@@ -30,11 +30,12 @@ export const BALANCE = Object.freeze({
   TOXIN_DECAY: 0.002,        // per env step
 
   // --- metabolism ------------------------------------------------------------
-  UPTAKE_RATE: 0.05,         // nutrient/biomass/tick at full suitability
+  UPTAKE_RATE: 0.09,         // nutrient/biomass/tick at full suitability
   CONVERSION: 1.0,           // nutrient -> energy conversion
-  MAINTENANCE_RATE: 0.011,   // energy/biomass/tick
+  MAINTENANCE_RATE: 0.009,   // energy/biomass/tick
   MAINTENANCE_ENTROPY: 0.8,  // extra maintenance multiplier at entropy 1
   ENERGY_CAP: 6.0,           // per-node stored energy cap
+  BIOMASS_MAX: 2.5,          // maturity cap per node
   STRESS_GAIN: 0.022,        // per tick at zero suitability
   STRESS_RECOVER: 0.014,     // per tick at full suitability
   DEATH_STRESS: 1.0,         // stress that starts killing biomass
@@ -52,10 +53,10 @@ export const BALANCE = Object.freeze({
   START_CONDUCTANCE: 0.35,
 
   // --- growth ------------------------------------------------------------------
-  GROW_COST: 0.34,           // energy to open a new frontier node
-  GROW_P_BASE: 0.2,          // base expansion probability per candidate/tick
+  GROW_COST: 0.22,           // energy to open a new frontier node
+  GROW_P_BASE: 0.3,          // base expansion probability per candidate/tick
   GROW_PER_NODE_CAP: 2,      // max expansions per node per tick
-  NEW_BIOMASS: 0.25,         // biomass seeded into a new node
+  NEW_BIOMASS: 0.3,          // biomass seeded into a new node
   CROWDING_PENALTY: 0.14,    // per alive neighbor beyond 2
   SIGNAL_BIAS: 0.9,          // expansion bias per unit signal potential
 

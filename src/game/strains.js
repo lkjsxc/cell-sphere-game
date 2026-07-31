@@ -24,6 +24,8 @@ export function baseTraits() {
     energyCap: 1.0,
     regrow: 1.0,         // regrowth into dead material
     scoreRate: 1.0,      // explicit score-rate modifier (Quiet Metabolism)
+    growCost: 1.0,       // expansion energy cost multiplier
+    growthCap: 0,        // extra expansions per node per tick
     // flags / additive
     signalCharges: 0,    // extra charges
     anastomosis: 0,      // reconnect fragmented branches
@@ -39,6 +41,9 @@ export function baseTraits() {
     fractalFrontier: 0,  // more tips, weaker branches
     redundantLoops: 0,   // improved connectivity survival
     localSacrifice: 0,   // prune damaged tips to protect core
+    distributedSensing: 0, // event telegraphs arrive earlier
+    opportunisticUptake: 0, // bonus uptake during temporary blooms
+    sporeMemory: 0,      // encode one trait for the next run
   };
 }
 
@@ -84,7 +89,8 @@ export function traitsFor(strainId, memoryEffects = {}) {
   const ADDITIVE = new Set(['signalCharges', 'anastomosis', 'dormantCysts', 'cannibal',
     'symbioticFilm', 'adaptiveMembrane', 'migratoryCore', 'pulsedTransport',
     'feverGrowth', 'coldReserve', 'toxinCatalysis', 'fractalFrontier',
-    'redundantLoops', 'localSacrifice']);
+    'redundantLoops', 'localSacrifice', 'growthCap', 'distributedSensing',
+    'opportunisticUptake', 'sporeMemory']);
   for (const [key, value] of Object.entries(memoryEffects)) {
     if (!(key in traits)) throw new Error(`unknown trait: ${key}`);
     traits[key] = ADDITIVE.has(key) ? traits[key] + value : traits[key] * value;

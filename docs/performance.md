@@ -46,9 +46,12 @@ checksum. Do not compare unlike environments directly.
 
 | Date | Commit | Machine | Env | 3000 ticks | ticks/s | checksum |
 |---|---|---|---|---|---|---|
-| — | — | — | — | pending simulation landing | — | — |
+| 2026-07-31 | (Gate B) | 20-core Linux, 32GB | Node v22.22.3 | full run 3,396 ticks / 197 ms | 17,234 | d02cae0d |
 
 ## Evidence log
 
-- 2026-07-31: repository initialized; no simulation yet. Desktop class:
-  20-core Linux, Node 22. Physical mobile verification: **not performed**.
+- 2026-07-31: headless benchmark established: one full run (seed 20260731,
+  balanced pilot with Signals) = 3,396 ticks in ~200 ms = ~17k ticks/s on a
+  20-core Linux desktop (single thread), 7 MB heap. The 3,000-tick budget is
+  met with ~5x headroom on desktop. Physical mobile verification: **not
+  performed** — desktop numbers are not mobile numbers.

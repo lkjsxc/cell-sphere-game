@@ -31,9 +31,17 @@ Each is a deterministic heuristic using only player-visible information.
 
 ## Measured outcomes
 
-| Date | Commit | Policy | n | median t | p25–p75 | median score | notes |
+| Date | Commit | Policy | n | median t | p25–p75 | peak cov | notes |
 |---|---|---|---|---|---|---|---|
-| — | — | — | — | pending simulation landing | — | — | — |
+| 2026-07-31 | (Gate B) | balanced | 4 | 361 s | 329–366 | 0.45 | first calibration; median slightly above 330 target |
+| 2026-07-31 | (Gate B) | expansion | 4 | 325 s | 236–361 | 0.40 | wider spread, as expected |
+| 2026-07-31 | (Gate B) | resilience | 4 | 361 s | 311–361 | 0.52 | highest coverage |
+
+Initial read: extinction timing clusters near the terminal ceiling (360 s)
+rather than the 270–330 median target — the collapse curve is currently the
+dominant killer. Next tuning pass: strengthen mid-run pressure (events,
+maintenance entropy scaling) so weak builds die before the ceiling while
+strong builds still reach it. Sample size 4 is diagnostic, not conclusive.
 
 ## Tuning decisions
 
