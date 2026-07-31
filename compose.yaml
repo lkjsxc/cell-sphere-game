@@ -1,0 +1,19 @@
+# Reproducible serve + verification for environments with Docker.
+# The deployed browser application itself has zero dependencies; this file
+# only provides a consistent Node runtime for local checks.
+services:
+  serve:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: node scripts/serve.mjs --host 0.0.0.0 --port 8080
+    ports:
+      - "8080:8080"
+
+  verify:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: node scripts/verify.mjs

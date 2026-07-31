@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Incremental Network — 球体世界に網状生命を育て、絶滅を次の記憶へ変える。1本指で遊ぶ球体ローグライト・インクリメンタル。">
+  <meta name="theme-color" content="#04070d">
+  <meta name="color-scheme" content="dark">
+  <title>Incremental Network — Every extinction becomes memory.</title>
+  <link rel="icon" type="image/svg+xml" href="assets/mark.svg">
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/surfaces.css">
+  <link rel="stylesheet" href="styles/motion.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="gl-canvas" aria-label="Incremental Network の球体世界" role="img"></canvas>
+
+    <!-- Title screen -->
+    <section id="title-screen" class="screen" aria-labelledby="title-heading">
+      <div class="title-identity">
+        <svg class="title-mark" width="56" height="56" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="32" r="27" fill="none" stroke="#35d0b0" stroke-width="2"/>
+          <path d="M12 24 L30 14 L44 22 L52 40 L36 50 L18 44 Z" fill="none"
+                stroke="#6ef3d6" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M30 14 L36 50 M12 24 L44 22 M52 40 L18 44" fill="none"
+                stroke="#6ef3d6" stroke-width="1" opacity="0.7"/>
+          <circle cx="30" cy="14" r="2.5" fill="#ffd479"/>
+          <circle cx="12" cy="24" r="2" fill="#6ef3d6"/>
+          <circle cx="44" cy="22" r="2" fill="#6ef3d6"/>
+          <circle cx="52" cy="40" r="2" fill="#6ef3d6"/>
+          <circle cx="36" cy="50" r="2" fill="#6ef3d6"/>
+          <circle cx="18" cy="44" r="2" fill="#6ef3d6"/>
+        </svg>
+        <h1 id="title-heading">Incremental Network</h1>
+        <p class="title-tagline">Every extinction becomes memory.</p>
+        <p class="title-premise">球体世界に網状生命を育て、絶滅を次の記憶へ変える。</p>
+        <p id="boot-status" class="title-status" role="status">起動中…</p>
+      </div>
+    </section>
+
+    <div id="toast-root" aria-hidden="true"></div>
+    <div id="live-region" class="sr-only" aria-live="polite"></div>
+    <div id="diagnostics" hidden></div>
+
+    <noscript>
+      <p style="padding:2rem">このゲームには JavaScript が必要です。Google Chrome の最新版で開いてください。</p>
+    </noscript>
+  </div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

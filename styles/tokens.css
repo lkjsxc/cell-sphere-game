@@ -1,0 +1,112 @@
+/* Design tokens: the single source of truth for color, type, space, motion.
+   Art direction: dark space, bioluminescent network life, calm Apple-grade
+   hierarchy. Information is never color-only: tokens pair with icon/shape
+   rules defined in components.css. */
+
+:root {
+  /* Surface palette */
+  --bg-deep: #04070d;
+  --bg-space: #070b14;
+  --bg-panel: rgba(13, 20, 33, 0.82);
+  --bg-panel-solid: #0d1421;
+  --bg-elevated: #131c2e;
+  --border-faint: rgba(140, 180, 220, 0.14);
+  --border-strong: rgba(140, 180, 220, 0.32);
+
+  /* Text */
+  --text-primary: #eaf2fa;
+  --text-secondary: #9db1c7;
+  --text-faint: #5f7288;
+  --text-inverse: #06121f;
+
+  /* Life / network accents */
+  --life-core: #6ef3d6;
+  --life-glow: #35d0b0;
+  --life-dim: #1d7f6e;
+  --signal-gold: #ffd479;
+  --signal-glow: #f0b23e;
+  --memory-violet: #a99bff;
+  --memory-glow: #7f6ce0;
+
+  /* Semantic states (always paired with shape/label in components) */
+  --state-good: #6ef3d6;
+  --state-warn: #ffd479;
+  --state-bad: #ff8f7a;
+  --state-info: #8fc7ff;
+
+  /* Category hues (Reach/Metabolism/Resilience/Transport/Symbiosis/Memory) */
+  --cat-reach: #7fd8ff;
+  --cat-metabolism: #8ef0b8;
+  --cat-resilience: #ffb27f;
+  --cat-transport: #d9a6ff;
+  --cat-symbiosis: #ffe08a;
+  --cat-memory: #a99bff;
+
+  /* Typography */
+  --font-body: system-ui, "Hiragino Kaku Gothic ProN", "Hiragino Sans",
+    "Yu Gothic UI", "Noto Sans JP", Meiryo, sans-serif;
+  --font-display: var(--font-body);
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
+    monospace;
+  --fs-caption: 0.8125rem;   /* 13px — secondary only */
+  --fs-body: 1rem;           /* 16px */
+  --fs-lead: 1.1875rem;      /* 19px */
+  --fs-title: 1.5rem;        /* 24px */
+  --fs-hero: clamp(2rem, 6vw, 3.25rem);
+  --fs-score: clamp(2.5rem, 9vw, 4.5rem);
+  --lh-body: 1.55;
+  --lh-tight: 1.2;
+
+  /* Space scale (8px base) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Shape */
+  --radius-s: 8px;
+  --radius-m: 14px;
+  --radius-l: 20px;
+  --radius-pill: 999px;
+
+  /* Touch + safe areas */
+  --touch-min: 44px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  /* Z layers */
+  --z-canvas: 0;
+  --z-hud: 10;
+  --z-sheet: 30;
+  --z-dialog: 50;
+  --z-toast: 70;
+
+  /* Motion */
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slow: 420ms;
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.44, 1);
+}
+
+/* Increased-contrast preference: strengthen borders and text. */
+@media (prefers-contrast: more) {
+  :root {
+    --border-faint: rgba(180, 210, 240, 0.4);
+    --border-strong: rgba(200, 225, 250, 0.65);
+    --text-secondary: #c3d3e4;
+    --bg-panel: rgba(8, 13, 22, 0.94);
+  }
+}
+
+/* App-level reduced-motion switch (set from settings + system pref). */
+:root[data-motion="reduced"] {
+  --dur-fast: 0ms;
+  --dur-base: 0ms;
+  --dur-slow: 0ms;
+}

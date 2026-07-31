@@ -1,0 +1,139 @@
+/* App shell layout: canvas + screen stack + HUD grid.
+   Portrait mobile is the primary layout; landscape and desktop scale up. */
+
+#app {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+#gl-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: var(--z-canvas);
+}
+
+/* Screens occupy the full viewport and stack above the canvas. */
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-hud);
+  display: flex;
+  flex-direction: column;
+  pointer-events: none; /* children re-enable as needed */
+  padding:
+    calc(var(--sp-4) + var(--safe-top))
+    calc(var(--sp-4) + var(--safe-right))
+    calc(var(--sp-4) + var(--safe-bottom))
+    calc(var(--sp-4) + var(--safe-left));
+}
+
+.screen > * {
+  pointer-events: auto;
+}
+
+.screen.is-hidden {
+  display: none;
+}
+
+/* Title screen: identity block at bottom-left, actions at bottom. */
+#title-screen {
+  justify-content: flex-end;
+  gap: var(--sp-5);
+}
+
+.title-identity {
+  max-width: 34rem;
+}
+
+/* In-run HUD: top metrics row + bottom action row; globe center is clear. */
+#run-screen {
+  justify-content: space-between;
+}
+
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.hud-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}
+
+.hud-metrics {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.hud-cluster {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+/* Center-stage surfaces (strain select, result) anchor to the bottom on
+   phones and to the center on larger screens. */
+.bottom-sheet {
+  align-self: stretch;
+  margin: 0 calc(-1 * var(--sp-4));
+  padding:
+    var(--sp-4)
+    calc(var(--sp-4) + var(--safe-right))
+    calc(var(--sp-4) + var(--safe-bottom))
+    calc(var(--sp-4) + var(--safe-left));
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-faint);
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+@media (min-width: 720px) and (min-height: 640px) {
+  .bottom-sheet {
+    align-self: center;
+    margin: 0;
+    max-width: 56rem;
+    width: min(92vw, 56rem);
+    border-radius: var(--radius-l);
+    border: 1px solid var(--border-faint);
+  }
+}
+
+/* Full-panel screens (memory globe UI lists, trophies, archive, settings). */
+.panel-screen {
+  background: linear-gradient(180deg, rgba(4, 7, 13, 0.55), rgba(4, 7, 13, 0.88));
+}
+
+.panel-body {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Diagnostics overlay: compact monospace readout, top-right. */
+#diagnostics {
+  position: absolute;
+  top: calc(var(--sp-2) + var(--safe-top));
+  right: calc(var(--sp-2) + var(--safe-right));
+  z-index: var(--z-toast);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  background: rgba(4, 7, 13, 0.8);
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-s);
+  padding: var(--sp-2) var(--sp-3);
+  max-width: 16rem;
+  white-space: pre;
+  pointer-events: none;
+}

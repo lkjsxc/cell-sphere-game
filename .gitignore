@@ -1,0 +1,18 @@
+# Dependencies (this project intentionally has zero runtime/dev npm packages)
+node_modules/
+
+# Generated reports and artifacts (balance runs, benchmark history exports)
+reports/
+*.log
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+tmp/
+
+# Local environment overrides
+.env
+.env.local

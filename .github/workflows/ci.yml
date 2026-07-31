@@ -1,0 +1,50 @@
+name: verify
+
+on:
+  push:
+    branches: [main, contest-submission]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Structure gate
+        run: node scripts/check-structure.mjs
+      - name: Unit tests
+        run: node --test tests/unit/
+      - name: Integration tests
+        run: node --test tests/integration/
+      - name: Balance smoke
+        run: node scripts/balance.mjs --smoke
+      - name: Benchmark
+        run: node scripts/benchmark.mjs
+      - name: Link / deployment path checks
+        run: node scripts/check-links.mjs
+
+  pages:
+    needs: verify
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/contest-submission'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

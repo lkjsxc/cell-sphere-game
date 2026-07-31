@@ -1,0 +1,133 @@
+/* Content surfaces: adaptation cards, panels, dialogs, toasts, trophies. */
+
+/* Adaptation cards. Category is encoded by symbol shape + hue + label. */
+.card-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 720px) {
+  .card-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  min-height: var(--touch-min);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-l);
+  text-align: start;
+  transition: transform var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.card:active {
+  transform: scale(0.985);
+}
+
+.card-category {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.card-name {
+  font-size: var(--fs-lead);
+  font-weight: 700;
+}
+
+.card-effect {
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.card-cost {
+  font-size: var(--fs-caption);
+  color: var(--state-warn);
+}
+
+/* Panels and dialogs. */
+.panel {
+  background: var(--bg-panel-solid);
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-l);
+  padding: var(--sp-5);
+}
+
+dialog.panel {
+  color: var(--text-primary);
+  max-width: min(92vw, 40rem);
+  margin: auto;
+}
+
+dialog::backdrop {
+  background: rgba(2, 4, 8, 0.7);
+}
+
+/* Toast queue (trophies, milestones). */
+#toast-root {
+  position: absolute;
+  top: calc(var(--sp-5) + var(--safe-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: center;
+  pointer-events: none;
+}
+
+.toast {
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--bg-panel-solid);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Trophy emblems: circular with engraved ring; locked = dashed ring + label. */
+.trophy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+}
+
+.trophy-emblem {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid var(--life-core);
+  display: grid;
+  place-items: center;
+}
+
+.trophy.is-locked .trophy-emblem {
+  border-style: dashed;
+  border-color: var(--text-faint);
+}
+
+.trophy-name {
+  font-size: var(--fs-caption);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+/* Grids for galleries. */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--sp-3);
+}
