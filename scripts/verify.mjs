@@ -17,19 +17,19 @@
 import { spawnSync } from 'node:child_process';
 
 const gates = [
-  ['check:structure', ['node', 'scripts/check-structure.mjs']],
-  ['test:unit', ['node', '--test', 'tests/unit/']],
-  ['test:integration', ['node', '--test', 'tests/integration/']],
-  ['balance:smoke', ['node', 'scripts/balance.mjs', '--smoke']],
-  ['benchmark', ['node', 'scripts/benchmark.mjs']],
-  ['check:links', ['node', 'scripts/check-links.mjs']],
+  ['check:structure', 'node scripts/check-structure.mjs'],
+  ['test:unit', 'node --test tests/unit/*.test.js'],
+  ['test:integration', 'node --test tests/integration/*.test.js'],
+  ['balance:smoke', 'node scripts/balance.mjs --smoke'],
+  ['benchmark', 'node scripts/benchmark.mjs'],
+  ['check:links', 'node scripts/check-links.mjs'],
 ];
 
 const results = [];
 let failed = false;
-for (const [name, cmd] of gates) {
+for (const [name, command] of gates) {
   const started = performance.now();
-  const res = spawnSync(cmd[0], cmd.slice(1), { stdio: 'inherit' });
+  const res = spawnSync(command, { shell: true, stdio: 'inherit' });
   const ms = Math.round(performance.now() - started);
   const ok = res.status === 0;
   results.push({ name, ok, ms });

@@ -20,9 +20,9 @@ jobs:
       - name: Structure gate
         run: node scripts/check-structure.mjs
       - name: Unit tests
-        run: node --test tests/unit/
+        run: node --test tests/unit/*.test.js
       - name: Integration tests
-        run: node --test tests/integration/
+        run: node --test tests/integration/*.test.js
       - name: Balance smoke
         run: node scripts/balance.mjs --smoke
       - name: Benchmark
