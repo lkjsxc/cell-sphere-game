@@ -5,6 +5,15 @@ snapshots and never mutates simulation state.
 
 ## Draw passes (target ≤ 8 draw calls/frame)
 
+Current steady-state implementation issues **5** draws (background, globe,
+atmosphere, veins, tips). The two network draws live in `network-pass.js`,
+with the organism shaders in `shaders-network.js` (split from `shaders.js`,
+which holds the world-surface programs, to keep each module under the line
+budget). Camera, picking, and instance packing are pure functions and are
+unit-tested in Node; the GPU path is exercised by `scripts/browser-test.mjs`
+where the environment's sandbox allows Chrome networking — see
+`docs/testing.md` for the seccomp skip and `docs/decisions.md` D8.
+
 1. **Background** — fullscreen triangle, procedural gradient + star hash.
 2. **Globe** — indexed icosphere (same topology as simulation), per-vertex
    biome attributes; Lambert + rim lighting; entropy desaturation; event
