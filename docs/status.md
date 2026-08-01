@@ -4,8 +4,19 @@ Truthful current state. Updated every session.
 
 - **Starting commit (this turn):** `db31bfb`
 - **Commits this turn:** `6a72824` (renderer + verification), `41c81b0`
-  (canonical-name alignment + decision records), plus this status commit.
-- **Branch / upstream:** `main`, ahead of `origin/main` (push pending verification).
+  (canonical-name alignment + decision records), `c4400e1` (status), plus
+  this push-failure note.
+- **Branch / upstream:** `main`. **Push to `origin` FAILED** with
+  `fatal: repository 'https://github.com/lkjsxc/incremental-network-game/' not
+  found`. Diagnostics: `gh auth status` is logged in as `lkjsxc` with a token
+  carrying `repo` scope, but `gh repo view lkjsxc/incremental-network-game`
+  returns *"Could not resolve to a Repository"* — i.e. the remote repository
+  no longer exists on GitHub (it resolved fine in the previous session, so it
+  was deleted or renamed externally between sessions). This is an external
+  state change, not a code or credential defect. Local history is intact and
+  the working tree is clean. The remote was **not** recreated from here
+  (that is the account owner's decision); recreate or restore it, then
+  `git push origin main` will fast-forward the 6 local commits.
 - **Contest readiness:** Gate C renderer landed and logic-verified; the game
   is **not yet playable as a full loop in the browser** (no HUD/draft/result
   UI, no worker wiring in-browser). See gates below.
