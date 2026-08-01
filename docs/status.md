@@ -2,65 +2,104 @@
 
 Truthful current state. Updated every session.
 
-- **Last verified commit:** (set after Gate B part 2 commit)
-- **Branch:** main → origin/main (not pushed yet)
-- **Contest readiness:** simulation nucleus complete; not playable in browser yet.
+- **Starting commit (this turn):** `db31bfb`
+- **Commits this turn:** `6a72824` (renderer + verification), `41c81b0`
+  (canonical-name alignment + decision records), plus this status commit.
+- **Branch / upstream:** `main`, ahead of `origin/main` (push pending verification).
+- **Contest readiness:** Gate C renderer landed and logic-verified; the game
+  is **not yet playable as a full loop in the browser** (no HUD/draft/result
+  UI, no worker wiring in-browser). See gates below.
 
 ## Playable now
 
-- Static title shell boots through the dev server with capability detection.
-- Full headless run lifecycle: inoculation → growth → crises → drafts →
-  extinction → result summary with deterministic hash (Node only).
+- Title screen renders the **live rotating WebGL2 globe** (Canvas 2D fallback
+  if WebGL2 init throws); `?preview=1` runs the real main-thread simulation
+  through the renderer for visual checks.
+- Full headless run lifecycle in Node: inoculation → growth → crises →
+  drafts → extinction → result summary with a deterministic hash.
 
 ## Complete and verified
 
 - Gate A: repo contract, docs, structure gate, dev server, CI workflow.
-- Gate B part 1: core primitives + world generation (70 unit tests).
-- Gate B part 2: deterministic simulation (tick phases, events, drafts,
-  signals, extinction), 7 integration tests incl. speed invariance
-  (chunk 1/7/32/50 → identical hash), benchmark (~17k ticks/s desktop),
-  balance harness with smoke mode.
+- Gate B: core primitives + world generation + deterministic simulation
+  (78 unit tests, 7 integration tests incl. speed invariance chunk 1/7/32,
+  benchmark ~17–19k ticks/s desktop, balance harness with smoke mode).
+- Gate C (this turn): WebGL2 renderer (globe, atmosphere, instanced vein
+  ribbons + tips, event/signal overlays), Canvas 2D fallback, orbit camera,
+  ray-sphere picking, quality governor; renderer **logic** unit-tested in
+  Node (8 tests, incl. a static shader-uniform cross-check); browser smoke
+  harness added. Canonical name aligned to `incremental-network-game`
+  everywhere it is asserted.
 
 ## Incomplete
 
-- WebGL2 renderer + interaction (Gate C)
-- Full browser run loop: HUD, draft UI, result screen (Gate D)
-- Scoring formula, phenotypes (Gate D)
-- Progression, trophies, autoplay, archive (Gate E)
-- Sharing, audio, PWA (Gate F)
-- Accessibility pass, balance tuning, CI evidence, polish (Gate G)
+- In-browser run loop: worker driver, HUD, adaptation sheet, result screen,
+  speed controls wired to the DOM (Gate D).
+- Scoring formula, phenotypes/synergies, run epithet (Gate D).
+- Memory Globe, Echoes, Imprints, trophies, autoplay, archive, challenges,
+  world archetypes, strains beyond the initial three (Gate E).
+- Share card, procedural audio, PWA (Gate F).
+- **Full English + Japanese player-facing localization** (tracked gate;
+  Japanese premise + canonical name ship now, full bilingual copy does not).
+- The 8 Hz tick-rate + fixed-point numeric convention from the revised
+  mission (deferred to a dedicated rebaseline turn — see `docs/decisions.md`
+  D9; current 10 Hz Float32 simulation is green and deterministic).
+- Accessibility pass, balance tuning with evidence, physical-device tests,
+  CI evidence, README screenshot (Gate G).
 
-## Current gates (all green locally)
+## Current gates
 
 | Gate | State |
 |---|---|
-| check:structure | PASS (95 files, 16 dirs) |
-| test:unit | PASS 70/70 |
+| check:structure | PASS (110 files, 17 dirs) |
+| test:unit | PASS 78/78 |
 | test:integration | PASS 7/7 |
 | balance:smoke | PASS |
-| benchmark | PASS 17,234 ticks/s (min 3,000), hash d02cae0d |
+| benchmark | PASS ~17–19k ticks/s (min 3,000), hash d02cae0d |
 | check:links | PASS |
+| test:browser | SKIP 77 — container seccomp blocks Chrome network stack |
+
+`test:browser` is intentionally outside `npm run verify`: in this sandbox
+Chrome's network stack gets `EPERM` on `socket()` (curl/Node connect fine),
+so headless Chrome cannot load the dev server. The harness reports this as a
+skip with the exact signature — never a false pass. A real GPU render is
+claimed only when observed on unrestricted hardware (see `docs/decisions.md`
+D8, `docs/testing.md`).
 
 ## Latest metrics
 
-- Median extinction: balanced 361 s / expansion 325 s / resilience 361 s
-  (n=4 each — above the 270–330 target; tuning pass planned, see
-  `docs/balancing.md`).
-- Peak coverage median 0.40–0.52; crisis survival 0.91–1.0.
+- Benchmark: 3,396 ticks / ~190–230 ms ≈ 17–19k ticks/s single-threaded on a
+  20-core Linux desktop; 8 MB heap; hash `d02cae0d` stable across runs.
+- Balance smoke (n=4/policy): balanced median ~361 s, expansion ~325 s,
+  resilience ~361 s — extinction leans on the terminal ceiling; a mid-run
+  pressure tuning pass is planned (recorded in `docs/balancing.md`).
+- Physical mobile / GPU render: **not observed this turn** (environment
+  limitation, stated plainly).
 
 ## Known risks
 
-- Extinction timing leans on the terminal ceiling; mid-run pressure needs
-  strengthening before score design lands.
-- Mobile performance unverified physically.
+- No in-browser play yet: the renderer is logic-verified but a pixel has not
+  been observed from this environment. The next turn must wire the worker +
+  HUD and capture a real frame on unrestricted hardware or CI.
+- Extinction timing clusters near the 360 s ceiling rather than the 270–330 s
+  median target; needs a balance pass before score design lands.
+- The revised mission's 8 Hz / fixed-point numeric contract is not yet
+  adopted; doing it carelessly would rebaseline determinism and balance.
 
-## Next actions (priority order)
+## Next actions (priority order, by contest impact)
 
-1. Gate C: WebGL2 renderer (globe, instanced vein ribbons, atmosphere,
-   event footprints), orbit camera, ray-sphere picking, Canvas 2D fallback.
-2. Gate D: browser run loop — worker driver, HUD, adaptation sheet, result
-   screen, scoring, phenotypes, speed controls, 32× batching.
-3. Gate E: Memory Globe, Echoes, trophies, autoplay, archive, challenges.
-4. Gate F: share text/card, procedural audio, PWA.
-5. Gate G: accessibility pass, balance tuning with evidence, CI + Pages,
-   README captures, submission checklist.
+1. **Gate D in-browser loop**: worker driver + main-thread fallback wired to
+   the DOM, running HUD (score, pressure, Signal charges, speed/pause),
+   adaptation bottom sheet, extinction transition, result screen, restart;
+   capture a real rendered frame and verify the ten-second judge path.
+2. **Balance pass**: strengthen mid-run pressure so the median extinction
+   lands in 270–330 s; record before/after in `docs/balancing.md`.
+3. **Numeric rebaseline turn**: adopt 8 Hz + fixed-point convention with full
+   golden/balance/performance rebaselining per `docs/decisions.md` D9.
+4. **Scoring + phenotypes**: 5-component Network Score, ranks, epithet,
+   synergy recognition (Gate D content).
+5. **Gate E**: Memory Globe + Echoes + Imprints + first campaign resolution
+   + trophies + autoplay + archive.
+6. **Localization**: complete English + Japanese player-facing copy.
+7. **Gate F/G**: share card, audio, PWA, accessibility, physical-device +
+   thermal evidence, CI/Pages, README capture, submission checklist.
