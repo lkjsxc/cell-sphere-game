@@ -4,7 +4,7 @@
  * to safe defaults without throwing.
  */
 
-const KEY = 'incremental-network:settings:v1';
+const KEY = 'incremental-network-game:settings:v1';
 
 /** @returns {Settings} validated settings with defaults applied */
 export function defaultSettings() {

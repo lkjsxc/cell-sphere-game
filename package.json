@@ -1,9 +1,9 @@
 {
-  "name": "incremental-network",
+  "name": "incremental-network-game",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Incremental Network — a deterministic spherical roguelite incremental game. Every extinction becomes memory.",
+  "description": "incremental-network-game — a deterministic spherical roguelite incremental game. Every extinction becomes memory.",
   "engines": {
     "node": ">=22"
   },

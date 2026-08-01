@@ -1,6 +1,6 @@
 # Game design
 
-Canonical product language: title **Incremental Network**; tagline
+Canonical product language: title **incremental-network-game**; tagline
 *Every extinction becomes memory.*; premise
 「球体世界に網状生命を育て、絶滅を次の記憶へ変える。」
 Score = **Network Score / ネットワークスコア**; currency = **Echoes / エコー**;

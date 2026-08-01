@@ -67,7 +67,7 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Incremental Network dev server`);
+  console.log(`incremental-network-game dev server`);
   console.log(`  root: ${ROOT}`);
   console.log(`  url:  http://${HOST}:${PORT}/`);
 });

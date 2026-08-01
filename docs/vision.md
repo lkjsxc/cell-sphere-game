@@ -1,6 +1,6 @@
 # Vision
 
-**Incremental Network** — *Every extinction becomes memory.*
+**incremental-network-game** — *Every extinction becomes memory.*
 
 A mobile-first, one-pointer roguelite incremental played on a living spherical
 world. The player cultivates a slime-mold-like network organism that explores,

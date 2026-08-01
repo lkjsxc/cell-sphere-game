@@ -1,4 +1,4 @@
-# Incremental Network
+# incremental-network-game
 
 > **Every extinction becomes memory.**
 > 球体世界に網状生命を育て、絶滅を次の記憶へ変える。

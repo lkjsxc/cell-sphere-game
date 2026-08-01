@@ -11,7 +11,7 @@ Read order at the start of every turn:
 
 ## Non-negotiables
 
-- Title identity, north-star timings (270–330 s median run, ~360 s ceiling,
+- Canonical name `incremental-network-game` + tagline; north-star timings (270–330 s median run, ~360 s ceiling,
   18–24 min resolution, ~4 h trophies), deterministic simulation, pointer-only
   completeness, low-heat goal, and honest evidence survive redesigns.
 - No mocks, placeholders, fake metrics, decorative buttons, or TODO-driven UX.
@@ -36,7 +36,7 @@ DOM/GL/storage/audio. Renderer never mutates simulation state. See
 ```bash
 npm run check:structure
 npm test
-npm run test:browser     # requires Chrome
+npm run test:browser     # requires Chrome; skips (exit 77) if the sandbox blocks Chrome networking; not in verify
 npm run balance:smoke
 npm run benchmark
 npm run check:links
