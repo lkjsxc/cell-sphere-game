@@ -1,73 +1,88 @@
 # Status
 
-Truthful current state. Updated every session.
+Truthful current state. Updated every substantial session.
 
-- **Starting commit (this turn):** `de47194`
-- **Playable implementation commit:** `adbe1f0` — `feat(interface): make deterministic runs playable in browser`.
-- **Branch / upstream:** `main` tracks `origin/main`. The missing GitHub remote
-  reported in the prior session was recreated as a **public** repository at
-  <https://github.com/lkjsxc/incremental-network-game>; the existing local
-  history was pushed without rewriting it.
+- **Starting commit (2026-08-02 rebuild turn):** `a01a989`
+- **Latest product commit:** `10d8d47` — complete dual-cell visual rebuild and
+  first extinction-to-memory transaction, pushed to `origin/main`.
+- **Supporting commit:** `7fbba68` — explicit spherical dual mesh and renderer.
+- **Protective baseline tag:** `pre-rebuild-2026-08-02` points to `a01a989` and
+  is pushed to origin.
+- **Branch / upstream:** `main` tracks `origin/main`.
 - **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>.
-  GitHub Pages is configured for the workflow source and run
-  [`30731782437`](https://github.com/lkjsxc/incremental-network-game/actions/runs/30731782437)
-  completed successfully for `adbe1f0`. A no-cache Node fetch then received
-  HTTP 200 for the public index and `src/interface/app-controller.js`, checking
-  the deployed Begin control and production controller text.
-- **Contest readiness:** browser Gate D vertical slice is now implemented;
-  contest-ready completion is still far away. No physical mobile or GPU run is
-  claimed from this container.
+  GitHub Actions run `30747205702` completed successfully for `10d8d47`.
+  Cache-busted public fetches returned HTTP 200 and matched unique rebuild text
+  in `index.html`, `dual-mesh.js`, `memory.js`, and `app-controller.js`.
 
 ## Playable now
 
-- The title globe has one live **ネットワークを始める** action.
-- A normal run starts the production Web Worker (or the identical
-  `RunController` fallback), displays authoritative Score / Pressure / Reach /
-  Signal data, supports pointer drag rotation and tap Signal placement, speed
-  1×–32×, pause, visibility pause, and a five-minute simulation arc.
-- Production adaptation drafts use an accessible dialog and pause ticks; the
-  terminal result shows an authoritative deterministic score, rank, cause,
-  breakdown, Echoes, and immediate restart.
-- The old `?preview=1` path remains a development visual tool; browser smoke
-  now opens the normal `?demo=1` app route.
+- The title is already a real interaction: drag/inertia, wheel, pinch, and tap
+  work before starting. Tap reseeds a bounded cosmetic organism that grows on
+  real world adjacency and never affects score or saves.
+- The planet is an explicit dual of the level-4 geodesic graph: 2,562 discrete
+  cells, 7,680 shared boundaries, mostly hexagons, and exactly twelve warm
+  pentagonal World Knots. Ocean/land material is procedural and cell-discrete.
+- Living transport occupies canonical shared boundaries rather than unrelated
+  floating triangular ribbons. Cell life/stress, spatial events, Signals,
+  atmosphere, and entropy all feed the render state.
+- The production deterministic run remains playable through Worker or the
+  same `RunController` fallback: Signal, five adaptation drafts in the demo
+  seed, crises, 1×–32×, pause, extinction cause, score, and Echo reward.
+- Result now enters a functioning graphite **Memory Globe**. The first run can
+  purchase **First Trace** for 2 Echoes; the filament persists in the versioned
+  save and the next run visibly starts with `Signal 4 / 4`.
+- Six bounded Memory nodes form an initial prerequisite graph. This is a real
+  progression path, but not yet the complete campaign tree.
 
-## Complete and verified
+## Evidence from this turn
 
-- Structure: 117 files / 18 directories, all within source and directory
-  limits and with required READMEs.
-- Deterministic simulation remains green; terminal score is now asserted equal
-  for identical full production runs.
-- `npm run verify` passed on 2026-08-02: 82 unit tests, 7 integration tests,
-  balance smoke, benchmark, structure, and link checks.
-- Benchmark: 3,396 ticks / 183 ms = **18,517 ticks/s** on Node v22.22.3,
-  Linux x64, 20 CPUs; 7 MB heap; stable hash `d02cae0d`.
-- Balance smoke still records medians: balanced 361 s, expansion 325.4 s,
-  resilience 360.5 s. This misses the 270–330 s median goal for two policies.
-- `npm run test:browser` correctly skipped with exit 77: this container's
-  Chrome is blocked from opening sockets by seccomp (`ERR_ACCESS_DENIED`).
-  This is not a browser/GPU pass.
+- `npm run verify` passed after the rebuild: structure, **89 unit tests**,
+  **7 integration tests**, balance smoke, benchmark, and link/path checks.
+- Benchmark on Node v22.22.3 / Linux x64: 3,396 ticks in 205 ms = **16,572
+  ticks/s**, 7 MB reported heap, stable hash `d02cae0d`.
+- `npm run test:browser:file` passed in real headless Chrome WebGL2 through CDP
+  pipe at 390×844: title tap changed the rendered PNG; a 32× run completed in
+  **9.65 s**, score 704,131, five drafts, Memory purchase, persisted filament,
+  and next-run `Signal 4 / 4`; no browser errors were observed.
+- A separate 1440×900 Chrome/WebGL2 CDP capture booted with no observed
+  exceptions. Generated evidence is git-ignored under `reports/`:
+  `browser-file-title.png`, `browser-file-title-tap.png`,
+  `browser-file-memory.png`, and `browser-file-title-desktop.png`.
+- `npm run test:browser` still exits **77** honestly because this container
+  blocks Chrome network sockets (`ERR_ACCESS_DENIED`). The socket-free test is
+  strong browser/GPU evidence but not a same-origin HTTP or public Pages test.
+- A 100-run sequential production-simulation soak completed 306,932 ticks in
+  18.015 s with 0 invalid runs. Forced-GC heap moved 4.77 → 4.83 MB; final RSS
+  was 66.52 MB. This is Node simulation evidence, not a browser heap claim.
+- Balance smoke medians remain: balanced 361 s, expansion 325.4 s, resilience
+  360.5 s. Balanced and resilience still miss the 270–330 s target.
 
-## Incomplete
+## Incomplete / not claimed
 
-- Memory Globe, Imprints, permanent spending, archive, trophies, campaign
-  resolution, automation, share card, audio, PWA, save export/import, and
-  challenge/world breadth.
-- Complete English/Japanese localization, full accessibility audit, real-user
-  playtests, physical Android Chrome, GPU, performance, and thermal evidence.
-- Required numeric rebaseline: 8 Hz fixed-point simulation; current green
-  simulation remains 10 Hz Float32 (documented decision D9).
-- Score display is an interim deterministic six-axis projection; calibrate its
-  bands and reconcile the final five-axis product specification before claims.
+- The full four-run campaign, **Beyond the Last Cell**, Imprints, archive,
+  trophies, Policies, auto-retry, sharing, audio, PWA, challenges, and broad
+  world/strain selection are not implemented.
+- English is now coherent across the exposed title/result/memory and current
+  Adaptation drafts, but complete Japanese localization and an accessible
+  language switch are not done.
+- Memory currently preserves authored prerequisite filaments, not a selected
+  morphology-derived Imprint from the just-finished run.
+- The WebGL2 primary path has the new dual-cell art direction. Canvas 2D remains
+  playable but still uses the older simplified dot/speckle substrate.
+- No physical phone, thermal, real-user, screen-reader, 200% text zoom, or
+  unrestricted public-URL Chrome visual observation is claimed. Public
+  deployment bytes were verified with cache-busted Node fetches only.
+- The authoritative simulation remains 10 Hz Float32; the 8 Hz rebaseline is a
+  target, not an implementation claim.
 
 ## Next actions (contest impact order)
 
-1. Rebalance pressure so standard median extinction is 270–330 s, then
-   rebaseline the planned 8 Hz fixed-point authority in one measured change.
-2. Build Memory Globe / Imprints / Echo persistence and the first four-run
-   campaign resolution; do not add visible unfinished controls.
-3. Complete English and Japanese localization plus keyboard/screen-reader and
-   reduced-motion validation for the new run flow.
-4. Obtain real desktop GPU and physical Android Chrome / thermal observations;
-   retain the current browser-skip limitation until then.
-5. Add archive, trophies, worlds, automation, sharing, and PWA only after the
-   complete extinction-to-memory loop is present and tested.
+1. Derive a compact Imprint from the terminal morphology and carry that exact
+   state into Memory; expand the six-node path into the tested four-run
+   **Beyond the Last Cell** campaign.
+2. Make run morphology less locally dense and improve collapse/Memory visual
+   transitions, then capture abundance, crisis, collapse, and result at the
+   four required viewports.
+3. Complete English/Japanese switching and keyboard/screen-reader/reduced-motion
+   flows, then obtain same-origin/public Pages Chrome and physical Android
+   performance/thermal evidence.
