@@ -21,15 +21,39 @@ export function defineBranch(branch, connectorPrerequisite, rows) {
   return Object.freeze(rows.map((row, index) => {
     const requires = MEMORY_PARENT_TEMPLATE[index].map((required) => ids[required]);
     if (index === 16) requires.push(connectorPrerequisite);
-    const effect = row[5];
+    const completion = completeUnlock(branch, KINDS[index], row[5]); const effect = completion.effect;
     const effects = effect.type === 'scalar' ? { [effect.key]: effect.value } : {};
     return Object.freeze({
-      id: ids[index], nameEn: row[1], effectEn: row[2], description: row[3],
+      id: ids[index], nameEn: row[1], effectEn: completion.summary ?? row[2], description: completion.description ?? row[3],
       cost: row[4], requires: Object.freeze(requires),
       branch: `${branch[0].toUpperCase()}${branch.slice(1)}`, tier: TIERS[index],
       kind: KINDS[index], cell: memoryAtlasCell(branch, index), effect, effects: Object.freeze(effects),
     });
   }));
+}
+
+const UNLOCK_TRAITS = Object.freeze({
+  reach: ['reach', 'Frontier readiness'], flow: ['conductance', 'Transport capacity'],
+  reserve: ['energyCap', 'Stored-energy capacity'], continuity: ['reinforce', 'Useful-route reinforcement'],
+  ecology: ['uptake', 'Nutrient uptake'], perception: ['stressResist', 'Stress resistance'],
+});
+function completeUnlock(branch, kind, raw) {
+  if (raw.type !== 'unlock') return { effect: raw };
+  const [key, label] = UNLOCK_TRAITS[branch]; const gain = kind === 'capstone' ? 0.04 : kind === 'unlock' ? 0.015 : 0.025;
+  const bonus = raw.bonus ?? scalar(key, 1 + gain); const effect = Object.freeze({ ...raw, bonus });
+  const role = kind === 'connector' ? 'The adjacent cell requires both branches and carries this deterministic improvement.'
+    : kind === 'capstone' ? 'The branch’s final adjacent cell carries its strongest completed trait improvement.'
+      : kind === 'keystone' ? 'The completed branch lesson carries this deterministic improvement.'
+        : 'Later worlds carry this deterministic improvement from their first inoculated cell.';
+  return { effect, summary: bonusSummary(bonus, label, gain), description: role };
+}
+function bonusSummary(bonus, defaultLabel, defaultGain) {
+  if (bonus.key === 'distributedSensing') return 'Crisis warnings arrive one interval earlier.';
+  const labels = { stressResist: 'Stress resistance', uptake: 'Nutrient uptake', maintenance: 'Maintenance cost' };
+  const label = labels[bonus.key] ?? defaultLabel;
+  if (bonus.operation === 'add') return `${label} rises by ${bonus.value}.`;
+  const amount = Math.round(Math.abs(bonus.value - 1) * 1000) / 10;
+  return `${label} ${bonus.value < 1 ? 'falls' : 'rises'} by ${amount || defaultGain * 100}%.`;
 }
 
 /** Rebuild the small effective trait block once per tick from owned conditions. */

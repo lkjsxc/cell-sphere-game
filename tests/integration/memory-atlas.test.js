@@ -7,7 +7,7 @@ import {
   generateMemoryAtlas, validateAtlasMapping,
 } from '../../src/game/memory-atlas.js';
 import {
-  MEMORY_BRANCHES, MEMORY_NODES, availableMemoryNodes, buildMemorySnapshot, validateMemoryGraph,
+  MEMORY_BRANCHES, MEMORY_NODES, availableMemoryNodes, buildMemorySnapshot, compileMemory, validateMemoryGraph,
 } from '../../src/game/memory.js';
 import { MEMORY_STATUS } from '../../src/game/memory-scene.js';
 import { defaultMeta } from '../../src/platform/storage.js';
@@ -72,6 +72,17 @@ test('all Memory cell status and semantic arrays are explicit', () => {
   const owned = buildMemorySnapshot(topo, { ...defaultMeta(), memoryNodes: [root.id] }, root.id);
   assert.equal(owned.memoryStatus[root.cell], MEMORY_STATUS.SELECTED_OWNED);
   assert.ok([MEMORY_STATUS.UNAFFORDABLE, MEMORY_STATUS.AFFORDABLE].includes(owned.memoryStatus[child.cell]));
+});
+
+test('all advanced atlas cells ship a concrete downstream trait effect', () => {
+  const advanced = MEMORY_NODES.filter((node) => node.effect.type === 'unlock');
+  assert.equal(advanced.length, 36); assert.equal(advanced.every((node) => node.effect.bonus?.type === 'scalar'), true);
+  assert.equal(advanced.every((node) => node.effect.bonus.value > 1
+    || (node.effect.bonus.operation === 'add' && node.effect.bonus.value > 0)
+    || (node.effect.bonus.key === 'maintenance' && node.effect.bonus.value > 0 && node.effect.bonus.value < 1)), true);
+  assert.equal(advanced.some((node) => /unlock|reveal|automatic|select a starting/i.test(`${node.effectEn} ${node.description}`)), false);
+  const compiled = compileMemory({ ...defaultMeta(), memoryNodes: MEMORY_NODES.map((node) => node.id) });
+  for (const key of ['reach', 'conductance', 'energyCap', 'reinforce', 'uptake', 'stressResist']) assert.ok(compiled.effects[key] > 1, key);
 });
 
 test('Memory scene source has no edge-path construction or edge state arrays', () => {
