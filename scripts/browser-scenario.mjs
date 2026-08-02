@@ -70,7 +70,9 @@ export async function runScenario(t) {
   ok(await evaluate("!document.getElementById('memory-node-panel').hidden"), 'node selection did not open details');
   await screenshot('browser-memory-selected-mobile.png'); await evaluate("document.getElementById('memory-unlock').click()"); await wait(150);
   ok(await evaluate('window.__IN_APP__.meta.echoBalance') < before, 'Memory unlock did not spend Echoes');
-  await screenshot('browser-memory-purchased-mobile.png');
+  const purchased = await evaluate(`(() => { const app=window.__IN_APP__; for(let i=0;i<3;i++) { const node=app.memorySnapshot.nodeStates.find(n=>n.reachable&&n.affordable&&!n.owned);
+    if(!node) break; app.selectMemoryNode(node.id); document.getElementById('memory-unlock').click(); } return app.meta.memoryNodes.length; })()`);
+  ok(purchased >= 4, 'first extinction did not support several Memory purchases'); await screenshot('browser-memory-purchased-mobile.png');
   await evaluate("document.getElementById('memory-list-button').click()");
   ok(await evaluate("document.querySelectorAll('#memory-list .memory-list-item').length") > 0, 'accessible Memory list is empty');
   await evaluate("document.getElementById('memory-list-close').click()");
@@ -79,7 +81,7 @@ export async function runScenario(t) {
   await evaluate('location.reload()'); await wait(3000);
   const persisted = await evaluate(`(() => { const meta=JSON.parse(localStorage.getItem('incremental-network-game:meta:v1'));
     const history=JSON.parse(localStorage.getItem('incremental-network-game:history:v1')); return {nodes:meta.memoryNodes.length,worlds:history.worlds.length}; })()`);
-  ok(persisted.nodes >= 1 && persisted.worlds >= 1, 'Memory or History did not persist');
+  ok(persisted.nodes >= 4 && persisted.worlds >= 1, 'Memory or History did not persist');
   await screenshot('browser-title-desktop.png'); ok(errors.length === 0, `browser reported ${errors.length} errors`);
   return { backend: boot.renderer, score: result.score, elapsed, nodeId, render };
 }

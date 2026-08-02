@@ -14,9 +14,9 @@ Environment: Node v22.22.3, Linux x64, 20 logical CPUs.
 - balance smoke medians: balanced 291.7 s, expansion 290.9 s, resilience
   292.2 s (n=4 each; diagnostic sample);
 - real headless Chrome/WebGL2 390×844: mixed manual/Random production run at
-  32× reached result in 7.95 s with no browser errors;
+  32× reached result in 7.97 s with no browser errors and four purchases;
 - Balanced renderer: seven steady-state draws; instrumented JavaScript command
-  submission on the title scene mean 0.11 ms, p95 0.20 ms (not GPU frame time);
+  submission on the title scene mean 0.09 ms, p95 0.20 ms (not GPU frame time);
 - 100-run production soak: 267,523 ticks in 6.928 s, 0 invalid, max 5 offers,
   max 80 History events / 5,894 bytes; a separate forced-GC sample moved heap
   4.57 → 5.80 MB after 100 runs (Node evidence);

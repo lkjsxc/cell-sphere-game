@@ -72,8 +72,8 @@ Truthful handoff state after the passive living-world vertical slice.
   drag, river inspector, Settings, queued Manual offer/time continuation,
   Random switch, History/time continuation/location, result, 108-node Memory
   selection-before-purchase, persistence/reload, and no browser errors pass.
-  Mixed run reached result at 32× in 7.95 s; JS draw submission mean 0.11 ms,
-  p95 0.20 ms (not GPU frame time).
+  Mixed run reached result at 32× in 7.97 s; four explicit Memory purchases
+  persisted; JS draw submission mean 0.09 ms, p95 0.20 ms (not GPU frame time).
 - Docker `node:22` verify passes all gates. Same-origin Chrome harness exits 77
   because container seccomp blocks Chrome networking; CDP/file evidence is real
   Chrome but bypasses same-origin HTTP.
