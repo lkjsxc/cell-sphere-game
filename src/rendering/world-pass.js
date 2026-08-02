@@ -12,11 +12,13 @@ export class WorldPass {
     this.programs = {
       globe: this.make(SH.VS_GLOBE, SH.FS_GLOBE),
       boundary: this.make(BOUNDARY.VS_BOUNDARY, BOUNDARY.FS_BOUNDARY),
+      river: this.make(BOUNDARY.VS_BOUNDARY, BOUNDARY.FS_BOUNDARY),
       atmosphere: this.make(SH.VS_ATMOSPHERE, SH.FS_ATMOSPHERE),
     };
     this.lifeData = new Float32Array(this.geometry.vertexCount * 2);
     this.lastSnapshot = null;
     this.lastTick = -1;
+    this.zero3 = new Float32Array(3);
     this.buffers = [];
     this.vaos = [];
     this.initialize();
@@ -44,6 +46,7 @@ export class WorldPass {
     this.attribute(this.programs.globe, 'aPos', this.buffer(gl.ARRAY_BUFFER, g.positions), 3);
     this.attribute(this.programs.globe, 'aCenter', this.buffer(gl.ARRAY_BUFFER, g.centers), 3);
     this.attribute(this.programs.globe, 'aMaterial', this.buffer(gl.ARRAY_BUFFER, g.material), 4);
+    this.attribute(this.programs.globe, 'aTerrain', this.buffer(gl.ARRAY_BUFFER, g.terrain), 4);
     this.attribute(this.programs.globe, 'aLife', this.lifeBuffer, 2);
     this.attribute(this.programs.globe, 'aKnot', this.buffer(gl.ARRAY_BUFFER, knot), 1);
     this.globeIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.indices);
@@ -51,9 +54,15 @@ export class WorldPass {
 
     this.boundaryVao = this.vao();
     this.attribute(this.programs.boundary, 'aPos', this.buffer(gl.ARRAY_BUFFER, g.boundaryPositions), 3);
-    this.attribute(this.programs.boundary, 'aKnot', this.buffer(gl.ARRAY_BUFFER, g.boundaryKind), 1);
+    this.attribute(this.programs.boundary, 'aFeature', this.buffer(gl.ARRAY_BUFFER, g.boundaryFeature), 3);
     this.boundaryIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.boundaryIndices);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.boundaryIndex);
+
+    this.riverVao = this.vao();
+    this.attribute(this.programs.river, 'aPos', this.buffer(gl.ARRAY_BUFFER, g.riverPositions), 3);
+    this.attribute(this.programs.river, 'aFeature', this.buffer(gl.ARRAY_BUFFER, g.riverFeature), 3);
+    this.riverIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.riverIndices);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.riverIndex);
 
     this.atmosphereVao = this.vao();
     this.attribute(this.programs.atmosphere, 'aPos', this.buffer(gl.ARRAY_BUFFER, this.topo.positions), 3);
@@ -93,7 +102,7 @@ export class WorldPass {
     this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.lifeData);
   }
 
-  draw(vp, eye, time, pulse, snapshot, setOverlays) {
+  draw(vp, eye, time, pulse, snapshot, selectedNode, setOverlays) {
     const gl = this.gl; this.uploadLife(snapshot);
     const globe = this.programs.globe;
     gl.useProgram(globe.program);
@@ -103,6 +112,10 @@ export class WorldPass {
     gl.uniform1f(globe.u.get('uTime'), time);
     gl.uniform1f(globe.u.get('uPulse'), pulse ? 1 : 0);
     gl.uniform1f(globe.u.get('uMemory'), snapshot?.status === 'memory' ? 1 : 0);
+    const selected = Number.isInteger(selectedNode) ? selectedNode : -1;
+    gl.uniform1f(globe.u.get('uHasSelection'), selected >= 0 ? 1 : 0);
+    gl.uniform3fv(globe.u.get('uSelectedCenter'), selected >= 0
+      ? this.topo.positions.subarray(selected * 3, selected * 3 + 3) : this.zero3);
     setOverlays(globe, snapshot);
     gl.bindVertexArray(this.globeVao);
     gl.drawElements(gl.TRIANGLES, this.geometry.indices.length, gl.UNSIGNED_SHORT, 0);
@@ -115,6 +128,15 @@ export class WorldPass {
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false); gl.bindVertexArray(this.boundaryVao);
     gl.drawElements(gl.TRIANGLES, this.geometry.boundaryIndices.length, gl.UNSIGNED_SHORT, 0);
+    gl.depthMask(true);
+
+    const river = this.programs.river;
+    gl.useProgram(river.program);
+    gl.uniformMatrix4fv(river.u.get('uViewProj'), false, vp);
+    gl.uniform3fv(river.u.get('uEye'), eye);
+    gl.uniform1f(river.u.get('uEntropy'), snapshot?.entropy ?? 0);
+    gl.depthMask(false); gl.bindVertexArray(this.riverVao);
+    gl.drawElements(gl.TRIANGLES, this.geometry.riverIndices.length, gl.UNSIGNED_SHORT, 0);
     gl.depthMask(true);
 
     const atmosphere = this.programs.atmosphere;

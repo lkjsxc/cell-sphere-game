@@ -9,26 +9,31 @@ import {
   groupAccessibleMemory, purchaseMemory, validateMemoryGraph,
 } from '../../src/game/memory.js';
 import { createTopology } from '../../src/world/icosphere.js';
+import { createCamera, viewProjection } from '../../src/rendering/camera.js';
+import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from '../../src/interface/camera-policy.js';
+import { createPauseControl } from '../../src/interface/pause-control.js';
 
 const LEGACY_IDS = Object.keys(LEGACY_MEMORY_MAP);
 
-test('settings defaults and valid values are safe', () => {
+test('settings default to passive random play with idle rotation off', () => {
   const d = defaultSettings();
-  assert.equal(d.muted, true); assert.equal(d.haptics, false);
-  assert.ok(['full', 'reduced'].includes(d.motion));
-  const s = validateSettings({ motion: 'reduced', muted: false, quality: 'eco', lang: 'ja', speed: 32 });
-  assert.deepEqual({ motion: s.motion, muted: s.muted, quality: s.quality, lang: s.lang, speed: s.speed },
-    { motion: 'reduced', muted: false, quality: 'eco', lang: 'ja', speed: 32 });
+  assert.equal(d.adaptationMode, 'random'); assert.equal(d.autoRotate, false);
+  assert.equal(d.pauseOnPanels, false); assert.ok(['full', 'reduced'].includes(d.motion));
+  const s = validateSettings({ motion: 'reduced', quality: 'eco', adaptationMode: 'manual',
+    autoRotate: true, pauseOnPanels: true, speed: 32 });
+  assert.deepEqual({ motion: s.motion, quality: s.quality, adaptationMode: s.adaptationMode,
+    autoRotate: s.autoRotate, pauseOnPanels: s.pauseOnPanels, speed: s.speed },
+  { motion: 'reduced', quality: 'eco', adaptationMode: 'manual', autoRotate: true, pauseOnPanels: true, speed: 32 });
 });
 
 test('settings reject garbage, invalid enums, and prototype pollution', () => {
   assert.deepEqual(validateSettings(null), defaultSettings());
   assert.deepEqual(validateSettings('junk'), defaultSettings());
-  const s = validateSettings({ motion: 'sideways', quality: 'ultra', muted: 'yes', lang: 'xx', speed: 3 });
+  const s = validateSettings({ motion: 'sideways', quality: 'ultra', adaptationMode: 'weighted', speed: 3 });
   assert.equal(s.motion, defaultSettings().motion); assert.equal(s.quality, 'auto');
-  assert.equal(s.muted, true); assert.equal(s.lang, null); assert.equal(s.speed, 1);
-  const polluted = validateSettings(JSON.parse('{"__proto__":{"polluted":true},"muted":false}'));
-  assert.equal(polluted.muted, false); assert.equal({}.polluted, undefined);
+  assert.equal(s.adaptationMode, 'random'); assert.equal(s.speed, 1);
+  validateSettings(JSON.parse('{"__proto__":{"polluted":true},"autoRotate":true}'));
+  assert.equal({}.polluted, undefined);
 });
 
 test('Memory atlas has the exact validated composition and economy', () => {
@@ -56,22 +61,22 @@ test('every legacy ownership subset migrates one-for-one without currency refund
     const migrated = validateMeta({ schema: 3, bestScore: 99, totalEchoes: 70,
       echoBalance: 17, runs: 4, signalHintShown: true, memoryNodes: owned });
     assert.equal(migrated.schema, 4); assert.equal(migrated.memoryNodes.length, owned.length);
-    assert.deepEqual(migrated.memoryNodes, owned.map((id) => LEGACY_MEMORY_MAP[id]));
+    const mapped = owned.map((id) => LEGACY_MEMORY_MAP[id]);
+    assert.deepEqual(migrated.memoryNodes, MEMORY_NODE_IDS.filter((id) => mapped.includes(id)));
     assert.equal(migrated.totalEchoes, 70); assert.equal(migrated.echoBalance, 17);
     assert.equal('signalHintShown' in migrated, false);
     assert.deepEqual(migrated.migrationNotice, { kind: 'memory-atlas-v4', pending: true });
   }
 });
 
-test('all six proof nodes preserve paid effects while First Trace no longer grants Signal', () => {
+test('all six proof nodes preserve bounded value while First Trace becomes resilience', () => {
   const migrated = validateMeta({ schema: 3, totalEchoes: 40, echoBalance: 0,
     runs: 6, memoryNodes: LEGACY_IDS });
   const compiled = compileMemory(migrated);
   assert.deepEqual(compiled.effects, { reach: 1.06, conductance: 1.08, energyCap: 1.08,
-    stressResist: 1.08, signalRadius: 1.08, maintenance: 0.96 });
-  assert.equal(compiled.effects.signalCharges, undefined);
-  assert.equal(compiled.unlocks.some((item) => item.key === 'unbrokenLesson'), true);
-  assert.equal(campaignResolved(migrated), true);
+    stressResist: 1.1448, maintenance: 0.96 });
+  assert.equal(compiled.unlocks.length, 0);
+  assert.equal(campaignResolved(migrated), false);
 });
 
 test('schema 4 preserves all 108 IDs and quarantines unknown IDs', () => {
@@ -81,6 +86,8 @@ test('schema 4 preserves all 108 IDs and quarantines unknown IDs', () => {
   assert.deepEqual(meta.memoryNodes, MEMORY_NODE_IDS); assert.equal(meta.memoryNodes.length, 108);
   assert.deepEqual(meta.quarantinedMemoryNodes, ['foreign-memory', 'earlier-unknown']);
   assert.equal(meta.echoBalance, 79); assert.equal(meta.migrationNotice, null);
+  const corrupt = validateMeta({ schema: 4, memoryNodes: ['continuity-unbroken-lesson'] });
+  assert.deepEqual(corrupt.memoryNodes, []); assert.deepEqual(corrupt.quarantinedMemoryNodes, ['continuity-unbroken-lesson']);
 });
 
 test('old Imprints gain canonical topology metadata and invalid edges are removed', () => {
@@ -135,6 +142,31 @@ test('stable spherical cells and prerequisite paths drive the Memory snapshot', 
   }
   const groups = groupAccessibleMemory({ ...defaultMeta(), echoBalance: 3 }, 'reach-horizon-instinct');
   assert.equal(groups.length, 6); assert.equal(groups[0].nodes[0].selectedReady, true);
+});
+
+test('idle globe rotation is opt-in, interruptible, reduced-motion safe, and finite', () => {
+  const camera = createCamera(); const start = camera.direction.slice(); const policy = createCameraPolicy(0);
+  const off = defaultSettings();
+  assert.equal(applyAutoRotation(camera, off, policy, { active: false, selected: false, overlay: false, hidden: false }, 4000, 1000), false);
+  assert.deepEqual(camera.direction, start);
+  const on = { ...off, motion: 'full', autoRotate: true, autoRotateSpeed: 'slow' };
+  assert.equal(applyAutoRotation(camera, on, policy, { active: false, selected: false, overlay: false, hidden: false }, 4000, 1000), true);
+  const moved = camera.direction.slice(); interruptCameraPolicy(policy, 4000);
+  assert.equal(applyAutoRotation(camera, on, policy, { active: false, selected: false, overlay: false, hidden: false }, 5000, 1000), false);
+  assert.deepEqual(camera.direction, moved);
+  assert.equal(applyAutoRotation(camera, { ...on, motion: 'reduced' }, policy,
+    { active: false, selected: false, overlay: false, hidden: false }, 8000, 1000), false);
+  for (let i = 0; i < 5000; i++) applyAutoRotation(camera, on, policy,
+    { active: false, selected: false, overlay: false, hidden: false }, 8000 + i * 16, 16);
+  for (const value of viewProjection(camera, 1)) assert.ok(Number.isFinite(value));
+});
+
+test('pause reasons release only their own ownership', () => {
+  const changes = []; const pause = createPauseControl((value, reasons) => changes.push([value, [...reasons]]));
+  pause.set('manual', true); pause.set('panel', true); pause.set('panel', false);
+  assert.equal(pause.paused, true); assert.equal(pause.has('manual'), true);
+  pause.set('manual', false); assert.equal(pause.paused, false);
+  assert.deepEqual(changes.map((entry) => entry[0]), [true, false]);
 });
 
 test('saveMeta reports persistence honestly and writes a validated copy', () => {

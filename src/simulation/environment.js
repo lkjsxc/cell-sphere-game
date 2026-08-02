@@ -54,7 +54,7 @@ export function buildNodeSeasonOffsets(topo) {
  *   ({nodes: Uint16Array, falloff: Float32Array, kind, amount})
  */
 export function updateEnvironment(state) {
-  const { topo, fields, traits } = state;
+  const { topo, fields } = state; const traits = state.activeTraits ?? state.traits;
   const N = topo.nodeCount;
   const t = state.tick;
   const e = state.entropyLut[Math.min(t, state.entropyLut.length - 1)];
@@ -87,7 +87,8 @@ export function updateEnvironment(state) {
     // Nutrient regeneration fails as entropy rises; occupied cells with
     // symbiotic film renew better.
     const occupied = symbiotic && state.alive[i] === 1 ? 1.5 : 1;
-    const regen = B.NUTRIENT_REGEN * (1 - e * 0.92) * occupied * challengeNutrient;
+    const regen = B.NUTRIENT_REGEN * (1 - e * 0.92) * occupied * challengeNutrient
+      * (fields.resourceRenewal?.[i] ?? 1);
     state.nutrient[i] = Math.fround(clamp01(
       state.nutrient[i] + regen * (fields.baseNutrient[i] - state.nutrient[i])));
   }

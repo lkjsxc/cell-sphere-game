@@ -38,7 +38,10 @@ export function createRunState(cfg) {
   const traits = traitsFor(cfg.strainId ?? 'pioneer', cfg.memoryEffects ?? {});
 
   const state = {
-    topo, fields, traits, challenge: cfg.challenge ?? null, seed,
+    topo, fields, traits, activeTraits: { ...traits },
+    memoryConditionals: Array.isArray(cfg.memoryConditionals) ? cfg.memoryConditionals : [],
+    memoryUnlocks: Array.isArray(cfg.memoryUnlocks) ? cfg.memoryUnlocks : [],
+    challenge: cfg.challenge ?? null, seed,
     simRng, eventRng, contentRng, decisionRng, inoculationRng,
     tick: 0, entropy: 0, status: 'idle', extinction: null,
 
@@ -67,7 +70,8 @@ export function createRunState(cfg) {
     totalUptake: 0, totalMaintenance: 0, phenotypes: [],
     causes: { starvation: 0, heat: 0, cold: 0, drought: 0, toxin: 0, event: 0, collapse: 0 },
 
-    phaseIndex: -1, coverageMilestoneIndex: 0, loopMilestone: false,
+    phaseIndex: -1, coverageMilestoneIndex: 0, loopMilestone: false, geographySeen: 0,
+    wasFragmented: false, reconnectedUntil: -1,
     replayVersion: 2, replay: [], history: [],
   };
 

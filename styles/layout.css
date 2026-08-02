@@ -48,7 +48,7 @@
 }
 
 .title-identity { max-width: 38rem; text-shadow: 0 2px 20px #080a0b; }
-.title-index { color: var(--signal-gold); font-size: var(--fs-caption); letter-spacing: 0.16em; }
+.title-index { color: var(--accent-gold); font-size: var(--fs-caption); letter-spacing: 0.16em; }
 .title-index span { display: inline-block; margin-right: var(--sp-2); }
 .title-identity h1 { margin-top: var(--sp-2); font-size: clamp(1.75rem, 6vw, 3.7rem); letter-spacing: -0.035em; }
 .title-tagline { margin-top: var(--sp-1); color: var(--text-primary); font-size: var(--fs-lead); }
@@ -62,7 +62,7 @@
 .memory-copy { display: grid; gap: var(--sp-3); max-width: 38rem; }
 .memory-copy h2 { max-width: 32rem; font-size: clamp(1.6rem, 5vw, 2.8rem); }
 .memory-balance { color: var(--text-secondary); }
-.memory-balance strong { color: var(--signal-gold); font-size: var(--fs-title); }
+.memory-balance strong { color: var(--accent-gold); font-size: var(--fs-title); }
 
 @media (min-width: 800px) {
   #title-screen { justify-content: center; padding-left: max(5vw, var(--sp-6)); background: none; }
@@ -111,7 +111,7 @@
   font-size: var(--fs-caption);
 }
 
-.hud-event strong { color: var(--signal-gold); }
+.hud-event strong { color: var(--accent-gold); }
 
 .speed-control {
   display: grid;

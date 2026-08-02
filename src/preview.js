@@ -30,9 +30,9 @@ export function startPreview(canvas) {
   const camera = createCamera();
   let snapshot = null;
   let fade = 1;
+  let selectedNode = null;
 
-  const rc = new RunController({ seed: SEED, strainId: 'pioneer' }, (m) => {
-    if (m.t === 'draft') rc.decide(m.options[0]);
+  const rc = new RunController({ seed: SEED, strainId: 'pioneer', adaptationMode: 'random' }, (m) => {
     if (m.t === 'extinct') {
       // Restart the world after a short fade — the preview never idles.
       fade = 0;
@@ -43,7 +43,7 @@ export function startPreview(canvas) {
   });
   rc.start();
 
-  // Pointer: drag rotates, wheel zooms, tap places a Signal.
+  // Pointer: drag rotates, wheel zooms, tap selects without changing authority.
   let dragging = false;
   let moved = 0;
   let lastX = 0;
@@ -64,7 +64,7 @@ export function startPreview(canvas) {
     dragging = false;
     if (moved < 8) {
       const hit = pickNode(canvas, e.clientX, e.clientY, camera, topo);
-      if (hit) rc.placeSignal(hit.node);
+      if (hit) selectedNode = hit.node;
     }
   });
   canvas.addEventListener('wheel', (e) => {
@@ -86,9 +86,8 @@ export function startPreview(canvas) {
     }
     fade = Math.min(1, fade + dt * 0.002);
     if (rc.state.tick % 2 === 0 || !snapshot) snapshot = rc.snapshot();
-    rotate(camera, -dt * 0.00004, 0, false);
     renderer.render({
-      snapshot, camera, time: now / 1000, pulse: true, fade,
+      snapshot, camera, selectedNode, time: now / 1000, pulse: true, fade,
     });
     requestAnimationFrame(loop);
   };

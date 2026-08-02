@@ -4,8 +4,9 @@ import { createTerrain } from './terrain.js';
 import { createHydrology } from './hydrology.js';
 import { createEcology } from './ecology.js';
 import { createFeatures } from './features.js';
+import { ARCHETYPE_NAME } from './constants.js';
 
-export { ARCHETYPE, BIOME, FEATURE, LANDMARK, WATER } from './constants.js';
+export { ARCHETYPE, ARCHETYPE_NAME, BIOME, BIOME_EFFECTS, FEATURE, LANDMARK, WATER } from './constants.js';
 
 /**
  * Preserve the original entry point while returning explicit living geography.
@@ -20,6 +21,7 @@ export function createFields(rng, topo) {
   const features = createFeatures(featureRng, topo, terrain, hydro, ecology);
   return Object.freeze({
     archetype: terrain.archetype,
+    archetypeName: ARCHETYPE_NAME[terrain.archetype],
     seaLevel: terrain.seaLevel,
     landMask: terrain.landMask,
     waterClass: terrain.waterClass,
@@ -41,6 +43,11 @@ export function createFields(rng, topo) {
     biomeId: ecology.biomeId,
     ridgeStrength: terrain.ridgeStrength,
     hazardSusceptibility: ecology.hazardSusceptibility,
+    growthSuitability: ecology.growthSuitability,
+    maintenanceMultiplier: ecology.maintenanceMultiplier,
+    uptakeMultiplier: ecology.uptakeMultiplier,
+    resourceRenewal: ecology.resourceRenewal,
+    routeCost: ecology.routeCost,
     featureFlags: hydro.featureFlags,
     regionId: ecology.regionId,
     toxVuln: ecology.toxVuln,

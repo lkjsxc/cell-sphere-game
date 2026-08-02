@@ -5,6 +5,12 @@ export const ARCHETYPE = Object.freeze({
   RIFTED: 3,
 });
 
+export const ARCHETYPE_NAME = Object.freeze({
+  [ARCHETYPE.CONTINENTAL]: 'Verdant Riverworld',
+  [ARCHETYPE.ARCHIPELAGO]: 'Archipelago',
+  [ARCHETYPE.RIFTED]: 'Fractured Basins',
+});
+
 export const WATER = Object.freeze({
   LAND: 0,
   DEEP_OCEAN: 1,
@@ -28,6 +34,27 @@ export const BIOME = Object.freeze({
   TUNDRA: 11,
   SNOW_ICE: 12,
 });
+
+/** Bounded static factors consumed by simulation hot loops. */
+export const BIOME_EFFECTS = Object.freeze([
+  effect(0.04, 1.80, 0.18, 0.35, 1.80), // deep ocean
+  effect(0.24, 1.32, 0.48, 0.62, 1.35), // shallow ocean
+  effect(0.90, 1.04, 0.94, 1.02, 1.05), // coast
+  effect(0.84, 0.96, 1.08, 1.12, 1.10), // forest
+  effect(0.76, 0.98, 1.12, 1.18, 1.14), // wet forest
+  effect(1.06, 0.98, 1.00, 1.00, 0.92), // grass
+  effect(0.78, 1.08, 0.78, 0.70, 1.03), // dry grass
+  effect(0.34, 1.30, 0.46, 0.38, 1.24), // desert
+  effect(0.82, 1.02, 1.14, 1.20, 1.16), // wetland
+  effect(0.56, 1.18, 0.70, 0.66, 1.30), // highland
+  effect(0.30, 1.38, 0.48, 0.45, 1.55), // mountain
+  effect(0.46, 1.22, 0.62, 0.52, 1.30), // tundra
+  effect(0.14, 1.55, 0.28, 0.34, 1.62), // snow / ice
+]);
+
+function effect(growth, maintenance, uptake, renewal, routeCost) {
+  return Object.freeze({ growth, maintenance, uptake, renewal, routeCost });
+}
 
 export const LANDMARK = Object.freeze({
   SUMMIT: 1,

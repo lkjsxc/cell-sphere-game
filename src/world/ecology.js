@@ -1,4 +1,4 @@
-import { BIOME, FEATURE, WATER } from './constants.js';
+import { BIOME, BIOME_EFFECTS, FEATURE, WATER } from './constants.js';
 import { smoothField, sphericalField } from './noise.js';
 
 /** Correlate climate, soils, forests, biomes, and hazard exposure. */
@@ -10,6 +10,9 @@ export function createEcology(rng, topo, terrain, hydro) {
   const baseNutrient = new Float32Array(n); const forestDensity = new Float32Array(n);
   const biomeId = new Uint8Array(n); const hazardSusceptibility = new Float32Array(n);
   const toxVuln = new Float32Array(n); const eventVuln = new Float32Array(n);
+  const growthSuitability = new Float32Array(n); const maintenanceMultiplier = new Float32Array(n);
+  const uptakeMultiplier = new Float32Array(n); const resourceRenewal = new Float32Array(n);
+  const routeCost = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const land = terrain.landMask[i];
     const height = land ? Math.max(0, (terrain.baseElevation[i] - terrain.seaLevel)
@@ -30,6 +33,9 @@ export function createEcology(rng, topo, terrain, hydro) {
     baseNutrient[i] = Math.fround(land ? nutrient : clamp(nutrient * 0.72));
     forestDensity[i] = Math.fround(forest);
     biomeId[i] = classifyBiome(i, height, terrain, hydro, moisture, temp, forest);
+    const factor = BIOME_EFFECTS[biomeId[i]];
+    growthSuitability[i] = factor.growth; maintenanceMultiplier[i] = factor.maintenance;
+    uptakeMultiplier[i] = factor.uptake; resourceRenewal[i] = factor.renewal; routeCost[i] = factor.routeCost;
     const hazard = clamp(0.12 + terrain.ridgeStrength[i] * 0.28
       + (1 - moisture) * 0.25 + hydro.rainfall[i] * 0.12 + soil[i] * 0.18);
     hazardSusceptibility[i] = Math.fround(hazard);
@@ -40,7 +46,8 @@ export function createEcology(rng, topo, terrain, hydro) {
   const regionId = regionsFor(biomeId, topo);
   return {
     baseMoisture, baseTemp, baseNutrient, forestDensity, biomeId,
-    hazardSusceptibility, toxVuln, eventVuln, regionId,
+    hazardSusceptibility, toxVuln, eventVuln, regionId, growthSuitability,
+    maintenanceMultiplier, uptakeMultiplier, resourceRenewal, routeCost,
   };
 }
 

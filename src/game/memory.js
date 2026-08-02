@@ -15,10 +15,10 @@ export const MEMORY_NODES = Object.freeze([
 ]);
 export const MEMORY_NODE_IDS = Object.freeze(MEMORY_NODES.map((node) => node.id));
 const BY_ID = new Map(MEMORY_NODES.map((node) => [node.id, node]));
-const ADDITIVE = new Set(['signalCharges', 'growthCap', 'anastomosis', 'redundantLoops',
+const ADDITIVE = new Set(['growthCap', 'anastomosis', 'redundantLoops',
   'coldReserve', 'symbioticFilm', 'distributedSensing']);
 const EFFECT_KEYS = new Set(['reach', 'uptake', 'maintenance', 'conductance', 'reinforce',
-  'stressResist', 'heatTol', 'droughtTol', 'toxinTol', 'signalRadius', 'signalDuration',
+  'stressResist', 'heatTol', 'droughtTol', 'toxinTol',
   'energyCap', 'regrow', 'growCost', ...ADDITIVE]);
 const COMPILED = new Map();
 
@@ -87,6 +87,54 @@ function mergeEffect(target, effect) {
 }
 
 export function memoryEffects(meta) { return compileMemory(meta).effects; }
+
+/** Rebuild the small effective trait block once per tick from owned conditions. */
+export function applyMemoryConditionals(state) {
+  const target = state.activeTraits;
+  for (const key of Object.keys(state.traits)) target[key] = state.traits[key];
+  const conditions = state.memoryConditionals ?? [];
+  if (!conditions.length) return target;
+  const context = conditionContext(state);
+  for (const effect of conditions) {
+    if (!conditionActive(effect.trigger, state, context) || !(effect.key in target)) continue;
+    target[effect.key] = effect.operation === 'add'
+      ? target[effect.key] + effect.value : target[effect.key] * effect.value;
+  }
+  return target;
+}
+
+function conditionContext(state) {
+  let energy = 0; let moisture = 0; let toxin = 0; let alive = 0;
+  for (let i = 0; i < state.topo.nodeCount; i++) if (state.alive[i]) {
+    alive++; energy += Math.max(0, state.energy[i]); moisture += state.moisture[i]; toxin += state.toxicity[i];
+  }
+  const active = state.events.filter((event) => state.tick >= event.startTick && state.tick <= event.endTick);
+  return { energy: alive ? energy / alive / 6 : 0, moisture: alive ? moisture / alive : 0,
+    toxin: alive ? toxin / alive : 0, crisis: active.some((event) => event.crisis), active };
+}
+
+function conditionActive(trigger, state, c) {
+  switch (trigger) {
+    case 'coverage-below-25': return state.coverage < 0.25;
+    case 'coverage-above-70': return state.coverage > 0.70;
+    case 'components-above-one': return state.aliveCount > 1 && state.connectedShare < 0.98;
+    case 'connectivity-below-45': return state.connectedShare < 0.45;
+    case 'connectivity-below-35': return state.connectedShare < 0.35;
+    case 'crisis-active': return c.crisis;
+    case 'nutrient-bloom-active': return c.active.some((event) => event.family === 'bloom');
+    case 'energy-below-20': return c.energy < 0.20;
+    case 'energy-above-80': return c.energy > 0.80;
+    case 'recent-biomass-loss-above-20': return state.peakCoverage - state.coverage > 0.20;
+    case 'heat-crisis-active': return c.active.some((event) => event.family === 'heat');
+    case 'moisture-below-30': return c.moisture < 0.30;
+    case 'toxin-pressure-above-50': return c.toxin > 0.50;
+    case 'crisis-recently-ended': return state.events.some((event) => state.tick > event.endTick && state.tick <= event.endTick + 200);
+    case 'crisis-telegraphed': return state.events.some((event) => (event.announced & 1) && !(event.announced & 2));
+    case 'component-just-rejoined': return (state.reconnectedUntil ?? -1) >= state.tick;
+    default: return false;
+  }
+}
+
 export function campaignResolved(meta) { return meta.memoryNodes.includes('continuity-unbroken-lesson'); }
 
 export function buildMemoryScene(meta, selectedId = null) {

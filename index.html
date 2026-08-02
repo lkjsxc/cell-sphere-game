@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="incremental-network-game — grow a living network across a world that cannot last.">
-  <meta name="theme-color" content="#0a0c0d">
+  <meta name="description" content="incremental-network-game — Every extinction becomes memory.">
+  <meta name="theme-color" content="#080b0d">
   <meta name="color-scheme" content="dark">
   <title>incremental-network-game — Every extinction becomes memory.</title>
   <link rel="icon" type="image/svg+xml" href="assets/mark.svg">
@@ -13,29 +13,34 @@
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/components.css">
   <link rel="stylesheet" href="styles/surfaces.css">
+  <link rel="stylesheet" href="styles/atlas.css">
   <link rel="stylesheet" href="styles/motion.css">
 </head>
 <body>
   <div id="app">
-    <canvas id="gl-canvas" aria-label="A living cellular world. Drag to rotate; tap a cell to interact." role="img"></canvas>
+    <canvas id="gl-canvas" aria-label="An autonomous living world. Drag to rotate, zoom, or select a cell to inspect it." role="img"></canvas>
 
     <section id="title-screen" class="screen" aria-labelledby="title-heading">
+      <nav class="corner-nav" aria-label="World tools">
+        <button class="quiet-btn history-open" type="button">History</button>
+        <button class="quiet-btn settings-open" type="button">Settings</button>
+      </nav>
       <div class="title-identity">
         <p class="title-index"><span aria-hidden="true">⬠</span> WORLD / 0001</p>
         <h1 id="title-heading">incremental-network-game</h1>
         <p class="title-tagline">Every extinction becomes memory.</p>
-        <p class="title-premise">Grow a living network across a world that cannot last.</p>
+        <p class="title-premise">Watch a living network discover a world that cannot last.</p>
         <p id="boot-status" class="title-status" role="status">Waking the cells…</p>
       </div>
       <div class="title-actions">
-        <button id="begin-button" class="btn btn-primary" type="button">Inoculate</button>
-        <p class="title-help">Drag to turn · tap the world to wake its cells</p>
+        <button id="begin-button" class="btn btn-primary" type="button">Grow a world</button>
+        <p class="title-help">Drag to turn · tap a cell to inspect · growth is autonomous</p>
       </div>
     </section>
 
     <section id="run-screen" class="screen" hidden aria-label="Living network run">
       <div class="hud-top">
-        <div class="hud-metrics" aria-label="現在の状態">
+        <div class="hud-metrics" aria-label="Current world state">
           <div class="metric"><span class="metric-label">NETWORK SCORE</span><strong id="hud-score" class="metric-value">0</strong></div>
           <div class="metric"><span class="metric-label">ENTROPY</span><strong id="hud-pressure" class="metric-value">0%</strong></div>
           <div class="metric"><span class="metric-label">REACH</span><strong id="hud-reach" class="metric-value">0%</strong></div>
@@ -43,51 +48,94 @@
         <button id="pause-button" class="btn btn-icon" type="button" aria-pressed="false">Pause</button>
       </div>
       <div class="hud-bottom">
-        <div class="hud-event" aria-live="polite"><strong id="hud-signal">Signal 3 / 3</strong><span id="hud-event-text">Growth is automatic.</span></div>
-        <label class="speed-control">Speed
-          <select id="speed-select" aria-label="Game speed">
-            <option value="1">1×</option><option value="2">2×</option><option value="4">4×</option>
-            <option value="8">8×</option><option value="16">16×</option><option value="32">32×</option>
-          </select>
-        </label>
+        <div class="hud-event"><span id="hud-event-text">Autonomous inoculation is beginning.</span></div>
+        <div class="command-rail" aria-label="Run controls">
+          <button id="adaptations-button" class="rail-btn" type="button">Adaptations <span id="adaptation-badge" class="badge" hidden>0</span></button>
+          <button id="adaptation-mode" class="rail-btn mode-btn" type="button" aria-pressed="true">AUTO: RANDOM</button>
+          <button class="rail-btn history-open" type="button">History</button>
+          <button class="rail-btn settings-open" type="button" aria-label="Open Settings">Settings</button>
+          <label class="speed-control">Speed
+            <select id="speed-select" aria-label="Game speed">
+              <option value="1">1×</option><option value="2">2×</option><option value="4">4×</option>
+              <option value="8">8×</option><option value="16">16×</option><option value="32">32×</option>
+            </select>
+          </label>
+        </div>
       </div>
     </section>
 
     <section id="result-screen" class="screen" hidden aria-labelledby="result-heading">
+      <nav class="corner-nav"><button class="quiet-btn history-open" type="button">History</button><button class="quiet-btn settings-open" type="button">Settings</button></nav>
       <div class="bottom-sheet sheet-enter">
         <p class="eyebrow">THE NETWORK BECOMES MEMORY</p>
         <h2 id="result-heading">Extinction leaves a trace.</h2>
         <p id="result-rank" class="result-rank"></p>
         <strong id="result-score" class="result-score score-reveal">0</strong>
         <p id="result-cause" class="result-copy"></p>
-        <div id="result-breakdown" class="result-breakdown" aria-label="スコア内訳"></div>
+        <div id="result-breakdown" class="result-breakdown" aria-label="Score breakdown"></div>
+        <p id="result-adaptations" class="result-copy"></p>
         <p id="result-echoes" class="result-echoes"></p>
         <p id="result-imprint" class="result-imprint"></p>
-        <button id="memory-button" class="btn btn-primary" type="button">Enter Memory</button>
+        <div class="sheet-actions"><button id="result-history-button" class="btn btn-secondary" type="button">Review History</button><button id="memory-button" class="btn btn-primary" type="button">Enter Memory</button></div>
       </div>
     </section>
 
     <section id="memory-screen" class="screen" hidden aria-labelledby="memory-heading">
+      <nav class="corner-nav"><button id="memory-list-button" class="quiet-btn" type="button">List view</button><button class="quiet-btn history-open" type="button">History</button><button class="quiet-btn settings-open" type="button">Settings</button></nav>
       <div class="memory-copy">
         <p class="eyebrow">MEMORY GLOBE</p>
-        <h2 id="memory-heading">The world remembers its strongest paths.</h2>
+        <h2 id="memory-heading">The world remembers its paths.</h2>
         <p class="memory-balance"><strong id="memory-balance">0</strong> Echoes remain</p>
-        <div id="memory-nodes" class="memory-nodes" aria-label="Reachable memory nodes"></div>
+        <p class="memory-help">Rotate the globe and select a visible node.</p>
         <button id="restart-button" class="btn btn-primary" type="button">Grow the next world</button>
       </div>
     </section>
 
-    <dialog id="draft-dialog" class="panel" aria-labelledby="draft-heading">
-      <p class="eyebrow">ADAPTATION</p><h2 id="draft-heading">Choose how life changes.</h2>
-      <p class="dialog-copy">Game time pauses while you choose.</p>
-      <div id="draft-cards" class="card-row"></div>
+    <section id="cell-inspector" class="observer-panel" hidden role="dialog" aria-labelledby="inspector-heading">
+      <header><p class="eyebrow">CELL OBSERVATORY</p><button id="inspector-close" class="close-btn" type="button" aria-label="Close cell inspector">Close</button></header>
+      <h2 id="inspector-heading">Selected cell</h2><p id="inspector-summary" class="panel-copy"></p>
+      <dl id="inspector-fields" class="inspection-grid"></dl>
+      <div id="inspector-life"></div><div id="inspector-history"></div>
+      <div class="panel-actions"><button id="inspector-prev" class="btn btn-secondary" type="button">Previous landmark</button><button id="inspector-next" class="btn btn-secondary" type="button">Next landmark</button></div>
+    </section>
+
+    <section id="memory-node-panel" class="observer-panel" hidden role="dialog" aria-labelledby="memory-node-heading">
+      <header><p id="memory-node-branch" class="eyebrow">MEMORY CURRENT</p><button id="memory-node-close" class="close-btn" type="button">Close</button></header>
+      <h2 id="memory-node-heading">Memory node</h2><p id="memory-node-summary" class="panel-copy"></p><p id="memory-node-detail" class="panel-copy"></p>
+      <dl id="memory-node-meta" class="inspection-grid"></dl><button id="memory-unlock" class="btn btn-primary" type="button">Unlock</button>
+    </section>
+
+    <dialog id="adaptations-dialog" class="panel panel-full" aria-labelledby="adaptations-heading">
+      <header><div><p class="eyebrow">ADAPTATIONS</p><h2 id="adaptations-heading">Choose when you are ready.</h2></div><button id="adaptations-close" class="close-btn" type="button">Close</button></header>
+      <p class="time-note">World time continues while this panel is open.</p>
+      <div class="panel-toolbar"><strong id="adaptations-pending">No pending offers</strong><button id="adaptations-mode" class="rail-btn" type="button">AUTO: RANDOM</button></div>
+      <p id="adaptations-offer-meta" class="panel-copy"></p><div id="adaptation-cards" class="card-row"></div>
+      <h3>Remembered this world</h3><ol id="adaptations-owned" class="compact-list"></ol>
     </dialog>
 
-    <div id="toast-root" aria-hidden="true"></div>
-    <div id="live-region" class="sr-only" aria-live="polite"></div>
-    <div id="diagnostics" hidden></div>
+    <dialog id="history-dialog" class="panel panel-full" aria-labelledby="history-heading">
+      <header><div><p class="eyebrow">HISTORY</p><h2 id="history-heading">What this world remembers.</h2></div><button id="history-close" class="close-btn" type="button">Close</button></header>
+      <p id="history-time-note" class="time-note">World time continues while this panel is open.</p>
+      <div class="panel-toolbar"><button id="history-current" class="rail-btn" type="button" aria-pressed="true">This World</button><button id="history-past" class="rail-btn" type="button" aria-pressed="false">Past Worlds</button><select id="history-filter" aria-label="History category"><option value="all">All</option><option value="world">World</option><option value="life">Life</option><option value="adaptation">Adaptations</option><option value="crisis">Crises</option><option value="memory">Memory</option></select></div>
+      <div id="history-header" class="history-header"></div><ol id="history-list" class="history-list"></ol>
+    </dialog>
 
-    <noscript><p style="padding:2rem">このゲームには JavaScript が必要です。Google Chrome の最新版で開いてください。</p></noscript>
+    <dialog id="settings-dialog" class="panel panel-full" aria-labelledby="settings-heading">
+      <header><div><p class="eyebrow">SETTINGS</p><h2 id="settings-heading">Shape how you observe.</h2></div><button id="settings-close" class="close-btn" type="button">Close</button></header>
+      <p id="settings-time-note" class="time-note">World time continues while this panel is open.</p>
+      <form id="settings-form" class="settings-form">
+        <fieldset><legend>Play</legend><label>Default run speed <select name="speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option><option value="16">16×</option><option value="32">32×</option></select></label><label>Adaptations <select name="adaptationMode"><option value="random">Random automatic</option><option value="manual">Manual</option></select></label><label><input name="pauseOnPanels" type="checkbox"> Pause while full-screen panels are open</label><label>Notifications <select name="notificationDensity"><option value="normal">Normal</option><option value="quiet">Quiet</option></select></label></fieldset>
+        <fieldset><legend>Globe and camera</legend><label><input name="autoRotate" type="checkbox"> Rotate the globe after an idle delay</label><label>Rotation speed <select name="autoRotateSpeed"><option value="slow">Slow</option><option value="very-slow">Very slow</option></select></label><label><input name="cameraInertia" type="checkbox"> Camera inertia</label><button id="camera-reset" class="btn btn-secondary" type="button">Reset camera</button></fieldset>
+        <fieldset><legend>Visual and accessibility</legend><label>Quality <select name="quality"><option value="auto">Auto</option><option value="eco">Eco</option><option value="balanced">Balanced</option><option value="luminous">Luminous</option></select></label><label>Motion <select name="motion"><option value="full">Full</option><option value="reduced">Reduced</option></select></label><label>Contrast <select name="contrast"><option value="normal">Normal</option><option value="high">High</option></select></label></fieldset>
+        <fieldset><legend>History and local data</legend><label>Full worlds retained <select name="historyRetention"><option value="24">24</option><option value="32">32</option></select></label><p class="panel-copy">Progress and History stay in this browser. No analytics or network account is used.</p><div class="panel-actions"><button id="export-data" class="btn btn-secondary" type="button">Export</button><label class="btn btn-secondary file-label">Import<input id="import-data" type="file" accept="application/json"></label><button id="clear-history" class="btn btn-secondary" type="button">Clear History</button><button id="reset-progress" class="btn btn-danger" type="button">Reset progression</button></div></fieldset>
+        <details><summary>Diagnostics</summary><p id="settings-version">Version 0.2 · local-only static build</p></details>
+      </form>
+    </dialog>
+
+    <dialog id="memory-list-dialog" class="panel panel-full" aria-labelledby="memory-list-heading"><header><div><p class="eyebrow">MEMORY ATLAS</p><h2 id="memory-list-heading">Accessible node list</h2></div><button id="memory-list-close" class="close-btn" type="button">Close</button></header><div class="panel-toolbar"><select id="memory-list-filter" aria-label="Memory status"><option value="available">Available</option><option value="owned">Owned</option><option value="locked">Locked</option><option value="all">All nodes</option></select></div><div id="memory-list" class="memory-list"></div></dialog>
+
+    <div id="toast-root" aria-hidden="true"></div><div id="live-region" class="sr-only" aria-live="polite"></div><div id="diagnostics" hidden></div>
+    <noscript><p style="padding:2rem">This game requires JavaScript and a current browser.</p></noscript>
   </div>
   <script type="module" src="src/main.js"></script>
 </body>

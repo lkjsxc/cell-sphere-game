@@ -1,13 +1,12 @@
 /**
  * Network draw pass: owns the per-snapshot instance buffers for vein ribbons
- * and frontier tips, uploads the globe's event/signal overlay uniforms, and
+ * and frontier tips, uploads the globe's environmental event uniforms, and
  * issues the two instanced draws. Extracted from the renderer so each module
  * stays under the line budget and the network math is unit-testable in Node.
  *
  * The pass reads immutable snapshots only; it never touches simulation state.
  */
 import { buildVeinInstances, buildTipInstances, EVENT_TINTS } from './instances.js';
-import { BALANCE as B } from '../game/balance.js';
 
 export class NetworkPass {
   /**
@@ -29,8 +28,6 @@ export class NetworkPass {
     this.overlay = {
       eventCenters: new Float32Array(12), eventRadii: new Float32Array(4),
       eventTints: new Float32Array(12), eventStrengths: new Float32Array(4),
-      signalCenters: new Float32Array(12), signalRadii: new Float32Array(4),
-      signalStrengths: new Float32Array(4),
     };
     /** @type {WebGLBuffer|null} */ this.veinBuf = null;
     /** @type {WebGLBuffer|null} */ this.tipBuf = null;
@@ -49,7 +46,7 @@ export class NetworkPass {
   }
 
   /**
-   * Upload event + signal overlay uniforms into the globe program. Must be
+   * Upload event overlay uniforms into the globe program. Must be
    * called while the globe program is active, before its draw call.
    * @param {{u: Map<string, WebGLUniformLocation>}} progGlobe
    * @param {object|null} snapshot
@@ -57,7 +54,6 @@ export class NetworkPass {
   setOverlays(progGlobe, snapshot) {
     const gl = this.gl; const data = this.overlay;
     data.eventCenters.fill(0); data.eventRadii.fill(0); data.eventTints.fill(0); data.eventStrengths.fill(0);
-    data.signalCenters.fill(0); data.signalRadii.fill(0); data.signalStrengths.fill(0);
     if (snapshot) {
       const pos = this.topo.positions;
       for (let i = 0; i < Math.min(4, snapshot.events.length); i++) {
@@ -68,20 +64,11 @@ export class NetworkPass {
         data.eventRadii[i] = ev.radiusDot; data.eventTints.set(color, target);
         data.eventStrengths[i] = Math.min(1, ev.intensity);
       }
-      for (let i = 0; i < Math.min(4, snapshot.signals.length); i++) {
-        const signal = snapshot.signals[i]; const source = signal.node * 3; const target = i * 3;
-        data.signalCenters[target] = pos[source]; data.signalCenters[target + 1] = pos[source + 1];
-        data.signalCenters[target + 2] = pos[source + 2]; data.signalRadii[i] = B.SIGNAL_RADIUS_DOT;
-        data.signalStrengths[i] = Math.min(1, (signal.untilTick - snapshot.tick) / 40);
-      }
     }
     gl.uniform3fv(progGlobe.u.get('uEventCenter'), data.eventCenters);
     gl.uniform1fv(progGlobe.u.get('uEventRadius'), data.eventRadii);
     gl.uniform3fv(progGlobe.u.get('uEventTint'), data.eventTints);
     gl.uniform1fv(progGlobe.u.get('uEventStrength'), data.eventStrengths);
-    gl.uniform3fv(progGlobe.u.get('uSignalCenter'), data.signalCenters);
-    gl.uniform1fv(progGlobe.u.get('uSignalRadius'), data.signalRadii);
-    gl.uniform1fv(progGlobe.u.get('uSignalStrength'), data.signalStrengths);
   }
 
   /**

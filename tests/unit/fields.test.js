@@ -11,7 +11,8 @@ const fieldsFor = (seed) => createFields(createRng(seed), topo);
 const floats = ['altitude', 'baseElevation', 'filledElevation', 'oceanDepth',
   'coastDistance', 'flowAccumulation', 'riverStrength', 'rainfall',
   'baseMoisture', 'baseTemp', 'baseNutrient', 'forestDensity',
-  'ridgeStrength', 'hazardSusceptibility', 'toxVuln', 'eventVuln'];
+  'ridgeStrength', 'hazardSusceptibility', 'toxVuln', 'eventVuln',
+  'growthSuitability', 'maintenanceMultiplier', 'uptakeMultiplier', 'resourceRenewal', 'routeCost'];
 const integers = ['landMask', 'waterClass', 'drainTo', 'riverOrder', 'lakeId',
   'biomeId', 'featureFlags', 'regionId'];
 
@@ -53,7 +54,7 @@ function adjacent(a, b) {
 test('world hash and every explicit array are deterministic', () => {
   const a = fieldsFor(20260731); const b = fieldsFor(20260731);
   assert.equal(worldHash(a), worldHash(b));
-  assert.equal(worldHash(a), 'eccc4bba');
+  assert.equal(worldHash(a), '749bda35');
   for (const key of [...floats, ...integers]) assert.deepEqual(a[key], b[key], key);
   assert.deepEqual(a.landmarks, b.landmarks);
   assert.deepEqual(a.sources, b.sources);
@@ -67,6 +68,9 @@ test('normal worlds have bounded coherent land and typed classes', () => {
     assert.ok(land / topo.nodeCount >= 0.38 && land / topo.nodeCount <= 0.58, `seed ${seed}`);
     assert.ok(componentSizes((i) => f.landMask[i])[0] > land * 0.7, `fragmented seed ${seed}`);
     assert.ok(f.landMask instanceof Uint8Array && f.waterClass instanceof Uint8Array);
+    for (const key of ['growthSuitability', 'maintenanceMultiplier', 'uptakeMultiplier', 'resourceRenewal', 'routeCost']) {
+      assert.ok(f[key] instanceof Float32Array && f[key].length === topo.nodeCount);
+    }
     assert.ok(f.drainTo instanceof Int32Array && f.lakeId instanceof Int16Array);
     assert.ok(f.riverOrder instanceof Uint8Array && f.featureFlags instanceof Uint32Array);
   }
@@ -76,7 +80,9 @@ test('fields and biome assignments are bounded and ecologically valid', () => {
   const f = fieldsFor(42); const validBiomes = new Set(Object.values(BIOME));
   for (const key of floats) for (const value of f[key]) {
     assert.ok(Number.isFinite(value) && value >= 0, `${key}: ${value}`);
-    if (key !== 'flowAccumulation') assert.ok(value <= 1.001, `${key}: ${value}`);
+    if (key === 'flowAccumulation') continue;
+    const factor = ['growthSuitability', 'maintenanceMultiplier', 'uptakeMultiplier', 'resourceRenewal', 'routeCost'].includes(key);
+    assert.ok(value <= (factor ? 2.001 : 1.001), `${key}: ${value}`);
   }
   for (let i = 0; i < topo.nodeCount; i++) {
     assert.ok(validBiomes.has(f.biomeId[i]), `biome ${f.biomeId[i]}`);

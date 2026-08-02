@@ -10,7 +10,7 @@ const TEMP_CENTER = 0.6;
 
 /** @param {object} state */
 export function runMetabolism(state) {
-  const { topo, fields, traits } = state;
+  const { topo, fields } = state; const traits = state.activeTraits ?? state.traits;
   const N = topo.nodeCount;
   const e = state.entropy;
   const moistW = MOIST_CENTER * 0.92 * traits.droughtTol;
@@ -40,7 +40,8 @@ export function runMetabolism(state) {
     }
 
     // Uptake: opportunistic strains exploit temporary blooms.
-    let rate = B.UPTAKE_RATE * state.biomass[i] * (0.15 + 0.85 * suit) * traits.uptake;
+    let rate = B.UPTAKE_RATE * state.biomass[i] * (0.15 + 0.85 * suit) * traits.uptake
+      * (fields.uptakeMultiplier?.[i] ?? 1);
     if (traits.opportunisticUptake
       && state.nutrient[i] > fields.baseNutrient[i] + 0.05) {
       rate *= 1.5;
@@ -56,7 +57,8 @@ export function runMetabolism(state) {
     state.energy[i] = Math.fround(Math.min(energyCap, state.energy[i] + gain));
 
     const maint = B.MAINTENANCE_RATE * state.biomass[i]
-      * (1 + e * B.MAINTENANCE_ENTROPY) * traits.maintenance;
+      * (1 + e * B.MAINTENANCE_ENTROPY) * traits.maintenance
+      * (fields.maintenanceMultiplier?.[i] ?? 1);
     state.energy[i] = Math.fround(state.energy[i] - maint);
 
     state.totalUptake += uptake;

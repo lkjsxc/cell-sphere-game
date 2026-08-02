@@ -2,6 +2,7 @@
 import { BALANCE as B } from '../game/balance.js';
 import { ADAPTATIONS, drawAdaptationOptions } from '../game/adaptations.js';
 import { telegraphLead } from './events.js';
+import { BIOME, FEATURE } from '../world/fields.js';
 import { logReplay, recordHistory, REPLAY } from './replay.js';
 
 const PHASES = Object.freeze([
@@ -14,6 +15,7 @@ const COVERAGE_MILESTONES = Object.freeze([0.1, 0.25, 0.5, 0.75]);
 
 /** @param {object} state @param {(msg: object) => void} emit */
 export function runSummary(state, emit) {
+  const historyStart = state.history.length;
   const coverage = state.aliveCount / state.topo.nodeCount;
   state.coverage = coverage;
   if (coverage > state.peakCoverage) state.peakCoverage = coverage;
@@ -25,7 +27,12 @@ export function runSummary(state, emit) {
   }
   announceEvents(state, emit);
   recordMilestones(state);
+  recordGeography(state);
+  recordMorphology(state);
   checkAdaptationOffer(state, emit);
+  if (state.history.length > historyStart) {
+    emit({ t: 'history-batch', events: state.history.slice(historyStart).map((event) => ({ ...event })) });
+  }
 }
 
 function announceEvents(state, emit) {
@@ -33,13 +40,13 @@ function announceEvents(state, emit) {
   for (const ev of state.events) {
     if (!(ev.announced & 1) && state.tick >= ev.startTick - lead) {
       ev.announced |= 1;
-      recordHistory(state, 'event-telegraph', { id: ev.id, family: ev.family });
+      recordHistory(state, 'event-telegraph', { id: ev.id, family: ev.family, cell: ev.center });
       emit({ t: 'event', phase: 'telegraph', family: ev.family, nameJa: ev.nameJa,
         descJa: ev.descJa, center: ev.center, radiusDot: ev.radiusDot, tick: state.tick });
     }
     if (!(ev.announced & 2) && state.tick >= ev.startTick) {
       ev.announced |= 2;
-      recordHistory(state, 'event-start', { id: ev.id, family: ev.family });
+      recordHistory(state, 'event-start', { id: ev.id, family: ev.family, cell: ev.center });
       emit({ t: 'event', phase: 'active', family: ev.family, nameJa: ev.nameJa,
         center: ev.center, radiusDot: ev.radiusDot, tick: state.tick });
       if (ev.crisis) state.crisesTotal++;
@@ -54,7 +61,7 @@ function announceEvents(state, emit) {
     if (!(ev.announced & 4) && state.tick > ev.endTick) {
       ev.announced |= 4;
       if (ev.crisis && state.aliveCount > 0) state.crisesEndured++;
-      recordHistory(state, 'event-end', { id: ev.id, family: ev.family });
+      recordHistory(state, 'event-end', { id: ev.id, family: ev.family, cell: ev.center });
       emit({ t: 'event', phase: 'end', family: ev.family, tick: state.tick });
     }
   }
@@ -78,6 +85,34 @@ function recordMilestones(state) {
       state.loopMilestone = true;
       recordHistory(state, 'network-loop', { edges, cells: state.aliveCount });
     }
+  }
+}
+
+function recordGeography(state) {
+  const checks = [
+    [1, 'geo-coast', (i) => state.fields.featureFlags[i] & FEATURE.COAST],
+    [2, 'geo-river', (i) => state.fields.featureFlags[i] & FEATURE.RIVER],
+    [4, 'geo-forest', (i) => state.fields.featureFlags[i] & FEATURE.FOREST],
+    [8, 'geo-mountain', (i) => state.fields.biomeId[i] === BIOME.HIGHLAND || state.fields.biomeId[i] === BIOME.MOUNTAIN],
+    [16, 'geo-wetland', (i) => state.fields.biomeId[i] === BIOME.WETLAND],
+    [32, 'geo-world-knot', (i) => state.topo.degree[i] === 5],
+  ];
+  for (const [bit, type, predicate] of checks) {
+    if (state.geographySeen & bit) continue;
+    for (let cell = 0; cell < state.topo.nodeCount; cell++) if (state.alive[cell] && predicate(cell)) {
+      state.geographySeen |= bit; recordHistory(state, type, { cell }); break;
+    }
+  }
+}
+
+function recordMorphology(state) {
+  const fragmented = state.aliveCount > 8 && state.connectedShare < 0.88;
+  if (fragmented && !state.wasFragmented) {
+    state.wasFragmented = true;
+    recordHistory(state, 'component-split', { value: state.connectedShare });
+  } else if (!fragmented && state.wasFragmented && state.connectedShare > 0.95) {
+    state.wasFragmented = false; state.reconnectedUntil = state.tick + 200;
+    recordHistory(state, 'component-reconnected', { value: state.connectedShare });
   }
 }
 

@@ -60,7 +60,7 @@ self.onmessage = (event) => {
         break;
       case 'speed':
         speed = message.value;
-        snapshotEvery = speed >= 16 ? Math.max(2, Math.round(speed / 2)) : B.SNAPSHOT_EVERY;
+        snapshotEvery = B.SNAPSHOT_EVERY; // frame-count cadence: two 50 ms slices ≈ 10 Hz
         break;
       case 'pause': paused = true; break;
       case 'resume': paused = false; break;

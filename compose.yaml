@@ -12,8 +12,8 @@ services:
       - "8080:8080"
 
   verify:
-    image: node:22-alpine
+    image: node:22
     working_dir: /app
     volumes:
       - ./:/app
-    command: node scripts/verify.mjs
+    command: sh -c "git config --global --add safe.directory /app && node scripts/verify.mjs"

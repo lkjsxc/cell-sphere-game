@@ -27,7 +27,7 @@ export function serializeReplay(state) {
  * final slot is reserved for extinction, so the cap is deterministic.
  */
 export function recordHistory(state, type, data = {}) {
-  const event = { tick: state.tick, type, ...data };
+  const event = { seq: state.history.length, tick: state.tick, type, ...data };
   if (type === 'run-extinct') {
     if (state.history.length < 80) state.history.push(event);
     else state.history[79] = event;

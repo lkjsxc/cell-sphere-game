@@ -1,20 +1,16 @@
 # src/platform/
 
-Browser-platform adapters. Each module wraps a browser capability behind a
-small testable surface and degrades honestly when that capability is absent.
+Small browser adapters that degrade honestly when APIs or storage are absent.
 
-| Module | Wraps | Failure behavior |
-|---|---|---|
-| `capabilities.js` | Canvas, Worker, AudioContext, and navigator hints | reports capability flags |
-| `settings.js` | localStorage preferences | validated defaults on corruption |
-| `storage.js` | localStorage progression document | schema migration or in-memory continuation |
+| Module | Responsibility |
+|---|---|
+| `capabilities.js` | WebGL2, Worker, device, sharing, and DPR hints. |
+| `settings.js` | Schema-2 validated preferences; random Adaptations and rotation-off defaults. |
+| `storage.js` | Schema-4 Echo/Memory/Imprint progression and proof-tree migration. |
+| `history.js` | Separate semantic archive, 24/32 worlds, 80 events/run, 700 KB cap. |
 
-Progress storage invariants:
-
-- Schema 4 validates all 108 Memory IDs and records the Memory graph version.
-- Schema 1–3 saves preserve scores, Echo totals and balance, runs, and Imprints;
-  old proof-node IDs map once without refunds, and old Imprints gain topology metadata.
-- Unknown progression IDs are bounded and quarantined rather than activated.
-- Persistence serializes a validated copy, never mutates the caller, and returns
-  `false` when localStorage cannot honestly confirm a write.
-- No adapter contains simulation math or throws merely because an API is absent.
+Progress validation enforces the 108-node prerequisite closure, quarantines
+unknown IDs, preserves old Echoes/Imprints, and returns truthful write success.
+History stores stable event keys/arguments rather than localized prose and
+prunes oldest ordinary worlds deterministically. Corrupt documents fall back
+to safe defaults; unavailable storage keeps the current session playable.

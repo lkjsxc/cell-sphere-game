@@ -14,6 +14,7 @@ export class GLRenderer {
     if (!gl) throw new Error('WebGL2 unavailable');
     this.gl = gl;
     this.backend = 'webgl2';
+    this.drawCalls = 7;
     this.background = this.make(SH.VS_BACKGROUND, SH.FS_BACKGROUND);
     this.world = new WorldPass(gl, topo, fields);
     const veins = this.make(SHN.VS_VEINS, SHN.FS_VEINS);
@@ -99,7 +100,7 @@ export class GLRenderer {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.depthMask(true);
 
-    this.world.draw(vp, eye, scene.time, scene.pulse, scene.snapshot,
+    this.world.draw(vp, eye, scene.time, scene.pulse, scene.snapshot, scene.selectedNode,
       (program, snapshot) => this.network.setOverlays(program, snapshot));
     this.network.draw(vp, eye, scene.time, scene.pulse, fade, scene.snapshot);
     gl.bindVertexArray(null);

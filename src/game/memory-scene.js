@@ -2,18 +2,21 @@
 export function renderMemorySnapshot(topo, meta, scene) {
   const snapshot = {
     tick: scene.nodes.filter((node) => node.owned).length + (meta.imprints?.length ?? 0),
-    entropy: 0.74, status: 'memory', biomass: new Float32Array(topo.nodeCount),
+    entropy: 0.34, status: 'memory', biomass: new Float32Array(topo.nodeCount),
     stress: new Float32Array(topo.nodeCount), alive: new Uint8Array(topo.nodeCount),
     conductance: new Float32Array(topo.edgeCount), flux: new Float32Array(topo.edgeCount),
-    edgeActive: new Uint8Array(topo.edgeCount), events: [], signals: [],
-    metrics: { coverage: 0, signalCharges: 0, signalMax: 0, score: 0 },
+    edgeActive: new Uint8Array(topo.edgeCount), events: [],
+    metrics: { coverage: 0, score: 0, pendingAdaptations: 0 },
     memoryScene: scene, nodeStates: scene.nodes,
   };
   const byId = new Map(scene.nodes.map((node) => [node.id, node]));
   for (const node of scene.nodes) {
-    if (!node.owned) continue;
     const cell = projectCell(node.cell, topo.nodeCount);
-    snapshot.alive[cell] = 1; snapshot.biomass[cell] = 0.72;
+    snapshot.alive[cell] = 1;
+    snapshot.biomass[cell] = node.owned ? 1.20 : node.reachable ? 0.76 : 0.22;
+    snapshot.stress[cell] = node.owned ? 0 : node.reachable ? 0.18 : 0.72;
+    if (!node.owned) continue;
+    if (!node.requires.length) tracePath(topo, 12 % topo.nodeCount, cell, snapshot, node.tier);
     for (const required of node.requires) {
       const parent = byId.get(required);
       if (parent) tracePath(topo, projectCell(parent.cell, topo.nodeCount), cell, snapshot, node.tier);

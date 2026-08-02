@@ -43,6 +43,7 @@ export function createCellGeometry(topo, fields) {
   const positions = new Float32Array(vertexCount * 3);
   const centers = new Float32Array(vertexCount * 3);
   const material = new Float32Array(vertexCount * 4);
+  const terrain = new Float32Array(vertexCount * 4);
   const vertexCell = new Uint16Array(vertexCount);
   const indices = new Uint16Array(dual.cellCorners.length * 3);
   let vertex = 0; let index = 0;
@@ -65,7 +66,7 @@ export function createCellGeometry(topo, fields) {
   }
 
   const boundaryPositions = new Float32Array(topo.edgeCount * 12);
-  const boundaryKind = new Float32Array(topo.edgeCount * 4);
+  const boundaryFeature = new Float32Array(topo.edgeCount * 12);
   const boundaryIndices = new Uint16Array(topo.edgeCount * 6);
   for (let edge = 0; edge < topo.edgeCount; edge++) {
     const ai = dual.boundaryCornerA[edge] * 3;
@@ -79,14 +80,17 @@ export function createCellGeometry(topo, fields) {
     boundaryPositions.set(offset(a, sideA, -0.0018, 1.0025), (base + 1) * 3);
     boundaryPositions.set(offset(b, sideB, 0.0018, 1.0025), (base + 2) * 3);
     boundaryPositions.set(offset(b, sideB, -0.0018, 1.0025), (base + 3) * 3);
-    const knot = topo.degree[topo.edgeA[edge]] === 5 || topo.degree[topo.edgeB[edge]] === 5 ? 1 : 0;
-    boundaryKind.fill(knot, base, base + 4);
+    const cellA = topo.edgeA[edge]; const cellB = topo.edgeB[edge];
+    const knot = topo.degree[cellA] === 5 || topo.degree[cellB] === 5 ? 1 : 0;
+    const coast = fields.landMask?.[cellA] !== fields.landMask?.[cellB] ? 1 : 0;
+    for (let corner = 0; corner < 4; corner++) boundaryFeature.set([knot, 0, coast], (base + corner) * 3);
     boundaryIndices.set([base, base + 1, base + 2, base + 1, base + 3, base + 2], edge * 6);
   }
 
+  const rivers = buildRiverGeometry(topo, fields);
   return Object.freeze({
-    dual, vertexCount, positions, centers, material, vertexCell, indices,
-    boundaryPositions, boundaryKind, boundaryIndices,
+    dual, vertexCount, positions, centers, material, terrain, vertexCell, indices,
+    boundaryPositions, boundaryFeature, boundaryIndices, ...rivers,
   });
 
   function writeVertex(position, cell) {
@@ -95,6 +99,8 @@ export function createCellGeometry(topo, fields) {
     material.set([
       fields.baseNutrient[cell], fields.baseMoisture[cell], fields.baseTemp[cell], fields.altitude[cell],
     ], vertex * 4);
+    terrain.set([fields.biomeId?.[cell] ?? 5, fields.forestDensity?.[cell] ?? 0,
+      fields.riverStrength?.[cell] ?? 0, fields.ridgeStrength?.[cell] ?? 0], vertex * 4);
     vertexCell[vertex] = cell;
     vertex++;
   }
@@ -102,4 +108,29 @@ export function createCellGeometry(topo, fields) {
   function centerFor(cell) {
     return topo.positions.subarray(cell * 3, cell * 3 + 3);
   }
+}
+
+/** Connected center-to-downstream ribbons keep rivers distinct from cell edges. */
+function buildRiverGeometry(topo, fields) {
+  const cells = [];
+  for (let cell = 0; cell < topo.nodeCount; cell++) {
+    if ((fields.riverStrength?.[cell] ?? 0) > 0 && (fields.drainTo?.[cell] ?? -1) >= 0) cells.push(cell);
+  }
+  const riverPositions = new Float32Array(cells.length * 12);
+  const riverFeature = new Float32Array(cells.length * 12);
+  const riverIndices = new Uint16Array(cells.length * 6);
+  cells.forEach((cell, segment) => {
+    const down = fields.drainTo[cell]; const a = Array.from(topo.positions.subarray(cell * 3, cell * 3 + 3));
+    const b = Array.from(topo.positions.subarray(down * 3, down * 3 + 3));
+    const sideA = cross(a, tangentToward(a, b)); const sideB = cross(b, tangentToward(b, a, false));
+    const strength = fields.riverStrength[cell]; const width = 0.0032 + strength * 0.008;
+    const base = segment * 4;
+    riverPositions.set(offset(a, sideA, width, 1.006), base * 3);
+    riverPositions.set(offset(a, sideA, -width, 1.006), (base + 1) * 3);
+    riverPositions.set(offset(b, sideB, width, 1.006), (base + 2) * 3);
+    riverPositions.set(offset(b, sideB, -width, 1.006), (base + 3) * 3);
+    for (let corner = 0; corner < 4; corner++) riverFeature.set([0, 1, strength], (base + corner) * 3);
+    riverIndices.set([base, base + 1, base + 2, base + 1, base + 3, base + 2], segment * 6);
+  });
+  return { riverPositions, riverFeature, riverIndices };
 }

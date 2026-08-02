@@ -114,10 +114,10 @@ test('every declared uniform is uploaded by the renderer modules', () => {
       assert.ok(uploaded.has(u), `${name}: uniform "${u}" declared but never uploaded`);
     }
   }
-  // Spot-check the high-value overlay uniforms really exist in the globe shader.
-  for (const u of ['uEventCenter', 'uEventStrength', 'uSignalCenter', 'uSignalRadius']) {
+  for (const u of ['uEventCenter', 'uEventStrength', 'uSelectedCenter', 'uHasSelection']) {
     assert.ok(parseUniformNames(SH.FS_GLOBE).has(u), `globe missing ${u}`);
   }
+  assert.ok(!parseUniformNames(SH.FS_GLOBE).has('uSignalCenter'));
 });
 
 test('dual-cell render geometry stays indexed, finite, and cell-addressable', () => {
@@ -126,9 +126,10 @@ test('dual-cell render geometry stays indexed, finite, and cell-addressable', ()
   const geometry = createCellGeometry(topo, fields);
   assert.equal(geometry.dual.cellCount, topo.nodeCount);
   assert.equal(geometry.indices.length, topo.edgeCount * 6);
-  assert.equal(geometry.boundaryIndices.length, topo.edgeCount * 6);
+  assert.equal(geometry.boundaryIndices.length, topo.edgeCount * 6); assert.ok(geometry.riverIndices.length > 0
+    && geometry.riverPositions.length === geometry.riverIndices.length * 2);
   assert.equal(geometry.vertexCell.length, geometry.vertexCount);
-  for (const value of geometry.positions) assert.ok(Number.isFinite(value));
+  for (const value of [...geometry.positions, ...geometry.terrain]) assert.ok(Number.isFinite(value));
   for (const index of geometry.indices) assert.ok(index < geometry.vertexCount);
 });
 
@@ -138,7 +139,8 @@ test('title organism grows through real adjacency and stays bounded', () => {
   for (let step = 1; step <= 80; step++) attract.update(step * 300, true);
   const snap = attract.snapshot;
   const alive = snap.alive.reduce((sum, value) => sum + value, 0);
-  assert.equal(alive, 54);
+  assert.ok(alive > 0 && alive <= 54, `bounded autonomous bloom: ${alive}`);
+  assert.ok(snap.tick > 54, 'title bloom reseeds autonomously after resting');
   for (let edge = 0; edge < topo.edgeCount; edge++) {
     if (!snap.edgeActive[edge]) continue;
     assert.equal(snap.alive[topo.edgeA[edge]], 1);

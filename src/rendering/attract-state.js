@@ -13,28 +13,30 @@ export class AttractState {
       conductance: new Float32Array(topo.edgeCount),
       flux: new Float32Array(topo.edgeCount),
       edgeActive: new Uint8Array(topo.edgeCount),
-      events: [], signals: [],
-      metrics: { coverage: 0, signalCharges: 0, signalMax: 0, score: 0 },
+      events: [],
+      metrics: { coverage: 0, score: 0, pendingAdaptations: 0 },
     };
     this.seen = new Uint8Array(topo.nodeCount);
     this.queue = new Uint16Array(topo.nodeCount);
     this.lastStep = 0;
-    this.reset(root, false);
+    this.root = root;
+    this.reset(root);
   }
 
-  reset(root, signal = true) {
+  reset(root) {
     const snap = this.snapshot;
     snap.biomass.fill(0); snap.stress.fill(0); snap.alive.fill(0);
     snap.conductance.fill(0); snap.flux.fill(0); snap.edgeActive.fill(0);
     this.seen.fill(0); this.head = 0; this.tail = 1; this.grown = 0;
-    this.queue[0] = root; this.seen[root] = 1;
-    snap.tick++;
-    snap.signals = signal ? [{ node: root, untilTick: snap.tick + 38 }] : [];
-    this.growOne();
+    this.root = root; this.queue[0] = root; this.seen[root] = 1;
+    snap.tick++; this.growOne(); this.lastStep = performance.now();
   }
 
   update(now, reducedMotion = false) {
     const interval = reducedMotion ? 260 : 92;
+    if (this.grown >= 54 && now - this.lastStep > 4200) {
+      this.reset((this.root * 1664525 + 1013904223) % this.topo.nodeCount); return;
+    }
     if (now - this.lastStep < interval || this.grown >= 54) return;
     this.lastStep = now;
     this.growOne();
@@ -64,6 +66,5 @@ export class AttractState {
     }
     snap.tick++;
     snap.metrics.coverage = this.grown / topo.nodeCount;
-    snap.signals = snap.signals.filter((value) => value.untilTick > snap.tick);
   }
 }

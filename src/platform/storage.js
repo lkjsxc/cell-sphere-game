@@ -1,5 +1,5 @@
 /** Versioned, corruption-safe persistence for cross-run progression. */
-import { MEMORY_GRAPH_VERSION, MEMORY_NODE_IDS } from '../game/memory.js';
+import { MEMORY_GRAPH_VERSION, MEMORY_NODE_IDS, getMemoryNode } from '../game/memory.js';
 
 const KEY = 'incremental-network-game:meta:v1';
 const VALID_MEMORY_IDS = new Set(MEMORY_NODE_IDS);
@@ -10,7 +10,7 @@ export const LEGACY_MEMORY_MAP = Object.freeze({
   'remembered-reach': 'reach-horizon-instinct',
   'flow-imprint': 'flow-channel-imprint',
   'scar-wisdom': 'ecology-tempered-scars',
-  continuity: 'continuity-unbroken-lesson',
+  continuity: 'continuity-remembered-burden',
 });
 
 export function defaultMeta() {
@@ -32,9 +32,10 @@ export function validateMeta(raw) {
   if (Number.isFinite(r.echoBalance) && r.echoBalance >= 0) out.echoBalance = Math.floor(r.echoBalance);
   else if (sourceSchema === 1) out.echoBalance = out.totalEchoes;
   out.runs = boundedInteger(r.runs, 0);
-  const { valid, quarantine } = migrateMemoryIds(r.memoryNodes, sourceSchema);
-  out.memoryNodes = valid;
-  out.quarantinedMemoryNodes = mergeQuarantine(quarantine, r.quarantinedMemoryNodes);
+  const migrated = migrateMemoryIds(r.memoryNodes, sourceSchema);
+  const closed = closePrerequisites(migrated.valid);
+  out.memoryNodes = closed.valid;
+  out.quarantinedMemoryNodes = mergeQuarantine([...migrated.quarantine, ...closed.rejected], r.quarantinedMemoryNodes);
   if (Array.isArray(r.imprints)) out.imprints = r.imprints.map(validateImprint).filter(Boolean).slice(-8);
   if (sourceSchema !== 4) out.migrationNotice = Object.freeze({ kind: 'memory-atlas-v4', pending: true });
   else if (validMigrationNotice(r.migrationNotice)) out.migrationNotice =
@@ -56,6 +57,18 @@ function migrateMemoryIds(raw, sourceSchema) {
     else if (!quarantine.includes(candidate)) quarantine.push(candidate);
   }
   return { valid, quarantine };
+}
+
+function closePrerequisites(ids) {
+  const accepted = new Set(); let changed = true;
+  while (changed) { changed = false;
+    for (const id of ids) { const node = getMemoryNode(id);
+      if (!accepted.has(id) && node?.requires.every((required) => accepted.has(required))) {
+        accepted.add(id); changed = true;
+      }
+    }
+  }
+  return { valid: MEMORY_NODE_IDS.filter((id) => accepted.has(id)), rejected: ids.filter((id) => !accepted.has(id)) };
 }
 
 function mergeQuarantine(found, raw) {

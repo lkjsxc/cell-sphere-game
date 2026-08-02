@@ -1,6 +1,7 @@
 /** Authoritative deterministic run controller shared by Worker and fallback. */
 import { BALANCE as B } from '../game/balance.js';
 import { ADAPTATIONS, applyCardEffects, selectRandomOption } from '../game/adaptations.js';
+import { applyMemoryConditionals } from '../game/memory.js';
 import { createRunState } from './state.js';
 import { updateEnvironment } from './environment.js';
 import { runMetabolism } from './metabolism.js';
@@ -29,6 +30,7 @@ export class RunController {
     logReplay(s, REPLAY.ADAPTATION_MODE, modeIndex(s.adaptationMode));
     recordHistory(s, 'run-start');
     this.emit({ t: 'started', tick: 0, inoculationCell: s.inoculationCell });
+    this.emit({ t: 'history-batch', events: s.history.map((event) => ({ ...event })) });
   }
 
   /** Advance up to n authoritative ticks; offers never pause progress. */
@@ -45,6 +47,7 @@ export class RunController {
     const s = this.state;
     if (s.status !== 'running') return false;
     s.tick++;
+    applyMemoryConditionals(s);
     if (s.tick % B.ENV_EVERY === 0) updateEnvironment(s);
     runMetabolism(s);
     runTransport(s);
@@ -55,12 +58,14 @@ export class RunController {
     this.resolveNextRandomOffer();
 
     if (s.aliveCount <= 0) {
+      const historyStart = s.history.length;
       s.status = 'extinct';
       s.extinction = { tick: s.tick, cause: dominantCause(s) };
       for (const offer of s.adaptationOffers) {
         if (offer.resolvedTick == null) recordHistory(s, 'adaptation-unresolved', { id: offer.id });
       }
       recordHistory(s, 'run-extinct', { cause: s.extinction.cause });
+      this.emit({ t: 'history-batch', events: s.history.slice(historyStart).map((event) => ({ ...event })) });
       this.emit({ t: 'extinct', summary: this.buildResult() });
     }
     return true;
@@ -88,6 +93,7 @@ export class RunController {
     logReplay(s, REPLAY.ADAPTATION_MODE, modeIndex(mode));
     recordHistory(s, 'adaptation-mode', { id: mode });
     this.emit({ t: 'adaptation-mode', mode, tick: s.tick });
+    this.emit({ t: 'history-batch', events: [{ ...s.history.at(-1) }] });
     if (mode === 'random' && s.status === 'running') this.resolveNextRandomOffer();
     return true;
   }
@@ -114,6 +120,7 @@ export class RunController {
     logReplay(s, REPLAY.ADAPTATION_SELECT, offer.id, cardIndex(cardId), s.tick, modeIndex(selectionMode));
     recordHistory(s, 'adaptation-selected', { id: offer.id, card: cardIndex(cardId), mode: selectionMode });
     this.emit({ t: 'adaptation-selected', offerId: offer.id, cardId, tick: s.tick, selectionMode });
+    this.emit({ t: 'history-batch', events: [{ ...s.history.at(-1) }] });
   }
 
   /** Pure compact dynamic projection for pointer inspection. */

@@ -12,20 +12,20 @@ const TEMP_CENTER = 0.6;
 
 /** @param {object} state */
 export function runGrowth(state) {
-  const { topo, traits } = state;
+  const { topo, fields } = state; const traits = state.activeTraits ?? state.traits;
   const { nodeStart, nodeEdges, nodeNeighbors } = topo;
   const { alive, biomass, energy, nutrient, moisture, temperature, toxicity,
     conductance, edgePeak, edgeActive, edgeAge, expansions, simRng } = state;
 
   expansions.fill(0);
   const cap = B.GROW_PER_NODE_CAP + traits.growthCap + (traits.fractalFrontier ? 1 : 0);
-  const cost = B.GROW_COST * traits.growCost;
+  const baseCost = B.GROW_COST * traits.growCost;
   const startCond = B.START_CONDUCTANCE * (traits.fractalFrontier ? 0.75 : 1);
   const moistW = MOIST_CENTER * 0.92 * traits.droughtTol;
   const tempW = 0.42 * traits.heatTol;
 
   for (let i = 0; i < topo.nodeCount; i++) {
-    if (alive[i] !== 1 || energy[i] < cost) continue;
+    if (alive[i] !== 1 || energy[i] < baseCost) continue;
 
     const begin = nodeStart[i];
     const end = nodeStart[i + 1];
@@ -45,7 +45,9 @@ export function runGrowth(state) {
         * tolerance(temperature[nb], TEMP_CENTER, tempW)
         * clamp01(1 - (toxicity[nb] / traits.toxinTol - 0.35) * 1.1);
       const grad = clamp01(nutrient[nb] * 1.6);
+      const cost = baseCost * (fields.routeCost?.[nb] ?? 1);
       let p = B.GROW_P_BASE * traits.reach
+        * (fields.growthSuitability?.[nb] ?? 1)
         * (0.25 + 0.75 * suitNb)
         * (0.3 + 0.7 * grad)
         * (1 - B.CROWDING_PENALTY * Math.max(0, crowd - 2));

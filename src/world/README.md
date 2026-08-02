@@ -8,7 +8,7 @@ same model from the same seed; no generated buffers cross a worker boundary.
 |---|---|
 | `icosphere.js` | Canonical geodesic graph, edges, and CSR adjacency. |
 | `dual-mesh.js` | Renderable dual cells sharing simulation cell IDs. |
-| `constants.js` | Stable archetype, water, biome, landmark, and feature enums. |
+| `constants.js` | Stable enums and centralized bounded biome simulation factors. |
 | `noise.js` | Isolated RNG streams and seamless broad spherical fields. |
 | `terrain.js` | Quantile sea level, coherent continents, ridges, depth, coasts. |
 | `hydrology.js` | Priority-flood drainage, accumulation, rivers, mouths, lakes. |
@@ -25,6 +25,7 @@ same model from the same seed; no generated buffers cross a worker boundary.
 - Every land cell drains through a neighboring cell to ocean without cycles.
   Rivers are thresholds over accumulated drainage, never decorative edges.
 - Forests and biomes follow moisture, temperature, elevation, and water.
+  Central growth/upkeep/uptake/renewal/route factors make geography matter.
   Feature flags and landmarks reference the same authoritative cell graph.
 - `baseNutrient`, `baseMoisture`, `baseTemp`, `toxVuln`, `eventVuln`, and
   frozen `sources` remain available to existing simulation/rendering callers.

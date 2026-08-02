@@ -1,20 +1,14 @@
 # tests/
 
-Zero-dependency tests using Node built-ins (`node:test`, `node:assert`) plus
-an original headless-Chrome harness for browser-only APIs.
+Zero-dependency `node:test` suites plus original real-Chrome/CDP harnesses.
 
-| Directory | Contents | Run with |
-|---|---|---|
-| `unit/` | Environment-independent module tests | `npm run test:unit` |
-| `integration/` | Golden scenarios + speed invariance | `npm run test:integration` |
-| `browser/` | WebGL2/worker/storage/share smoke page + harness | `npm run test:browser` |
-| `fixtures/` | Golden seeds, decision logs, expected hashes | read by integration tests |
+| Location | Coverage |
+|---|---|
+| `unit/` | PRNG, topology, geography/hydrology, rendering math, Settings, Memory graph/migration, simulation invariants. |
+| `integration/` | Whole-run speed/chunk/Worker-equivalent determinism, observation neutrality, semantic History. |
+| `scripts/browser-test.mjs` | Same-origin boot smoke; exits 77 on sandbox networking blocks. |
+| `scripts/browser-file-test.mjs` | Socket-free WebGL2 mobile/desktop passive-world acceptance. |
 
-Invariants:
-
-- Tests exercise the **production** modules under `src/` — never a copied
-  or simplified model.
-- Golden fixture changes require a tuning decision recorded in
-  `docs/balancing.md`.
-- No test framework packages; no network access from tests.
-- Each test file names the risk it protects in a header comment.
+Tests import production modules only. Intentional world/hash changes require a
+balancing record. Browser screenshots are generated evidence and remain
+ignored unless intentionally retained by repository policy.

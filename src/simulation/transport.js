@@ -11,7 +11,7 @@ import { clamp } from '../core/math.js';
 
 /** @param {object} state */
 export function runTransport(state) {
-  const { topo, traits } = state;
+  const { topo, fields } = state; const traits = state.activeTraits ?? state.traits;
   const { edgeA, edgeB, edgeCount, nodeCount } = topo;
   const { pressure, nextEnergy, energy, alive, conductance, edgePeak, flux, edgeActive, edgeAge } = state;
 
@@ -24,7 +24,7 @@ export function runTransport(state) {
   const k = B.TRANSPORT_K * traits.conductance;
   // Pulsed transport: alternating surge/quiet phases reinforce harder.
   const pulse = traits.pulsedTransport ? ((state.tick % 50) < 12 ? 1.7 : 0.85) : 1;
-  const regrow = traits.anastomosis + traits.migratoryCore;
+  const regrow = traits.anastomosis + traits.migratoryCore + Math.max(0, traits.regrow - 1) * 10;
 
   for (let e = 0; e < edgeCount; e++) {
     if (edgeActive[e] !== 1) {
@@ -44,7 +44,8 @@ export function runTransport(state) {
     }
     const a = edgeA[e];
     const b = edgeB[e];
-    const f = conductance[e] * (pressure[a] - pressure[b]) * k * pulse;
+    const terrainFlow = 2 / ((fields.routeCost?.[a] ?? 1) + (fields.routeCost?.[b] ?? 1));
+    const f = conductance[e] * (pressure[a] - pressure[b]) * k * pulse * terrainFlow;
     flux[e] = Math.fround(f);
     nextEnergy[a] -= f;
     nextEnergy[b] += f;

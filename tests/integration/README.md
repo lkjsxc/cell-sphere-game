@@ -1,12 +1,10 @@
 # tests/integration/
 
-Deterministic whole-run tests (`node --test tests/integration/*.test.js`).
-They exercise the production `RunController` end to end.
+Production `RunController` whole-run tests.
 
-| File | Protects |
-|---|---|
-| `determinism.test.js` | Same seed + decisions ⇒ identical final hash under chunk 1/7/32/50 (speed invariance), delayed draft decisions (pause/resume), fixed-tick signals, replay monotonicity, strain divergence |
-
-Golden scenario policy: when balance tuning legitimately changes outcomes,
-update expectations together with a `docs/balancing.md` decision entry —
-never silently re-snapshot.
+`determinism.test.js` protects seeded inoculation, exactly uniform isolated
+random decisions, manual resolution ticks, chunk/speed invariance, zero-input
+completion, replay schema, hundreds of neutral inspection/snapshot queries,
+conditional Memory behavior, semantic History ordering/pruning, and storage
+failure behavior. Camera/panel interaction is deliberately excluded from the
+run digest and covered separately by unit/browser evidence.

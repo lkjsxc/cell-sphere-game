@@ -7,7 +7,7 @@ import { BALANCE as B } from '../game/balance.js';
 
 /** @param {object} state */
 export function runDeath(state) {
-  const { topo, traits } = state;
+  const { topo } = state; const traits = state.activeTraits ?? state.traits;
   const { alive, biomass, energy, stress } = state;
 
   for (let i = 0; i < topo.nodeCount; i++) {
@@ -90,7 +90,7 @@ function killNode(state, i) {
 
 /** Dead biomass decays; cannibal strains feed nearby living tissue. */
 function reclaimDetritus(state) {
-  const { topo, traits } = state;
+  const { topo } = state; const traits = state.activeTraits ?? state.traits;
   const { alive, biomass, energy } = state;
   const { nodeStart, nodeNeighbors } = topo;
   const rate = 0.01 + (traits.cannibal ? 0.05 : 0);

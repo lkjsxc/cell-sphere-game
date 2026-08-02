@@ -23,7 +23,7 @@ and `node:test`.
 
 ## Tick order (10 Hz)
 
-`environment (every 5) → metabolism → transport → growth → death →
+`compiled Memory conditions → environment (every 5) → metabolism → transport → growth → death →
 connectivity (every 20) → summary (every 10) → one passive decision →
 extinction check`
 
@@ -35,8 +35,11 @@ extinction check`
   keeps unresolved offers while simulation continues.
 - World, event, growth, content, decision, and inoculation RNG streams are
   isolated. Random adaptation choice is exactly uniform among three options.
-- Inoculation is a dedicated seeded weighted choice among suitable resource
-  candidates, preferring land metadata when a world provides it.
+- Inoculation is a dedicated seeded weighted choice among ecologically valid
+  land candidates; it is plausible rather than a fixed global optimum.
+- Biome lookup arrays bound growth, upkeep, uptake, renewal, and route cost.
+  Owned conditional Memory is compiled once and rebuilt into a tiny effective
+  trait block once per tick rather than iterated per cell.
 - Snapshots expose only adaptation mode and pending count. Cell inspection,
   snapshots, results, and history queries never mutate authority or RNG.
 - Replay schema 2 records offer, selection, and mode IDs/ticks/card indices;

@@ -69,24 +69,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Signal charge pips: shape (filled/ring) + count label, not color-only. */
-.signal-pips {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.pip {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid var(--signal-gold);
-}
-
-.pip.is-full {
-  background: var(--signal-gold);
-}
-
 /* Speed control segmented control. */
 .segmented {
   display: flex;
@@ -114,5 +96,5 @@
 }
 
 .segmented button.is-turbo[aria-pressed="true"] {
-  color: var(--signal-gold);
+  color: var(--accent-gold);
 }

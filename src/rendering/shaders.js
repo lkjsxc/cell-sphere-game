@@ -31,20 +31,24 @@ uniform mat4 uViewProj;
 in vec3 aPos;
 in vec3 aCenter;
 in vec4 aMaterial;
+in vec4 aTerrain;
 in vec2 aLife;
 in float aKnot;
 out vec3 vPos;
 out vec3 vCenter;
 out vec4 vMaterial;
+out vec4 vTerrain;
 out vec2 vLife;
 out float vKnot;
 void main() {
-  vPos = aPos;
+  float relief = max(0.0, aMaterial.w - 0.43) * 0.022 + aTerrain.w * 0.004;
+  vPos = aPos * (1.0 + relief);
   vCenter = aCenter;
   vMaterial = aMaterial;
+  vTerrain = aTerrain;
   vLife = aLife;
   vKnot = aKnot;
-  gl_Position = uViewProj * vec4(aPos, 1.0);
+  gl_Position = uViewProj * vec4(vPos, 1.0);
 }`;
 
 export const FS_GLOBE = `#version 300 es
@@ -52,6 +56,7 @@ precision highp float;
 in vec3 vPos;
 in vec3 vCenter;
 in vec4 vMaterial;
+in vec4 vTerrain;
 in vec2 vLife;
 in float vKnot;
 out vec4 outColor;
@@ -60,26 +65,39 @@ uniform float uEntropy;
 uniform float uTime;
 uniform float uPulse;
 uniform float uMemory;
+uniform vec3 uSelectedCenter;
+uniform float uHasSelection;
 uniform vec3 uEventCenter[4];
 uniform float uEventRadius[4];
 uniform vec3 uEventTint[4];
 uniform float uEventStrength[4];
-uniform vec3 uSignalCenter[4];
-uniform float uSignalRadius[4];
-uniform float uSignalStrength[4];
 void main() {
   float nutrient = vMaterial.x;
   float moisture = vMaterial.y;
-  float temp = vMaterial.z;
-  float altitude = vMaterial.w;
-  float land = smoothstep(0.405, 0.455, altitude);
-  vec3 ocean = mix(vec3(0.035, 0.105, 0.135), vec3(0.10, 0.29, 0.30), moisture);
-  vec3 dry = mix(vec3(0.39, 0.29, 0.17), vec3(0.57, 0.47, 0.27), nutrient);
-  vec3 wet = mix(vec3(0.13, 0.25, 0.17), vec3(0.27, 0.42, 0.22), nutrient);
-  vec3 terrain = mix(dry, wet, smoothstep(0.42, 0.72, moisture));
-  terrain = mix(terrain, vec3(0.72, 0.75, 0.69), smoothstep(0.0, 0.30, 0.32 - temp));
-  vec3 base = mix(ocean, terrain, land);
-  base = mix(base, vec3(0.17, 0.18, 0.17) + nutrient * 0.035, uMemory * 0.88);
+  float biome = vTerrain.x;
+  float forest = vTerrain.y;
+  float river = vTerrain.z;
+  float ridge = vTerrain.w;
+  vec3 base = vec3(0.19, 0.31, 0.18);
+  if (biome < 0.5) base = vec3(0.025, 0.13, 0.19);
+  else if (biome < 1.5) base = vec3(0.05, 0.27, 0.33);
+  else if (biome < 2.5) base = vec3(0.52, 0.47, 0.30);
+  else if (biome < 3.5) base = vec3(0.09, 0.27, 0.14);
+  else if (biome < 4.5) base = vec3(0.055, 0.22, 0.13);
+  else if (biome < 5.5) base = vec3(0.27, 0.42, 0.20);
+  else if (biome < 6.5) base = vec3(0.48, 0.42, 0.22);
+  else if (biome < 7.5) base = vec3(0.61, 0.44, 0.22);
+  else if (biome < 8.5) base = vec3(0.13, 0.37, 0.28);
+  else if (biome < 9.5) base = vec3(0.36, 0.36, 0.27);
+  else if (biome < 10.5) base = vec3(0.39, 0.39, 0.37);
+  else if (biome < 11.5) base = vec3(0.43, 0.49, 0.39);
+  else base = vec3(0.72, 0.78, 0.78);
+  float canopy = forest * (0.82 + 0.18 * sin(dot(vCenter, vec3(71.3, 43.7, 97.1))));
+  base = mix(base, vec3(0.035, 0.16, 0.09), canopy * 0.44);
+  base = mix(base, vec3(0.18, 0.42, 0.46), river * 0.16);
+  base = mix(base, vec3(0.52, 0.50, 0.43), ridge * 0.20);
+  base *= 0.86 + nutrient * 0.20 + moisture * 0.05;
+  base = mix(base, vec3(0.22, 0.23, 0.21) + nutrient * 0.05, uMemory * 0.82);
   float life = clamp(vLife.x, 0.0, 1.0);
   float stress = clamp(vLife.y, 0.0, 1.0);
   base = mix(base, vec3(0.66, 0.66, 0.38), life * 0.25);
@@ -88,7 +106,7 @@ void main() {
   float grey = dot(base, vec3(0.299, 0.587, 0.114));
   base = mix(base, vec3(grey) * 0.56, uEntropy * 0.70);
   vec3 n = normalize(vPos);
-  vec3 light = normalize(vec3(-0.52, 0.72, 0.44));
+  vec3 light = normalize(vec3(-0.52, 0.72, 0.44) + normalize(uEye) * 0.58);
   float diffuse = max(dot(n, light), 0.0);
   float night = smoothstep(-0.16, 0.14, dot(n, light));
   vec3 viewDir = normalize(uEye - vPos);
@@ -97,18 +115,13 @@ void main() {
   vec3 col = base * (0.22 + 0.90 * diffuse) + base * plate * 0.07;
   col += vec3(0.72, 0.65, 0.36) * life * (0.12 + 0.14 * plate) * night;
   col += rim * vec3(0.08, 0.13, 0.14) * (1.0 - uEntropy * 0.5);
+  float selected = uHasSelection * step(0.99994, dot(normalize(vCenter), uSelectedCenter));
+  col = mix(col, vec3(0.78, 0.92, 0.84), selected * (0.34 + plate * 0.28));
   for (int i = 0; i < 4; i++) {
     if (uEventStrength[i] > 0.001) {
       float d = dot(n, uEventCenter[i]);
       float w = smoothstep(uEventRadius[i], min(1.0, uEventRadius[i] + 0.18), d);
       col = mix(col, uEventTint[i], w * uEventStrength[i] * 0.48);
-    }
-    if (uSignalStrength[i] > 0.001) {
-      float d = dot(n, uSignalCenter[i]);
-      float ring = smoothstep(uSignalRadius[i], uSignalRadius[i] + 0.035, d)
-        * (1.0 - smoothstep(uSignalRadius[i] + 0.035, uSignalRadius[i] + 0.14, d));
-      float pulse = uPulse > 0.5 ? 0.82 + 0.18 * sin(uTime * 3.4) : 1.0;
-      col += vec3(0.98, 0.67, 0.30) * ring * uSignalStrength[i] * pulse;
     }
   }
   outColor = vec4(col, 1.0);

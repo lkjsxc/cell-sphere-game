@@ -1,81 +1,84 @@
-/**
- * Settings: load, validate, persist, and reflect user preferences.
- * Storage is localStorage under a versioned key; invalid data falls back
- * to safe defaults without throwing.
- */
+/** Versioned, validated player preferences. */
+const KEY = 'incremental-network-game:settings:v2';
+const OLD_KEY = 'incremental-network-game:settings:v1';
 
-const KEY = 'incremental-network-game:settings:v1';
-
-/** @returns {Settings} validated settings with defaults applied */
 export function defaultSettings() {
-  const prefersReduced = typeof matchMedia === 'function'
+  const reduced = typeof matchMedia === 'function'
     && matchMedia('(prefers-reduced-motion: reduce)').matches;
   return {
-    motion: prefersReduced ? 'reduced' : 'full',
+    schema: 2,
+    motion: reduced ? 'reduced' : 'full',
     contrast: 'normal',
-    colorMode: 'default',
     quality: 'auto',
-    muted: true,
-    cameraInertia: !prefersReduced,
-    draftPause: true,
-    haptics: false,
-    lang: null, // null = auto-detect from navigator.languages
-    speed: 1,   // persisted preferred game speed
+    cameraInertia: !reduced,
+    autoRotate: false,
+    autoRotateSpeed: 'slow',
+    adaptationMode: 'random',
+    pauseOnPanels: false,
+    notificationDensity: 'normal',
+    speed: 1,
+    historyRetention: 24,
   };
 }
 
-const FIELDS = {
+const ENUMS = Object.freeze({
   motion: new Set(['full', 'reduced']),
   contrast: new Set(['normal', 'high']),
-  colorMode: new Set(['default', 'deutan', 'protan', 'tritan']),
   quality: new Set(['auto', 'eco', 'balanced', 'luminous']),
-  lang: new Set(['en', 'ja']),
+  autoRotateSpeed: new Set(['slow', 'very-slow']),
+  adaptationMode: new Set(['random', 'manual']),
+  notificationDensity: new Set(['normal', 'quiet']),
   speed: new Set([1, 2, 4, 8, 16, 32]),
-  muted: null,
-  cameraInertia: null,
-  draftPause: null,
-  haptics: null,
-};
+  historyRetention: new Set([24, 32]),
+});
+const BOOLEANS = Object.freeze(['cameraInertia', 'autoRotate', 'pauseOnPanels']);
 
-/** @param {unknown} raw @returns {Settings} */
 export function validateSettings(raw) {
-  const base = defaultSettings();
-  if (raw === null || typeof raw !== 'object') return base;
-  const out = { ...base };
-  for (const [field, allowed] of Object.entries(FIELDS)) {
-    const value = raw[field];
-    if (allowed instanceof Set) {
-      if (allowed.has(value)) out[field] = value;
-    } else if (typeof value === 'boolean') {
-      out[field] = value;
-    }
+  const out = defaultSettings();
+  if (!raw || typeof raw !== 'object') return out;
+  for (const [field, allowed] of Object.entries(ENUMS)) {
+    if (allowed.has(raw[field])) out[field] = raw[field];
   }
+  for (const field of BOOLEANS) {
+    if (typeof raw[field] === 'boolean') out[field] = raw[field];
+  }
+  // Old installs used draftPause=true. It deliberately does not migrate:
+  // panels continue time by default in the passive-world interaction model.
+  out.schema = 2;
   return out;
 }
 
-/** @returns {Settings} */
 export function loadSettings() {
   try {
-    const raw = globalThis.localStorage?.getItem(KEY);
-    return validateSettings(raw ? JSON.parse(raw) : null);
+    const current = globalThis.localStorage?.getItem(KEY);
+    if (current) return validateSettings(JSON.parse(current));
+    const previous = globalThis.localStorage?.getItem(OLD_KEY);
+    const migrated = validateSettings(previous ? JSON.parse(previous) : null);
+    if (previous) saveSettings(migrated);
+    return migrated;
   } catch {
     return defaultSettings();
   }
 }
 
-/** @param {Settings} settings */
+/** Persist an already validated settings object. Returns truthful success. */
 export function saveSettings(settings) {
   try {
-    globalThis.localStorage?.setItem(KEY, JSON.stringify(settings));
+    globalThis.localStorage?.setItem(KEY, JSON.stringify(validateSettings(settings)));
+    return true;
   } catch {
-    // Storage may be unavailable (private mode); settings stay in-memory.
+    return false;
   }
 }
 
-/** @param {Settings} settings */
 export function applySettingsToDocument(settings) {
   const root = document.documentElement;
   root.dataset.motion = settings.motion;
   root.dataset.contrast = settings.contrast;
-  root.dataset.colormode = settings.colorMode;
+  root.dataset.quality = settings.quality;
+}
+
+/** Effective ambient motion respects reduced motion without changing storage. */
+export function autoRotationEnabled(settings) {
+  return settings.autoRotate && settings.motion !== 'reduced';
 }

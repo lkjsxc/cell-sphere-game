@@ -1,10 +1,16 @@
 /**
  * Canvas 2D fallback renderer. Same public interface as GLRenderer
  * (resize/render/dispose). Simplified shading, but fully playable: globe,
- * veins, events, signals, and facing-culled geometry.
+ * veins, events, selection, and facing-culled geography.
  */
 import { EVENT_TINTS } from './instances.js';
 import { cameraBasis } from './camera.js';
+
+const BIOME_COLOR = Object.freeze([
+  [8, 42, 62], [14, 76, 88], [145, 126, 76], [35, 91, 45], [22, 73, 42],
+  [83, 119, 50], [137, 116, 52], [164, 116, 53], [37, 110, 82], [96, 94, 72],
+  [112, 110, 104], [113, 128, 104], [205, 218, 218],
+]);
 
 export class Canvas2DRenderer {
   /**
@@ -38,8 +44,8 @@ export class Canvas2DRenderer {
     const { snapshot, camera } = scene;
     const w = canvas.width;
     const h = canvas.height;
-    const cx = w / 2;
-    const cy = h / 2;
+    const cx = w * (0.5 + camera.offsetX * 0.5);
+    const cy = h * (0.5 - camera.offsetY * 0.5);
     const R = Math.min(w, h) * 0.40 * (3.1 / camera.dist);
     const { dir, right, up } = this.basis(camera);
     const entropy = snapshot ? snapshot.entropy : 0;
@@ -81,15 +87,26 @@ export class Canvas2DRenderer {
       py[i] = cy - (x * up[0] + y * up[1] + z * up[2]) * R;
     }
 
-    // Biome speckle (front-facing only)
+    // Explicit biome cells make geography readable without WebGL.
     for (let i = 0; i < topo.nodeCount; i++) {
-      if (facing[i] <= 0.05) continue;
-      const n = fields.baseNutrient[i];
-      const m = fields.baseMoisture[i];
-      ctx.fillStyle = `rgba(${90 - m * 40}, ${120 + n * 90}, ${90 + m * 60}, ${0.16 * facing[i] * dim})`;
-      ctx.fillRect(px[i] - 1, py[i] - 1, 2.5, 2.5);
+      if (facing[i] <= 0.03) continue;
+      const color = BIOME_COLOR[fields.biomeId?.[i] ?? 5];
+      const forest = fields.forestDensity?.[i] ?? 0; const size = 2 + forest * 2;
+      ctx.fillStyle = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${(0.32 + facing[i] * 0.42) * dim})`;
+      ctx.fillRect(px[i] - size / 2, py[i] - size / 2, size, size);
+    }
+    ctx.lineCap = 'round';
+    for (let i = 0; i < topo.nodeCount; i++) {
+      const down = fields.drainTo?.[i] ?? -1; const strength = fields.riverStrength?.[i] ?? 0;
+      if (down < 0 || strength <= 0 || facing[i] <= 0 || facing[down] <= 0) continue;
+      ctx.strokeStyle = `rgba(71, 177, 205, ${0.52 + strength * 0.34})`; ctx.lineWidth = 0.7 + strength * 2.4;
+      ctx.beginPath(); ctx.moveTo(px[i], py[i]); ctx.lineTo(px[down], py[down]); ctx.stroke();
     }
 
+    if (Number.isInteger(scene.selectedNode) && facing[scene.selectedNode] > 0) {
+      ctx.beginPath(); ctx.arc(px[scene.selectedNode], py[scene.selectedNode], Math.max(7, R * 0.025), 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(202, 238, 219, .95)'; ctx.lineWidth = 3; ctx.stroke();
+    }
     if (snapshot) this.renderNetwork(scene, px, py, facing, R, cx, cy, dir);
   }
 
@@ -129,15 +146,6 @@ export class Canvas2DRenderer {
       ctx.stroke();
     }
 
-    // Signals
-    for (const sig of snap.signals) {
-      if (facing[sig.node] <= 0) continue;
-      ctx.beginPath();
-      ctx.arc(px[sig.node], py[sig.node], R * 0.22, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255, 212, 121, ${0.6 * fade})`;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
   }
 
   dispose() { /* no persistent GPU resources */ }

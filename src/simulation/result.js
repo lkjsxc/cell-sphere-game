@@ -6,6 +6,7 @@ import { deriveImprint } from './imprint.js';
 export function buildRunResult(s) {
   return {
     seed: s.seed,
+    archetype: s.fields.archetypeName,
     tick: s.tick,
     survivalSeconds: s.tick / B.TICKS_PER_SECOND,
     cause: s.extinction?.cause ?? 'unknown',
@@ -21,6 +22,8 @@ export function buildRunResult(s) {
     minConnectedWhileMajority: s.minConnectedWhileMajority,
     totalUptake: s.totalUptake,
     totalMaintenance: s.totalMaintenance,
+    scoreRate: s.traits.scoreRate,
+    challengeMult: s.challenge?.scoreMult ?? 1,
     crisesTotal: s.crisesTotal,
     crisesEndured: s.crisesEndured,
     ownedCards: s.ownedCards.slice(),

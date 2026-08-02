@@ -5,6 +5,8 @@ import { RunController } from '../../src/simulation/simulator.js';
 import { REPLAY, REPLAY_VERSION } from '../../src/simulation/replay.js';
 import { BALANCE as B } from '../../src/game/balance.js';
 import { scoreResult } from '../../src/game/scoring.js';
+import { compileMemory, MEMORY_NODES } from '../../src/game/memory.js';
+import { appendWorld, loadHistory, normalizeHistoryEvents, saveHistory, serializeHistory } from '../../src/platform/history.js';
 
 function runFull(cfg, chunk = 50) {
   const controller = new RunController(cfg);
@@ -85,6 +87,20 @@ test('zero-input default random run completes with every offer selected', () => 
   assert.ok(result.offers.every((offer) => offer.offerTick === offer.resolvedTick));
 });
 
+test('hundreds of inspections and snapshot views are observationally neutral', () => {
+  const config = { seed: 1357911, strainId: 'pioneer' };
+  const quiet = runFull(config, 17); const controller = new RunController(config); controller.start();
+  let views = 0;
+  while (controller.state.status !== 'extinct') {
+    controller.advance(17); controller.snapshot();
+    for (let i = 0; i < 3; i++) { controller.inspectCell((views * 97 + i * 31) % controller.state.topo.nodeCount); views++; }
+  }
+  const observed = controller.buildResult(); assert.ok(views > 500);
+  assert.deepEqual(semanticResult(observed), semanticResult(quiet));
+  assert.deepEqual(scoreResult(observed), scoreResult(quiet));
+  assert.deepEqual(observed.history, quiet.history); assert.deepEqual(observed.imprint, quiet.imprint);
+});
+
 test('decision stream and mode changes are isolated from world/event/growth/content', () => {
   const random = new RunController({ seed: 7777, adaptationMode: 'random' });
   const manual = new RunController({ seed: 7777, adaptationMode: 'manual' });
@@ -122,6 +138,31 @@ test('replay schema 2 distinguishes offers, selections, modes, ids, and ticks', 
   const selections = result.replay.filter((entry) => entry[1] === REPLAY.ADAPTATION_SELECT);
   assert.ok(offers.every((entry) => entry.length === 6));
   assert.ok(selections.every((entry) => entry[0] === entry[4]));
+});
+
+test('owned conditional Memory compiles once and changes only its named future condition', () => {
+  const owned = MEMORY_NODES.filter((node) => node.branch === 'Reach').slice(0, 9).map((node) => node.id);
+  const memory = compileMemory({ memoryNodes: owned });
+  const controller = new RunController({ seed: 9182, memoryEffects: memory.effects,
+    memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks });
+  controller.start(); controller.advance(1);
+  assert.equal(memory.conditionals.some((effect) => effect.trigger === 'coverage-below-25'), true);
+  assert.ok(controller.state.activeTraits.reach > controller.state.traits.reach);
+  assert.equal(controller.state.activeTraits.maintenance, controller.state.traits.maintenance);
+});
+
+test('semantic History validates, prunes, serializes, and survives storage failure', () => {
+  const result = runFull({ seed: 443322 }); const score = scoreResult(result);
+  const events = normalizeHistoryEvents(result.history);
+  assert.ok(events.length > 5 && events.length <= 80);
+  for (let i = 1; i < events.length; i++) { assert.ok(events[i].seq > events[i - 1].seq); assert.ok(events[i].tick >= events[i - 1].tick); }
+  let archive = { schema: 1, worlds: [], memory: [] };
+  for (let run = 1; run <= 35; run++) archive = appendWorld(archive, { ...result, seed: run }, score, run, 24);
+  assert.equal(archive.worlds.length, 24); assert.ok(serializeHistory(archive).length < 700000);
+  globalThis.localStorage = { getItem: () => '{broken', setItem: () => {} };
+  try { assert.deepEqual(loadHistory(), { schema: 1, worlds: [], memory: [] });
+    globalThis.localStorage.setItem = () => { throw new Error('quota'); }; assert.equal(saveHistory(archive), false); }
+  finally { delete globalThis.localStorage; }
 });
 
 function eventShape(event) {

@@ -1,4 +1,4 @@
-/** Explicit screen/run state; overlays such as pause do not change run truth. */
+/** Primary world screen only. Simulation and overlays are independent state. */
 import { createStateMachine } from '../core/state-machine.js';
 
 export function createAppState() {
@@ -7,8 +7,7 @@ export function createAppState() {
     transitions: {
       title: { begin: 'starting' },
       starting: { ready: 'running', fail: 'title' },
-      running: { draft: 'draft', extinct: 'result' },
-      draft: { choose: 'running', extinct: 'result' },
+      running: { extinct: 'result' },
       result: { memory: 'memory', restart: 'starting' },
       memory: { restart: 'starting' },
     },

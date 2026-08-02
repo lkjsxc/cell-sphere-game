@@ -1,13 +1,24 @@
 # src/interface/
 
-DOM-facing game interface. It renders screen state and sends explicit player
-intent to the app controller; it never reads or mutates simulation arrays.
+DOM-facing composition. It translates player intent into explicit commands;
+it never mutates simulation arrays or consumes authoritative randomness.
 
 | Module | Responsibility |
-| --- | --- |
-| `app-controller.js` | Composition, worker/fallback lifecycle, camera/input, visibility handling. |
-| `app-state.js` | Legal title/run/draft/result transitions. |
-| `surfaces.js` | Semantic DOM updates for HUD, drafts, and results. |
+|---|---|
+| `app-controller.js` | Primary screens, one-overlay ownership, persistence transactions. |
+| `app-state.js` | Legal title → running → result → Memory screen transitions. |
+| `run-driver.js` | Worker-first timing with the same main-thread fallback controller. |
+| `globe-input.js` | Tap/drag/pinch/wheel classification and pointer capture. |
+| `camera-policy.js` | Optional idle rotation, interruption, and reduced-motion gate. |
+| `pause-control.js` | Independent manual/hidden/panel pause reasons. |
+| `surfaces.js` | Core HUD, result, notices, and screen visibility. |
+| `inspector-surface.js` | Read-only static geography and low-cadence living detail. |
+| `panel-surfaces.js` | Explicit Adaptation and Memory-node/list interactions. |
+| `history-surface.js` | Semantic current/past timelines and location actions. |
+| `settings-surface.js` | Live validated preference form and local-data actions. |
+| `app-data.js` | Quality/DPR, seed, and export/import browser helpers. |
 
-Snapshots and terminal summaries enter through the controller. Simulation,
-rendering, and persistence remain outside this directory.
+Primary screen, simulation status, and overlay are separate concerns. Ordinary
+world taps only select cells; only Memory-node Unlock commands spend currency.
+Full-screen panels continue world time unless the panel pause preference owns
+its explicit pause reason.
