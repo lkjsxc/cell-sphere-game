@@ -81,9 +81,9 @@ class GameApp {
       onTap: (x, y) => this.tapGlobe(x, y), onInterrupt: interrupt, onInteractionStart: interrupt,
       onInteractionEnd: () => interruptCameraPolicy(this.cameraPolicy, performance.now()) }); }
   bindLifecycle() {
-    const resize = () => this.resize(true); if (typeof ResizeObserver === 'function') new ResizeObserver(resize).observe(this.canvas); else addEventListener('resize', resize);
-    document.addEventListener('visibilitychange', () => { this.pause.set('hidden', document.hidden && ['starting', 'running'].includes(this.state));
-      this.pauseContinuation('hidden', document.hidden); });
+    const resize = () => this.resize(true); const stopNext = () => { if (this.state === 'result') this.pauseContinuation('interaction', true); };
+    if (typeof ResizeObserver === 'function') new ResizeObserver(resize).observe(this.canvas); else addEventListener('resize', resize); this.el.result.addEventListener('pointerdown', stopNext); document.addEventListener('keydown', stopNext);
+    document.addEventListener('visibilitychange', () => { this.pause.set('hidden', document.hidden && ['starting', 'running'].includes(this.state)); this.pauseContinuation('hidden', document.hidden); });
   }
   tapGlobe(x, y) {
     const hit = pickNode(this.canvas, x, y, this.camera, this.topo); if (!hit) return;
