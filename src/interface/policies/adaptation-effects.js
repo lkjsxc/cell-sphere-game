@@ -1,6 +1,6 @@
 /** Bridges presentation-only Adaptation messages to bounded rendering and caption UI. */
-import { AdaptationPropagation } from '../rendering/adaptation-propagation.js';
-import { ADAPTATION_COPY } from './panel-surfaces.js';
+import { AdaptationPropagation } from '../../rendering/adaptation-propagation.js';
+import { ADAPTATION_COPY } from '../panel-surfaces.js';
 
 export function createAdaptationEffects(topo, host) {
   const propagation = new AdaptationPropagation(topo); let pending = []; let captionTimer = 0;

@@ -15,7 +15,7 @@ import { appendMemoryEvent, appendWorld, clearHistory, loadHistory, normalizeHis
 import { applySettingsToDocument, saveSettings } from '../platform/settings.js';
 import { createAppState } from './app-state.js';
 import { createRunDriver } from './run-driver.js';
-import { handleRunMessage } from './app-message.js'; import { createAdaptationEffects } from './adaptation-effects.js';
+import { handleRunMessage } from './app-message.js'; import { createAdaptationEffects } from './policies/adaptation-effects.js';
 import { createPauseControl } from './pause-control.js';
 import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from './camera-policy.js';
 import { createSurfaceCoordinator } from './policies/surface-coordinator.js';
