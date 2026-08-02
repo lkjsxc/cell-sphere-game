@@ -12,7 +12,11 @@ export async function runScenario(t) {
   const idleBefore = await evaluate('window.__IN_APP__.camera.direction.slice()'); await wait(650);
   const idleAfter = await evaluate('window.__IN_APP__.camera.direction.slice()');
   ok(distance(idleBefore, idleAfter) < 1e-8, 'globe rotated although default auto-rotation is off');
-  await screenshot('browser-title-mobile.png'); await drag([150, 350], [230, 420]);
+  await screenshot('browser-title-mobile.png');
+  for (const [width, height, name] of [[430,932,'browser-title-430.png'],[768,1024,'browser-title-tablet.png'],[1024,768,'browser-title-landscape.png'],[1440,900,'browser-title-1440.png'],[1920,1080,'browser-title-1920.png']]) {
+    await setViewport(width, height); await wait(220); ok(await evaluate('document.documentElement.scrollWidth<=innerWidth && document.documentElement.scrollHeight<=innerHeight'), `title overflow at ${width}x${height}`); await screenshot(name);
+  }
+  await setViewport(390, 844); await wait(220); await drag([150, 350], [230, 420]);
   const dragged = await evaluate('window.__IN_APP__.camera.direction.slice()');
   ok(distance(idleAfter, dragged) > 0.05, 'free orbit did not change camera');
 
@@ -20,9 +24,14 @@ export async function runScenario(t) {
   ok(await evaluate("!document.getElementById('cell-inspector').hidden"), 'title tap did not open inspector');
   await evaluate(`(() => { const mark=window.__IN_APP__.fields.landmarks.find(item=>item.kind===2); if(mark) window.__IN_APP__.selectCell(mark.cell); })()`);
   await screenshot('browser-inspector-mobile.png');
-  await evaluate("document.getElementById('inspector-close').click()");
+  for (const [width, height, name] of [[430,932,'browser-inspector-430.png'],[768,1024,'browser-inspector-tablet.png'],[1440,900,'browser-inspector-desktop.png']]) {
+    await setViewport(width, height); if(width > 900) await evaluate('window.__IN_APP__.camera.dist=4.2'); await wait(180); const bounds=await evaluate(`(() => { const r=document.getElementById('cell-inspector').getBoundingClientRect(); return {left:r.left,top:r.top,width:r.width,height:r.height}; })()`);
+    ok(width < 900 ? bounds.top >= height * .58 : bounds.left < width * .35 && bounds.width <= width * .34, `inspector placement at ${width}x${height}`); await screenshot(name);
+  }
+  await setViewport(390,844); await evaluate('window.__IN_APP__.camera.dist=6'); await wait(150); await evaluate("document.getElementById('inspector-close').click()");
 
   await evaluate("document.querySelector('.settings-open').click()"); await screenshot('browser-settings-mobile.png');
+  await setViewport(1440,900); await evaluate('window.__IN_APP__.camera.dist=4.1'); await wait(180); await screenshot('browser-settings-desktop.png'); await setViewport(390,844); await evaluate('window.__IN_APP__.camera.dist=6'); await wait(150);
   await evaluate(`(() => { const input=document.querySelector('[name=idleRotation]'); input.value='gentle';
     input.dispatchEvent(new Event('change',{bubbles:true})); document.getElementById('settings-close').click(); })()`);
   const rotateBefore = await evaluate('window.__IN_APP__.camera.direction.slice()'); await wait(5500);
@@ -42,7 +51,8 @@ export async function runScenario(t) {
   await evaluate("document.getElementById('adaptations-button').click()"); await wait(650);
   const panelTick = await evaluate('window.__IN_APP__.snapshot.tick');
   ok(panelTick > pendingTick, 'Adaptations panel stopped world time'); await screenshot('browser-adaptations-mobile.png');
-  await evaluate("document.getElementById('adaptations-close').click()");
+  await setViewport(1440,900); await evaluate('window.__IN_APP__.camera.dist=4.1'); await wait(180); await screenshot('browser-adaptations-desktop.png');
+  await setViewport(390,844); await evaluate('window.__IN_APP__.camera.dist=6'); await wait(150); await evaluate("document.getElementById('adaptations-close').click()");
   ok(await evaluate("window.__IN_APP__.offers.some(offer=>offer.id===0&&offer.resolvedTick==null)"), 'closing Adaptations discarded the offer');
   await evaluate(`(() => { document.getElementById('adaptations-button').click(); document.querySelector('#adaptation-cards .card').click();
     document.getElementById('adaptations-close').click(); })()`);
@@ -86,10 +96,11 @@ export async function runScenario(t) {
   ok(await evaluate(`(() => { const s=window.__IN_APP__.historySnapshot; return s?.approximate && s.lifeState.length===2562
     && !('edgeActive' in s) && !('conductance' in s) && !('flux' in s); })()`), 'scrub did not project a cell-only checkpoint');
   await evaluate(`(() => { const previous=document.getElementById('history-prev'); for(let i=0;i<20&&!window.__IN_APP__.historyHighlights.length;i++) previous.click(); })()`);
-  ok(await evaluate('window.__IN_APP__.historyHighlights.length > 0'), 'event navigation did not highlight primary cells');
-  await evaluate("document.getElementById('history-next').click(); document.getElementById('history-live').click()");
+  await screenshot('browser-history-scrub-mobile.png'); ok(await evaluate('window.__IN_APP__.historyHighlights.length > 0'), 'event navigation did not highlight primary cells');
+  await screenshot('browser-history-event-mobile.png'); await evaluate("document.getElementById('history-next').click(); document.getElementById('history-live').click()");
   ok(await evaluate('window.__IN_APP__.historySnapshot===null && window.__IN_APP__.visualSeed===window.__IN_APP__.runSeed'), 'Live did not restore authoritative presentation');
-  await screenshot('browser-history-mobile.png'); await evaluate("document.getElementById('history-close').click()");
+  await screenshot('browser-history-mobile.png'); await setViewport(1440,900); await evaluate('window.__IN_APP__.camera.dist=4.1'); await wait(180); await screenshot('browser-history-desktop.png');
+  await setViewport(390,844); await evaluate('window.__IN_APP__.camera.dist=6'); await wait(150); await evaluate("document.getElementById('history-close').click()");
 
   ok(await poll(() => evaluate("document.getElementById('result-screen').hidden"), (hidden) => hidden === false, 40000),
     '32x run did not reach extinction');
@@ -100,8 +111,8 @@ export async function runScenario(t) {
   ok(await evaluate(`window.__IN_APP__.adaptationEffects.queueLength===0
     && window.__IN_APP__.adaptationEffects.retainedBytes===0
     && document.getElementById('adaptation-caption').hidden`), 'result retained Adaptation presentation state');
-  await screenshot('browser-result-mobile.png');
-  await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-result-history-mobile.png');
+  await screenshot('browser-result-mobile.png'); await setViewport(1440,900); await evaluate('window.__IN_APP__.camera.dist=4.1'); await wait(180); await screenshot('browser-result-desktop.png');
+  await setViewport(390,844); await evaluate('window.__IN_APP__.camera.dist=6'); await wait(150); await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-result-history-mobile.png');
   await evaluate("document.getElementById('history-close').click(); document.getElementById('memory-button').click()"); await wait(300);
   const atlas = await evaluate(`(() => { const app=window.__IN_APP__, snap=app.memorySnapshot; return {
     nodes:snap.nodeStates.length,cells:snap.memoryStatus.length,level:app.topo.levels,frontier:snap.nodeStates.filter(n=>n.reachable).length,
@@ -130,10 +141,16 @@ export async function runScenario(t) {
     return {left:r.left,right:r.right,width:r.width,viewport:innerWidth}; })()`);
   ok(desktopPanel.left < desktopPanel.viewport * 0.45 && desktopPanel.right < desktopPanel.viewport * 0.62,
     'desktop Memory detail is not a safe left surface'); await screenshot('browser-memory-desktop.png');
-  await evaluate('location.reload()'); await wait(3000);
+  await evaluate("document.getElementById('memory-node-close').click(); document.querySelector('#memory-screen .history-open').click()"); await wait(250);
+  await evaluate("document.getElementById('history-close').click()"); ok(await evaluate('window.__IN_APP__.topo.levels===3 && window.__IN_APP__.memorySnapshot.memoryStatus.length===642'), 'History did not restore the Memory atlas');
+  const ownedBeforeAuto = await evaluate('window.__IN_APP__.meta.memoryNodes.length'); await evaluate("document.getElementById('restart-button').click()");
+  ok(await poll(() => evaluate("document.getElementById('result-screen').hidden"), (hidden) => hidden === false, 40000), 'second unattended run did not finish');
+  ok(await poll(() => evaluate('window.__IN_APP__.state'), (state) => state === 'running', 14000), 'result countdown did not start the next world');
+  ok(await evaluate(`window.__IN_APP__.meta.runs>=2 && window.__IN_APP__.meta.memoryNodes.length===${ownedBeforeAuto}`), 'automatic continuation duplicated or spent progression');
+  await screenshot('browser-auto-next-desktop.png'); await evaluate('location.reload()'); await wait(3000);
   const persisted = await evaluate(`(() => { const meta=JSON.parse(localStorage.getItem('incremental-network-game:meta:v1'));
     const history=JSON.parse(localStorage.getItem('incremental-network-game:history:v2')); return {nodes:meta.memoryNodes.length,worlds:history.worlds.length}; })()`);
-  ok(persisted.nodes >= 4 && persisted.worlds >= 1, 'Memory or semantic History did not persist');
+  ok(persisted.nodes >= 4 && persisted.worlds >= 2, 'Memory or semantic History did not persist');
   const idb = await evaluate('window.__IN_APP__.historyPlayback.recentRuns.ready()');
   if (idb) { await evaluate("document.querySelector('#title-screen .history-open').click()");
     ok(await poll(() => evaluate("document.getElementById('history-visual-note').hidden"), Boolean, 4000), 'IndexedDB visual History did not reload');

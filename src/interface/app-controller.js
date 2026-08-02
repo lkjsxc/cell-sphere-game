@@ -1,4 +1,3 @@
-import { scoreResult } from '../game/scoring.js';
 import { buildMemorySnapshot, compileMemory, createMemoryFields, getMemoryNode, MEMORY_ATLAS_REVERSE, MEMORY_NODES, purchaseMemory } from '../game/memory.js';
 import { createRng } from '../core/prng.js';
 import { createTopology } from '../world/icosphere.js';
@@ -9,8 +8,8 @@ import { AttractState } from '../rendering/attract-state.js';
 import { createCamera, focusCamera, applyInertia } from '../rendering/camera.js';
 import { pickNode } from '../rendering/picking.js';
 import { bindGlobeInput } from './globe-input.js';
-import { convertImprintToAtlas, loadMeta, saveMeta, defaultMeta } from '../platform/storage.js';
-import { appendMemoryEvent, appendWorld, clearHistory, loadHistory, normalizeHistoryEvents, parseHistory, saveHistory, serializeHistory } from '../platform/history.js';
+import { loadMeta, saveMeta, defaultMeta } from '../platform/storage.js';
+import { appendMemoryEvent, clearHistory, loadHistory, normalizeHistoryEvents, parseHistory, saveHistory, serializeHistory } from '../platform/history.js';
 import { applySettingsToDocument, saveSettings } from '../platform/settings.js';
 import { createAppState } from './app-state.js';
 import { createRunDriver } from './run-driver.js';
@@ -20,6 +19,7 @@ import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from './
 import { createSurfaceCoordinator } from './policies/surface-coordinator.js';
 import { applySafeLayout, safeLayout } from './policies/layout-policy.js';
 import { advanceContinuation, cancelContinuation, continuationLabel, createContinuation, setContinuationPause, startContinuation } from './policies/continuation.js';
+import { applyRunResult } from './policies/run-result.js';
 import { createHistorySurface } from './history-surface.js'; import { createHistoryPlayback } from './history-playback.js';
 import { createInspectorSurface } from './inspector-surface.js';
 import { createAdaptationSurface, createMemorySurface } from './panel-surfaces.js';
@@ -35,7 +35,7 @@ class GameApp {
     this.flow = createAppState(); this.speed = settings.speed; this.snapshot = null; this.selectedNode = null;
     this.renderer = null; this.fields = null; this.worldFields = null; this.atlasFields = createMemoryFields(this.topo3); this.attract = null;
     this.memorySnapshot = null; this.overlay = null;
-    this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null; this.requestId = 0;
+    this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null; this.lastResultKey = null; this.requestId = 0;
     this.runSeed = null; this.visualSeed = null; this.historySnapshot = null; this.historyHighlights = [];
     this.last = performance.now(); this.lastRender = 0; this.lastInspect = 0; this.cameraPolicy = createCameraPolicy(this.last);
     this.driver = createRunDriver(caps, (message) => this.message(message)); this.pause = createPauseControl((paused) => this.applyPause(paused)); this.surfaces = createSurfaceCoordinator(() => this.closeActiveOverlay());
@@ -119,14 +119,12 @@ class GameApp {
   setSpeed(value) { this.speed = value; this.settings = { ...this.settings, speed: value }; saveSettings(this.settings); this.driver.setSpeed(value); }
   applyPause(paused) { this.driver.setPaused(paused); this.el.pause.setAttribute('aria-pressed', String(paused)); this.el.pause.textContent = paused ? 'Resume' : 'Pause'; }
   finishRun(result) {
-    this.closeActiveOverlay(); this.adaptationEffects.clear(); this.selectedNode = null; this.flow.send('extinct'); this.lastResult = result; this.currentHistory = normalizeHistoryEvents(result.history); const score = scoreResult(result);
-    const next = { ...this.meta, runs: this.meta.runs + 1, totalEchoes: this.meta.totalEchoes + score.echoes,
-      echoBalance: this.meta.echoBalance + score.echoes, bestScore: Math.max(this.meta.bestScore, score.total),
-      imprints: result.imprint.edges.length ? [...this.meta.imprints, convertImprintToAtlas(result.imprint)].filter(Boolean).slice(-8) : this.meta.imprints };
-    this.meta = next; if (!saveMeta(next)) ui.announce(this.el, 'Progress is temporary because browser storage is unavailable.');
-    this.archive = appendWorld(this.archive, result, score, next.runs, this.settings.historyRetention); saveHistory(this.archive, this.settings.historyRetention);
-    const record = this.archive.worlds.at(-1); this.historyPlayback.save(record && { id: record.id, seed: record.seed, completedAt: next.runs });
-    ui.showResult(this.el, score, { ...result, adaptationOffers: result.offers }); this.resize(false);
+    const transaction = applyRunResult(this.meta, this.archive, result, this.settings.historyRetention, this.lastResultKey); if (!transaction.applied) return;
+    this.lastResultKey = transaction.key; this.closeActiveOverlay(); this.adaptationEffects.clear(); this.selectedNode = null; this.flow.send('extinct');
+    this.lastResult = result; this.currentHistory = normalizeHistoryEvents(result.history); this.meta = transaction.meta; this.archive = transaction.archive;
+    if (!saveMeta(this.meta)) ui.announce(this.el, 'Progress is temporary because browser storage is unavailable.'); saveHistory(this.archive, this.settings.historyRetention);
+    const record = this.archive.worlds.at(-1); this.historyPlayback.save(record && { id: record.id, seed: record.seed, completedAt: this.meta.runs });
+    ui.showResult(this.el, transaction.score, { ...result, adaptationOffers: result.offers }); this.resize(false);
     if (this.settings.autoContinue) { startContinuation(this.continuation, performance.now()); this.updateContinuation(); }
   }
   enterMemory() { this.closeActiveOverlay(); this.adaptationEffects.clear(); cancelContinuation(this.continuation); this.el.countdown.textContent = ''; this.flow.send('memory'); this.selectedNode = null;

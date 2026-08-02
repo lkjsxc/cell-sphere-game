@@ -1,0 +1,35 @@
+/** Nonvisual soak for persistent result-to-next-world ownership. */
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { RunController } from '../../src/simulation/simulator.js';
+import { defaultMeta } from '../../src/platform/storage.js';
+import { clearHistory, serializeHistory } from '../../src/platform/history.js';
+import { createAppState } from '../../src/interface/app-state.js';
+import { applyRunResult } from '../../src/interface/policies/run-result.js';
+import { advanceContinuation, createContinuation, setContinuationPause,
+  startContinuation } from '../../src/interface/policies/continuation.js';
+
+function complete(seed, manual) {
+  const run = new RunController({ seed, adaptationMode: manual ? 'manual' : 'random' }); run.start();
+  let guard = 0; while (run.state.status !== 'extinct' && guard++ < 500) run.advance(50);
+  assert.equal(run.state.status, 'extinct'); return run.buildResult();
+}
+
+test('100 unattended result transitions award once and remain bounded', { timeout: 30_000 }, () => {
+  let meta = defaultMeta(); let archive = clearHistory(); let lastKey = null; let echoes = 0; let now = 0;
+  const flow = createAppState(); const countdown = createContinuation(9000); const heapStart = process.memoryUsage().heapUsed;
+  for (let world = 0; world < 100; world++) {
+    flow.send(world ? 'restart' : 'begin'); flow.send('ready'); const result = complete(5_000_000 + world, world % 5 === 0);
+    flow.send('extinct'); const transaction = applyRunResult(meta, archive, result, 24, lastKey);
+    assert.equal(transaction.applied, true); meta = transaction.meta; archive = transaction.archive;
+    lastKey = transaction.key; echoes += transaction.score.echoes;
+    assert.equal(applyRunResult(meta, archive, result, 24, lastKey).applied, false, 'duplicate result awarded');
+    startContinuation(countdown, now); now += 4000; assert.equal(advanceContinuation(countdown, now), false);
+    if (world % 10 === 0) { setContinuationPause(countdown, 'hidden', true, now); now += 30_000;
+      assert.equal(advanceContinuation(countdown, now), false); setContinuationPause(countdown, 'hidden', false, now); }
+    now += 5000; assert.equal(advanceContinuation(countdown, now), true);
+  }
+  assert.equal(meta.runs, 100); assert.equal(meta.totalEchoes, echoes); assert.equal(meta.echoBalance, echoes);
+  assert.equal(archive.worlds.length, 24); assert.ok(serializeHistory(archive, 24).length < 700_000);
+  assert.ok(meta.imprints.length <= 8); assert.ok(process.memoryUsage().heapUsed - heapStart < 160 * 1024 * 1024);
+});
