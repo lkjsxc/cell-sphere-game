@@ -178,8 +178,7 @@ class GameApp {
   } catch { ui.announce(this.el, 'That local-data action could not be completed.'); } }
   availableMemory() { return this.memorySnapshot?.nodeStates?.filter((node) => node.reachable && !node.owned).length ?? 0; }
   pauseContinuation(reason, paused) { setContinuationPause(this.continuation, reason, paused, performance.now()); this.updateContinuation(); }
-  updateContinuation() { const label = continuationLabel(this.continuation); if (label === this.countdownLabel) return;
-    this.countdownLabel = label; this.el.countdown.textContent = label; }
+  updateContinuation() { const label = continuationLabel(this.continuation); if (label === this.countdownLabel) return; this.countdownLabel = label; this.el.countdown.textContent = label; }
   resize(preserveZoom = true) { const layout = safeLayout(this.canvas.clientWidth, this.canvas.clientHeight, this.state, this.surfaces.bounds());
     applySafeLayout(this.camera, layout, preserveZoom); this.renderer?.resize(this.canvas.clientWidth, this.canvas.clientHeight, qualityDpr(this.settings, this.caps)); }
   frame(now) { const dt = Math.min(100, now - this.last); this.last = now; this.driver.frame(dt, now);

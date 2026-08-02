@@ -5,7 +5,7 @@ import { createRecentRuns } from '../platform/recent-runs.js';
 
 export function createHistoryPlayback(app) {
   const recent = createRecentRuns(); const loads = createHistoryLoadGuard(); const requests = new Map();
-  let requestId = 0; let decoded = null; let buffers = null; let seedBefore = null;
+  let requestId = 0; let decoded = null; let buffers = null; let seedBefore = null; let memoryBefore = false;
   function request(kind, record = null) {
     const id = ++requestId; requests.set(id, { kind, record, generation: app.driver.generation });
     app.driver.message({ t: 'history-buffer', requestId: id }); return id;
@@ -20,7 +20,7 @@ export function createHistoryPlayback(app) {
   }
   function save(record) { if (record) request('save', record); }
   function open(scope = null) {
-    seedBefore = app.visualSeed; decoded = null; buffers = null; app.historySnapshot = null; app.historyHighlights = [];
+    seedBefore = app.visualSeed; memoryBefore = app.state === 'memory'; decoded = null; buffers = null; app.historySnapshot = null; app.historyHighlights = [];
     const worlds = [];
     if (['starting', 'running', 'result'].includes(app.state)) worlds.push({ id: 'current', current: true,
       label: app.state === 'result' ? `Latest world · seed ${app.runSeed}` : `Current world · seed ${app.runSeed}`,
@@ -58,7 +58,10 @@ export function createHistoryPlayback(app) {
   }
   function close() { loads.invalidate(); requests.forEach((value, key) => { if (value.kind === 'view') requests.delete(key); });
     app.historySnapshot = null; app.historyHighlights = []; restoreFields(); decoded = null; buffers = null; }
-  function restoreFields() { if (seedBefore != null && app.visualSeed !== seedBefore) { app.makeRenderer(seedBefore); app.resize(true); } }
+  function restoreFields() {
+    if (memoryBefore && app.topo !== app.topo3) { app.makeRenderer(0, true); app.resize(true); return; }
+    if (!memoryBefore && seedBefore != null && (app.visualSeed !== seedBefore || app.topo !== app.topo4)) { app.makeRenderer(seedBefore); app.resize(true); }
+  }
   function useDecoded(value) { decoded = value; buffers = createPreviewBuffers(value.cellCount); }
   return { open, close, handle, save, selectWorld, seek, live, clear: () => recent.clear(), get recentRuns() { return recent; } };
 }

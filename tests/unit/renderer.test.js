@@ -13,6 +13,7 @@ import { createCamera, cameraEye, viewProjection, cameraRay, intersectUnitSphere
 import { LIFE_STATE, writeLifeStates } from '../../src/core/life-state.js';
 import * as SH from '../../src/rendering/shaders.js';
 import * as SHB from '../../src/rendering/shaders-boundary.js';
+import * as SHS from '../../src/rendering/shaders-shell.js';
 import { parseUniformNames } from '../../src/rendering/gl-utils.js';
 import { createCellGeometry } from '../../src/rendering/cell-geometry.js';
 import { AttractState } from '../../src/rendering/attract-state.js';
@@ -98,9 +99,9 @@ test('every declared uniform is uploaded by the renderer modules', () => {
     while ((m = re.exec(src)) !== null) uploaded.add(m[1]);
   }
   const programs = {
-    background: [SH.VS_BACKGROUND, SH.FS_BACKGROUND],
+    background: [SHS.VS_BACKGROUND, SHS.FS_BACKGROUND],
     globe: [SH.VS_GLOBE, SH.FS_GLOBE],
-    atmosphere: [SH.VS_ATMOSPHERE, SH.FS_ATMOSPHERE],
+    atmosphere: [SHS.VS_ATMOSPHERE, SHS.FS_ATMOSPHERE],
     boundary: [SHB.VS_BOUNDARY, SHB.FS_BOUNDARY],
   };
   for (const [name, sources] of Object.entries(programs)) {

@@ -175,7 +175,7 @@ function memoryStyles(status, kind, fossil, fade) {
   if (!status && !fossil) return null;
   const selected = status >= 5; const plain = selected ? status - 4 : status;
   const special = kind >= 4; const stroke = selected ? 'rgba(225,244,232,.98)' : plain === 2 ? 'rgba(171,185,168,.65)' : null;
-  if (plain === 1) return { fill: `rgba(55,58,59,${0.68 * fade})`, inset: 'rgba(73,77,75,.36)', scale: 0.72, stroke, width: 1.2 };
+  if (plain === 1) return { fill: `rgba(55,58,59,${0.68 * fade})`, stroke, width: 1.2 };
   if (plain === 2) return { fill: `rgba(104,119,105,${0.52 * fade})`, inset: 'rgba(38,43,41,.62)', scale: 0.62, stroke, width: 1.0 };
   if (plain === 3) return { fill: `rgba(177,202,137,${0.90 * fade})`, inset: 'rgba(230,235,184,.75)', scale: 0.54, stroke, width: 1.5 };
   if (plain === 4) return { fill: `rgba(117,158,128,${0.82 * fade})`, inset: special ? 'rgba(224,218,163,.78)' : 'rgba(197,220,185,.62)', scale: special ? 0.45 : 0.62, stroke, width: 1.5 };

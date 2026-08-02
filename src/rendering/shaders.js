@@ -102,7 +102,7 @@ void main() {
   float atlasKind = floor(fract(vLife.y) * 10.0 + 0.5);
   float selectedStatus = step(4.5, atlasStatus);
   float plainStatus = atlasStatus - selectedStatus * 4.0;
-  float lockedCell = 1.0 - step(1.5, plainStatus);
+  float lockedCell = step(0.5, plainStatus) * (1.0 - step(1.5, plainStatus));
   float unaffordableCell = step(1.5, plainStatus) * (1.0 - step(2.5, plainStatus));
   float affordableCell = step(2.5, plainStatus) * (1.0 - step(3.5, plainStatus));
   float ownedCell = step(3.5, plainStatus);
@@ -116,8 +116,8 @@ void main() {
   float fossil = fract(vLife.z); float emphasis = step(31.0, vLife.z);
   float broadGlyph = smoothstep(0.38, 0.60, abs(sin(dot(vPos, vec3(11.0, 7.0, 5.0)) * (1.0 + atlasKind * 0.12))));
   vec3 atlasBase = mix(vec3(0.13, 0.14, 0.145), vec3(0.30, 0.27, 0.22), fossil * 0.48);
-  atlasBase = mix(atlasBase, branchColor * 0.38, lockedCell * inset);
-  atlasBase = mix(atlasBase, branchColor * 0.68, unaffordableCell * (0.28 + inset * 0.28));
+  atlasBase = mix(atlasBase, branchColor * 0.28, lockedCell * 0.38);
+  atlasBase = mix(atlasBase, branchColor * 0.58, unaffordableCell * (0.40 + (1.0 - inset) * 0.26));
   atlasBase = mix(atlasBase, branchColor * 1.22, affordableCell * (0.64 + inset * 0.30));
   atlasBase = mix(atlasBase, branchColor * (0.82 + broadGlyph * 0.24), ownedCell * (0.58 + inset * 0.34));
   atlasBase += selectedStatus * vec3(0.24, 0.30, 0.26) * (0.45 + inset * 0.35);
@@ -163,9 +163,9 @@ void main() {
   else if (category < 4.5 && category > 3.5) { form = 0.58 + 0.42 * sin(distance * 1.73 - uAdaptationTime * 28.0); adaptationTint = vec3(0.63, 0.76, 0.58); }
   else if (category < 5.5 && category > 4.5) { form = 0.48 + moisture * 0.28 + forest * 0.30; adaptationTint = vec3(0.48, 0.74, 0.42); }
   else if (category > 5.5) { form = 0.62 + 0.18 * sin(dot(vCenter, vec3(191.0, 127.0, 83.0)) + distance); adaptationTint = vec3(0.72, 0.78, 0.73); }
-  float emphasis = reachable * wake * clamp(form, 0.15, 1.0);
-  col = mix(col, adaptationTint, emphasis * 0.42);
-  col += emphasis * (0.035 + inset * 0.045);
+  float adaptationEmphasis = reachable * wake * clamp(form, 0.15, 1.0);
+  col = mix(col, adaptationTint, adaptationEmphasis * 0.42);
+  col += adaptationEmphasis * (0.035 + inset * 0.045);
   float selected = uHasSelection * step(0.99994, dot(normalize(vCenter), uSelectedCenter));
   col = mix(col, vec3(0.78, 0.92, 0.84), selected * (0.34 + plate * 0.28));
   outColor = vec4(col, 1.0);
