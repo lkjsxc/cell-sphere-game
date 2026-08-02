@@ -70,9 +70,8 @@ function validateImprint(raw, sourceSchema) {
   if (!raw || typeof raw !== 'object' || raw.kind !== 'strongest-corridor') return null;
   if (!Number.isInteger(raw.seed) || raw.seed < 0 || raw.seed >= 0x40000000) return null;
   if (Array.isArray(raw.cells)) {
-    const cells = uniqueCells(raw.cells, 642).slice(0, 64);
-    return cells.length >= 1 ? { kind: raw.kind, seed: raw.seed, cells,
-      topology: { ...ATLAS_TOPOLOGY } } : null;
+    const cells = morphologyCells(createTopology(3), uniqueCells(raw.cells, 642).slice(0, 64));
+    return cells.length >= 32 ? { kind: raw.kind, seed: raw.seed, cells, topology: { ...ATLAS_TOPOLOGY } } : null;
   }
   if (!Array.isArray(raw.edges) || sourceSchema >= 5) return null;
   return projectLegacyEdges(raw);
@@ -81,21 +80,23 @@ function validateImprint(raw, sourceSchema) {
 function projectLegacyEdges(raw) {
   const world = createTopology(4); const atlas = createTopology(3);
   const edges = uniqueCells(raw.edges, world.edgeCount).slice(0, 28); if (!edges.length) return null;
-  const projected = edges.map((edge) => nearestMidpointCell(world, atlas, edge)); const cells = [];
-  for (const target of projected) {
-    if (!cells.length) cells.push(target);
+  const projected = edges.map((edge) => nearestMidpointCell(world, atlas, edge));
+  return { kind: raw.kind, seed: raw.seed, cells: morphologyCells(atlas, projected), topology: { ...ATLAS_TOPOLOGY } };
+}
+
+function morphologyCells(atlas, seeds) {
+  const cells = [];
+  for (const target of seeds) { if (!cells.length) cells.push(target);
     else for (const cell of shortestPath(atlas, cells.at(-1), target)) if (!cells.includes(cell)) cells.push(cell);
     if (cells.length >= 64) break;
   }
   const occupied = new Set(cells.slice(0, 64)); const queue = [...occupied];
-  for (let head = 0; occupied.size < 32 && head < queue.length; head++) {
-    const cell = queue[head]; for (let offset = atlas.nodeStart[cell]; offset < atlas.nodeStart[cell + 1] && occupied.size < 32; offset++) {
-      const next = atlas.nodeNeighbors[offset]; if (!occupied.has(next)) { occupied.add(next); queue.push(next); }
-    }
+  for (let head = 0; occupied.size < 32 && head < queue.length; head++) for (let offset = atlas.nodeStart[queue[head]];
+    offset < atlas.nodeStart[queue[head] + 1] && occupied.size < 32; offset++) {
+    const next = atlas.nodeNeighbors[offset]; if (!occupied.has(next)) { occupied.add(next); queue.push(next); }
   }
-  return { kind: raw.kind, seed: raw.seed, cells: [...occupied].slice(0, 64), topology: { ...ATLAS_TOPOLOGY } };
+  return [...occupied].slice(0, 64);
 }
-
 function nearestMidpointCell(world, atlas, edge) {
   const a = world.edgeA[edge] * 3; const b = world.edgeB[edge] * 3;
   const x = world.positions[a] + world.positions[b]; const y = world.positions[a + 1] + world.positions[b + 1];
