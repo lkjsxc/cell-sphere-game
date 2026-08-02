@@ -32,8 +32,8 @@ cross-origin isolation headers).
 ### Worker protocol (JSON messages + transferable typed arrays)
 
 main → worker:
-- `{t:'init', seed, config}` — build world + run state
-- `{t:'start', strain, challenge, memoryEffects, inoculate}` — begin
+- `{t:'init', cfg}` — build a versioned world/run configuration
+- `{t:'start'}` — begin the prepared deterministic run
 - `{t:'decide', card}` / `{t:'signal', node}` / `{t:'reroll'}`
 - `{t:'speed', value}` / `{t:'pause'}` / `{t:'resume'}` / `{t:'policy', p}`
 
@@ -51,15 +51,20 @@ never transmitted.
 - Canonical simulation state: worker (or fallback driver). Typed arrays, SoA.
 - Permanent progression/settings/archive: `platform/storage.js`
   (localStorage, versioned schema, validated on load, corruption-safe).
-- UI state: explicit finite state machine in `interface/app-state.js`.
-  Screens never toggle via ad-hoc class changes.
+- UI state: explicit finite state machine in `interface/app-state.js`; semantic
+  surfaces receive snapshots and terminal summaries only.
 
 ### App states
 
-boot → title → strain-select → inoculation → running ⇄ adaptation-draft /
-paused → extinction → result → (memory-globe | trophy-gallery | archive |
-settings | diagnostics overlays) → title/strain-select. Overlays keep the
-underlying state explicit.
+Implemented by `src/interface/app-state.js`:
+
+```text
+title → starting → running ⇄ adaptation-draft → result → starting
+```
+
+Pause is an explicit overlay that never advances the worker or fallback.
+Memory Globe, archive, trophy, and settings routes remain future states; they
+are intentionally absent from the live UI rather than shipped as dead controls.
 
 ## Persistence
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="incremental-network-game — 球体世界に網状生命を育て、絶滅を次の記憶へ変える。1本指で遊ぶ球体ローグライト・インクリメンタル。">
+  <meta name="description" content="incremental-network-game — 球体世界に網状生命を育て、絶滅を次の記憶へ変える。">
   <meta name="theme-color" content="#04070d">
   <meta name="color-scheme" content="dark">
   <title>incremental-network-game — Every extinction becomes memory.</title>
@@ -19,36 +19,71 @@
   <div id="app">
     <canvas id="gl-canvas" aria-label="incremental-network-game の球体世界" role="img"></canvas>
 
-    <!-- Title screen -->
     <section id="title-screen" class="screen" aria-labelledby="title-heading">
       <div class="title-identity">
         <svg class="title-mark" width="56" height="56" viewBox="0 0 64 64" aria-hidden="true">
           <circle cx="32" cy="32" r="27" fill="none" stroke="#35d0b0" stroke-width="2"/>
-          <path d="M12 24 L30 14 L44 22 L52 40 L36 50 L18 44 Z" fill="none"
-                stroke="#6ef3d6" stroke-width="1.5" stroke-linejoin="round"/>
-          <path d="M30 14 L36 50 M12 24 L44 22 M52 40 L18 44" fill="none"
-                stroke="#6ef3d6" stroke-width="1" opacity="0.7"/>
-          <circle cx="30" cy="14" r="2.5" fill="#ffd479"/>
-          <circle cx="12" cy="24" r="2" fill="#6ef3d6"/>
-          <circle cx="44" cy="22" r="2" fill="#6ef3d6"/>
-          <circle cx="52" cy="40" r="2" fill="#6ef3d6"/>
-          <circle cx="36" cy="50" r="2" fill="#6ef3d6"/>
-          <circle cx="18" cy="44" r="2" fill="#6ef3d6"/>
+          <path d="M12 24 L30 14 L44 22 L52 40 L36 50 L18 44 Z" fill="none" stroke="#6ef3d6" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M30 14 L36 50 M12 24 L44 22 M52 40 L18 44" fill="none" stroke="#6ef3d6" stroke-width="1" opacity="0.7"/>
+          <circle cx="30" cy="14" r="2.5" fill="#ffd479"/><circle cx="12" cy="24" r="2" fill="#6ef3d6"/>
+          <circle cx="44" cy="22" r="2" fill="#6ef3d6"/><circle cx="52" cy="40" r="2" fill="#6ef3d6"/>
+          <circle cx="36" cy="50" r="2" fill="#6ef3d6"/><circle cx="18" cy="44" r="2" fill="#6ef3d6"/>
         </svg>
         <h1 id="title-heading">incremental-network-game</h1>
         <p class="title-tagline">Every extinction becomes memory.</p>
         <p class="title-premise">球体世界に網状生命を育て、絶滅を次の記憶へ変える。</p>
         <p id="boot-status" class="title-status" role="status">起動中…</p>
       </div>
+      <div class="title-actions">
+        <button id="begin-button" class="btn btn-primary" type="button">ネットワークを始める</button>
+        <p class="title-help">成長は自動です。球体をタップして Signal を送り、ドラッグで回転します。</p>
+      </div>
     </section>
+
+    <section id="run-screen" class="screen" hidden aria-label="実行中のネットワーク">
+      <div class="hud-top">
+        <div class="hud-metrics" aria-label="現在の状態">
+          <div class="metric"><span class="metric-label">NETWORK SCORE</span><strong id="hud-score" class="metric-value">0</strong></div>
+          <div class="metric"><span class="metric-label">WORLD PRESSURE</span><strong id="hud-pressure" class="metric-value">0%</strong></div>
+          <div class="metric"><span class="metric-label">LIVING REACH</span><strong id="hud-reach" class="metric-value">0%</strong></div>
+        </div>
+        <button id="pause-button" class="btn btn-icon" type="button" aria-pressed="false">一時停止</button>
+      </div>
+      <div class="hud-bottom">
+        <div class="hud-event" aria-live="polite"><strong id="hud-signal">Signal 3 / 3</strong><span id="hud-event-text">成長は自動です。</span></div>
+        <label class="speed-control">速度
+          <select id="speed-select" aria-label="ゲーム速度">
+            <option value="1">1×</option><option value="2">2×</option><option value="4">4×</option>
+            <option value="8">8×</option><option value="16">16×</option><option value="32">32×</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section id="result-screen" class="screen" hidden aria-labelledby="result-heading">
+      <div class="bottom-sheet sheet-enter">
+        <p class="eyebrow">THE NETWORK BECOMES MEMORY</p>
+        <h2 id="result-heading">絶滅は記憶になる</h2>
+        <p id="result-rank" class="result-rank"></p>
+        <strong id="result-score" class="result-score score-reveal">0</strong>
+        <p id="result-cause" class="result-copy"></p>
+        <div id="result-breakdown" class="result-breakdown" aria-label="スコア内訳"></div>
+        <p id="result-echoes" class="result-echoes"></p>
+        <button id="restart-button" class="btn btn-primary" type="button">もう一度育てる</button>
+      </div>
+    </section>
+
+    <dialog id="draft-dialog" class="panel" aria-labelledby="draft-heading">
+      <p class="eyebrow">ADAPTATION</p><h2 id="draft-heading">次の生き方を選ぶ</h2>
+      <p class="dialog-copy">選択中はゲーム時間が止まります。</p>
+      <div id="draft-cards" class="card-row"></div>
+    </dialog>
 
     <div id="toast-root" aria-hidden="true"></div>
     <div id="live-region" class="sr-only" aria-live="polite"></div>
     <div id="diagnostics" hidden></div>
 
-    <noscript>
-      <p style="padding:2rem">このゲームには JavaScript が必要です。Google Chrome の最新版で開いてください。</p>
-    </noscript>
+    <noscript><p style="padding:2rem">このゲームには JavaScript が必要です。Google Chrome の最新版で開いてください。</p></noscript>
   </div>
   <script type="module" src="src/main.js"></script>
 </body>

@@ -9,6 +9,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RunController } from '../../src/simulation/simulator.js';
+import { scoreResult } from '../../src/game/scoring.js';
 
 /** Run to extinction with auto-decisions; returns the final result. */
 function runFull(cfg, { chunk = 50, decideDelay = 0, signals = [] } = {}) {
@@ -38,13 +39,14 @@ function runFull(cfg, { chunk = 50, decideDelay = 0, signals = [] } = {}) {
   return rc.buildResult();
 }
 
-test('same seed reproduces the identical final hash', () => {
+test('same seed reproduces the identical final hash and score', () => {
   const a = runFull({ seed: 424242, strainId: 'pioneer' });
   const b = runFull({ seed: 424242, strainId: 'pioneer' });
   assert.equal(a.hash, b.hash);
   assert.equal(a.tick, b.tick);
   assert.equal(a.cause, b.cause);
   assert.deepEqual(a.ownedCards, b.ownedCards);
+  assert.deepEqual(scoreResult(a), scoreResult(b));
 });
 
 test('different seeds diverge', () => {

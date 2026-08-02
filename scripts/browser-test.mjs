@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.BROWSER_TEST_PORT || 8137);
-const URL = `http://127.0.0.1:${PORT}/?preview=1`;
+const URL = `http://127.0.0.1:${PORT}/?demo=1`;
 const SHOT = resolve(ROOT, 'reports', 'browser-smoke.png');
 
 function findChrome() {

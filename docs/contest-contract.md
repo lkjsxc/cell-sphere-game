@@ -1,6 +1,6 @@
 # Contest contract
 
-Facts verified against the official page on **2026-07-31**. If official rules
+Facts re-verified against the official page on **2026-08-01**. If official rules
 change, the official page overrides this document — re-verify before submission.
 
 ## Official sources
@@ -10,7 +10,7 @@ change, the official page overrides this document — re-verify before submissio
 - Apple design reference (discipline standard, not imitation target):
   <https://developer.apple.com/jp/design/>, <https://developer.apple.com/design/tips/>
 
-## Binding facts (verified 2026-07-31)
+## Binding facts (verified 2026-08-01)
 
 1. Deadline: **2026-09-13 (日)**.
 2. Division: **Webページ部門 — ZEN大学** (最優秀賞 1名 / 優秀賞 2名 / 健闘賞 複数名).
@@ -61,9 +61,9 @@ yet proven. Emulation is never reported as a physical observation.
 | File/folder organization | verified | `check:structure` (≤200 lines/file, ≤16 children, README per dir) |
 | Readable code + comments | implemented | JSDoc + invariant comments; review at submission |
 | Effective GitHub use | implemented | small commits + CI workflow; Pages deploy = target |
-| Tests | verified | unit 78 + integration 7 pass; browser harness exists (skips here) |
-| Few bugs / high finish | target | run loop + result UI incomplete |
-| Purpose-fit design / refined UX / first-time clarity | target | HUD, draft, result surfaces pending |
+| Tests | verified | unit 82 + integration 7 pass; browser harness opens normal app route (skips here only because Chrome networking is sandbox-blocked) |
+| Few bugs / high finish | implemented + partially verified | title → run → draft → result uses production worker/fallback; physical/browser observation remains target |
+| Purpose-fit design / refined UX / first-time clarity | implemented + target | HUD, draft, result, touch grammar exist; fresh-user observation remains target |
 | Originality | implemented | real spherical adaptive-network simulation, no engine |
 | Current relevance | implemented | offline-first, deterministic, low-heat oriented |
 | Real-use evidence | target | no playtests yet |

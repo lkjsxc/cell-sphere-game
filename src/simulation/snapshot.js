@@ -2,6 +2,7 @@
  * Snapshot construction for the renderer. Copies only what rendering needs;
  * the copies are transferable over the worker channel.
  */
+import { liveScore } from '../game/scoring.js';
 
 /**
  * @param {object} state
@@ -26,6 +27,8 @@ export function buildSnapshot(state) {
       connectedShare: state.connectedShare,
       aliveCount: state.aliveCount,
       signalCharges: state.signalCharges,
+      signalMax: 3 + state.traits.signalCharges,
+      score: liveScore(state),
       vitality: vitality(state),
     },
     signals: state.activeSignals.map((s) => ({ node: s.node, untilTick: s.untilTick })),

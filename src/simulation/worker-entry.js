@@ -13,6 +13,7 @@ let speed = 1;
 let paused = false;
 let snapshotEvery = B.SNAPSHOT_EVERY;
 let ticksSinceSnapshot = 0;
+let tickDebt = 0;
 
 /** Post a message, transferring snapshot buffers when present. */
 function post(msg, transfers) {
@@ -41,8 +42,12 @@ function frame() {
   if (!controller || paused || speed <= 0) return;
   if (controller.state.status === 'extinct') return;
 
-  // Ticks per 50ms slice: speed 1 -> 0.5 tick/slice; 32x -> 16 ticks/slice.
-  const ticks = Math.max(1, Math.round((speed * B.TICKS_PER_SECOND) / 20));
+  // Carry fractional ticks: at 10 Hz, 1× advances exactly one tick every
+  // two 50 ms slices; 32× advances 16. No speed gets an accidental bonus.
+  tickDebt += (speed * B.TICKS_PER_SECOND) / 20;
+  const ticks = Math.floor(tickDebt);
+  tickDebt -= ticks;
+  if (ticks <= 0) return;
   controller.advance(ticks);
   maybeSnapshot();
 }
@@ -56,6 +61,7 @@ self.onmessage = (ev) => {
       break;
     }
     case 'start': {
+      tickDebt = 0;
       controller.start();
       maybeSnapshot(true);
       break;

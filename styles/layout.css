@@ -50,6 +50,22 @@
   max-width: 34rem;
 }
 
+.title-actions {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-3);
+}
+
+.title-help {
+  max-width: 30rem;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+#result-screen {
+  justify-content: flex-end;
+}
+
 /* In-run HUD: top metrics row + bottom action row; globe center is clear. */
 #run-screen {
   justify-content: space-between;
@@ -79,6 +95,43 @@
   display: flex;
   gap: var(--sp-2);
   align-items: center;
+}
+
+.hud-event {
+  display: grid;
+  gap: var(--sp-1);
+  max-width: min(20rem, 62vw);
+  padding: var(--sp-3);
+  color: var(--text-secondary);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-m);
+  font-size: var(--fs-caption);
+}
+
+.hud-event strong { color: var(--signal-gold); }
+
+.speed-control {
+  display: grid;
+  gap: var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.speed-control select {
+  min-height: var(--touch-min);
+  padding: 0 var(--sp-3);
+  color: var(--text-primary);
+  background: var(--bg-panel-solid);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  font: inherit;
+}
+
+@media (max-width: 390px) {
+  .hud-metrics { gap: var(--sp-1); }
+  .metric { min-width: 4rem; padding: var(--sp-1) var(--sp-2); }
+  .hud-event { max-width: 54vw; }
 }
 
 /* Center-stage surfaces (strain select, result) anchor to the bottom on

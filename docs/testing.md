@@ -51,7 +51,7 @@ npm run verify           # all fast gates
 
 | Date | Command | Result |
 |---|---|---|
-| 2026-07-31 | `npm run test:unit` | PASS 78/78 (incl. 8 renderer-logic tests) |
-| 2026-07-31 | `npm run test:integration` | PASS 7/7 (speed invariance chunk 1/7/32) |
-| 2026-07-31 | `npm run benchmark` | PASS ~17–19k ticks/s, hash d02cae0d |
-| 2026-07-31 | `npm run test:browser` | SKIP 77 — container seccomp blocks Chrome network stack |
+| 2026-08-01 | `npm run test:unit` | PASS 82/82 (incl. scoring and local-progression validation) |
+| 2026-08-01 | `npm run test:integration` | PASS 7/7 (speed invariance chunk 1/7/32) |
+| 2026-08-01 | `npm run benchmark` | PASS ~18.6k ticks/s, hash d02cae0d |
+| 2026-08-01 | `npm run test:browser` | SKIP 77 — container seccomp blocks Chrome network stack; harness now opens the normal app route, not preview mode |

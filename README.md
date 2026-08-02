@@ -9,21 +9,21 @@ dies — then turn each extinction into permanent memory on a spherical skill
 tree. Built with vanilla HTML/CSS/JavaScript and WebGL2: no engines, no
 frameworks, no runtime dependencies, no external requests.
 
-**Play:** https://lkjsxc.github.io/incremental-network-game/ *(enabled once
-the first playable build lands — see `docs/status.md`)*
+**Play:** https://lkjsxc.github.io/incremental-network-game/ *(deployment is
+verified after the next Pages workflow run — see `docs/status.md`)*
 
 Submitted to the [ZEN Study プログラミングコンテスト 2026 夏](https://progedu.github.io/webappcontest/2026/summer/index.html),
 Webページ部門 (ZEN大学). Deadline 2026-09-13.
 
 ## How to play
 
-1. Tap **はじめる** and choose a strain (or accept the recommendation).
-2. Tap the globe to inoculate the organism.
-3. Watch it explore, reinforce useful veins, and prune weak branches.
-4. Tap the globe to place a **Signal** that guides growth (optional).
-5. Choose **Adaptations** at milestones; survive telegraphed crises.
-6. Extinction is inevitable. Read your **Network Score**, spend **Echoes**
-   on the **Memory Globe**, and begin the next world.
+1. Tap **ネットワークを始める**. The recommended Pioneer strain inoculates immediately.
+2. Watch it explore, reinforce useful veins, and prune weak branches.
+3. Tap the globe to place a **Signal** that guides growth; drag to rotate.
+4. Choose **Adaptations** at milestones; survive telegraphed crises.
+5. Extinction is inevitable. Read the authoritative **Network Score** and
+   **Echoes**, then begin the next world. Memory Globe spending is not yet in
+the live build and is intentionally not exposed as a dead control.
 
 Speed controls: pause · 1× · 2× · 4× · 8× · 16× · 32× (Turbo). Same seed +
 same decisions = the same result at any speed.

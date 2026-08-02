@@ -19,6 +19,8 @@ export function defaultSettings() {
     cameraInertia: !prefersReduced,
     draftPause: true,
     haptics: false,
+    lang: null, // null = auto-detect from navigator.languages
+    speed: 1,   // persisted preferred game speed
   };
 }
 
@@ -27,6 +29,8 @@ const FIELDS = {
   contrast: new Set(['normal', 'high']),
   colorMode: new Set(['default', 'deutan', 'protan', 'tritan']),
   quality: new Set(['auto', 'eco', 'balanced', 'luminous']),
+  lang: new Set(['en', 'ja']),
+  speed: new Set([1, 2, 4, 8, 16, 32]),
   muted: null,
   cameraInertia: null,
   draftPause: null,

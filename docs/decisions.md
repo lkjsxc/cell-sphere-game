@@ -100,3 +100,23 @@ updated golden checksums, before/after balance + performance reports per the
 numeric-change protocol). The game-time targets (270–330 s median, ~360 s
 ceiling) are tick-rate independent and already hold. Evidence: this record;
 `docs/balancing.md` and `docs/simulation.md` to be updated in that turn.
+
+## D10 — Ship the complete browser run path before meta-system breadth
+
+Context: the simulation and renderer were separately verified, but judges
+could not yet start a run, place a Signal, choose an adaptation, see a score,
+or reach a result in the browser. The Pages URL therefore could not truthfully
+be called playable.
+
+Decision: add a small interface composition layer around the production worker
+protocol, with the same `RunController` as an explicit main-thread fallback.
+It provides title → running → draft → result state transitions, tap/drag
+separation, full speed selection, visibility pause, authoritative score
+projection, and validated local result totals. Do not expose Memory Globe,
+archive, or other unfinished features as decorative controls.
+
+Consequence: normal browser play now exercises the production simulation and
+not the old `?preview=1` auto-run. The score uses a temporary six-axis
+projection; it is deterministic and tested, but score-band calibration and
+the required five-axis reconciliation remain a future balance task. Evidence:
+`src/interface/`, `src/game/scoring.js`, `tests/unit/scoring.test.js`.

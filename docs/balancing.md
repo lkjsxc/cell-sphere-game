@@ -43,9 +43,21 @@ dominant killer. Next tuning pass: strengthen mid-run pressure (events,
 maintenance entropy scaling) so weak builds die before the ceiling while
 strong builds still reach it. Sample size 4 is diagnostic, not conclusive.
 
+## Score projection
+
+The live HUD and terminal result both call `src/game/scoring.js`, a pure
+projection of authoritative run metrics. It currently normalizes survival,
+peak/sustained coverage, connectivity, energy efficiency, and crisis resolve;
+quality, language, render cadence, and game speed are excluded. The six-part
+interim display is tested for bounds and monotonicity. Its score bands need a
+production-distribution calibration before contest claims.
+
 ## Tuning decisions
 
 Record accepted tuning changes here with rationale and measured delta.
 Golden fixture updates require an entry here — never blind snapshot resets.
 
-(none yet)
+- **2026-08-01 — UI score projection.** Added a deterministic live/terminal
+  score and Echo projection; no simulation equation or golden checksum
+  changed. Evidence: `tests/unit/scoring.test.js`; a balance recalibration is
+  still required before changing thresholds or score bands.
