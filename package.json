@@ -14,6 +14,7 @@
     "test:integration": "node --test tests/integration/*.test.js",
     "test:browser": "node scripts/browser-test.mjs",
     "test:browser:file": "node scripts/browser-file-test.mjs",
+    "test:browser:canvas": "node scripts/browser-file-test.mjs --canvas",
     "check:structure": "node scripts/check-structure.mjs",
     "check:links": "node scripts/check-links.mjs",
     "balance": "node scripts/balance.mjs",

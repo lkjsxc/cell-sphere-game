@@ -54,10 +54,12 @@ export class Canvas2DRenderer {
       if (forest > 0.08) {
         this.cellPath(cell, 0.72); ctx.fillStyle = `rgba(9,54,30,${forest * 0.34})`; ctx.fill();
       }
+      const river = fields.riverStrength?.[cell] ?? 0;
+      if (river > 0) { this.cellPath(cell, 0.72); ctx.fillStyle = `rgba(71,177,205,${0.22 + river * 0.24})`; ctx.fill(); }
     }
     if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1);
     if (scene.adaptation) this.drawAdaptation(scene.adaptation);
-    this.drawBoundaries(false); this.drawBoundaries(true); this.drawRivers();
+    this.drawBoundaries(false); this.drawBoundaries(true);
     for (const cell of (scene.highlightedCells ?? []).slice(0, 8)) {
       if (this.facing[cell] <= 0) continue; this.cellPath(cell, 0.82);
       ctx.strokeStyle = 'rgba(246,186,79,.96)'; ctx.lineWidth = 2.4; ctx.stroke();
@@ -141,16 +143,6 @@ export class Canvas2DRenderer {
     }
     ctx.strokeStyle = coast ? 'rgba(82,151,159,.52)' : 'rgba(142,154,144,.13)';
     ctx.lineWidth = coast ? 0.9 : 0.45; ctx.stroke();
-  }
-
-  drawRivers() {
-    const { ctx, topo, fields } = this; ctx.lineCap = 'round';
-    for (let cell = 0; cell < topo.nodeCount; cell++) {
-      const down = fields.drainTo?.[cell] ?? -1; const strength = fields.riverStrength?.[cell] ?? 0;
-      if (down < 0 || strength <= 0 || this.facing[cell] <= 0 || this.facing[down] <= 0) continue;
-      ctx.strokeStyle = `rgba(71,177,205,${0.52 + strength * 0.34})`; ctx.lineWidth = 0.7 + strength * 2.4;
-      ctx.beginPath(); ctx.moveTo(this.px[cell], this.py[cell]); ctx.lineTo(this.px[down], this.py[down]); ctx.stroke();
-    }
   }
 
   dispose() { /* no persistent GPU resources */ }
