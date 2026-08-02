@@ -24,3 +24,57 @@ player chooses attention, Adaptations, automation, and permanent Memory rather
 than steering biological authority with pointer coordinates. This makes
 ambient zero-input play, observational neutrality, accessibility, and exact
 replay one coherent product contract.
+
+## World-first correction baseline — 2026-08-02
+
+Protective tag: `pre-world-first-interface-20260802` at `540f31a`. Real
+Chrome/WebGL2 evidence reproduced the rejected interface before redesign:
+
+- the ordinary globe's terrain is promising, but repeated mint tip sprites,
+  short warm/cyan route fragments, and a decorative background orbit compete
+  with cell state and make life look placed above the world;
+- rivers, organism routes, boundaries, and dots require explanation rather than
+  reading immediately as geography or biology;
+- the selected-cell sheet is nearly opaque, covers most of the 390×844 globe,
+  and includes generic landmark cycling unrelated to the selected cell;
+- Adaptations and History are opaque full-height documents that replace the
+  world; policy is exposed as implementation labels in both run chrome and the
+  surface;
+- the result is a large centered card, obscures the terminal globe, and has no
+  unattended-next-world path;
+- Memory combines distant path ribbons, many tiny status dots, a large dark
+  atlas, giant premise copy, a wide action button, top-right navigation, and
+  opaque node details. Ownership and the next adjacent purchase are not the
+  dominant reading;
+- 430×932 title remains usable but layers controls, globe, and copy tightly;
+  at 768×1024 the captured title globe disappeared entirely while controls and
+  copy remained, making tablet framing a baseline regression.
+
+Live Apple Human Interface Guidelines were consulted from their current DocC
+JSON. Acceptance follows their guidance to minimize virtual controls over game
+content, retain place through material, use modality only for clear benefit,
+keep passive feedback near its subject, make motion brief/purposeful/optional,
+reserve toolbars for frequent commands, use strong defaults with few settings,
+and avoid relying on one sensory channel. These are principles, not copied
+Apple assets or platform styling.
+
+### Visible-line audit
+
+| Producer | Current meaning | Keep internally | Keep visually | Required action |
+|---|---|---:|---:|---|
+| cell boundary | shared topology | yes | yes, quiet | retain without Knot line accents |
+| coastline | land/water boundary | yes | yes | retain as geography |
+| river ribbon | downstream drainage | yes | yes | make terrain-bound and unmistakable |
+| organism ribbon | adjacent transfer | optional | no | remove production pass and snapshot payload |
+| frontier sprite | living/dead frontier | optional state | no | replace with cell material |
+| Memory path | distant prerequisite route | no | no | adjacent atlas cells only |
+| background orbit | decoration | no | no | delete shader equation |
+| Imprint filament | fossil corridor | migrate | no | convert bounded edge endpoints to cells |
+| favicon lines/dots | old network mark | no | no | replace with cellular mark |
+
+Only 9 of the existing 162 Memory prerequisite relations are cell-adjacent;
+153 require the rejected path renderer. The existing seven-draw WebGL frame
+uploads up to 471,096 dynamic bytes, including route/tip buffers rebuilt every
+render. Pair arrays account for 69,120 of 102,426 snapshot bytes even though
+only cell state is needed by the new presentation. This is the measured
+before-state for the cell-only renderer gate.
