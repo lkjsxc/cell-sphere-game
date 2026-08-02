@@ -19,15 +19,12 @@ export function baseTraits() {
     heatTol: 1.0,        // temperature tolerance width
     droughtTol: 1.0,     // moisture tolerance width
     toxinTol: 1.0,       // toxin resistance
-    signalRadius: 1.0,
-    signalDuration: 1.0,
     energyCap: 1.0,
     regrow: 1.0,         // regrowth into dead material
     scoreRate: 1.0,      // explicit score-rate modifier (Quiet Metabolism)
     growCost: 1.0,       // expansion energy cost multiplier
     growthCap: 0,        // extra expansions per node per tick
     // flags / additive
-    signalCharges: 0,    // extra charges
     anastomosis: 0,      // reconnect fragmented branches
     dormantCysts: 0,     // preserve pockets under terminal stress
     cannibal: 0,         // reclaim energy from dead biomass
@@ -86,7 +83,7 @@ export function traitsFor(strainId, memoryEffects = {}) {
     traits[key] = value;
   }
   // Memory effects multiply multipliers and add to additive fields/flags.
-  const ADDITIVE = new Set(['signalCharges', 'anastomosis', 'dormantCysts', 'cannibal',
+  const ADDITIVE = new Set(['anastomosis', 'dormantCysts', 'cannibal',
     'symbioticFilm', 'adaptiveMembrane', 'migratoryCore', 'pulsedTransport',
     'feverGrowth', 'coldReserve', 'toxinCatalysis', 'fractalFrontier',
     'redundantLoops', 'localSacrifice', 'growthCap', 'distributedSensing',

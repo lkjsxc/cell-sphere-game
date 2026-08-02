@@ -1,9 +1,6 @@
-/**
- * RunController: the single deterministic orchestrator used identically by
- * the Web Worker driver and the main-thread fallback. Owns canonical state;
- * exposes decision entry points; emits notifications through one callback.
- */
+/** Authoritative deterministic run controller shared by Worker and fallback. */
 import { BALANCE as B } from '../game/balance.js';
+import { ADAPTATIONS, applyCardEffects, selectRandomOption } from '../game/adaptations.js';
 import { createRunState } from './state.js';
 import { updateEnvironment } from './environment.js';
 import { runMetabolism } from './metabolism.js';
@@ -12,38 +9,29 @@ import { runGrowth } from './growth.js';
 import { runDeath } from './death.js';
 import { analyzeConnectivity } from './connectivity.js';
 import { runSummary } from './summary.js';
-import { logReplay, REPLAY } from './replay.js';
+import { logReplay, recordHistory, REPLAY } from './replay.js';
 import { buildSnapshot } from './snapshot.js';
 import { buildRunResult, dominantCause } from './result.js';
-import { ADAPTATIONS, drawDraftOptions, applyCardEffects } from '../game/adaptations.js';
-import { clamp01 } from '../core/math.js';
 
 export class RunController {
-  /**
-   * @param {object} cfg {seed, strainId, memoryEffects, challenge, inoculate}
-   * @param {(msg: object) => void} emit
-   */
-  constructor(cfg, emit) {
+  constructor(cfg, emit = () => {}) {
     this.emit = emit;
-    this.state = createRunState(cfg);
-    this.cfg = cfg;
+    this.cfg = { ...cfg, adaptationMode: cfg.adaptationMode ?? 'random' };
+    this.state = createRunState(this.cfg);
   }
 
-  /** Begin the run (status idle -> running). */
   start() {
     const s = this.state;
     if (s.status !== 'idle') throw new Error(`start from ${s.status}`);
     s.status = 'running';
     logReplay(s, REPLAY.STRAIN, strainIndex(this.cfg.strainId));
-    logReplay(s, REPLAY.INOCULATE, inoculateNode(s));
-    this.emit({ t: 'started', tick: 0 });
+    logReplay(s, REPLAY.INOCULATE, s.inoculationCell);
+    logReplay(s, REPLAY.ADAPTATION_MODE, modeIndex(s.adaptationMode));
+    recordHistory(s, 'run-start');
+    this.emit({ t: 'started', tick: 0, inoculationCell: s.inoculationCell });
   }
 
-  /**
-   * Advance up to n ticks. Stops early at drafts and extinction.
-   * @param {number} n
-   * @returns {number} ticks actually simulated
-   */
+  /** Advance up to n authoritative ticks; offers never pause progress. */
   advance(n) {
     let done = 0;
     while (done < n && this.state.status === 'running') {
@@ -53,122 +41,108 @@ export class RunController {
     return done;
   }
 
-  /** One canonical tick. */
   step() {
     const s = this.state;
+    if (s.status !== 'running') return false;
     s.tick++;
-
     if (s.tick % B.ENV_EVERY === 0) updateEnvironment(s);
     runMetabolism(s);
     runTransport(s);
     runGrowth(s);
     runDeath(s);
-    decaySignals(s);
-    regenSignalCharge(s);
-
     if (s.tick % B.CONNECTIVITY_EVERY === 0) analyzeConnectivity(s);
-    if (s.tick % B.SUMMARY_EVERY === 0) runSummary(s, (m) => this.emit(m));
+    if (s.tick % B.SUMMARY_EVERY === 0) runSummary(s, (message) => this.emit(message));
+    this.resolveNextRandomOffer();
 
-    if (s.aliveCount <= 0 && s.status === 'running') {
+    if (s.aliveCount <= 0) {
       s.status = 'extinct';
       s.extinction = { tick: s.tick, cause: dominantCause(s) };
+      for (const offer of s.adaptationOffers) {
+        if (offer.resolvedTick == null) recordHistory(s, 'adaptation-unresolved', { id: offer.id });
+      }
+      recordHistory(s, 'run-extinct', { cause: s.extinction.cause });
       this.emit({ t: 'extinct', summary: this.buildResult() });
     }
-  }
-
-  /** Place a Signal at a node. Returns false if unavailable. */
-  placeSignal(node) {
-    const s = this.state;
-    if (s.status !== 'running' || s.signalCharges <= 0) return false;
-    s.signalCharges--;
-    s.signalsPlaced++;
-    const { positions } = s.topo;
-    const cx = positions[node * 3];
-    const cy = positions[node * 3 + 1];
-    const cz = positions[node * 3 + 2];
-    const radiusDot = B.SIGNAL_RADIUS_DOT;
-    const until = s.tick + B.SIGNAL_DURATION_TICKS * s.traits.signalDuration;
-    for (let i = 0; i < s.topo.nodeCount; i++) {
-      const dot = cx * positions[i * 3] + cy * positions[i * 3 + 1] + cz * positions[i * 3 + 2];
-      if (dot > radiusDot) {
-        const w = (dot - radiusDot) / (1 - radiusDot);
-        s.signal[i] = Math.fround(clamp01(s.signal[i] + B.SIGNAL_STRENGTH * w * w));
-      }
-    }
-    s.activeSignals.push({ node, untilTick: until });
-    logReplay(s, REPLAY.SIGNAL, node);
-    this.emit({ t: 'signal', node, untilTick: until });
     return true;
   }
 
-  /** Resolve a pending draft with a chosen card. */
-  decide(cardId) {
+  /** Resolve one fixed offer manually at the current authoritative tick. */
+  chooseAdaptation(offerId, cardId) {
     const s = this.state;
-    if (s.status !== 'draft' || !s.pendingDraft) throw new Error('no pending draft');
-    if (!s.pendingDraft.options.includes(cardId)) throw new Error(`invalid option ${cardId}`);
+    if (s.status !== 'running') throw new Error(`cannot choose adaptation while ${s.status}`);
+    const offer = s.adaptationOffers.find((item) => item.id === offerId);
+    if (!offer) throw new Error(`unknown adaptation offer: ${offerId}`);
+    if (offer.resolvedTick != null) throw new Error(`adaptation offer already resolved: ${offerId}`);
+    if (!offer.options.includes(cardId)) throw new Error(`card not in adaptation offer: ${cardId}`);
+    this.resolveOffer(offer, cardId, 'manual');
+    return true;
+  }
+
+  /** Change passive decision policy without touching simulation/content RNG. */
+  setAdaptationMode(mode) {
+    if (mode !== 'random' && mode !== 'manual') throw new Error(`invalid adaptation mode: ${mode}`);
+    const s = this.state;
+    if (s.status === 'extinct') throw new Error('cannot change adaptation mode after extinction');
+    if (s.adaptationMode === mode) return false;
+    s.adaptationMode = mode;
+    logReplay(s, REPLAY.ADAPTATION_MODE, modeIndex(mode));
+    recordHistory(s, 'adaptation-mode', { id: mode });
+    this.emit({ t: 'adaptation-mode', mode, tick: s.tick });
+    if (mode === 'random' && s.status === 'running') this.resolveNextRandomOffer();
+    return true;
+  }
+
+  /** Resolve at most one pending FIFO offer in this authoritative tick. */
+  resolveNextRandomOffer() {
+    const s = this.state;
+    if (s.status !== 'running' || s.adaptationMode !== 'random') return false;
+    if (s.lastAdaptationResolutionTick === s.tick) return false;
+    const offer = s.adaptationOffers.find((item) => item.resolvedTick == null);
+    if (!offer) return false;
+    this.resolveOffer(offer, selectRandomOption(s.decisionRng, offer.options), 'random');
+    return true;
+  }
+
+  resolveOffer(offer, cardId, selectionMode) {
+    const s = this.state;
     applyCardEffects(s.traits, cardId);
     s.ownedCards.push(cardId);
-    s.pendingDraft = null;
-    s.draftIndex++;
-    s.status = 'running';
-    logReplay(s, REPLAY.DECIDE, cardIndex(cardId));
-    this.emit({ t: 'decided', card: cardId, tick: s.tick });
+    offer.resolvedTick = s.tick;
+    offer.selectedCardId = cardId;
+    offer.selectionMode = selectionMode;
+    s.lastAdaptationResolutionTick = s.tick;
+    logReplay(s, REPLAY.ADAPTATION_SELECT, offer.id, cardIndex(cardId), s.tick, modeIndex(selectionMode));
+    recordHistory(s, 'adaptation-selected', { id: offer.id, card: cardIndex(cardId), mode: selectionMode });
+    this.emit({ t: 'adaptation-selected', offerId: offer.id, cardId, tick: s.tick, selectionMode });
   }
 
-  /** Reroll the pending draft (requires rerollsLeft > 0). */
-  reroll() {
+  /** Pure compact dynamic projection for pointer inspection. */
+  inspectCell(node) {
     const s = this.state;
-    if (s.status !== 'draft' || s.rerollsLeft <= 0) return false;
-    s.rerollsLeft--;
-    const previous = s.pendingDraft?.options ?? [];
-    logReplay(s, REPLAY.REROLL);
-    const options = drawDraftOptions(s.contentRng, {
-      owned: s.ownedCards, lastOffered: previous, crisisCats: [],
-    }, B.DRAFT_OPTIONS);
-    s.pendingDraft = { options, tick: s.tick };
-    s.lastOffered = options;
-    this.emit({ t: 'draft', options, tick: s.tick });
-    return true;
+    if (!Number.isInteger(node) || node < 0 || node >= s.topo.nodeCount) {
+      throw new Error(`invalid cell: ${node}`);
+    }
+    let activeEdges = 0;
+    let conductance = 0;
+    for (let o = s.topo.nodeStart[node]; o < s.topo.nodeStart[node + 1]; o++) {
+      const edge = s.topo.nodeEdges[o];
+      if (s.edgeActive[edge] === 1) {
+        activeEdges++;
+        conductance += s.conductance[edge];
+      }
+    }
+    return {
+      tick: s.tick, node, alive: s.alive[node], biomass: s.biomass[node], energy: s.energy[node],
+      nutrient: s.nutrient[node], moisture: s.moisture[node], temperature: s.temperature[node],
+      toxicity: s.toxicity[node], stress: s.stress[node], activeEdges,
+      meanConductance: activeEdges ? conductance / activeEdges : 0,
+    };
   }
 
-  /** Compact result summary for the result screen and archive. */
-  buildResult() {
-    return buildRunResult(this.state);
-  }
-
-  /** Visual snapshot (copies; safe to transfer). */
-  snapshot() {
-    return buildSnapshot(this.state);
-  }
+  buildResult() { return buildRunResult(this.state); }
+  snapshot() { return buildSnapshot(this.state); }
 }
 
-function decaySignals(s) {
-  for (let i = 0; i < s.topo.nodeCount; i++) {
-    if (s.signal[i] > 0) s.signal[i] = Math.fround(s.signal[i] * B.SIGNAL_DECAY);
-  }
-  s.activeSignals = s.activeSignals.filter((sig) => sig.untilTick > s.tick);
-}
-
-function regenSignalCharge(s) {
-  const max = B.SIGNAL_CHARGES + s.traits.signalCharges;
-  if (s.signalCharges >= max) return;
-  s.signalRegenAcc++;
-  if (s.signalRegenAcc >= B.SIGNAL_REGEN_TICKS) {
-    s.signalRegenAcc = 0;
-    s.signalCharges = Math.min(max, s.signalCharges + 1);
-  }
-}
-
-function strainIndex(id) {
-  return ['pioneer', 'conservator', 'weaver'].indexOf(id ?? 'pioneer');
-}
-
-function cardIndex(id) {
-  return ADAPTATIONS.findIndex((c) => c.id === id);
-}
-
-function inoculateNode(s) {
-  // The state constructor already applied the inoculation; recover the node.
-  for (let i = 0; i < s.topo.nodeCount; i++) if (s.alive[i] === 1) return i;
-  return 0;
-}
+function strainIndex(id) { return ['pioneer', 'conservator', 'weaver'].indexOf(id ?? 'pioneer'); }
+function cardIndex(id) { return ADAPTATIONS.findIndex((card) => card.id === id); }
+function modeIndex(mode) { return mode === 'random' ? 0 : 1; }

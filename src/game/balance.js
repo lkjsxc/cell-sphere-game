@@ -58,19 +58,11 @@ export const BALANCE = Object.freeze({
   GROW_PER_NODE_CAP: 2,      // max expansions per node per tick
   NEW_BIOMASS: 0.3,          // biomass seeded into a new node
   CROWDING_PENALTY: 0.14,    // per alive neighbor beyond 2
-  SIGNAL_BIAS: 0.9,          // expansion bias per unit signal potential
 
-  // --- signals -----------------------------------------------------------------
-  SIGNAL_CHARGES: 3,
-  SIGNAL_REGEN_TICKS: 200,   // ~one charge per 20 game s
-  SIGNAL_DURATION_TICKS: 140,
-  SIGNAL_RADIUS_DOT: 0.86,   // angular radius as dot threshold (~30deg)
-  SIGNAL_STRENGTH: 1.4,
-  SIGNAL_DECAY: 0.975,       // per tick
-
-  // --- drafting ----------------------------------------------------------------
-  DRAFT_TICKS: Object.freeze([450, 900, 1350, 1800, 2400]),
-  DRAFT_OPTIONS: 3,
+  // --- passive adaptation offers ----------------------------------------------
+  ADAPTATION_OFFER_TICKS: Object.freeze([450, 900, 1350, 1800, 2400]),
+  ADAPTATION_OPTIONS: 3,
+  ADAPTATION_QUEUE_CAP: 8,
 
   // --- scoring -----------------------------------------------------------------
   SCORE_WEIGHTS: Object.freeze({

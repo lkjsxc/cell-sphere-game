@@ -1,37 +1,43 @@
 # src/simulation/
 
 Deterministic run-state evolution. **No DOM, audio, storage, or WebGL
-imports.** Runs identically in a Web Worker, on the main thread, and under
-`node:test` — this is what makes golden tests and the balance harness honest.
+imports.** The same `RunController` is authoritative in a Worker, fallback,
+and `node:test`.
 
 | Module | Responsibility |
 |---|---|
-| `state.js` | Preallocated typed-array run state; stream separation; inoculation. |
-| `environment.js` | Entropy/season LUTs, nutrient regeneration, toxin accumulation, event footprint application. |
-| `metabolism.js` | Uptake, conversion, maintenance, stress (with adaptation interactions). |
-| `transport.js` | One relaxation pass of energy flow; reinforcement, decay, pruning, reconnection. |
-| `growth.js` | Frontier expansion: suitability × gradient × signal × crowding, seeded draws. |
-| `death.js` | Shrink, death, edge deactivation, detritus reclamation, local sacrifice, terminal cascade. |
-| `connectivity.js` | Largest-component BFS (amortized). |
-| `events.js` | Seeded event schedule + footprint precompute; no-immediate-repeat family bag. |
-| `summary.js` | Coverage/efficiency metrics, crisis accounting, event telegraphs, draft trigger. |
-| `snapshot.js` | Compact renderer snapshots with transferable buffers. |
-| `result.js` | Plain run-result projection + extinction-cause attribution. |
-| `replay.js` | Compact decision log + final FNV-1a state hash. |
-| `simulator.js` | `RunController`: the single orchestrator used by worker and fallback. |
-| `worker-entry.js` | Worker message protocol + 50ms fixed-step timer. |
+| `state.js` | Typed-array authority, isolated streams, seeded inoculation. |
+| `environment.js` | Entropy/season LUTs, renewal, toxins, event effects. |
+| `metabolism.js` | Uptake, conversion, maintenance, stress. |
+| `transport.js` | Flow, reinforcement, decay, pruning, reconnection. |
+| `growth.js` | Seeded frontier expansion from habitat and resources. |
+| `death.js` | Death, reclamation, sacrifice, terminal cascade. |
+| `connectivity.js` | Largest-component BFS. |
+| `events.js` | Seeded event schedule and footprints. |
+| `summary.js` | Metrics, semantic milestones, events, passive offers. |
+| `snapshot.js` | Compact transferable renderer observations. |
+| `result.js` | Plain result including offers, history, and inoculation. |
+| `replay.js` | Versioned decisions, bounded history, authority hash. |
+| `simulator.js` | Non-blocking `RunController` and pure cell inspection. |
+| `worker-entry.js` | Fixed-step Worker protocol. |
 
 ## Tick order (10 Hz)
 
 `environment (every 5) → metabolism → transport → growth → death →
-signal decay/charge regen → connectivity (every 20) → summary (every 10)
-→ extinction check`
+connectivity (every 20) → summary (every 10) → one passive decision →
+extinction check`
 
-## Determinism rules
+## Authority invariants
 
-- All randomness through `simRng`/`contentRng` (xoshiro128**), fixed
-  iteration order. `Math.random` never appears here.
-- `Math.fround` at every state-array write.
-- Speed only changes ticks-per-slice; `advance(n)` is the same code path at
-  every speed, in every driver.
-- Drafts pause the loop (`status: 'draft'`) until `decide`/`reroll`.
+- Status is only `idle`, `running`, or `extinct`; adaptation offers never pause.
+- `adaptationOffers` is a fixed-option FIFO capped at eight records. Random
+  mode is default and resolves exactly one pending offer per tick; manual mode
+  keeps unresolved offers while simulation continues.
+- World, event, growth, content, decision, and inoculation RNG streams are
+  isolated. Random adaptation choice is exactly uniform among three options.
+- Inoculation is a dedicated seeded weighted choice among suitable resource
+  candidates, preferring land metadata when a world provides it.
+- Snapshots expose only adaptation mode and pending count. Cell inspection,
+  snapshots, results, and history queries never mutate authority or RNG.
+- Replay schema 2 records offer, selection, and mode IDs/ticks/card indices;
+  final hashes fold replay and owned decisions.

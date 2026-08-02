@@ -16,7 +16,6 @@ const { result, ticks, ms } = runHeadless(
   { RunController },
   { seed: SEED, strainId: 'pioneer' },
   'balanced',
-  { signals: true },
 );
 
 const ticksPerSecond = Math.round(ticks / (ms / 1000));

@@ -1,20 +1,18 @@
-/**
- * Run result projection: a plain, serializable summary of a finished run.
- * Pure function of run state — shared by the result screen, archive, share
- * card, and (later) scoring.
- */
+/** Pure terminal/plain result projection. */
 import { BALANCE as B } from '../game/balance.js';
-import { finalStateHash, serializeReplay } from './replay.js';
+import { finalStateHash, serializeHistory, serializeReplay } from './replay.js';
 import { deriveImprint } from './imprint.js';
 
-/** @param {object} state @returns {object} result summary */
-export function buildRunResult(state) {
-  const s = state;
+export function buildRunResult(s) {
   return {
     seed: s.seed,
     tick: s.tick,
     survivalSeconds: s.tick / B.TICKS_PER_SECOND,
     cause: s.extinction?.cause ?? 'unknown',
+    inoculationCell: s.inoculationCell,
+    adaptationMode: s.adaptationMode,
+    offers: s.adaptationOffers.map((offer) => ({ ...offer, options: offer.options.slice() })),
+    history: serializeHistory(s),
     coverage: s.coverage,
     peakCoverage: s.peakCoverage,
     sustainedCoverage: s.sustainedSamples ? s.sustainedSum / s.sustainedSamples : 0,
@@ -25,22 +23,21 @@ export function buildRunResult(state) {
     totalMaintenance: s.totalMaintenance,
     crisesTotal: s.crisesTotal,
     crisesEndured: s.crisesEndured,
-    signalsPlaced: s.signalsPlaced,
     ownedCards: s.ownedCards.slice(),
     phenotypes: s.phenotypes.slice(),
     imprint: deriveImprint(s),
     causes: { ...s.causes },
     hash: finalStateHash(s),
+    replayVersion: s.replayVersion,
     replay: serializeReplay(s),
   };
 }
 
-/** Dominant extinction cause from accumulated biomass-loss attribution. */
 export function dominantCause(s) {
   let best = 'starvation';
-  let bestV = -1;
-  for (const [key, v] of Object.entries(s.causes)) {
-    if (v > bestV) { bestV = v; best = key; }
+  let bestValue = -1;
+  for (const [key, value] of Object.entries(s.causes)) {
+    if (value > bestValue) { bestValue = value; best = key; }
   }
   return best;
 }

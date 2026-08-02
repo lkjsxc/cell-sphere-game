@@ -1,5 +1,5 @@
 /**
- * Adaptation cards. Data-driven content consumed by the draft system.
+ * Adaptation cards. Data-driven content consumed by passive offers.
  *
  * Effect semantics match memory effects: multiplier traits multiply the
  * current value; additive traits/flags add. Every card carries a real
@@ -88,7 +88,7 @@ function card(id, nameJa, cats, effectJa, costJa, effects, weight) {
 const BY_ID = new Map(ADAPTATIONS.map((c) => [c.id, c]));
 
 /** Trait keys that merge additively; all others merge multiplicatively. */
-const ADDITIVE_TRAITS = new Set(['growthCap', 'signalCharges', 'anastomosis', 'dormantCysts',
+const ADDITIVE_TRAITS = new Set(['growthCap', 'anastomosis', 'dormantCysts',
   'cannibal', 'symbioticFilm', 'adaptiveMembrane', 'migratoryCore', 'pulsedTransport',
   'feverGrowth', 'coldReserve', 'toxinCatalysis', 'fractalFrontier', 'redundantLoops',
   'localSacrifice', 'distributedSensing', 'opportunisticUptake', 'sporeMemory']);
@@ -115,14 +115,14 @@ export function cardById(id) {
 }
 
 /**
- * Draw draft options: weighted, no repeats of owned cards, no immediate
- * repeat of the previous draft's offers, crisis-aware boosting.
+ * Draw offer options: weighted, no repeats of owned cards, no immediate
+ * repeat of the previous offer, crisis-aware boosting.
  * @param {import('../core/prng.js').Rng} rng content stream
  * @param {object} opts {owned: string[], lastOffered: string[], crisisCats: string[]}
  * @param {number} count
  * @returns {string[]} card ids
  */
-export function drawDraftOptions(rng, opts, count = 3) {
+export function drawAdaptationOptions(rng, opts, count = 3) {
   const excluded = new Set([...opts.owned, ...opts.lastOffered]);
   const pool = ADAPTATIONS.filter((c) => !excluded.has(c.id));
   const source = pool.length >= count ? pool : ADAPTATIONS.filter((c) => !opts.owned.includes(c.id));
@@ -151,4 +151,23 @@ export function drawDraftOptions(rng, opts, count = 3) {
     }
   }
   return picked;
+}
+
+/** Exact-uniform integer draw using rejection rather than modulo reduction. */
+export function uniformIndex(rng, count) {
+  if (!Number.isInteger(count) || count <= 0 || count > 0x100000000) {
+    throw new Error(`invalid uniform count: ${count}`);
+  }
+  const limit = 0x100000000 - (0x100000000 % count);
+  let value;
+  do value = rng.nextU32(); while (value >= limit);
+  return value % count;
+}
+
+/** Select one of an offer's fixed options exactly uniformly. */
+export function selectRandomOption(rng, options) {
+  if (!Array.isArray(options) || options.length !== 3) {
+    throw new Error('adaptation offer requires exactly three options');
+  }
+  return options[uniformIndex(rng, options.length)];
 }

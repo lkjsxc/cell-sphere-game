@@ -1,121 +1,181 @@
-/** Risk protected: simulation invariant violations (NaN, negative mass,
- *  inconsistent counters) would corrupt every run silently. */
+/** Authoritative state, passive evolution, observation, and history invariants. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RunController } from '../../src/simulation/simulator.js';
+import { selectInoculation } from '../../src/simulation/state.js';
+import { offerAdaptation } from '../../src/simulation/summary.js';
+import { finalStateHash, recordHistory } from '../../src/simulation/replay.js';
 import { BALANCE as B } from '../../src/game/balance.js';
-import { cardById } from '../../src/game/adaptations.js';
+import { createRng } from '../../src/core/prng.js';
 
-function makeRun(seed = 4242, strainId = 'pioneer') {
-  const rc = new RunController({ seed, strainId }, (m) => {
-    if (m.t === 'draft') rc.decide(m.options[0]);
-  });
-  rc.start();
-  return rc;
+function run(seed = 4242, mode = 'random', emit = () => {}) {
+  const controller = new RunController({ seed, adaptationMode: mode }, emit);
+  controller.start();
+  return controller;
 }
 
-test('500 ticks preserve all invariants', () => {
-  const rc = makeRun();
-  rc.advance(500);
-  const s = rc.state;
-
-  let aliveSum = 0;
-  for (let i = 0; i < s.topo.nodeCount; i++) {
-    assert.ok(!Number.isNaN(s.biomass[i]), `biomass NaN at ${i}`);
-    assert.ok(s.biomass[i] >= 0, `negative biomass at ${i}`);
-    assert.ok(!Number.isNaN(s.energy[i]), `energy NaN at ${i}`);
-    assert.ok(!Number.isNaN(s.nutrient[i]), `nutrient NaN at ${i}`);
-    assert.ok(s.nutrient[i] >= 0 && s.nutrient[i] <= 1, `nutrient bounds at ${i}`);
-    assert.ok(!Number.isNaN(s.stress[i]), `stress NaN at ${i}`);
-    assert.ok(s.stress[i] >= 0 && s.stress[i] <= 1, `stress bounds at ${i}`);
-    assert.ok(s.alive[i] === 0 || s.alive[i] === 1, `alive flag at ${i}`);
-    aliveSum += s.alive[i];
-  }
-  assert.equal(s.aliveCount, aliveSum, 'aliveCount drifted from alive[]');
-
-  for (let e = 0; e < s.topo.edgeCount; e++) {
-    assert.ok(!Number.isNaN(s.conductance[e]), `conductance NaN at ${e}`);
-    assert.ok(s.conductance[e] >= 0 && s.conductance[e] <= B.COND_MAX, `conductance bounds at ${e}`);
-    assert.ok(s.edgePeak[e] >= s.conductance[e] && s.edgePeak[e] <= B.COND_MAX, `edgePeak bounds at ${e}`);
-    assert.ok(s.edgeActive[e] === 0 || s.edgeActive[e] === 1, `edgeActive at ${e}`);
-  }
-  assert.ok(s.aliveCount > 10, 'network failed to grow');
-});
-
-test('growth actually expands from the seed', () => {
-  const rc = makeRun(7);
-  rc.advance(100); // 10 game seconds of germination
-  assert.ok(rc.state.aliveCount > 5, `only ${rc.state.aliveCount} alive after 10s`);
-  assert.ok(rc.state.coverage > 0.002);
-});
-
-test('signals decay and charges regenerate', () => {
-  const rc = makeRun();
-  rc.advance(50);
-  const s = rc.state;
-  const chargesBefore = s.signalCharges;
-  assert.ok(rc.placeSignal(s.topo.nodeCount >> 1));
-  assert.equal(s.signalCharges, chargesBefore - 1);
-
-  let maxSignal = 0;
-  for (let i = 0; i < s.topo.nodeCount; i++) maxSignal = Math.max(maxSignal, s.signal[i]);
-  assert.ok(maxSignal > 0.5, 'signal field not applied');
-
-  const before = maxSignal;
-  rc.advance(10);
-  let after = 0;
-  for (let i = 0; i < s.topo.nodeCount; i++) after = Math.max(after, s.signal[i]);
-  assert.ok(after < before, 'signal did not decay');
-
-  // Charge regen over SIGNAL_REGEN_TICKS.
-  s.signalRegenAcc = B.SIGNAL_REGEN_TICKS - 5;
-  const c0 = s.signalCharges;
-  rc.advance(10);
-  assert.equal(s.signalCharges, Math.min(c0 + 1, B.SIGNAL_CHARGES + s.traits.signalCharges));
-});
-
-test('draft pauses simulation until decision', () => {
-  const rc = new RunController({ seed: 4242 }, () => {});
-  rc.start();
-  rc.advance(B.DRAFT_TICKS[0] + 5);
-  const s = rc.state;
-  assert.equal(s.status, 'draft');
-  assert.ok(s.pendingDraft);
-  assert.equal(s.pendingDraft.options.length, B.DRAFT_OPTIONS);
-
-  const tickAtDraft = s.tick;
-  rc.advance(100); // must not progress
-  assert.equal(s.tick, tickAtDraft, 'ticks advanced during draft');
-
-  const traitsBefore = s.traits.reach;
-  rc.decide(s.pendingDraft.options[0]);
-  assert.equal(s.status, 'running');
-  assert.equal(s.ownedCards.length, 1);
-  const card = cardById(s.ownedCards[0]);
-  assert.ok(card);
-  void traitsBefore;
-
-  assert.throws(() => rc.decide('long-filaments'), /no pending draft|invalid option/);
-});
-
-test('extinction happens with a cause and stable summary', () => {
-  const rc = makeRun(31337);
+function finish(controller) {
   let guard = 0;
-  while (rc.state.status !== 'extinct' && guard++ < 5000) rc.advance(50);
-  assert.equal(rc.state.status, 'extinct');
-  const res = rc.buildResult();
-  assert.ok(res.tick > 2000, `run too short: ${res.tick}`);
-  assert.ok(res.tick <= 4200, `run too long: ${res.tick}`);
-  assert.ok(typeof res.cause === 'string' && res.cause.length > 0);
-  assert.match(res.hash, /^[0-9a-f]{8}$/);
-  assert.ok(res.replay.length > 0);
-  assert.equal(res.imprint.kind, 'strongest-corridor');
-  assert.ok(res.imprint.edges.length > 0 && res.imprint.edges.length <= 28);
-  assert.equal(new Set(res.imprint.edges).size, res.imprint.edges.length, 'Imprint repeats an edge');
-  for (let index = 1; index < res.imprint.edges.length; index++) {
-    const left = res.imprint.edges[index - 1]; const right = res.imprint.edges[index];
-    const endpoints = [rc.state.topo.edgeA[left], rc.state.topo.edgeB[left]];
-    assert.ok(endpoints.includes(rc.state.topo.edgeA[right])
-      || endpoints.includes(rc.state.topo.edgeB[right]), 'Imprint corridor is disconnected');
+  while (controller.state.status !== 'extinct' && guard++ < 5000) controller.advance(40);
+  assert.equal(controller.state.status, 'extinct');
+  return controller.buildResult();
+}
+
+test('500 ticks preserve typed-array invariants and growth', () => {
+  const controller = run();
+  controller.advance(500);
+  const state = controller.state;
+  let alive = 0;
+  for (let i = 0; i < state.topo.nodeCount; i++) {
+    for (const value of [state.biomass[i], state.energy[i], state.nutrient[i], state.stress[i]]) {
+      assert.ok(Number.isFinite(value));
+    }
+    assert.ok(state.biomass[i] >= 0 && state.nutrient[i] >= 0 && state.nutrient[i] <= 1);
+    assert.ok(state.stress[i] >= 0 && state.stress[i] <= 1);
+    alive += state.alive[i];
   }
+  assert.equal(state.aliveCount, alive);
+  assert.ok(alive > 10);
+  for (let edge = 0; edge < state.topo.edgeCount; edge++) {
+    assert.ok(state.conductance[edge] >= 0 && state.conductance[edge] <= B.COND_MAX);
+    assert.ok(state.edgePeak[edge] >= state.conductance[edge]);
+  }
+});
+
+test('Signal authority and draft status are absent', () => {
+  const controller = run();
+  const state = controller.state;
+  assert.equal(controller.placeSignal, undefined);
+  for (const key of Object.keys(state)) assert.doesNotMatch(key, /signal|draft/i);
+  for (const key of Object.keys(B)) assert.doesNotMatch(key, /signal|draft/i);
+  const snapshot = controller.snapshot();
+  for (const key of Object.keys(snapshot)) assert.doesNotMatch(key, /signal/i);
+  assert.ok(['idle', 'running', 'extinct'].includes(state.status));
+});
+
+test('manual offers remain pending while ticks continue', () => {
+  const messages = [];
+  const controller = run(8, 'manual', (message) => messages.push(message.t));
+  controller.advance(B.ADAPTATION_OFFER_TICKS[0] + 25);
+  assert.equal(controller.state.tick, 475);
+  assert.equal(controller.state.status, 'running');
+  assert.equal(controller.state.adaptationOffers[0].resolvedTick, null);
+  controller.advance(100);
+  assert.equal(controller.state.tick, 575);
+  assert.ok(messages.includes('adaptation-offered'));
+  const snapshot = controller.snapshot();
+  assert.equal(snapshot.pendingAdaptations, 1);
+  assert.equal(snapshot.adaptationMode, 'manual');
+});
+
+test('random offers emit offered then selected and apply at offer tick', () => {
+  const messages = [];
+  const controller = run(9, 'random', (message) => messages.push(message));
+  controller.advance(450);
+  const relevant = messages.filter((message) => message.t.startsWith('adaptation-'));
+  assert.deepEqual(relevant.map((message) => message.t), ['adaptation-offered', 'adaptation-selected']);
+  const offer = controller.state.adaptationOffers[0];
+  assert.equal(offer.offerTick, 450);
+  assert.equal(offer.resolvedTick, 450);
+  assert.equal(offer.selectionMode, 'random');
+  assert.equal(controller.state.ownedCards.length, 1);
+});
+
+test('manual selection validates offer/card and applies exactly once', () => {
+  const controller = run(10, 'manual');
+  controller.advance(450);
+  const offer = controller.state.adaptationOffers[0];
+  assert.throws(() => controller.chooseAdaptation(99, offer.options[0]), /unknown/);
+  assert.throws(() => controller.chooseAdaptation(offer.id, 'not-a-card'), /not in/);
+  assert.equal(controller.chooseAdaptation(offer.id, offer.options[1]), true);
+  assert.equal(offer.resolvedTick, 450);
+  assert.throws(() => controller.chooseAdaptation(offer.id, offer.options[1]), /already resolved/);
+  assert.equal(controller.state.ownedCards.length, 1);
+});
+
+test('mode toggles drain pending FIFO at no more than one per tick', () => {
+  const controller = run(11, 'manual');
+  controller.advance(1360);
+  assert.equal(controller.state.adaptationOffers.filter((offer) => offer.resolvedTick == null).length, 3);
+  assert.throws(() => controller.setAdaptationMode('auto'), /invalid/);
+  assert.equal(controller.setAdaptationMode('random'), true);
+  assert.equal(controller.state.adaptationOffers.filter((offer) => offer.resolvedTick != null).length, 1);
+  assert.equal(controller.resolveNextRandomOffer(), false);
+  controller.advance(1);
+  assert.equal(controller.state.adaptationOffers.filter((offer) => offer.resolvedTick != null).length, 2);
+  controller.setAdaptationMode('manual');
+  controller.advance(1);
+  assert.equal(controller.state.adaptationOffers.filter((offer) => offer.resolvedTick != null).length, 2);
+});
+
+test('offer queue is bounded at eight fixed records', () => {
+  const controller = new RunController({ seed: 12, adaptationMode: 'manual' });
+  for (let i = 0; i < 10; i++) {
+    controller.state.tick = i;
+    offerAdaptation(controller.state, () => {}, 'test');
+  }
+  assert.equal(controller.state.adaptationOffers.length, B.ADAPTATION_QUEUE_CAP);
+  for (const offer of controller.state.adaptationOffers) {
+    assert.equal(offer.options.length, 3);
+    assert.ok(Object.isFrozen(offer.options));
+  }
+});
+
+test('manual extinction preserves unresolved offers and semantic history', () => {
+  const result = finish(run(31337, 'manual'));
+  assert.ok(result.offers.length > 0);
+  assert.ok(result.offers.every((offer) => offer.resolvedTick == null));
+  assert.equal(result.history.at(-1).type, 'run-extinct');
+  assert.ok(result.history.some((event) => event.type === 'adaptation-unresolved'));
+  assert.ok(result.history.some((event) => event.type === 'event-telegraph'));
+  assert.ok(result.history.length <= 80);
+});
+
+test('inspection and result/snapshot queries do not mutate authority or RNG', () => {
+  const controller = run(14, 'manual');
+  controller.advance(100);
+  const state = controller.state;
+  const before = {
+    rng: [state.simRng, state.eventRng, state.contentRng, state.decisionRng, state.inoculationRng]
+      .map((rng) => rng.state()),
+    replay: JSON.stringify(state.replay), history: JSON.stringify(state.history),
+    biomass: state.biomass.slice(),
+  };
+  const cell = controller.inspectCell(state.inoculationCell);
+  assert.equal(cell.node, state.inoculationCell);
+  controller.snapshot();
+  controller.buildResult();
+  assert.deepEqual(state.biomass, before.biomass);
+  assert.deepEqual([state.simRng, state.eventRng, state.contentRng, state.decisionRng, state.inoculationRng]
+    .map((rng) => rng.state()), before.rng);
+  assert.equal(JSON.stringify(state.replay), before.replay);
+  assert.equal(JSON.stringify(state.history), before.history);
+  assert.throws(() => controller.inspectCell(-1), /invalid cell/);
+});
+
+test('inoculation is seeded, varied, and prefers future land metadata', () => {
+  const cells = new Set(Array.from({ length: 16 }, (_, seed) =>
+    new RunController({ seed }).state.inoculationCell));
+  assert.ok(cells.size > 1);
+  const fields = {
+    baseNutrient: Float32Array.of(1, 0.8, 0.7), baseTemp: Float32Array.of(0.6, 0.6, 0.6),
+    baseMoisture: Float32Array.of(0.55, 0.55, 0.55), sources: [0, 1], landMask: Uint8Array.of(0, 1, 1),
+  };
+  assert.equal(selectInoculation(fields, createRng(1)), 1);
+});
+
+test('history cap coalesces deterministically and reserves extinction', () => {
+  const state = { tick: 0, history: [] };
+  for (let i = 0; i < 100; i++) { state.tick = i; recordHistory(state, `event-${i}`); }
+  recordHistory(state, 'run-extinct', { cause: 'test' });
+  assert.equal(state.history.length, 80);
+  assert.equal(state.history.at(-1).type, 'run-extinct');
+});
+
+test('final hash folds owned decisions', () => {
+  const controller = run(15);
+  controller.advance(450);
+  const before = finalStateHash(controller.state);
+  controller.state.ownedCards.push('long-filaments');
+  assert.notEqual(finalStateHash(controller.state), before);
 });

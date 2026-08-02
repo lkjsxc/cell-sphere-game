@@ -1,146 +1,122 @@
 /**
- * Run state: all mutable simulation data in preallocated typed arrays
- * (structure-of-arrays). No per-cell objects, no hot-path allocation.
+ * Run state: all mutable simulation data in preallocated typed arrays.
+ * Random streams are isolated by authority concern.
  */
-import { BALANCE as B } from '../game/balance.js';
 import { traitsFor } from '../game/strains.js';
 import { createRng } from '../core/prng.js';
 import { createTopology } from '../world/icosphere.js';
 import { createFields } from '../world/fields.js';
 import { buildEntropyLut, buildSeasonLut, buildNodeSeasonOffsets } from './environment.js';
 import { scheduleEvents } from './events.js';
+import { recordHistory } from './replay.js';
 
-/**
- * @param {Object} cfg
- * @param {number} cfg.seed world seed (30-bit)
- * @param {string} [cfg.strainId]
- * @param {object} [cfg.memoryEffects] permanent trait modifiers
- * @param {object|null} [cfg.challenge] challenge modifier or null
- * @param {number|null} [cfg.inoculate] starting node index (null = recommend)
- */
+const STREAM = Object.freeze({
+  world: 0x51ab3d71,
+  growth: 0x9e3779b9,
+  event: 0x0e7e17a1,
+  content: 0x2545f491,
+  decision: 0xd3c1510a,
+  inoculation: 0x1a0c01a7,
+});
+
+/** @param {Object} cfg run configuration */
 export function createRunState(cfg) {
   const seed = cfg.seed >>> 0;
+  const adaptationMode = cfg.adaptationMode ?? 'random';
+  if (adaptationMode !== 'random' && adaptationMode !== 'manual') {
+    throw new Error(`invalid adaptation mode: ${adaptationMode}`);
+  }
   const topo = createTopology(4);
-  // Independent deterministic streams derived from the world seed.
-  const worldRng = createRng(seed ^ 0x51ab3d71);
-  const fields = createFields(worldRng, topo);
-  const simRng = createRng(seed ^ 0x9e3779b9);
-  const contentRng = createRng(seed ^ 0x2545f491);
-
+  const fields = createFields(createRng(seed ^ STREAM.world), topo);
+  const simRng = createRng(seed ^ STREAM.growth);
+  const eventRng = createRng(seed ^ STREAM.event);
+  const contentRng = createRng(seed ^ STREAM.content);
+  const decisionRng = createRng(seed ^ STREAM.decision);
+  const inoculationRng = createRng(seed ^ STREAM.inoculation);
   const N = topo.nodeCount;
   const E = topo.edgeCount;
   const traits = traitsFor(cfg.strainId ?? 'pioneer', cfg.memoryEffects ?? {});
 
   const state = {
-    topo,
-    fields,
-    traits,
-    challenge: cfg.challenge ?? null,
-    seed,
-    simRng,
-    contentRng,
+    topo, fields, traits, challenge: cfg.challenge ?? null, seed,
+    simRng, eventRng, contentRng, decisionRng, inoculationRng,
+    tick: 0, entropy: 0, status: 'idle', extinction: null,
 
-    tick: 0,
-    entropy: 0,
-    status: 'idle', // idle | running | draft | extinct
-    extinction: null, // {tick, cause}
+    biomass: new Float32Array(N), energy: new Float32Array(N),
+    nutrient: fields.baseNutrient.slice(), moisture: fields.baseMoisture.slice(),
+    temperature: fields.baseTemp.slice(), toxicity: new Float32Array(N),
+    stress: new Float32Array(N), membrane: new Float32Array(N), alive: new Uint8Array(N),
 
-    // --- per-node dynamic arrays -------------------------------------------
-    biomass: new Float32Array(N),
-    energy: new Float32Array(N),
-    nutrient: fields.baseNutrient.slice(),
-    moisture: fields.baseMoisture.slice(),
-    temperature: fields.baseTemp.slice(),
-    toxicity: new Float32Array(N),
-    stress: new Float32Array(N),
-    signal: new Float32Array(N),
-    membrane: new Float32Array(N), // adaptive-membrane exposure memory
-    alive: new Uint8Array(N),
+    conductance: new Float32Array(E), edgePeak: new Float32Array(E),
+    flux: new Float32Array(E), edgeAge: new Uint16Array(E), edgeActive: new Uint8Array(E),
 
-    // --- per-edge dynamic arrays -------------------------------------------
-    conductance: new Float32Array(E),
-    edgePeak: new Float32Array(E),
-    flux: new Float32Array(E),
-    edgeAge: new Uint16Array(E),
-    edgeActive: new Uint8Array(E),
+    pressure: new Float32Array(N), nextEnergy: new Float32Array(N),
+    expansions: new Uint8Array(N), bfsVisited: new Uint8Array(N), bfsQueue: new Uint32Array(N),
 
-    // --- scratch buffers (reused, never reallocated) -------------------------
-    pressure: new Float32Array(N),
-    nextEnergy: new Float32Array(N),
-    expansions: new Uint8Array(N),
-    bfsVisited: new Uint8Array(N),
-    bfsQueue: new Uint32Array(N),
-
-    // --- signals -------------------------------------------------------------
-    signalCharges: B.SIGNAL_CHARGES + traits.signalCharges,
-    signalRegenAcc: 0,
-    activeSignals: [], // {node, untilTick} for rendering
-
-    // --- environment LUTs ----------------------------------------------------
-    entropyLut: buildEntropyLut(),
-    seasonLut: buildSeasonLut(),
+    entropyLut: buildEntropyLut(), seasonLut: buildSeasonLut(),
     nodeSeasonOffset: buildNodeSeasonOffsets(topo),
+    events: scheduleEvents(eventRng, topo, fields, cfg.challenge ?? null),
+    crisesEndured: 0, crisesTotal: 0,
 
-    // --- events ----------------------------------------------------------------
-    events: scheduleEvents(simRng, topo, fields, cfg.challenge ?? null),
-    eventCursor: 0, // next event to announce
-    crisesEndured: 0,
-    crisesTotal: 0,
+    adaptationMode, adaptationOffers: [], nextOfferIndex: 0,
+    lastOffered: [], lastAdaptationResolutionTick: -1, ownedCards: [],
 
-    // --- drafting ---------------------------------------------------------------
-    draftIndex: 0,
-    pendingDraft: null, // {options: string[]}
-    ownedCards: [],
-    rerollsLeft: 0,
-
-    // --- metrics -----------------------------------------------------------------
-    aliveCount: 0,
-    coverage: 0,
-    peakCoverage: 0,
-    sustainedSum: 0,
-    sustainedSamples: 0,
-    connectedShare: 0,
-    peakConnectedShare: 0,
-    minConnectedWhileMajority: 1,
-    largestComponent: 0,
-    totalUptake: 0,
-    totalMaintenance: 0,
-    signalsPlaced: 0,
-    signalProductivity: 0,
-    phenotypes: [],
-
-    // extinction-cause accumulators
+    aliveCount: 0, coverage: 0, peakCoverage: 0, sustainedSum: 0,
+    sustainedSamples: 0, connectedShare: 0, peakConnectedShare: 0,
+    minConnectedWhileMajority: 1, largestComponent: 0,
+    totalUptake: 0, totalMaintenance: 0, phenotypes: [],
     causes: { starvation: 0, heat: 0, cold: 0, drought: 0, toxin: 0, event: 0, collapse: 0 },
 
-    // replay log: [tick, type, ...args]
-    replay: [],
+    phaseIndex: -1, coverageMilestoneIndex: 0, loopMilestone: false,
+    replayVersion: 2, replay: [], history: [],
   };
 
-  // Inoculate: the recommended node is the richest source that is also
-  // hospitable (no unknowable cold/dry first-run traps).
-  const start = cfg.inoculate ?? recommendInoculation(fields);
+  const start = cfg.inoculate ?? selectInoculation(fields, inoculationRng);
+  if (!Number.isInteger(start) || start < 0 || start >= N) throw new Error(`invalid inoculation cell: ${start}`);
+  state.inoculationCell = start;
   state.alive[start] = 1;
   state.biomass[start] = Math.fround(1.2);
   state.energy[start] = Math.fround(3.0);
   state.aliveCount = 1;
-
+  recordHistory(state, 'run-created');
+  recordHistory(state, 'inoculation', { cell: start });
   return state;
 }
 
-/**
- * Pick the best starting node among the resource sources, scoring nutrient
- * richness against baseline environmental suitability.
- * @param {import('../world/fields.js').Fields} fields
- * @returns {number} node index
- */
-function recommendInoculation(fields) {
-  let best = fields.sources[0];
-  let bestScore = -1;
-  for (const s of fields.sources) {
-    const tempFit = 1 - Math.abs(fields.baseTemp[s] - 0.6) * 1.6;
-    const moistFit = 1 - Math.abs(fields.baseMoisture[s] - 0.55) * 1.2;
-    const score = fields.baseNutrient[s] * Math.max(0.2, tempFit) * Math.max(0.2, moistFit);
-    if (score > bestScore) { bestScore = score; best = s; }
+/** Seeded weighted selection among plausible resource/land candidates. */
+export function selectInoculation(fields, rng) {
+  const count = fields.baseNutrient.length;
+  const sources = Array.from(fields.sources ?? [], Number);
+  const hasLand = fields.landMask != null || fields.biome != null;
+  let candidates = sources.filter((i) => i >= 0 && i < count && (!hasLand || isLand(fields, i)));
+  if (candidates.length === 0 && hasLand) {
+    for (let i = 0; i < count; i++) if (isLand(fields, i)) candidates.push(i);
   }
-  return best;
+  if (candidates.length === 0) candidates = sources.length ? sources : Array.from({ length: count }, (_, i) => i);
+
+  let best = 0;
+  const scores = candidates.map((i) => {
+    const tempFit = Math.max(0.2, 1 - Math.abs(fields.baseTemp[i] - 0.6) * 1.6);
+    const moistFit = Math.max(0.2, 1 - Math.abs(fields.baseMoisture[i] - 0.55) * 1.2);
+    const score = Math.max(0.0001, fields.baseNutrient[i] * tempFit * moistFit);
+    if (score > best) best = score;
+    return score;
+  });
+  const plausible = candidates.map((cell, i) => ({ cell, weight: scores[i] }))
+    .filter((x) => x.weight >= best * 0.45);
+  let total = plausible.reduce((sum, x) => sum + x.weight, 0);
+  let roll = rng.float() * total;
+  for (const candidate of plausible) {
+    roll -= candidate.weight;
+    if (roll <= 0) return candidate.cell;
+  }
+  return plausible[plausible.length - 1].cell;
+}
+
+function isLand(fields, i) {
+  if (fields.landMask != null) return Boolean(fields.landMask[i]);
+  const biome = fields.biome?.[i];
+  if (typeof biome === 'string') return !/^(ocean|water|sea)$/i.test(biome);
+  if (typeof biome === 'number') return biome !== 0;
+  return biome !== false && biome != null;
 }

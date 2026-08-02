@@ -51,6 +51,7 @@ export function scheduleEvents(rng, topo, fields, challenge) {
     const { nodes, falloff } = computeFootprint(topo, center, radiusDot);
 
     events.push({
+      id: k,
       family: family.id,
       nameJa: family.nameJa,
       descJa: family.descJa,

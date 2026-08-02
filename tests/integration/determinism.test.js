@@ -1,99 +1,129 @@
-/** GOLDEN-CLASS INTEGRATION: the core determinism contract.
- *
- * Same seed + same decisions must produce an identical final state hash
- * regardless of how ticks are batched (speed), when draft decisions are
- * delivered (pause/resume), or which signals are placed when.
- *
- * These tests run the production RunController — no simplified model.
- */
+/** GOLDEN-CLASS: production authority determinism and passive-decision replay. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RunController } from '../../src/simulation/simulator.js';
+import { REPLAY, REPLAY_VERSION } from '../../src/simulation/replay.js';
+import { BALANCE as B } from '../../src/game/balance.js';
 import { scoreResult } from '../../src/game/scoring.js';
 
-/** Run to extinction with auto-decisions; returns the final result. */
-function runFull(cfg, { chunk = 50, decideDelay = 0, signals = [] } = {}) {
-  let pending = null;
-  let waited = 0;
-  const rc = new RunController(cfg, (m) => {
-    if (m.t === 'draft') pending = m;
-  });
-  rc.start();
-
-  const signalAt = new Map(signals); // tick -> node
+function runFull(cfg, chunk = 50) {
+  const controller = new RunController(cfg);
+  controller.start();
   let guard = 0;
-  while (rc.state.status !== 'extinct' && guard++ < 6000) {
-    rc.advance(chunk);
-    // Deliver a queued decision after the requested delay.
-    if (pending) {
-      if (waited++ >= decideDelay) {
-        rc.decide(pending.options[0]);
-        pending = null;
-        waited = 0;
-      }
-    }
-    const sig = signalAt.get(rc.state.tick);
-    if (sig !== undefined) rc.placeSignal(sig);
-  }
-  assert.equal(rc.state.status, 'extinct', 'run did not finish');
-  return rc.buildResult();
+  while (controller.state.status !== 'extinct' && guard++ < 6000) controller.advance(chunk);
+  assert.equal(controller.state.status, 'extinct');
+  return controller.buildResult();
 }
 
-test('same seed reproduces the identical final hash and score', () => {
+function runManual(cfg, chunk) {
+  const controller = new RunController({ ...cfg, adaptationMode: 'manual' });
+  controller.start();
+  const resolutionTicks = B.ADAPTATION_OFFER_TICKS.map((tick) => tick + 20);
+  let decision = 0;
+  let guard = 0;
+  while (controller.state.status !== 'extinct' && guard++ < 10000) {
+    const target = resolutionTicks[decision];
+    if (target != null && controller.state.tick === target) {
+      const offer = controller.state.adaptationOffers.find((item) => item.resolvedTick == null);
+      controller.chooseAdaptation(offer.id, offer.options[0]);
+      decision++;
+      continue;
+    }
+    const distance = target == null ? chunk : Math.max(1, target - controller.state.tick);
+    controller.advance(Math.min(chunk, distance));
+  }
+  assert.equal(controller.state.status, 'extinct');
+  return controller.buildResult();
+}
+
+function semanticResult(result) {
+  return {
+    hash: result.hash, tick: result.tick, cause: result.cause,
+    inoculationCell: result.inoculationCell, ownedCards: result.ownedCards,
+    offers: result.offers, replay: result.replay,
+  };
+}
+
+test('same seed reproduces hash, inoculation, decisions, history, and score', () => {
   const a = runFull({ seed: 424242, strainId: 'pioneer' });
   const b = runFull({ seed: 424242, strainId: 'pioneer' });
-  assert.equal(a.hash, b.hash);
-  assert.equal(a.tick, b.tick);
-  assert.equal(a.cause, b.cause);
-  assert.deepEqual(a.ownedCards, b.ownedCards);
+  assert.deepEqual(semanticResult(a), semanticResult(b));
+  assert.deepEqual(a.history, b.history);
   assert.deepEqual(a.imprint, b.imprint);
   assert.deepEqual(scoreResult(a), scoreResult(b));
 });
 
-test('different seeds diverge', () => {
+test('different seeds diverge in strengthened authority results', () => {
   const a = runFull({ seed: 1 });
   const b = runFull({ seed: 2 });
   assert.notEqual(a.hash, b.hash);
+  assert.notDeepEqual(a.replay, b.replay);
 });
 
-test('speed invariance: chunk 1 / 7 / 32 / 50 yield identical outcomes', () => {
-  const ref = runFull({ seed: 987654, strainId: 'conservator' }, { chunk: 50 });
+test('chunk/speed invariance includes passive adaptation log and hash', () => {
+  const reference = runFull({ seed: 987654, strainId: 'conservator' }, 50);
   for (const chunk of [1, 7, 32]) {
-    const r = runFull({ seed: 987654, strainId: 'conservator' }, { chunk });
-    assert.equal(r.hash, ref.hash, `chunk ${chunk} diverged`);
-    assert.equal(r.tick, ref.tick, `chunk ${chunk} length diverged`);
+    const result = runFull({ seed: 987654, strainId: 'conservator' }, chunk);
+    assert.deepEqual(semanticResult(result), semanticResult(reference), `chunk ${chunk}`);
   }
 });
 
-test('pause/resume around drafts does not change the outcome', () => {
-  const immediate = runFull({ seed: 55555, strainId: 'weaver' }, { decideDelay: 0 });
-  const delayed = runFull({ seed: 55555, strainId: 'weaver' }, { decideDelay: 3, chunk: 11 });
-  assert.equal(delayed.hash, immediate.hash);
-  assert.equal(delayed.tick, immediate.tick);
+test('manual delivery at exact authoritative ticks is chunk invariant and replayed', () => {
+  const a = runManual({ seed: 55555, strainId: 'weaver' }, 1);
+  const b = runManual({ seed: 55555, strainId: 'weaver' }, 37);
+  assert.deepEqual(semanticResult(a), semanticResult(b));
+  const selected = a.replay.filter((entry) => entry[1] === REPLAY.ADAPTATION_SELECT);
+  assert.deepEqual(selected.map((entry) => entry[0]), B.ADAPTATION_OFFER_TICKS.map((tick) => tick + 20));
+  assert.deepEqual(a.offers.map((offer) => offer.resolvedTick), selected.map((entry) => entry[0]));
 });
 
-test('signals at fixed ticks are deterministic', () => {
-  const signals = [[120, 500], [400, 1000], [900, 1500]];
-  const a = runFull({ seed: 7777 }, { signals });
-  const b = runFull({ seed: 7777 }, { signals, chunk: 13 });
-  assert.equal(a.hash, b.hash);
-  assert.ok(a.signalsPlaced >= 1, 'no signals registered');
+test('zero-input default random run completes with every offer selected', () => {
+  const result = runFull({ seed: 24680 });
+  assert.equal(result.adaptationMode, 'random');
+  assert.equal(result.offers.length, B.ADAPTATION_OFFER_TICKS.length);
+  assert.ok(result.offers.every((offer) => offer.selectedCardId && offer.selectionMode === 'random'));
+  assert.ok(result.offers.every((offer) => offer.offerTick === offer.resolvedTick));
 });
 
-test('strain choice changes the outcome', () => {
+test('decision stream and mode changes are isolated from world/event/growth/content', () => {
+  const random = new RunController({ seed: 7777, adaptationMode: 'random' });
+  const manual = new RunController({ seed: 7777, adaptationMode: 'manual' });
+  assert.equal(random.state.inoculationCell, manual.state.inoculationCell);
+  assert.deepEqual(random.state.events.map(eventShape), manual.state.events.map(eventShape));
+  for (const key of ['simRng', 'eventRng', 'contentRng', 'decisionRng', 'inoculationRng']) {
+    assert.deepEqual(random.state[key].state(), manual.state[key].state(), key);
+  }
+  const streams = ['simRng', 'eventRng', 'contentRng', 'inoculationRng'];
+  const before = streams.map((key) => manual.state[key].state());
+  manual.setAdaptationMode('random');
+  assert.deepEqual(streams.map((key) => manual.state[key].state()), before);
+});
+
+test('strain remains authoritative and changes the outcome', () => {
   const pioneer = runFull({ seed: 31337, strainId: 'pioneer' });
   const weaver = runFull({ seed: 31337, strainId: 'weaver' });
   assert.notEqual(pioneer.hash, weaver.hash);
 });
 
-test('replay log round-trips with the run', () => {
-  const r = runFull({ seed: 24680 }, { signals: [[150, 42]] });
-  assert.ok(r.replay.length >= 7, `replay too short: ${r.replay.length}`);
-  // Entries are [tick, type, ...]; ticks must be nondecreasing.
-  let last = -1;
-  for (const entry of r.replay) {
-    assert.ok(entry[0] >= last, 'replay ticks decreased');
-    last = entry[0];
-    assert.ok(Number.isInteger(entry[1]), 'replay type not integer');
+test('replay schema 2 distinguishes offers, selections, modes, ids, and ticks', () => {
+  const result = runFull({ seed: 8888 });
+  assert.equal(result.replayVersion, REPLAY_VERSION);
+  const types = new Set(result.replay.map((entry) => entry[1]));
+  for (const type of [REPLAY.ADAPTATION_OFFER, REPLAY.ADAPTATION_SELECT, REPLAY.ADAPTATION_MODE]) {
+    assert.ok(types.has(type));
   }
+  let lastTick = -1;
+  for (const entry of result.replay) {
+    assert.ok(entry[0] >= lastTick);
+    lastTick = entry[0];
+    assert.ok(entry.every(Number.isInteger));
+  }
+  const offers = result.replay.filter((entry) => entry[1] === REPLAY.ADAPTATION_OFFER);
+  const selections = result.replay.filter((entry) => entry[1] === REPLAY.ADAPTATION_SELECT);
+  assert.ok(offers.every((entry) => entry.length === 6));
+  assert.ok(selections.every((entry) => entry[0] === entry[4]));
 });
+
+function eventShape(event) {
+  return [event.id, event.family, event.startTick, event.endTick, event.center, event.intensity];
+}

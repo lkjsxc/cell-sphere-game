@@ -42,7 +42,7 @@ for (const policy of POLICIES) {
     const seed = seedCounter++;
     const strain = STRAINS[r % STRAINS.length];
     const { result, state } = runHeadless(
-      { RunController }, { seed, strainId: strain }, policy, { signals: policy !== 'first' && policy !== 'random' });
+      { RunController }, { seed, strainId: strain }, policy);
 
     // Invalid-state gate: always enforced.
     if (stateHasNaN(state)) nanRuns++;

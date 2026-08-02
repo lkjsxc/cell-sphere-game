@@ -1,6 +1,6 @@
 /**
  * Growth phase: frontier expansion. Alive nodes evaluate inactive neighbor
- * edges by local suitability, nutrient gradient, signal bias, and crowding,
+ * edges by local suitability, nutrient gradient, and crowding,
  * then expand probabilistically using the simulation RNG (fixed iteration
  * order keeps draws deterministic).
  */
@@ -15,7 +15,7 @@ export function runGrowth(state) {
   const { topo, traits } = state;
   const { nodeStart, nodeEdges, nodeNeighbors } = topo;
   const { alive, biomass, energy, nutrient, moisture, temperature, toxicity,
-    signal, conductance, edgePeak, edgeActive, edgeAge, expansions, simRng } = state;
+    conductance, edgePeak, edgeActive, edgeAge, expansions, simRng } = state;
 
   expansions.fill(0);
   const cap = B.GROW_PER_NODE_CAP + traits.growthCap + (traits.fractalFrontier ? 1 : 0);
@@ -45,11 +45,9 @@ export function runGrowth(state) {
         * tolerance(temperature[nb], TEMP_CENTER, tempW)
         * clamp01(1 - (toxicity[nb] / traits.toxinTol - 0.35) * 1.1);
       const grad = clamp01(nutrient[nb] * 1.6);
-      const sig = signal[nb] * B.SIGNAL_BIAS;
       let p = B.GROW_P_BASE * traits.reach
         * (0.25 + 0.75 * suitNb)
         * (0.3 + 0.7 * grad)
-        * (1 + sig)
         * (1 - B.CROWDING_PENALTY * Math.max(0, crowd - 2));
       // Migratory core favors reclaiming dead-but-rich ground.
       if (traits.migratoryCore && biomass[nb] > 0.01) p *= 1.5;
