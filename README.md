@@ -17,28 +17,32 @@ Webページ部門 (ZEN大学). Deadline 2026-09-13.
 
 ## How to play
 
-1. Tap **ネットワークを始める**. The recommended Pioneer strain inoculates immediately.
-2. Watch it explore, reinforce useful veins, and prune weak branches.
-3. Tap the globe to place a **Signal** that guides growth; drag to rotate.
-4. Choose **Adaptations** at milestones; survive telegraphed crises.
-5. Extinction is inevitable. Read the authoritative **Network Score** and
-   **Echoes**, then begin the next world. Memory Globe spending is not yet in
-the live build and is intentionally not exposed as a dead control.
+1. Drag the title globe or tap it to wake a bounded cellular bloom.
+2. Press **Inoculate**. The recommended Pioneer strain begins immediately.
+3. Watch it explore and reinforce shared cell boundaries; tap a visible cell
+   to place a **Signal** and drag or pinch to inspect the planet.
+4. Choose **Adaptations** at milestones and survive spatial crises.
+5. Extinction yields an authoritative **Network Score** and **Echoes**. Enter
+   the **Memory Globe**, purchase a reachable filament, then grow the next
+   world with the purchased effect applied.
 
 Speed controls: pause · 1× · 2× · 4× · 8× · 16× · 32× (Turbo). Same seed +
 same decisions = the same result at any speed.
 
 ## Technical highlights
 
-- Deterministic spherical simulation on a 2,562-node geodesic icosphere
-  (xoshiro128** PRNG, typed-array SoA state, fixed 10 Hz tick, ~3,000
-  ticks/run) running in a Web Worker.
-- WebGL2 renderer with instanced vein ribbons, biome-shaded globe,
-  atmosphere rim, event footprints — plus a playable Canvas 2D fallback.
-- Data-driven content: 24+ adaptations, 8 phenotypes, 8 event families,
-  36–48 Memory Globe nodes, 32 trophies, 4 challenge modifiers.
-- Headless balance harness and benchmark run the *production* simulation.
-- Procedural audio and share-card images; offline-capable PWA.
+- Explicit spherical dual mesh: 2,562 simulation/render cells, 7,680 shared
+  boundaries, mostly hexagons, and exactly twelve pentagonal **World Knots**.
+- Deterministic typed-array simulation (xoshiro128**, fixed 10 Hz authority)
+  running in a Web Worker or the same main-thread `RunController` fallback.
+- WebGL2 dual-cell renderer with discrete procedural ocean/land materials,
+  etched boundaries, boundary-aligned transport, atmosphere, title bloom,
+  and graphite Memory Globe state; playable Canvas 2D fallback remains.
+- One complete persistent transaction: score → Echoes → Memory purchase →
+  saved filament → next-run trait. Six bounded Memory nodes form the initial
+  progression path; broader campaign content remains in development.
+- Production simulation powers unit/integration tests, balance smoke, and the
+  benchmark. No runtime dependency or downloaded media is used.
 
 ## Local development
 

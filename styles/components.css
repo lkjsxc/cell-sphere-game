@@ -33,7 +33,7 @@
   color: var(--text-inverse);
   border-color: transparent;
   font-weight: 700;
-  box-shadow: 0 4px 24px rgba(53, 208, 176, 0.28);
+  box-shadow: 0 8px 32px rgba(201, 158, 69, 0.18);
 }
 
 .btn-ghost {
@@ -47,22 +47,20 @@
   border-radius: var(--radius-m);
 }
 
-/* Metric chips in the HUD. */
+/* Metrics read as quiet edge typography, not dashboard cards. */
 .metric {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: var(--sp-1) var(--sp-3);
-  background: var(--bg-panel);
-  border: 1px solid var(--border-faint);
-  border-radius: var(--radius-m);
+  gap: 1px;
+  padding-right: var(--sp-3);
   min-width: 4.5rem;
+  text-shadow: 0 1px 10px var(--bg-deep);
 }
 
 .metric-label {
   font-size: var(--fs-caption);
   color: var(--text-faint);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.11em;
 }
 
 .metric-value {

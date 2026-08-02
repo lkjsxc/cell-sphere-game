@@ -1,38 +1,35 @@
-/* Design tokens: the single source of truth for color, type, space, motion.
-   Art direction: dark space, bioluminescent network life, calm Apple-grade
-   hierarchy. Information is never color-only: tokens pair with icon/shape
-   rules defined in components.css. */
+/* Mineral twilight, cellular parchment, and restrained biological light. */
 
 :root {
   /* Surface palette */
-  --bg-deep: #04070d;
-  --bg-space: #070b14;
-  --bg-panel: rgba(13, 20, 33, 0.82);
-  --bg-panel-solid: #0d1421;
-  --bg-elevated: #131c2e;
-  --border-faint: rgba(140, 180, 220, 0.14);
-  --border-strong: rgba(140, 180, 220, 0.32);
+  --bg-deep: #080a0b;
+  --bg-space: #0d1112;
+  --bg-panel: rgba(16, 18, 18, 0.90);
+  --bg-panel-solid: #121515;
+  --bg-elevated: #1a1d1c;
+  --border-faint: rgba(224, 216, 190, 0.14);
+  --border-strong: rgba(230, 213, 167, 0.34);
 
   /* Text */
-  --text-primary: #eaf2fa;
-  --text-secondary: #9db1c7;
-  --text-faint: #5f7288;
-  --text-inverse: #06121f;
+  --text-primary: #f0eee7;
+  --text-secondary: #b7b4aa;
+  --text-faint: #77786f;
+  --text-inverse: #17150f;
 
   /* Life / network accents */
-  --life-core: #6ef3d6;
-  --life-glow: #35d0b0;
-  --life-dim: #1d7f6e;
-  --signal-gold: #ffd479;
-  --signal-glow: #f0b23e;
-  --memory-violet: #a99bff;
-  --memory-glow: #7f6ce0;
+  --life-core: #f1dda1;
+  --life-glow: #c99e45;
+  --life-dim: #75642f;
+  --signal-gold: #f0a34a;
+  --signal-glow: #ce7434;
+  --memory-violet: #cbc2a7;
+  --memory-glow: #898270;
 
   /* Semantic states (always paired with shape/label in components) */
-  --state-good: #6ef3d6;
-  --state-warn: #ffd479;
-  --state-bad: #ff8f7a;
-  --state-info: #8fc7ff;
+  --state-good: #d8d69c;
+  --state-warn: #f0a34a;
+  --state-bad: #df6d55;
+  --state-info: #8eb5b1;
 
   /* Category hues (Reach/Metabolism/Resilience/Transport/Symbiosis/Memory) */
   --cat-reach: #7fd8ff;

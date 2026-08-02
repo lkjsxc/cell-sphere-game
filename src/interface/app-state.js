@@ -9,7 +9,8 @@ export function createAppState() {
       starting: { ready: 'running', fail: 'title' },
       running: { draft: 'draft', extinct: 'result' },
       draft: { choose: 'running', extinct: 'result' },
-      result: { restart: 'starting' },
+      result: { memory: 'memory', restart: 'starting' },
+      memory: { restart: 'starting' },
     },
   });
 }

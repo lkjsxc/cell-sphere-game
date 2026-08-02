@@ -73,7 +73,24 @@
 .result-copy, .result-echoes { color: var(--text-secondary); }
 .result-echoes { margin: var(--sp-4) 0; color: var(--memory-violet); }
 .result-breakdown { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); margin: var(--sp-4) 0; }
-.breakdown-row { padding: var(--sp-2); background: var(--bg-elevated); border-radius: var(--radius-s); color: var(--text-secondary); font-size: var(--fs-caption); font-variant-numeric: tabular-nums; }
+.breakdown-row { padding: var(--sp-2) 0; border-top: 1px solid var(--border-faint); color: var(--text-secondary); font-size: var(--fs-caption); font-variant-numeric: tabular-nums; }
+
+.memory-nodes { display: grid; gap: var(--sp-2); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.memory-node {
+  display: grid;
+  gap: 2px;
+  min-height: var(--touch-min);
+  padding: var(--sp-3) var(--sp-2);
+  color: var(--text-primary);
+  background: transparent;
+  border-top: 1px solid var(--border-strong);
+  border-radius: 0;
+  text-align: left;
+}
+.memory-node:disabled { opacity: 0.42; }
+.memory-node-name { font-weight: 700; }
+.memory-node-effect { color: var(--text-secondary); font-size: var(--fs-caption); }
+.memory-node-cost { color: var(--signal-gold); font-size: var(--fs-caption); }
 
 /* Panels and dialogs. */
 .panel {

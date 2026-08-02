@@ -4,13 +4,16 @@
  */
 import { BALANCE as B } from '../game/balance.js';
 import { scoreResult } from '../game/scoring.js';
+import { buildMemorySnapshot, memoryEffects, purchaseMemory } from '../game/memory.js';
 import { createRng } from '../core/prng.js';
 import { createTopology } from '../world/icosphere.js';
 import { createFields } from '../world/fields.js';
 import { GLRenderer } from '../rendering/renderer.js';
 import { Canvas2DRenderer } from '../rendering/fallback2d.js';
-import { createCamera, rotate, zoom, applyInertia } from '../rendering/camera.js';
+import { AttractState } from '../rendering/attract-state.js';
+import { createCamera, applyInertia } from '../rendering/camera.js';
 import { pickNode } from '../rendering/picking.js';
+import { bindGlobeInput } from './globe-input.js';
 import { RunController } from '../simulation/simulator.js';
 import { loadMeta, saveMeta } from '../platform/storage.js';
 import { saveSettings } from '../platform/settings.js';
@@ -32,7 +35,8 @@ class GameApp {
     this.el = ui.elements(); this.topo = createTopology(4); this.camera = createCamera();
     this.meta = loadMeta(); this.flow = createAppState(); this.speed = settings.speed; this.snapshot = null;
     this.renderer = null; this.worker = null; this.fallback = null; this.paused = false;
-    this.pointer = null; this.debt = 0; this.last = performance.now(); this.lastSnapshot = 0;
+    this.attract = null; this.memorySnapshot = null; this.input = null;
+    this.debt = 0; this.last = performance.now(); this.lastSnapshot = 0;
     this.lastRender = 0; this.hiddenRun = false;
   }
 
@@ -40,9 +44,14 @@ class GameApp {
 
   boot() {
     this.makeRenderer(TITLE_SEED);
-    this.resize(); this.bindUi(); this.bindCanvas(); this.bindLifecycle();
+    this.resize();
+    this.camera.dist = this.canvas.clientWidth < 600 ? 6 : 4.1;
+    const centerX = this.canvas.clientWidth * (0.5 + this.camera.offsetX * 0.5);
+    const center = pickNode(this.canvas, centerX, this.canvas.clientHeight / 2, this.camera, this.topo);
+    this.attract = new AttractState(this.topo, center?.node ?? 0);
+    this.bindUi(); this.bindCanvas(); this.bindLifecycle();
     this.el.speed.value = String(this.speed);
-    this.el.boot.textContent = `システム準備完了 — ${this.renderer.backend === 'webgl2' ? 'WebGL2' : 'Canvas 2D'}`;
+    this.el.boot.textContent = `Cells ready — ${this.renderer.backend === 'webgl2' ? 'WebGL2' : 'Canvas 2D'}`;
     ui.show(this.el, 'title');
     window.__IN_BOOT__ = Object.freeze({ renderer: this.renderer.backend, version: '0.1.0', playable: true });
     requestAnimationFrame((now) => this.frame(now));
@@ -58,6 +67,7 @@ class GameApp {
 
   bindUi() {
     this.el.begin.addEventListener('click', () => this.startRun());
+    this.el.memoryButton.addEventListener('click', () => this.enterMemory());
     this.el.restart.addEventListener('click', () => this.startRun());
     this.el.pause.addEventListener('click', () => this.setPaused(!this.paused));
     this.el.speed.addEventListener('change', () => this.setSpeed(Number(this.el.speed.value)));
@@ -65,20 +75,10 @@ class GameApp {
   }
 
   bindCanvas() {
-    this.canvas.addEventListener('pointerdown', (event) => {
-      if (!['title', 'running'].includes(this.state)) return;
-      this.pointer = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: 0, at: performance.now() };
-      this.canvas.setPointerCapture(event.pointerId);
+    this.input = bindGlobeInput(this.canvas, this.camera, {
+      canInteract: () => ['title', 'running', 'memory'].includes(this.state) && (!this.paused || this.state === 'memory'),
+      onTap: (x, y) => this.tapGlobe(x, y),
     });
-    this.canvas.addEventListener('pointermove', (event) => {
-      if (!this.pointer || event.pointerId !== this.pointer.id) return;
-      const dx = event.clientX - this.pointer.x; const dy = event.clientY - this.pointer.y;
-      this.pointer.moved += Math.abs(dx) + Math.abs(dy); rotate(this.camera, dx * 0.006, dy * 0.005);
-      this.pointer.x = event.clientX; this.pointer.y = event.clientY;
-    });
-    this.canvas.addEventListener('pointerup', (event) => this.finishPointer(event));
-    this.canvas.addEventListener('pointercancel', () => { this.pointer = null; });
-    this.canvas.addEventListener('wheel', (event) => { event.preventDefault(); zoom(this.camera, event.deltaY > 0 ? 1.08 : 0.93); }, { passive: false });
   }
 
   bindLifecycle() {
@@ -91,13 +91,11 @@ class GameApp {
     });
   }
 
-  finishPointer(event) {
-    const pointer = this.pointer; this.pointer = null;
-    if (!pointer || event.pointerId !== pointer.id || this.state !== 'running' || this.paused) return;
-    if (pointer.moved < 10 && performance.now() - pointer.at < 500) {
-      const hit = pickNode(this.canvas, event.clientX, event.clientY, this.camera, this.topo);
-      if (hit) this.send({ t: 'signal', node: hit.node });
-    }
+  tapGlobe(x, y) {
+    const hit = pickNode(this.canvas, x, y, this.camera, this.topo);
+    if (!hit) return;
+    if (this.state === 'title') this.attract?.reset(hit.node);
+    else if (this.state === 'running') this.send({ t: 'signal', node: hit.node });
   }
 
   startRun() {
@@ -106,10 +104,10 @@ class GameApp {
     const given = Number(params.get('seed'));
     const seed = Number.isInteger(given) && given >= 0 && given < 0x40000000 ? given
       : params.has('demo') ? TITLE_SEED : (TITLE_SEED + this.meta.runs * 104729) & 0x3fffffff;
-    this.makeRenderer(seed); this.resize();
-    this.flow.send(this.state === 'title' ? 'begin' : 'restart'); this.snapshot = null;
-    ui.show(this.el, 'run'); ui.announce(this.el, '推奨地点で生命が芽生えています。球体をタップして Signal を送れます。');
-    const cfg = { seed, strainId: 'pioneer' };
+    this.makeRenderer(seed);
+    this.flow.send(this.state === 'title' ? 'begin' : 'restart'); this.resize(); this.snapshot = null;
+    ui.show(this.el, 'run'); ui.announce(this.el, 'Life is blooming at the recommended cell. Tap the world to place a Signal.');
+    const cfg = { seed, strainId: 'pioneer', memoryEffects: memoryEffects(this.meta) };
     if (this.caps.worker) this.startWorker(cfg); else this.startFallback(cfg, 'Web Worker が使えないため、互換モードで実行中です。');
   }
 
@@ -120,11 +118,11 @@ class GameApp {
       worker.onmessage = (event) => this.message(event.data);
       worker.onerror = () => {
         worker.terminate();
-        if (this.state === 'starting') this.startFallback(cfg, 'Worker の起動に失敗しました。互換モードで実行中です。');
-        else ui.announce(this.el, 'シミュレーションが中断されました。もう一度育ててください。');
+        if (this.state === 'starting') this.startFallback(cfg, 'The Worker was unavailable. The same simulation is running on this thread.');
+        else ui.announce(this.el, 'The simulation stopped unexpectedly. Begin another world to recover.');
       };
       worker.postMessage({ t: 'init', cfg });
-    } catch { this.startFallback(cfg, 'Worker の起動に失敗しました。互換モードで実行中です。'); }
+    } catch { this.startFallback(cfg, 'The Worker was unavailable. The same simulation is running on this thread.'); }
   }
 
   startFallback(cfg, note) {
@@ -137,10 +135,10 @@ class GameApp {
     if (msg.t === 'ready') { this.worker?.postMessage({ t: 'speed', value: this.speed }); this.worker?.postMessage({ t: 'start' }); return; }
     if (msg.t === 'snapshot') { this.snapshot = msg; ui.updateHud(this.el, msg); return; }
     if (msg.t === 'started') { this.flow.send('ready'); return; }
-    if (msg.t === 'signal') { ui.announce(this.el, 'Signal が前線を新しい地域へ導いています。'); return; }
-    if (msg.t === 'event') { ui.announce(this.el, `${msg.family} が世界を移動しています。`); return; }
+    if (msg.t === 'signal') { ui.announce(this.el, 'The Signal is bending the frontier toward a new region.'); return; }
+    if (msg.t === 'event') { ui.announce(this.el, `${msg.family} is moving across the world.`); return; }
     if (msg.t === 'draft') { this.flow.send('draft'); ui.showDraft(this.el, msg.options, (card) => this.choose(card)); return; }
-    if (msg.t === 'decided') { this.flow.send('choose'); ui.hideDraft(this.el); ui.announce(this.el, '適応がネットワークの形を変え始めました。'); return; }
+    if (msg.t === 'decided') { this.flow.send('choose'); ui.hideDraft(this.el); ui.announce(this.el, 'The Adaptation is changing the network’s form.'); return; }
     if (msg.t === 'extinct') this.finishRun(msg.summary);
   }
 
@@ -150,24 +148,43 @@ class GameApp {
   setPaused(value) {
     if (!['running', 'draft'].includes(this.state)) return;
     this.paused = value; this.el.pause.setAttribute('aria-pressed', String(value));
-    this.el.pause.textContent = value ? '再開' : '一時停止'; this.worker?.postMessage({ t: value ? 'pause' : 'resume' });
-    ui.announce(this.el, value ? 'ゲーム時間を止めました。' : '成長を再開しました。');
+    this.el.pause.textContent = value ? 'Resume' : 'Pause'; this.worker?.postMessage({ t: value ? 'pause' : 'resume' });
+    ui.announce(this.el, value ? 'Game time is paused.' : 'Growth resumes.');
   }
 
   finishRun(result) {
     this.flow.send('extinct'); this.paused = true; ui.hideDraft(this.el);
     const score = scoreResult(result);
-    this.meta = { ...this.meta, runs: this.meta.runs + 1, totalEchoes: this.meta.totalEchoes + score.echoes, bestScore: Math.max(this.meta.bestScore, score.total) };
+    this.meta = { ...this.meta, runs: this.meta.runs + 1, totalEchoes: this.meta.totalEchoes + score.echoes,
+      echoBalance: this.meta.echoBalance + score.echoes, bestScore: Math.max(this.meta.bestScore, score.total) };
     saveMeta(this.meta); ui.showResult(this.el, score, result);
   }
 
-  resize() { this.renderer?.resize(this.canvas.clientWidth, this.canvas.clientHeight, Math.min(this.caps.dpr, 2)); }
+  enterMemory() {
+    this.flow.send('memory'); this.resize(); this.memorySnapshot = buildMemorySnapshot(this.topo, this.meta);
+    ui.showMemory(this.el, this.meta, (id) => this.buyMemory(id));
+  }
+
+  buyMemory(id) {
+    const purchase = purchaseMemory(this.meta, id);
+    if (!purchase.ok) return;
+    this.meta = purchase.meta; saveMeta(this.meta);
+    this.memorySnapshot = buildMemorySnapshot(this.topo, this.meta);
+    ui.showMemory(this.el, this.meta, (next) => this.buyMemory(next));
+    ui.announce(this.el, `${purchase.node.nameEn} is now part of every future world.`);
+  }
+
+  resize() { const memory = this.state === 'memory'; this.camera.offsetX = memory ? (this.canvas.clientWidth >= 800 ? -0.3 : 0) : (this.canvas.clientWidth >= 800 ? 0.26 : 0); this.camera.offsetY = memory && this.canvas.clientWidth < 800 ? 0.32 : 0; this.renderer?.resize(this.canvas.clientWidth, this.canvas.clientHeight, Math.min(this.caps.dpr, 2)); }
   frame(now) {
     const dt = Math.min(100, now - this.last); this.last = now;
     this.advanceFallback(dt, now);
-    if (this.state === 'title' && this.settings.motion !== 'reduced') this.camera.yaw += dt * 0.00006;
-    else if (!this.pointer && this.settings.cameraInertia) applyInertia(this.camera);
-    if (this.speed < 16 || now - this.lastRender > 66) { this.renderer.render({ snapshot: this.snapshot, camera: this.camera, time: now / 1000, pulse: this.settings.motion !== 'reduced' }); this.lastRender = now; }
+    if (this.state === 'title') {
+      this.attract?.update(now, this.settings.motion === 'reduced');
+      if (this.settings.motion !== 'reduced') this.camera.yaw += dt * 0.000035;
+    } else if (!this.input?.isActive() && this.settings.cameraInertia) applyInertia(this.camera);
+    const rendered = this.state === 'title' ? this.attract?.snapshot ?? null
+      : this.state === 'memory' ? this.memorySnapshot : this.snapshot;
+    if (this.speed < 16 || now - this.lastRender > 66) { this.renderer.render({ snapshot: rendered, camera: this.camera, time: now / 1000, pulse: this.settings.motion !== 'reduced' }); this.lastRender = now; }
     requestAnimationFrame((time) => this.frame(time));
   }
 

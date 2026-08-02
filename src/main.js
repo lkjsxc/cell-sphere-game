@@ -15,5 +15,5 @@ try { boot(); }
 catch (error) {
   console.error('boot failed', error);
   const status = document.getElementById('boot-status');
-  if (status) status.textContent = '起動に失敗しました。ページを再読み込みしてください。';
+  if (status) status.textContent = 'The world could not wake. Reload the page to try again.';
 }
