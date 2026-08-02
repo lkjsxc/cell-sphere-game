@@ -15,15 +15,23 @@ export class NetworkPass {
    * @param {{program: WebGLProgram, u: Map<string, WebGLUniformLocation>}} progVeins
    * @param {{program: WebGLProgram, u: Map<string, WebGLUniformLocation>}} progTips
    * @param {import('../world/icosphere.js').Topology} topo
+   * @param {import('../world/dual-mesh.js').DualMesh} dual
    */
-  constructor(gl, progVeins, progTips, topo) {
+  constructor(gl, progVeins, progTips, topo, dual) {
     this.gl = gl;
     this.pv = progVeins;
     this.pt = progTips;
     this.topo = topo;
+    this.dual = dual;
     // Preallocated instance payloads; filled each snapshot, never reallocated.
     this.veinData = new Float32Array(topo.edgeCount * 9);
     this.tipData = new Float32Array(topo.nodeCount * 5);
+    this.overlay = {
+      eventCenters: new Float32Array(12), eventRadii: new Float32Array(4),
+      eventTints: new Float32Array(12), eventStrengths: new Float32Array(4),
+      signalCenters: new Float32Array(12), signalRadii: new Float32Array(4),
+      signalStrengths: new Float32Array(4),
+    };
     /** @type {WebGLBuffer|null} */ this.veinBuf = null;
     /** @type {WebGLBuffer|null} */ this.tipBuf = null;
     /** @type {WebGLVertexArrayObject|null} */ this.veinsVao = null;
@@ -47,39 +55,33 @@ export class NetworkPass {
    * @param {object|null} snapshot
    */
   setOverlays(progGlobe, snapshot) {
-    const gl = this.gl;
-    const centers = new Float32Array(12);
-    const radii = new Float32Array(4);
-    const tints = new Float32Array(12);
-    const strengths = new Float32Array(4);
+    const gl = this.gl; const data = this.overlay;
+    data.eventCenters.fill(0); data.eventRadii.fill(0); data.eventTints.fill(0); data.eventStrengths.fill(0);
+    data.signalCenters.fill(0); data.signalRadii.fill(0); data.signalStrengths.fill(0);
     if (snapshot) {
       const pos = this.topo.positions;
-      snapshot.events.slice(0, 4).forEach((ev, i) => {
-        centers.set([pos[ev.center * 3], pos[ev.center * 3 + 1], pos[ev.center * 3 + 2]], i * 3);
-        radii[i] = ev.radiusDot;
-        tints.set(EVENT_TINTS[ev.family] ?? [0.7, 0.7, 0.7], i * 3);
-        strengths[i] = Math.min(1, ev.intensity);
-      });
+      for (let i = 0; i < Math.min(4, snapshot.events.length); i++) {
+        const ev = snapshot.events[i]; const color = EVENT_TINTS[ev.family] ?? [0.7, 0.7, 0.7];
+        const source = ev.center * 3; const target = i * 3;
+        data.eventCenters[target] = pos[source]; data.eventCenters[target + 1] = pos[source + 1];
+        data.eventCenters[target + 2] = pos[source + 2];
+        data.eventRadii[i] = ev.radiusDot; data.eventTints.set(color, target);
+        data.eventStrengths[i] = Math.min(1, ev.intensity);
+      }
+      for (let i = 0; i < Math.min(4, snapshot.signals.length); i++) {
+        const signal = snapshot.signals[i]; const source = signal.node * 3; const target = i * 3;
+        data.signalCenters[target] = pos[source]; data.signalCenters[target + 1] = pos[source + 1];
+        data.signalCenters[target + 2] = pos[source + 2]; data.signalRadii[i] = B.SIGNAL_RADIUS_DOT;
+        data.signalStrengths[i] = Math.min(1, (signal.untilTick - snapshot.tick) / 40);
+      }
     }
-    gl.uniform3fv(progGlobe.u.get('uEventCenter'), centers);
-    gl.uniform1fv(progGlobe.u.get('uEventRadius'), radii);
-    gl.uniform3fv(progGlobe.u.get('uEventTint'), tints);
-    gl.uniform1fv(progGlobe.u.get('uEventStrength'), strengths);
-
-    const sCenters = new Float32Array(12);
-    const sRadii = new Float32Array(4);
-    const sStrengths = new Float32Array(4);
-    if (snapshot) {
-      const pos = this.topo.positions;
-      snapshot.signals.slice(0, 4).forEach((sig, i) => {
-        sCenters.set([pos[sig.node * 3], pos[sig.node * 3 + 1], pos[sig.node * 3 + 2]], i * 3);
-        sRadii[i] = B.SIGNAL_RADIUS_DOT;
-        sStrengths[i] = Math.min(1, (sig.untilTick - snapshot.tick) / 40);
-      });
-    }
-    gl.uniform3fv(progGlobe.u.get('uSignalCenter'), sCenters);
-    gl.uniform1fv(progGlobe.u.get('uSignalRadius'), sRadii);
-    gl.uniform1fv(progGlobe.u.get('uSignalStrength'), sStrengths);
+    gl.uniform3fv(progGlobe.u.get('uEventCenter'), data.eventCenters);
+    gl.uniform1fv(progGlobe.u.get('uEventRadius'), data.eventRadii);
+    gl.uniform3fv(progGlobe.u.get('uEventTint'), data.eventTints);
+    gl.uniform1fv(progGlobe.u.get('uEventStrength'), data.eventStrengths);
+    gl.uniform3fv(progGlobe.u.get('uSignalCenter'), data.signalCenters);
+    gl.uniform1fv(progGlobe.u.get('uSignalRadius'), data.signalRadii);
+    gl.uniform1fv(progGlobe.u.get('uSignalStrength'), data.signalStrengths);
   }
 
   /**
@@ -90,7 +92,7 @@ export class NetworkPass {
     const gl = this.gl;
     if (!snapshot || fade <= 0.01) return;
 
-    const veins = buildVeinInstances(this.topo, snapshot, this.veinData);
+    const veins = buildVeinInstances(this.topo, snapshot, this.veinData, this.dual);
     const pv = this.pv;
     gl.useProgram(pv.program);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // premultiplied alpha
@@ -99,6 +101,7 @@ export class NetworkPass {
     gl.uniform1f(pv.u.get('uTime'), time);
     gl.uniform1f(pv.u.get('uPulse'), pulse ? 1 : 0);
     gl.uniform1f(pv.u.get('uFade'), fade);
+    gl.uniform1f(pv.u.get('uMemory'), snapshot.status === 'memory' ? 1 : 0);
     gl.bindVertexArray(this.veinsVao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.veinBuf);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.veinData, 0, veins * 9);

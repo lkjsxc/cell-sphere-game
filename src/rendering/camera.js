@@ -4,17 +4,19 @@
  */
 import { perspective, lookAt, multiply, norm3, cross3, dot3 } from './mat4.js';
 
-export const FOV_Y = (40 * Math.PI) / 180;
-const MIN_DIST = 1.6;
-const MAX_DIST = 6.0;
+export const FOV_Y = (44 * Math.PI) / 180;
+const MIN_DIST = 1.7;
+const MAX_DIST = 7.2;
 const MAX_PITCH = 1.45;
 
 /** @returns {Camera} */
 export function createCamera() {
   return {
-    yaw: 0.7,
-    pitch: 0.32,
-    dist: 3.1,
+    yaw: 2.4,
+    pitch: 0.6,
+    dist: 4.1,
+    offsetX: 0,
+    offsetY: 0,
     velYaw: 0,
     velPitch: 0,
   };
@@ -35,6 +37,8 @@ export function viewProjection(cam, aspect) {
   const eye = cameraEye(cam);
   const view = lookAt(eye, [0, 0, 0], [0, 1, 0]);
   const proj = perspective(FOV_Y, aspect, 0.1, 50);
+  proj[8] = -cam.offsetX;
+  proj[9] = -cam.offsetY;
   return multiply(proj, view);
 }
 
@@ -75,10 +79,12 @@ export function cameraRay(cam, ndcX, ndcY, aspect) {
   const right = norm3(cross3(forward, [0, 1, 0]));
   const up = cross3(right, forward);
   const tanHalf = Math.tan(FOV_Y / 2);
+  const shiftedX = ndcX - cam.offsetX;
+  const shiftedY = ndcY - cam.offsetY;
   const dir = norm3([
-    forward[0] + right[0] * ndcX * tanHalf * aspect + up[0] * ndcY * tanHalf,
-    forward[1] + right[1] * ndcX * tanHalf * aspect + up[1] * ndcY * tanHalf,
-    forward[2] + right[2] * ndcX * tanHalf * aspect + up[2] * ndcY * tanHalf,
+    forward[0] + right[0] * shiftedX * tanHalf * aspect + up[0] * shiftedY * tanHalf,
+    forward[1] + right[1] * shiftedX * tanHalf * aspect + up[1] * shiftedY * tanHalf,
+    forward[2] + right[2] * shiftedX * tanHalf * aspect + up[2] * shiftedY * tanHalf,
   ]);
   return { origin: eye, dir };
 }

@@ -3,8 +3,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createTopology } from '../../src/world/icosphere.js';
+import { createDualMesh } from '../../src/world/dual-mesh.js';
 
 const topo = createTopology(4);
+const dual = createDualMesh(topo);
 
 test('canonical counts at level 4', () => {
   assert.equal(topo.nodeCount, 2562);
@@ -76,4 +78,58 @@ test('generation is deterministic across calls', () => {
   assert.deepEqual(again.triangles, topo.triangles);
   assert.deepEqual(again.edgeA, topo.edgeA);
   assert.deepEqual(again.edgeB, topo.edgeB);
+});
+
+test('dual mesh forms mostly hexagonal cells with twelve World Knots', () => {
+  assert.equal(dual.cellCount, 2562);
+  assert.equal(dual.cornerCount, 5120);
+  assert.equal(dual.boundaryCount, 7680);
+  assert.equal(dual.cellCorners.length, 15360);
+  let knots = 0;
+  for (let cell = 0; cell < dual.cellCount; cell++) {
+    const sides = dual.cellStart[cell + 1] - dual.cellStart[cell];
+    if (sides === 5) knots++;
+    else assert.equal(sides, 6, `cell ${cell} has ${sides} sides`);
+  }
+  assert.equal(knots, 12);
+});
+
+test('dual corners are finite unit vectors and boundaries are manifold', () => {
+  for (let corner = 0; corner < dual.cornerCount; corner++) {
+    const x = dual.corners[corner * 3];
+    const y = dual.corners[corner * 3 + 1];
+    const z = dual.corners[corner * 3 + 2];
+    assert.ok(Number.isFinite(x + y + z), `corner ${corner} is not finite`);
+    assert.ok(Math.abs(Math.hypot(x, y, z) - 1) < 1e-5, `corner ${corner} off sphere`);
+  }
+  for (let edge = 0; edge < dual.boundaryCount; edge++) {
+    const a = dual.boundaryCornerA[edge];
+    const b = dual.boundaryCornerB[edge];
+    assert.notEqual(a, b, `boundary ${edge} repeats one corner`);
+    assert.ok(a < dual.cornerCount && b < dual.cornerCount, `boundary ${edge} invalid`);
+  }
+});
+
+test('dual cell winding faces outward and generation is deterministic', () => {
+  for (let cell = 0; cell < dual.cellCount; cell++) {
+    const start = dual.cellStart[cell]; const end = dual.cellStart[cell + 1];
+    const center = topo.positions.subarray(cell * 3, cell * 3 + 3);
+    for (let offset = start; offset < end; offset++) {
+      const ca = dual.cellCorners[offset] * 3;
+      const cb = dual.cellCorners[offset + 1 < end ? offset + 1 : start] * 3;
+      const ax = dual.corners[ca] - center[0];
+      const ay = dual.corners[ca + 1] - center[1];
+      const az = dual.corners[ca + 2] - center[2];
+      const bx = dual.corners[cb] - center[0];
+      const by = dual.corners[cb + 1] - center[1];
+      const bz = dual.corners[cb + 2] - center[2];
+      const facing = (ay * bz - az * by) * center[0]
+        + (az * bx - ax * bz) * center[1]
+        + (ax * by - ay * bx) * center[2];
+      assert.ok(facing > 0, `cell ${cell} has inward edge at ${offset - start}`);
+    }
+  }
+  const again = createDualMesh(createTopology(4));
+  assert.deepEqual(again.corners, dual.corners);
+  assert.deepEqual(again.cellCorners, dual.cellCorners);
 });

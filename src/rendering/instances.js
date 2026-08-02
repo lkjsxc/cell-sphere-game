@@ -8,7 +8,7 @@
  * Layout per instance (9 floats): posA(3), posB(3), width, stress, |flux|.
  * @returns {number} instance count
  */
-export function buildVeinInstances(topo, snapshot, out) {
+export function buildVeinInstances(topo, snapshot, out, dual = null) {
   const { edgeA, edgeB, positions, edgeCount } = topo;
   const { edgeActive, conductance, flux, stress } = snapshot;
   let n = 0;
@@ -17,14 +17,17 @@ export function buildVeinInstances(topo, snapshot, out) {
     const a = edgeA[e];
     const b = edgeB[e];
     const o = n * 9;
-    out[o] = positions[a * 3];
-    out[o + 1] = positions[a * 3 + 1];
-    out[o + 2] = positions[a * 3 + 2];
-    out[o + 3] = positions[b * 3];
-    out[o + 4] = positions[b * 3 + 1];
-    out[o + 5] = positions[b * 3 + 2];
+    const ai = dual ? dual.boundaryCornerA[e] * 3 : a * 3;
+    const bi = dual ? dual.boundaryCornerB[e] * 3 : b * 3;
+    const source = dual ? dual.corners : positions;
+    out[o] = source[ai];
+    out[o + 1] = source[ai + 1];
+    out[o + 2] = source[ai + 2];
+    out[o + 3] = source[bi];
+    out[o + 4] = source[bi + 1];
+    out[o + 5] = source[bi + 2];
     // Width from conductance; stress averaged; flux normalized.
-    out[o + 6] = 0.006 + conductance[e] * 0.011;
+    out[o + 6] = 0.004 + conductance[e] * 0.007;
     out[o + 7] = (stress[a] + stress[b]) * 0.5;
     out[o + 8] = Math.min(1, Math.abs(flux[e]) * 3.0);
     n++;

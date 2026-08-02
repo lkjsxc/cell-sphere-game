@@ -13,7 +13,13 @@ import { createCamera, cameraEye, viewProjection, cameraRay, intersectUnitSphere
 import { buildVeinInstances, buildTipInstances } from '../../src/rendering/instances.js';
 import * as SH from '../../src/rendering/shaders.js';
 import * as SHN from '../../src/rendering/shaders-network.js';
+import * as SHB from '../../src/rendering/shaders-boundary.js';
 import { parseUniformNames } from '../../src/rendering/gl-utils.js';
+import { createCellGeometry } from '../../src/rendering/cell-geometry.js';
+import { AttractState } from '../../src/rendering/attract-state.js';
+import { createTopology } from '../../src/world/icosphere.js';
+import { createFields } from '../../src/world/fields.js';
+import { createRng } from '../../src/core/prng.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(here, p), 'utf8');
@@ -57,7 +63,8 @@ test('parseUniformNames strips array brackets', () => {
 test('every declared uniform is uploaded by the renderer modules', () => {
   const uploaded = new Set();
   const re = /\.u\.get\(['"]([^'"]+)['"]\)/g;
-  for (const src of [read('../../src/rendering/renderer.js'), read('../../src/rendering/network-pass.js')]) {
+  for (const src of [read('../../src/rendering/renderer.js'), read('../../src/rendering/world-pass.js'),
+    read('../../src/rendering/network-pass.js')]) {
     let m;
     while ((m = re.exec(src)) !== null) uploaded.add(m[1]);
   }
@@ -67,6 +74,7 @@ test('every declared uniform is uploaded by the renderer modules', () => {
     atmosphere: [SH.VS_ATMOSPHERE, SH.FS_ATMOSPHERE],
     veins: [SHN.VS_VEINS, SHN.FS_VEINS],
     tips: [SHN.VS_TIPS, SHN.FS_TIPS],
+    boundary: [SHB.VS_BOUNDARY, SHB.FS_BOUNDARY],
   };
   for (const [name, sources] of Object.entries(programs)) {
     const declared = new Set();
@@ -80,6 +88,35 @@ test('every declared uniform is uploaded by the renderer modules', () => {
   for (const u of ['uEventCenter', 'uEventStrength', 'uSignalCenter', 'uSignalRadius']) {
     assert.ok(parseUniformNames(SH.FS_GLOBE).has(u), `globe missing ${u}`);
   }
+});
+
+test('dual-cell render geometry stays indexed, finite, and cell-addressable', () => {
+  const topo = createTopology(3);
+  const fields = createFields(createRng(42), topo);
+  const geometry = createCellGeometry(topo, fields);
+  assert.equal(geometry.dual.cellCount, topo.nodeCount);
+  assert.equal(geometry.indices.length, topo.edgeCount * 6);
+  assert.equal(geometry.boundaryIndices.length, topo.edgeCount * 6);
+  assert.equal(geometry.vertexCell.length, geometry.vertexCount);
+  for (const value of geometry.positions) assert.ok(Number.isFinite(value));
+  for (const index of geometry.indices) assert.ok(index < geometry.vertexCount);
+});
+
+test('title organism grows through real adjacency and stays bounded', () => {
+  const topo = createTopology(2);
+  const attract = new AttractState(topo, 0);
+  for (let step = 1; step <= 80; step++) attract.update(step * 300, true);
+  const snap = attract.snapshot;
+  const alive = snap.alive.reduce((sum, value) => sum + value, 0);
+  assert.equal(alive, 54);
+  for (let edge = 0; edge < topo.edgeCount; edge++) {
+    if (!snap.edgeActive[edge]) continue;
+    assert.equal(snap.alive[topo.edgeA[edge]], 1);
+    assert.equal(snap.alive[topo.edgeB[edge]], 1);
+  }
+  attract.reset(12);
+  assert.equal(snap.alive[12], 1);
+  assert.equal(snap.alive.reduce((sum, value) => sum + value, 0), 1);
 });
 
 // --- instance builders on a synthetic 3-node line graph ---------------------
