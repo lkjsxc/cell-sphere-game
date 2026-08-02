@@ -27,7 +27,13 @@ export function serializeReplay(state) {
  * final slot is reserved for extinction, so the cap is deterministic.
  */
 export function recordHistory(state, type, data = {}) {
-  const event = { seq: state.history.length, tick: state.tick, type, ...data };
+  const sourceCells = Array.isArray(data.primaryCells) ? data.primaryCells : [data.cellId ?? data.cell];
+  const primaryCells = [];
+  for (const cell of sourceCells) {
+    if (Number.isInteger(cell) && cell >= 0 && cell < state.topo.nodeCount && !primaryCells.includes(cell)) primaryCells.push(cell);
+    if (primaryCells.length === 8) break;
+  }
+  const event = { seq: state.history.length, tick: state.tick, type, ...data, primaryCells };
   if (type === 'run-extinct') {
     if (state.history.length < 80) state.history.push(event);
     else state.history[79] = event;

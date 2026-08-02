@@ -39,15 +39,17 @@ Main → Worker:
 - `set-adaptation-mode {mode}`
 - `choose-adaptation {offerId, cardId}`
 - `inspect-cell {requestId, node}`
+- `history-preview {requestId, tick}` / `history-buffer {requestId}`
 - `snapshot-now`
 
 Worker → main:
 
 - `ready` / `started {inoculationCell}`
-- transferable `snapshot` (dynamic life/routes, pending count, active events)
+- transferable cell-only `snapshot` (`biomass`, `stress`, `alive`, `lifeState`)
 - `adaptation-offered` / `adaptation-selected` / `adaptation-mode`
 - `history-batch` / `event`
 - `cell-inspection {requestId, cell}`
+- transferable `history-preview` / `history-buffer` with matching request IDs
 - `extinct {summary}` / `error`
 
 Snapshot cadence is bounded at about 10 Hz even at 32×; rendering is reduced to
@@ -69,12 +71,16 @@ Separate localStorage documents own:
 - Settings schema 2 (`settings:v2`), with safe migration from the old key;
 - progression schema 4 (`meta:v1`), including Echoes, 108-node ownership,
   Imprints, graph version, quarantine, and one migration notice;
-- History schema 1 (`history:v1`), retaining 24/32 timelines, ≤80 events each,
-  ≤128 Memory purchases, and a hard 700 KB serialized cap.
+- semantic History schema 2 (`history:v2`, migrating `history:v1`), retaining
+  24/32 timelines, ≤80 events and ≤8 primary cells/event, ≤128 Memory
+  purchases, and a hard 700 KB serialized cap;
+- device-local IndexedDB visual History: strict `INHV` v1 cell-only bundles,
+  newest ten completed worlds, each at most 256 KiB.
 
 Parse/validate is field-by-field. Progress purchases persist before in-memory
 currency is committed. Storage failure leaves the session playable and is
-communicated honestly.
+communicated honestly. JSON export/import remains semantic only; visual
+checkpoints are explicitly approximate and device-local.
 
 ## Determinism boundary
 

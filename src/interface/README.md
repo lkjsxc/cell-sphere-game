@@ -15,7 +15,8 @@ it never mutates simulation arrays or consumes authoritative randomness.
 | `inspector-surface.js` | Read-only static geography and low-cadence living detail. |
 | `panel-surfaces.js` | Explicit Adaptation and Memory-node/list interactions. |
 | `adaptation-effects.js` | Two-event visual queue, reduced-motion gate, bottom caption lifetime. |
-| `history-surface.js` | Semantic current/past timelines and location actions. |
+| `history-surface.js` | Nonmodal scrubber, world/event navigation, and expanded semantic list. |
+| `history-playback.js` | Current/past bundle loading, stale guards, projection, and live restoration. |
 | `settings-surface.js` | Live validated preference form and local-data actions. |
 | `app-data.js` | Quality/DPR, seed, and export/import browser helpers. |
 

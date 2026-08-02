@@ -44,8 +44,8 @@ preference.
   main-thread `RunController` fallback. World, events, growth, inoculation,
   offers, and random decisions use isolated xoshiro128** streams.
 - Non-blocking FIFO Adaptation offers with exact-uniform seeded automatic
-  selection, manual delayed choices, versioned replay, and bounded semantic
-  History.
+  selection, manual delayed choices, versioned replay, schema-2 semantic
+  History, and bounded approximate cell-only timeline checkpoints.
 - WebGL2 primary renderer: seven steady-state draws for terrain, coast/cell
   etching, drainage ribbons, atmosphere, and living routes. Canvas 2D remains
   an observationally complete fallback.
@@ -54,8 +54,9 @@ preference.
 - Exactly 108 validated Memory nodes across Reach, Flow, Reserve, Ecology,
   Perception, and Continuity; spherical selection precedes every purchase and
   an accessible grouped list shares the same source of truth.
-- Separate validated stores for Settings, progression/Imprints, and a bounded
-  local-only History archive.
+- Separate validated stores for Settings, progression/Imprints, schema-2
+  semantic History, and ten device-local IndexedDB visual bundles. JSON
+  export/import intentionally remains semantic only.
 - No runtime dependencies, engine, framework, CDN, remote media, analytics, or
   post-load network requirement.
 
@@ -80,6 +81,7 @@ src/world/       topology, terrain, hydrology, ecology, landmarks
 src/simulation/  deterministic authority, inspection, replay, History events
 src/game/        Adaptations, scoring, strains, 108-node Memory content
 src/rendering/   WebGL2 + Canvas 2D, camera, picking, static/dynamic passes
+src/history/     strict bounded visual codec, recorder, preview projection
 src/interface/   screen/overlay composition and player intent
 src/platform/    capabilities, Settings, progression, History persistence
 tests/ scripts/  production-module tests, balance, benchmark, Chrome evidence

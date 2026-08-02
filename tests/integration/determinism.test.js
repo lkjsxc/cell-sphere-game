@@ -185,7 +185,7 @@ test('semantic History validates, prunes, serializes, and survives storage failu
   for (let run = 1; run <= 35; run++) archive = appendWorld(archive, { ...result, seed: run }, score, run, 24);
   assert.equal(archive.worlds.length, 24); assert.ok(serializeHistory(archive).length < 700000);
   globalThis.localStorage = { getItem: () => '{broken', setItem: () => {} };
-  try { assert.deepEqual(loadHistory(), { schema: 1, worlds: [], memory: [] });
+  try { assert.deepEqual(loadHistory(), { schema: 2, worlds: [], memory: [] });
     globalThis.localStorage.setItem = () => { throw new Error('quota'); }; assert.equal(saveHistory(archive), false); }
   finally { delete globalThis.localStorage; }
 });

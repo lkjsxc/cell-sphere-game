@@ -1,5 +1,6 @@
 /** Authoritative deterministic run controller shared by Worker and fallback. */
 import { BALANCE as B } from '../game/balance.js';
+import { chooseAdaptationOrigin } from '../core/adaptation-origin.js';
 import { ADAPTATIONS, adaptationPresentationCategory, applyCardEffects, selectRandomOption } from '../game/adaptations.js';
 import { applyMemoryConditionals } from '../game/memory.js';
 import { createRunState } from './state.js';
@@ -13,12 +14,14 @@ import { runSummary } from './summary.js';
 import { logReplay, recordHistory, REPLAY } from './replay.js';
 import { buildSnapshot } from './snapshot.js';
 import { buildRunResult, dominantCause } from './result.js';
+import { HistoryRecorder } from '../history/recorder.js';
 
 export class RunController {
   constructor(cfg, emit = () => {}) {
     this.emit = emit;
     this.cfg = { ...cfg, adaptationMode: cfg.adaptationMode ?? 'random' };
     this.state = createRunState(this.cfg);
+    this.historyRecorder = new HistoryRecorder(this.state);
   }
 
   start() {
@@ -29,6 +32,7 @@ export class RunController {
     logReplay(s, REPLAY.INOCULATE, s.inoculationCell);
     logReplay(s, REPLAY.ADAPTATION_MODE, modeIndex(s.adaptationMode));
     recordHistory(s, 'run-start');
+    this.historyRecorder.observe(s, true);
     this.emit({ t: 'started', tick: 0, inoculationCell: s.inoculationCell });
     this.emit({ t: 'history-batch', events: s.history.map((event) => ({ ...event })) });
   }
@@ -46,6 +50,7 @@ export class RunController {
   step() {
     const s = this.state;
     if (s.status !== 'running') return false;
+    const historyLength = s.history.length;
     s.tick++;
     applyMemoryConditionals(s);
     if (s.tick % B.ENV_EVERY === 0) updateEnvironment(s);
@@ -65,8 +70,11 @@ export class RunController {
         if (offer.resolvedTick == null) recordHistory(s, 'adaptation-unresolved', { id: offer.id });
       }
       recordHistory(s, 'run-extinct', { cause: s.extinction.cause });
+      this.historyRecorder.observe(s, true, true);
       this.emit({ t: 'history-batch', events: s.history.slice(historyStart).map((event) => ({ ...event })) });
       this.emit({ t: 'extinct', summary: this.buildResult() });
+    } else {
+      this.historyRecorder.observe(s, s.history.length !== historyLength);
     }
     return true;
   }
@@ -94,6 +102,7 @@ export class RunController {
     recordHistory(s, 'adaptation-mode', { id: mode });
     this.emit({ t: 'adaptation-mode', mode, tick: s.tick });
     this.emit({ t: 'history-batch', events: [{ ...s.history.at(-1) }] });
+    this.historyRecorder.observe(s, true);
     if (mode === 'random' && s.status === 'running') this.resolveNextRandomOffer();
     return true;
   }
@@ -124,6 +133,7 @@ export class RunController {
       originCell: origin.cell, category: adaptationPresentationCategory(cardId),
       affectedComponentId: origin.componentId });
     this.emit({ t: 'history-batch', events: [{ ...s.history.at(-1) }] });
+    this.historyRecorder.observe(s, true);
   }
 
   /** Pure compact dynamic projection for pointer inspection. */
@@ -151,39 +161,8 @@ export class RunController {
 
   buildResult() { return buildRunResult(this.state); }
   snapshot() { return buildSnapshot(this.state); }
-}
-
-/** Deterministic healthiest, most central living cell; consumes no random stream. */
-export function chooseAdaptationOrigin(state) {
-  const { topo, alive, biomass, energy, stress, bfsVisited: seen, bfsQueue: queue } = state;
-  seen.fill(0); let bestCell = -1; let bestComponent = -1; let bestScore = -Infinity;
-  for (let start = 0; start < topo.nodeCount; start++) {
-    if (!alive[start] || seen[start]) continue;
-    let head = 0; let tail = 0; let componentId = start; let cx = 0; let cy = 0; let cz = 0;
-    queue[tail++] = start; seen[start] = 1;
-    while (head < tail) {
-      const cell = queue[head++]; componentId = Math.min(componentId, cell); const p = cell * 3;
-      cx += topo.positions[p]; cy += topo.positions[p + 1]; cz += topo.positions[p + 2];
-      for (let o = topo.nodeStart[cell]; o < topo.nodeStart[cell + 1]; o++) {
-        const next = topo.nodeNeighbors[o];
-        if (alive[next] && !seen[next]) { seen[next] = 1; queue[tail++] = next; }
-      }
-    }
-    const length = Math.hypot(cx, cy, cz) || 1; cx /= length; cy /= length; cz /= length;
-    for (let i = 0; i < tail; i++) {
-      const cell = queue[i]; const p = cell * 3; let degree = 0;
-      for (let o = topo.nodeStart[cell]; o < topo.nodeStart[cell + 1]; o++) degree += alive[topo.nodeNeighbors[o]];
-      const centrality = Math.max(0, (topo.positions[p] * cx + topo.positions[p + 1] * cy + topo.positions[p + 2] * cz + 1) * 0.5);
-      const b = Math.max(0, biomass[cell]); const e = Math.max(0, energy[cell]);
-      const score = b / (b + 1) * 0.26 + e / (e + 2) * 0.22
-        + (1 - Math.min(1, stress[cell])) * 0.18 + centrality * 0.20
-        + degree / Math.max(1, topo.nodeStart[cell + 1] - topo.nodeStart[cell]) * 0.14;
-      if (score > bestScore || (score === bestScore && cell < bestCell)) {
-        bestScore = score; bestCell = cell; bestComponent = componentId;
-      }
-    }
-  }
-  return { cell: bestCell, componentId: bestComponent };
+  historyPreview(tick) { return this.historyRecorder.preview(tick); }
+  historyBuffer() { return this.historyRecorder.buffer(); }
 }
 
 function strainIndex(id) { return ['pioneer', 'conservator', 'weaver'].indexOf(id ?? 'pioneer'); }

@@ -18,8 +18,8 @@ and `node:test`.
 | `snapshot.js` | Compact transferable renderer observations. |
 | `result.js` | Plain result including offers, history, and inoculation. |
 | `replay.js` | Versioned decisions, bounded history, authority hash. |
-| `simulator.js` | Non-blocking `RunController` and pure cell inspection. |
-| `worker-entry.js` | Fixed-step Worker protocol. |
+| `simulator.js` | Non-blocking `RunController`, inspection, and observational recorder ownership. |
+| `worker-entry.js` | Fixed-step Worker protocol with transferable visual-History requests. |
 
 ## Tick order (10 Hz)
 
@@ -40,7 +40,8 @@ extinction check`
 - Biome lookup arrays bound growth, upkeep, uptake, renewal, and route cost.
   Owned conditional Memory is compiled once and rebuilt into a tiny effective
   trait block once per tick rather than iterated per cell.
-- Snapshots expose only adaptation mode and pending count. Cell inspection,
-  snapshots, results, and history queries never mutate authority or RNG.
+- Presentation snapshots are cell-only (`biomass`, `stress`, `alive`,
+  `lifeState`). Visual History quantizes those semantics independently; neither
+  snapshots nor recorder buffers enter replay, result hashes, or RNG.
 - Replay schema 2 records offer, selection, and mode IDs/ticks/card indices;
   final hashes fold replay and owned decisions.

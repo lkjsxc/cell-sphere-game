@@ -58,6 +58,17 @@ self.onmessage = (event) => {
         post({ t: 'cell-inspection', requestId: message.requestId,
           cell: controller.inspectCell(message.node) });
         break;
+      case 'history-preview': {
+        const frame = controller.historyPreview(message.tick); const cells = frame.cells.slice().buffer;
+        post({ t: 'history-preview', requestId: message.requestId, tick: frame.tick,
+          entropyQ: frame.entropyQ, flags: frame.flags, aliveCount: frame.aliveCount, cells }, [cells]);
+        break;
+      }
+      case 'history-buffer': {
+        const buffer = controller.historyBuffer();
+        post({ t: 'history-buffer', requestId: message.requestId, buffer }, [buffer]);
+        break;
+      }
       case 'speed':
         speed = message.value;
         snapshotEvery = B.SNAPSHOT_EVERY; // frame-count cadence: two 50 ms slices ≈ 10 Hz

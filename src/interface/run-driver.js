@@ -36,6 +36,11 @@ export function createRunDriver(caps, onMessage) {
         else if (value.t === 'inspect-cell') emit({ t: 'cell-inspection', requestId: value.requestId,
           cell: fallback.inspectCell(value.node) });
         else if (value.t === 'snapshot-now') { snapshot = fallback.snapshot(); emit({ t: 'snapshot', ...snapshot }); }
+        else if (value.t === 'history-preview') { const frame = fallback.historyPreview(value.tick);
+          emit({ t: 'history-preview', requestId: value.requestId, tick: frame.tick, entropyQ: frame.entropyQ,
+            flags: frame.flags, aliveCount: frame.aliveCount, cells: frame.cells.slice().buffer }); }
+        else if (value.t === 'history-buffer') emit({ t: 'history-buffer', requestId: value.requestId,
+          buffer: fallback.historyBuffer() });
       } catch (error) { emit({ t: 'error', requestId: value.requestId, message: error.message }); }
     }
   }
