@@ -78,8 +78,10 @@
     padding: var(--sp-3) var(--sp-4) calc(var(--sp-3) + var(--safe-bottom)); border-radius: var(--radius-l) var(--radius-l) 0 0; }
   .context-surface::before { content: ""; display: block; width: 2.5rem; height: 3px; margin: 0 auto var(--sp-3);
     background: var(--border-strong); border-radius: var(--radius-pill); }
-  .command-rail { flex-wrap: nowrap; max-width: calc(100vw - 2 * var(--sp-4)); overflow-x: auto; }
-  .hud-bottom { align-items: end; }.hud-event { display: none; }.rail-btn { white-space: nowrap; }
+  .command-rail { width: calc(100vw - 2 * var(--sp-4)); display: grid;
+    grid-template-columns: 3.1rem 4.4rem minmax(5.8rem, 1fr) 4.4rem 3.4rem; overflow: visible; }
+  .hud-bottom { align-items: end; }.hud-event { display: none; }.rail-btn { white-space: nowrap; padding-inline: var(--sp-1); }
+  .speed-control span { display: none; }.speed-control select { width: 4.4rem; padding-inline: var(--sp-2); }
 }
 @media (max-width: 410px) { .corner-nav { gap: 0; }.quiet-btn { padding: 0 var(--sp-2); }.command-rail { gap: 3px; } }
 @supports not (backdrop-filter: blur(1px)) { .material-clear { background: rgba(10, 13, 14, .84); }.material-regular { background: rgba(13, 16, 16, .94); } }
