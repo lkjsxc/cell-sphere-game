@@ -37,7 +37,8 @@ export class Canvas2DRenderer {
     const { ctx, canvas, topo, fields } = this; const { snapshot, camera } = scene;
     const w = canvas.width; const h = canvas.height;
     const cx = w * (0.5 + camera.offsetX * 0.5); const cy = h * (0.5 - camera.offsetY * 0.5);
-    const radius = Math.min(w, h) * 0.40 * (3.1 / camera.dist);
+    const sizeScale = canvas.clientWidth < 600 ? 0.76 : 0.52;
+    const radius = Math.min(w, h) * sizeScale * (3.1 / camera.dist);
     const basis = this.basis(camera); const entropy = snapshot?.entropy ?? 0; const dim = 1 - entropy * 0.55;
     const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#070b14'); bg.addColorStop(1, '#0d1421');
     ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
