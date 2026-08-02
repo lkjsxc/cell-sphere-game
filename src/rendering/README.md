@@ -3,30 +3,24 @@
 WebGL2 primary renderer with a playable Canvas 2D fallback. Both read immutable
 world fields and presentation snapshots; neither can mutate simulation authority.
 
-The ordinary world issues five steady-state WebGL2 draws: background, dual-cell
-terrain and cellular life material, quiet/coast boundaries, connected drainage
-ribbons, and atmosphere. Life is never rendered as a route, line, or point
-sprite. Healthy, frontier, stressed, and critical states occupy
-whole dual cells; dead detritus gets a separate remnant material, and frontier
-uses a static broad inset in addition to color.
-Rivers remain cool center-to-downstream geography.
+The renderer issues five steady-state draws: background, dual-cell surface,
+quiet/coast boundaries, geographic drainage ribbons, and atmosphere. Life is
+never a route, line, or point sprite. Healthy, frontier, stressed, critical,
+and dead-remnant states occupy cells; frontier also has a static inset.
 
 Key modules:
 
-- `camera.js`: orthonormal free-orbit frame, zoom, inertia, focus, picking ray.
-- `picking.js`: offset-aware ray/sphere hit and nearest stable cell ID.
-- `cell-geometry.js`: dual polygons, coast etching, and immutable river ribbons.
-- `world-pass.js`: terrain, cellular life, cell-local events, Adaptation cell
-  emphasis, rivers, atmosphere, and selection.
-- `adaptation-propagation.js`: one bounded living-neighbor BFS per selection,
-  reusable typed-array workspace, and a two-event presentation queue.
+- `camera.js`: orthonormal free orbit, zoom, inertia, focus, and picking ray.
+- `picking.js`: offset-aware ray/sphere hit and stable nearest cell ID.
+- `cell-geometry.js`: dual polygons, coast etching, and immutable rivers.
+- `world-pass.js`: terrain, life, History, Adaptation, Memory, and selection.
+- `adaptation-propagation.js`: bounded neighbor BFS and two-event queue.
 - `shaders*.js`: original GLSL for geography and cellular materials.
-- `fallback2d.js`: projected dual cells, quiet/coast boundaries, rivers,
-  selection, cell-local events, and cellular life states.
+- `fallback2d.js`: equivalent projected cell semantics without organism lines.
 - `renderer.js`: five-draw composition and context-loss callback.
 
-Invariants: static world buffers build once per world; snapshots upload only
-compact per-cell life state. Adaptations upload one quantized cell-distance /
-category field per event and animate with uniforms without adding a sixth draw.
-No canvas readback; quality changes DPR/cadence only; analytic picking remains
-on the documented unit sphere because visual relief is shallow.
+Memory reconfigures the same renderer for a dedicated 642-cell level-3 atlas.
+Status, branch, tier, kind, selection, and morphology fossils are cellular;
+there are no prerequisite lines or path cells. Static geometry builds once per
+world/atlas entry. Snapshot and visual-event uploads are compact per-cell data;
+Adaptation motion uses uniforms and adds no draw. There is no canvas readback.

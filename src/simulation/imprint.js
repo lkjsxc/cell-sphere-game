@@ -1,7 +1,7 @@
 /**
- * Compress one run into a bounded, connected Memory Globe filament.
- * Conductance survives edge deactivation, so it truthfully records which
- * routes carried and reinforced flow before terminal extinction.
+ * Retain a bounded internal edge summary at the authoritative result boundary.
+ * Persistence transactionally projects it into level-3 morphology cells;
+ * production Memory rendering never consumes these edge IDs.
  */
 const MAX_EDGES = 28;
 

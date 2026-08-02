@@ -2,6 +2,7 @@
 import { createProgram, uniformMap, createBuffer } from './gl-utils.js';
 import { createCellGeometry } from './cell-geometry.js';
 import * as SH from './shaders.js';
+import * as SHELL from './shaders-shell.js';
 import * as BOUNDARY from './shaders-boundary.js';
 import { EVENT_TINTS } from './event-tints.js';
 
@@ -14,7 +15,7 @@ export class WorldPass {
       globe: this.make(SH.VS_GLOBE, SH.FS_GLOBE),
       boundary: this.make(BOUNDARY.VS_BOUNDARY, BOUNDARY.FS_BOUNDARY),
       river: this.make(BOUNDARY.VS_BOUNDARY, BOUNDARY.FS_BOUNDARY),
-      atmosphere: this.make(SH.VS_ATMOSPHERE, SH.FS_ATMOSPHERE),
+      atmosphere: this.make(SHELL.VS_ATMOSPHERE, SHELL.FS_ATMOSPHERE),
     };
     this.lifeData = new Float32Array(this.geometry.vertexCount * 3);
     this.adaptationData = new Uint8Array(this.geometry.vertexCount * 2); this.adaptationToken = -1;
@@ -30,18 +31,15 @@ export class WorldPass {
     this.vaos = [];
     this.initialize();
   }
-
   make(vertex, fragment) {
     const program = createProgram(this.gl, vertex, fragment);
     return { program, u: uniformMap(this.gl, program) };
   }
-
   buffer(target, data, usage) {
     const value = createBuffer(this.gl, target, data, usage);
     this.buffers.push(value);
     return value;
   }
-
   initialize() {
     const gl = this.gl; const g = this.geometry;
     this.lifeBuffer = this.buffer(gl.ARRAY_BUFFER, this.lifeData, gl.DYNAMIC_DRAW);
@@ -74,13 +72,11 @@ export class WorldPass {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.atmosphereIndex);
     gl.bindVertexArray(null);
   }
-
   vao() {
     const vao = this.gl.createVertexArray();
     this.gl.bindVertexArray(vao); this.vaos.push(vao);
     return vao;
   }
-
   attribute(program, name, buffer, size, type = this.gl.FLOAT) {
     const gl = this.gl; const location = gl.getAttribLocation(program.program, name);
     if (location < 0) return;
@@ -88,7 +84,6 @@ export class WorldPass {
     gl.enableVertexAttribArray(location);
     gl.vertexAttribPointer(location, size, type, false, 0, 0);
   }
-
   uploadLife(snapshot) {
     if (snapshot === this.lastSnapshot && (snapshot?.tick ?? -1) === this.lastTick) return;
     this.lastSnapshot = snapshot;
@@ -96,18 +91,25 @@ export class WorldPass {
     const cells = this.geometry.vertexCell;
     if (!snapshot) this.lifeData.fill(0);
     else {
+      const memory = snapshot.status === 'memory';
       for (let vertex = 0; vertex < cells.length; vertex++) {
         const cell = cells[vertex];
-        this.lifeData[vertex * 3] = snapshot.alive[cell] ? Math.min(1, 0.25 + snapshot.biomass[cell] * 0.55) : 0;
-        this.lifeData[vertex * 3 + 1] = snapshot.stress[cell];
-        this.lifeData[vertex * 3 + 2] = snapshot.lifeState?.[cell]
-          ?? (snapshot.alive[cell] ? 1 : snapshot.biomass[cell] > 0 ? 5 : 0);
+        if (memory) {
+          this.lifeData[vertex * 3] = snapshot.memoryStatus[cell];
+          this.lifeData[vertex * 3 + 1] = snapshot.memoryBranch[cell] + snapshot.memoryKind[cell] * 0.1;
+          this.lifeData[vertex * 3 + 2] = snapshot.memoryImprintWeight[cell]
+            + snapshot.memoryTier[cell] * 2 + snapshot.memoryEmphasis[cell] * 32;
+        } else {
+          this.lifeData[vertex * 3] = snapshot.alive[cell] ? Math.min(1, 0.25 + snapshot.biomass[cell] * 0.55) : 0;
+          this.lifeData[vertex * 3 + 1] = snapshot.stress[cell];
+          this.lifeData[vertex * 3 + 2] = snapshot.lifeState?.[cell]
+            ?? (snapshot.alive[cell] ? 1 : snapshot.biomass[cell] > 0 ? 5 : 0);
+        }
       }
     }
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.lifeBuffer);
     this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.lifeData);
   }
-
   uploadAdaptation(event) {
     const token = event?.token ?? 0; if (token === this.adaptationToken) return;
     this.adaptationToken = token; const cells = this.geometry.vertexCell;
@@ -118,7 +120,6 @@ export class WorldPass {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.adaptationBuffer);
     this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.adaptationData);
   }
-
   draw(vp, eye, snapshot, selectedNode, adaptation, highlightedCells = []) {
     const gl = this.gl; this.uploadLife(snapshot); this.uploadAdaptation(adaptation);
     const globe = this.programs.globe;
@@ -171,7 +172,6 @@ export class WorldPass {
     gl.drawElements(gl.TRIANGLES, this.topo.triangles.length, gl.UNSIGNED_SHORT, 0);
     gl.disable(gl.CULL_FACE);
   }
-
   setEventOverlays(program, snapshot) {
     const gl = this.gl; const data = this.overlay;
     data.centers.fill(0); data.radii.fill(0); data.tints.fill(0); data.strengths.fill(0);

@@ -1,25 +1,4 @@
-/** Original GLSL for the surrounding field, dual-cell planet, and atmosphere. */
-
-export const VS_BACKGROUND = `#version 300 es
-out vec2 vUv;
-void main() {
-  vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2);
-  vUv = p;
-  gl_Position = vec4(p * 2.0 - 1.0, 0.999, 1.0);
-}`;
-
-export const FS_BACKGROUND = `#version 300 es
-precision mediump float;
-in vec2 vUv;
-out vec4 outColor;
-void main() {
-  vec2 p = vUv - 0.5;
-  float dawn = exp(-4.8 * length(p - vec2(-0.42, -0.34)));
-  float deep = smoothstep(-0.45, 0.65, p.y);
-  vec3 col = mix(vec3(0.035, 0.041, 0.052), vec3(0.009, 0.014, 0.023), deep);
-  col += vec3(0.16, 0.095, 0.052) * dawn * 0.18;
-  outColor = vec4(col, 1.0);
-}`;
+/** Dual-cell world, life, History, Adaptation, and Memory GLSL. */
 
 export const VS_GLOBE = `#version 300 es
 uniform mat4 uViewProj;
@@ -36,7 +15,9 @@ out vec4 vTerrain;
 out vec3 vLife;
 out vec2 vAdaptation;
 void main() {
-  float relief = max(0.0, aMaterial.w - 0.43) * 0.022 + aTerrain.w * 0.004;
+  float atlasRelief = step(0.5, aLife.x) * (0.002 + step(2.5, aLife.x) * 0.006)
+    + step(3.5, fract(aLife.y) * 10.0) * 0.003;
+  float relief = max(0.0, aMaterial.w - 0.43) * 0.022 + aTerrain.w * 0.004 + atlasRelief;
   vPos = aPos * (1.0 + relief);
   vCenter = aCenter;
   vMaterial = aMaterial;
@@ -100,11 +81,12 @@ void main() {
   float life = clamp(vLife.x, 0.0, 1.0);
   float stress = clamp(vLife.y, 0.0, 1.0);
   float state = floor(vLife.z + 0.5);
-  float living = 1.0 - step(0.5, abs(state - 1.0));
-  float frontier = 1.0 - step(0.5, abs(state - 2.0));
-  float stressed = 1.0 - step(0.5, abs(state - 3.0));
-  float critical = 1.0 - step(0.5, abs(state - 4.0));
-  float deadRemains = 1.0 - step(0.5, abs(state - 5.0));
+  float ordinary = 1.0 - uMemory;
+  float living = (1.0 - step(0.5, abs(state - 1.0))) * ordinary;
+  float frontier = (1.0 - step(0.5, abs(state - 2.0))) * ordinary;
+  float stressed = (1.0 - step(0.5, abs(state - 3.0))) * ordinary;
+  float critical = (1.0 - step(0.5, abs(state - 4.0))) * ordinary;
+  float deadRemains = (1.0 - step(0.5, abs(state - 5.0))) * ordinary;
   float alive = living + frontier + stressed + critical;
   float centerDot = dot(normalize(vPos), normalize(vCenter));
   float inset = smoothstep(0.9982, 0.99972, centerDot);
@@ -115,6 +97,32 @@ void main() {
   base = mix(base, vec3(0.58, 0.34, 0.22), stressed * (0.20 + stress * 0.12 + striation * 0.08));
   base = mix(base, vec3(0.66, 0.20, 0.13), critical * (0.34 + stress * 0.08 + striation * 0.13));
   base = mix(base, vec3(0.31, 0.30, 0.28), deadRemains * (0.20 + inset * 0.09));
+  float atlasStatus = floor(vLife.x + 0.5);
+  float atlasBranch = floor(vLife.y + 0.01);
+  float atlasKind = floor(fract(vLife.y) * 10.0 + 0.5);
+  float selectedStatus = step(4.5, atlasStatus);
+  float plainStatus = atlasStatus - selectedStatus * 4.0;
+  float lockedCell = 1.0 - step(1.5, plainStatus);
+  float unaffordableCell = step(1.5, plainStatus) * (1.0 - step(2.5, plainStatus));
+  float affordableCell = step(2.5, plainStatus) * (1.0 - step(3.5, plainStatus));
+  float ownedCell = step(3.5, plainStatus);
+  vec3 branchColor = vec3(0.48, 0.58, 0.47);
+  if (atlasBranch < 1.5) branchColor = vec3(0.56, 0.72, 0.48);
+  else if (atlasBranch < 2.5) branchColor = vec3(0.40, 0.68, 0.76);
+  else if (atlasBranch < 3.5) branchColor = vec3(0.76, 0.62, 0.36);
+  else if (atlasBranch < 4.5) branchColor = vec3(0.42, 0.68, 0.45);
+  else if (atlasBranch < 5.5) branchColor = vec3(0.62, 0.52, 0.73);
+  else branchColor = vec3(0.72, 0.54, 0.48);
+  float fossil = fract(vLife.z); float emphasis = step(31.0, vLife.z);
+  float broadGlyph = smoothstep(0.38, 0.60, abs(sin(dot(vPos, vec3(11.0, 7.0, 5.0)) * (1.0 + atlasKind * 0.12))));
+  vec3 atlasBase = mix(vec3(0.13, 0.14, 0.145), vec3(0.30, 0.27, 0.22), fossil * 0.48);
+  atlasBase = mix(atlasBase, branchColor * 0.38, lockedCell * inset);
+  atlasBase = mix(atlasBase, branchColor * 0.68, unaffordableCell * (0.28 + inset * 0.28));
+  atlasBase = mix(atlasBase, branchColor * 1.22, affordableCell * (0.64 + inset * 0.30));
+  atlasBase = mix(atlasBase, branchColor * (0.82 + broadGlyph * 0.24), ownedCell * (0.58 + inset * 0.34));
+  atlasBase += selectedStatus * vec3(0.24, 0.30, 0.26) * (0.45 + inset * 0.35);
+  atlasBase += emphasis * vec3(0.18, 0.22, 0.15) * inset;
+  base = mix(base, atlasBase, uMemory);
   float grey = dot(base, vec3(0.299, 0.587, 0.114));
   base = mix(base, vec3(grey) * 0.56, uEntropy * 0.70);
   vec3 n = normalize(vPos);
@@ -161,27 +169,4 @@ void main() {
   float selected = uHasSelection * step(0.99994, dot(normalize(vCenter), uSelectedCenter));
   col = mix(col, vec3(0.78, 0.92, 0.84), selected * (0.34 + plate * 0.28));
   outColor = vec4(col, 1.0);
-}`;
-
-export const VS_ATMOSPHERE = `#version 300 es
-uniform mat4 uViewProj;
-in vec3 aPos;
-out vec3 vPos;
-void main() {
-  vPos = aPos * 1.095;
-  gl_Position = uViewProj * vec4(vPos, 1.0);
-}`;
-
-export const FS_ATMOSPHERE = `#version 300 es
-precision mediump float;
-in vec3 vPos;
-out vec4 outColor;
-uniform vec3 uEye;
-uniform float uEntropy;
-void main() {
-  vec3 n = normalize(vPos);
-  vec3 v = normalize(uEye - vPos);
-  float rim = pow(clamp(1.0 - abs(dot(v, n)), 0.0, 1.0), 2.5);
-  vec3 tint = mix(vec3(0.20, 0.43, 0.46), vec3(0.34, 0.24, 0.21), uEntropy);
-  outColor = vec4(tint * rim * (0.58 - uEntropy * 0.24), 1.0);
 }`;

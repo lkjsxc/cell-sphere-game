@@ -71,9 +71,9 @@ export function createMemorySurface(options) {
     document.getElementById('memory-node-summary').textContent = state.effectEn;
     document.getElementById('memory-node-detail').textContent = state.description;
     const status = state.owned ? 'Owned' : state.locked ? 'Locked' : state.affordable ? 'Available' : 'Needs more Echoes';
-    const prereqs = state.requires.length ? state.requires.map((id) => getMemoryNode(id)?.nameEn ?? id).join(', ') : 'Atlas origin';
+    const prereqs = state.requires.length ? state.requires.map((id) => getMemoryNode(id)?.nameEn ?? id).join(', ') : 'Atlas origin cell';
     const root = document.getElementById('memory-node-meta'); root.replaceChildren(...definitionRows([
-      ['Status', status], ['Cost', `${state.cost} Echoes · ${meta.echoBalance} held`], ['Prerequisites', prereqs], ['Kind', humanize(state.kind)]]));
+      ['Cell status', status], ['Cost', `${state.cost} Echoes · ${meta.echoBalance} held`], ['Adjacent parent cells', prereqs], ['Kind', humanize(state.kind)]]));
     unlock.disabled = !state.selectedReady; unlock.textContent = state.owned ? 'Remembered' : `Unlock · ${state.cost} Echoes`;
   }
   function renderList() {
@@ -81,7 +81,7 @@ export function createMemorySurface(options) {
     for (const branch of MEMORY_BRANCHES) {
       const heading = document.createElement('h3'); heading.textContent = branch; fragments.push(heading);
       for (const node of MEMORY_NODES.filter((item) => item.branch === branch)) {
-        const state = memoryNodeState(meta, node); const value = state.owned ? 'owned' : state.reachable && state.affordable ? 'available' : 'locked';
+        const state = memoryNodeState(meta, node); const value = state.owned ? 'owned' : state.reachable ? 'available' : 'locked';
         if (status !== 'all' && status !== value) continue;
         const button = document.createElement('button'); button.type = 'button'; button.className = 'memory-list-item';
         button.append(line('', state.nameEn), line('', `${value} · ${state.cost} Echoes`));
@@ -94,14 +94,6 @@ export function createMemorySurface(options) {
     refresh(nextMeta) { meta = nextMeta; if (selected) renderNode(); }, closeNode() { panel.hidden = true; selected = null; },
     openList(nextMeta) { meta = nextMeta; renderList(); listSurface.hidden = false; },
     closeList() { listSurface.hidden = true; }, get selectedId() { return selected?.id ?? null; }, get listSurface() { return listSurface; } };
-}
-
-export function nearestMemoryNode(hit, topo, threshold = 0.986) {
-  let best = null; let bestDot = threshold;
-  for (const node of MEMORY_NODES) { const p = node.cell * 3;
-    const dot = hit[0] * topo.positions[p] + hit[1] * topo.positions[p + 1] + hit[2] * topo.positions[p + 2];
-    if (dot > bestDot) { bestDot = dot; best = node; } }
-  return best;
 }
 
 function line(className, text) { const node = document.createElement('span'); if (className) node.className = className; node.textContent = text; return node; }

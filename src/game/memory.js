@@ -6,8 +6,13 @@ import { PERCEPTION_MEMORY } from './memory-perception.js';
 import { REACH_MEMORY } from './memory-reach.js';
 import { RESERVE_MEMORY } from './memory-reserve.js';
 import { renderMemorySnapshot } from './memory-scene.js';
+import { MEMORY_ATLAS_HASH } from './memory-atlas.js';
+export { createMemoryFields } from './memory-scene.js';
+export { MEMORY_ATLAS_REVERSE } from './memory-atlas.js';
+import { createTopology } from '../world/icosphere.js';
+export { applyMemoryConditionals } from './memory-node.js';
 
-export const MEMORY_GRAPH_VERSION = 1;
+export const MEMORY_GRAPH_VERSION = 2;
 export const MEMORY_BRANCHES = Object.freeze(['Reach', 'Flow', 'Reserve', 'Ecology', 'Perception', 'Continuity']);
 export const MEMORY_NODES = Object.freeze([
   ...REACH_MEMORY, ...FLOW_MEMORY, ...RESERVE_MEMORY,
@@ -88,73 +93,25 @@ function mergeEffect(target, effect) {
 
 export function memoryEffects(meta) { return compileMemory(meta).effects; }
 
-/** Rebuild the small effective trait block once per tick from owned conditions. */
-export function applyMemoryConditionals(state) {
-  const target = state.activeTraits;
-  for (const key of Object.keys(state.traits)) target[key] = state.traits[key];
-  const conditions = state.memoryConditionals ?? [];
-  if (!conditions.length) return target;
-  const context = conditionContext(state);
-  for (const effect of conditions) {
-    if (!conditionActive(effect.trigger, state, context) || !(effect.key in target)) continue;
-    target[effect.key] = effect.operation === 'add'
-      ? target[effect.key] + effect.value : target[effect.key] * effect.value;
-  }
-  return target;
-}
-
-function conditionContext(state) {
-  let energy = 0; let moisture = 0; let toxin = 0; let alive = 0;
-  for (let i = 0; i < state.topo.nodeCount; i++) if (state.alive[i]) {
-    alive++; energy += Math.max(0, state.energy[i]); moisture += state.moisture[i]; toxin += state.toxicity[i];
-  }
-  const active = state.events.filter((event) => state.tick >= event.startTick && state.tick <= event.endTick);
-  return { energy: alive ? energy / alive / 6 : 0, moisture: alive ? moisture / alive : 0,
-    toxin: alive ? toxin / alive : 0, crisis: active.some((event) => event.crisis), active };
-}
-
-function conditionActive(trigger, state, c) {
-  switch (trigger) {
-    case 'coverage-below-25': return state.coverage < 0.25;
-    case 'coverage-above-70': return state.coverage > 0.70;
-    case 'components-above-one': return state.aliveCount > 1 && state.connectedShare < 0.98;
-    case 'connectivity-below-45': return state.connectedShare < 0.45;
-    case 'connectivity-below-35': return state.connectedShare < 0.35;
-    case 'crisis-active': return c.crisis;
-    case 'nutrient-bloom-active': return c.active.some((event) => event.family === 'bloom');
-    case 'energy-below-20': return c.energy < 0.20;
-    case 'energy-above-80': return c.energy > 0.80;
-    case 'recent-biomass-loss-above-20': return state.peakCoverage - state.coverage > 0.20;
-    case 'heat-crisis-active': return c.active.some((event) => event.family === 'heat');
-    case 'moisture-below-30': return c.moisture < 0.30;
-    case 'toxin-pressure-above-50': return c.toxin > 0.50;
-    case 'crisis-recently-ended': return state.events.some((event) => state.tick > event.endTick && state.tick <= event.endTick + 200);
-    case 'crisis-telegraphed': return state.events.some((event) => (event.announced & 1) && !(event.announced & 2));
-    case 'component-just-rejoined': return (state.reconnectedUntil ?? -1) >= state.tick;
-    default: return false;
-  }
-}
-
 export function campaignResolved(meta) { return meta.memoryNodes.includes('continuity-unbroken-lesson'); }
 
 export function buildMemoryScene(meta, selectedId = null) {
   const groups = groupAccessibleMemory(meta, selectedId);
   const nodes = Object.freeze(groups.flatMap((group) => group.nodes));
-  const links = Object.freeze(MEMORY_NODES.flatMap((node) => node.requires.map((from) =>
-    Object.freeze({ from, to: node.id }))));
-  return Object.freeze({ version: MEMORY_GRAPH_VERSION, nodes, links, groups });
+  return Object.freeze({ version: MEMORY_GRAPH_VERSION, selectedId, nodes, groups });
 }
 
-export function buildMemorySnapshot(topo, meta, selectedId = null) {
-  return renderMemorySnapshot(topo, meta, buildMemoryScene(meta, selectedId));
+export function buildMemorySnapshot(topo, meta, selectedId = null, emphasizedIds = []) {
+  return renderMemorySnapshot(topo, meta, buildMemoryScene(meta, selectedId), emphasizedIds);
 }
 
 export function validateMemoryGraph(nodes = MEMORY_NODES) {
   const errors = []; const ids = new Set(); const cells = new Set(); const unlockKeys = new Set();
   const byId = new Map(); const composition = {}; const branchCounts = {}; let totalCost = 0;
+  const topo = createTopology(3);
   for (const node of nodes) {
     if (!/^[a-z][a-z-]+$/.test(node.id) || ids.has(node.id)) errors.push(`invalid id: ${node.id}`); ids.add(node.id); byId.set(node.id, node);
-    if (!Number.isInteger(node.cell) || node.cell < 0 || node.cell >= 2562 || cells.has(node.cell)) errors.push(`invalid cell: ${node.id}`); cells.add(node.cell);
+    if (!Number.isInteger(node.cell) || node.cell < 0 || node.cell >= topo.nodeCount || cells.has(node.cell)) errors.push(`invalid cell: ${node.id}`); cells.add(node.cell);
     if (!Number.isFinite(node.cost) || node.cost <= 0) errors.push(`invalid cost: ${node.id}`); else totalCost += node.cost;
     composition[node.kind] = (composition[node.kind] ?? 0) + 1;
     branchCounts[node.branch] = (branchCounts[node.branch] ?? 0) + 1;
@@ -172,10 +129,18 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
   if (nodes.length !== 108) errors.push(`node count: ${nodes.length}`);
   for (const [kind, count] of Object.entries(expectedKinds)) if (composition[kind] !== count) errors.push(`kind count: ${kind}`);
   for (const branch of MEMORY_BRANCHES) if (branchCounts[branch] !== 18) errors.push(`branch count: ${branch}`);
-  const children = new Map(nodes.map((node) => [node.id, 0]));
+  const degree = new Map(nodes.map((node) => [node.id, 0]));
   for (const node of nodes) for (const required of node.requires) {
-    if (!byId.has(required)) errors.push(`missing prerequisite: ${node.id}->${required}`);
-    else children.set(required, children.get(required) + 1);
+    const parent = byId.get(required);
+    if (!parent) errors.push(`missing prerequisite: ${node.id}->${required}`);
+    else {
+      degree.set(required, degree.get(required) + 1); degree.set(node.id, degree.get(node.id) + 1);
+      if (!cellsAdjacent(topo, node.cell, parent.cell)) errors.push(`nonadjacent prerequisite: ${node.id}->${required}`);
+    }
+  }
+  for (const node of nodes.filter((item) => item.kind === 'connector')) {
+    if (node.requires.length !== 2 || !node.requires.every((id) => byId.get(id)?.kind === 'keystone'))
+      errors.push(`connector parents: ${node.id}`);
   }
   const visiting = new Set(); const reached = new Set();
   function visit(id) {
@@ -185,7 +150,10 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
     visiting.delete(id); reached.add(id);
   }
   for (const id of ids) visit(id);
-  for (const node of nodes) if (children.get(node.id) === 0 && node.kind !== 'capstone') errors.push(`orphan: ${node.id}`);
+  for (const branch of MEMORY_BRANCHES) {
+    const territory = nodes.filter((node) => node.branch === branch); const allowed = new Set(territory.map((node) => node.cell));
+    if (territory.length && connectedCells(topo, territory[0].cell, allowed) !== allowed.size) errors.push(`disconnected branch: ${branch}`);
+  }
   const roots = nodes.filter((node) => node.requires.length === 0).map((node) => node.id);
   const rootReachable = new Set(roots); let changed = true;
   while (changed) { changed = false; for (const node of nodes) if (!rootReachable.has(node.id)
@@ -194,5 +162,19 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
   for (const node of nodes) if (!rootReachable.has(node.id)) errors.push(`unreachable: ${node.id}`);
   return Object.freeze({ valid: errors.length === 0, errors: Object.freeze(errors),
     totalCost, composition: Object.freeze(composition), branchCounts: Object.freeze(branchCounts),
-    roots: Object.freeze(roots), reachable: rootReachable.size });
+    roots: Object.freeze(roots), reachable: rootReachable.size, relations: nodes.reduce((sum, node) => sum + node.requires.length, 0),
+    maxDegree: Math.max(0, ...degree.values()), topologyLevel: topo.levels, mappingHash: MEMORY_ATLAS_HASH });
+}
+
+function cellsAdjacent(topo, a, b) {
+  if (!Number.isInteger(a) || !Number.isInteger(b) || a < 0 || a >= topo.nodeCount) return false;
+  for (let offset = topo.nodeStart[a]; offset < topo.nodeStart[a + 1]; offset++) if (topo.nodeNeighbors[offset] === b) return true;
+  return false;
+}
+function connectedCells(topo, root, allowed) {
+  const seen = new Set([root]); const queue = [root];
+  for (const cell of queue) for (let offset = topo.nodeStart[cell]; offset < topo.nodeStart[cell + 1]; offset++) {
+    const next = topo.nodeNeighbors[offset]; if (allowed.has(next) && !seen.has(next)) { seen.add(next); queue.push(next); }
+  }
+  return seen.size;
 }

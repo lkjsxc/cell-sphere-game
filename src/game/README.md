@@ -13,7 +13,8 @@ same frozen definitions; this directory never owns DOM or persistence state.
 | `memory.js` | 108-node atlas graph, queries, transactions, compilation, and validation. |
 | `memory-node.js` | Shared immutable node/effect schema for atlas content. |
 | `memory-{branch}.js` | Eighteen authored nodes for each of six progression branches. |
-| `memory-scene.js` | Stable cell and prerequisite-path projection onto the world topology. |
+| `memory-atlas.js` | Frozen level-3 cell embedding, reverse map, validator, and deterministic solver. |
+| `memory-scene.js` | Direct per-cell atlas status and morphology-fossil projection. |
 
 Invariants:
 
@@ -24,4 +25,4 @@ Invariants:
 - Six Memory branches contain exactly 18 nodes; IDs and locations are stable.
 - Scalar traits, conditional effects, and unlocks compile separately.
 - Purchases return a new meta document and spend exactly the declared cost.
-- Memory filaments follow graph prerequisites, never save-array order.
+- Every prerequisite is represented by one shared boundary between atlas cells.

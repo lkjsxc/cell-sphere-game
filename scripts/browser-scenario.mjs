@@ -103,11 +103,18 @@ export async function runScenario(t) {
   await screenshot('browser-result-mobile.png');
   await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-result-history-mobile.png');
   await evaluate("document.getElementById('history-close').click(); document.getElementById('memory-button').click()"); await wait(300);
-  ok(await evaluate('window.__IN_APP__.memorySnapshot.nodeStates.length') === 108, 'Memory atlas is not 108 nodes');
+  const atlas = await evaluate(`(() => { const app=window.__IN_APP__, snap=app.memorySnapshot; return {
+    nodes:snap.nodeStates.length,cells:snap.memoryStatus.length,level:app.topo.levels,frontier:snap.nodeStates.filter(n=>n.reachable).length,
+    paths:'links' in snap.memoryScene,draws:app.renderer.drawCalls}; })()`);
+  ok(atlas.nodes === 108 && atlas.cells === 642 && atlas.level === 3, 'Memory did not reconfigure to the level-3 atlas');
+  ok(atlas.frontier === 6 && !atlas.paths && atlas.draws === 5, 'early frontier or direct-cell rendering regressed');
   const before = await evaluate('window.__IN_APP__.meta.echoBalance');
   const nodeId = await evaluate(`window.__IN_APP__.memorySnapshot.nodeStates.find(n=>n.reachable&&n.affordable)?.id`);
   ok(nodeId, 'no affordable Memory node'); await evaluate(`window.__IN_APP__.selectMemoryNode(${JSON.stringify(nodeId)})`);
   ok(await evaluate("!document.getElementById('memory-node-panel').hidden"), 'node selection did not open details');
+  const mobilePanel = await evaluate(`(() => { const r=document.getElementById('memory-node-panel').getBoundingClientRect();
+    return {top:r.top,left:r.left,width:r.width,height:r.height,viewport:innerHeight}; })()`);
+  ok(mobilePanel.top > mobilePanel.viewport * 0.32, 'mobile Memory detail is not a safe bottom surface');
   await screenshot('browser-memory-selected-mobile.png'); await evaluate("document.getElementById('memory-unlock').click()"); await wait(150);
   ok(await evaluate('window.__IN_APP__.meta.echoBalance') < before, 'Memory unlock did not spend Echoes');
   const purchased = await evaluate(`(() => { const app=window.__IN_APP__; for(let i=0;i<3;i++) { const node=app.memorySnapshot.nodeStates.find(n=>n.reachable&&n.affordable&&!n.owned);
@@ -117,7 +124,12 @@ export async function runScenario(t) {
   ok(await evaluate("document.querySelectorAll('#memory-list .memory-list-item').length") > 0, 'accessible Memory list is empty');
   await evaluate("document.getElementById('memory-list-close').click()");
 
-  await setViewport(1440, 900); await evaluate('window.__IN_APP__.camera.dist=4.1'); await wait(250); await screenshot('browser-memory-desktop.png');
+  await setViewport(1440, 900); await evaluate(`(() => { const app=window.__IN_APP__; app.camera.dist=4.1;
+    app.selectMemoryNode(app.memorySnapshot.nodeStates.find(n=>n.owned)?.id); })()`); await wait(250);
+  const desktopPanel = await evaluate(`(() => { const r=document.getElementById('memory-node-panel').getBoundingClientRect();
+    return {left:r.left,right:r.right,width:r.width,viewport:innerWidth}; })()`);
+  ok(desktopPanel.left < desktopPanel.viewport * 0.45 && desktopPanel.right < desktopPanel.viewport * 0.62,
+    'desktop Memory detail is not a safe left surface'); await screenshot('browser-memory-desktop.png');
   await evaluate('location.reload()'); await wait(3000);
   const persisted = await evaluate(`(() => { const meta=JSON.parse(localStorage.getItem('incremental-network-game:meta:v1'));
     const history=JSON.parse(localStorage.getItem('incremental-network-game:history:v2')); return {nodes:meta.memoryNodes.length,worlds:history.worlds.length}; })()`);

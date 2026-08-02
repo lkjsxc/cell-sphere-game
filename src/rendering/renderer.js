@@ -1,6 +1,6 @@
 /** WebGL2 composition: quiet field, dual-cell world, atmosphere, and life. */
 import { createProgram, uniformMap } from './gl-utils.js';
-import * as SH from './shaders.js';
+import * as SHELL from './shaders-shell.js';
 import { viewProjection, cameraEye } from './camera.js';
 import { WorldPass } from './world-pass.js';
 
@@ -13,7 +13,7 @@ export class GLRenderer {
     this.gl = gl;
     this.backend = 'webgl2';
     this.drawCalls = 5;
-    this.background = this.make(SH.VS_BACKGROUND, SH.FS_BACKGROUND);
+    this.background = this.make(SHELL.VS_BACKGROUND, SHELL.FS_BACKGROUND);
     this.world = new WorldPass(gl, topo, fields);
     this.onContextLoss = opts.onContextLoss ?? (() => {});
     canvas.addEventListener('webglcontextlost', (event) => {

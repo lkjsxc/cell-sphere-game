@@ -93,14 +93,19 @@ export class Canvas2DRenderer {
     const { ctx, topo } = this; const events = snapshot.events ?? [];
     for (let cell = 0; cell < topo.nodeCount; cell++) {
       if (this.facing[cell] <= 0.02) continue;
+      if (snapshot.status === 'memory') {
+        const styles = memoryStyles(snapshot.memoryStatus[cell], snapshot.memoryKind[cell], snapshot.memoryImprintWeight[cell], fade);
+        if (!styles) continue; this.cellPath(cell); ctx.fillStyle = styles.fill; ctx.fill();
+        if (styles.inset) { this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill(); }
+        if (styles.stroke) { ctx.strokeStyle = styles.stroke; ctx.lineWidth = styles.width; ctx.stroke(); }
+        continue;
+      }
       const state = snapshot.lifeState?.[cell]
         ?? (snapshot.alive[cell] ? LIFE_STATE.LIVING : snapshot.biomass[cell] > 0 ? LIFE_STATE.DEAD_REMAINS : 0);
       if (state !== LIFE_STATE.UNOCCUPIED) {
         const styles = lifeStyles(state, fade); this.cellPath(cell); ctx.fillStyle = styles.fill; ctx.fill();
-        if (styles.inset) {
-          this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill();
-          if (styles.stroke) { ctx.strokeStyle = styles.stroke; ctx.lineWidth = styles.width; ctx.stroke(); }
-        }
+        if (styles.inset) { this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill();
+          if (styles.stroke) { ctx.strokeStyle = styles.stroke; ctx.lineWidth = styles.width; ctx.stroke(); } }
       }
       for (const event of events) {
         if (dotCell(topo.positions, cell, event.center) < event.radiusDot) continue;
@@ -164,6 +169,17 @@ function adaptationStyle(category, strength) {
   if (category === 5) return { fill: `rgba(116,190,104,${alpha})`, scale: 0.82 };
   if (category === 6) return { fill: `rgba(190,209,191,${alpha * 0.72})`, scale: 0.48 };
   return { fill: `rgba(205,214,119,${alpha})`, scale: 1 };
+}
+
+function memoryStyles(status, kind, fossil, fade) {
+  if (!status && !fossil) return null;
+  const selected = status >= 5; const plain = selected ? status - 4 : status;
+  const special = kind >= 4; const stroke = selected ? 'rgba(225,244,232,.98)' : plain === 2 ? 'rgba(171,185,168,.65)' : null;
+  if (plain === 1) return { fill: `rgba(55,58,59,${0.68 * fade})`, inset: 'rgba(73,77,75,.36)', scale: 0.72, stroke, width: 1.2 };
+  if (plain === 2) return { fill: `rgba(104,119,105,${0.52 * fade})`, inset: 'rgba(38,43,41,.62)', scale: 0.62, stroke, width: 1.0 };
+  if (plain === 3) return { fill: `rgba(177,202,137,${0.90 * fade})`, inset: 'rgba(230,235,184,.75)', scale: 0.54, stroke, width: 1.5 };
+  if (plain === 4) return { fill: `rgba(117,158,128,${0.82 * fade})`, inset: special ? 'rgba(224,218,163,.78)' : 'rgba(197,220,185,.62)', scale: special ? 0.45 : 0.62, stroke, width: 1.5 };
+  return { fill: `rgba(111,91,66,${fossil * 0.48 * fade})` };
 }
 
 function lifeStyles(state, fade) {

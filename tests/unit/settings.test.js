@@ -63,12 +63,13 @@ test('every legacy ownership subset migrates one-for-one without currency refund
     const owned = LEGACY_IDS.filter((_, index) => mask & (1 << index));
     const migrated = validateMeta({ schema: 3, bestScore: 99, totalEchoes: 70,
       echoBalance: 17, runs: 4, signalHintShown: true, memoryNodes: owned });
-    assert.equal(migrated.schema, 4); assert.equal(migrated.memoryNodes.length, owned.length);
+    assert.equal(migrated.schema, 5); assert.equal(migrated.memoryGraphVersion, 2);
+    assert.equal(migrated.memoryNodes.length, owned.length);
     const mapped = owned.map((id) => LEGACY_MEMORY_MAP[id]);
     assert.deepEqual(migrated.memoryNodes, MEMORY_NODE_IDS.filter((id) => mapped.includes(id)));
     assert.equal(migrated.totalEchoes, 70); assert.equal(migrated.echoBalance, 17);
     assert.equal('signalHintShown' in migrated, false);
-    assert.deepEqual(migrated.migrationNotice, { kind: 'memory-atlas-v4', pending: true });
+    assert.deepEqual(migrated.migrationNotice, { kind: 'memory-atlas-v5', pending: true });
   }
 });
 
@@ -82,24 +83,29 @@ test('all six proof nodes preserve bounded value while First Trace becomes resil
   assert.equal(campaignResolved(migrated), false);
 });
 
-test('schema 4 preserves all 108 IDs and quarantines unknown IDs', () => {
+test('schema 4 validates old ownership, then preserves it under graph 2', () => {
   const meta = validateMeta({ schema: 4, memoryGraphVersion: 1, bestScore: 500,
     totalEchoes: 900, echoBalance: 79, runs: 12,
     memoryNodes: [...MEMORY_NODE_IDS, 'foreign-memory'], quarantinedMemoryNodes: ['earlier-unknown'] });
   assert.deepEqual(meta.memoryNodes, MEMORY_NODE_IDS); assert.equal(meta.memoryNodes.length, 108);
   assert.deepEqual(meta.quarantinedMemoryNodes, ['foreign-memory', 'earlier-unknown']);
-  assert.equal(meta.echoBalance, 79); assert.equal(meta.migrationNotice, null);
+  assert.equal(meta.echoBalance, 79); assert.equal(meta.totalEchoes, 900);
+  assert.deepEqual(meta.migrationNotice, { kind: 'memory-atlas-v5', pending: true });
+  assert.equal(meta.memoryGraphVersion, 2);
   const corrupt = validateMeta({ schema: 4, memoryNodes: ['continuity-unbroken-lesson'] });
   assert.deepEqual(corrupt.memoryNodes, []); assert.deepEqual(corrupt.quarantinedMemoryNodes, ['continuity-unbroken-lesson']);
 });
 
-test('old Imprints gain canonical topology metadata and invalid edges are removed', () => {
-  const meta = validateMeta({ schema: 3, imprints: [
+test('old edge Imprints become bounded, connected level-3 morphology fossils idempotently', () => {
+  const meta = validateMeta({ schema: 4, memoryNodes: [], imprints: [
     { kind: 'strongest-corridor', seed: 42, edges: [3, 4, 4, -1, 7680] },
     { kind: 'unknown', seed: 2, edges: [1] },
   ] });
-  assert.deepEqual(meta.imprints, [{ kind: 'strongest-corridor', seed: 42, edges: [3, 4],
-    topology: { kind: 'icosphere', levels: 4, nodeCount: 2562, edgeCount: 7680 } }]);
+  assert.equal(meta.imprints.length, 1); const fossil = meta.imprints[0];
+  assert.equal(fossil.kind, 'strongest-corridor'); assert.equal(fossil.seed, 42);
+  assert.ok(fossil.cells.length >= 32 && fossil.cells.length <= 64);
+  assert.deepEqual(fossil.topology, { kind: 'icosphere', levels: 3, nodeCount: 642, edgeCount: 1920 });
+  assert.deepEqual(validateMeta(meta), meta);
 });
 
 test('Memory purchases are immutable, repeat-safe, and conserve Echoes', () => {
@@ -127,22 +133,20 @@ test('the complete graph can be purchased transactionally for its exact total co
   assert.equal(meta.echoBalance, 0); assert.equal(meta.memoryNodes.length, 108);
 });
 
-test('stable spherical cells and prerequisite paths drive the Memory snapshot', () => {
-  const topo = createTopology(4); const owned = MEMORY_NODE_IDS.slice();
+test('stable level-3 cells drive direct Memory status arrays without path cells', () => {
+  const topo = createTopology(3); const owned = MEMORY_NODE_IDS.slice();
   const meta = { ...defaultMeta(), memoryNodes: owned,
-    imprints: [{ kind: 'strongest-corridor', seed: 7, edges: [0] }] };
+    imprints: [{ kind: 'strongest-corridor', seed: 7, cells: [0, 12, 42] }] };
   const snapshot = buildMemorySnapshot(topo, meta, 'reach-world-seeder');
   const shuffled = buildMemorySnapshot(topo, { ...meta, memoryNodes: [...owned].reverse() }, 'reach-world-seeder');
-  assert.deepEqual(snapshot.alive, shuffled.alive);
-  assert.deepEqual(snapshot.lifeState, shuffled.lifeState);
-  assert.equal(snapshot.alive[topo.edgeA[0]], 1); assert.equal(snapshot.alive[topo.edgeB[0]], 1);
-  assert.equal(snapshot.nodeStates.length, 108);
-  assert.equal(snapshot.nodeStates.find((node) => node.id === 'reach-world-seeder').selectedReady, false);
+  assert.deepEqual(snapshot.memoryStatus, shuffled.memoryStatus);
+  assert.equal(snapshot.memoryStatus.length, 642); assert.equal(snapshot.memoryNodeIndex.length, 642);
+  assert.equal(snapshot.memoryImprintWeight[0] > 0, true); assert.equal(snapshot.nodeStates.length, 108);
+  assert.equal('alive' in snapshot, false); assert.equal('links' in snapshot.memoryScene, false);
   for (const node of snapshot.nodeStates) {
-    assert.ok(node.cell < topo.nodeCount); const p = node.cell * 3;
+    assert.ok(node.cell < topo.nodeCount); assert.ok(snapshot.memoryStatus[node.cell] >= 4); const p = node.cell * 3;
     assert.ok(Math.abs(Math.hypot(topo.positions[p], topo.positions[p + 1], topo.positions[p + 2]) - 1) < 1e-5);
   }
-  for (const node of snapshot.nodeStates) assert.equal(snapshot.alive[node.cell], 1);
   const groups = groupAccessibleMemory({ ...defaultMeta(), echoBalance: 3 }, 'reach-horizon-instinct');
   assert.equal(groups.length, 6); assert.equal(groups[0].nodes[0].selectedReady, true);
 });
