@@ -12,8 +12,8 @@ release candidate from the later frozen submission/tag/form.
 
 ## Current release candidate evidence
 
-- World-first implementation/evidence commit: `48fba48`; final documentation
-  and deployment verification follow it.
+- World-first implementation/evidence commit: `48fba48`; reviewed deployed
+  release commit: `dba92c4dc04e0a37ce2343db09b8992bd8dc1629`.
 - Native static HTML/CSS/ES modules, no runtime dependency or network service.
 - Local verify: 110 unit + 29 integration, including a 100-world unattended
   result-transition soak; balance, benchmark, structure, and links pass.
@@ -32,7 +32,7 @@ release candidate from the later frozen submission/tag/form.
 - [ ] Manually test 200% zoom, forced colors, keyboard, and screen reader.
 - [x] Test WebGL2 reduced motion and force the Canvas fallback in real Chrome.
 - [x] Run local and Docker verification on the release candidate.
-- [ ] Verify public Pages HTML/modules contain the exact final commit.
+- [x] Verify cache-busted public Pages HTML/core modules match reviewed release bytes.
 - [x] Review responsive title/run/surfaces/History/result/Memory screenshots
       from fresh disposable browser storage.
 - [ ] Create reviewed submission branch and annotated tag without rewriting main.
@@ -43,4 +43,6 @@ release candidate from the later frozen submission/tag/form.
 - Submission commit: pending
 - Submission branch/tag: pending (protective pre-redesign tag is not a submission tag)
 - Form submitted: pending
-- Public URL exact revision verification: pending final push/Pages workflow
+- Public URL exact revision verification: release `dba92c4` matched after
+  successful workflow `30760066713`; final evidence-only commit is verified in
+  the handoff report

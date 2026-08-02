@@ -1,15 +1,17 @@
 # Status
 
-Truthful pre-deployment handoff for the world-first cellular redesign.
+Truthful deployed handoff for the world-first cellular redesign.
 
 - **Starting commit:** `540f31a45c7846bc64c49c2ac21208042d4faccc`.
 - **Implementation/evidence commit:** `48fba48` (`test(browser): stabilize visual History evidence`).
-- **Branch at this record:** local `main`, eight commits ahead of pushed
-  `origin/main`; the documentation commit containing this record is not yet
-  pushed.
-- **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>. Until
-  the final push/workflow/parity check recorded in the handoff report, this URL
-  must be treated as the earlier deployed revision.
+- **Reviewed release commit:** `dba92c4dc04e0a37ce2343db09b8992bd8dc1629`.
+- **Branch/upstream:** `main` was synchronized with `origin/main` at the reviewed
+  release commit before this final evidence record.
+- **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>.
+  Workflow `30760066713` completed successfully (verify job `91528877439`,
+  Pages job `91528950821`). Cache-busted public `index.html`, renderer/shader,
+  Memory atlas, continuation, History codec, and this status file all returned
+  HTTP 200 and matched release-commit bytes exactly.
 - **Protective tag:** `pre-world-first-interface-20260802` at `540f31a`.
 
 ## Playable product
@@ -83,5 +85,6 @@ Environment unless stated: Node v22.22.3, Linux x64, 20 logical CPUs.
 - Deep geography/archetype Monte Carlo, dense late-run cellular visual tuning,
   four-run campaign resolution, trophies/challenges/audio/sharing/PWA breadth,
   physical-device review, and final contest branch/tag/form freeze remain.
-- Final required release action: push, wait for CI/Pages, compare cache-busted
-  public bytes with the exact final revision, then update this deployment record.
+- Remaining release administration is the contest-specific branch/tag/form
+  freeze after physical-device and assistive-technology review; it is not
+  falsely recorded as complete here.
