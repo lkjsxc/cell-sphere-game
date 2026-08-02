@@ -36,6 +36,9 @@ Each is a deterministic heuristic using only player-visible information.
 | 2026-07-31 | (Gate B) | balanced | 4 | 361 s | 329–366 | 0.45 | first calibration; median slightly above 330 target |
 | 2026-07-31 | (Gate B) | expansion | 4 | 325 s | 236–361 | 0.40 | wider spread, as expected |
 | 2026-07-31 | (Gate B) | resilience | 4 | 361 s | 311–361 | 0.52 | highest coverage |
+| 2026-08-02 | (WorldModel) | balanced | 4 | 364.2 s | 360.5–364.2 | 0.50 | graph-native geography smoke |
+| 2026-08-02 | (WorldModel) | expansion | 4 | 311.5 s | 304.8–360.9 | 0.56 | within target median; wide range |
+| 2026-08-02 | (WorldModel) | resilience | 4 | 360.2 s | 360.2–364.2 | 0.57 | ceiling remains dominant |
 
 Initial read: extinction timing clusters near the terminal ceiling (360 s)
 rather than the 270–330 median target — the collapse curve is currently the
@@ -69,3 +72,9 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   target first-run score band (20k–80k) yields 5–9 Echoes and exposes all six.
   This is static economy evidence, not a claim that the four-hour completion
   target is calibrated. No simulation equation or golden checksum changed.
+- **2026-08-02 — Graph-native WorldModel.** Replaced independent scalar noise
+  with continent, climate, drainage, river, forest, and biome fields. The
+  default-world golden is `eccc4bba`; production benchmark hash is now
+  `494b406b` (3,107 ticks, 15,475 ticks/s on Node v22.22.3/Linux x64). The
+  four-seed smoke above is evidence of the resulting environment shift, not a
+  claim that balanced/resilience timing now meets target.

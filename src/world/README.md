@@ -1,20 +1,30 @@
 # src/world/
 
-World generation: static topology and environmental fields. Pure functions
-of the seed — identical output on worker, main thread, and Node.
+Pure, deterministic construction of the spherical graph and its static living
+geography. Worker, renderer, simulation, and Node independently obtain the
+same model from the same seed; no generated buffers cross a worker boundary.
 
 | Module | Responsibility |
 |---|---|
-| `icosphere.js` | Geodesic icosphere graph (level 4: 2,562 nodes / 5,120 tris / 7,680 edges), canonical edge list, CSR adjacency. |
-| `fields.js` | Static per-node fields (nutrient, moisture, temperature, altitude, toxin/event vulnerability) via seeded radial-blob noise; resource-source picking. |
+| `icosphere.js` | Canonical geodesic graph, edges, and CSR adjacency. |
+| `dual-mesh.js` | Renderable dual cells sharing simulation cell IDs. |
+| `constants.js` | Stable archetype, water, biome, landmark, and feature enums. |
+| `noise.js` | Isolated RNG streams and seamless broad spherical fields. |
+| `terrain.js` | Quantile sea level, coherent continents, ridges, depth, coasts. |
+| `hydrology.js` | Priority-flood drainage, accumulation, rivers, mouths, lakes. |
+| `ecology.js` | Correlated rainfall climate, soils, forests, biomes, hazards. |
+| `features.js` | Ecologically viable starts, regions, and real landmarks. |
+| `fields.js` | `createFields(rng, topo)` compatibility entry point. |
 
-Invariants:
+## Invariants
 
-- Generation math uses only +,−,×,÷ and `Math.sqrt` (IEEE-correct per spec).
-  No transcendentals, so topology and fields are bit-identical everywhere.
-- Topology is immutable (`Object.freeze`) and shared conceptually by
-  simulation and rendering; each side generates it independently from the
-  level constant — it is never transmitted over the worker channel.
-- Fields are normalized to [0,1] and stored fround-quantized.
-- The opening world is generous by construction (see `baseNutrient`);
-  scarcity arrives through the simulation's entropy curve, not the fields.
+- Generation uses the passed xoshiro RNG only; subsystem streams are derived
+  up front so adding detail to one subsystem cannot perturb another.
+- Terrain occupies 38–58% of a normal world and remains seamless on the
+  sphere. Float fields are explicit, bounded, and `Math.fround`-quantized.
+- Every land cell drains through a neighboring cell to ocean without cycles.
+  Rivers are thresholds over accumulated drainage, never decorative edges.
+- Forests and biomes follow moisture, temperature, elevation, and water.
+  Feature flags and landmarks reference the same authoritative cell graph.
+- `baseNutrient`, `baseMoisture`, `baseTemp`, `toxVuln`, `eventVuln`, and
+  frozen `sources` remain available to existing simulation/rendering callers.
