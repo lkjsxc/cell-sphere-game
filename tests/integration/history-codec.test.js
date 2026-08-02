@@ -5,6 +5,7 @@ import { performance } from 'node:perf_hooks';
 import { decodeVisualHistory, encodeVisualHistory, MAX_BYTES, thinFrames } from '../../src/history/codec.js';
 import { createPreviewBuffers, nearestFrame, projectPreview } from '../../src/history/preview.js';
 import { RunController } from '../../src/simulation/simulator.js';
+import { scoreResult } from '../../src/game/scoring.js';
 import { createRecentRuns, validateRecentRun } from '../../src/platform/recent-runs.js';
 import { createHistoryLoadGuard, createHistoryPlayback } from '../../src/interface/history-playback.js';
 import { loadHistory, normalizeHistoryEvents, validateHistory } from '../../src/platform/history.js';
@@ -49,8 +50,9 @@ test('a detailed five-minute run stays bounded and recorder is authority-neutral
   while (quiet.state.status === 'running') quiet.advance(37);
   while (observed.state.status === 'running') { observed.advance(11); observed.historyPreview(observed.state.tick - 23); observed.historyBuffer(); }
   const a = quiet.buildResult(); const b = observed.buildResult();
-  assert.deepEqual({ hash: b.hash, score: b.score, cause: b.cause, offers: b.offers, history: b.history, imprint: b.imprint },
-    { hash: a.hash, score: a.score, cause: a.cause, offers: a.offers, history: a.history, imprint: a.imprint });
+  assert.deepEqual({ hash: b.hash, cause: b.cause, offers: b.offers, history: b.history, imprint: b.imprint },
+    { hash: a.hash, cause: a.cause, offers: a.offers, history: a.history, imprint: a.imprint });
+  assert.deepEqual(scoreResult(b), scoreResult(a));
   const started = performance.now(); const buffer = observed.historyBuffer(); const decoded = decodeVisualHistory(buffer);
   const decodeMs = performance.now() - started; const seekStart = performance.now();
   for (let i = 0; i < 10_000; i++) nearestFrame(decoded.frames, i % (decoded.terminalTick + 1));
