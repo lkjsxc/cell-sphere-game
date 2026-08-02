@@ -9,6 +9,7 @@
  *   - at most 16 direct children per directory;
  *   - at most 200 lines per source/doc file;
  *   - no directories or files named old/new/legacy/temp/v1/v2/final/...;
+ *   - GitHub's higher-priority .github/README.md mirrors the root README.
  *
  * Documented exceptions live in LINE_EXCEPTIONS / CHILD_EXCEPTIONS below and
  * must name the reason. Exits non-zero on any violation.
@@ -43,6 +44,10 @@ const files = execSync('git ls-files --cached --others --exclude-standard', { cw
 
 const violations = [];
 const dirs = new Map(); // dir -> Set of direct children
+const githubReadme = join(ROOT, '.github/README.md');
+if (readFileSync(githubReadme, 'utf8') !== readFileSync(join(ROOT, 'README.md'), 'utf8')) {
+  violations.push('.github/README.md: must exactly mirror the canonical root README.md');
+}
 
 for (const file of files) {
   const parts = file.split('/');
