@@ -54,13 +54,13 @@ yet proven. Emulation is never reported as a physical observation.
 | Requirement | Status | Evidence |
 |---|---|---|
 | Original HTML/CSS/JS, no prohibited runtime lib | implemented + verified | `check:links` (no remote/bare imports); dedicated `check:forbidden` = target |
-| Public GitHub source | implemented | public repo, coherent history; signed-out check = target at submission |
-| Hosted URL matches source | target | GitHub Pages not yet enabled/verified |
+| Public GitHub source | implemented + verified | <https://github.com/lkjsxc/incremental-network-game> is public; authenticated API confirmed creation (signed-out check remains a submission audit) |
+| Hosted URL matches source | verified | GitHub Pages Actions deployment for `adbe1f0` succeeded; a clean Node fetch on 2026-08-02 returned `200` for the public index and production controller |
 | Desktop Chrome | implemented | WebGL2 + Canvas 2D fallback; headless observe = target (seccomp here) |
 | Smartphone Chrome | target | physical test pending |
 | File/folder organization | verified | `check:structure` (≤200 lines/file, ≤16 children, README per dir) |
 | Readable code + comments | implemented | JSDoc + invariant comments; review at submission |
-| Effective GitHub use | implemented | small commits + CI workflow; Pages deploy = target |
+| Effective GitHub use | verified | small commits, CI, and an Actions Pages deployment succeeded: run `30731782437` |
 | Tests | verified | unit 82 + integration 7 pass; browser harness opens normal app route (skips here only because Chrome networking is sandbox-blocked) |
 | Few bugs / high finish | implemented + partially verified | title → run → draft → result uses production worker/fallback; physical/browser observation remains target |
 | Purpose-fit design / refined UX / first-time clarity | implemented + target | HUD, draft, result, touch grammar exist; fresh-user observation remains target |

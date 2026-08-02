@@ -9,8 +9,8 @@ dies — then turn each extinction into permanent memory on a spherical skill
 tree. Built with vanilla HTML/CSS/JavaScript and WebGL2: no engines, no
 frameworks, no runtime dependencies, no external requests.
 
-**Play:** https://lkjsxc.github.io/incremental-network-game/ *(deployment is
-verified after the next Pages workflow run — see `docs/status.md`)*
+**Play:** https://lkjsxc.github.io/incremental-network-game/ *(Pages deployment
+verified on 2026-08-02; see `docs/status.md`)*
 
 Submitted to the [ZEN Study プログラミングコンテスト 2026 夏](https://progedu.github.io/webappcontest/2026/summer/index.html),
 Webページ部門 (ZEN大学). Deadline 2026-09-13.

@@ -2,115 +2,72 @@
 
 Truthful current state. Updated every session.
 
-- **Starting commit (this turn):** `db31bfb`
-- **Commits this turn:** `6a72824` (renderer + verification), `41c81b0`
-  (canonical-name alignment + decision records), `c4400e1` (status), plus
-  this push-failure note.
-- **Branch / upstream:** `main`. **Push to `origin` FAILED** with
-  `fatal: repository 'https://github.com/lkjsxc/incremental-network-game/' not
-  found`. Diagnostics: `gh auth status` is logged in as `lkjsxc` with a token
-  carrying `repo` scope, but `gh repo view lkjsxc/incremental-network-game`
-  returns *"Could not resolve to a Repository"* — i.e. the remote repository
-  no longer exists on GitHub (it resolved fine in the previous session, so it
-  was deleted or renamed externally between sessions). This is an external
-  state change, not a code or credential defect. Local history is intact and
-  the working tree is clean. The remote was **not** recreated from here
-  (that is the account owner's decision); recreate or restore it, then
-  `git push origin main` will fast-forward the 6 local commits.
-- **Contest readiness:** Gate C renderer landed and logic-verified; the game
-  is **not yet playable as a full loop in the browser** (no HUD/draft/result
-  UI, no worker wiring in-browser). See gates below.
+- **Starting commit (this turn):** `de47194`
+- **Playable implementation commit:** `adbe1f0` — `feat(interface): make deterministic runs playable in browser`.
+- **Branch / upstream:** `main` tracks `origin/main`. The missing GitHub remote
+  reported in the prior session was recreated as a **public** repository at
+  <https://github.com/lkjsxc/incremental-network-game>; the existing local
+  history was pushed without rewriting it.
+- **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>.
+  GitHub Pages is configured for the workflow source and run
+  [`30731782437`](https://github.com/lkjsxc/incremental-network-game/actions/runs/30731782437)
+  completed successfully for `adbe1f0`. A no-cache Node fetch then received
+  HTTP 200 for the public index and `src/interface/app-controller.js`, checking
+  the deployed Begin control and production controller text.
+- **Contest readiness:** browser Gate D vertical slice is now implemented;
+  contest-ready completion is still far away. No physical mobile or GPU run is
+  claimed from this container.
 
 ## Playable now
 
-- Title screen renders the **live rotating WebGL2 globe** (Canvas 2D fallback
-  if WebGL2 init throws); `?preview=1` runs the real main-thread simulation
-  through the renderer for visual checks.
-- Full headless run lifecycle in Node: inoculation → growth → crises →
-  drafts → extinction → result summary with a deterministic hash.
+- The title globe has one live **ネットワークを始める** action.
+- A normal run starts the production Web Worker (or the identical
+  `RunController` fallback), displays authoritative Score / Pressure / Reach /
+  Signal data, supports pointer drag rotation and tap Signal placement, speed
+  1×–32×, pause, visibility pause, and a five-minute simulation arc.
+- Production adaptation drafts use an accessible dialog and pause ticks; the
+  terminal result shows an authoritative deterministic score, rank, cause,
+  breakdown, Echoes, and immediate restart.
+- The old `?preview=1` path remains a development visual tool; browser smoke
+  now opens the normal `?demo=1` app route.
 
 ## Complete and verified
 
-- Gate A: repo contract, docs, structure gate, dev server, CI workflow.
-- Gate B: core primitives + world generation + deterministic simulation
-  (78 unit tests, 7 integration tests incl. speed invariance chunk 1/7/32,
-  benchmark ~17–19k ticks/s desktop, balance harness with smoke mode).
-- Gate C (this turn): WebGL2 renderer (globe, atmosphere, instanced vein
-  ribbons + tips, event/signal overlays), Canvas 2D fallback, orbit camera,
-  ray-sphere picking, quality governor; renderer **logic** unit-tested in
-  Node (8 tests, incl. a static shader-uniform cross-check); browser smoke
-  harness added. Canonical name aligned to `incremental-network-game`
-  everywhere it is asserted.
+- Structure: 117 files / 18 directories, all within source and directory
+  limits and with required READMEs.
+- Deterministic simulation remains green; terminal score is now asserted equal
+  for identical full production runs.
+- `npm run verify` passed on 2026-08-02: 82 unit tests, 7 integration tests,
+  balance smoke, benchmark, structure, and link checks.
+- Benchmark: 3,396 ticks / 183 ms = **18,517 ticks/s** on Node v22.22.3,
+  Linux x64, 20 CPUs; 7 MB heap; stable hash `d02cae0d`.
+- Balance smoke still records medians: balanced 361 s, expansion 325.4 s,
+  resilience 360.5 s. This misses the 270–330 s median goal for two policies.
+- `npm run test:browser` correctly skipped with exit 77: this container's
+  Chrome is blocked from opening sockets by seccomp (`ERR_ACCESS_DENIED`).
+  This is not a browser/GPU pass.
 
 ## Incomplete
 
-- In-browser run loop: worker driver, HUD, adaptation sheet, result screen,
-  speed controls wired to the DOM (Gate D).
-- Scoring formula, phenotypes/synergies, run epithet (Gate D).
-- Memory Globe, Echoes, Imprints, trophies, autoplay, archive, challenges,
-  world archetypes, strains beyond the initial three (Gate E).
-- Share card, procedural audio, PWA (Gate F).
-- **Full English + Japanese player-facing localization** (tracked gate;
-  Japanese premise + canonical name ship now, full bilingual copy does not).
-- The 8 Hz tick-rate + fixed-point numeric convention from the revised
-  mission (deferred to a dedicated rebaseline turn — see `docs/decisions.md`
-  D9; current 10 Hz Float32 simulation is green and deterministic).
-- Accessibility pass, balance tuning with evidence, physical-device tests,
-  CI evidence, README screenshot (Gate G).
+- Memory Globe, Imprints, permanent spending, archive, trophies, campaign
+  resolution, automation, share card, audio, PWA, save export/import, and
+  challenge/world breadth.
+- Complete English/Japanese localization, full accessibility audit, real-user
+  playtests, physical Android Chrome, GPU, performance, and thermal evidence.
+- Required numeric rebaseline: 8 Hz fixed-point simulation; current green
+  simulation remains 10 Hz Float32 (documented decision D9).
+- Score display is an interim deterministic six-axis projection; calibrate its
+  bands and reconcile the final five-axis product specification before claims.
 
-## Current gates
+## Next actions (contest impact order)
 
-| Gate | State |
-|---|---|
-| check:structure | PASS (110 files, 17 dirs) |
-| test:unit | PASS 78/78 |
-| test:integration | PASS 7/7 |
-| balance:smoke | PASS |
-| benchmark | PASS ~17–19k ticks/s (min 3,000), hash d02cae0d |
-| check:links | PASS |
-| test:browser | SKIP 77 — container seccomp blocks Chrome network stack |
-
-`test:browser` is intentionally outside `npm run verify`: in this sandbox
-Chrome's network stack gets `EPERM` on `socket()` (curl/Node connect fine),
-so headless Chrome cannot load the dev server. The harness reports this as a
-skip with the exact signature — never a false pass. A real GPU render is
-claimed only when observed on unrestricted hardware (see `docs/decisions.md`
-D8, `docs/testing.md`).
-
-## Latest metrics
-
-- Benchmark: 3,396 ticks / ~190–230 ms ≈ 17–19k ticks/s single-threaded on a
-  20-core Linux desktop; 8 MB heap; hash `d02cae0d` stable across runs.
-- Balance smoke (n=4/policy): balanced median ~361 s, expansion ~325 s,
-  resilience ~361 s — extinction leans on the terminal ceiling; a mid-run
-  pressure tuning pass is planned (recorded in `docs/balancing.md`).
-- Physical mobile / GPU render: **not observed this turn** (environment
-  limitation, stated plainly).
-
-## Known risks
-
-- No in-browser play yet: the renderer is logic-verified but a pixel has not
-  been observed from this environment. The next turn must wire the worker +
-  HUD and capture a real frame on unrestricted hardware or CI.
-- Extinction timing clusters near the 360 s ceiling rather than the 270–330 s
-  median target; needs a balance pass before score design lands.
-- The revised mission's 8 Hz / fixed-point numeric contract is not yet
-  adopted; doing it carelessly would rebaseline determinism and balance.
-
-## Next actions (priority order, by contest impact)
-
-1. **Gate D in-browser loop**: worker driver + main-thread fallback wired to
-   the DOM, running HUD (score, pressure, Signal charges, speed/pause),
-   adaptation bottom sheet, extinction transition, result screen, restart;
-   capture a real rendered frame and verify the ten-second judge path.
-2. **Balance pass**: strengthen mid-run pressure so the median extinction
-   lands in 270–330 s; record before/after in `docs/balancing.md`.
-3. **Numeric rebaseline turn**: adopt 8 Hz + fixed-point convention with full
-   golden/balance/performance rebaselining per `docs/decisions.md` D9.
-4. **Scoring + phenotypes**: 5-component Network Score, ranks, epithet,
-   synergy recognition (Gate D content).
-5. **Gate E**: Memory Globe + Echoes + Imprints + first campaign resolution
-   + trophies + autoplay + archive.
-6. **Localization**: complete English + Japanese player-facing copy.
-7. **Gate F/G**: share card, audio, PWA, accessibility, physical-device +
-   thermal evidence, CI/Pages, README capture, submission checklist.
+1. Rebalance pressure so standard median extinction is 270–330 s, then
+   rebaseline the planned 8 Hz fixed-point authority in one measured change.
+2. Build Memory Globe / Imprints / Echo persistence and the first four-run
+   campaign resolution; do not add visible unfinished controls.
+3. Complete English and Japanese localization plus keyboard/screen-reader and
+   reduced-motion validation for the new run flow.
+4. Obtain real desktop GPU and physical Android Chrome / thermal observations;
+   retain the current browser-skip limitation until then.
+5. Add archive, trophies, worlds, automation, sharing, and PWA only after the
+   complete extinction-to-memory loop is present and tested.
