@@ -14,7 +14,10 @@ it never mutates simulation arrays or consumes authoritative randomness.
 | `surfaces.js` | Core HUD, result, notices, and screen visibility. |
 | `inspector-surface.js` | Read-only static geography and low-cadence living detail. |
 | `panel-surfaces.js` | Explicit Adaptation and Memory-node/list interactions. |
-| `adaptation-effects.js` | Two-event visual queue, reduced-motion gate, bottom caption lifetime. |
+| `policies/adaptation-effects.js` | Two-event visual queue, reduced-motion gate, bottom caption lifetime. |
+| `policies/continuation.js` | Nine-second result countdown with independent suspension reasons. |
+| `policies/run-result.js` | Idempotent Echo/Imprint/History completion transaction. |
+| `policies/surface-coordinator.js` | One nonmodal context surface, Escape, and focus restoration. |
 | `history-surface.js` | Nonmodal scrubber, world/event navigation, and expanded semantic list. |
 | `history-playback.js` | Current/past bundle loading, stale guards, projection, and live restoration. |
 | `settings-surface.js` | Live validated preference form and local-data actions. |
@@ -22,6 +25,7 @@ it never mutates simulation arrays or consumes authoritative randomness.
 
 Primary screen, simulation status, and overlay are separate concerns. Ordinary
 world taps only select cells; only Memory-node Unlock commands spend currency.
-Full-screen panels continue world time unless the panel pause preference owns
-its explicit pause reason. Adaptation captions are nonblocking and render below
-context sheets; presentation events are released at world/result transitions.
+Bounded context surfaces continue world time unless the panel pause preference
+owns its explicit pause reason. Adaptation captions are nonblocking and render
+below context sheets; presentation events are released at world/result
+transitions. Automatic continuation never purchases Memory.

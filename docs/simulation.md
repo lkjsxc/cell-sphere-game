@@ -38,13 +38,18 @@ options, resolution tick/card/mode. Queue cap is eight; ordinary runs create at
 most five. Manual commands validate offer and card IDs and apply once at the
 current tick. Switching to Random resolves pending FIFO offers at no more than
 one per tick. Random selection is exact-uniform through rejection sampling on
-a dedicated xoshiro stream.
+a dedicated xoshiro stream. Each accepted choice records a deterministic living
+origin cell. Rendering may breadth-first propagate presentation through that
+origin’s living component, but the query is read-only and never enters replay,
+hash, card application, or RNG.
 
 ## Observation
 
 `inspectCell(node)` returns one compact dynamic record (life, biomass, energy,
-nutrient, moisture, temperature, toxicity, stress, routes) and performs no
-writes. Snapshot/history/result serialization likewise consumes no RNG.
+nutrient, moisture, temperature, toxicity, stress, and internal transport
+summary) and performs no writes. Presentation snapshots expose only biomass,
+stress, alive, and explicit life-state cell arrays—never transport edges.
+Snapshot/history/result serialization likewise consumes no RNG.
 Observational-neutrality integration tests compare hash, score, cause,
 Adaptations, History, replay, and Imprint after hundreds of queries.
 
@@ -54,5 +59,8 @@ Replay schema 2 records strain, inoculation, mode changes, fixed offers, and
 selections with authoritative ticks/card indices. The terminal hash folds
 dynamic arrays, replay, inoculation, mode, version, and owned cards. History is
 capped at 80 semantic events with deterministic final-slot reservation and
-coalescing. Main-thread persistence converts stable event types/arguments into
-localized presentation keys.
+coalescing. Major events carry up to eight deterministic primary cells.
+Cell-only approximate checkpoints are thinned below 256 KiB/run, use strict
+`INHV` v1 decoding, and are retained for the newest ten worlds in IndexedDB.
+Main-thread persistence converts stable event types/arguments into localized
+presentation keys.

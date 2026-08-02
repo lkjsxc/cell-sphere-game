@@ -46,7 +46,7 @@ Each is a deterministic heuristic using only player-visible information.
 The integrated biome factors moved the diagnostic medians into the 270–330 s
 target while reducing coverage. This is n=4 smoke evidence, not a calibrated
 claim about the full distribution. A deep Monte Carlo should check that sparse
-terrain routes remain visually satisfying across archetypes.
+cellular spread remains visually satisfying across archetypes.
 
 ## Score projection
 
@@ -82,3 +82,12 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   Node v22.22.3/Linux x64). The
   four-seed smoke above is evidence of the resulting environment shift, not a
   claim that balanced/resilience timing now meets target.
+- **2026-08-02 — World-first cellular presentation.** Deleted organism route,
+  tip, orbit, and Memory-path rendering and reduced steady-state WebGL2 from
+  seven draws to five. Presentation snapshots fell from 102,426 to 25,620
+  bytes. Simulation equations and the default benchmark hash did not change.
+- **2026-08-02 — Completed advanced Memory cells.** Every milestone, keystone,
+  connector, and capstone now includes a concrete bounded scalar bonus; UI copy
+  states only that shipped effect. New-save/default-run balance and golden hash
+  are unchanged because bonuses apply only after purchase. Full-atlas campaign
+  pacing still needs deep calibration.

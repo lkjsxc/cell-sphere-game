@@ -1,67 +1,87 @@
 # Status
 
-Truthful handoff after Gate 6: Adaptation propagation through living cells.
+Truthful pre-deployment handoff for the world-first cellular redesign.
 
-- **Starting commit:** `8b1e31b2f3aa7c5026600da9f1d635608ba352ae`.
-- **Gate 6 commit:** repository HEAD with subject
-  `feat(game): propagate Adaptations through living cells`.
-- **Branch:** isolated detached worktree; not pushed.
-- **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/> remains
-  the earlier release and does not contain this isolated worktree commit.
+- **Starting commit:** `540f31a45c7846bc64c49c2ac21208042d4faccc`.
+- **Implementation/evidence commit:** `48fba48` (`test(browser): stabilize visual History evidence`).
+- **Branch at this record:** local `main`, eight commits ahead of pushed
+  `origin/main`; the documentation commit containing this record is not yet
+  pushed.
+- **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>. Until
+  the final push/workflow/parity check recorded in the handoff report, this URL
+  must be treated as the earlier deployed revision.
+- **Protective tag:** `pre-world-first-interface-20260802` at `540f31a`.
 
-## Gate 6 implemented
+## Playable product
 
-- Every selected Adaptation emits presentation-only `originCell`, stable six-way
-  category, and living-component ID metadata. Origin selection consumes no RNG:
-  it combines biomass, energy, low stress, component-centroid centrality, and
-  local living degree with a stable cell-ID tie break.
-- Rendering prepares one direct-living-neighbor BFS per selection with reusable
-  `Uint32` queue / `Uint16` distance workspace. Dead and disconnected cells stay
-  unreachable. Quantized event distance storage is one byte per world cell.
-- WebGL uploads the expanded distance/category cell attribute once per visual
-  event. The existing cell shader animates Reach, Metabolism, Resilience,
-  Transport, Ecology, and Perception materials from uniforms for 2,000 ms. Draw
-  count remains exactly five; no routes, particles, remote jumps, or authority
-  effects were added.
-- Shader material precedence is selection, Adaptation, event/crisis, life, then
-  geography. Canvas 2D has the same bounded cell-only event and reduced-motion
-  origin treatment.
-- The full visual queue is capped at two events. A third discards the oldest;
-  result/world transitions release queued arrays and captions. At level 4 each
-  event retains 2,562 bytes, two retain at most 5,124 bytes, reused BFS workspace
-  is 15,372 bytes, and the expanded one-time GPU upload is 35,844 bytes.
-- Reduced motion uses a 220 ms static origin emphasis without an expanding wave.
-  The bottom, nonblocking caption uses canonical card name/effect copy for
-  2,500 ms and stacks below context sheets instead of using the generic toast.
+- The globe is the product background on title, run, result, inspector,
+  Adaptations, Settings, History, and Memory. Wide context uses a translucent
+  left surface; narrow context uses a ≤42% bottom sheet; History is a bottom
+  timeline; result is a compact bottom strip.
+- Ordinary globe input remains inspection-only. Automatic Adaptation choices,
+  automatic continuation, idle rotation off, panel pause off, and 1× speed are
+  new-save defaults.
+- Enabled-by-default result continuation starts the next world after nine
+  unattended seconds. Pointer/key input cancels it; hidden documents and open
+  detail surfaces suspend remaining time; it never spends Echoes.
+- WebGL2 uses five steady draws. Living, frontier, stressed, critical, dead,
+  crisis, selection, Adaptation, visual History, and Memory states are direct
+  cell materials. Organism route/tip/orbit and Memory path producers and their
+  presentation payloads are deleted.
+- Adaptation selection starts a bounded two-second direct-living-neighbor wave
+  from a deterministic authoritative origin. Reduced motion uses a brief static
+  origin. The queue retains at most two events / 5,124 bytes.
+- History retains bounded semantic events plus strict approximate cell-only
+  checkpoints. Previous/Next selects event time and primary cells; Live
+  restores current authority immediately; newest-ten visual bundles are
+  device-local IndexedDB data.
+- Memory is a separate level-3 globe: 642 total cells, 108 unique purchase
+  cells, 108 direct-adjacency prerequisites, six roots and connected branches,
+  mapping hash `5a08107c`, graph version 2, and unchanged 818-Echo economy.
+  Schema 5 converts old edge Imprints to bounded cell fossils. Every purchase,
+  including all 36 advanced milestones, has a concrete compiled run effect.
+- Canvas 2D is a tested cellular fallback. Its rivers are terrain-cell material,
+  not center-to-center organism-like lines.
 
-## Evidence
+## Measured evidence
 
-- Determinism tests compare origin metadata at chunk sizes 1 and 32, assert every
-  origin is living, and compare hash/cause/offers/score/Imprint with visual BFS
-  preparation and time queries enabled versus disabled.
-- Unit coverage verifies direct adjacency, no dead-cell jump, unreachable
-  disconnected life, quantized bounded distance, queue cap/discard, retained
-  bytes, reduced-motion static behavior, and timeout release.
-- `npm run verify`: structure, 110/110 unit, 12/12 integration, balance smoke,
-  benchmark, and link checks pass in 6.12 s.
-- Node v22.22.3/Linux x64 benchmark: 2,910 ticks in 162 ms = 17,970 ticks/s;
-  deterministic hash remains `98333073`.
-- `npm run test:browser:file`: pass in real headless Chrome/WebGL2; 32× run
-  reached result in 8.32 s; five draws; title render mean 0.08 ms, p95 0.20 ms.
-  It checks caption copy, start/mid/end time progression, queue ≤2, 5,124-byte
-  queue ceiling, 220 ms reduced static path, and zero retained result state.
-- Browser evidence: `reports/browser-adaptation-wave-start.png` (SHA-256
-  `78e7ef51…`), `browser-adaptation-wave-mid.png` (`bc04b1b8…`),
-  `browser-adaptation-wave-end.png` (`384b59dc…`), and
-  `browser-adaptation-reduced.png` (`230f0bf4…`).
+Environment unless stated: Node v22.22.3, Linux x64, 20 logical CPUs.
+
+- `npm run verify`: PASS — structure; 110/110 unit; 29/29 integration;
+  balance smoke; benchmark; 92-module/9-HTML link gate.
+- Benchmark: 2,910 ticks in 152 ms, 19,096 ticks/s, hash `98333073`, 10 MB
+  reported heap. Smoke medians remain 291.7/290.9/292.2 game seconds for
+  balanced/expansion/resilience.
+- `npm run test:browser:file`: PASS in real headless Chrome/WebGL2. Responsive
+  evidence covers 390×844, 430×932, 768×1024, 1024×768, 1440×900, and
+  1920×1080; 32× result in 8.54 s; five draws; JS submission mean 0.07 ms,
+  p95 0.20 ms; visual IndexedDB reload; four Memory purchases; History restores
+  the level-3 atlas; second unattended result starts the third world; no browser
+  errors. These are not physical-device or GPU timings.
+- `npm run test:browser:canvas`: PASS in real headless Chrome with WebGL
+  disabled through title, complete run, visual History, and Memory.
+- Detailed visual History: 101 frames, 259,594 bytes, 3.248 ms decode, 1.357 ms
+  for 10,000 nearest-frame seeks.
+- 100-world unattended transition soak: 271,785 ticks / 12.678 s; zero invalid
+  or duplicate awards; 92 unresolved Manual offers; 24 worlds / 252,005 bytes
+  retained; eight Imprints; forced-GC heap 4.82→6.44 MiB.
+- `docker compose run --rm verify`: PASS after mirroring the changed canonical
+  README; 110 unit, 29 integration, balance, benchmark, and links all pass in
+  the Node 22 container.
 
 ## Honest limitations / next actions
 
-- Canvas fallback is production-implemented and source/unit-covered, but this
-  turn did not force Canvas in Chrome for a dedicated screenshot.
-- Browser evidence is headless 390×844 emulation, not a physical phone. GPU
-  timing, thermal behavior, forced colors, screen-reader review, and 200% zoom
-  remain unmeasured.
-- Adaptation propagation deliberately does not cross disconnected living
-  components; no secondary origin was added because a single clear origin is
-  more legible and simpler.
+- Current responsive evidence is desktop headless Chrome emulation, not a
+  physical smartphone. Touch feel, temperature, battery, and actual GPU frame
+  time remain unmeasured.
+- Screen-reader traversal, forced-colors visual review, 200% zoom, and Japanese
+  localization remain incomplete. Arbitrary world-cell inspection still needs
+  pointer hit testing; Memory has a semantic list alternative.
+- The same-origin harness exits 77 in this container because Chrome networking
+  is seccomp-blocked; CDP-pipe/file evidence is real Chrome but bypasses HTTP
+  same-origin behavior.
+- Deep geography/archetype Monte Carlo, dense late-run cellular visual tuning,
+  four-run campaign resolution, trophies/challenges/audio/sharing/PWA breadth,
+  physical-device review, and final contest branch/tag/form freeze remain.
+- Final required release action: push, wait for CI/Pages, compare cache-busted
+  public bytes with the exact final revision, then update this deployment record.

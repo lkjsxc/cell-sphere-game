@@ -3,8 +3,9 @@
 `npm run verify` runs structure, unit, integration, balance smoke, benchmark,
 and deployment-path/link gates. `npm run test:browser:file` uses real headless
 Chrome/WebGL2 through a CDP pipe when local HTTP sockets are sandbox-blocked.
-The same-origin harness exits 77 rather than reporting a false pass when Chrome
-cannot connect.
+`npm run test:browser:canvas` starts the same browser with WebGL disabled and
+verifies the Canvas 2D path. The same-origin harness exits 77 rather than
+reporting a false pass when Chrome cannot connect.
 
 ## Automated contracts
 
@@ -16,9 +17,12 @@ pure inspection, History cap, and the 108-node graph/migration/economy.
 
 Integration coverage includes seed/chunk/speed invariance, zero-input Random
 completion, exact manual resolution ticks, stream isolation, replay schema,
-conditional Memory, strict visual-History codec bounds/malformed input,
-primary-cell migration, stale load guards, and an observed run matching a quiet
-run in hash, score, extinction, decisions, semantic History, and Imprint.
+conditional Memory, concrete effects for all 108 Memory purchases, strict
+visual-History codec bounds/malformed input, primary-cell migration, stale load
+guards, and an observed run matching a quiet run in hash, score, extinction,
+decisions, semantic History, and Imprint. A 100-world integration soak also
+checks automatic result transitions, duplicate-award rejection, hidden countdown
+pause ownership, unresolved Manual offers, persistence caps, and heap bounds.
 
 ## Real Chrome scenario
 
@@ -26,18 +30,22 @@ The file/CDP scenario clears itself through a disposable profile and checks:
 rotation default off; drag; title inspector; Settings and opt-in idle rotation;
 manual queued offer without pause; explicit panel/close/reopen/choice; switch
 back to Random; nonmodal History scrub/previous/next/Live with highlighted
-primary cells and continuing authority; 32× result; result History; IndexedDB
-visual-detail reload when available; 108 Memory scene nodes; select-before-Unlock; currency/persistence; accessible
-list; reload; no obsolete run guidance; and no console/runtime errors.
+primary cells and continuing authority; 32× result; compact result History;
+IndexedDB visual-detail reload when available; 642-cell/108-purchase Memory;
+select-before-Unlock; repeated currency/persistence; Memory restoration after
+History; a second unattended result counting down into the third world; an
+accessible list; reload; no obsolete guidance; and no console/runtime errors.
 
-Generated evidence includes mobile title/run/river inspector/Adaptations/
-History/result/Memory selections/Settings and desktop title/run/Memory at
-390×844 and 1440×900.
+Generated WebGL2 evidence includes title layouts at 390×844, 430×932,
+768×1024, 1024×768, 1440×900, and 1920×1080; mobile/tablet/desktop inspector;
+mobile/desktop Settings, run, Adaptations, visual History, result, and Memory;
+full/reduced Adaptation propagation; and automatic continuation. Dedicated
+Canvas screenshots cover mobile/desktop title, History, and Memory.
 
 ## Honest limitations
 
 The CDP file path is real Chrome/WebGL2 but bypasses same-origin HTTP security
 to accommodate this container. Physical Android, thermal, screen-reader,
-Japanese localization, browser heap trend, p95 frame timing, and unrestricted
-public-URL visual observation remain unmeasured unless status records newer
-specific evidence.
+Japanese localization, 200% zoom, forced-colors review, browser heap trend,
+actual GPU frame timing, and unrestricted public-URL visual observation remain
+unmeasured unless status records newer specific evidence.

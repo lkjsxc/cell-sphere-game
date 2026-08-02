@@ -12,9 +12,10 @@ Evidence: `package.json`, link gate, contest rules fetch recorded in status.
 ## D2 — WebGL2 primary, Canvas 2D fallback
 
 Desktop/smartphone Chrome support WebGL2 broadly, while a blank unsupported
-page is unacceptable. WebGL2 owns the seven-draw authored presentation; Canvas
-keeps geography, rivers, selection, events, and routes playable. Evidence:
-renderer unit contracts and real-Chrome WebGL2 scenario.
+page is unacceptable. WebGL2 owns the five-draw authored cellular presentation;
+Canvas keeps geography, cellular life, selection, events, History, and Memory
+playable without drawing organism routes. Evidence: renderer unit contracts and
+dedicated real-Chrome WebGL2 and forced-Canvas scenarios.
 
 ## D3 — Stable level-4 topology
 
@@ -29,12 +30,13 @@ isolation. Use module Worker messages and transferable snapshots, with the same
 `RunController` fallback and no SharedArrayBuffer. Evidence: chunk/speed whole-
 run determinism and browser Worker path.
 
-## D5 — LocalStorage by concern
+## D5 — Storage by bounded concern
 
-Current bounded data does not justify IndexedDB. Keep separate validated
-Settings, progression, and History documents; report write failure and continue
-in session memory. History has explicit count/byte pruning. Evidence: migration,
-corruption, quota, and transaction tests.
+Keep separate validated localStorage documents for Settings, progression, and
+semantic History; report write failure and continue in session memory. Store
+only the newest ten strict, ≤256 KiB visual History bundles in IndexedDB because
+cell checkpoints do not belong in semantic export/import. Evidence: migration,
+corruption, quota, transaction, codec, stale-load, and browser reload tests.
 
 ## D6 — Fixed-step deterministic math
 
@@ -74,17 +76,44 @@ drainage, flow hierarchy, climate, forests, biomes, regions, and landmarks.
 Central biome factor arrays bound gameplay effects. Evidence: world hash,
 property tests, generation timing, browser screenshots.
 
-## D11 — 108-node Memory atlas on stable world cells
+## D11 — 108-cell adjacent Memory atlas
 
-The six-node proof transaction was too sparse; a new 108-vertex manifold would
-risk existing Imprint IDs and renderer complexity. Place 108 unique progression
-nodes on stable level-4 cells, keep a separate prerequisite DAG, draw BFS paths,
-and retain a grouped semantic list. Consequence: dense globe interaction with
-no topology migration. Evidence: graph/economy/migration/scene tests and Chrome.
+The first 108-node placement needed 153 nonadjacent prerequisite paths, recreating
+the line-and-dot problem. Use a separate level-3 642-cell globe, solve 108 unique
+locations so every prerequisite is direct cell adjacency, convert legacy edge
+Imprints to bounded cell weight, and retain a grouped semantic list. Consequence:
+progression reads as territory without path geometry. Evidence: frozen mapping
+hash, adjacency/degree/economy/migration tests, and Chrome selection/purchases.
 
 ## D12 — Optional idle rotation, default off
 
 Ambient motion supports display use but can fight inspection/accessibility.
-Use the orthonormal camera frame, 130/180-second revolution options, a three-
+Use the orthonormal camera frame, 55/90-second revolution options, a four-
 second idle delay, immediate interruption, fixed selection framing, and an
 effective reduced-motion veto. Evidence: camera policy unit and Chrome checks.
+
+## D13 — Cell material is the life visual
+
+Warm route fragments and tip sprites made the organism look drawn above the
+planet and required explanatory copy. Keep transport internally authoritative,
+but remove its visual pass and edge snapshot payload. Express life stages,
+crises, selection, History, and Adaptation propagation on the same geography
+cells. Consequence: the world remains legible with no graph legend and five
+steady draws. Evidence: source-negative tests, snapshot-byte test, screenshots.
+
+## D14 — Visual History is approximate and authority-neutral
+
+Semantic events alone could not show temporal change, while raw tick logs would
+violate storage bounds. Record strict quantized cell checkpoints, preserve major
+frames while thinning, associate events with bounded primary cells, and restore
+Live immediately. Keep bundles device-local and newest-ten. Evidence: neutrality,
+codec/fuzz/bounds/stale-load tests and real-Chrome scrub/reload.
+
+## D15 — Results continue unless attention says otherwise
+
+Ambient play should not stop at an opaque result card, but progression must
+never be spent implicitly. Keep the terminal world behind a compact strip and
+start a nine-second next-world countdown. Interaction cancels it; hidden state
+and detail surfaces suspend remaining time; only explicit Memory input spends
+Echoes. Result awards are idempotent. Evidence: policy tests, 100-world soak,
+and a no-input real-Chrome second-result → third-world transition.

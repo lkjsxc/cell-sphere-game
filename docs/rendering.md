@@ -1,53 +1,62 @@
 # Rendering
 
-WebGL2 is primary; Canvas 2D is an honestly maintained playable fallback.
-Both consume immutable WorldModel/snapshot data and share camera/picking IDs.
+WebGL2 is primary; Canvas 2D is an honestly maintained cellular fallback. Both
+consume immutable world fields/snapshots and share camera/picking cell IDs.
 
-## Balanced draw hierarchy
+## Five-draw hierarchy
 
-Seven steady-state draws:
+Steady-state WebGL2 submits exactly five draws:
 
 1. mineral-twilight background;
-2. shallow-relief dual-cell terrain with explicit biome material and forest
-   density pattern;
-3. quiet cell boundaries, coast accents, and World Knot emphasis;
-4. connected static river ribbons from each river cell to its downstream cell,
-   with flow-strength width hierarchy;
-5. atmosphere;
-6. warm boundary-aligned organism routes using conductance/real flux/stress;
-7. organism frontier tips or state-scaled Memory nodes.
+2. one dual-cell surface carrying geography and all dynamic cellular material;
+3. quiet region/coast boundaries;
+4. terrain-bound geographic drainage accents;
+5. atmosphere.
 
-Rivers are cool, static, center-to-downstream drainage. Cell boundaries are
-thin etched plates. Organism routes are warm, raised, and flow animated only
-when motion is enabled. Meaning therefore survives grayscale/hue ambiguity.
+The cell surface expresses living, stressed, critical, frontier, and dead-remain
+states by whole-cell fill, inset, edge, roughness, and light response. Events
+and crises tint affected cells. A selected cell gets a pale material edge.
+Adaptations temporarily propagate through direct living neighbors in the same
+shader. History uploads an approximate cell checkpoint and primary-cell
+highlight. Memory replaces the world fields with a graphite 642-cell atlas and
+explicit locked, unaffordable, affordable, owned, selected, Imprint, and brief
+unlock-emphasis materials.
 
-Static terrain, coast, river, forest, and Memory placement buffers are built
-once per world. Dynamic uploads contain life/stress and active route/tip
-instances only. Snapshot cadence is about 10 Hz; render cadence falls to about
-15 fps at 16×/32× and about 6 fps behind full-screen panels.
+There is no organism route, vein, tip, node-sprite, background-orbit, or Memory
+path draw. The deleted passes no longer receive edge, conductance, or flux
+snapshot payloads. Presentation snapshots contain four cell arrays totaling
+25,620 bytes at level 4, down from 102,426 bytes before the redesign. Static
+topology/geography buffers build once; only bounded cell attributes update.
 
-## Camera and picking
+## Camera, surfaces, and picking
 
 The camera stores an orthonormal direction/right/up frame, allowing repeated
 pole crossings without yaw/pitch clamps. Drag follows the grabbed point;
 pinch/wheel zoom is bounded. Analytic offset-aware ray/sphere picking returns
 the nearest stable cell. Relief is deliberately shallow, so picking remains on
-the documented unit sphere. Selection is a pale cell material, never a growth
-or resource effect.
+the documented unit sphere.
 
-Idle rotation is optional, defaults off, completes a revolution in roughly
-130 or 180 seconds, stops immediately on manipulation/selection/panel/hidden
-document, resumes after three seconds of true idle, and is effectively disabled
-by reduced motion.
+Wide-screen context surfaces use a translucent left material and shift/scale the
+globe into the remaining safe region. Narrow screens use a translucent bottom
+sheet capped near 42% of viewport height and keep the selected region above it.
+History uses a bottom timeline sheet at all widths. The result is a compact
+bottom strip, so the terminal world stays visible. These are nonmodal surfaces:
+they neither create a backdrop nor pause authority unless the explicit panel-
+pause preference owns a pause lease.
 
-## Memory and fallback
+Idle rotation is optional, defaults off, completes a revolution in roughly 55
+or 90 seconds, stops on manipulation/selection/surface/hidden document, resumes
+after four seconds of true idle, and is effectively disabled by reduced motion.
 
-Memory reuses the graphite world with 108 state-scaled node cells, owned
-prerequisite paths, a selected-cell focus, and separate projected Imprints.
-Canvas 2D renders explicit biome colors, connected rivers, events, selected
-cells, and living routes with camera offsets matching WebGL picking.
+## Fallback and evidence
 
-Current measured Chrome evidence uses WebGL2 at 390×844 and 1440×900. The
-code-level steady-state count is seven draws. p95 browser frame time and
-physical mobile thermal behavior remain unmeasured; no low-heat claim is made
-from Node simulation speed.
+Canvas 2D draws the same cellular semantics as polygons. Rivers are quiet
+terrain-cell material rather than center-to-center lines; organism and Memory
+paths do not exist. The forced-fallback real-Chrome scenario completes a run,
+opens visual History, renders the 642-cell Memory atlas, captures mobile and
+desktop evidence, and reports no browser errors.
+
+Current WebGL2 evidence covers 390×844, 430×932, 768×1024, 1024×768,
+1440×900, and 1920×1080. It reports five draws and JavaScript render submission
+mean 0.07 ms / p95 0.20 ms. These are not GPU timings. Physical-mobile thermal
+behavior and actual GPU frame time remain unmeasured.

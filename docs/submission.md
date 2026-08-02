@@ -1,7 +1,7 @@
 # Submission
 
-Final contest submission remains pending. This file distinguishes release
-evidence from the later frozen submission/tag/form.
+Final contest submission remains pending. This file distinguishes the current
+release candidate from the later frozen submission/tag/form.
 
 ## Target
 
@@ -12,28 +12,35 @@ evidence from the later frozen submission/tag/form.
 
 ## Current release candidate evidence
 
-- Functional commit: `9c8d552` (passive living-world integrated loop).
-- Native static HTML/CSS/ES modules, no runtime dependency/network service.
-- Local verify: 107 unit + 11 integration, balance, benchmark, structure/links.
-- Docker verify passes with the Git-capable Node 22 image.
-- Real desktop Chrome/WebGL2 via CDP pipe: 390×844 and 1440×900, no console
-  errors, 32× result, History, Settings, inspector, 108-node Memory purchase.
-- Physical smartphone and unrestricted same-origin Chrome remain pending.
+- World-first implementation/evidence commit: `48fba48`; final documentation
+  and deployment verification follow it.
+- Native static HTML/CSS/ES modules, no runtime dependency or network service.
+- Local verify: 110 unit + 29 integration, including a 100-world unattended
+  result-transition soak; balance, benchmark, structure, and links pass.
+- Docker Node 22 verification passes on the current worktree.
+- Real headless Chrome/WebGL2 covers six responsive viewport sizes, five draws,
+  nonmodal surfaces, cellular Adaptations, visual History, compact result,
+  adjacent-cell Memory purchases, persistence, and unattended continuation.
+- A second real-Chrome run forces Canvas 2D through title, result, History, and
+  Memory. Physical smartphone, assistive-technology, and actual GPU evidence
+  remain pending.
 
 ## Final freeze checklist
 
 - [ ] Re-read rules/form and confirm ZEN University application path.
 - [ ] Obtain physical smartphone Chrome/touch/thermal evidence.
-- [ ] Test Canvas fallback, reduced motion, large text, and screen reader manually.
-- [ ] Run clean-clone local + Docker verification.
-- [ ] Verify public Pages HTML/modules contain the exact intended commit.
-- [ ] Review README/screenshots/copy from fresh storage.
+- [ ] Manually test 200% zoom, forced colors, keyboard, and screen reader.
+- [x] Test WebGL2 reduced motion and force the Canvas fallback in real Chrome.
+- [x] Run local and Docker verification on the release candidate.
+- [ ] Verify public Pages HTML/modules contain the exact final commit.
+- [x] Review responsive title/run/surfaces/History/result/Memory screenshots
+      from fresh disposable browser storage.
 - [ ] Create reviewed submission branch and annotated tag without rewriting main.
 - [ ] Submit form and preserve public repository/page throughout judging.
 
 ## Final record
 
 - Submission commit: pending
-- Submission branch/tag: pending
+- Submission branch/tag: pending (protective pre-redesign tag is not a submission tag)
 - Form submitted: pending
-- Public URL exact revision verification: see `docs/status.md` for latest release
+- Public URL exact revision verification: pending final push/Pages workflow

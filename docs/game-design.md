@@ -5,13 +5,13 @@
 ## Product thesis
 
 The planet is primarily a beautiful autonomous world to watch, rotate, and
-understand. It inoculates itself from the run seed. Growth, routes, crises, and
-collapse remain authoritative when the player never touches the screen.
+understand. It inoculates itself from the run seed. Cellular growth, crises,
+and collapse remain authoritative when the player never touches the screen.
 Ordinary globe taps only inspect.
 
 Four compatible attention modes:
 
-- **Ambient observer:** start and watch; AUTO: RANDOM completes the run.
+- **Ambient observer:** start and watch; Automatic choices complete the run.
 - **Curious naturalist:** rotate and inspect geography/life without influence.
 - **Strategic curator:** switch to MANUAL and resolve queued three-card offers
   when convenient while world time continues.
@@ -22,14 +22,16 @@ Four compatible attention modes:
 
 1. Inspect a seeded living world.
 2. Grow a world; deterministic weighted inoculation chooses suitable land.
-3. Watch routes spread through climate/biome opportunities and costs.
+3. Watch life spread into adjacent cells through climate/biome opportunities and costs.
 4. Receive three-option Adaptations without interruption. Random automatic
    selection is default and exactly uniform; Manual offers remain until chosen.
 5. Inspect cells and review semantic History during play.
 6. Spatial crises, entropy, fragmentation, and inevitable extinction unfold.
-7. Result explains score/cause, automatic/manual choices, Echoes, and Imprint.
-8. Enter Memory, select a node on the globe, read it, then explicitly Unlock.
-9. Make several small purchases and grow the next world.
+7. A compact result strip explains score/cause and Echoes without hiding the
+   terminal world; details, History, and Memory remain optional.
+8. Enter Memory, select an adjacent cell on the globe, read it, then explicitly
+   Unlock; or use the semantic list.
+9. Choose the next world or let the nine-second unattended countdown continue.
 
 ## Geography
 
@@ -58,19 +60,25 @@ mastery timing remain targets, not measured completion claims.
 
 Offers are fixed when generated, bounded FIFO records with offer/resolution
 ticks. Unresolved manual offers grant no benefit and are reported as Unchosen.
+A selection starts a bounded two-second presentation wave from an authoritative
+living origin through direct living neighbors; it visualizes consequence but
+never changes the already-applied deterministic effect.
 History stores semantic lifecycle, geography, morphology, crisis, Adaptation,
-extinction, and Memory-purchase events rather than tick logs. Located events
-can focus the globe and open the same observational inspector.
+extinction, and Memory-purchase events rather than tick logs. Bounded visual
+checkpoints let the globe scrub to approximate earlier cellular states; event
+primary cells receive direct material emphasis and Live restores authority
+immediately. The expanded event list exposes the same selected event in text.
 
 ## Memory atlas
 
-Exactly 108 nodes form six 18-node currents: Reach, Flow, Reserve, Ecology,
-Perception, and Continuity. Composition is 48 micro, 24 conditional, 18
-information/mechanic/automation records, 6 keystones, 6 connectors, and 6
-capstones. Costs total 818 Echoes. Six roots cost 2–3 Echoes; early runs expose
-several purchases. Scalar/conditional effects compile once per run and remain
-bounded. The globe is primary; the grouped list is an accessible alternative.
+Exactly 108 unique cells occupy a separate 642-cell atlas in six 18-cell
+currents: Reach, Flow, Reserve, Ecology, Perception, and Continuity. Every
+prerequisite is also direct spherical adjacency. Composition is 48 micro, 24
+conditional, 18 milestones, 6 keystones, 6 connectors, and 6 capstones. Costs
+total 818 Echoes. Six roots cost 2–3 Echoes; early runs expose several purchases.
+Every purchase compiles a concrete bounded scalar or conditional effect for the
+next run. The globe is primary; the grouped list is a semantic alternative.
 
-The long campaign, challenges, broader strain selection, trophies, audio,
-complete Japanese localization, and every advanced Memory unlock consumer are
-not yet complete and are not exposed as decorative controls.
+The long campaign, challenges, broader strain selection, trophies, audio, and
+complete Japanese localization are not yet complete and are not exposed as
+decorative controls.

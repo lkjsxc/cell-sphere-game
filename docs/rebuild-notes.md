@@ -78,3 +78,29 @@ uploads up to 471,096 dynamic bytes, including route/tip buffers rebuilt every
 render. Pair arrays account for 69,120 of 102,426 snapshot bytes even though
 only cell state is needed by the new presentation. This is the measured
 before-state for the cell-only renderer gate.
+
+### Implemented correction
+
+- Deleted organism route/tip shaders, geometry builders, passes, imports, and
+  edge presentation payloads; deleted the decorative orbit equation.
+- Moved all living, crisis, selection, Adaptation, History, and Memory meaning
+  into direct cell materials. WebGL2 now submits five draws and presentation
+  snapshots total 25,620 bytes.
+- Replaced opaque/full-height documents with one coordinated translucent left
+  surface on wide screens or ≤42% bottom sheet on narrow screens; History is a
+  visual bottom timeline and result is a compact strip.
+- Added deterministic two-second living-neighbor Adaptation propagation with a
+  reduced-motion static origin and bounded two-event presentation queue.
+- Added strict cell-only visual History checkpoints, primary-cell event focus,
+  nearest-frame scrub, immediate Live restoration, and newest-ten IndexedDB
+  retention. A detailed run is 101 frames / 259,594 bytes.
+- Rebuilt Memory on a separate 642-cell level-3 globe: 108 unique cells, 108
+  direct-adjacency prerequisite relations, six roots/connected branches,
+  mapping hash `5a08107c`, schema-5 edge-Imprint→cell migration, and the same
+  818-Echo economy. Every advanced cell now has a shipped bounded trait effect.
+- Added compact result details plus enabled-by-default nine-second unattended
+  continuation with interaction cancellation, hidden/surface suspension, and
+  idempotent result awards.
+- Real Chrome now covers six WebGL2 viewport sizes and a forced cellular Canvas
+  fallback. A 100-world no-input transition soak found zero invalid/duplicate
+  awards with forced-GC heap growth of 1.62 MiB.

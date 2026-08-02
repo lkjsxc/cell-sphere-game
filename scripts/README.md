@@ -12,8 +12,8 @@ ES modules using Node built-ins only (Node >= 22).
 | `benchmark.mjs` | `npm run benchmark` | 3000-tick headless benchmark with checksum and JSON output. |
 | `balance.mjs` | `npm run balance` / `balance:smoke` | Monte-Carlo balance harness using production simulation modules. |
 | `browser-test.mjs` | `npm run test:browser` | Same-origin headless-Chrome boot check; reports sandbox socket blocks as exit 77. |
-| `browser-file-test.mjs` | `npm run test:browser:file` | Socket-free real Chrome/WebGL2 harness and CDP transport. |
-| `browser-scenario.mjs` | via file test | Mobile/desktop observational run, panels, History, 32×, and 108-node Memory evidence. |
+| `browser-file-test.mjs` | `npm run test:browser:file` / `test:browser:canvas` | Socket-free real Chrome harness for WebGL2 and forced Canvas 2D. |
+| `browser-scenario.mjs` | via file test | Six-viewport observational run, surfaces, visual History, 32×, adjacent-cell Memory, and unattended continuation evidence. |
 
 Invariants:
 

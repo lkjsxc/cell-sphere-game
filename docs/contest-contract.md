@@ -34,13 +34,13 @@ being prepared on 2026-07-30; this must be checked before submission.
 
 | Requirement | Current evidence |
 |---|---|
-| Native HTML/CSS/JS | link gate checks 78 modules/9 HTML refs, no bare/remote runtime imports |
+| Native HTML/CSS/JS | link gate checks 92 modules/9 HTML refs, no bare/remote runtime imports |
 | Organization | structure gate: ≤200 lines/file, ≤16 children/directory, README/directory |
 | Original implementation | authored spherical dual, hydrology, network simulation, renderer, Memory graph |
 | Test code | unit/integration/property/browser/balance/benchmark harnesses use production modules |
-| Few bugs / complete loop | title → passive run → result/History → 108-node Memory → persisted purchase in real Chrome |
-| Desktop Chrome | 1440×900 WebGL2 screenshots through real headless Chrome |
-| Smartphone Chrome | 390×844 emulated viewport in real desktop Chrome; physical phone remains unmeasured |
+| Few bugs / complete loop | title → passive run → visual History/result → 108-cell Memory → persisted purchases → unattended next world in real Chrome |
+| Desktop Chrome | 1024×768, 1440×900, and 1920×1080 WebGL2 plus forced-Canvas screenshots through real headless Chrome |
+| Smartphone/tablet Chrome | 390×844, 430×932, and 768×1024 emulated viewports in real desktop Chrome; physical phone remains unmeasured |
 | Hosted source parity | Pages deployment must be re-verified for the final commit |
 | Copyright | no external media/font/runtime package |
 | Real users | no playtest evidence yet |

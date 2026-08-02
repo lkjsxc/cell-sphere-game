@@ -5,7 +5,7 @@
 A mobile-first passive-observation roguelite on a rich spherical ecology. The
 player watches autonomous network life discover geography, rotates and inspects
 without steering it, chooses or delegates non-blocking evolution, understands
-its story through History, and gardens permanent paths across a Memory Globe.
+its story through visual History, and gardens adjacent cells across a Memory Globe.
 
 ## Product thesis
 
@@ -32,11 +32,11 @@ not a click-to-place game, and not a hidden-tab idle process.
 ## Winning criteria
 
 1. A judge understands the autonomous loop within ten seconds.
-2. Original engine-less spherical topology, geography, hydrology, and network.
-3. Rivers, forests, terrain, and living routes remain distinct at a glance.
+2. Original engine-less spherical topology, geography, hydrology, and simulation.
+3. Rivers, forests, terrain, and cellular life stages remain distinct at a glance.
 4. Extinction is inevitable, causal, narrated, and converted into Memory.
 5. Non-blocking Random/Manual evolution supports ambient and strategic play.
 6. History makes autonomous behavior understandable during and after a run.
-7. A dense globe-native progression atlas rewards repeated extinction.
+7. A globe-native adjacent-cell progression atlas rewards repeated extinction.
 8. Excellent deterministic source, tests, accessibility, deployment, and
    honest performance evidence.
