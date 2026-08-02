@@ -5,8 +5,10 @@ Truthful handoff state after the passive living-world vertical slice.
 - **Starting commit:** `834e4f24169b0005cec790afd705ea1a0317aebc`
   (`docs(status): record GitHub README landing fix`).
 - **Latest functional commit:** `9c8d552` — complete passive living-world loop.
-- **Branch:** `main`, tracking `origin/main`; final push/deployment evidence is
-  recorded below only after verification.
+- **Release documentation commit:** `63cb846` — pushed to `origin/main` before
+  this deployment-evidence follow-up.
+- **Branch:** `main`, tracking `origin/main`; the product release was clean and
+  synchronized when workflow `30752944245` began.
 - **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>.
 - **Contest page:** re-fetched 2026-08-02; deadline shown as 2026-09-13;
   ZEN University Web Page application form still requires final recheck.
@@ -75,6 +77,13 @@ Truthful handoff state after the passive living-world vertical slice.
 - Docker `node:22` verify passes all gates. Same-origin Chrome harness exits 77
   because container seccomp blocks Chrome networking; CDP/file evidence is real
   Chrome but bypasses same-origin HTTP.
+- GitHub Actions workflow [30752944245](https://github.com/lkjsxc/incremental-network-game/actions/runs/30752944245)
+  completed successfully for `63cb846c9bceae614660438db9f40b06a75c8c5d`:
+  verify job `91510097842` and Pages job `91510133777` both passed.
+- Cache-busted public HTTP fetches returned 200 and byte-for-byte SHA-256
+  matches for `index.html`, `app-controller.js`, `fields.js`, `memory.js`,
+  `history.js`, and `atlas.css`. Public HTML contains Adaptations/History/
+  Settings/inspector controls and no obsolete direct-placement copy.
 
 ## Generated visual evidence (git-ignored)
 
