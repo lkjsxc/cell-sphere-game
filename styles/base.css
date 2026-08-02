@@ -66,7 +66,7 @@ button {
 
 /* Respect forced-colors mode: let system colors show through. */
 @media (forced-colors: active) {
-  .btn, .card, .panel {
+  .btn, .card, .context-surface {
     border: 1px solid CanvasText;
   }
 }

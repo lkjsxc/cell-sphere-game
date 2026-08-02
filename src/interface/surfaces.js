@@ -19,11 +19,14 @@ export function elements() {
     pause: /** @type {HTMLButtonElement} */ (byId('pause-button')),
     speed: /** @type {HTMLSelectElement} */ (byId('speed-select')),
     adaptationButton: /** @type {HTMLButtonElement} */ (byId('adaptations-button')),
-    adaptationBadge: byId('adaptation-badge'), adaptationMode: /** @type {HTMLButtonElement} */ (byId('adaptation-mode')),
+    adaptationBadge: byId('adaptation-badge'),
     boot: byId('boot-status'), score: byId('hud-score'), pressure: byId('hud-pressure'), reach: byId('hud-reach'),
     event: byId('hud-event-text'), resultRank: byId('result-rank'), resultScore: byId('result-score'),
     resultCause: byId('result-cause'), breakdown: byId('result-breakdown'), resultAdaptations: byId('result-adaptations'),
     echoes: byId('result-echoes'), resultImprint: byId('result-imprint'), memoryBalance: byId('memory-balance'),
+    memoryAvailable: byId('memory-available'), countdown: byId('result-countdown'),
+    resultNext: /** @type {HTMLButtonElement} */ (byId('result-next-button')),
+    resultDetails: /** @type {HTMLButtonElement} */ (byId('result-details-button')),
     live: byId('live-region'), toast: byId('toast-root'), resultHistory: byId('result-history-button'),
   };
 }
@@ -45,13 +48,7 @@ export function updateHud(el, snap) {
 export function updateAdaptationCount(el, count) {
   const n = Math.max(0, Math.floor(count));
   el.adaptationBadge.hidden = n === 0; el.adaptationBadge.textContent = String(n);
-  el.adaptationButton.setAttribute('aria-label', `Adaptations, ${n} pending`);
-}
-
-export function updateMode(el, mode) {
-  const random = mode === 'random';
-  el.adaptationMode.textContent = random ? 'AUTO: RANDOM' : 'MANUAL';
-  el.adaptationMode.setAttribute('aria-pressed', String(random));
+  el.adaptationButton.setAttribute('aria-label', n ? `Adaptations, ${n} waiting` : 'Adaptations');
 }
 
 export function announce(el, text) { el.event.textContent = text; el.live.textContent = text; }
@@ -64,23 +61,23 @@ export function toast(el, text, quiet = false) {
 }
 
 export function showResult(el, score, result) {
-  el.resultRank.textContent = score.rank.en;
+  el.resultRank.textContent = `${score.rank.en.split(' ')[0].toUpperCase()} · +${score.echoes} Echoes`;
   el.resultScore.textContent = number(score.total);
   el.resultCause.textContent = CAUSE[result.cause] ?? 'The final living cell released its remaining energy.';
   el.echoes.textContent = `${score.echoes} Echoes entered permanent memory.`;
-  el.resultImprint.textContent = result.imprint?.edges?.length
-    ? `Imprint preserved · ${result.imprint.edges.length}-boundary strongest corridor.` : '';
+  el.resultImprint.textContent = result.imprint?.edges?.length ? 'Imprint preserved · strongest morphology retained.' : '';
   const offers = result.adaptationOffers ?? result.offers ?? [];
   const random = offers.filter((offer) => offer.selectionMode === 'random' && offer.selectedCardId).length;
   const manual = offers.filter((offer) => offer.selectionMode === 'manual' && offer.selectedCardId).length;
   const pending = offers.filter((offer) => !offer.selectedCardId).length;
-  el.resultAdaptations.textContent = `Adaptations · ${random} random · ${manual} manual${pending ? ` · ${pending} unchosen` : ''}`;
+  el.resultAdaptations.textContent = `Adaptations · ${random} automatic · ${manual} manual${pending ? ` · ${pending} unchosen` : ''}`;
   el.breakdown.replaceChildren(...score.breakdown.map((part) => {
     const row = document.createElement('p'); row.className = 'breakdown-row';
     row.textContent = `${part.en}  ${number(part.points)}`; return row;
   }));
-  show(el, 'result'); el.memoryButton.focus();
+  show(el, 'result');
 }
 
-export function showMemory(el, meta) { el.memoryBalance.textContent = number(meta.echoBalance); show(el, 'memory'); }
+export function showMemory(el, meta, available = 0) { el.memoryBalance.textContent = number(meta.echoBalance);
+  el.memoryAvailable.textContent = `${available} available`; show(el, 'memory'); }
 export function number(value) { return new Intl.NumberFormat('en').format(Math.round(value)); }

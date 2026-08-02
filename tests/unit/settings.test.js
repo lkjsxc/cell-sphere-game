@@ -12,18 +12,21 @@ import { createTopology } from '../../src/world/icosphere.js';
 import { createCamera, viewProjection } from '../../src/rendering/camera.js';
 import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from '../../src/interface/camera-policy.js';
 import { createPauseControl } from '../../src/interface/pause-control.js';
+import { advanceContinuation, createContinuation, setContinuationPause,
+  startContinuation } from '../../src/interface/policies/continuation.js';
 
 const LEGACY_IDS = Object.keys(LEGACY_MEMORY_MAP);
 
-test('settings default to passive random play with idle rotation off', () => {
+test('settings default to unattended Automatic play with idle rotation off', () => {
   const d = defaultSettings();
-  assert.equal(d.adaptationMode, 'random'); assert.equal(d.autoRotate, false);
+  assert.equal(d.adaptationMode, 'random'); assert.equal(d.idleRotation, 'off'); assert.equal(d.autoContinue, true);
   assert.equal(d.pauseOnPanels, false); assert.ok(['full', 'reduced'].includes(d.motion));
-  const s = validateSettings({ motion: 'reduced', quality: 'eco', adaptationMode: 'manual',
-    autoRotate: true, pauseOnPanels: true, speed: 32 });
+  const s = validateSettings({ schema: 2, motion: 'reduced', quality: 'eco', adaptationMode: 'manual',
+    autoRotate: true, autoContinue: false, pauseOnPanels: true, speed: 32 });
   assert.deepEqual({ motion: s.motion, quality: s.quality, adaptationMode: s.adaptationMode,
-    autoRotate: s.autoRotate, pauseOnPanels: s.pauseOnPanels, speed: s.speed },
-  { motion: 'reduced', quality: 'eco', adaptationMode: 'manual', autoRotate: true, pauseOnPanels: true, speed: 32 });
+    idleRotation: s.idleRotation, autoContinue: s.autoContinue, pauseOnPanels: s.pauseOnPanels, speed: s.speed },
+  { motion: 'reduced', quality: 'eco', adaptationMode: 'manual', idleRotation: 'calm',
+    autoContinue: false, pauseOnPanels: true, speed: 32 });
 });
 
 test('settings reject garbage, invalid enums, and prototype pollution', () => {
@@ -32,7 +35,7 @@ test('settings reject garbage, invalid enums, and prototype pollution', () => {
   const s = validateSettings({ motion: 'sideways', quality: 'ultra', adaptationMode: 'weighted', speed: 3 });
   assert.equal(s.motion, defaultSettings().motion); assert.equal(s.quality, 'auto');
   assert.equal(s.adaptationMode, 'random'); assert.equal(s.speed, 1);
-  validateSettings(JSON.parse('{"__proto__":{"polluted":true},"autoRotate":true}'));
+  validateSettings(JSON.parse('{"__proto__":{"polluted":true},"idleRotation":"gentle"}'));
   assert.equal({}.polluted, undefined);
 });
 
@@ -149,7 +152,7 @@ test('idle globe rotation is opt-in, interruptible, reduced-motion safe, and fin
   const off = defaultSettings();
   assert.equal(applyAutoRotation(camera, off, policy, { active: false, selected: false, overlay: false, hidden: false }, 4000, 1000), false);
   assert.deepEqual(camera.direction, start);
-  const on = { ...off, motion: 'full', autoRotate: true, autoRotateSpeed: 'slow' };
+  const on = { ...off, motion: 'full', idleRotation: 'gentle' };
   assert.equal(applyAutoRotation(camera, on, policy, { active: false, selected: false, overlay: false, hidden: false }, 4000, 1000), true);
   const moved = camera.direction.slice(); interruptCameraPolicy(policy, 4000);
   assert.equal(applyAutoRotation(camera, on, policy, { active: false, selected: false, overlay: false, hidden: false }, 5000, 1000), false);
@@ -159,6 +162,18 @@ test('idle globe rotation is opt-in, interruptible, reduced-motion safe, and fin
   for (let i = 0; i < 5000; i++) applyAutoRotation(camera, on, policy,
     { active: false, selected: false, overlay: false, hidden: false }, 8000 + i * 16, 16);
   for (const value of viewProjection(camera, 1)) assert.ok(Number.isFinite(value));
+});
+
+test('result continuation fires once and pauses for interaction or hidden state', () => {
+  const state = createContinuation(9000); let now = 0;
+  for (let run = 0; run < 100; run++) {
+    startContinuation(state, now); now += 4000; assert.equal(advanceContinuation(state, now), false);
+    setContinuationPause(state, 'hidden', true, now); now += 20_000; assert.equal(advanceContinuation(state, now), false);
+    setContinuationPause(state, 'hidden', false, now); now += 5000;
+    assert.equal(advanceContinuation(state, now), true); assert.equal(advanceContinuation(state, now + 1000), false);
+  }
+  startContinuation(state, now); setContinuationPause(state, 'interaction', true, now); now += 90_000;
+  assert.equal(advanceContinuation(state, now), false); assert.equal(state.remainingMs, 9000);
 });
 
 test('pause reasons release only their own ownership', () => {

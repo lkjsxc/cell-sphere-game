@@ -4,11 +4,21 @@
   /* Surface palette */
   --bg-deep: #080a0b;
   --bg-space: #0d1112;
-  --bg-panel: rgba(16, 18, 18, 0.90);
+  --bg-panel: rgba(16, 18, 18, 0.78);
   --bg-panel-solid: #121515;
-  --bg-elevated: #1a1d1c;
+  --bg-elevated: rgba(26, 29, 28, 0.82);
   --border-faint: rgba(224, 216, 190, 0.14);
   --border-strong: rgba(230, 213, 167, 0.34);
+
+  /* One functional layer above the globe. */
+  --material-clear-bg: rgba(10, 13, 14, 0.58);
+  --material-clear-border: rgba(230, 224, 202, 0.18);
+  --material-regular-bg: rgba(13, 16, 16, 0.78);
+  --material-regular-border: rgba(230, 213, 167, 0.30);
+  --material-thick-bg: rgba(12, 15, 15, 0.94);
+  --material-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.34);
+  --material-blur-clear: 12px;
+  --material-blur-regular: 20px;
 
   /* Text */
   --text-primary: #f0eee7;
@@ -98,6 +108,8 @@
     --border-strong: rgba(200, 225, 250, 0.65);
     --text-secondary: #c3d3e4;
     --bg-panel: rgba(8, 13, 22, 0.94);
+    --material-clear-bg: rgba(5, 8, 9, 0.88);
+    --material-regular-bg: rgba(5, 8, 9, 0.95);
   }
 }
 

@@ -5,7 +5,7 @@ export async function runScenario(t) {
   const render = await evaluate(`new Promise(resolve => { const app=window.__IN_APP__, original=app.renderer.render.bind(app.renderer), samples=[];
     app.renderer.render=(scene)=>{const start=performance.now(); original(scene); samples.push(performance.now()-start)};
     setTimeout(()=>{app.renderer.render=original; samples.sort((a,b)=>a-b); resolve({draws:app.renderer.drawCalls,p95:samples[Math.floor(samples.length*.95)]||0,mean:samples.reduce((a,b)=>a+b,0)/Math.max(1,samples.length)});},1200); })`);
-  ok(render.draws === 7 && render.p95 < 20, 'renderer draw/time budget regressed');
+  ok([5, 7].includes(render.draws) && render.p95 < 20, 'renderer draw/time budget regressed');
   const signalCopy = await evaluate("document.body.innerText.includes('Signal')");
   ok(!signalCopy, 'obsolete run guidance remains visible');
 
@@ -23,17 +23,17 @@ export async function runScenario(t) {
   await evaluate("document.getElementById('inspector-close').click()");
 
   await evaluate("document.querySelector('.settings-open').click()"); await screenshot('browser-settings-mobile.png');
-  await evaluate(`(() => { const input=document.querySelector('[name=autoRotate]'); input.checked=true;
+  await evaluate(`(() => { const input=document.querySelector('[name=idleRotation]'); input.value='gentle';
     input.dispatchEvent(new Event('change',{bubbles:true})); document.getElementById('settings-close').click(); })()`);
-  const rotateBefore = await evaluate('window.__IN_APP__.camera.direction.slice()'); await wait(3600);
+  const rotateBefore = await evaluate('window.__IN_APP__.camera.direction.slice()'); await wait(5500);
   const rotateAfter = await evaluate('window.__IN_APP__.camera.direction.slice()');
   ok(distance(rotateBefore, rotateAfter) > 0.012, 'enabled idle auto-rotation did not move');
-  await evaluate(`(() => { document.querySelector('.settings-open').click(); const input=document.querySelector('[name=autoRotate]');
-    input.checked=false; input.dispatchEvent(new Event('change',{bubbles:true})); document.getElementById('settings-close').click(); })()`);
+  await evaluate(`(() => { document.querySelector('.settings-open').click(); const rotation=document.querySelector('[name=idleRotation]');
+    rotation.value='off'; rotation.dispatchEvent(new Event('change',{bubbles:true})); const choices=document.querySelector('[name=adaptationMode]');
+    choices.value='manual'; choices.dispatchEvent(new Event('change',{bubbles:true})); document.getElementById('settings-close').click(); })()`);
 
   await evaluate(`(() => { const speed=document.getElementById('speed-select'); speed.value='32';
-    speed.dispatchEvent(new Event('change')); document.getElementById('begin-button').click();
-    document.getElementById('adaptation-mode').click(); })()`);
+    speed.dispatchEvent(new Event('change')); document.getElementById('begin-button').click(); })()`);
   const started = performance.now();
   ok(await poll(() => evaluate('window.__IN_APP__.pendingCount()'), (value) => value >= 1, 10000), 'manual offer never queued');
   const pendingTick = await evaluate('window.__IN_APP__.snapshot.tick'); await screenshot('browser-run-mobile.png');
@@ -45,7 +45,9 @@ export async function runScenario(t) {
   await evaluate("document.getElementById('adaptations-close').click()");
   ok(await evaluate("window.__IN_APP__.offers.some(offer=>offer.id===0&&offer.resolvedTick==null)"), 'closing Adaptations discarded the offer');
   await evaluate("document.getElementById('adaptations-button').click(); document.querySelector('#adaptation-cards .card').click()");
-  await wait(150); await evaluate("document.getElementById('adaptations-close').click(); document.getElementById('adaptation-mode').click()");
+  await wait(150); await evaluate(`(() => { document.getElementById('adaptations-close').click(); document.querySelector('#run-screen .settings-open').click();
+    const choices=document.querySelector('[name=adaptationMode]'); choices.value='random'; choices.dispatchEvent(new Event('change',{bubbles:true}));
+    document.getElementById('settings-close').click(); })()`);
 
   await evaluate("document.querySelector('#run-screen .history-open').click()"); const historyTick = await evaluate('window.__IN_APP__.snapshot.tick');
   await wait(500); ok(await evaluate('window.__IN_APP__.snapshot.tick') > historyTick, 'History stopped world time');

@@ -58,16 +58,15 @@
 .title-help { color: var(--text-faint); font-size: var(--fs-caption); letter-spacing: 0.02em; }
 
 #result-screen, #memory-screen { justify-content: flex-end; }
-#memory-screen { background: linear-gradient(0deg, rgba(8, 10, 11, 0.98) 0%, rgba(8, 10, 11, 0.68) 46%, transparent 75%); }
-.memory-copy { display: grid; gap: var(--sp-3); max-width: 38rem; }
-.memory-copy h2 { max-width: 32rem; font-size: clamp(1.6rem, 5vw, 2.8rem); }
-.memory-balance { color: var(--text-secondary); }
-.memory-balance strong { color: var(--accent-gold); font-size: var(--fs-title); }
 
-@media (min-width: 800px) {
-  #title-screen { justify-content: center; padding-left: max(5vw, var(--sp-6)); background: none; }
+@media (min-width: 900px) {
+  #title-screen { justify-content: center; padding-left: max(4vw, var(--sp-6)); background: none; }
   .title-actions { margin-top: var(--sp-3); }
-  #memory-screen { justify-content: center; align-items: flex-end; padding-right: max(6vw, var(--sp-6)); }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  #title-screen { padding-bottom: calc(var(--sp-5) + var(--safe-bottom)); }
+  .title-identity, .title-actions { max-width: min(32rem, 74vw); }
 }
 
 /* In-run HUD: top metrics row + bottom action row; globe center is clear. */
@@ -136,40 +135,28 @@
   .hud-event { max-width: 54vw; }
 }
 
-/* Center-stage surfaces (strain select, result) anchor to the bottom on
-   phones and to the center on larger screens. */
-.bottom-sheet {
-  align-self: stretch;
-  margin: 0 calc(-1 * var(--sp-4));
-  padding:
-    var(--sp-4)
-    calc(var(--sp-4) + var(--safe-right))
-    calc(var(--sp-4) + var(--safe-bottom))
-    calc(var(--sp-4) + var(--safe-left));
-  background: linear-gradient(0deg, rgba(8, 10, 11, 0.98), rgba(8, 10, 11, 0.88));
-  border-top: 1px solid var(--border-faint);
-  border-radius: var(--radius-l) var(--radius-l) 0 0;
+/* Result and Memory stay as compact bottom chrome, never center cards. */
+.result-strip, .memory-bar {
+  align-self: center; width: min(70rem, calc(100vw - 2 * var(--sp-4)));
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-l);
+  pointer-events: auto;
 }
+.result-primary { min-width: 9rem; }.result-primary .result-score { margin: 0; font-size: clamp(2rem, 4vw, 3.2rem); }
+.result-primary .result-rank { margin: 0; }.result-summary { flex: 1; min-width: 12rem; }
+.result-summary h2 { font-size: var(--fs-body); }.result-summary p { margin: 0; font-size: var(--fs-caption); }
+.result-actions, .memory-actions { display: flex; gap: var(--sp-1); flex-wrap: wrap; justify-content: flex-end; }
+.result-countdown { color: var(--life-core); font-variant-numeric: tabular-nums; }
+.memory-bar > div:first-child { display: flex; align-items: baseline; gap: var(--sp-3); }
+.memory-bar span { color: var(--text-secondary); font-size: var(--fs-caption); }.memory-bar b { color: var(--accent-gold); }
 
-@media (min-width: 720px) and (min-height: 640px) {
-  .bottom-sheet {
-    align-self: center;
-    margin: 0;
-    max-width: 56rem;
-    width: min(92vw, 56rem);
-    border-radius: var(--radius-l);
-    border: 1px solid var(--border-faint);
-  }
-}
-
-/* Full-panel screens (memory globe UI lists, trophies, archive, settings). */
-.panel-screen {
-  background: linear-gradient(180deg, rgba(4, 7, 13, 0.55), rgba(4, 7, 13, 0.88));
-}
-
-.panel-body {
-  flex: 1;
-  min-height: 0;
+@media (max-width: 719px) {
+  .result-strip, .memory-bar { width: calc(100vw - 2 * var(--sp-2)); padding: var(--sp-2) var(--sp-3); align-items: flex-end; }
+  .result-strip { display: grid; grid-template-columns: auto 1fr; }.result-primary { min-width: 0; }.result-primary .result-score { font-size: 2rem; }
+  .result-summary h2, .result-summary #result-cause, .result-summary #result-echoes { display: none; }.result-actions { grid-column: 1 / -1; }
+  .result-actions, .memory-actions { flex-wrap: nowrap; overflow-x: auto; min-width: 0; width: 100%; }
+  .result-actions .btn, .memory-actions .btn { padding-inline: var(--sp-2); white-space: nowrap; font-size: var(--fs-caption); }
+  .memory-bar > div:first-child { display: grid; gap: 0; }
 }
 
 /* Diagnostics overlay: compact monospace readout, top-right. */

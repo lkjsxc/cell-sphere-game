@@ -7,12 +7,6 @@
   gap: var(--sp-3);
 }
 
-@media (min-width: 720px) {
-  .card-row {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
 .card {
   display: flex;
   flex-direction: column;
@@ -93,29 +87,10 @@
 .memory-node-effect { color: var(--text-secondary); font-size: var(--fs-caption); }
 .memory-node-cost { color: var(--accent-gold); font-size: var(--fs-caption); }
 
-/* Panels and dialogs. */
-.panel {
-  background: var(--bg-panel-solid);
-  border: 1px solid var(--border-faint);
-  border-radius: var(--radius-l);
-  padding: var(--sp-5);
-}
-
-dialog.panel {
-  color: var(--text-primary);
-  width: min(92vw, 58rem);
-  max-width: 58rem;
-  margin: auto;
-}
-
-dialog::backdrop {
-  background: rgba(2, 4, 8, 0.7);
-}
-
-/* Toast queue (trophies, milestones). */
+/* Rare transient feedback stays near bottom context, never over the globe center. */
 #toast-root {
   position: absolute;
-  top: calc(var(--sp-5) + var(--safe-top));
+  bottom: calc(5rem + var(--safe-bottom));
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-toast);
@@ -134,40 +109,4 @@ dialog::backdrop {
   font-size: var(--fs-body);
   font-weight: 600;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-}
-
-/* Trophy emblems: circular with engraved ring; locked = dashed ring + label. */
-.trophy {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-}
-
-.trophy-emblem {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  border: 2px solid var(--life-core);
-  display: grid;
-  place-items: center;
-}
-
-.trophy.is-locked .trophy-emblem {
-  border-style: dashed;
-  border-color: var(--text-faint);
-}
-
-.trophy-name {
-  font-size: var(--fs-caption);
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-/* Grids for galleries. */
-.grid-2 {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-  gap: var(--sp-3);
 }

@@ -19,8 +19,6 @@ export function createInspectorSurface(options) {
   const life = document.getElementById('inspector-life'); const history = document.getElementById('inspector-history');
   let model = null;
   document.getElementById('inspector-close')?.addEventListener('click', () => options.onClose());
-  document.getElementById('inspector-prev')?.addEventListener('click', () => options.onLandmark(-1));
-  document.getElementById('inspector-next')?.addEventListener('click', () => options.onLandmark(1));
 
   function render() {
     if (!model) return; const { node, world, topo } = model;
@@ -47,11 +45,11 @@ export function createInspectorSurface(options) {
     const dl = document.createElement('dl'); dl.className = 'inspection-grid';
     const stateName = d.alive ? (d.stress > 0.75 ? 'Alive · critical stress' : 'Alive')
       : d.biomass > 0.02 ? 'Dead tissue / scar' : 'Unoccupied';
-    const role = d.activeEdges >= 4 ? 'Junction' : d.activeEdges === 1 ? 'Frontier / bridge' : d.activeEdges > 1 ? 'Route tissue' : 'Isolated';
+    const role = d.activeEdges >= 4 ? 'Connected center' : d.activeEdges === 1 ? 'Frontier cell' : d.activeEdges > 1 ? 'Connected tissue' : 'Isolated';
     dl.append(...definitionRows([['State', stateName], ['Role', role], ['Biomass', band(Math.min(1, d.biomass / 2.5), ['Trace', 'Thin', 'Established', 'Dense'])],
       ['Energy reserve', band(Math.min(1, Math.max(0, d.energy) / 6), ['Empty', 'Low', 'Stable', 'Full'])],
       ['Stress', band(d.stress, ['Calm', 'Watchful', 'Strained', 'Critical'])], ['Local nutrient', band(d.nutrient, ['Spent', 'Low', 'Rich', 'Abundant'])],
-      ['Active routes', `${d.activeEdges} · ${band(Math.min(1, d.meanConductance / 2), ['Faint', 'Thin', 'Strong', 'Trunk'])}`],
+      ['Living neighbors', `${d.activeEdges} · ${band(Math.min(1, d.meanConductance / 2), ['Faint', 'Low exchange', 'Strong exchange', 'Core exchange'])}`],
       ['Toxic pressure', band(d.toxicity, ['Clear', 'Low', 'Elevated', 'Severe'])]]));
     life.append(h3, dl);
   }

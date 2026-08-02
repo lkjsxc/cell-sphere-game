@@ -7,7 +7,7 @@ const TITLES = Object.freeze({
   'run.phase.instability': ['Instability', 'Environmental pressure began to dominate.'],
   'run.phase.collapse': ['Collapse', 'The network entered its terminal phase.'],
   'adaptation.offered': ['Adaptation offered', 'Three possible changes entered the queue.'],
-  'adaptation.selected.random': ['Random Adaptation remembered', 'The seeded decision stream selected one option.'],
+  'adaptation.selected.random': ['Adaptation chosen automatically', 'The world selected one of the three options.'],
   'adaptation.selected.manual': ['Adaptation chosen', 'The selected change now affects future ticks.'],
   'adaptation.unresolved': ['Adaptation left unchosen', 'Extinction arrived before this offer was resolved.'],
   'adaptation.mode.changed': ['Adaptation mode changed', 'Future offers now follow the selected decision policy.'],
@@ -29,16 +29,14 @@ const TITLES = Object.freeze({
 });
 
 export function createHistorySurface(options) {
-  const dialog = /** @type {HTMLDialogElement} */ (document.getElementById('history-dialog'));
+  const surface = document.getElementById('history-dialog');
   const list = document.getElementById('history-list'); const header = document.getElementById('history-header');
   const current = /** @type {HTMLButtonElement} */ (document.getElementById('history-current'));
   const past = /** @type {HTMLButtonElement} */ (document.getElementById('history-past'));
   const filter = /** @type {HTMLSelectElement} */ (document.getElementById('history-filter'));
   const note = document.getElementById('history-time-note');
   let model = null; let scope = 'current'; let pastIndex = 0;
-  document.getElementById('history-close')?.addEventListener('click', () => dialog.close());
-  dialog.addEventListener('cancel', (event) => { event.preventDefault(); dialog.close(); });
-  dialog.addEventListener('close', () => options.onClose());
+  document.getElementById('history-close')?.addEventListener('click', () => options.onClose());
   current.addEventListener('click', () => { scope = 'current'; render(); });
   past.addEventListener('click', () => { scope = 'past'; render(); });
   filter.addEventListener('change', render);
@@ -80,14 +78,14 @@ export function createHistorySurface(options) {
     return row;
   }
 
-  return { dialog, open(next, defaultScope = 'current') { model = next; scope = defaultScope; pastIndex = 0;
-    if (note) note.hidden = !next.worldContinues; render(); if (!dialog.open) dialog.showModal(); current.focus(); },
-  close() { if (dialog.open) dialog.close(); } };
+  return { surface, open(next, defaultScope = 'current') { model = next; scope = defaultScope; pastIndex = 0;
+    if (note) note.hidden = !next.worldContinues; render(); surface.hidden = false; },
+  close() { surface.hidden = true; } };
 }
 
 function describe(event) {
   const base = TITLES[event.key] ?? [humanize(event.key), 'A meaningful change was preserved.'];
-  const subject = event.subjectId ? ` · ${humanize(event.subjectId)}` : '';
+  const subject = event.subjectId ? ` · ${event.subjectId === 'random' ? 'Automatic' : humanize(event.subjectId)}` : '';
   return [base[0] + subject, base[1]];
 }
 function humanize(value) { return String(value).split(/[.-]/).at(-1).replaceAll('_', ' ').replace(/^./, (c) => c.toUpperCase()); }
