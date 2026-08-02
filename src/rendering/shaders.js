@@ -64,6 +64,8 @@ uniform float uAdaptationTime;
 uniform float uAdaptationMaxDistance;
 uniform float uAdaptationReduced;
 uniform float uAdaptationActive;
+uniform vec3 uHistoryCenter[8];
+uniform int uHistoryCount;
 uniform vec3 uEventCenter[4];
 uniform float uEventRadius[4];
 uniform vec3 uEventTint[4];
@@ -130,6 +132,12 @@ void main() {
       float d = dot(normalize(vCenter), uEventCenter[i]);
       float w = smoothstep(uEventRadius[i], min(1.0, uEventRadius[i] + 0.18), d);
       col = mix(col, uEventTint[i], w * uEventStrength[i] * 0.48);
+    }
+  }
+  for (int i = 0; i < 8; i++) {
+    if (i < uHistoryCount) {
+      float marked = step(0.99994, dot(normalize(vCenter), uHistoryCenter[i]));
+      col = mix(col, vec3(0.96, 0.73, 0.31), marked * (0.48 + plate * 0.30));
     }
   }
   float distance = vAdaptation.x;

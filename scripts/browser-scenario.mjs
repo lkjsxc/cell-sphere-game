@@ -78,10 +78,18 @@ export async function runScenario(t) {
 
   await evaluate("document.querySelector('#run-screen .history-open').click()"); const historyTick = await evaluate('window.__IN_APP__.snapshot.tick');
   await wait(500); ok(await evaluate('window.__IN_APP__.snapshot.tick') > historyTick, 'History stopped world time');
-  await screenshot('browser-history-mobile.png');
-  const location = await evaluate("Boolean(document.querySelector('#history-list .location-btn'))");
-  if (location) { await evaluate("document.querySelector('#history-list .location-btn').click()"); await wait(200); }
-  else await evaluate("document.getElementById('history-close').click()");
+  const historySize = await evaluate(`(() => { const r=document.getElementById('history-dialog').getBoundingClientRect();
+    return {height:r.height,viewport:innerHeight,backdrop:Boolean(document.querySelector('.modal-backdrop,[role=dialog]'))}; })()`);
+  ok(historySize.height <= historySize.viewport * .42 + 1 && !historySize.backdrop, 'History is blocking or exceeds mobile sheet bound');
+  await evaluate(`(() => { const range=document.getElementById('history-range'); range.value=String(Math.floor(Number(range.max)/2));
+    range.dispatchEvent(new Event('input',{bubbles:true})); })()`); await wait(120);
+  ok(await evaluate(`(() => { const s=window.__IN_APP__.historySnapshot; return s?.approximate && s.lifeState.length===2562
+    && !('edgeActive' in s) && !('conductance' in s) && !('flux' in s); })()`), 'scrub did not project a cell-only checkpoint');
+  await evaluate(`(() => { const previous=document.getElementById('history-prev'); for(let i=0;i<20&&!window.__IN_APP__.historyHighlights.length;i++) previous.click(); })()`);
+  ok(await evaluate('window.__IN_APP__.historyHighlights.length > 0'), 'event navigation did not highlight primary cells');
+  await evaluate("document.getElementById('history-next').click(); document.getElementById('history-live').click()");
+  ok(await evaluate('window.__IN_APP__.historySnapshot===null && window.__IN_APP__.visualSeed===window.__IN_APP__.runSeed'), 'Live did not restore authoritative presentation');
+  await screenshot('browser-history-mobile.png'); await evaluate("document.getElementById('history-close').click()");
 
   ok(await poll(() => evaluate("document.getElementById('result-screen').hidden"), (hidden) => hidden === false, 40000),
     '32x run did not reach extinction');
@@ -112,10 +120,17 @@ export async function runScenario(t) {
   await setViewport(1440, 900); await evaluate('window.__IN_APP__.camera.dist=4.1'); await wait(250); await screenshot('browser-memory-desktop.png');
   await evaluate('location.reload()'); await wait(3000);
   const persisted = await evaluate(`(() => { const meta=JSON.parse(localStorage.getItem('incremental-network-game:meta:v1'));
-    const history=JSON.parse(localStorage.getItem('incremental-network-game:history:v1')); return {nodes:meta.memoryNodes.length,worlds:history.worlds.length}; })()`);
-  ok(persisted.nodes >= 4 && persisted.worlds >= 1, 'Memory or History did not persist');
+    const history=JSON.parse(localStorage.getItem('incremental-network-game:history:v2')); return {nodes:meta.memoryNodes.length,worlds:history.worlds.length}; })()`);
+  ok(persisted.nodes >= 4 && persisted.worlds >= 1, 'Memory or semantic History did not persist');
+  const idb = await evaluate('window.__IN_APP__.historyPlayback.recentRuns.ready()');
+  if (idb) { await evaluate("document.querySelector('#title-screen .history-open').click()");
+    ok(await poll(() => evaluate("document.getElementById('history-visual-note').hidden"), Boolean, 4000), 'IndexedDB visual History did not reload');
+    await evaluate(`(() => { const range=document.getElementById('history-range'); range.value=String(Math.floor(Number(range.max)/2));
+      range.dispatchEvent(new Event('input',{bubbles:true})); })()`); await wait(120);
+    ok(await evaluate('window.__IN_APP__.historySnapshot?.approximate===true'), 'reloaded visual History did not scrub');
+    await evaluate("document.getElementById('history-close').click()"); }
   await screenshot('browser-title-desktop.png'); ok(errors.length === 0, `browser reported ${errors.length} errors`);
-  return { backend: boot.renderer, score: result.score, elapsed, nodeId, render };
+  return { backend: boot.renderer, score: result.score, elapsed, nodeId, render, idb };
 }
 
 function distance(a, b) { return Math.hypot(...a.map((value, index) => value - b[index])); }

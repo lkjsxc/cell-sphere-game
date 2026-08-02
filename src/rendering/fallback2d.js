@@ -58,6 +58,10 @@ export class Canvas2DRenderer {
     if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1);
     if (scene.adaptation) this.drawAdaptation(scene.adaptation);
     this.drawBoundaries(false); this.drawBoundaries(true); this.drawRivers();
+    for (const cell of (scene.highlightedCells ?? []).slice(0, 8)) {
+      if (this.facing[cell] <= 0) continue; this.cellPath(cell, 0.82);
+      ctx.strokeStyle = 'rgba(246,186,79,.96)'; ctx.lineWidth = 2.4; ctx.stroke();
+    }
     if (Number.isInteger(scene.selectedNode) && this.facing[scene.selectedNode] > 0) {
       this.cellPath(scene.selectedNode, 0.84); ctx.strokeStyle = 'rgba(202,238,219,.95)'; ctx.lineWidth = 2.2; ctx.stroke();
     }

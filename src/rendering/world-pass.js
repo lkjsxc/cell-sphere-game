@@ -25,6 +25,7 @@ export class WorldPass {
     this.lastSnapshot = null;
     this.lastTick = -1;
     this.zero3 = new Float32Array(3);
+    this.historyCenters = new Float32Array(24);
     this.buffers = [];
     this.vaos = [];
     this.initialize();
@@ -118,7 +119,7 @@ export class WorldPass {
     this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.adaptationData);
   }
 
-  draw(vp, eye, snapshot, selectedNode, adaptation) {
+  draw(vp, eye, snapshot, selectedNode, adaptation, highlightedCells = []) {
     const gl = this.gl; this.uploadLife(snapshot); this.uploadAdaptation(adaptation);
     const globe = this.programs.globe;
     gl.useProgram(globe.program);
@@ -134,6 +135,9 @@ export class WorldPass {
     gl.uniform1f(globe.u.get('uAdaptationMaxDistance'), adaptation?.maxDistance ?? 0);
     gl.uniform1f(globe.u.get('uAdaptationReduced'), adaptation?.reduced ? 1 : 0);
     gl.uniform1f(globe.u.get('uAdaptationActive'), adaptation ? 1 : 0);
+    this.historyCenters.fill(0); const count = Math.min(8, highlightedCells.length);
+    for (let i = 0; i < count; i++) this.historyCenters.set(this.topo.positions.subarray(highlightedCells[i] * 3, highlightedCells[i] * 3 + 3), i * 3);
+    gl.uniform1i(globe.u.get('uHistoryCount'), count); gl.uniform3fv(globe.u.get('uHistoryCenter'), this.historyCenters);
     this.setEventOverlays(globe, snapshot);
     gl.bindVertexArray(this.globeVao);
     gl.drawElements(gl.TRIANGLES, this.geometry.indices.length, gl.UNSIGNED_SHORT, 0);

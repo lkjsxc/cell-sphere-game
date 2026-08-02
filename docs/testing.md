@@ -14,20 +14,20 @@ river mouths/order, landmarks/sources, generation budget, renderer geometry
 and uniforms, tap/camera math, settings/pause/rotation, simulation queue/RNG,
 pure inspection, History cap, and the 108-node graph/migration/economy.
 
-Current local and Docker verification pass **107 unit** and **11 integration**
-tests. Integration coverage includes seed/chunk/speed invariance, zero-input Random
+Integration coverage includes seed/chunk/speed invariance, zero-input Random
 completion, exact manual resolution ticks, stream isolation, replay schema,
-conditional Memory, and a run with hundreds of inspection/snapshot queries
-matching a quiet run in hash, score, extinction, decisions, History, and
-Imprint.
+conditional Memory, strict visual-History codec bounds/malformed input,
+primary-cell migration, stale load guards, and an observed run matching a quiet
+run in hash, score, extinction, decisions, semantic History, and Imprint.
 
 ## Real Chrome scenario
 
 The file/CDP scenario clears itself through a disposable profile and checks:
 rotation default off; drag; title inspector; Settings and opt-in idle rotation;
 manual queued offer without pause; explicit panel/close/reopen/choice; switch
-back to Random; live History without pause; 32× result; result History;
-108 Memory scene nodes; select-before-Unlock; currency/persistence; accessible
+back to Random; nonmodal History scrub/previous/next/Live with highlighted
+primary cells and continuing authority; 32× result; result History; IndexedDB
+visual-detail reload when available; 108 Memory scene nodes; select-before-Unlock; currency/persistence; accessible
 list; reload; no obsolete run guidance; and no console/runtime errors.
 
 Generated evidence includes mobile title/run/river inspector/Adaptations/

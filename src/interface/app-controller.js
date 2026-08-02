@@ -21,7 +21,7 @@ import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from './
 import { createSurfaceCoordinator } from './policies/surface-coordinator.js';
 import { applySafeLayout, safeLayout } from './policies/layout-policy.js';
 import { advanceContinuation, cancelContinuation, continuationLabel, createContinuation, setContinuationPause, startContinuation } from './policies/continuation.js';
-import { createHistorySurface } from './history-surface.js';
+import { createHistorySurface } from './history-surface.js'; import { createHistoryPlayback } from './history-playback.js';
 import { createInspectorSurface } from './inspector-surface.js';
 import { createAdaptationSurface, createMemorySurface, nearestMemoryNode } from './panel-surfaces.js';
 import { createSettingsSurface } from './settings-surface.js';
@@ -36,9 +36,10 @@ class GameApp {
     this.flow = createAppState(); this.speed = settings.speed; this.snapshot = null; this.selectedNode = null;
     this.renderer = null; this.fields = null; this.attract = null; this.memorySnapshot = null; this.overlay = null;
     this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null; this.requestId = 0;
+    this.runSeed = null; this.visualSeed = null; this.historySnapshot = null; this.historyHighlights = [];
     this.last = performance.now(); this.lastRender = 0; this.lastInspect = 0; this.cameraPolicy = createCameraPolicy(this.last);
     this.driver = createRunDriver(caps, (message) => this.message(message)); this.pause = createPauseControl((paused) => this.applyPause(paused)); this.surfaces = createSurfaceCoordinator(() => this.closeActiveOverlay());
-    this.continuation = createContinuation(); this.countdownLabel = '';
+    this.historyPlayback = createHistoryPlayback(this); this.continuation = createContinuation(); this.countdownLabel = '';
   }
   get state() { return this.flow.state; }
   boot() {
@@ -55,12 +56,14 @@ class GameApp {
   makeSurfaces() {
     this.adapt = createAdaptationSurface({ onClose: () => this.panelClosed('adaptations'), onChoose: (offer, card) => this.choose(offer, card) });
     this.inspector = createInspectorSurface({ onClose: () => this.closeInspector(), onHistory: () => this.openHistory('current') });
-    this.historyUi = createHistorySurface({ onClose: () => this.panelClosed('history'), onLocation: (event) => this.focusHistory(event) });
+    this.historyUi = createHistorySurface({ onClose: () => this.panelClosed('history'),
+      onWorld: (world) => this.historyPlayback.selectWorld(world), onSeek: (tick, event, world) => this.historyPlayback.seek(tick, event, world),
+      onLive: () => this.historyPlayback.live() });
     this.memoryUi = createMemorySurface({ onCloseNode: () => this.closeMemoryNode(), onCloseList: () => this.panelClosed('memory-list'), onUnlock: (id) => this.buyMemory(id), onSelect: (id) => this.selectMemoryNode(id) });
     this.settingsUi = createSettingsSurface({ read: () => this.settings, onChange: (value) => this.applySettings(value), onClose: () => this.panelClosed('settings'), onAction: (action, value) => this.settingsAction(action, value) });
   }
   makeRenderer(seed) {
-    this.fields = createFields(createRng(seed ^ 0x51ab3d71), this.topo); this.renderer?.dispose();
+    this.visualSeed = seed; this.fields = createFields(createRng(seed ^ 0x51ab3d71), this.topo); this.renderer?.dispose();
     const fallback = () => { this.renderer = new Canvas2DRenderer(this.canvas, this.topo, this.fields); ui.announce(this.el, 'WebGL was lost. The observational Canvas renderer is continuing.'); };
     try { this.renderer = new GLRenderer(this.canvas, this.topo, this.fields, { onContextLoss: fallback }); }
     catch (error) { console.warn('WebGL2 unavailable; Canvas 2D active', error); fallback(); }
@@ -92,7 +95,7 @@ class GameApp {
   }
   selectCell(node, context = null) {
     this.closeActiveOverlay(); this.selectedNode = node; interruptCameraPolicy(this.cameraPolicy, performance.now(), 60_000);
-    const events = this.currentHistory.filter((event) => event.cellId === node); this.inspector.open({ node, world: this.fields, topo: this.topo, dynamic: null, events, context });
+    const events = this.currentHistory.filter((event) => event.primaryCells.includes(node)); this.inspector.open({ node, world: this.fields, topo: this.topo, dynamic: null, events, context });
     this.overlay = 'inspector'; this.surfaces.open('inspector', this.inspector.panel, document.getElementById('inspector-heading')); this.pauseContinuation('surface', true); this.resize(true);
     if (this.state === 'running' || this.state === 'result') this.requestInspection();
   }
@@ -101,12 +104,12 @@ class GameApp {
     this.selectedNode = null; this.pauseContinuation('surface', false); this.resize(true); interruptCameraPolicy(this.cameraPolicy, performance.now()); }
   startRun() {
     this.closeActiveOverlay(); this.adaptationEffects.clear(); cancelContinuation(this.continuation); this.el.countdown.textContent = ''; this.pause.clear(); this.selectedNode = null; this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null;
-    const seed = seedForRun(this.meta.runs); this.makeRenderer(seed); this.flow.send(this.state === 'title' ? 'begin' : 'restart'); this.resize(false); this.snapshot = null;
+    const seed = seedForRun(this.meta.runs); this.runSeed = seed; this.makeRenderer(seed); this.flow.send(this.state === 'title' ? 'begin' : 'restart'); this.resize(false); this.snapshot = null; this.historySnapshot = null; this.historyHighlights = [];
     ui.show(this.el, 'run'); ui.announce(this.el, 'The seeded world is choosing a suitable place to begin.');
     const memory = compileMemory(this.meta); this.driver.start({ seed, strainId: 'pioneer', memoryEffects: memory.effects,
       memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks, adaptationMode: this.settings.adaptationMode }, this.speed);
   }
-  message(message) { handleRunMessage(this, message); }
+  message(message) { if (!this.historyPlayback.handle(message)) handleRunMessage(this, message); }
   mergeHistory(events) { const bySeq = new Map(this.currentHistory.map((event) => [event.seq, event]));
     for (const event of normalizeHistoryEvents(events)) bySeq.set(event.seq, event); this.currentHistory = [...bySeq.values()].sort((a, b) => a.seq - b.seq); }
   adaptationModel() { return { offers: this.offers, cards: this.cards, mode: this.settings.adaptationMode, tick: this.snapshot?.tick ?? 0 }; }
@@ -121,6 +124,7 @@ class GameApp {
       imprints: result.imprint.edges.length ? [...this.meta.imprints, result.imprint].slice(-8) : this.meta.imprints };
     this.meta = next; if (!saveMeta(next)) ui.announce(this.el, 'Progress is temporary because browser storage is unavailable.');
     this.archive = appendWorld(this.archive, result, score, next.runs, this.settings.historyRetention); saveHistory(this.archive, this.settings.historyRetention);
+    const record = this.archive.worlds.at(-1); this.historyPlayback.save(record && { id: record.id, seed: record.seed, completedAt: next.runs });
     ui.showResult(this.el, score, { ...result, adaptationOffers: result.offers }); this.resize(false);
     if (this.settings.autoContinue) { startContinuation(this.continuation, performance.now()); this.updateContinuation(); }
   }
@@ -139,10 +143,7 @@ class GameApp {
     ui.showMemory(this.el, this.meta, this.availableMemory()); ui.toast(this.el, `${purchase.node.nameEn} joined Memory.`); }
   openAdaptations() { if (this.state !== 'running') return; this.openFull('adaptations'); this.adapt.open(this.adaptationModel());
     this.activateSurface('adaptations', this.adapt.surface, 'adaptations-heading'); }
-  openHistory(scope = null) { this.openFull('history'); const use = scope ?? (this.state === 'title' || this.state === 'memory' ? 'past' : 'current');
-    this.historyUi.open({ currentEvents: this.currentHistory, archive: this.archive, worldContinues: this.state === 'running',
-      currentHeader: this.lastResult ? `${this.lastResult.archetype} · seed ${this.lastResult.seed}` : `Living world · ${this.snapshot?.tick ?? 0} ticks` }, use);
-    this.activateSurface('history', this.historyUi.surface, 'history-heading'); }
+  openHistory(scope = null) { this.historyPlayback.open(scope ?? (this.state === 'title' || this.state === 'memory' ? 'past' : 'current')); }
   openSettings() { this.openFull('settings'); this.settingsUi.open(this.state === 'running'); this.activateSurface('settings', this.settingsUi.surface, 'settings-heading'); }
   openMemoryList() { if (this.state !== 'memory') return; this.openFull('memory-list'); this.memoryUi.openList(this.meta);
     this.activateSurface('memory-list', this.memoryUi.listSurface, 'memory-list-heading'); }
@@ -153,13 +154,11 @@ class GameApp {
   panelClosed(name) { if (this.overlay === name) this.closeActiveOverlay(); }
   closeActiveOverlay() { const name = this.overlay; if (!name) return;
     if (name === 'inspector') this.inspector.close(); else if (name === 'memory-node') this.memoryUi.closeNode();
-    else if (name === 'adaptations') this.adapt.close(); else if (name === 'history') this.historyUi.close();
+    else if (name === 'adaptations') this.adapt.close(); else if (name === 'history') { this.historyPlayback.close(); this.historyUi.close(); }
     else if (name === 'settings') this.settingsUi.close(); else if (name === 'memory-list') this.memoryUi.closeList();
     this.surfaces.close(name); this.overlay = null; this.pause.set('panel', false); this.pauseContinuation('surface', false);
     if (name === 'inspector' || name === 'memory-node') this.selectedNode = null; this.resize(true);
   }
-  focusHistory(event) { this.historyUi.close(); const cell = event.cellId; if (!Number.isInteger(cell)) return;
-    focusCamera(this.camera, this.topo.positions.subarray(cell * 3, cell * 3 + 3)); this.selectCell(cell, event); }
   applySettings(value) { const before = this.settings; this.settings = value; saveSettings(value); applySettingsToDocument(value);
     if (value.speed !== this.speed) { this.speed = value.speed; this.el.speed.value = String(value.speed); this.driver.setSpeed(value.speed); }
     if (value.adaptationMode !== before.adaptationMode && this.state === 'running') this.driver.message({ t: 'set-adaptation-mode', mode: value.adaptationMode });
@@ -170,7 +169,7 @@ class GameApp {
   settingsAction(action, value) { try {
     if (action === 'camera-reset') { Object.assign(this.camera, createCamera()); this.selectedNode = null; }
     else if (action === 'export') downloadData(this.meta, this.archive, this.settings);
-    else if (action === 'clear-history' && confirm('Clear all preserved History?')) { this.archive = clearHistory(); saveHistory(this.archive); ui.announce(this.el, 'History was cleared.'); }
+    else if (action === 'clear-history' && confirm('Clear all preserved History?')) { this.archive = clearHistory(); saveHistory(this.archive); this.historyPlayback.clear(); ui.announce(this.el, 'History was cleared.'); }
     else if (action === 'reset-progress' && confirm('Reset Echoes, Memory, and Imprints? This cannot be undone.')) { this.meta = defaultMeta(); saveMeta(this.meta); ui.announce(this.el, 'Progression was reset.'); }
     else if (action === 'import') { const data = parseImportedData(value); this.meta = data.meta; this.archive = data.history; this.applySettings(data.settings);
       saveMeta(this.meta); saveHistory(this.archive, this.settings.historyRetention); ui.announce(this.el, 'Local data was imported.'); }
@@ -190,10 +189,11 @@ class GameApp {
     if (this.state === 'result' && advanceContinuation(this.continuation, now)) { this.startRun(); return; }
     if (this.state === 'result') this.updateContinuation();
     if (this.inspector?.node != null && (this.state === 'running' || this.state === 'result') && now - this.lastInspect > 333) this.requestInspection();
-    const snap = this.state === 'title' ? this.attract?.snapshot : this.state === 'memory' ? this.memorySnapshot : this.snapshot;
+    const snap = this.historySnapshot ?? (this.state === 'title' ? this.attract?.snapshot : this.state === 'memory' ? this.memorySnapshot : this.snapshot);
     const cadence = this.speed >= 16 ? 66 : 0;
     if (!cadence || now - this.lastRender >= cadence) { this.renderer.render({ snapshot: snap ?? null, camera: this.camera, selectedNode: this.selectedNode,
-      adaptation: this.adaptationEffects.frame(now), time: now / 1000, pulse: this.settings.motion !== 'reduced' }); this.lastRender = now; }
+      adaptation: this.adaptationEffects.frame(now), highlightedCells: this.historyHighlights,
+      time: now / 1000, pulse: this.settings.motion !== 'reduced' }); this.lastRender = now; }
     requestAnimationFrame((time) => this.frame(time)); }
 }
 function openingDirection(fields, topo) { const cell = fields.landmarks.find((mark) => mark.kind === 2)?.cell ?? fields.sources[0]; return topo.positions.subarray(cell * 3, cell * 3 + 3); }

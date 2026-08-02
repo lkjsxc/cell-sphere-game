@@ -12,7 +12,7 @@ export function handleRunMessage(app, message) {
     ui.updateHud(app.el, message); app.adapt.update(app.adaptationModel()); return; }
   if (message.t === 'history-batch') return app.mergeHistory(message.events);
   if (message.t === 'cell-inspection') { if (message.requestId === app.requestId && message.cell.node === app.selectedNode) {
-    app.inspector.updateDynamic(message.cell, app.currentHistory.filter((event) => event.cellId === app.selectedNode)); } return; }
+    app.inspector.updateDynamic(message.cell, app.currentHistory.filter((event) => event.primaryCells.includes(app.selectedNode))); } return; }
   if (message.t === 'adaptation-offered') { app.offers.push(message.offer); ui.updateAdaptationCount(app.el, app.pendingCount()); return; }
   if (message.t === 'adaptation-selected') { const offer = app.offers.find((item) => item.id === message.offerId);
     if (offer) Object.assign(offer, { resolvedTick: message.tick, selectedCardId: message.cardId, selectionMode: message.selectionMode });

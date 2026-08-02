@@ -6,7 +6,7 @@ import { decodeVisualHistory, encodeVisualHistory, MAX_BYTES, thinFrames } from 
 import { createPreviewBuffers, nearestFrame, projectPreview } from '../../src/history/preview.js';
 import { RunController } from '../../src/simulation/simulator.js';
 import { createRecentRuns, validateRecentRun } from '../../src/platform/recent-runs.js';
-import { createHistoryLoadGuard } from '../../src/interface/history-playback.js';
+import { createHistoryLoadGuard, createHistoryPlayback } from '../../src/interface/history-playback.js';
 import { loadHistory, normalizeHistoryEvents, validateHistory } from '../../src/platform/history.js';
 
 function frame(tick, flags = 0, cells = 32) {
@@ -84,4 +84,16 @@ test('past-world load guard rejects stale asynchronous completions', () => {
   const guard = createHistoryLoadGuard(); const first = guard.next(); const second = guard.next();
   assert.equal(guard.isCurrent(first), false); assert.equal(guard.isCurrent(second), true);
   guard.invalidate(); assert.equal(guard.isCurrent(second), false);
+});
+
+test('Live and close restore current fields and snapshot immediately', () => {
+  const app = { state: 'running', visualSeed: 7, runSeed: 7, overlay: null, archive: { worlds: [] }, currentHistory: [],
+    snapshot: { tick: 90 }, lastResult: null, driver: { generation: 2, message() {} }, historySnapshot: null, historyHighlights: [],
+    makeRenderer(seed) { this.visualSeed = seed; }, resize() {}, openFull() { this.overlay = 'history'; }, activateSurface() {} };
+  let playback; app.historyUi = { worldId: 'current', surface: {}, setAvailability() {}, updateFrame() {},
+    open(model, id) { this.worldId = id; playback.selectWorld(model.worlds.find((world) => world.id === id)); } };
+  playback = createHistoryPlayback(app); playback.open('current'); app.visualSeed = 99; app.historySnapshot = { approximate: true };
+  app.historyHighlights = [4]; playback.live(); assert.equal(app.visualSeed, 7); assert.equal(app.historySnapshot, null);
+  assert.deepEqual(app.historyHighlights, []); app.visualSeed = 88; app.historySnapshot = {}; playback.close();
+  assert.equal(app.visualSeed, 7); assert.equal(app.historySnapshot, null);
 });
