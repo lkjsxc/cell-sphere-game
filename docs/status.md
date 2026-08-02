@@ -2,15 +2,17 @@
 
 Truthful current state. Updated every substantial session.
 
-- **Starting commit (2026-08-02 free-orbit turn):** `ddfcf28`
+- **Starting commit (2026-08-02 README landing fix):** `3dcd0e2`
+- **Latest functional commit:** `fe0be9e` — mirrors the canonical root README
+  into GitHub's higher-priority `.github/README.md`; pushed to `origin/main`.
 - **Latest product commit:** `e133c9f` — free two-axis globe orbit and
-  morphology-derived Imprints, pushed to `origin/main`.
+  morphology-derived Imprints.
 - **Branch / upstream:** `main` tracks `origin/main`.
 - **Protective rebuild tag:** `pre-rebuild-2026-08-02` remains pushed at
   baseline commit `a01a989`.
 - **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>.
-  GitHub Actions run `30748071582` completed both `verify` and `pages` for
-  `e133c9f`. Cache-busted public fetches returned HTTP 200 and matched the
+  GitHub Actions run `30749125707` completed both `verify` and `pages` for
+  `fe0be9e`. Cache-busted public fetches returned HTTP 200 and matched the
   free-orbit camera, Imprint module, result markup, and controller integration.
 
 ## Playable now
@@ -34,13 +36,17 @@ Truthful current state. Updated every substantial session.
 
 ## Evidence from this turn
 
+- GitHub's repository landing page now contains “Every extinction becomes
+  memory.” and the project introduction, and no longer shows “GitHub
+  automation. Contents”. `.github/README.md` is an exact root README mirror;
+  `check:structure` fails if they drift.
 - Focused camera/simulation/storage/determinism suite: **32/32 passed**.
   Regression tests prove a fixed grabbed point follows rightward and downward
   drag, and 96 vertical steps complete a full 2π orbit with finite matrices and
   no direction/up drift.
 - `npm run verify` passed: structure, **91 unit tests**, **7 integration tests**,
   balance smoke, benchmark, and link/deployment-path checks.
-- Benchmark on Node v22.22.3 / Linux x64: 3,396 ticks in 203 ms = **16,712
+- Benchmark on Node v22.22.3 / Linux x64: 3,396 ticks in 232 ms = **14,620
   ticks/s**, 8 MB reported heap, deterministic hash `6965ed2a`.
 - `npm run test:browser:file` passed in real headless Chrome WebGL2 at 390×844:
   a horizontal drag plus a 580 px vertical drag rendered visibly; title tap
