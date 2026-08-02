@@ -66,7 +66,7 @@ export function createCellGeometry(topo, fields) {
   }
 
   const boundaryPositions = new Float32Array(topo.edgeCount * 12);
-  const boundaryFeature = new Float32Array(topo.edgeCount * 12);
+  const boundaryFeature = new Float32Array(topo.edgeCount * 8);
   const boundaryIndices = new Uint16Array(topo.edgeCount * 6);
   for (let edge = 0; edge < topo.edgeCount; edge++) {
     const ai = dual.boundaryCornerA[edge] * 3;
@@ -81,9 +81,8 @@ export function createCellGeometry(topo, fields) {
     boundaryPositions.set(offset(b, sideB, 0.0018, 1.0025), (base + 2) * 3);
     boundaryPositions.set(offset(b, sideB, -0.0018, 1.0025), (base + 3) * 3);
     const cellA = topo.edgeA[edge]; const cellB = topo.edgeB[edge];
-    const knot = topo.degree[cellA] === 5 || topo.degree[cellB] === 5 ? 1 : 0;
     const coast = fields.landMask?.[cellA] !== fields.landMask?.[cellB] ? 1 : 0;
-    for (let corner = 0; corner < 4; corner++) boundaryFeature.set([knot, 0, coast], (base + corner) * 3);
+    for (let corner = 0; corner < 4; corner++) boundaryFeature.set([0, coast], (base + corner) * 2);
     boundaryIndices.set([base, base + 1, base + 2, base + 1, base + 3, base + 2], edge * 6);
   }
 
@@ -117,7 +116,7 @@ function buildRiverGeometry(topo, fields) {
     if ((fields.riverStrength?.[cell] ?? 0) > 0 && (fields.drainTo?.[cell] ?? -1) >= 0) cells.push(cell);
   }
   const riverPositions = new Float32Array(cells.length * 12);
-  const riverFeature = new Float32Array(cells.length * 12);
+  const riverFeature = new Float32Array(cells.length * 8);
   const riverIndices = new Uint16Array(cells.length * 6);
   cells.forEach((cell, segment) => {
     const down = fields.drainTo[cell]; const a = Array.from(topo.positions.subarray(cell * 3, cell * 3 + 3));
@@ -129,7 +128,7 @@ function buildRiverGeometry(topo, fields) {
     riverPositions.set(offset(a, sideA, -width, 1.006), (base + 1) * 3);
     riverPositions.set(offset(b, sideB, width, 1.006), (base + 2) * 3);
     riverPositions.set(offset(b, sideB, -width, 1.006), (base + 3) * 3);
-    for (let corner = 0; corner < 4; corner++) riverFeature.set([0, 1, strength], (base + corner) * 3);
+    for (let corner = 0; corner < 4; corner++) riverFeature.set([1, strength], (base + corner) * 2);
     riverIndices.set([base, base + 1, base + 2, base + 1, base + 3, base + 2], segment * 6);
   });
   return { riverPositions, riverFeature, riverIndices };

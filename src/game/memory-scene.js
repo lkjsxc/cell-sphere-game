@@ -1,11 +1,12 @@
 /** Project the stable Memory graph onto a compatible spherical topology. */
+import { writeLifeStates } from '../core/life-state.js';
+
 export function renderMemorySnapshot(topo, meta, scene) {
   const snapshot = {
     tick: scene.nodes.filter((node) => node.owned).length + (meta.imprints?.length ?? 0),
     entropy: 0.34, status: 'memory', biomass: new Float32Array(topo.nodeCount),
     stress: new Float32Array(topo.nodeCount), alive: new Uint8Array(topo.nodeCount),
-    conductance: new Float32Array(topo.edgeCount), flux: new Float32Array(topo.edgeCount),
-    edgeActive: new Uint8Array(topo.edgeCount), events: [],
+    lifeState: new Uint8Array(topo.nodeCount), events: [],
     metrics: { coverage: 0, score: 0, pendingAdaptations: 0 },
     memoryScene: scene, nodeStates: scene.nodes,
   };
@@ -23,6 +24,7 @@ export function renderMemorySnapshot(topo, meta, scene) {
     }
   }
   snapshot.focus = applyImprints(topo, meta.imprints ?? [], snapshot);
+  writeLifeStates(topo, snapshot.alive, snapshot.biomass, snapshot.stress, snapshot.lifeState);
   snapshot.metrics.coverage = snapshot.alive.reduce((sum, value) => sum + value, 0) / topo.nodeCount;
   return snapshot;
 }
@@ -35,7 +37,7 @@ function applyImprints(topo, imprints, snapshot) {
     for (const edge of imprints[index].edges ?? []) {
       if (edge < 0 || edge >= topo.edgeCount) continue;
       const a = topo.edgeA[edge]; const b = topo.edgeB[edge];
-      paintEdge(snapshot, edge, a, b, 1.25 + index * 0.04, 0.28);
+      paintCells(snapshot, a, b, 0.78 + index * 0.03);
       if (index === imprints.length - 1) for (let axis = 0; axis < 3; axis++)
         focus[axis] += topo.positions[a * 3 + axis] + topo.positions[b * 3 + axis];
     }
@@ -46,7 +48,6 @@ function applyImprints(topo, imprints, snapshot) {
 
 function tracePath(topo, root, target, snapshot, tier) {
   const previousNode = new Int32Array(topo.nodeCount).fill(-1);
-  const previousEdge = new Int32Array(topo.nodeCount).fill(-1);
   const queue = new Uint16Array(topo.nodeCount);
   let head = 0; let tail = 1; queue[0] = root; previousNode[root] = root;
   while (head < tail && previousNode[target] < 0) {
@@ -54,20 +55,16 @@ function tracePath(topo, root, target, snapshot, tier) {
     for (let offset = topo.nodeStart[cell]; offset < topo.nodeStart[cell + 1]; offset++) {
       const next = topo.nodeNeighbors[offset];
       if (previousNode[next] >= 0) continue;
-      previousNode[next] = cell; previousEdge[next] = topo.nodeEdges[offset]; queue[tail++] = next;
+      previousNode[next] = cell; queue[tail++] = next;
     }
   }
   for (let cell = target; cell !== root && previousNode[cell] >= 0; cell = previousNode[cell]) {
-    const edge = previousEdge[cell]; const parent = previousNode[cell];
-    paintEdge(snapshot, edge, cell, parent, 0.68 + tier * 0.035, 0.18);
+    paintCells(snapshot, cell, previousNode[cell], 0.58 + tier * 0.025);
   }
 }
 
-function paintEdge(snapshot, edge, a, b, conductance, flux) {
-  snapshot.edgeActive[edge] = 1;
-  snapshot.conductance[edge] = Math.max(snapshot.conductance[edge], conductance);
-  snapshot.flux[edge] = Math.max(snapshot.flux[edge], flux);
+function paintCells(snapshot, a, b, biomass) {
   snapshot.alive[a] = 1; snapshot.alive[b] = 1;
-  snapshot.biomass[a] = Math.max(snapshot.biomass[a], 0.62);
-  snapshot.biomass[b] = Math.max(snapshot.biomass[b], 0.62);
+  snapshot.biomass[a] = Math.max(snapshot.biomass[a], biomass);
+  snapshot.biomass[b] = Math.max(snapshot.biomass[b], biomass);
 }

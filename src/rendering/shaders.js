@@ -12,17 +12,12 @@ export const FS_BACKGROUND = `#version 300 es
 precision mediump float;
 in vec2 vUv;
 out vec4 outColor;
-uniform float uTime;
-uniform float uTwinkle;
 void main() {
   vec2 p = vUv - 0.5;
   float dawn = exp(-4.8 * length(p - vec2(-0.42, -0.34)));
   float deep = smoothstep(-0.45, 0.65, p.y);
   vec3 col = mix(vec3(0.035, 0.041, 0.052), vec3(0.009, 0.014, 0.023), deep);
   col += vec3(0.16, 0.095, 0.052) * dawn * 0.18;
-  float orbit = abs(length((p - vec2(0.18, 0.03)) * vec2(0.72, 1.0)) - 0.52);
-  float breathe = uTwinkle > 0.5 ? 0.88 + 0.12 * sin(uTime * 0.28) : 1.0;
-  col += vec3(0.28, 0.31, 0.31) * smoothstep(0.003, 0.0, orbit) * 0.055 * breathe;
   outColor = vec4(col, 1.0);
 }`;
 
@@ -32,14 +27,12 @@ in vec3 aPos;
 in vec3 aCenter;
 in vec4 aMaterial;
 in vec4 aTerrain;
-in vec2 aLife;
-in float aKnot;
+in vec3 aLife;
 out vec3 vPos;
 out vec3 vCenter;
 out vec4 vMaterial;
 out vec4 vTerrain;
-out vec2 vLife;
-out float vKnot;
+out vec3 vLife;
 void main() {
   float relief = max(0.0, aMaterial.w - 0.43) * 0.022 + aTerrain.w * 0.004;
   vPos = aPos * (1.0 + relief);
@@ -47,7 +40,6 @@ void main() {
   vMaterial = aMaterial;
   vTerrain = aTerrain;
   vLife = aLife;
-  vKnot = aKnot;
   gl_Position = uViewProj * vec4(vPos, 1.0);
 }`;
 
@@ -57,13 +49,10 @@ in vec3 vPos;
 in vec3 vCenter;
 in vec4 vMaterial;
 in vec4 vTerrain;
-in vec2 vLife;
-in float vKnot;
+in vec3 vLife;
 out vec4 outColor;
 uniform vec3 uEye;
 uniform float uEntropy;
-uniform float uTime;
-uniform float uPulse;
 uniform float uMemory;
 uniform vec3 uSelectedCenter;
 uniform float uHasSelection;
@@ -100,9 +89,22 @@ void main() {
   base = mix(base, vec3(0.22, 0.23, 0.21) + nutrient * 0.05, uMemory * 0.82);
   float life = clamp(vLife.x, 0.0, 1.0);
   float stress = clamp(vLife.y, 0.0, 1.0);
-  base = mix(base, vec3(0.66, 0.66, 0.38), life * 0.25);
-  base = mix(base, vec3(0.67, 0.22, 0.15), life * stress * 0.42);
-  base += vec3(0.13, 0.08, 0.025) * vKnot;
+  float state = floor(vLife.z + 0.5);
+  float living = 1.0 - step(0.5, abs(state - 1.0));
+  float frontier = 1.0 - step(0.5, abs(state - 2.0));
+  float stressed = 1.0 - step(0.5, abs(state - 3.0));
+  float critical = 1.0 - step(0.5, abs(state - 4.0));
+  float deadRemains = 1.0 - step(0.5, abs(state - 5.0));
+  float alive = living + frontier + stressed + critical;
+  float centerDot = dot(normalize(vPos), normalize(vCenter));
+  float inset = smoothstep(0.9982, 0.99972, centerDot);
+  float striation = 0.5 + 0.5 * sin(dot(vPos, vec3(97.0, 151.0, 73.0)) * 17.0);
+  base = mix(base, vec3(0.56, 0.60, 0.34), alive * (0.18 + life * 0.10));
+  base = mix(base, vec3(0.70, 0.73, 0.48), frontier * inset * 0.34);
+  base *= 1.0 - frontier * (1.0 - inset) * 0.10;
+  base = mix(base, vec3(0.58, 0.34, 0.22), stressed * (0.20 + stress * 0.12 + striation * 0.08));
+  base = mix(base, vec3(0.66, 0.20, 0.13), critical * (0.34 + stress * 0.08 + striation * 0.13));
+  base = mix(base, vec3(0.31, 0.30, 0.28), deadRemains * (0.20 + inset * 0.09));
   float grey = dot(base, vec3(0.299, 0.587, 0.114));
   base = mix(base, vec3(grey) * 0.56, uEntropy * 0.70);
   vec3 n = normalize(vPos);
@@ -113,13 +115,13 @@ void main() {
   float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 2.7);
   float plate = smoothstep(0.996, 0.9998, dot(n, normalize(vCenter)));
   vec3 col = base * (0.22 + 0.90 * diffuse) + base * plate * 0.07;
-  col += vec3(0.72, 0.65, 0.36) * life * (0.12 + 0.14 * plate) * night;
+  col += vec3(0.38, 0.39, 0.20) * alive * life * (0.08 + 0.12 * plate) * night;
   col += rim * vec3(0.08, 0.13, 0.14) * (1.0 - uEntropy * 0.5);
   float selected = uHasSelection * step(0.99994, dot(normalize(vCenter), uSelectedCenter));
   col = mix(col, vec3(0.78, 0.92, 0.84), selected * (0.34 + plate * 0.28));
   for (int i = 0; i < 4; i++) {
     if (uEventStrength[i] > 0.001) {
-      float d = dot(n, uEventCenter[i]);
+      float d = dot(normalize(vCenter), uEventCenter[i]);
       float w = smoothstep(uEventRadius[i], min(1.0, uEventRadius[i] + 0.18), d);
       col = mix(col, uEventTint[i], w * uEventStrength[i] * 0.48);
     }

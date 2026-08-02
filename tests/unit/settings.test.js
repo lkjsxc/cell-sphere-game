@@ -133,16 +133,16 @@ test('stable spherical cells and prerequisite paths drive the Memory snapshot', 
     imprints: [{ kind: 'strongest-corridor', seed: 7, edges: [0] }] };
   const snapshot = buildMemorySnapshot(topo, meta, 'reach-world-seeder');
   const shuffled = buildMemorySnapshot(topo, { ...meta, memoryNodes: [...owned].reverse() }, 'reach-world-seeder');
-  assert.deepEqual(snapshot.edgeActive, shuffled.edgeActive);
-  assert.equal(snapshot.edgeActive[0], 1); assert.equal(snapshot.nodeStates.length, 108);
+  assert.deepEqual(snapshot.alive, shuffled.alive);
+  assert.deepEqual(snapshot.lifeState, shuffled.lifeState);
+  assert.equal(snapshot.alive[topo.edgeA[0]], 1); assert.equal(snapshot.alive[topo.edgeB[0]], 1);
+  assert.equal(snapshot.nodeStates.length, 108);
   assert.equal(snapshot.nodeStates.find((node) => node.id === 'reach-world-seeder').selectedReady, false);
   for (const node of snapshot.nodeStates) {
     assert.ok(node.cell < topo.nodeCount); const p = node.cell * 3;
     assert.ok(Math.abs(Math.hypot(topo.positions[p], topo.positions[p + 1], topo.positions[p + 2]) - 1) < 1e-5);
   }
-  for (let edge = 0; edge < topo.edgeCount; edge++) if (snapshot.edgeActive[edge]) {
-    assert.equal(snapshot.alive[topo.edgeA[edge]], 1); assert.equal(snapshot.alive[topo.edgeB[edge]], 1);
-  }
+  for (const node of snapshot.nodeStates) assert.equal(snapshot.alive[node.cell], 1);
   const groups = groupAccessibleMemory({ ...defaultMeta(), echoBalance: 3 }, 'reach-horizon-instinct');
   assert.equal(groups.length, 6); assert.equal(groups[0].nodes[0].selectedReady, true);
 });

@@ -5,7 +5,7 @@ export async function runScenario(t) {
   const render = await evaluate(`new Promise(resolve => { const app=window.__IN_APP__, original=app.renderer.render.bind(app.renderer), samples=[];
     app.renderer.render=(scene)=>{const start=performance.now(); original(scene); samples.push(performance.now()-start)};
     setTimeout(()=>{app.renderer.render=original; samples.sort((a,b)=>a-b); resolve({draws:app.renderer.drawCalls,p95:samples[Math.floor(samples.length*.95)]||0,mean:samples.reduce((a,b)=>a+b,0)/Math.max(1,samples.length)});},1200); })`);
-  ok([5, 7].includes(render.draws) && render.p95 < 20, 'renderer draw/time budget regressed');
+  ok(render.draws === 5 && render.p95 < 20, 'renderer draw/time budget regressed');
   const signalCopy = await evaluate("document.body.innerText.includes('Signal')");
   ok(!signalCopy, 'obsolete run guidance remains visible');
 

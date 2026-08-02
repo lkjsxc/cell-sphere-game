@@ -6,13 +6,12 @@
  *  environment permits (see docs/testing.md for the seccomp caveat). */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
 import { createCamera, cameraEye, viewProjection, cameraRay, intersectUnitSphere, rotate } from '../../src/rendering/camera.js';
-import { buildVeinInstances, buildTipInstances } from '../../src/rendering/instances.js';
+import { LIFE_STATE, writeLifeStates } from '../../src/core/life-state.js';
 import * as SH from '../../src/rendering/shaders.js';
-import * as SHN from '../../src/rendering/shaders-network.js';
 import * as SHB from '../../src/rendering/shaders-boundary.js';
 import { parseUniformNames } from '../../src/rendering/gl-utils.js';
 import { createCellGeometry } from '../../src/rendering/cell-geometry.js';
@@ -93,8 +92,7 @@ test('parseUniformNames strips array brackets', () => {
 test('every declared uniform is uploaded by the renderer modules', () => {
   const uploaded = new Set();
   const re = /\.u\.get\(['"]([^'"]+)['"]\)/g;
-  for (const src of [read('../../src/rendering/renderer.js'), read('../../src/rendering/world-pass.js'),
-    read('../../src/rendering/network-pass.js')]) {
+  for (const src of [read('../../src/rendering/renderer.js'), read('../../src/rendering/world-pass.js')]) {
     let m;
     while ((m = re.exec(src)) !== null) uploaded.add(m[1]);
   }
@@ -102,14 +100,12 @@ test('every declared uniform is uploaded by the renderer modules', () => {
     background: [SH.VS_BACKGROUND, SH.FS_BACKGROUND],
     globe: [SH.VS_GLOBE, SH.FS_GLOBE],
     atmosphere: [SH.VS_ATMOSPHERE, SH.FS_ATMOSPHERE],
-    veins: [SHN.VS_VEINS, SHN.FS_VEINS],
-    tips: [SHN.VS_TIPS, SHN.FS_TIPS],
     boundary: [SHB.VS_BOUNDARY, SHB.FS_BOUNDARY],
   };
   for (const [name, sources] of Object.entries(programs)) {
     const declared = new Set();
     for (const s of sources) for (const u of parseUniformNames(s)) declared.add(u);
-    assert.ok(declared.size > 0, `${name} declared no uniforms`);
+    if (name !== 'background') assert.ok(declared.size > 0, `${name} declared no uniforms`);
     for (const u of declared) {
       assert.ok(uploaded.has(u), `${name}: uniform "${u}" declared but never uploaded`);
     }
@@ -118,6 +114,17 @@ test('every declared uniform is uploaded by the renderer modules', () => {
     assert.ok(parseUniformNames(SH.FS_GLOBE).has(u), `globe missing ${u}`);
   }
   assert.ok(!parseUniformNames(SH.FS_GLOBE).has('uSignalCenter'));
+});
+
+test('production renderer has five geographic/cellular draws and no route programs', () => {
+  const renderer = read('../../src/rendering/renderer.js'); const shaders = read('../../src/rendering/shaders.js');
+  const fallback = read('../../src/rendering/fallback2d.js');
+  assert.match(renderer, /drawCalls = 5/);
+  assert.doesNotMatch(renderer, /network|vein|tip|drawElementsInstanced/i);
+  assert.doesNotMatch(fallback, /edgeActive|conductance|flux|renderNetwork|tip|vein/i);
+  assert.doesNotMatch(shaders, /orbit|uTwinkle|uTime/);
+  assert.equal(existsSync(resolve(here, '../../src/rendering/network-pass.js')), false);
+  assert.equal(existsSync(resolve(here, '../../src/rendering/shaders-network.js')), false);
 });
 
 test('dual-cell render geometry stays indexed, finite, and cell-addressable', () => {
@@ -141,59 +148,23 @@ test('title organism grows through real adjacency and stays bounded', () => {
   const alive = snap.alive.reduce((sum, value) => sum + value, 0);
   assert.ok(alive > 0 && alive <= 54, `bounded autonomous bloom: ${alive}`);
   assert.ok(snap.tick > 54, 'title bloom reseeds autonomously after resting');
-  for (let edge = 0; edge < topo.edgeCount; edge++) {
-    if (!snap.edgeActive[edge]) continue;
-    assert.equal(snap.alive[topo.edgeA[edge]], 1);
-    assert.equal(snap.alive[topo.edgeB[edge]], 1);
-  }
+  assert.equal(snap.lifeState.length, topo.nodeCount);
+  assert.ok(snap.lifeState.some((value) => value === LIFE_STATE.FRONTIER));
   attract.reset(12);
   assert.equal(snap.alive[12], 1);
   assert.equal(snap.alive.reduce((sum, value) => sum + value, 0), 1);
 });
 
-// --- instance builders on a synthetic 3-node line graph ---------------------
-
-function syntheticTopoAndSnapshot() {
-  // nodes 0-1-2; edges e0=(0,1) active, e1=(1,2) inactive.
-  const positions = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
-  const topo = {
-    nodeCount: 3, edgeCount: 2, positions,
-    edgeA: Uint16Array.from([0, 1]),
-    edgeB: Uint16Array.from([1, 2]),
-    // CSR: node0->[e0], node1->[e0,e1], node2->[e1]; neighbors mirror.
-    nodeStart: Uint32Array.from([0, 1, 3, 4]),
-    nodeEdges: Uint32Array.from([0, 0, 1, 1]),
-    nodeNeighbors: Uint16Array.from([1, 0, 2, 1]),
-  };
-  const snapshot = {
-    edgeActive: Uint8Array.from([1, 0]),
-    conductance: Float32Array.from([1.2, 0.1]),
-    flux: Float32Array.from([0.3, 0]),
-    stress: Float32Array.from([0.1, 0.4, 0.2]),
-    alive: Uint8Array.from([1, 1, 0]),
-    biomass: Float32Array.from([1.0, 0.8, 0]),
-  };
-  return { topo, snapshot };
-}
-
-test('buildVeinInstances emits only active edges with 9-float stride', () => {
-  const { topo, snapshot } = syntheticTopoAndSnapshot();
-  const out = new Float32Array(topo.edgeCount * 9);
-  const n = buildVeinInstances(topo, snapshot, out);
-  assert.equal(n, 1, 'only the active edge');
-  // First endpoint must be node 0's position (1,0,0).
-  assert.equal(out[0], 1); assert.equal(out[1], 0); assert.equal(out[2], 0);
-  // Width encodes conductance; flux normalized and clamped.
-  assert.ok(out[6] > 0.006, 'width should reflect conductance');
-  assert.ok(out[8] >= 0 && out[8] <= 1, 'flux param out of [0,1]');
-});
-
-test('buildTipInstances emits living frontier nodes only', () => {
-  const { topo, snapshot } = syntheticTopoAndSnapshot();
-  const out = new Float32Array(topo.nodeCount * 5);
-  const n = buildTipInstances(topo, snapshot, out);
-  // node0 alive but its only neighbor (1) is alive -> not frontier.
-  // node1 alive with dead neighbor 2 -> frontier. node2 dead.
-  assert.equal(n, 1, 'exactly one frontier tip');
-  assert.equal(out[0], 0); assert.equal(out[1], 1); assert.equal(out[2], 0); // node1 pos
+test('cell life semantics distinguish topology frontier, stress, critical, and remains', () => {
+  const topo = { nodeCount: 6, nodeStart: Uint32Array.from([0, 1, 3, 5, 7, 9, 10]),
+    nodeNeighbors: Uint16Array.from([1, 0, 2, 1, 3, 2, 4, 3, 5, 4]) };
+  const alive = Uint8Array.from([1, 1, 1, 1, 0, 0]);
+  const biomass = Float32Array.from([1, 1, 1, 1, 0.02, 0]);
+  const stress = Float32Array.from([0, 0, 0.7, 1.1, 0, 0]);
+  const result = writeLifeStates(topo, alive, biomass, stress, new Uint8Array(6));
+  assert.deepEqual([...result], [LIFE_STATE.LIVING, LIFE_STATE.LIVING, LIFE_STATE.STRESSED,
+    LIFE_STATE.CRITICAL, LIFE_STATE.DEAD_REMAINS, LIFE_STATE.UNOCCUPIED]);
+  stress[2] = 0; alive[3] = 0; biomass[3] = 0;
+  writeLifeStates(topo, alive, biomass, stress, result);
+  assert.equal(result[2], LIFE_STATE.FRONTIER);
 });

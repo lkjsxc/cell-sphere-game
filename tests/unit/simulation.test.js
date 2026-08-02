@@ -7,6 +7,8 @@ import { offerAdaptation } from '../../src/simulation/summary.js';
 import { finalStateHash, recordHistory } from '../../src/simulation/replay.js';
 import { BALANCE as B } from '../../src/game/balance.js';
 import { createRng } from '../../src/core/prng.js';
+import { LIFE_STATE } from '../../src/core/life-state.js';
+import { snapshotTransfers } from '../../src/simulation/snapshot.js';
 
 function run(seed = 4242, mode = 'random', emit = () => {}) {
   const controller = new RunController({ seed, adaptationMode: mode }, emit);
@@ -42,14 +44,21 @@ test('500 ticks preserve typed-array invariants and growth', () => {
   }
 });
 
-test('Signal authority and draft status are absent', () => {
+test('presentation snapshots omit route authority and expose compact cell semantics', () => {
   const controller = run();
   const state = controller.state;
   assert.equal(controller.placeSignal, undefined);
   for (const key of Object.keys(state)) assert.doesNotMatch(key, /signal|draft/i);
   for (const key of Object.keys(B)) assert.doesNotMatch(key, /signal|draft/i);
   const snapshot = controller.snapshot();
-  for (const key of Object.keys(snapshot)) assert.doesNotMatch(key, /signal/i);
+  for (const key of Object.keys(snapshot)) assert.doesNotMatch(key, /signal|edgeActive|conductance|flux|nutrient/i);
+  assert.ok(state.edgeActive instanceof Uint8Array && state.conductance instanceof Float32Array);
+  assert.equal(snapshot.lifeState.length, state.topo.nodeCount);
+  assert.equal(snapshot.lifeState[state.inoculationCell], LIFE_STATE.FRONTIER);
+  const transfers = snapshotTransfers(snapshot);
+  assert.deepEqual(transfers, [snapshot.biomass.buffer, snapshot.stress.buffer,
+    snapshot.alive.buffer, snapshot.lifeState.buffer]);
+  assert.equal(transfers.reduce((sum, buffer) => sum + buffer.byteLength, 0), state.topo.nodeCount * 10);
   assert.ok(['idle', 'running', 'extinct'].includes(state.status));
 });
 

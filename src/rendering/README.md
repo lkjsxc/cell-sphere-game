@@ -1,26 +1,29 @@
 # src/rendering/
 
 WebGL2 primary renderer with a playable Canvas 2D fallback. Both read immutable
-world fields and snapshots; neither can mutate simulation authority.
+world fields and presentation snapshots; neither can mutate simulation authority.
 
-Balanced WebGL2 issues seven steady-state draws: background, dual-cell terrain,
-quiet/coast boundaries, connected drainage ribbons, atmosphere, organism
-routes, and organism tips/Memory nodes. Rivers are static cool center-to-
-downstream ribbons; organism routes are warm animated boundary-aligned veins.
-Forests and relief stay in the cell material pass.
+The ordinary world issues five steady-state WebGL2 draws: background, dual-cell
+terrain and cellular life material, quiet/coast boundaries, connected drainage
+ribbons, and atmosphere. Life is never rendered as a route, line, or point
+sprite. Healthy, frontier, stressed, and critical states occupy
+whole dual cells; dead detritus gets a separate remnant material, and frontier
+uses a static broad inset in addition to color.
+Rivers remain cool center-to-downstream geography.
 
 Key modules:
 
 - `camera.js`: orthonormal free-orbit frame, zoom, inertia, focus, picking ray.
 - `picking.js`: offset-aware ray/sphere hit and nearest stable cell ID.
 - `cell-geometry.js`: dual polygons, coast etching, and immutable river ribbons.
-- `world-pass.js`: terrain, boundaries, rivers, atmosphere, and selection.
-- `network-pass.js`: bounded dynamic vein/tip buffers and event uniforms.
-- `shaders*.js`: original GLSL for geography, life, and Memory materials.
-- `fallback2d.js`: explicit biomes, rivers, selection, events, and routes.
-- `renderer.js`: draw composition and context-loss callback.
+- `world-pass.js`: terrain, cellular life, cell-local events, rivers, atmosphere,
+  and selection.
+- `shaders*.js`: original GLSL for geography and cellular materials.
+- `fallback2d.js`: projected dual cells, quiet/coast boundaries, rivers,
+  selection, cell-local events, and cellular life states.
+- `renderer.js`: five-draw composition and context-loss callback.
 
 Invariants: static world buffers build once per world; snapshots upload only
-life/route state; no canvas readback; reduced motion removes pulses; quality
-changes DPR/cadence only; analytic picking remains on the documented unit
-sphere because visual relief is shallow.
+compact per-cell life state; no canvas readback; quality changes DPR/cadence
+only; analytic picking remains on the documented unit sphere because visual
+relief is shallow.

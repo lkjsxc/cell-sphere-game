@@ -57,7 +57,7 @@ try {
     setViewport: (width, height) => cdp.send('Emulation.setDeviceMetricsOverride',
       { width, height, deviceScaleFactor: 1, mobile: width < 600 }, session) });
   console.log(`test:browser:file — PASS (${evidence.backend}; observational loop; score ${evidence.score}; `
-    + `32x ${evidence.elapsed.toFixed(2)}s; 7 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
+    + `32x ${evidence.elapsed.toFixed(2)}s; 5 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
     + `108-node Memory purchase ${evidence.nodeId})`);
   exitCode = 0;
 } catch (error) {

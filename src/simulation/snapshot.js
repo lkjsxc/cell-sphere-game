@@ -1,7 +1,10 @@
 /** Renderer snapshot construction from canonical authority. */
 import { liveScore } from '../game/scoring.js';
+import { writeLifeStates } from '../core/life-state.js';
 
 export function buildSnapshot(state) {
+  const lifeState = writeLifeStates(state.topo, state.alive, state.biomass, state.stress,
+    new Uint8Array(state.topo.nodeCount));
   return {
     tick: state.tick,
     entropy: state.entropy,
@@ -10,11 +13,8 @@ export function buildSnapshot(state) {
     pendingAdaptations: state.adaptationOffers.filter((offer) => offer.resolvedTick == null).length,
     biomass: state.biomass.slice(),
     stress: state.stress.slice(),
-    nutrient: state.nutrient.slice(),
     alive: state.alive.slice(),
-    conductance: state.conductance.slice(),
-    flux: state.flux.slice(),
-    edgeActive: state.edgeActive.slice(),
+    lifeState,
     metrics: {
       coverage: state.coverage,
       peakCoverage: state.peakCoverage,
@@ -44,7 +44,6 @@ function vitality(state) {
 }
 
 export function snapshotTransfers(snapshot) {
-  return [snapshot.biomass.buffer, snapshot.stress.buffer, snapshot.nutrient.buffer,
-    snapshot.alive.buffer, snapshot.conductance.buffer, snapshot.flux.buffer,
-    snapshot.edgeActive.buffer];
+  return [snapshot.biomass.buffer, snapshot.stress.buffer, snapshot.alive.buffer,
+    snapshot.lifeState.buffer];
 }

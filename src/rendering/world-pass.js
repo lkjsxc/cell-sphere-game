@@ -3,6 +3,7 @@ import { createProgram, uniformMap, createBuffer } from './gl-utils.js';
 import { createCellGeometry } from './cell-geometry.js';
 import * as SH from './shaders.js';
 import * as BOUNDARY from './shaders-boundary.js';
+import { EVENT_TINTS } from './event-tints.js';
 
 export class WorldPass {
   constructor(gl, topo, fields) {
@@ -15,7 +16,11 @@ export class WorldPass {
       river: this.make(BOUNDARY.VS_BOUNDARY, BOUNDARY.FS_BOUNDARY),
       atmosphere: this.make(SH.VS_ATMOSPHERE, SH.FS_ATMOSPHERE),
     };
-    this.lifeData = new Float32Array(this.geometry.vertexCount * 2);
+    this.lifeData = new Float32Array(this.geometry.vertexCount * 3);
+    this.overlay = {
+      centers: new Float32Array(12), radii: new Float32Array(4),
+      tints: new Float32Array(12), strengths: new Float32Array(4),
+    };
     this.lastSnapshot = null;
     this.lastTick = -1;
     this.zero3 = new Float32Array(3);
@@ -38,29 +43,24 @@ export class WorldPass {
   initialize() {
     const gl = this.gl; const g = this.geometry;
     this.lifeBuffer = this.buffer(gl.ARRAY_BUFFER, this.lifeData, gl.DYNAMIC_DRAW);
-    const knot = new Float32Array(g.vertexCount);
-    for (let vertex = 0; vertex < g.vertexCount; vertex++) {
-      knot[vertex] = this.topo.degree[g.vertexCell[vertex]] === 5 ? 1 : 0;
-    }
     this.globeVao = this.vao();
     this.attribute(this.programs.globe, 'aPos', this.buffer(gl.ARRAY_BUFFER, g.positions), 3);
     this.attribute(this.programs.globe, 'aCenter', this.buffer(gl.ARRAY_BUFFER, g.centers), 3);
     this.attribute(this.programs.globe, 'aMaterial', this.buffer(gl.ARRAY_BUFFER, g.material), 4);
     this.attribute(this.programs.globe, 'aTerrain', this.buffer(gl.ARRAY_BUFFER, g.terrain), 4);
-    this.attribute(this.programs.globe, 'aLife', this.lifeBuffer, 2);
-    this.attribute(this.programs.globe, 'aKnot', this.buffer(gl.ARRAY_BUFFER, knot), 1);
+    this.attribute(this.programs.globe, 'aLife', this.lifeBuffer, 3);
     this.globeIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.indices);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.globeIndex);
 
     this.boundaryVao = this.vao();
     this.attribute(this.programs.boundary, 'aPos', this.buffer(gl.ARRAY_BUFFER, g.boundaryPositions), 3);
-    this.attribute(this.programs.boundary, 'aFeature', this.buffer(gl.ARRAY_BUFFER, g.boundaryFeature), 3);
+    this.attribute(this.programs.boundary, 'aFeature', this.buffer(gl.ARRAY_BUFFER, g.boundaryFeature), 2);
     this.boundaryIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.boundaryIndices);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.boundaryIndex);
 
     this.riverVao = this.vao();
     this.attribute(this.programs.river, 'aPos', this.buffer(gl.ARRAY_BUFFER, g.riverPositions), 3);
-    this.attribute(this.programs.river, 'aFeature', this.buffer(gl.ARRAY_BUFFER, g.riverFeature), 3);
+    this.attribute(this.programs.river, 'aFeature', this.buffer(gl.ARRAY_BUFFER, g.riverFeature), 2);
     this.riverIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.riverIndices);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.riverIndex);
 
@@ -94,29 +94,29 @@ export class WorldPass {
     else {
       for (let vertex = 0; vertex < cells.length; vertex++) {
         const cell = cells[vertex];
-        this.lifeData[vertex * 2] = snapshot.alive[cell] ? Math.min(1, 0.25 + snapshot.biomass[cell] * 0.55) : 0;
-        this.lifeData[vertex * 2 + 1] = snapshot.stress[cell];
+        this.lifeData[vertex * 3] = snapshot.alive[cell] ? Math.min(1, 0.25 + snapshot.biomass[cell] * 0.55) : 0;
+        this.lifeData[vertex * 3 + 1] = snapshot.stress[cell];
+        this.lifeData[vertex * 3 + 2] = snapshot.lifeState?.[cell]
+          ?? (snapshot.alive[cell] ? 1 : snapshot.biomass[cell] > 0 ? 5 : 0);
       }
     }
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.lifeBuffer);
     this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.lifeData);
   }
 
-  draw(vp, eye, time, pulse, snapshot, selectedNode, setOverlays) {
+  draw(vp, eye, snapshot, selectedNode) {
     const gl = this.gl; this.uploadLife(snapshot);
     const globe = this.programs.globe;
     gl.useProgram(globe.program);
     gl.uniformMatrix4fv(globe.u.get('uViewProj'), false, vp);
     gl.uniform3fv(globe.u.get('uEye'), eye);
     gl.uniform1f(globe.u.get('uEntropy'), snapshot?.entropy ?? 0);
-    gl.uniform1f(globe.u.get('uTime'), time);
-    gl.uniform1f(globe.u.get('uPulse'), pulse ? 1 : 0);
     gl.uniform1f(globe.u.get('uMemory'), snapshot?.status === 'memory' ? 1 : 0);
     const selected = Number.isInteger(selectedNode) ? selectedNode : -1;
     gl.uniform1f(globe.u.get('uHasSelection'), selected >= 0 ? 1 : 0);
     gl.uniform3fv(globe.u.get('uSelectedCenter'), selected >= 0
       ? this.topo.positions.subarray(selected * 3, selected * 3 + 3) : this.zero3);
-    setOverlays(globe, snapshot);
+    this.setEventOverlays(globe, snapshot);
     gl.bindVertexArray(this.globeVao);
     gl.drawElements(gl.TRIANGLES, this.geometry.indices.length, gl.UNSIGNED_SHORT, 0);
 
@@ -148,6 +148,23 @@ export class WorldPass {
     gl.bindVertexArray(this.atmosphereVao);
     gl.drawElements(gl.TRIANGLES, this.topo.triangles.length, gl.UNSIGNED_SHORT, 0);
     gl.disable(gl.CULL_FACE);
+  }
+
+  setEventOverlays(program, snapshot) {
+    const gl = this.gl; const data = this.overlay;
+    data.centers.fill(0); data.radii.fill(0); data.tints.fill(0); data.strengths.fill(0);
+    const events = snapshot?.events ?? [];
+    for (let i = 0; i < Math.min(4, events.length); i++) {
+      const event = events[i]; const source = event.center * 3; const target = i * 3;
+      data.centers.set(this.topo.positions.subarray(source, source + 3), target);
+      data.radii[i] = event.radiusDot;
+      data.tints.set(EVENT_TINTS[event.family] ?? [0.7, 0.7, 0.7], target);
+      data.strengths[i] = Math.min(1, event.intensity);
+    }
+    gl.uniform3fv(program.u.get('uEventCenter'), data.centers);
+    gl.uniform1fv(program.u.get('uEventRadius'), data.radii);
+    gl.uniform3fv(program.u.get('uEventTint'), data.tints);
+    gl.uniform1fv(program.u.get('uEventStrength'), data.strengths);
   }
 
   dispose() {
