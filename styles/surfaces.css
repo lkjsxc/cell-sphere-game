@@ -87,6 +87,27 @@
 .memory-node-effect { color: var(--text-secondary); font-size: var(--fs-caption); }
 .memory-node-cost { color: var(--accent-gold); font-size: var(--fs-caption); }
 
+/* Adaptations use one nonblocking bottom caption below context-sheet stacking. */
+#adaptation-caption {
+  position: absolute;
+  left: 50%;
+  bottom: calc(7.5rem + var(--safe-bottom));
+  z-index: calc(var(--z-hud) + 1);
+  width: min(32rem, calc(100vw - 2 * var(--sp-4)));
+  transform: translateX(-50%);
+  display: grid;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-4);
+  color: var(--text-primary);
+  background: rgba(10, 15, 18, .82);
+  border-left: 3px solid var(--life-core);
+  border-radius: var(--radius-s);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .38);
+  pointer-events: none;
+}
+#adaptation-caption[hidden] { display: none; }
+#adaptation-caption span { color: var(--text-secondary); font-size: var(--fs-caption); }
+
 /* Rare transient feedback stays near bottom context, never over the globe center. */
 #toast-root {
   position: absolute;

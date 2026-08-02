@@ -28,11 +28,13 @@ in vec3 aCenter;
 in vec4 aMaterial;
 in vec4 aTerrain;
 in vec3 aLife;
+in vec2 aAdaptation;
 out vec3 vPos;
 out vec3 vCenter;
 out vec4 vMaterial;
 out vec4 vTerrain;
 out vec3 vLife;
+out vec2 vAdaptation;
 void main() {
   float relief = max(0.0, aMaterial.w - 0.43) * 0.022 + aTerrain.w * 0.004;
   vPos = aPos * (1.0 + relief);
@@ -40,6 +42,7 @@ void main() {
   vMaterial = aMaterial;
   vTerrain = aTerrain;
   vLife = aLife;
+  vAdaptation = aAdaptation;
   gl_Position = uViewProj * vec4(vPos, 1.0);
 }`;
 
@@ -50,12 +53,17 @@ in vec3 vCenter;
 in vec4 vMaterial;
 in vec4 vTerrain;
 in vec3 vLife;
+in vec2 vAdaptation;
 out vec4 outColor;
 uniform vec3 uEye;
 uniform float uEntropy;
 uniform float uMemory;
 uniform vec3 uSelectedCenter;
 uniform float uHasSelection;
+uniform float uAdaptationTime;
+uniform float uAdaptationMaxDistance;
+uniform float uAdaptationReduced;
+uniform float uAdaptationActive;
 uniform vec3 uEventCenter[4];
 uniform float uEventRadius[4];
 uniform vec3 uEventTint[4];
@@ -117,8 +125,6 @@ void main() {
   vec3 col = base * (0.22 + 0.90 * diffuse) + base * plate * 0.07;
   col += vec3(0.38, 0.39, 0.20) * alive * life * (0.08 + 0.12 * plate) * night;
   col += rim * vec3(0.08, 0.13, 0.14) * (1.0 - uEntropy * 0.5);
-  float selected = uHasSelection * step(0.99994, dot(normalize(vCenter), uSelectedCenter));
-  col = mix(col, vec3(0.78, 0.92, 0.84), selected * (0.34 + plate * 0.28));
   for (int i = 0; i < 4; i++) {
     if (uEventStrength[i] > 0.001) {
       float d = dot(normalize(vCenter), uEventCenter[i]);
@@ -126,6 +132,26 @@ void main() {
       col = mix(col, uEventTint[i], w * uEventStrength[i] * 0.48);
     }
   }
+  float distance = vAdaptation.x;
+  float category = vAdaptation.y;
+  float reachable = uAdaptationActive * (1.0 - step(254.5, distance));
+  float normalizedDistance = distance / max(1.0, uAdaptationMaxDistance);
+  float width = category < 1.5 ? 0.18 : category < 4.5 ? 0.105 : 0.075;
+  float wake = 1.0 - smoothstep(width, width + 0.035, abs(normalizedDistance - uAdaptationTime));
+  float origin = 1.0 - step(0.5, distance);
+  wake = mix(max(wake, origin * (1.0 - uAdaptationTime) * 0.45), origin, uAdaptationReduced);
+  float form = 0.72 + inset * 0.28;
+  vec3 adaptationTint = vec3(0.72, 0.76, 0.46);
+  if (category > 1.5 && category < 2.5) { form = inset * (0.72 + striation * 0.28); adaptationTint = vec3(0.82, 0.55, 0.30); }
+  else if (category < 3.5 && category > 2.5) { form = 0.25 + (1.0 - inset) * 0.75; adaptationTint = vec3(0.70, 0.80, 0.66); }
+  else if (category < 4.5 && category > 3.5) { form = 0.58 + 0.42 * sin(distance * 1.73 - uAdaptationTime * 28.0); adaptationTint = vec3(0.63, 0.76, 0.58); }
+  else if (category < 5.5 && category > 4.5) { form = 0.48 + moisture * 0.28 + forest * 0.30; adaptationTint = vec3(0.48, 0.74, 0.42); }
+  else if (category > 5.5) { form = 0.62 + 0.18 * sin(dot(vCenter, vec3(191.0, 127.0, 83.0)) + distance); adaptationTint = vec3(0.72, 0.78, 0.73); }
+  float emphasis = reachable * wake * clamp(form, 0.15, 1.0);
+  col = mix(col, adaptationTint, emphasis * 0.42);
+  col += emphasis * (0.035 + inset * 0.045);
+  float selected = uHasSelection * step(0.99994, dot(normalize(vCenter), uSelectedCenter));
+  col = mix(col, vec3(0.78, 0.92, 0.84), selected * (0.34 + plate * 0.28));
   outColor = vec4(col, 1.0);
 }`;
 

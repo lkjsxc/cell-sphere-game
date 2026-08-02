@@ -171,3 +171,14 @@ export function selectRandomOption(rng, options) {
   }
   return options[uniformIndex(rng, options.length)];
 }
+
+/** Stable six-way visual grammar; presentation never enters authority hashes. */
+export function adaptationPresentationCategory(cardId) {
+  const cats = cardById(cardId).cats;
+  if (cats.includes('transport')) return 'transport';
+  if (cats.includes('resilience')) return 'resilience';
+  if (cats.includes('metabolism')) return 'metabolism';
+  if (cats.includes('symbiosis')) return 'ecology';
+  if (cats.includes('memory')) return 'perception';
+  return 'reach';
+}

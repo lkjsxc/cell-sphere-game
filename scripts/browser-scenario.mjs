@@ -44,10 +44,37 @@ export async function runScenario(t) {
   ok(panelTick > pendingTick, 'Adaptations panel stopped world time'); await screenshot('browser-adaptations-mobile.png');
   await evaluate("document.getElementById('adaptations-close').click()");
   ok(await evaluate("window.__IN_APP__.offers.some(offer=>offer.id===0&&offer.resolvedTick==null)"), 'closing Adaptations discarded the offer');
-  await evaluate("document.getElementById('adaptations-button').click(); document.querySelector('#adaptation-cards .card').click()");
-  await wait(150); await evaluate(`(() => { document.getElementById('adaptations-close').click(); document.querySelector('#run-screen .settings-open').click();
-    const choices=document.querySelector('[name=adaptationMode]'); choices.value='random'; choices.dispatchEvent(new Event('change',{bubbles:true}));
-    document.getElementById('settings-close').click(); })()`);
+  await evaluate(`(() => { document.getElementById('adaptations-button').click(); document.querySelector('#adaptation-cards .card').click();
+    document.getElementById('adaptations-close').click(); })()`);
+  ok(await poll(() => evaluate('window.__IN_APP__.adaptationEffects.queueLength'), (value) => value === 1, 2000), 'Adaptation wave did not start');
+  const waveStart = await evaluate(`(() => { const app=window.__IN_APP__, wave=app.adaptationEffects.frame(performance.now());
+    return {caption:document.getElementById('adaptation-caption').textContent,hidden:document.getElementById('adaptation-caption').hidden,
+      draws:app.renderer.drawCalls,queue:app.adaptationEffects.queueLength,bytes:app.adaptationEffects.retainedBytes,
+      reduced:wave?.reduced,progress:wave?.progress}; })()`);
+  ok(!waveStart.hidden && waveStart.caption.length > 20 && waveStart.draws === 5 && waveStart.queue <= 2
+    && waveStart.bytes <= 5124 && waveStart.reduced === false, 'full-motion Adaptation presentation contract failed');
+  await screenshot('browser-adaptation-wave-start.png');
+  ok(await poll(() => evaluate('window.__IN_APP__.adaptationEffects.frame(performance.now())?.progress'),
+    (value) => value > 0.35 && value < 0.85, 1400), 'Adaptation wave never reached its midpoint');
+  await screenshot('browser-adaptation-wave-mid.png');
+  ok(await poll(() => evaluate('window.__IN_APP__.adaptationEffects.frame(performance.now())?.progress'),
+    (value) => value > 0.72 && value < 1, 1400), 'Adaptation wave did not advance by uniform time');
+  await screenshot('browser-adaptation-wave-end.png'); await wait(600);
+  ok(await evaluate('window.__IN_APP__.adaptationEffects.frame(performance.now()) === null'), 'Adaptation wave timeout did not clear');
+
+  ok(await poll(() => evaluate('window.__IN_APP__.pendingCount()'), (value) => value >= 1, 4000), 'second manual offer never queued');
+  await evaluate(`(() => { document.querySelector('#run-screen .settings-open').click(); const motion=document.querySelector('[name=motion]');
+    motion.value='reduced'; motion.dispatchEvent(new Event('change',{bubbles:true})); document.getElementById('settings-close').click();
+    document.getElementById('adaptations-button').click(); document.querySelector('#adaptation-cards .card').click(); document.getElementById('adaptations-close').click(); })()`);
+  const reduced = await evaluate(`new Promise(resolve => { const end=performance.now()+2000; function read() {
+    const effects=window.__IN_APP__.adaptationEffects, wave=effects.frame(performance.now());
+    if(wave) return resolve({reduced:wave.reduced,origin:wave.distances[wave.originCell],queue:effects.queueLength});
+    if(performance.now()>=end) return resolve(null); setTimeout(read,20); } read(); })`);
+  ok(reduced?.reduced && reduced.origin === 0 && reduced.queue <= 2, 'reduced motion did not use static origin emphasis');
+  await screenshot('browser-adaptation-reduced.png'); await wait(260);
+  ok(await evaluate('window.__IN_APP__.adaptationEffects.queueLength') === 0, 'reduced emphasis exceeded its timeout');
+  await evaluate(`(() => { document.querySelector('#run-screen .settings-open').click(); const choices=document.querySelector('[name=adaptationMode]');
+    choices.value='random'; choices.dispatchEvent(new Event('change',{bubbles:true})); document.getElementById('settings-close').click(); })()`);
 
   await evaluate("document.querySelector('#run-screen .history-open').click()"); const historyTick = await evaluate('window.__IN_APP__.snapshot.tick');
   await wait(500); ok(await evaluate('window.__IN_APP__.snapshot.tick') > historyTick, 'History stopped world time');
@@ -62,6 +89,9 @@ export async function runScenario(t) {
     score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),
     imprint:document.getElementById('result-imprint').textContent })`);
   ok(result.score > 0 && result.imprint.includes('Imprint preserved'), 'result was incomplete');
+  ok(await evaluate(`window.__IN_APP__.adaptationEffects.queueLength===0
+    && window.__IN_APP__.adaptationEffects.retainedBytes===0
+    && document.getElementById('adaptation-caption').hidden`), 'result retained Adaptation presentation state');
   await screenshot('browser-result-mobile.png');
   await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-result-history-mobile.png');
   await evaluate("document.getElementById('history-close').click(); document.getElementById('memory-button').click()"); await wait(300);

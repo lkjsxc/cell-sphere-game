@@ -1,63 +1,67 @@
 # Status
 
-Truthful handoff after Gate 1: cellular ordinary-world life presentation.
+Truthful handoff after Gate 6: Adaptation propagation through living cells.
 
-- **Starting commit:** `62c26f9737a9b5f1564c7546053730f681331f38`.
-- **Gate 1 commit:** repository HEAD with subject
-  `refactor(render): make the organism a cellular world state`.
-- **Branch:** isolated `gate1-cellular-world`; not pushed.
+- **Starting commit:** `8b1e31b2f3aa7c5026600da9f1d635608ba352ae`.
+- **Gate 6 commit:** repository HEAD with subject
+  `feat(game): propagate Adaptations through living cells`.
+- **Branch:** isolated detached worktree; not pushed.
 - **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/> remains
   the earlier release and does not contain this isolated worktree commit.
 
-## Gate 1 implemented
+## Gate 6 implemented
 
-- Ordinary-world WebGL now has exactly five steady-state draws: still
-  background, dual-cell terrain/life, quiet boundary/coast, terrain-bound river,
-  and atmosphere.
-- Organism route ribbons, active-edge transport lines, frontier point sprites,
-  the decorative background orbit, and orange World Knot accents were removed.
-  The production network pass and shaders were deleted.
-- Living, topological-frontier, stressed, critical, and dead-remnant semantics
-  are compact whole-cell materials. Frontier is a broad static inset as well as
-  a color change. Selection and event effects resolve through cell material.
-- Presentation snapshots no longer expose or transfer nutrient, edge activity,
-  conductance, or flux. Authoritative simulation arrays, adjacent-edge
-  transport, replay hashing, determinism, and balance remain unchanged.
-- Title attraction and the current 108-node Memory scene use cellular alive
-  paths and no longer construct display edge arrays. Memory nodes remain visible
-  and selectable pending the later atlas gate.
-- Canvas fallback projects existing dual-cell polygons for terrain, cellular
-  life, cell-local events, quiet boundaries/coasts, selection, and geographic
-  rivers. It no longer reads active edges or draws organism lines/markers.
-- `assets/mark.svg` is now a contiguous filled-cell mark.
+- Every selected Adaptation emits presentation-only `originCell`, stable six-way
+  category, and living-component ID metadata. Origin selection consumes no RNG:
+  it combines biomass, energy, low stress, component-centroid centrality, and
+  local living degree with a stable cell-ID tie break.
+- Rendering prepares one direct-living-neighbor BFS per selection with reusable
+  `Uint32` queue / `Uint16` distance workspace. Dead and disconnected cells stay
+  unreachable. Quantized event distance storage is one byte per world cell.
+- WebGL uploads the expanded distance/category cell attribute once per visual
+  event. The existing cell shader animates Reach, Metabolism, Resilience,
+  Transport, Ecology, and Perception materials from uniforms for 2,000 ms. Draw
+  count remains exactly five; no routes, particles, remote jumps, or authority
+  effects were added.
+- Shader material precedence is selection, Adaptation, event/crisis, life, then
+  geography. Canvas 2D has the same bounded cell-only event and reduced-motion
+  origin treatment.
+- The full visual queue is capped at two events. A third discards the oldest;
+  result/world transitions release queued arrays and captions. At level 4 each
+  event retains 2,562 bytes, two retain at most 5,124 bytes, reused BFS workspace
+  is 15,372 bytes, and the expanded one-time GPU upload is 35,844 bytes.
+- Reduced motion uses a 220 ms static origin emphasis without an expanding wave.
+  The bottom, nonblocking caption uses canonical card name/effect copy for
+  2,500 ms and stacks below context sheets instead of using the generic toast.
 
 ## Evidence
 
-- Snapshot transferable typed-array payload at level 4: **102,426 → 25,620
-  bytes** (−76,806 bytes, −74.99%). New payload is biomass, stress, alive, and
-  one-byte semantic state per cell.
-- Real headless Chrome/WebGL2 at 390×844 and 1440×900 completed the observational
-  loop, result, Memory selection/purchase, and persistence with no browser
-  errors. Draw count is **5**.
-- Same Chrome title submission harness before Gate 1: mean **0.11 ms**, p95
-  **0.30 ms**. Final Gate 1 sample: mean **0.04 ms**, p95 **0.10 ms**. These are JS
-  render-call submission timings, not GPU frame time, and are single runs.
-- Node v22.22.3/Linux x64 benchmark after Gate 1: 2,910 ticks in 162 ms =
-  17,953 ticks/s; deterministic hash `98333073`; 10 MB reported heap.
-- `npm run verify`: structure, 107/107 unit, 11/11 integration, balance smoke,
-  benchmark, and 77-module/9-HTML link checks pass.
+- Determinism tests compare origin metadata at chunk sizes 1 and 32, assert every
+  origin is living, and compare hash/cause/offers/score/Imprint with visual BFS
+  preparation and time queries enabled versus disabled.
+- Unit coverage verifies direct adjacency, no dead-cell jump, unreachable
+  disconnected life, quantized bounded distance, queue cap/discard, retained
+  bytes, reduced-motion static behavior, and timeout release.
+- `npm run verify`: structure, 110/110 unit, 12/12 integration, balance smoke,
+  benchmark, and link checks pass in 6.12 s.
+- Node v22.22.3/Linux x64 benchmark: 2,910 ticks in 162 ms = 17,970 ticks/s;
+  deterministic hash remains `98333073`.
 - `npm run test:browser:file`: pass in real headless Chrome/WebGL2; 32× run
-  reached result in 8.01 s; 5 draws; title mean 0.04 ms, p95 0.10 ms.
+  reached result in 8.32 s; five draws; title render mean 0.08 ms, p95 0.20 ms.
+  It checks caption copy, start/mid/end time progression, queue ≤2, 5,124-byte
+  queue ceiling, 220 ms reduced static path, and zero retained result state.
+- Browser evidence: `reports/browser-adaptation-wave-start.png` (SHA-256
+  `78e7ef51…`), `browser-adaptation-wave-mid.png` (`bc04b1b8…`),
+  `browser-adaptation-wave-end.png` (`384b59dc…`), and
+  `browser-adaptation-reduced.png` (`230f0bf4…`).
 
 ## Honest limitations / next actions
 
-- Authority has no per-cell death timestamp. Dead detritus therefore has a
-  distinct remnant material, but this gate does not claim a time-bounded
-  “recently dead” state.
-- Canvas fallback behavior is source/unit-covered but still lacks a dedicated
-  forced-Canvas Chrome screenshot and timing sample.
-- Memory remains a cellular projection of the existing graph; branch-specific
-  atlas shape/material is reserved for the later atlas gate.
-- Actual GPU time, physical-phone touch/thermal evidence, forced colors,
-  screen-reader review, 200% zoom, campaign resolution, and trophies remain
-  incomplete.
+- Canvas fallback is production-implemented and source/unit-covered, but this
+  turn did not force Canvas in Chrome for a dedicated screenshot.
+- Browser evidence is headless 390×844 emulation, not a physical phone. GPU
+  timing, thermal behavior, forced colors, screen-reader review, and 200% zoom
+  remain unmeasured.
+- Adaptation propagation deliberately does not cross disconnected living
+  components; no secondary origin was added because a single clear origin is
+  more legible and simpler.

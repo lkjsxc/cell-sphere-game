@@ -8,7 +8,8 @@ export function handleRunMessage(app, message) {
   if (message.t === 'started') { if (app.state === 'starting') app.flow.send('ready');
     focusCamera(app.camera, app.topo.positions.subarray(message.inoculationCell * 3, message.inoculationCell * 3 + 3));
     ui.announce(app.el, `Life inoculated cell ${message.inoculationCell}.`); return; }
-  if (message.t === 'snapshot') { app.snapshot = message; app.driver.snapshot = message; ui.updateHud(app.el, message); app.adapt.update(app.adaptationModel()); return; }
+  if (message.t === 'snapshot') { app.snapshot = message; app.driver.snapshot = message; app.adaptationEffects.onSnapshot(message);
+    ui.updateHud(app.el, message); app.adapt.update(app.adaptationModel()); return; }
   if (message.t === 'history-batch') return app.mergeHistory(message.events);
   if (message.t === 'cell-inspection') { if (message.requestId === app.requestId && message.cell.node === app.selectedNode) {
     app.inspector.updateDynamic(message.cell, app.currentHistory.filter((event) => event.cellId === app.selectedNode)); } return; }
@@ -16,7 +17,7 @@ export function handleRunMessage(app, message) {
   if (message.t === 'adaptation-selected') { const offer = app.offers.find((item) => item.id === message.offerId);
     if (offer) Object.assign(offer, { resolvedTick: message.tick, selectedCardId: message.cardId, selectionMode: message.selectionMode });
     app.cards.push(message.cardId); ui.updateAdaptationCount(app.el, app.pendingCount()); app.adapt.update(app.adaptationModel());
-    ui.toast(app.el, `${humanize(message.cardId)} remembered.`); return; }
+    app.adaptationEffects.selected(message, app.snapshot, app.settings.motion === 'reduced'); return; }
   if (message.t === 'adaptation-mode') { app.settings = { ...app.settings, adaptationMode: message.mode };
     saveSettings(app.settings); app.adapt.update(app.adaptationModel()); return; }
   if (message.t === 'event') return ui.announce(app.el, `${humanize(message.family)} · ${message.phase}`);

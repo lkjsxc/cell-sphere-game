@@ -27,7 +27,8 @@ export function elements() {
     memoryAvailable: byId('memory-available'), countdown: byId('result-countdown'),
     resultNext: /** @type {HTMLButtonElement} */ (byId('result-next-button')),
     resultDetails: /** @type {HTMLButtonElement} */ (byId('result-details-button')),
-    live: byId('live-region'), toast: byId('toast-root'), resultHistory: byId('result-history-button'),
+    live: byId('live-region'), toast: byId('toast-root'), adaptationCaption: byId('adaptation-caption'),
+    resultHistory: byId('result-history-button'),
   };
 }
 

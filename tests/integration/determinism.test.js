@@ -7,6 +7,7 @@ import { BALANCE as B } from '../../src/game/balance.js';
 import { scoreResult } from '../../src/game/scoring.js';
 import { compileMemory, MEMORY_NODES } from '../../src/game/memory.js';
 import { appendWorld, loadHistory, normalizeHistoryEvents, saveHistory, serializeHistory } from '../../src/platform/history.js';
+import { AdaptationPropagation } from '../../src/rendering/adaptation-propagation.js';
 
 function runFull(cfg, chunk = 50) {
   const controller = new RunController(cfg);
@@ -38,6 +39,19 @@ function runManual(cfg, chunk) {
   return controller.buildResult();
 }
 
+function runOrigins(seed, chunk, visual = false) {
+  const events = []; let wave; let controller;
+  controller = new RunController({ seed }, (message) => {
+    if (message.t !== 'adaptation-selected') return;
+    events.push({ originCell: message.originCell, category: message.category,
+      component: message.affectedComponentId, living: controller.state.alive[message.originCell] });
+    if (visual) wave.enqueue(message, controller.state.alive, controller.state.tick * 100, false);
+  });
+  wave = new AdaptationPropagation(controller.state.topo); controller.start();
+  while (controller.state.status !== 'extinct') { controller.advance(chunk); if (visual) wave.frame(controller.state.tick * 100); }
+  return { events, result: controller.buildResult() };
+}
+
 function semanticResult(result) {
   return {
     hash: result.hash, tick: result.tick, cause: result.cause,
@@ -53,6 +67,17 @@ test('same seed reproduces hash, inoculation, decisions, history, and score', ()
   assert.deepEqual(a.history, b.history);
   assert.deepEqual(a.imprint, b.imprint);
   assert.deepEqual(scoreResult(a), scoreResult(b));
+});
+
+test('Adaptation origins are living, deterministic across chunks, and visual queries are neutral', () => {
+  const reference = runOrigins(24680, 1); const chunked = runOrigins(24680, 32);
+  assert.deepEqual(chunked.events, reference.events); assert.ok(reference.events.length > 0);
+  assert.ok(reference.events.every((event) => event.living === 1 && event.originCell >= 0
+    && event.component >= 0 && ['reach', 'metabolism', 'resilience', 'transport', 'ecology', 'perception'].includes(event.category)));
+  const viewed = runOrigins(24680, 7, true);
+  assert.deepEqual(semanticResult(viewed.result), semanticResult(reference.result));
+  assert.deepEqual(scoreResult(viewed.result), scoreResult(reference.result));
+  assert.deepEqual(viewed.result.imprint, reference.result.imprint);
 });
 
 test('different seeds diverge in strengthened authority results', () => {

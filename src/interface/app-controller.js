@@ -15,7 +15,7 @@ import { appendMemoryEvent, appendWorld, clearHistory, loadHistory, normalizeHis
 import { applySettingsToDocument, saveSettings } from '../platform/settings.js';
 import { createAppState } from './app-state.js';
 import { createRunDriver } from './run-driver.js';
-import { handleRunMessage } from './app-message.js';
+import { handleRunMessage } from './app-message.js'; import { createAdaptationEffects } from './adaptation-effects.js';
 import { createPauseControl } from './pause-control.js';
 import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from './camera-policy.js';
 import { createSurfaceCoordinator } from './policies/surface-coordinator.js';
@@ -32,7 +32,7 @@ export function startGameApp(options) { const app = new GameApp(options); app.bo
 class GameApp {
   constructor({ canvas, caps, settings }) {
     Object.assign(this, { canvas, caps, settings }); this.el = ui.elements(); this.topo = createTopology(4);
-    this.camera = createCamera(); this.meta = loadMeta(); this.archive = loadHistory(settings.historyRetention);
+    this.adaptationEffects = createAdaptationEffects(this.topo, this.el.adaptationCaption); this.camera = createCamera(); this.meta = loadMeta(); this.archive = loadHistory(settings.historyRetention);
     this.flow = createAppState(); this.speed = settings.speed; this.snapshot = null; this.selectedNode = null;
     this.renderer = null; this.fields = null; this.attract = null; this.memorySnapshot = null; this.overlay = null;
     this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null; this.requestId = 0;
@@ -100,7 +100,7 @@ class GameApp {
   closeInspector() { this.inspector.close(); this.surfaces.close('inspector'); if (this.overlay === 'inspector') this.overlay = null;
     this.selectedNode = null; this.pauseContinuation('surface', false); this.resize(true); interruptCameraPolicy(this.cameraPolicy, performance.now()); }
   startRun() {
-    this.closeActiveOverlay(); cancelContinuation(this.continuation); this.el.countdown.textContent = ''; this.pause.clear(); this.selectedNode = null; this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null;
+    this.closeActiveOverlay(); this.adaptationEffects.clear(); cancelContinuation(this.continuation); this.el.countdown.textContent = ''; this.pause.clear(); this.selectedNode = null; this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null;
     const seed = seedForRun(this.meta.runs); this.makeRenderer(seed); this.flow.send(this.state === 'title' ? 'begin' : 'restart'); this.resize(false); this.snapshot = null;
     ui.show(this.el, 'run'); ui.announce(this.el, 'The seeded world is choosing a suitable place to begin.');
     const memory = compileMemory(this.meta); this.driver.start({ seed, strainId: 'pioneer', memoryEffects: memory.effects,
@@ -115,7 +115,7 @@ class GameApp {
   setSpeed(value) { this.speed = value; this.settings = { ...this.settings, speed: value }; saveSettings(this.settings); this.driver.setSpeed(value); }
   applyPause(paused) { this.driver.setPaused(paused); this.el.pause.setAttribute('aria-pressed', String(paused)); this.el.pause.textContent = paused ? 'Resume' : 'Pause'; }
   finishRun(result) {
-    this.closeActiveOverlay(); this.selectedNode = null; this.flow.send('extinct'); this.lastResult = result; this.currentHistory = normalizeHistoryEvents(result.history); const score = scoreResult(result);
+    this.closeActiveOverlay(); this.adaptationEffects.clear(); this.selectedNode = null; this.flow.send('extinct'); this.lastResult = result; this.currentHistory = normalizeHistoryEvents(result.history); const score = scoreResult(result);
     const next = { ...this.meta, runs: this.meta.runs + 1, totalEchoes: this.meta.totalEchoes + score.echoes,
       echoBalance: this.meta.echoBalance + score.echoes, bestScore: Math.max(this.meta.bestScore, score.total),
       imprints: result.imprint.edges.length ? [...this.meta.imprints, result.imprint].slice(-8) : this.meta.imprints };
@@ -124,7 +124,7 @@ class GameApp {
     ui.showResult(this.el, score, { ...result, adaptationOffers: result.offers }); this.resize(false);
     if (this.settings.autoContinue) { startContinuation(this.continuation, performance.now()); this.updateContinuation(); }
   }
-  enterMemory() { this.closeActiveOverlay(); cancelContinuation(this.continuation); this.el.countdown.textContent = ''; this.flow.send('memory'); this.selectedNode = null;
+  enterMemory() { this.closeActiveOverlay(); this.adaptationEffects.clear(); cancelContinuation(this.continuation); this.el.countdown.textContent = ''; this.flow.send('memory'); this.selectedNode = null;
     this.memorySnapshot = buildMemorySnapshot(this.topo, this.meta); if (this.memorySnapshot.focus) focusCamera(this.camera, this.memorySnapshot.focus);
     ui.showMemory(this.el, this.meta, this.availableMemory()); this.resize(false); }
   selectMemoryNode(id) { const node = getMemoryNode(id); if (!node) return; this.closeActiveOverlay(); this.selectedNode = node.cell;
@@ -193,7 +193,7 @@ class GameApp {
     const snap = this.state === 'title' ? this.attract?.snapshot : this.state === 'memory' ? this.memorySnapshot : this.snapshot;
     const cadence = this.speed >= 16 ? 66 : 0;
     if (!cadence || now - this.lastRender >= cadence) { this.renderer.render({ snapshot: snap ?? null, camera: this.camera, selectedNode: this.selectedNode,
-      time: now / 1000, pulse: this.settings.motion !== 'reduced' }); this.lastRender = now; }
+      adaptation: this.adaptationEffects.frame(now), time: now / 1000, pulse: this.settings.motion !== 'reduced' }); this.lastRender = now; }
     requestAnimationFrame((time) => this.frame(time)); }
 }
 function openingDirection(fields, topo) { const cell = fields.landmarks.find((mark) => mark.kind === 2)?.cell ?? fields.sources[0]; return topo.positions.subarray(cell * 3, cell * 3 + 3); }

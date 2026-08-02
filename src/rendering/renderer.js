@@ -49,7 +49,7 @@ export class GLRenderer {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.depthMask(true);
 
-    this.world.draw(vp, eye, scene.snapshot, scene.selectedNode);
+    this.world.draw(vp, eye, scene.snapshot, scene.selectedNode, scene.adaptation);
     gl.bindVertexArray(null);
   }
 

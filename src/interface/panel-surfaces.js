@@ -2,7 +2,7 @@
 import { cardById } from '../game/adaptations.js';
 import { MEMORY_BRANCHES, MEMORY_NODES, getMemoryNode, memoryNodeState } from '../game/memory.js';
 
-const COPY = Object.freeze({
+export const ADAPTATION_COPY = Object.freeze({
   'long-filaments': ['Long Reach', 'Frontiers extend faster.', 'New living cells cost more to maintain.'],
   'frugal-cytoplasm': ['Frugal Cytoplasm', 'Maintenance falls sharply.', 'Burst growth becomes slower.'],
   anastomosis: ['Anastomosis', 'Separated regions reconnect.', 'Neighbor exchange costs slightly more.'],
@@ -42,14 +42,14 @@ export function createAdaptationSurface(options) {
       : `All offers resolved · world ${gameTime(model.tick)}`;
     cards.replaceChildren(...(offer?.options ?? []).map((id) => adaptationCard(id,
       () => options.onChoose(offer.id, id))));
-    owned.replaceChildren(...model.cards.map((id) => { const li = document.createElement('li'); li.textContent = COPY[id]?.[0] ?? humanize(id); return li; }));
+    owned.replaceChildren(...model.cards.map((id) => { const li = document.createElement('li'); li.textContent = ADAPTATION_COPY[id]?.[0] ?? humanize(id); return li; }));
   }
   return { surface, update(next) { model = next; if (!surface.hidden) render(); },
     open(next) { model = next; render(); surface.hidden = false; }, close() { surface.hidden = true; } };
 }
 
 function adaptationCard(id, choose) {
-  const card = cardById(id); const copy = COPY[id] ?? [humanize(id), 'A new behavior enters the network.', 'Its tradeoff is preserved in the run.'];
+  const card = cardById(id); const copy = ADAPTATION_COPY[id] ?? [humanize(id), 'A new behavior enters the network.', 'Its tradeoff is preserved in the run.'];
   const button = document.createElement('button'); button.type = 'button'; button.className = 'card';
   button.append(line('card-category', `⬡ ${card.cats.join(' · ')}`), line('card-name', copy[0]),
     line('card-effect', copy[1]), line('card-cost', copy[2])); button.addEventListener('click', choose, { once: true }); return button;

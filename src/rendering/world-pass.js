@@ -17,6 +17,7 @@ export class WorldPass {
       atmosphere: this.make(SH.VS_ATMOSPHERE, SH.FS_ATMOSPHERE),
     };
     this.lifeData = new Float32Array(this.geometry.vertexCount * 3);
+    this.adaptationData = new Uint8Array(this.geometry.vertexCount * 2); this.adaptationToken = -1;
     this.overlay = {
       centers: new Float32Array(12), radii: new Float32Array(4),
       tints: new Float32Array(12), strengths: new Float32Array(4),
@@ -49,6 +50,8 @@ export class WorldPass {
     this.attribute(this.programs.globe, 'aMaterial', this.buffer(gl.ARRAY_BUFFER, g.material), 4);
     this.attribute(this.programs.globe, 'aTerrain', this.buffer(gl.ARRAY_BUFFER, g.terrain), 4);
     this.attribute(this.programs.globe, 'aLife', this.lifeBuffer, 3);
+    this.adaptationBuffer = this.buffer(gl.ARRAY_BUFFER, this.adaptationData, gl.DYNAMIC_DRAW);
+    this.attribute(this.programs.globe, 'aAdaptation', this.adaptationBuffer, 2, gl.UNSIGNED_BYTE);
     this.globeIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.indices);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.globeIndex);
 
@@ -77,12 +80,12 @@ export class WorldPass {
     return vao;
   }
 
-  attribute(program, name, buffer, size) {
+  attribute(program, name, buffer, size, type = this.gl.FLOAT) {
     const gl = this.gl; const location = gl.getAttribLocation(program.program, name);
     if (location < 0) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.enableVertexAttribArray(location);
-    gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(location, size, type, false, 0, 0);
   }
 
   uploadLife(snapshot) {
@@ -104,8 +107,19 @@ export class WorldPass {
     this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.lifeData);
   }
 
-  draw(vp, eye, snapshot, selectedNode) {
-    const gl = this.gl; this.uploadLife(snapshot);
+  uploadAdaptation(event) {
+    const token = event?.token ?? 0; if (token === this.adaptationToken) return;
+    this.adaptationToken = token; const cells = this.geometry.vertexCell;
+    for (let vertex = 0; vertex < cells.length; vertex++) {
+      this.adaptationData[vertex * 2] = event?.distances[cells[vertex]] ?? 255;
+      this.adaptationData[vertex * 2 + 1] = event?.category ?? 0;
+    }
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.adaptationBuffer);
+    this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.adaptationData);
+  }
+
+  draw(vp, eye, snapshot, selectedNode, adaptation) {
+    const gl = this.gl; this.uploadLife(snapshot); this.uploadAdaptation(adaptation);
     const globe = this.programs.globe;
     gl.useProgram(globe.program);
     gl.uniformMatrix4fv(globe.u.get('uViewProj'), false, vp);
@@ -116,6 +130,10 @@ export class WorldPass {
     gl.uniform1f(globe.u.get('uHasSelection'), selected >= 0 ? 1 : 0);
     gl.uniform3fv(globe.u.get('uSelectedCenter'), selected >= 0
       ? this.topo.positions.subarray(selected * 3, selected * 3 + 3) : this.zero3);
+    gl.uniform1f(globe.u.get('uAdaptationTime'), adaptation?.progress ?? 0);
+    gl.uniform1f(globe.u.get('uAdaptationMaxDistance'), adaptation?.maxDistance ?? 0);
+    gl.uniform1f(globe.u.get('uAdaptationReduced'), adaptation?.reduced ? 1 : 0);
+    gl.uniform1f(globe.u.get('uAdaptationActive'), adaptation ? 1 : 0);
     this.setEventOverlays(globe, snapshot);
     gl.bindVertexArray(this.globeVao);
     gl.drawElements(gl.TRIANGLES, this.geometry.indices.length, gl.UNSIGNED_SHORT, 0);

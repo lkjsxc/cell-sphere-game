@@ -56,6 +56,7 @@ export class Canvas2DRenderer {
       }
     }
     if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1);
+    if (scene.adaptation) this.drawAdaptation(scene.adaptation);
     this.drawBoundaries(false); this.drawBoundaries(true); this.drawRivers();
     if (Number.isInteger(scene.selectedNode) && this.facing[scene.selectedNode] > 0) {
       this.cellPath(scene.selectedNode, 0.84); ctx.strokeStyle = 'rgba(202,238,219,.95)'; ctx.lineWidth = 2.2; ctx.stroke();
@@ -88,19 +89,35 @@ export class Canvas2DRenderer {
     const { ctx, topo } = this; const events = snapshot.events ?? [];
     for (let cell = 0; cell < topo.nodeCount; cell++) {
       if (this.facing[cell] <= 0.02) continue;
+      const state = snapshot.lifeState?.[cell]
+        ?? (snapshot.alive[cell] ? LIFE_STATE.LIVING : snapshot.biomass[cell] > 0 ? LIFE_STATE.DEAD_REMAINS : 0);
+      if (state !== LIFE_STATE.UNOCCUPIED) {
+        const styles = lifeStyles(state, fade); this.cellPath(cell); ctx.fillStyle = styles.fill; ctx.fill();
+        if (styles.inset) {
+          this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill();
+          if (styles.stroke) { ctx.strokeStyle = styles.stroke; ctx.lineWidth = styles.width; ctx.stroke(); }
+        }
+      }
       for (const event of events) {
         if (dotCell(topo.positions, cell, event.center) < event.radiusDot) continue;
         const tint = EVENT_TINTS[event.family] ?? [0.7, 0.7, 0.7]; this.cellPath(cell);
         ctx.fillStyle = `rgba(${tint[0] * 255 | 0},${tint[1] * 255 | 0},${tint[2] * 255 | 0},${0.22 * fade})`; ctx.fill();
       }
-      const state = snapshot.lifeState?.[cell]
-        ?? (snapshot.alive[cell] ? LIFE_STATE.LIVING : snapshot.biomass[cell] > 0 ? LIFE_STATE.DEAD_REMAINS : 0);
-      if (state === LIFE_STATE.UNOCCUPIED) continue;
-      const styles = lifeStyles(state, fade); this.cellPath(cell); ctx.fillStyle = styles.fill; ctx.fill();
-      if (styles.inset) {
-        this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill();
-        if (styles.stroke) { ctx.strokeStyle = styles.stroke; ctx.lineWidth = styles.width; ctx.stroke(); }
-      }
+    }
+  }
+
+  drawAdaptation(event) {
+    const max = Math.max(1, event.maxDistance); const width = event.category === 1 ? 0.18 : 0.10;
+    for (let cell = 0; cell < this.topo.nodeCount; cell++) {
+      const distance = event.distances[cell]; if (distance === 255 || this.facing[cell] <= 0.02) continue;
+      let strength = event.reduced ? (distance === 0 ? 1 : 0)
+        : Math.max(0, 1 - Math.abs(distance / max - event.progress) / width);
+      if (event.category === 4) strength *= 0.65 + 0.35 * Math.sin(distance * 1.7 - event.progress * 28);
+      if (event.category === 5) strength *= 0.55 + (this.fields.forestDensity?.[cell] ?? 0) * 0.45;
+      if (strength <= 0) continue;
+      const style = adaptationStyle(event.category, strength); this.cellPath(cell, style.scale);
+      this.ctx.fillStyle = style.fill; this.ctx.fill();
+      if (style.stroke) { this.ctx.strokeStyle = style.stroke; this.ctx.lineWidth = 1; this.ctx.stroke(); }
     }
   }
 
@@ -133,6 +150,16 @@ export class Canvas2DRenderer {
 function dotCell(positions, a, b) {
   const ai = a * 3; const bi = b * 3;
   return positions[ai] * positions[bi] + positions[ai + 1] * positions[bi + 1] + positions[ai + 2] * positions[bi + 2];
+}
+
+function adaptationStyle(category, strength) {
+  const alpha = Math.max(0, Math.min(0.46, strength * 0.46));
+  if (category === 2) return { fill: `rgba(229,142,74,${alpha})`, scale: 0.58 };
+  if (category === 3) return { fill: `rgba(172,205,163,${alpha * 0.35})`, stroke: `rgba(202,231,190,${alpha})`, scale: 0.76 };
+  if (category === 4) return { fill: `rgba(159,197,148,${alpha})`, scale: 0.70 };
+  if (category === 5) return { fill: `rgba(116,190,104,${alpha})`, scale: 0.82 };
+  if (category === 6) return { fill: `rgba(190,209,191,${alpha * 0.72})`, scale: 0.48 };
+  return { fill: `rgba(205,214,119,${alpha})`, scale: 1 };
 }
 
 function lifeStyles(state, fade) {
