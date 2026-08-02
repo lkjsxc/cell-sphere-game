@@ -1,19 +1,20 @@
 # src/platform/
 
-Browser-platform adapters. Everything here wraps a browser API behind a
-small, testable surface and degrades honestly when the API is missing.
+Browser-platform adapters. Each module wraps a browser capability behind a
+small testable surface and degrades honestly when that capability is absent.
 
 | Module | Wraps | Failure behavior |
 |---|---|---|
-| `capabilities.js` | canvas contexts, Worker, AudioContext, navigator hints | reports booleans; callers decide |
-| `settings.js` | localStorage settings document | validated load; defaults on corruption |
-| `storage.js` | localStorage progression/archive documents | versioned schema; raw copy preserved on corruption |
-| `audio.js` | Web Audio procedural sound | muted no-op until user gesture; suspends when hidden |
-| `share.js` | navigator.share, clipboard, canvas export | text copy fallback; clear success/failure notice |
-| `lifecycle.js` | visibilitychange, pagehide, resize | pause sim + audio when hidden; checkpoint |
+| `capabilities.js` | Canvas, Worker, AudioContext, and navigator hints | reports capability flags |
+| `settings.js` | localStorage preferences | validated defaults on corruption |
+| `storage.js` | localStorage progression document | schema migration or in-memory continuation |
 
-Invariants:
+Progress storage invariants:
 
-- No simulation math lives here.
-- No adapter may throw on missing APIs — return capability flags or no-ops.
-- Persistence writes are validated on read, never trusted blindly.
+- Schema 4 validates all 108 Memory IDs and records the Memory graph version.
+- Schema 1–3 saves preserve scores, Echo totals and balance, runs, and Imprints;
+  old proof-node IDs map once without refunds, and old Imprints gain topology metadata.
+- Unknown progression IDs are bounded and quarantined rather than activated.
+- Persistence serializes a validated copy, never mutates the caller, and returns
+  `false` when localStorage cannot honestly confirm a write.
+- No adapter contains simulation math or throws merely because an API is absent.

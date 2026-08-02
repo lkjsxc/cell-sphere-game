@@ -1,127 +1,150 @@
-/** Permanent Memory Globe progression and its compact spherical visual state. */
-const ADDITIVE = new Set(['signalCharges']);
+/** Permanent Memory atlas: graph queries, transactions, and run compilation. */
+import { CONTINUITY_MEMORY } from './memory-continuity.js';
+import { ECOLOGY_MEMORY } from './memory-ecology.js';
+import { FLOW_MEMORY } from './memory-flow.js';
+import { PERCEPTION_MEMORY } from './memory-perception.js';
+import { REACH_MEMORY } from './memory-reach.js';
+import { RESERVE_MEMORY } from './memory-reserve.js';
+import { renderMemorySnapshot } from './memory-scene.js';
 
+export const MEMORY_GRAPH_VERSION = 1;
+export const MEMORY_BRANCHES = Object.freeze(['Reach', 'Flow', 'Reserve', 'Ecology', 'Perception', 'Continuity']);
 export const MEMORY_NODES = Object.freeze([
-  node('first-trace', 2, [], 'First Trace', '最初の痕跡',
-    'Carry one extra Signal into every world.', 'Signalを1つ多く次の世界へ持ち込む。', { signalCharges: 1 }),
-  node('deep-reserve', 5, ['first-trace'], 'Deep Reserve', '深層貯蔵',
-    'Begin with a larger energy ceiling.', 'エネルギーの上限が少し広がる。', { energyCap: 1.08 }),
-  node('remembered-reach', 5, ['first-trace'], 'Remembered Reach', '記憶された到達',
-    'Frontiers recognize promising ground sooner.', '前線が有望な土地を早く見つける。', { reach: 1.06 }),
-  node('flow-imprint', 8, ['deep-reserve'], 'Flow Imprint', '流れの刻印',
-    'Useful routes carry more between cells.', '役立つ経路の輸送力が高まる。', { conductance: 1.08 }),
-  node('scar-wisdom', 8, ['remembered-reach'], 'Scar Wisdom', '傷跡の知恵',
-    'Past crises temper future tissue.', '過去の危機が次の組織を強くする。', { stressResist: 1.08 }),
-  node('continuity', 12, ['flow-imprint', 'scar-wisdom'], 'Continuity', '連続性',
-    'Memory lowers the cost of staying connected.', '記憶が結合を保つ負担を軽くする。', { maintenance: 0.96 }),
+  ...REACH_MEMORY, ...FLOW_MEMORY, ...RESERVE_MEMORY,
+  ...ECOLOGY_MEMORY, ...PERCEPTION_MEMORY, ...CONTINUITY_MEMORY,
 ]);
+export const MEMORY_NODE_IDS = Object.freeze(MEMORY_NODES.map((node) => node.id));
+const BY_ID = new Map(MEMORY_NODES.map((node) => [node.id, node]));
+const ADDITIVE = new Set(['signalCharges', 'growthCap', 'anastomosis', 'redundantLoops',
+  'coldReserve', 'symbioticFilm', 'distributedSensing']);
+const EFFECT_KEYS = new Set(['reach', 'uptake', 'maintenance', 'conductance', 'reinforce',
+  'stressResist', 'heatTol', 'droughtTol', 'toxinTol', 'signalRadius', 'signalDuration',
+  'energyCap', 'regrow', 'growCost', ...ADDITIVE]);
+const COMPILED = new Map();
 
-const BY_ID = new Map(MEMORY_NODES.map((value) => [value.id, value]));
+export function getMemoryNode(id) { return BY_ID.get(id) ?? null; }
 
-function node(id, cost, requires, nameEn, nameJa, effectEn, effectJa, effects) {
-  return Object.freeze({ id, cost, requires: Object.freeze(requires), nameEn, nameJa,
-    effectEn, effectJa, effects: Object.freeze(effects) });
+export function memoryNodeState(meta, node, selectedId = null) {
+  const ownedIds = new Set(Array.isArray(meta?.memoryNodes) ? meta.memoryNodes : []);
+  const owned = ownedIds.has(node.id);
+  const prerequisitesMet = node.requires.every((id) => ownedIds.has(id));
+  const affordable = Number.isFinite(meta?.echoBalance) && meta.echoBalance >= node.cost;
+  return Object.freeze({ ...node, owned, reachable: !owned && prerequisitesMet,
+    locked: !owned && !prerequisitesMet, affordable,
+    selectedReady: selectedId === node.id && !owned && prerequisitesMet && affordable });
+}
+
+export function groupAccessibleMemory(meta, selectedId = null) {
+  const nodes = MEMORY_NODES.map((node) => memoryNodeState(meta, node, selectedId));
+  return Object.freeze(MEMORY_BRANCHES.map((branch) => Object.freeze({ branch,
+    nodes: Object.freeze(nodes.filter((node) => node.branch === branch)) })));
+}
+
+export function availableMemoryNodes(meta) {
+  return Object.freeze(MEMORY_NODES.filter((node) => canPurchaseMemory(meta, node.id)));
 }
 
 export function canPurchaseMemory(meta, id) {
-  const target = BY_ID.get(id);
-  if (!target || meta.memoryNodes.includes(id) || meta.echoBalance < target.cost) return false;
-  return target.requires.every((required) => meta.memoryNodes.includes(required));
+  const node = BY_ID.get(id);
+  if (!node || !Array.isArray(meta?.memoryNodes) || !Number.isFinite(meta.echoBalance)) return false;
+  if (meta.memoryNodes.includes(id) || meta.echoBalance < node.cost) return false;
+  return node.requires.every((required) => meta.memoryNodes.includes(required));
 }
 
 export function purchaseMemory(meta, id) {
-  if (!canPurchaseMemory(meta, id)) return { ok: false, meta };
-  const target = BY_ID.get(id);
-  return {
-    ok: true,
-    node: target,
-    meta: { ...meta, echoBalance: meta.echoBalance - target.cost,
-      memoryNodes: [...meta.memoryNodes, id] },
-  };
+  if (!canPurchaseMemory(meta, id)) return Object.freeze({ ok: false, meta });
+  const node = BY_ID.get(id);
+  const next = { ...meta, echoBalance: meta.echoBalance - node.cost,
+    memoryNodes: [...meta.memoryNodes, id] };
+  return Object.freeze({ ok: true, node, spent: node.cost, meta: next });
+}
+export const transactMemoryPurchase = purchaseMemory;
+
+/** Compile canonical owned order once; callers pass `effects` into a run. */
+export function compileMemory(meta) {
+  const owned = new Set(Array.isArray(meta?.memoryNodes) ? meta.memoryNodes : []);
+  const key = MEMORY_NODE_IDS.filter((id) => owned.has(id)).join('|');
+  if (COMPILED.has(key)) return COMPILED.get(key);
+  const effects = {}; const conditionals = []; const unlocks = [];
+  for (const node of MEMORY_NODES) {
+    if (!owned.has(node.id)) continue;
+    const effect = node.effect;
+    if (effect.type === 'scalar') mergeEffect(effects, effect);
+    else if (effect.type === 'conditional') conditionals.push(Object.freeze({ nodeId: node.id, ...effect }));
+    else unlocks.push(Object.freeze({ nodeId: node.id, key: effect.key, mode: effect.mode }));
+    if (effect.bonus) mergeEffect(effects, effect.bonus);
+  }
+  const compiled = Object.freeze({ effects: Object.freeze(effects),
+    conditionals: Object.freeze(conditionals), unlocks: Object.freeze(unlocks) });
+  COMPILED.set(key, compiled);
+  return compiled;
 }
 
-export function memoryEffects(meta) {
-  const effects = {};
-  for (const id of meta.memoryNodes) {
-    const value = BY_ID.get(id);
-    if (!value) continue;
-    for (const [key, amount] of Object.entries(value.effects)) {
-      if (ADDITIVE.has(key)) effects[key] = (effects[key] ?? 0) + amount;
-      else effects[key] = (effects[key] ?? 1) * amount;
+function mergeEffect(target, effect) {
+  if (effect.operation === 'add' || ADDITIVE.has(effect.key))
+    target[effect.key] = (target[effect.key] ?? 0) + effect.value;
+  else target[effect.key] = (target[effect.key] ?? 1) * effect.value;
+}
+
+export function memoryEffects(meta) { return compileMemory(meta).effects; }
+export function campaignResolved(meta) { return meta.memoryNodes.includes('continuity-unbroken-lesson'); }
+
+export function buildMemoryScene(meta, selectedId = null) {
+  const groups = groupAccessibleMemory(meta, selectedId);
+  const nodes = Object.freeze(groups.flatMap((group) => group.nodes));
+  const links = Object.freeze(MEMORY_NODES.flatMap((node) => node.requires.map((from) =>
+    Object.freeze({ from, to: node.id }))));
+  return Object.freeze({ version: MEMORY_GRAPH_VERSION, nodes, links, groups });
+}
+
+export function buildMemorySnapshot(topo, meta, selectedId = null) {
+  return renderMemorySnapshot(topo, meta, buildMemoryScene(meta, selectedId));
+}
+
+export function validateMemoryGraph(nodes = MEMORY_NODES) {
+  const errors = []; const ids = new Set(); const cells = new Set(); const unlockKeys = new Set();
+  const byId = new Map(); const composition = {}; const branchCounts = {}; let totalCost = 0;
+  for (const node of nodes) {
+    if (!/^[a-z][a-z-]+$/.test(node.id) || ids.has(node.id)) errors.push(`invalid id: ${node.id}`); ids.add(node.id); byId.set(node.id, node);
+    if (!Number.isInteger(node.cell) || node.cell < 0 || node.cell >= 2562 || cells.has(node.cell)) errors.push(`invalid cell: ${node.id}`); cells.add(node.cell);
+    if (!Number.isFinite(node.cost) || node.cost <= 0) errors.push(`invalid cost: ${node.id}`); else totalCost += node.cost;
+    composition[node.kind] = (composition[node.kind] ?? 0) + 1;
+    branchCounts[node.branch] = (branchCounts[node.branch] ?? 0) + 1;
+    const effects = node.effect.bonus ? [node.effect, node.effect.bonus] : [node.effect];
+    for (const effect of effects) {
+      if (!['scalar', 'conditional', 'unlock'].includes(effect.type)) errors.push(`invalid effect: ${node.id}`);
+      if ((effect.type === 'scalar' || effect.type === 'conditional') && !EFFECT_KEYS.has(effect.key)) errors.push(`unknown effect: ${node.id}`);
+      if (!['multiply', 'add'].includes(effect.operation) && effect.type !== 'unlock') errors.push(`invalid operation: ${node.id}`);
+      if (effect.type === 'conditional' && !effect.trigger) errors.push(`invalid trigger: ${node.id}`);
+      if (effect.type === 'unlock' && (!effect.key || !effect.mode || unlockKeys.has(effect.key))) errors.push(`invalid unlock: ${node.id}`);
+      if (effect.type === 'unlock') unlockKeys.add(effect.key);
     }
   }
-  return effects;
-}
-
-export function campaignResolved(meta) {
-  return meta.memoryNodes.includes('continuity');
-}
-
-/** Build a bounded fossil snapshot; no run arrays are persisted. */
-export function buildMemorySnapshot(topo, meta) {
-  const snapshot = {
-    tick: meta.memoryNodes.length + meta.imprints.length, entropy: 0.74, status: 'memory',
-    biomass: new Float32Array(topo.nodeCount),
-    stress: new Float32Array(topo.nodeCount),
-    alive: new Uint8Array(topo.nodeCount),
-    conductance: new Float32Array(topo.edgeCount),
-    flux: new Float32Array(topo.edgeCount),
-    edgeActive: new Uint8Array(topo.edgeCount),
-    events: [], signals: [], metrics: { coverage: 0, signalCharges: 0, signalMax: 0, score: 0 },
-  };
-  const roots = [7, 8, 1, 6, 0, 11];
-  const targets = [105, 401, 1557, 1562, 1635, 402];
-  for (let index = 0; index < meta.memoryNodes.length; index++) {
-    const root = roots[index % roots.length] % topo.nodeCount;
-    const target = targets[index % targets.length] % topo.nodeCount;
-    tracePath(topo, root, target, snapshot, index);
+  const expectedKinds = { micro: 48, conditional: 24, unlock: 18, keystone: 6, connector: 6, capstone: 6 };
+  if (nodes.length !== 108) errors.push(`node count: ${nodes.length}`);
+  for (const [kind, count] of Object.entries(expectedKinds)) if (composition[kind] !== count) errors.push(`kind count: ${kind}`);
+  for (const branch of MEMORY_BRANCHES) if (branchCounts[branch] !== 18) errors.push(`branch count: ${branch}`);
+  const children = new Map(nodes.map((node) => [node.id, 0]));
+  for (const node of nodes) for (const required of node.requires) {
+    if (!byId.has(required)) errors.push(`missing prerequisite: ${node.id}->${required}`);
+    else children.set(required, children.get(required) + 1);
   }
-  snapshot.focus = applyImprints(topo, meta.imprints, snapshot);
-  snapshot.metrics.coverage = snapshot.alive.reduce((sum, value) => sum + value, 0) / topo.nodeCount;
-  return snapshot;
-}
-
-function applyImprints(topo, imprints, snapshot) {
-  const focus = [0, 0, 0];
-  for (let index = 0; index < imprints.length; index++) {
-    for (const edge of imprints[index].edges) {
-      if (edge < 0 || edge >= topo.edgeCount) continue;
-      const a = topo.edgeA[edge]; const b = topo.edgeB[edge];
-      snapshot.edgeActive[edge] = 1;
-      snapshot.conductance[edge] = Math.max(snapshot.conductance[edge], 1.25 + index * 0.04);
-      snapshot.flux[edge] = 0.28;
-      snapshot.alive[a] = 1; snapshot.alive[b] = 1;
-      snapshot.biomass[a] = 0.78; snapshot.biomass[b] = 0.78;
-      if (index === imprints.length - 1) {
-        for (let axis = 0; axis < 3; axis++) focus[axis] += topo.positions[a * 3 + axis] + topo.positions[b * 3 + axis];
-      }
-    }
+  const visiting = new Set(); const reached = new Set();
+  function visit(id) {
+    if (visiting.has(id)) { errors.push(`cycle: ${id}`); return; }
+    if (reached.has(id)) return; visiting.add(id);
+    for (const required of byId.get(id)?.requires ?? []) if (byId.has(required)) visit(required);
+    visiting.delete(id); reached.add(id);
   }
-  const length = Math.hypot(...focus);
-  return length > 0 ? focus.map((value) => value / length) : null;
-}
-
-function tracePath(topo, root, target, snapshot, variant) {
-  const previousNode = new Int32Array(topo.nodeCount).fill(-1);
-  const previousEdge = new Int32Array(topo.nodeCount).fill(-1);
-  const queue = new Uint16Array(topo.nodeCount);
-  let head = 0; let tail = 1; queue[0] = root; previousNode[root] = root;
-  while (head < tail && previousNode[target] < 0) {
-    const cell = queue[head++];
-    for (let offset = topo.nodeStart[cell]; offset < topo.nodeStart[cell + 1]; offset++) {
-      const next = topo.nodeNeighbors[offset];
-      if (previousNode[next] >= 0) continue;
-      previousNode[next] = cell; previousEdge[next] = topo.nodeEdges[offset]; queue[tail++] = next;
-    }
-  }
-  let cell = target;
-  while (cell !== root && previousNode[cell] >= 0) {
-    const edge = previousEdge[cell];
-    snapshot.edgeActive[edge] = 1;
-    snapshot.conductance[edge] = 0.72 + variant * 0.08;
-    snapshot.flux[edge] = 0.18;
-    snapshot.alive[cell] = 1; snapshot.biomass[cell] = 0.62;
-    cell = previousNode[cell];
-  }
-  snapshot.alive[root] = 1; snapshot.biomass[root] = 0.72;
+  for (const id of ids) visit(id);
+  for (const node of nodes) if (children.get(node.id) === 0 && node.kind !== 'capstone') errors.push(`orphan: ${node.id}`);
+  const roots = nodes.filter((node) => node.requires.length === 0).map((node) => node.id);
+  const rootReachable = new Set(roots); let changed = true;
+  while (changed) { changed = false; for (const node of nodes) if (!rootReachable.has(node.id)
+    && node.requires.every((id) => rootReachable.has(id))) { rootReachable.add(node.id); changed = true; } }
+  if (roots.length !== 6) errors.push(`root count: ${roots.length}`);
+  for (const node of nodes) if (!rootReachable.has(node.id)) errors.push(`unreachable: ${node.id}`);
+  return Object.freeze({ valid: errors.length === 0, errors: Object.freeze(errors),
+    totalCost, composition: Object.freeze(composition), branchCounts: Object.freeze(branchCounts),
+    roots: Object.freeze(roots), reachable: rootReachable.size });
 }

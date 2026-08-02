@@ -1,27 +1,27 @@
 # src/game/
 
-Data-driven content and rules. Everything tunable is validated data, not
-scattered magic numbers. Simulation reads content from here; interface
-renders it; the balance harness consumes the same definitions.
+Data-driven content and pure game rules. Simulation and interface consume the
+same frozen definitions; this directory never owns DOM or persistence state.
 
 | Module | Responsibility |
 |---|---|
-| `balance.js` | The single table of simulation constants, with units. |
-| `strains.js` | Strain archetypes + the `Traits` model and merging rules. |
-| `adaptations.js` | ≥24 cards, weighted offer draws, exact-uniform passive selection. |
-| `phenotypes.js` | ≥8 synergy recognizers over owned card sets. *(Gate D)* |
-| `events-content.js` | 8 event families: Japanese copy, effect parameters. *(Gate D)* |
-| `scoring.js` | Network Score formula, ranks, breakdown. *(Gate D)* |
-| `echoes.js` | Score → Echo conversion. *(Gate E)* |
-| `memory-nodes.js` | Memory Globe node graph. *(Gate E)* |
-| `trophies.js` | 32 trophy definitions + evaluation. *(Gate E)* |
-| `challenges.js` | Challenge modifiers + multipliers. *(Gate E)* |
-| `autoplay.js` | Deterministic policy heuristics. *(Gate E)* |
+| `balance.js` | Authoritative simulation and scoring constants, with units. |
+| `strains.js` | Starting morphologies and the closed run-trait model. |
+| `adaptations.js` | ≥24 cards, weighted offers, exact-uniform passive selection. |
+| `events-content.js` | Eight spatial crisis families and content parameters. |
+| `scoring.js` | Network Score, rank, breakdown, and Echo income. |
+| `memory.js` | 108-node atlas graph, queries, transactions, compilation, and validation. |
+| `memory-node.js` | Shared immutable node/effect schema for atlas content. |
+| `memory-{branch}.js` | Eighteen authored nodes for each of six progression branches. |
+| `memory-scene.js` | Stable cell and prerequisite-path projection onto the world topology. |
 
 Invariants:
 
 - Content modules export frozen data; validators run in unit tests.
 - Trait keys are a closed set defined in `strains.js`; unknown keys throw.
-- Evolution is passive/non-blocking: simulation owns offer timing and fixed options.
-- No player-guidance field or Signal trait participates in growth authority.
-- Japanese copy lives with its content, keyed by id.
+- Evolution is passive and non-blocking; simulation owns offer timing/options.
+- No player-guidance field participates in growth authority.
+- Six Memory branches contain exactly 18 nodes; IDs and locations are stable.
+- Scalar traits, conditional effects, and unlocks compile separately.
+- Purchases return a new meta document and spend exactly the declared cost.
+- Memory filaments follow graph prerequisites, never save-array order.

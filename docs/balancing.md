@@ -61,3 +61,11 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   score and Echo projection; no simulation equation or golden checksum
   changed. Evidence: `tests/unit/scoring.test.js`; a balance recalibration is
   still required before changing thresholds or score bands.
+- **2026-08-02 — Memory atlas economy foundation.** The 108-node graph costs
+  818 Echoes in total: 48 micro nodes, 24 conditional morphology/ecology
+  nodes, 18 mechanic/information/automation unlocks, and six each of
+  keystones, cross-branch connectors, and capstones. Six roots cost 2–3
+  Echoes. The guaranteed 2-Echo base income exposes four branch roots; the
+  target first-run score band (20k–80k) yields 5–9 Echoes and exposes all six.
+  This is static economy evidence, not a claim that the four-hour completion
+  target is calibrated. No simulation equation or golden checksum changed.
