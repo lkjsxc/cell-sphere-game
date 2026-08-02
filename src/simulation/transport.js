@@ -13,7 +13,7 @@ import { clamp } from '../core/math.js';
 export function runTransport(state) {
   const { topo, traits } = state;
   const { edgeA, edgeB, edgeCount, nodeCount } = topo;
-  const { pressure, nextEnergy, energy, alive, conductance, flux, edgeActive, edgeAge } = state;
+  const { pressure, nextEnergy, energy, alive, conductance, edgePeak, flux, edgeActive, edgeAge } = state;
 
   // Pressure field from stored energy.
   for (let i = 0; i < nodeCount; i++) {
@@ -31,6 +31,7 @@ export function runTransport(state) {
       // Reconnection: living tissue on both sides slowly regrows a vein.
       if (regrow > 0 && alive[edgeA[e]] === 1 && alive[edgeB[e]] === 1) {
         conductance[e] = Math.fround(conductance[e] + 0.004 * regrow);
+        if (conductance[e] > edgePeak[e]) edgePeak[e] = conductance[e];
         if (conductance[e] > B.COND_PRUNE_MIN * 1.5) {
           edgeActive[e] = 1;
           edgeAge[e] = 0;
@@ -61,6 +62,7 @@ export function runTransport(state) {
     const bothAlive = alive[edgeA[e]] === 1 && alive[edgeB[e]] === 1;
     const useful = Math.abs(flux[e]) * (bothAlive ? 1 : 0.2);
     conductance[e] = Math.fround(clamp(conductance[e] + reinforce * useful - decay, 0, B.COND_MAX));
+    if (conductance[e] > edgePeak[e]) edgePeak[e] = conductance[e];
     edgeAge[e] = edgeAge[e] === 65535 ? 65535 : edgeAge[e] + 1;
     if (conductance[e] < B.COND_PRUNE_MIN && edgeAge[e] > B.PRUNE_AGE_TICKS) {
       edgeActive[e] = 0;

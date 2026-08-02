@@ -5,6 +5,7 @@
  */
 import { BALANCE as B } from '../game/balance.js';
 import { finalStateHash, serializeReplay } from './replay.js';
+import { deriveImprint } from './imprint.js';
 
 /** @param {object} state @returns {object} result summary */
 export function buildRunResult(state) {
@@ -27,6 +28,7 @@ export function buildRunResult(state) {
     signalsPlaced: s.signalsPlaced,
     ownedCards: s.ownedCards.slice(),
     phenotypes: s.phenotypes.slice(),
+    imprint: deriveImprint(s),
     causes: { ...s.causes },
     hash: finalStateHash(s),
     replay: serializeReplay(s),

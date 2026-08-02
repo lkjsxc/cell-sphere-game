@@ -60,7 +60,7 @@ export function campaignResolved(meta) {
 /** Build a bounded fossil snapshot; no run arrays are persisted. */
 export function buildMemorySnapshot(topo, meta) {
   const snapshot = {
-    tick: meta.memoryNodes.length, entropy: 0.74, status: 'memory',
+    tick: meta.memoryNodes.length + meta.imprints.length, entropy: 0.74, status: 'memory',
     biomass: new Float32Array(topo.nodeCount),
     stress: new Float32Array(topo.nodeCount),
     alive: new Uint8Array(topo.nodeCount),
@@ -76,8 +76,29 @@ export function buildMemorySnapshot(topo, meta) {
     const target = targets[index % targets.length] % topo.nodeCount;
     tracePath(topo, root, target, snapshot, index);
   }
+  snapshot.focus = applyImprints(topo, meta.imprints, snapshot);
   snapshot.metrics.coverage = snapshot.alive.reduce((sum, value) => sum + value, 0) / topo.nodeCount;
   return snapshot;
+}
+
+function applyImprints(topo, imprints, snapshot) {
+  const focus = [0, 0, 0];
+  for (let index = 0; index < imprints.length; index++) {
+    for (const edge of imprints[index].edges) {
+      if (edge < 0 || edge >= topo.edgeCount) continue;
+      const a = topo.edgeA[edge]; const b = topo.edgeB[edge];
+      snapshot.edgeActive[edge] = 1;
+      snapshot.conductance[edge] = Math.max(snapshot.conductance[edge], 1.25 + index * 0.04);
+      snapshot.flux[edge] = 0.28;
+      snapshot.alive[a] = 1; snapshot.alive[b] = 1;
+      snapshot.biomass[a] = 0.78; snapshot.biomass[b] = 0.78;
+      if (index === imprints.length - 1) {
+        for (let axis = 0; axis < 3; axis++) focus[axis] += topo.positions[a * 3 + axis] + topo.positions[b * 3 + axis];
+      }
+    }
+  }
+  const length = Math.hypot(...focus);
+  return length > 0 ? focus.map((value) => value / length) : null;
 }
 
 function tracePath(topo, root, target, snapshot, variant) {

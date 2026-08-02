@@ -59,6 +59,7 @@ export function createRunState(cfg) {
 
     // --- per-edge dynamic arrays -------------------------------------------
     conductance: new Float32Array(E),
+    edgePeak: new Float32Array(E),
     flux: new Float32Array(E),
     edgeAge: new Uint16Array(E),
     edgeActive: new Uint8Array(E),

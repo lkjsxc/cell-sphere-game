@@ -36,6 +36,7 @@ test('500 ticks preserve all invariants', () => {
   for (let e = 0; e < s.topo.edgeCount; e++) {
     assert.ok(!Number.isNaN(s.conductance[e]), `conductance NaN at ${e}`);
     assert.ok(s.conductance[e] >= 0 && s.conductance[e] <= B.COND_MAX, `conductance bounds at ${e}`);
+    assert.ok(s.edgePeak[e] >= s.conductance[e] && s.edgePeak[e] <= B.COND_MAX, `edgePeak bounds at ${e}`);
     assert.ok(s.edgeActive[e] === 0 || s.edgeActive[e] === 1, `edgeActive at ${e}`);
   }
   assert.ok(s.aliveCount > 10, 'network failed to grow');
@@ -108,4 +109,13 @@ test('extinction happens with a cause and stable summary', () => {
   assert.ok(typeof res.cause === 'string' && res.cause.length > 0);
   assert.match(res.hash, /^[0-9a-f]{8}$/);
   assert.ok(res.replay.length > 0);
+  assert.equal(res.imprint.kind, 'strongest-corridor');
+  assert.ok(res.imprint.edges.length > 0 && res.imprint.edges.length <= 28);
+  assert.equal(new Set(res.imprint.edges).size, res.imprint.edges.length, 'Imprint repeats an edge');
+  for (let index = 1; index < res.imprint.edges.length; index++) {
+    const left = res.imprint.edges[index - 1]; const right = res.imprint.edges[index];
+    const endpoints = [rc.state.topo.edgeA[left], rc.state.topo.edgeB[left]];
+    assert.ok(endpoints.includes(rc.state.topo.edgeA[right])
+      || endpoints.includes(rc.state.topo.edgeB[right]), 'Imprint corridor is disconnected');
+  }
 });

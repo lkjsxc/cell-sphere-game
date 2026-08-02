@@ -11,7 +11,7 @@ import { createFields } from '../world/fields.js';
 import { GLRenderer } from '../rendering/renderer.js';
 import { Canvas2DRenderer } from '../rendering/fallback2d.js';
 import { AttractState } from '../rendering/attract-state.js';
-import { createCamera, applyInertia } from '../rendering/camera.js';
+import { createCamera, focusCamera, rotate, applyInertia } from '../rendering/camera.js';
 import { pickNode } from '../rendering/picking.js';
 import { bindGlobeInput } from './globe-input.js';
 import { RunController } from '../simulation/simulator.js';
@@ -156,12 +156,13 @@ class GameApp {
     this.flow.send('extinct'); this.paused = true; ui.hideDraft(this.el);
     const score = scoreResult(result);
     this.meta = { ...this.meta, runs: this.meta.runs + 1, totalEchoes: this.meta.totalEchoes + score.echoes,
-      echoBalance: this.meta.echoBalance + score.echoes, bestScore: Math.max(this.meta.bestScore, score.total) };
+      echoBalance: this.meta.echoBalance + score.echoes, bestScore: Math.max(this.meta.bestScore, score.total),
+      imprints: result.imprint.edges.length ? [...this.meta.imprints, result.imprint].slice(-8) : this.meta.imprints };
     saveMeta(this.meta); ui.showResult(this.el, score, result);
   }
 
   enterMemory() {
-    this.flow.send('memory'); this.resize(); this.memorySnapshot = buildMemorySnapshot(this.topo, this.meta);
+    this.flow.send('memory'); this.resize(); this.memorySnapshot = buildMemorySnapshot(this.topo, this.meta); if (this.memorySnapshot.focus) focusCamera(this.camera, this.memorySnapshot.focus);
     ui.showMemory(this.el, this.meta, (id) => this.buyMemory(id));
   }
 
@@ -180,7 +181,7 @@ class GameApp {
     this.advanceFallback(dt, now);
     if (this.state === 'title') {
       this.attract?.update(now, this.settings.motion === 'reduced');
-      if (this.settings.motion !== 'reduced') this.camera.yaw += dt * 0.000035;
+      if (this.settings.motion !== 'reduced') rotate(this.camera, -dt * 0.000035, 0, false);
     } else if (!this.input?.isActive() && this.settings.cameraInertia) applyInertia(this.camera);
     const rendered = this.state === 'title' ? this.attract?.snapshot ?? null
       : this.state === 'memory' ? this.memorySnapshot : this.snapshot;

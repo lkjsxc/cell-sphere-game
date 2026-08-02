@@ -54,7 +54,7 @@ export function elements() {
     dialog: /** @type {HTMLDialogElement} */ (byId('draft-dialog')),
     cards: byId('draft-cards'), resultRank: byId('result-rank'),
     resultScore: byId('result-score'), resultCause: byId('result-cause'),
-    breakdown: byId('result-breakdown'), echoes: byId('result-echoes'),
+    breakdown: byId('result-breakdown'), echoes: byId('result-echoes'), resultImprint: byId('result-imprint'),
     memoryBalance: byId('memory-balance'), memoryNodes: byId('memory-nodes'), live: byId('live-region'),
   };
 }
@@ -100,6 +100,8 @@ export function showResult(el, score, result) {
   el.resultScore.textContent = number(score.total);
   el.resultCause.textContent = CAUSE[result.cause] ?? 'The final living cell released its remaining energy.';
   el.echoes.textContent = `${score.echoes} Echoes entered permanent memory.`;
+  el.resultImprint.textContent = result.imprint.edges.length
+    ? `Imprint preserved · ${result.imprint.edges.length}-boundary strongest corridor.` : '';
   el.breakdown.replaceChildren(...score.breakdown.map((part) => breakdownRow(part)));
   show(el, 'result');
   el.memoryButton.focus();

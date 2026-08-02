@@ -4,6 +4,7 @@
  * veins, events, signals, and facing-culled geometry.
  */
 import { EVENT_TINTS } from './instances.js';
+import { cameraBasis } from './camera.js';
 
 export class Canvas2DRenderer {
   /**
@@ -29,21 +30,8 @@ export class Canvas2DRenderer {
     }
   }
 
-  /** Camera basis: direction from origin to eye + screen axes. */
-  basis(camera) {
-    const cp = Math.cos(camera.pitch);
-    const dir = [cp * Math.sin(camera.yaw), Math.sin(camera.pitch), cp * Math.cos(camera.yaw)];
-    let right = [dir[2], 0, -dir[0]];
-    const rl = Math.hypot(right[0], right[2]) || 1;
-    right = [right[0] / rl, 0, right[2] / rl];
-    // up = cross(right, dir)
-    const up = [
-      right[1] * dir[2] - right[2] * dir[1],
-      right[2] * dir[0] - right[0] * dir[2],
-      right[0] * dir[1] - right[1] * dir[0],
-    ];
-    return { dir, right, up };
-  }
+  /** Camera basis shared with the unconstrained WebGL orbit. */
+  basis(camera) { return cameraBasis(camera); }
 
   render(scene) {
     const { ctx, canvas, topo, fields } = this;

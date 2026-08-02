@@ -20,7 +20,7 @@ Webページ部門 (ZEN大学). Deadline 2026-09-13.
 1. Drag the title globe or tap it to wake a bounded cellular bloom.
 2. Press **Inoculate**. The recommended Pioneer strain begins immediately.
 3. Watch it explore and reinforce shared cell boundaries; tap a visible cell
-   to place a **Signal** and drag or pinch to inspect the planet.
+   to place a **Signal**. Drag freely through either pole or pinch to inspect.
 4. Choose **Adaptations** at milestones and survive spatial crises.
 5. Extinction yields an authoritative **Network Score** and **Echoes**. Enter
    the **Memory Globe**, purchase a reachable filament, then grow the next
@@ -38,9 +38,9 @@ same decisions = the same result at any speed.
 - WebGL2 dual-cell renderer with discrete procedural ocean/land materials,
   etched boundaries, boundary-aligned transport, atmosphere, title bloom,
   and graphite Memory Globe state; playable Canvas 2D fallback remains.
-- One complete persistent transaction: score → Echoes → Memory purchase →
-  saved filament → next-run trait. Six bounded Memory nodes form the initial
-  progression path; broader campaign content remains in development.
+- One complete persistent transaction: score → a bounded strongest-corridor
+  **Imprint** → Echoes → Memory purchase → next-run trait. Six Memory nodes
+  form the initial progression path; broader campaign content remains in development.
 - Production simulation powers unit/integration tests, balance smoke, and the
   benchmark. No runtime dependency or downloaded media is used.
 

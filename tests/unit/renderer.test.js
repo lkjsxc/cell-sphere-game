@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
-import { createCamera, cameraEye, viewProjection, cameraRay, intersectUnitSphere } from '../../src/rendering/camera.js';
+import { createCamera, cameraEye, viewProjection, cameraRay, intersectUnitSphere, rotate } from '../../src/rendering/camera.js';
 import { buildVeinInstances, buildTipInstances } from '../../src/rendering/instances.js';
 import * as SH from '../../src/rendering/shaders.js';
 import * as SHN from '../../src/rendering/shaders-network.js';
@@ -37,6 +37,29 @@ test('cameraEye sits at the configured distance from the origin', () => {
   assert.ok(Math.abs(d - cam.dist) < 1e-6, `distance ${d} != ${cam.dist}`);
 });
 
+test('grab rotation follows the pointer horizontally and vertically', () => {
+  for (const [dragX, dragY, axis, direction] of [[0.18, 0, 0, 1], [0, 0.18, 1, -1]]) {
+    const cam = createCamera();
+    const grabbed = cam.direction.slice();
+    const before = project(viewProjection(cam, 1), grabbed);
+    rotate(cam, dragX, dragY, false);
+    const after = project(viewProjection(cam, 1), grabbed);
+    assert.ok((after[axis] - before[axis]) * direction > 0.1,
+      `grabbed point did not follow drag ${dragX},${dragY}`);
+  }
+});
+
+test('vertical rotation crosses both poles and completes a full orbit', () => {
+  const cam = createCamera();
+  const startDirection = cam.direction.slice(); const startUp = cam.up.slice();
+  for (let step = 0; step < 96; step++) {
+    rotate(cam, 0, (Math.PI * 2) / 96, false);
+    for (const value of viewProjection(cam, 1)) assert.ok(Number.isFinite(value));
+  }
+  assert.ok(Math.hypot(...cam.direction.map((value, i) => value - startDirection[i])) < 1e-6);
+  assert.ok(Math.hypot(...cam.up.map((value, i) => value - startUp[i])) < 1e-6);
+});
+
 test('cameraRay direction is a unit vector', () => {
   const cam = createCamera();
   const r = cameraRay(cam, 0, 0, 1);
@@ -52,6 +75,13 @@ test('ray toward the globe hits; ray away misses', () => {
   const away = { origin: [0, 0, 5], dir: [0, 0, 1] };
   assert.equal(intersectUnitSphere(away), null, 'outward ray must miss');
 });
+
+function project(matrix, point) {
+  const x = matrix[0] * point[0] + matrix[4] * point[1] + matrix[8] * point[2] + matrix[12];
+  const y = matrix[1] * point[0] + matrix[5] * point[1] + matrix[9] * point[2] + matrix[13];
+  const w = matrix[3] * point[0] + matrix[7] * point[1] + matrix[11] * point[2] + matrix[15];
+  return [x / w, y / w];
+}
 
 test('parseUniformNames strips array brackets', () => {
   const names = parseUniformNames(SH.FS_GLOBE);

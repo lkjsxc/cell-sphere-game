@@ -5,26 +5,29 @@ snapshots and never mutates simulation state.
 
 ## Draw passes (target ≤ 8 draw calls/frame)
 
-Current steady-state implementation issues **5** draws (background, globe,
-atmosphere, veins, tips). The two network draws live in `network-pass.js`,
-with the organism shaders in `shaders-network.js` (split from `shaders.js`,
-which holds the world-surface programs, to keep each module under the line
-budget). Camera, picking, and instance packing are pure functions and are
-unit-tested in Node; the GPU path is exercised by `scripts/browser-test.mjs`
-where the environment's sandbox allows Chrome networking — see
-`docs/testing.md` for the seccomp skip and `docs/decisions.md` D8.
+Current steady-state implementation issues **6** draws: background, dual-cell
+surface, quiet boundaries, atmosphere, organism routes, and frontier tips.
+`world-pass.js` owns the first three world-space passes; `network-pass.js` owns
+the two dynamic organism passes. Camera, picking, dual geometry, and instance
+packing are unit-tested in Node. `scripts/browser-file-test.mjs` exercises the
+WebGL2 path, free-orbit input, extinction, Imprint, Memory purchase, and restart
+through real Chrome/CDP when the container blocks same-origin sockets.
 
-1. **Background** — fullscreen triangle, procedural gradient + star hash.
-2. **Globe** — indexed icosphere (same topology as simulation), per-vertex
-   biome attributes; Lambert + rim lighting; entropy desaturation; event
-   footprints and signal fields via uniform lists (≤4 events, ≤4 signals).
-3. **Atmosphere** — slightly larger back-facing sphere, additive rim.
-4. **Veins** — instanced ribbons: per active edge a camera-facing quad
-   slightly offset along surface normals; width from conductance; color from
-   stress/flux; pulse phase uniform. Avoids GL line-width clamping.
-5. **Tips/junctions** — instanced quads for frontier tips and strong nodes.
-6. **Extinction/memory overlays** — uniform-driven fade; memory mode recolors
-   biological light into persistent violet veins.
+1. **Background** — restrained mineral-twilight gradient and one quiet orbit
+   trace; no random star field.
+2. **Dual cells** — explicit Goldberg-like polygon fans: 2,562 discrete cells,
+   mostly hexagons with twelve pentagonal World Knots. Per-cell fields select
+   ocean, terrain, stress, life, entropy, and Memory material.
+3. **Quiet boundaries** — static raised ribbon quads with stronger fivefold
+   World Knot accents and semantic fading.
+4. **Atmosphere** — indexed primal sphere enlarged into a cheap additive rim.
+5. **Organism routes** — instanced ribbons on each active edge's exact dual
+   boundary, not center-to-center floating triangles; width comes from
+   conductance and color/phase from stress and flux.
+6. **Tips/junctions** — instanced quads for living frontier cells.
+
+Memory mode reuses these passes with graphite cell material and a bounded
+strongest-corridor Imprint derived from the just-finished run.
 
 Dynamic uploads per snapshot: one compact edge-state buffer (active edges
 only: endpoints' positions/normals + width + color) and one small node-state
@@ -38,11 +41,16 @@ fallback. No shader strings built per frame.
 
 ## Camera
 
-Unit-sphere world; view = orbit (yaw/pitch) × zoom. Drag rotates with
-optional inertia (settings + reduced-motion aware); pinch/wheel zoom bounded.
-Picking: NDC ray → analytic sphere intersection → nearest-node linear scan
-(2,562 nodes, negligible per tap). Tap vs drag distinguished by distance and
-time thresholds tuned for touch.
+The unit-sphere camera stores an orthonormal direction/right/up frame instead
+of yaw/pitch. Screen-axis drag rotates that frame as a grabbed object: a fixed
+surface point follows the pointer horizontally and vertically. There are no
+pole clamps, so repeated vertical revolutions remain finite and preserve a
+stable screen frame. Release inertia uses the same rotation and damping;
+reduced motion disables ambient movement. Pinch/wheel zoom remains bounded.
+
+Picking uses NDC ray → analytic sphere intersection → nearest-cell scan (2,562
+centres, measured negligible per tap). Projection offsets are included in the
+ray. Tap versus drag uses touch-oriented distance and time thresholds.
 
 ## Quality modes
 

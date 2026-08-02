@@ -39,6 +39,7 @@ export function finalStateHash(state) {
   h = hashF32(h, state.stress, 1000);
   h = hashF32(h, state.toxicity, 1000);
   h = hashF32(h, state.conductance, 1000);
+  h = hashF32(h, state.edgePeak, 1000);
   h = hashU8(h, state.alive);
   h = hashU8(h, state.edgeActive);
   // Fold scalar summary.

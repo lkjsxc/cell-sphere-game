@@ -1,53 +1,89 @@
 /**
- * Orbit camera around the unit sphere: yaw/pitch/distance with bounded
- * zoom, optional inertia, and analytic ray construction for picking.
+ * Free-orbit camera around the unit sphere.
+ *
+ * The camera stores an orthonormal frame instead of yaw/pitch, so a grabbed
+ * globe can turn through either pole repeatedly without clamps or axis flips.
  */
 import { perspective, lookAt, multiply, norm3, cross3, dot3 } from './mat4.js';
 
 export const FOV_Y = (44 * Math.PI) / 180;
 const MIN_DIST = 1.7;
 const MAX_DIST = 7.2;
-const MAX_PITCH = 1.45;
+const INITIAL_YAW = 2.4;
+const INITIAL_PITCH = 0.6;
 
 /** @returns {Camera} */
 export function createCamera() {
+  const cp = Math.cos(INITIAL_PITCH);
+  const direction = norm3([
+    cp * Math.sin(INITIAL_YAW),
+    Math.sin(INITIAL_PITCH),
+    cp * Math.cos(INITIAL_YAW),
+  ]);
+  const right = norm3(cross3([0, 1, 0], direction));
+  const up = norm3(cross3(direction, right));
   return {
-    yaw: 2.4,
-    pitch: 0.6,
+    direction, right, up,
     dist: 4.1,
     offsetX: 0,
     offsetY: 0,
-    velYaw: 0,
-    velPitch: 0,
+    velX: 0,
+    velY: 0,
   };
+}
+
+/** Stable camera frame for renderers and fallbacks. */
+export function cameraBasis(cam) {
+  return { dir: cam.direction, right: cam.right, up: cam.up };
+}
+
+/** Frame a world-space direction without introducing a pole singularity. */
+export function focusCamera(cam, direction) {
+  const target = norm3(direction);
+  let right = cross3(cam.up, target);
+  if (Math.hypot(...right) < 0.01) {
+    const reference = Math.abs(target[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+    right = cross3(reference, target);
+  }
+  cam.direction = target;
+  cam.right = norm3(right);
+  cam.up = norm3(cross3(target, cam.right));
+  cam.velX = 0; cam.velY = 0;
 }
 
 /** Camera eye position on the orbit shell. @param {Camera} cam @returns {number[]} */
 export function cameraEye(cam) {
-  const cp = Math.cos(cam.pitch);
   return [
-    cam.dist * cp * Math.sin(cam.yaw),
-    cam.dist * Math.sin(cam.pitch),
-    cam.dist * cp * Math.cos(cam.yaw),
+    cam.dist * cam.direction[0],
+    cam.dist * cam.direction[1],
+    cam.dist * cam.direction[2],
   ];
 }
 
 /** Combined projection*view matrix. @returns {Float32Array} */
 export function viewProjection(cam, aspect) {
   const eye = cameraEye(cam);
-  const view = lookAt(eye, [0, 0, 0], [0, 1, 0]);
+  const view = lookAt(eye, [0, 0, 0], cam.up);
   const proj = perspective(FOV_Y, aspect, 0.1, 50);
   proj[8] = -cam.offsetX;
   proj[9] = -cam.offsetY;
   return multiply(proj, view);
 }
 
-/** Drag rotation. @param {Camera} cam */
-export function rotate(cam, dYaw, dPitch) {
-  cam.yaw += dYaw;
-  cam.pitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, cam.pitch + dPitch));
-  cam.velYaw = dYaw;
-  cam.velPitch = dPitch;
+/**
+ * Rotate as if the player were dragging the globe itself. A point under a
+ * rightward/downward pointer therefore follows the pointer in screen space.
+ * @param {Camera} cam
+ * @param {number} dragX angular horizontal pointer travel
+ * @param {number} dragY angular vertical pointer travel
+ * @param {boolean} [rememberVelocity=true]
+ */
+export function rotate(cam, dragX, dragY, rememberVelocity = true) {
+  applyDrag(cam, dragX, dragY);
+  if (rememberVelocity) {
+    cam.velX = dragX;
+    cam.velY = dragY;
+  }
 }
 
 /** Zoom by wheel/pinch factor. */
@@ -57,12 +93,37 @@ export function zoom(cam, factor) {
 
 /** Inertia step; call per frame when enabled. Returns true if moving. */
 export function applyInertia(cam) {
-  if (Math.abs(cam.velYaw) < 1e-4 && Math.abs(cam.velPitch) < 1e-4) return false;
-  cam.yaw += cam.velYaw;
-  cam.pitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, cam.pitch + cam.velPitch));
-  cam.velYaw *= 0.92;
-  cam.velPitch *= 0.92;
+  if (Math.abs(cam.velX) < 1e-4 && Math.abs(cam.velY) < 1e-4) return false;
+  applyDrag(cam, cam.velX, cam.velY);
+  cam.velX *= 0.92;
+  cam.velY *= 0.92;
   return true;
+}
+
+function applyDrag(cam, dragX, dragY) {
+  if (dragX) {
+    cam.direction = rotateAround(cam.direction, cam.up, -dragX);
+    cam.right = rotateAround(cam.right, cam.up, -dragX);
+  }
+  if (dragY) {
+    cam.direction = rotateAround(cam.direction, cam.right, -dragY);
+    cam.up = rotateAround(cam.up, cam.right, -dragY);
+  }
+  cam.direction = norm3(cam.direction);
+  cam.right = norm3(cross3(cam.up, cam.direction));
+  cam.up = norm3(cross3(cam.direction, cam.right));
+}
+
+function rotateAround(vector, axis, angle) {
+  const cosine = Math.cos(angle);
+  const sine = Math.sin(angle);
+  const cross = cross3(axis, vector);
+  const along = dot3(axis, vector) * (1 - cosine);
+  return [
+    vector[0] * cosine + cross[0] * sine + axis[0] * along,
+    vector[1] * cosine + cross[1] * sine + axis[1] * along,
+    vector[2] * cosine + cross[2] * sine + axis[2] * along,
+  ];
 }
 
 /**
@@ -75,24 +136,19 @@ export function applyInertia(cam) {
  */
 export function cameraRay(cam, ndcX, ndcY, aspect) {
   const eye = cameraEye(cam);
-  const forward = norm3([-eye[0], -eye[1], -eye[2]]);
-  const right = norm3(cross3(forward, [0, 1, 0]));
-  const up = cross3(right, forward);
+  const forward = [-cam.direction[0], -cam.direction[1], -cam.direction[2]];
   const tanHalf = Math.tan(FOV_Y / 2);
   const shiftedX = ndcX - cam.offsetX;
   const shiftedY = ndcY - cam.offsetY;
   const dir = norm3([
-    forward[0] + right[0] * shiftedX * tanHalf * aspect + up[0] * shiftedY * tanHalf,
-    forward[1] + right[1] * shiftedX * tanHalf * aspect + up[1] * shiftedY * tanHalf,
-    forward[2] + right[2] * shiftedX * tanHalf * aspect + up[2] * shiftedY * tanHalf,
+    forward[0] + cam.right[0] * shiftedX * tanHalf * aspect + cam.up[0] * shiftedY * tanHalf,
+    forward[1] + cam.right[1] * shiftedX * tanHalf * aspect + cam.up[1] * shiftedY * tanHalf,
+    forward[2] + cam.right[2] * shiftedX * tanHalf * aspect + cam.up[2] * shiftedY * tanHalf,
   ]);
   return { origin: eye, dir };
 }
 
-/**
- * Intersect a ray with the unit sphere. Returns distance t or null.
- * @param {{origin: number[], dir: number[]}} ray
- */
+/** Intersect a ray with the unit sphere. Returns distance t or null. */
 export function intersectUnitSphere(ray) {
   const b = dot3(ray.origin, ray.dir);
   const c = dot3(ray.origin, ray.origin) - 1;

@@ -13,13 +13,14 @@ const KEY = 'incremental-network-game:meta:v1';
 /** @returns {Meta} */
 export function defaultMeta() {
   return {
-    schema: 2,
+    schema: 3,
     bestScore: 0,
     totalEchoes: 0,
     echoBalance: 0,
     runs: 0,
     signalHintShown: false,
     memoryNodes: [],
+    imprints: [],
   };
 }
 
@@ -38,7 +39,18 @@ export function validateMeta(raw) {
   if (Array.isArray(r.memoryNodes)) out.memoryNodes = r.memoryNodes
     .filter((id, index, all) => typeof id === 'string' && /^[a-z-]{1,40}$/.test(id)
       && all.indexOf(id) === index).slice(0, 64);
+  if (Array.isArray(r.imprints)) out.imprints = r.imprints
+    .map(validateImprint).filter(Boolean).slice(-8);
   return out;
+}
+
+function validateImprint(raw) {
+  if (!raw || typeof raw !== 'object' || raw.kind !== 'strongest-corridor') return null;
+  if (!Number.isInteger(raw.seed) || raw.seed < 0 || raw.seed >= 0x40000000) return null;
+  if (!Array.isArray(raw.edges)) return null;
+  const edges = raw.edges.filter((edge, index, all) => Number.isInteger(edge)
+    && edge >= 0 && edge <= 0xffff && all.indexOf(edge) === index).slice(0, 28);
+  return edges.length ? { kind: 'strongest-corridor', seed: raw.seed, edges } : null;
 }
 
 /** @returns {Meta} */

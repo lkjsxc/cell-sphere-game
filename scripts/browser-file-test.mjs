@@ -49,6 +49,11 @@ try {
   const boot = await evaluate('window.__IN_BOOT__');
   assert(boot?.playable && boot?.renderer, 'app did not report a playable renderer');
   const before = await screenshot(cdp, session, 'browser-file-title.png');
+  await drag(cdp, session, [145, 360], [225, 360]);
+  await drag(cdp, session, [190, 180], [190, 760]);
+  await wait(300);
+  const dragged = await screenshot(cdp, session, 'browser-file-title-drag.png');
+  assert(before.hash !== dragged.hash, 'free-orbit drag produced no visible response');
   await cdp.send('Input.dispatchMouseEvent', {
     type: 'mousePressed', x: 190, y: 360, button: 'left', clickCount: 1,
   }, session);
@@ -76,8 +81,10 @@ try {
   const result = await evaluate(`({
     score: Number(document.getElementById('result-score').textContent.replaceAll(',', '')),
     echoes: document.getElementById('result-echoes').textContent,
+    imprint: document.getElementById('result-imprint').textContent,
   })`);
   assert(result.score > 0, 'result score was not positive');
+  assert(result.imprint.includes('Imprint preserved'), 'result did not identify the preserved Imprint');
 
   await evaluate(`document.getElementById('memory-button').click()`);
   await wait(500);
@@ -88,12 +95,15 @@ try {
   assert(beforePurchase.available, 'first extinction did not make a Memory node affordable');
   await evaluate(`document.querySelector('.memory-node:not(:disabled)').click()`);
   await wait(500);
-  const memory = await evaluate(`({
-    balance: Number(document.getElementById('memory-balance').textContent.replaceAll(',', '')),
-    nodes: JSON.parse(localStorage.getItem('incremental-network-game:meta:v1')).memoryNodes,
-  })`);
+  const memory = await evaluate(`(() => {
+    const meta = JSON.parse(localStorage.getItem('incremental-network-game:meta:v1'));
+    return { balance: Number(document.getElementById('memory-balance').textContent.replaceAll(',', '')),
+      nodes: meta.memoryNodes, imprints: meta.imprints };
+  })()`);
   assert(beforePurchase.balance - memory.balance === 2, 'Memory purchase did not conserve Echoes');
   assert(memory.nodes.includes('first-trace'), 'purchased node was not persisted');
+  assert(memory.imprints.length === 1 && memory.imprints[0].edges.length > 0,
+    'terminal morphology did not persist as an Imprint');
   await screenshot(cdp, session, 'browser-file-memory.png');
 
   await evaluate(`document.getElementById('restart-button').click()`);
@@ -101,8 +111,8 @@ try {
   const signal = await evaluate(`document.getElementById('hud-signal').textContent`);
   assert(signal === 'Signal 4 / 4', `next run did not apply memory: ${signal}`);
   assert(cdp.errors.length === 0, `browser reported ${cdp.errors.length} errors`);
-  console.log(`test:browser:file — PASS (${boot.renderer}; title tap visible; score ${result.score}; `
-    + `${drafts} drafts; 32x ${elapsed.toFixed(2)}s; Memory purchase; next run ${signal})`);
+  console.log(`test:browser:file — PASS (${boot.renderer}; free orbit + title tap visible; score ${result.score}; `
+    + `${drafts} drafts; 32x ${elapsed.toFixed(2)}s; Imprint + Memory purchase; next run ${signal})`);
   exitCode = 0;
 } catch (error) {
   console.error(`test:browser:file — FAIL: ${error.message}`);
@@ -139,6 +149,18 @@ function protocol(child) {
     setTimeout(() => { if (pending.delete(id)) reject(new Error(`CDP timeout: ${method}`)); }, 10000);
   });
   return { send, errors };
+}
+
+async function drag(cdp, session, from, to) {
+  await cdp.send('Input.dispatchMouseEvent', {
+    type: 'mousePressed', x: from[0], y: from[1], button: 'left', clickCount: 1,
+  }, session);
+  await cdp.send('Input.dispatchMouseEvent', {
+    type: 'mouseMoved', x: to[0], y: to[1], button: 'left', buttons: 1,
+  }, session);
+  await cdp.send('Input.dispatchMouseEvent', {
+    type: 'mouseReleased', x: to[0], y: to[1], button: 'left', clickCount: 1,
+  }, session);
 }
 
 async function screenshot(cdp, session, name) {

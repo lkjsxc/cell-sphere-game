@@ -47,12 +47,17 @@ test('prototype pollution attempts are ignored', () => {
 test('progression validation preserves only bounded values', () => {
   assert.deepEqual(validateMeta(null), defaultMeta());
   const meta = validateMeta({ schema: 1, bestScore: 123.9, totalEchoes: 8.4, runs: 2.9, signalHintShown: true });
-  assert.deepEqual(meta, { schema: 2, bestScore: 123, totalEchoes: 8, echoBalance: 8,
-    runs: 2, signalHintShown: true, memoryNodes: [] });
+  assert.deepEqual(meta, { schema: 3, bestScore: 123, totalEchoes: 8, echoBalance: 8,
+    runs: 2, signalHintShown: true, memoryNodes: [], imprints: [] });
   const invalid = validateMeta(JSON.parse('{"bestScore":-1,"runs":-3,"__proto__":{"polluted":true}}'));
   assert.equal(invalid.bestScore, 0);
   assert.equal(invalid.runs, 0);
   assert.equal({}.polluted, undefined);
+  const fossil = validateMeta({ schema: 3, imprints: [
+    { kind: 'strongest-corridor', seed: 42, edges: [3, 4, 4, -1, 99999] },
+    { kind: 'unknown', seed: 2, edges: [1] },
+  ] });
+  assert.deepEqual(fossil.imprints, [{ kind: 'strongest-corridor', seed: 42, edges: [3, 4] }]);
 });
 
 test('Memory Globe purchase conserves Echoes and changes next-run traits', () => {
@@ -70,10 +75,14 @@ test('Memory Globe purchase conserves Echoes and changes next-run traits', () =>
 
 test('Memory Globe fossil uses valid canonical boundaries only', () => {
   const topo = createTopology(2);
-  const meta = { ...defaultMeta(), memoryNodes: ['first-trace'] };
+  const meta = { ...defaultMeta(), memoryNodes: ['first-trace'],
+    imprints: [{ kind: 'strongest-corridor', seed: 7, edges: [0] }] };
   const fossil = buildMemorySnapshot(topo, meta);
   assert.equal(fossil.status, 'memory');
   assert.ok(fossil.edgeActive.some((value) => value === 1), 'purchased memory must create a filament');
+  assert.equal(fossil.edgeActive[0], 1, 'run-derived Imprint boundary missing');
+  assert.ok(fossil.focus && Math.abs(Math.hypot(...fossil.focus) - 1) < 1e-6,
+    'latest Imprint should provide a unit camera focus');
   for (let edge = 0; edge < topo.edgeCount; edge++) {
     if (!fossil.edgeActive[edge]) continue;
     assert.equal(fossil.alive[topo.edgeA[edge]], 1);

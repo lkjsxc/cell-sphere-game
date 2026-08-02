@@ -46,6 +46,7 @@ test('same seed reproduces the identical final hash and score', () => {
   assert.equal(a.tick, b.tick);
   assert.equal(a.cause, b.cause);
   assert.deepEqual(a.ownedCards, b.ownedCards);
+  assert.deepEqual(a.imprint, b.imprint);
   assert.deepEqual(scoreResult(a), scoreResult(b));
 });
 

@@ -15,7 +15,7 @@ export function runGrowth(state) {
   const { topo, traits } = state;
   const { nodeStart, nodeEdges, nodeNeighbors } = topo;
   const { alive, biomass, energy, nutrient, moisture, temperature, toxicity,
-    signal, conductance, edgeActive, edgeAge, expansions, simRng } = state;
+    signal, conductance, edgePeak, edgeActive, edgeAge, expansions, simRng } = state;
 
   expansions.fill(0);
   const cap = B.GROW_PER_NODE_CAP + traits.growthCap + (traits.fractalFrontier ? 1 : 0);
@@ -59,6 +59,7 @@ export function runGrowth(state) {
         energy[i] = Math.fround(energy[i] - cost);
         edgeActive[e] = 1;
         conductance[e] = Math.fround(startCond);
+        if (conductance[e] > edgePeak[e]) edgePeak[e] = conductance[e];
         edgeAge[e] = 0;
         alive[nb] = 1;
         biomass[nb] = Math.fround(B.NEW_BIOMASS);

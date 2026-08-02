@@ -86,7 +86,7 @@ export function startPreview(canvas) {
     }
     fade = Math.min(1, fade + dt * 0.002);
     if (rc.state.tick % 2 === 0 || !snapshot) snapshot = rc.snapshot();
-    camera.yaw += dt * 0.00004;
+    rotate(camera, -dt * 0.00004, 0, false);
     renderer.render({
       snapshot, camera, time: now / 1000, pulse: true, fade,
     });
