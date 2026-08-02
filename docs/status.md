@@ -2,87 +2,88 @@
 
 Truthful current state. Updated every substantial session.
 
-- **Starting commit (2026-08-02 rebuild turn):** `a01a989`
-- **Latest product commit:** `10d8d47` — complete dual-cell visual rebuild and
-  first extinction-to-memory transaction, pushed to `origin/main`.
-- **Supporting commit:** `7fbba68` — explicit spherical dual mesh and renderer.
-- **Protective baseline tag:** `pre-rebuild-2026-08-02` points to `a01a989` and
-  is pushed to origin.
+- **Starting commit (2026-08-02 free-orbit turn):** `ddfcf28`
+- **Latest product commit:** `e133c9f` — free two-axis globe orbit and
+  morphology-derived Imprints, pushed to `origin/main`.
 - **Branch / upstream:** `main` tracks `origin/main`.
+- **Protective rebuild tag:** `pre-rebuild-2026-08-02` remains pushed at
+  baseline commit `a01a989`.
 - **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>.
-  GitHub Actions run `30747205702` completed successfully for `10d8d47`.
-  Cache-busted public fetches returned HTTP 200 and matched unique rebuild text
-  in `index.html`, `dual-mesh.js`, `memory.js`, and `app-controller.js`.
+  GitHub Actions run `30748071582` completed both `verify` and `pages` for
+  `e133c9f`. Cache-busted public fetches returned HTTP 200 and matched the
+  free-orbit camera, Imprint module, result markup, and controller integration.
 
 ## Playable now
 
-- The title is already a real interaction: drag/inertia, wheel, pinch, and tap
-  work before starting. Tap reseeds a bounded cosmetic organism that grows on
-  real world adjacency and never affects score or saves.
-- The planet is an explicit dual of the level-4 geodesic graph: 2,562 discrete
-  cells, 7,680 shared boundaries, mostly hexagons, and exactly twelve warm
-  pentagonal World Knots. Ocean/land material is procedural and cell-discrete.
-- Living transport occupies canonical shared boundaries rather than unrelated
-  floating triangular ribbons. Cell life/stress, spatial events, Signals,
-  atmosphere, and entropy all feed the render state.
-- The production deterministic run remains playable through Worker or the
-  same `RunController` fallback: Signal, five adaptation drafts in the demo
-  seed, crises, 1×–32×, pause, extinction cause, score, and Echo reward.
-- Result now enters a functioning graphite **Memory Globe**. The first run can
-  purchase **First Trace** for 2 Echoes; the filament persists in the versioned
-  save and the next run visibly starts with `Signal 4 / 4`.
-- Six bounded Memory nodes form an initial prerequisite graph. This is a real
-  progression path, but not yet the complete campaign tree.
+- The title globe responds before play: tap reseeds a bounded organism on real
+  adjacency; drag, inertia, wheel, and pinch use the production camera.
+- Globe grabbing now follows the pointer horizontally instead of moving in the
+  opposite direction. The camera stores an orthonormal direction/right/up
+  frame, not clamped yaw/pitch, so vertical drag can pass through either pole
+  and continue through repeated complete revolutions without flipping axes.
+- The explicit spherical dual remains authoritative for rendering: 2,562
+  cells, 7,680 shared boundaries, mostly hexagons, and twelve World Knots.
+- The deterministic Worker/fallback run supports Signal, Adaptations, spatial
+  crises, pause, 1×–32×, causal extinction, Network Score, and Echo rewards.
+- Every completed run now derives a bounded **strongest-corridor Imprint** from
+  per-edge peak conductance. The result identifies its boundary count; up to
+  eight validated 28-boundary Imprints persist in the versioned local save.
+- Entering Memory draws the latest real run corridor on the graphite globe and
+  frames it automatically. Purchased Memory filaments remain separate and the
+  first purchase still changes the next run to `Signal 4 / 4`.
 
 ## Evidence from this turn
 
-- `npm run verify` passed after the rebuild: structure, **89 unit tests**,
-  **7 integration tests**, balance smoke, benchmark, and link/path checks.
-- Benchmark on Node v22.22.3 / Linux x64: 3,396 ticks in 205 ms = **16,572
-  ticks/s**, 7 MB reported heap, stable hash `d02cae0d`.
-- `npm run test:browser:file` passed in real headless Chrome WebGL2 through CDP
-  pipe at 390×844: title tap changed the rendered PNG; a 32× run completed in
-  **9.65 s**, score 704,131, five drafts, Memory purchase, persisted filament,
-  and next-run `Signal 4 / 4`; no browser errors were observed.
-- A separate 1440×900 Chrome/WebGL2 CDP capture booted with no observed
-  exceptions. Generated evidence is git-ignored under `reports/`:
-  `browser-file-title.png`, `browser-file-title-tap.png`,
-  `browser-file-memory.png`, and `browser-file-title-desktop.png`.
-- `npm run test:browser` still exits **77** honestly because this container
-  blocks Chrome network sockets (`ERR_ACCESS_DENIED`). The socket-free test is
-  strong browser/GPU evidence but not a same-origin HTTP or public Pages test.
-- A 100-run sequential production-simulation soak completed 306,932 ticks in
-  18.015 s with 0 invalid runs. Forced-GC heap moved 4.77 → 4.83 MB; final RSS
-  was 66.52 MB. This is Node simulation evidence, not a browser heap claim.
-- Balance smoke medians remain: balanced 361 s, expansion 325.4 s, resilience
-  360.5 s. Balanced and resilience still miss the 270–330 s target.
+- Focused camera/simulation/storage/determinism suite: **32/32 passed**.
+  Regression tests prove a fixed grabbed point follows rightward and downward
+  drag, and 96 vertical steps complete a full 2π orbit with finite matrices and
+  no direction/up drift.
+- `npm run verify` passed: structure, **91 unit tests**, **7 integration tests**,
+  balance smoke, benchmark, and link/deployment-path checks.
+- Benchmark on Node v22.22.3 / Linux x64: 3,396 ticks in 203 ms = **16,712
+  ticks/s**, 8 MB reported heap, deterministic hash `6965ed2a`.
+- `npm run test:browser:file` passed in real headless Chrome WebGL2 at 390×844:
+  a horizontal drag plus a 580 px vertical drag rendered visibly; title tap
+  responded; the deterministic 32× run completed in **9.65 s** with score
+  704,131 and five drafts; the run Imprint persisted, Memory purchase
+  conserved Echoes, and restart showed `Signal 4 / 4`. No browser errors were
+  observed.
+- Generated git-ignored visual evidence:
+  `reports/browser-file-title.png`, `browser-file-title-drag.png`,
+  `browser-file-title-tap.png`, and `browser-file-memory.png`. The Memory image
+  shows the actual latest corridor centered on the globe.
+- A 100-run production-simulation soak completed 306,932 ticks and 2,736 total
+  Imprint edges in **22.047 s** with 0 invalid runs. Forced-GC heap moved
+  4.12 → 4.86 MB; final RSS was 69.89 MB. This is Node simulation evidence,
+  not a browser heap or physical thermal claim.
+- Balance smoke remains unchanged: balanced median 361 s, expansion 325.4 s,
+  resilience 360.5 s. Balanced and resilience miss the 270–330 s target.
 
 ## Incomplete / not claimed
 
-- The full four-run campaign, **Beyond the Last Cell**, Imprints, archive,
-  trophies, Policies, auto-retry, sharing, audio, PWA, challenges, and broad
-  world/strain selection are not implemented.
-- English is now coherent across the exposed title/result/memory and current
-  Adaptation drafts, but complete Japanese localization and an accessible
-  language switch are not done.
-- Memory currently preserves authored prerequisite filaments, not a selected
-  morphology-derived Imprint from the just-finished run.
-- The WebGL2 primary path has the new dual-cell art direction. Canvas 2D remains
-  playable but still uses the older simplified dot/speckle substrate.
-- No physical phone, thermal, real-user, screen-reader, 200% text zoom, or
-  unrestricted public-URL Chrome visual observation is claimed. Public
-  deployment bytes were verified with cache-busted Node fetches only.
-- The authoritative simulation remains 10 Hz Float32; the 8 Hz rebaseline is a
-  target, not an implementation claim.
+- Imprints are selected automatically as the strongest connected corridor.
+  A post-run choice between several morphology artifacts is not implemented.
+- The full four-run campaign, **Beyond the Last Cell**, archive, trophies,
+  Policies, auto-retry, share cards, audio, PWA, challenges, and broad world
+  selection remain incomplete.
+- English is coherent across exposed screens, but complete Japanese
+  localization and an accessible language switch are not done.
+- Canvas 2D uses the free camera frame but still renders the older simplified
+  substrate rather than filled dual polygons.
+- `npm run test:browser` over a local HTTP socket still exits 77 in this
+  container; the CDP-pipe file test is real browser/GPU evidence but not a
+  same-origin HTTP browser pass.
+- No physical Android, thermal, real-user, screen-reader, 200% text zoom, or
+  unrestricted public-URL Chrome visual observation is claimed.
+- The simulation remains 10 Hz Float32; 8 Hz remains a target.
 
 ## Next actions (contest impact order)
 
-1. Derive a compact Imprint from the terminal morphology and carry that exact
-   state into Memory; expand the six-node path into the tested four-run
-   **Beyond the Last Cell** campaign.
-2. Make run morphology less locally dense and improve collapse/Memory visual
-   transitions, then capture abundance, crisis, collapse, and result at the
-   four required viewports.
+1. Offer two or three truthful terminal Imprints (corridor, loop, surviving
+   component) and bind the player's choice into the first four-run continuity
+   campaign culminating in **Beyond the Last Cell**.
+2. Replace the abrupt result-to-Memory reframe with a state-derived extinction
+   transition and improve run morphology/collapse screenshots at all required
+   desktop and mobile viewports.
 3. Complete English/Japanese switching and keyboard/screen-reader/reduced-motion
-   flows, then obtain same-origin/public Pages Chrome and physical Android
-   performance/thermal evidence.
+   flows, then obtain same-origin Chrome and physical Android thermal evidence.
