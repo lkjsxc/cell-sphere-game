@@ -88,6 +88,7 @@ export async function runScenario(t) {
 
   await evaluate("document.querySelector('#run-screen .history-open').click()"); const historyTick = await evaluate('window.__IN_APP__.snapshot.tick');
   await wait(500); ok(await evaluate('window.__IN_APP__.snapshot.tick') > historyTick, 'History stopped world time');
+  await evaluate("document.getElementById('pause-button').click()");
   const historySize = await evaluate(`(() => { const r=document.getElementById('history-dialog').getBoundingClientRect();
     return {height:r.height,viewport:innerHeight,backdrop:Boolean(document.querySelector('.modal-backdrop,[role=dialog]'))}; })()`);
   ok(historySize.height <= historySize.viewport * .42 + 1 && !historySize.backdrop, 'History is blocking or exceeds mobile sheet bound');
@@ -100,7 +101,8 @@ export async function runScenario(t) {
   await screenshot('browser-history-event-mobile.png'); await evaluate("document.getElementById('history-next').click(); document.getElementById('history-live').click()");
   ok(await evaluate('window.__IN_APP__.historySnapshot===null && window.__IN_APP__.visualSeed===window.__IN_APP__.runSeed'), 'Live did not restore authoritative presentation');
   await screenshot('browser-history-mobile.png'); await setViewport(1440,900); await evaluate('window.__IN_APP__.camera.dist=4.1'); await wait(180); await screenshot('browser-history-desktop.png');
-  await setViewport(390,844); await evaluate('window.__IN_APP__.camera.dist=6'); await wait(150); await evaluate("document.getElementById('history-close').click()");
+  await setViewport(390,844); await evaluate('window.__IN_APP__.camera.dist=6'); await wait(150);
+  await evaluate("document.getElementById('history-close').click(); document.getElementById('pause-button').click()");
 
   ok(await poll(() => evaluate("document.getElementById('result-screen').hidden"), (hidden) => hidden === false, 40000),
     '32x run did not reach extinction');
