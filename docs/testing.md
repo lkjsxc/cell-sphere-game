@@ -1,57 +1,43 @@
-# Testing
+# Testing and evidence
 
-Tests target the risks that matter: determinism, topology correctness,
-simulation invariants, scoring integrity, save safety, and structure rules.
-Framework: Node built-in `node:test` + `node:assert`. Zero test dependencies.
+`npm run verify` runs structure, unit, integration, balance smoke, benchmark,
+and deployment-path/link gates. `npm run test:browser:file` uses real headless
+Chrome/WebGL2 through a CDP pipe when local HTTP sockets are sandbox-blocked.
+The same-origin harness exits 77 rather than reporting a false pass when Chrome
+cannot connect.
 
-## Layers
+## Automated contracts
 
-1. **Unit** (`npm run test:unit`, `tests/unit/`)
-   PRNG reproducibility/distribution · icosphere counts, adjacency symmetry,
-   degrees, no duplicate edges, normalized positions · world-field
-   reproducibility · tick invariants (no NaN, conservation sanity) · event
-   schedule determinism · Signal decay · adaptation prerequisites/effects ·
-   phenotype recognition · scoring monotonicity/bounds · Echo conversion ·
-   progression prerequisites · trophy evaluation · save validation ·
-   seed-code round trip · replay round trip · state-machine transitions ·
-   structure rules. Renderer logic (camera, picking, instance packing, and a
-   static shader-uniform cross-check that every declared uniform is uploaded)
-   is also unit-tested here so it runs without a GPU.
+Unit coverage includes topology/dual manifold, deterministic WorldModel hash,
+land bounds, climate/biomes/forest coherence, priority-flood acyclic drainage,
+river mouths/order, landmarks/sources, generation budget, renderer geometry
+and uniforms, tap/camera math, settings/pause/rotation, simulation queue/RNG,
+pure inspection, History cap, and the 108-node graph/migration/economy.
 
-2. **Integration** (`npm run test:integration`, `tests/integration/`)
-   Named golden scenarios (seed + decision log) asserting final hash,
-   extinction cause, score, survival tick, phenotype. Speed invariance:
-   identical outcome under constant 1×, mid-run speed changes, 32× batching,
-   worker path, main-thread fallback, and pause/resume around drafts.
-   Golden updates require a `docs/balancing.md` decision entry.
+Current local and Docker verification pass **107 unit** and **11 integration**
+tests. Integration coverage includes seed/chunk/speed invariance, zero-input Random
+completion, exact manual resolution ticks, stream isolation, replay schema,
+conditional Memory, and a run with hundreds of inspection/snapshot queries
+matching a quiet run in hash, score, extinction, decisions, History, and
+Imprint.
 
-3. **Browser** (`npm run test:browser` → `scripts/browser-test.mjs`)
-   Zero-dependency headless-Chrome harness that boots the live app over the
-   dev server and fails on any uncaught JS / shader error. Where the host
-   sandbox blocks Chrome's network stack (socket EPERM / `ERR_ACCESS_DENIED`,
-   as in restricted CI containers), it exits **77 (skip)** with the exact
-   signature rather than reporting a false pass — so it is intentionally not
-   part of `npm run verify`. A real GPU render is recorded only when observed
-   on unrestricted hardware (see `docs/decisions.md` D8).
+## Real Chrome scenario
 
-4. **Soak / chaos** (documented manual + scripted)
-   100-run auto-retry leak check · invalid shader path · worker rejection ·
-   malformed saves · unsupported share API · context loss · resize during
-   draft · rapid speed changes · repeated restarts.
+The file/CDP scenario clears itself through a disposable profile and checks:
+rotation default off; drag; title inspector; Settings and opt-in idle rotation;
+manual queued offer without pause; explicit panel/close/reopen/choice; switch
+back to Random; live History without pause; 32× result; result History;
+108 Memory scene nodes; select-before-Unlock; currency/persistence; accessible
+list; reload; no obsolete run guidance; and no console/runtime errors.
 
-## Commands
+Generated evidence includes mobile title/run/river inspector/Adaptations/
+History/result/Memory selections/Settings and desktop title/run/Memory at
+390×844 and 1440×900.
 
-```bash
-npm test                 # unit + integration
-npm run test:browser     # needs Chrome; prints instructions if absent
-npm run verify           # all fast gates
-```
+## Honest limitations
 
-## Latest evidence
-
-| Date | Command | Result |
-|---|---|---|
-| 2026-08-01 | `npm run test:unit` | PASS 82/82 (incl. scoring and local-progression validation) |
-| 2026-08-01 | `npm run test:integration` | PASS 7/7 (speed invariance chunk 1/7/32) |
-| 2026-08-01 | `npm run benchmark` | PASS ~18.6k ticks/s, hash d02cae0d |
-| 2026-08-01 | `npm run test:browser` | SKIP 77 — container seccomp blocks Chrome network stack; harness now opens the normal app route, not preview mode |
+The CDP file path is real Chrome/WebGL2 but bypasses same-origin HTTP security
+to accommodate this container. Physical Android, thermal, screen-reader,
+Japanese localization, browser heap trend, p95 frame timing, and unrestricted
+public-URL visual observation remain unmeasured unless status records newer
+specific evidence.

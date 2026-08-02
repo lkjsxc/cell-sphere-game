@@ -1,44 +1,39 @@
 # Submission
 
-Final submission plan and checklist. Nothing here is claimed done until
-evidence is recorded.
+Final contest submission remains pending. This file distinguishes release
+evidence from the later frozen submission/tag/form.
 
-## Targets
+## Target
 
-- Division: Webページ部門 — ZEN大学 (最優秀賞 target).
-- Deadline: 2026-09-13 (日).
-- Hosted URL: GitHub Pages at `https://lkjsxc.github.io/incremental-network-game/`
-  (verify after enabling Pages).
-- Repository: `https://github.com/lkjsxc/incremental-network-game` (Public).
+- Web Page category — ZEN University division.
+- Published deadline: 2026-09-13.
+- Repository: <https://github.com/lkjsxc/incremental-network-game>.
+- Playable URL: <https://lkjsxc.github.io/incremental-network-game/>.
 
-## Branch / tag plan
+## Current release candidate evidence
 
-1. Development on `main`; CI verifies every push.
-2. When Gate G passes: create `contest-submission` branch from the verified
-   commit; enable Pages from that branch (or `/docs` — decide at that time;
-   root deployment from branch is simplest).
-3. Create annotated tag `submission-2026-summer` on the same commit.
-4. Freeze risky changes; fixes only, each re-verified.
-5. Record both commit hashes here.
+- Functional commit: `9c8d552` (passive living-world integrated loop).
+- Native static HTML/CSS/ES modules, no runtime dependency/network service.
+- Local verify: 107 unit + 11 integration, balance, benchmark, structure/links.
+- Docker verify passes with the Git-capable Node 22 image.
+- Real desktop Chrome/WebGL2 via CDP pipe: 390×844 and 1440×900, no console
+  errors, 32× result, History, Settings, inspector, 108-node Memory purchase.
+- Physical smartphone and unrestricted same-origin Chrome remain pending.
 
-## Checklist
+## Final freeze checklist
 
-- [ ] `npm run verify` green on the tagged commit (paste output summary).
-- [ ] Clean-clone verification: clone to a temp dir, `npm run verify`.
-- [ ] Hosted URL serves the exact tagged source (diff a fetched file).
-- [ ] Fresh-storage first-run flow on desktop Chrome.
-- [ ] Smartphone Chrome flow (physical or emulation — record which).
-- [ ] 32× complete run; reduced-motion flow; WebGL2-disabled fallback.
-- [ ] Offline reload after service-worker install; no stale-cache trap.
-- [ ] Share text + generated card verified.
-- [ ] 100-run auto-retry soak; console clean.
-- [ ] README screenshot/capture is real and current.
-- [ ] Application form submitted (ZEN大学 tab; was preparing as of
-      2026-07-30 — recheck official page).
+- [ ] Re-read rules/form and confirm ZEN University application path.
+- [ ] Obtain physical smartphone Chrome/touch/thermal evidence.
+- [ ] Test Canvas fallback, reduced motion, large text, and screen reader manually.
+- [ ] Run clean-clone local + Docker verification.
+- [ ] Verify public Pages HTML/modules contain the exact intended commit.
+- [ ] Review README/screenshots/copy from fresh storage.
+- [ ] Create reviewed submission branch and annotated tag without rewriting main.
+- [ ] Submit form and preserve public repository/page throughout judging.
 
-## Record
+## Final record
 
-- Submission commit: (pending)
-- Tag: (pending)
-- Hosted URL verified at: (pending)
-- Form submitted at: (pending)
+- Submission commit: pending
+- Submission branch/tag: pending
+- Form submitted: pending
+- Public URL exact revision verification: see `docs/status.md` for latest release

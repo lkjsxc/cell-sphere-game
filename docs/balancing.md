@@ -18,8 +18,8 @@ simulation modules headlessly — never a copied or simplified model.
 
 ## Bot policies
 
-novice (random-valid) · balanced · expansion · resilience · efficiency ·
-greedy-score · no-signal · no-progression · challenge-specific.
+random-valid · balanced · expansion · resilience · efficiency ·
+greedy-score · no-progression · challenge-specific.
 Each is a deterministic heuristic using only player-visible information.
 
 ## Smoke vs full
@@ -39,12 +39,14 @@ Each is a deterministic heuristic using only player-visible information.
 | 2026-08-02 | (WorldModel) | balanced | 4 | 364.2 s | 360.5–364.2 | 0.50 | graph-native geography smoke |
 | 2026-08-02 | (WorldModel) | expansion | 4 | 311.5 s | 304.8–360.9 | 0.56 | within target median; wide range |
 | 2026-08-02 | (WorldModel) | resilience | 4 | 360.2 s | 360.2–364.2 | 0.57 | ceiling remains dominant |
+| 2026-08-02 | integrated passive world | balanced | 4 | 291.7 s | 273–322.6 | 0.14 | meets target in diagnostic smoke |
+| 2026-08-02 | integrated passive world | expansion | 4 | 290.9 s | 272.9–311.5 | 0.09 | low coverage, target duration |
+| 2026-08-02 | integrated passive world | resilience | 4 | 292.2 s | 194.9–362 | 0.14 | wide range needs deeper sample |
 
-Initial read: extinction timing clusters near the terminal ceiling (360 s)
-rather than the 270–330 median target — the collapse curve is currently the
-dominant killer. Next tuning pass: strengthen mid-run pressure (events,
-maintenance entropy scaling) so weak builds die before the ceiling while
-strong builds still reach it. Sample size 4 is diagnostic, not conclusive.
+The integrated biome factors moved the diagnostic medians into the 270–330 s
+target while reducing coverage. This is n=4 smoke evidence, not a calibrated
+claim about the full distribution. A deep Monte Carlo should check that sparse
+terrain routes remain visually satisfying across archetypes.
 
 ## Score projection
 
@@ -74,7 +76,9 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   target is calibrated. No simulation equation or golden checksum changed.
 - **2026-08-02 — Graph-native WorldModel.** Replaced independent scalar noise
   with continent, climate, drainage, river, forest, and biome fields. The
-  default-world golden is `eccc4bba`; production benchmark hash is now
-  `494b406b` (3,107 ticks, 15,475 ticks/s on Node v22.22.3/Linux x64). The
+  initial default-world golden was `eccc4bba`; after central biome factor
+  arrays joined the hash, the current golden is `749bda35`. The integrated
+  production benchmark hash is `98333073` (2,910 ticks, 18,089 ticks/s on
+  Node v22.22.3/Linux x64). The
   four-seed smoke above is evidence of the resulting environment shift, not a
   claim that balanced/resilience timing now meets target.

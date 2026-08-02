@@ -1,104 +1,76 @@
 # Game design
 
-Canonical product language: title **incremental-network-game**; tagline
-*Every extinction becomes memory.*; premise
-「球体世界に網状生命を育て、絶滅を次の記憶へ変える。」
-Score = **Network Score / ネットワークスコア**; currency = **Echoes / エコー**;
-skill tree = **Memory Globe / 記憶球**; archive = **Extinction Archive / 絶滅記録**;
-active verb = **Signal / シグナル**; mutation draft = **Adaptation / 適応**;
-world pressure = **Entropy / エントロピー**; first resolution trophy =
-**Beyond the Last Cell / 最後の細胞の先へ**.
+**incremental-network-game** — *Every extinction becomes memory.*
 
-## Core loop
+## Product thesis
 
-1. Inspect the rotating world (seed, biome tendencies).
-2. Pick 1 of ≤3 strains (first run preselects Pioneer, changeable).
-3. Inoculate: tap the globe or accept the recommended region.
-4. Watch automatic growth: seek nutrients, reinforce useful routes, prune.
-5. Optional Signals: tap to place a temporary attraction field (3 charges,
-   regen ~1 per 15–25 game s).
-6. Adaptation drafts at milestones: 3 cards, pause at 1× by default,
-   policy-driven at high speed.
-7. Respond to telegraphed environmental crises.
-8. Extinction: network fades in causal order; never an abrupt modal.
-9. Result: one integer score + rank + breakdown + Echoes + trophies.
-10. Memory Globe: spend Echoes on permanent veins across a second sphere.
-11. Restart instantly, or auto-retry under a chosen policy.
+The planet is primarily a beautiful autonomous world to watch, rotate, and
+understand. It inoculates itself from the run seed. Growth, routes, crises, and
+collapse remain authoritative when the player never touches the screen.
+Ordinary globe taps only inspect.
 
-## Run pacing (game time)
+Four compatible attention modes:
 
-| Range | Phase | Experience |
-|---:|---|---|
-| 0–15 s | Germination | Immediate bloom, forgiving resources |
-| 15–75 s | Abundance | Fast expansion, first Signal, first adaptation |
-| 75–165 s | Competition | Local scarcity, pruning, 2nd–3rd adaptations |
-| 165–245 s | Instability | Seasonal swings, seeded crises |
-| 245–300 s | Collapse | Renewal fails, fragmentation |
-| 300–360 s | Terminal | Hard ceiling converts power into score |
+- **Ambient observer:** start and watch; AUTO: RANDOM completes the run.
+- **Curious naturalist:** rotate and inspect geography/life without influence.
+- **Strategic curator:** switch to MANUAL and resolve queued three-card offers
+  when convenient while world time continues.
+- **Long-term gardener:** spend extinction Echoes on a dense spherical Memory
+  atlas and shape later worlds.
 
-## Adaptation categories (6)
+## Run loop
 
-Reach · Metabolism · Resilience · Transport · Symbiosis · Memory.
-A card may belong to two categories. Every card has a real tradeoff.
-Ship ≥24 cards before adding more.
+1. Inspect a seeded living world.
+2. Grow a world; deterministic weighted inoculation chooses suitable land.
+3. Watch routes spread through climate/biome opportunities and costs.
+4. Receive three-option Adaptations without interruption. Random automatic
+   selection is default and exactly uniform; Manual offers remain until chosen.
+5. Inspect cells and review semantic History during play.
+6. Spatial crises, entropy, fragmentation, and inevitable extinction unfold.
+7. Result explains score/cause, automatic/manual choices, Echoes, and Imprint.
+8. Enter Memory, select a node on the globe, read it, then explicitly Unlock.
+9. Make several small purchases and grow the next world.
 
-## Phenotype synergies (≥8)
+## Geography
 
-World Vein, Glass Bloom, Quiet Fortress, Phoenix Mesh, Storm Reader,
-Living Reservoir, Nomad Lattice, Toxic Garden. Each alters behavior or
-presentation, is recorded in the archive, and maps to a trophy.
+World archetypes currently vary among Verdant Riverworld, Archipelago, and
+Fractured Basins. Quantile continents feed priority-flood drainage, tributaries,
+river trunks/mouths, occasional lakes, climate, forests, and twelve biomes.
+Landmarks identify a summit, great river, forest heart, coast, dry basin, and
+lake where present. Rivers, forest, grassland, desert, wetlands, highlands,
+cold terrain, coasts, and ocean apply bounded centralized factors; no terrain
+is an unexplained arbitrary click wall.
 
-## Events (8 families)
+## Pacing
 
-Drought front, thermal bloom, deep freeze, toxic rain, solar flare,
-volcanic ash band, nutrient bloom, parasitic blight. Each has a telegraph,
-spatial footprint, clear effect, ≥2 responding adaptation categories,
-Japanese text, and an event-history entry. Positive events are sparse.
-A deterministic anti-streak rule prevents family repetition.
+- first visible growth: under 10 game seconds;
+- Adaptation offers: 45, 90, 135, 180, and 240 game seconds when reached;
+- median ordinary target: 270–330 game seconds;
+- terminal ceiling: about 360 game seconds;
+- 1×–32× alters wall time only;
+- first campaign-resolution target: 18–24 minutes;
+- broad Memory/mastery target: about four hours.
 
-## Score
+The current smoke median meets the ordinary-run target; campaign and complete
+mastery timing remain targets, not measured completion claims.
 
-```
-quality = 0.24 survival + 0.24 peakCoverage + 0.18 sustainedCoverage
-        + 0.14 connectivity + 0.12 efficiency + 0.08 crisis
-score   = round(1_000_000 * quality * challengeMultiplier + explicitBonuses)
-```
+## Adaptations and History
 
-Bands: 20k–80k first runs · 80k–200k learning · 200k–450k strong builds ·
-450k–750k mastery · 750k+ exceptional. Ranks: Seed, Thread, Mesh, Web,
-Cortex, Planetary, Transcendent.
+Offers are fixed when generated, bounded FIFO records with offer/resolution
+ticks. Unresolved manual offers grant no benefit and are reported as Unchosen.
+History stores semantic lifecycle, geography, morphology, crisis, Adaptation,
+extinction, and Memory-purchase events rather than tick logs. Located events
+can focus the globe and open the same observational inspector.
 
-Echoes: `floor(baseMilestone + sqrt(score / 1500) + challengeEchoes)` —
-diminishing returns; every run matters, no single run buys the tree.
+## Memory atlas
 
-## Progression
+Exactly 108 nodes form six 18-node currents: Reach, Flow, Reserve, Ecology,
+Perception, and Continuity. Composition is 48 micro, 24 conditional, 18
+information/mechanic/automation records, 6 keystones, 6 connectors, and 6
+capstones. Costs total 818 Echoes. Six roots cost 2–3 Echoes; early runs expose
+several purchases. Scalar/conditional effects compile once per run and remain
+bounded. The globe is primary; the grouped list is an accessible alternative.
 
-Memory Globe: 36–48 nodes on a low-res sphere, six branches mirroring the
-adaptation categories. Nodes grant cards, strains, Signal control, forecasts,
-one reroll, memory slots, challenges, visual styles, autoplay policies,
-auto-retry, archive tools, capstones. Raw power stays bounded.
-
-Campaign resolution (~4 runs): foundational nodes → phenotype discovery →
-survive into terminal pressure → Continuity node + transmission run. The run
-still ends in extinction; one memory filament escapes. Trophy: *Beyond the
-Last Cell*. Then: challenges (Barren / Volatile / Fractured / Silent Sphere),
-full trophy board, endless post-clear objective.
-
-## Trophies
-
-32 core trophies (progression ×8, mastery ×8, build discovery ×8,
-automation/speed/challenge ×8). Deterministic paths, visible conditions
-(unless intentionally secret), progress indicators, no online dependence.
-See `src/game/trophies.js` for the authoritative definitions.
-
-## Strains
-
-Pioneer (fast exploration, fragile) · Conservator (efficient, resilient,
-slow) · Weaver (strong transport/loops, high maintenance).
-
-## Autoplay policies
-
-Balanced · Expansion · Resilience · Efficiency. Deterministic heuristics
-using only player-visible information. Auto-retry stops on: new trophy,
-personal best, N runs, score threshold, or any pointer interrupt. Never
-runs in a hidden tab.
+The long campaign, challenges, broader strain selection, trophies, audio,
+complete Japanese localization, and every advanced Memory unlock consumer are
+not yet complete and are not exposed as decorative controls.

@@ -1,75 +1,58 @@
 # Simulation
 
-Deterministic spherical network simulation. Pure data in, pure data out —
-no DOM, audio, storage, or rendering dependencies.
+Deterministic 10 Hz typed-array network authority. No DOM, rendering, storage,
+or audio imports.
 
-## Topology
+## Static inputs
 
-Geodesic icosphere, subdivision level 4:
+A stable level-4 geodesic graph supplies 2,562 cells and 7,680 edges. The
+immutable WorldModel adds land/water, elevation, depression-filled drainage,
+flow accumulation/order/strength, lakes, climate, nutrients, forest density,
+biome, region, hazards, features, landmarks, and central biome factors.
 
-- **2,562 nodes**, **5,120 triangles**, **7,680 undirected edges**
-- mostly degree-6 nodes; exactly 12 degree-5 vertices (icosahedron corners)
-- canonical undirected edge list from triangle adjacency, deduplicated
-- static unit-sphere positions/normals in Float32Array; CSR adjacency
-  (`nodeEdgeStart`, `nodeEdges`, `nodeNeighbors`) for O(degree) traversal
+A dedicated inoculation RNG performs weighted sampling among ecologically
+valid resource candidates above a plausibility floor; it does not always pick
+the numerical optimum. The selected cell is recorded in replay, History,
+inspector state, and result.
 
-Generation uses only +, −, ×, ÷, and `Math.sqrt` (IEEE-correct per spec) —
-no transcendentals — so topology is bit-identical everywhere.
+## Tick order
 
-## State (structure-of-arrays)
+1. Rebuild the tiny effective trait block from compiled conditional Memory.
+2. Environment every 5 ticks: entropy/season LUTs, moisture/temperature,
+   toxins, biome-scaled renewal, spatial event effects.
+3. Metabolism: biome-scaled uptake/upkeep, energy, stress, tissue maturity.
+4. Transport: terrain-cost-scaled flux, reinforcement, decay, pruning/rejoin.
+5. Growth: seeded frontier trials using habitat, climate, resources, crowding.
+6. Death/reclamation and terminal cascade.
+7. Connectivity every 20 ticks.
+8. Summary every 10 ticks: score metrics, geography/morphology milestones,
+   crisis lifecycle, Adaptation offers, History batches.
+9. Resolve at most one automatic FIFO Adaptation at the authoritative tick.
+10. Extinction check.
 
-Per node (Float32Array unless noted):
-`biomass`, `energy`, `nutrient`, `moisture`, `temperature`, `toxicity`,
-`stress`, `signal`, `alive` (Uint8Array).
+## Adaptations
 
-Per edge: endpoints `a`/`b` (Int32Array), `conductance`, `flux`
-(Float32Array), `age` (Uint16Array), `active` (Uint8Array).
+Canonical status is only `idle`, `running`, or `extinct`. Offers never pause.
+Each record contains stable ID/index, offer tick/reason, three unique fixed
+options, resolution tick/card/mode. Queue cap is eight; ordinary runs create at
+most five. Manual commands validate offer and card IDs and apply once at the
+current tick. Switching to Random resolves pending FIFO offers at no more than
+one per tick. Random selection is exact-uniform through rejection sampling on
+a dedicated xoshiro stream.
 
-Preallocated once. Double-buffered only where previous-tick reads are needed
-(transport). No allocation in hot loops: no objects, closures, combinators,
-or string work per node/edge.
+## Observation
 
-## Tick order (10 ticks / game second; a run ≈ 3,000 ticks)
+`inspectCell(node)` returns one compact dynamic record (life, biomass, energy,
+nutrient, moisture, temperature, toxicity, stress, routes) and performs no
+writes. Snapshot/history/result serialization likewise consumes no RNG.
+Observational-neutrality integration tests compare hash, score, cause,
+Adaptations, History, replay, and Imprint after hundreds of queries.
 
-1. **Environment** (every 5 ticks): entropy curve LUT, seasonal LUT,
-   nutrient regeneration `regen·(1−entropy)·(base−current)`, moisture and
-   temperature from base + season + events, toxicity accumulation/decay.
-2. **Metabolism**: suitability = tolerance(moisture)·tolerance(temp)·(1−toxin);
-   uptake = min(nutrient, rate·biomass·suitability·traits); energy += uptake;
-   energy −= maintenance·(1+entropy·k); stress ±= (1−suitability)·rate.
-3. **Transport**: one Jacobi-style relaxation pass of energy along active
-   edges weighted by conductance; record `flux[e]`.
-4. **Reinforce/prune**: conductance += k·|flux|·usefulness − decay; clamp;
-   prune inactive below threshold after min age.
-5. **Growth**: frontier nodes evaluate inactive neighbor edges by nutrient
-   gradient, suitability, signal bias, crowding, traits; seeded PRNG draw;
-   expansion costs energy; new node starts with thin biomass.
-6. **Death**: energy deficit or stress > 1 shrinks biomass; biomass ≤ ε kills
-   the node; edges to dead nodes deactivate.
-7. **Signals**: exponential decay of `signal[]`.
-8. **Summaries** (every 10–20 ticks): coverage, largest connected component
-   (BFS), score accumulators, phenotype checks, extinction detection.
+## Replay and History
 
-Terminal ceiling: after 360 game s a collapse cascade kills low-energy nodes
-each tick, guaranteeing extinction.
-
-## Events
-
-Seeded schedule generated at run start: 6–10 events across the run, denser in
-instability; family anti-streak shuffle. Each event: family, start/peak/end
-tick, center node, angular radius, intensity. Telegraphed 10 s ahead.
-Footprint = nodes within angular radius (precomputed at schedule time).
-
-## Determinism rules
-
-- xoshiro128** PRNG; all draws in fixed iteration order.
-- Seasonal/entropy curves are precomputed LUTs (computed once per world).
-- `Math.fround` at every state-array write in the tick.
-- Speed changes only alter how many ticks run per real-time slice.
-- Replay log records decisions/signals/speed changes as `[tick, type, …]`.
-- Final hash: FNV-1a over quantized state arrays + summary.
-
-## Units
-
-Time in ticks (0.1 game s). Biomass/energy/nutrient are abstract conserved
-units. All constants centralized in `src/game/balance.js` with unit comments.
+Replay schema 2 records strain, inoculation, mode changes, fixed offers, and
+selections with authoritative ticks/card indices. The terminal hash folds
+dynamic arrays, replay, inoculation, mode, version, and owned cards. History is
+capped at 80 semantic events with deterministic final-slot reservation and
+coalescing. Main-thread persistence converts stable event types/arguments into
+localized presentation keys.

@@ -2,56 +2,41 @@
 
 **incremental-network-game** — *Every extinction becomes memory.*
 
-A mobile-first, one-pointer roguelite incremental played on a living spherical
-world. The player cultivates a slime-mold-like network organism that explores,
-connects, reinforces, and prunes itself across a globe that inevitably dies.
-Extinction is not failure; it is the currency of permanent memory.
+A mobile-first passive-observation roguelite on a rich spherical ecology. The
+player watches autonomous network life discover geography, rotates and inspects
+without steering it, chooses or delegates non-blocking evolution, understands
+its story through History, and gardens permanent paths across a Memory Globe.
 
 ## Product thesis
 
-> Death is not failure. Every extinction teaches the next network how to grow.
+> Death is not failure. Observation becomes understanding; every extinction
+> teaches the next world how to grow.
 
-The game must feel simultaneously alive, calm to watch, strategically
-meaningful when guided, immediately satisfying, technically impressive without
-looking like a demo, clear within ten seconds, and deep enough for roughly
-four hours of trophy play.
+The world must be beautiful and legible with zero input, rewarding to inspect,
+strategic when Adaptations are manual, and satisfying between runs through many
+small permanent purchases. It is a living interactive atlas, not a dashboard,
+not a click-to-place game, and not a hidden-tab idle process.
 
-## Non-negotiable timings (game time, normal speed)
+## North stars
 
-| Target | Value |
-|---|---|
-| First visible growth | < 10 s after inoculation |
-| First meaningful choice | < 60 s |
-| Median run length (new save, balanced) | 270–330 game s |
-| Hard run ceiling | ~360 game s |
-| First campaign resolution (1×) | ~18–24 min |
-| Full core trophy set (1×, skilled) | ~3.5–4.5 h |
+- first visible growth under 10 game seconds;
+- median ordinary run 270–330 game seconds, ceiling about 360;
+- first campaign resolution target 18–24 minutes;
+- broad trophy/Memory mastery target around four hours;
+- same seed + Memory + decision log produces the same result at every speed;
+- pointer-only completeness, semantic alternatives, reduced-motion safety;
+- desktop and smartphone Chrome, low allocation, restrained draw count;
+- exact evidence language: implemented, tested, measured, observed, deployed,
+  and target are never interchangeable.
 
-Speed settings (pause, 1×–32×) compress wall time without altering simulation
-rules. Turbo exists for experimentation, accessibility, and testing.
+## Winning criteria
 
-## Emotional arc of one run
-
-Abundance → competition → instability → collapse → extinction → memory.
-The world visibly tells this story through color, atmosphere, and network
-morphology. The result screen explains *why* the network died and *what* it
-achieved, then hands the player one clear next action.
-
-## Winning criteria (what makes this a grand-prize work)
-
-1. One-tap comprehension; a judge understands in 10 seconds.
-2. An original engine-less spherical adaptive-network simulation (WebGL2).
-3. Emergent but readable growth: reinforcement, pruning, fragmentation.
-4. An emotionally coherent inevitable-extinction loop with permanent memory.
-5. A Memory Globe skill tree that reuses the world's own visual language.
-6. Deterministic simulation: same seed + decisions = same result at any speed.
-7. Mobile-first, low-heat, 44px targets, reduced-motion safe.
-8. Shareable deterministic fossils (score + seed + generated card image).
-9. Excellent source: organized folders, comments, tests, honest docs,
-   clean Git history, CI, performance evidence.
-
-## What this game is not
-
-Not a literal Physarum simulator. Not a dashboard. Not an idle game that
-plays itself in a hidden tab. Not a gambling loop. Not a tech demo with a
-UI bolted on. See `game-design.md` for the positive definition.
+1. A judge understands the autonomous loop within ten seconds.
+2. Original engine-less spherical topology, geography, hydrology, and network.
+3. Rivers, forests, terrain, and living routes remain distinct at a glance.
+4. Extinction is inevitable, causal, narrated, and converted into Memory.
+5. Non-blocking Random/Manual evolution supports ambient and strategic play.
+6. History makes autonomous behavior understandable during and after a run.
+7. A dense globe-native progression atlas rewards repeated extinction.
+8. Excellent deterministic source, tests, accessibility, deployment, and
+   honest performance evidence.

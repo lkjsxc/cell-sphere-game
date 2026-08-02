@@ -1,47 +1,40 @@
 # Accessibility
 
-Accessibility is part of completion. This document records implemented
-behaviors, the manual test matrix, and known limitations. Do not claim
-conformance to a standard that has not been audited.
+Accessibility is a completion criterion, not a claim of audited conformance.
 
-## Implemented (updated as systems land)
+## Implemented
 
-- Japanese UI with short sentences; one concept introduced at a time.
-- All touch targets ≥ 44×44 CSS px; body text ≥ 16px.
-- Portrait-primary layout usable at 360×640; safe-area insets respected.
-- Information is never color-only: category, state, rarity, and locked
-  states pair hue with symbol shape, line pattern, or label.
-- `prefers-reduced-motion` honored as default; user override via settings.
-  Reduced motion removes inertia, particle bursts, score count-up, and vein
-  travel pulses while preserving state comprehension. No screen shake, no
-  full-screen flashing.
-- `prefers-contrast: more` strengthens borders/text; `forced-colors` gets
-  system-color borders.
-- Semantic DOM: real buttons/dialogs, visible focus, logical order, focus
-  trapping only in true modals with restoration.
-- Canvas has an accessible name; core HUD metrics mirrored in semantic DOM;
-  polite live region announces adaptation choices, trophies, and errors —
-  never rapid score updates.
-- Settings reachable from the title screen; pause always reachable in-run.
-- Audio muted by default; suspends when hidden; haptics off by default.
+- English player UI with semantic buttons, dialogs, headings, lists, forms,
+  fieldsets, definition lists, timestamps, and explicit close actions.
+- Touch controls target at least 44 CSS px and honor mobile safe areas.
+- Ordinary globe tapping is optional for information: previous/next landmark
+  controls and the grouped Memory list provide semantic alternatives.
+- Cell inspector exposes static geography and low-cadence living state in a
+  readable definition list. History location buttons focus the same cell.
+- Adaptation cards are ordinary generous buttons; offers never expire and the
+  full surface opens only by explicit action.
+- Full-screen Adaptations, History, and Settings state that world time
+  continues. Optional panel pause defaults off and uses an independent lease.
+- Native dialogs trap focus; close restores the invoking browser focus where
+  supported. Escape closes safe full-screen overlays.
+- Memory purchase status, cost, prerequisites, locked reason, and explicit
+  Unlock intent exist in DOM; the list and globe share one source of truth.
+- One polite live region announces meaningful changes; rapid metrics do not.
+- Reduced motion disables effective idle rotation/pulses/inertia behavior;
+  selection and river/network meaning remain static and visible.
+- System forced colors/focus visibility and user contrast settings are honored.
 
-## Manual test matrix
+## Continuing-time safeguards
 
-| Scenario | Desktop Chrome | Mobile Chrome / emulation |
-|---|---|---|
-| Fresh-storage first run | pending | pending |
-| 360×640 portrait reachability | pending | pending |
-| Reduced motion flow | pending | pending |
-| High contrast / forced colors | pending | pending |
-| Browser zoom 150% / large text | pending | pending |
-| Muted vs audio-enabled | pending | pending |
-| WebGL2-disabled fallback | pending | pending |
-| Worker-failure fallback | pending | pending |
-| Corrupted-save recovery | pending | pending |
-| Hidden-tab pause/resume | pending | pending |
+Pause is reachable before opening panels. Manual, hidden-document, and panel
+reasons are independent; closing Settings cannot resume a manual pause.
+Pending manual Adaptations remain indefinitely. Hidden documents stop rendering
+through browser scheduling and pause authority through the lifecycle adapter.
 
-Physical-device rows are only marked done with device/OS/browser recorded.
+## Known limitations / unmeasured
 
-## Known limitations
-
-- (record honestly as discovered)
+Complete Japanese localization/language switching, keyboard globe orbit,
+screen-reader manual audit, 200% zoom, forced-colors visual review, physical
+mobile touch/thermal testing, and Canvas-fallback browser screenshots remain
+incomplete. New Memory information unlock flags are stored/compiled, but not
+every advanced atlas tool has a distinct accessible consumer yet.

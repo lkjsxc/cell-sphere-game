@@ -1,88 +1,86 @@
 # Architecture
 
-Zero-dependency static site: `index.html` + native CSS + ES modules.
-Works from any static server under any subpath (relative URLs only).
+Zero-dependency static HTML/CSS/native ES modules. All URLs are repository
+relative and work under the GitHub Pages subpath.
 
-## Module boundaries and dependency direction
+## Dependency direction
 
+`interface → rendering → simulation → world → core`; `game` supplies frozen
+content/effects to simulation and interface; `platform` contains browser
+adapters only. Simulation imports no DOM, WebGL, storage, audio, or interface.
+Rendering consumes immutable world fields/snapshots and never mutates authority.
+
+## Three independent state concerns
+
+```text
+primary screen: title → starting → running → result → memory → starting
+simulation:     idle | running | extinct
+pause reasons:  manual, hidden, optional panel lease
+overlay:        none | inspector | adaptations | history | settings |
+                memory-node | memory-list
 ```
-main.js  (composition root, small)
-  ├─ platform/   persistence, settings, capabilities, audio, share, lifecycle
-  ├─ interface/  DOM screens, user intent, state-machine wiring
-  ├─ rendering/  WebGL2 renderer, Canvas2D fallback, camera, picking, share card
-  ├─ game/       adaptations, phenotypes, strains, events content, scoring,
-  │              echoes, memory nodes, trophies, challenges, autoplay, balance
-  ├─ simulation/ deterministic run state + tick (no DOM/audio/storage/WebGL)
-  ├─ world/      icosphere topology + static environmental fields
-  └─ core/       PRNG, fixed-point math, clock, state machine, hashing, seeds
-```
 
-Allowed direction: upper layers import lower layers. `simulation` may import
-`world`, `game` (content/balance data), and `core` — never `rendering`,
-`interface`, or `platform`. `rendering` reads snapshots; it never mutates
-simulation state. No circular imports (checked by review; keep it that way).
+An Adaptation offer is queued data, never a primary/simulation phase. One
+overlay is active at a time. Closing a panel releases only its own pause reason
+and cannot resume a manually paused world.
 
 ## Execution topology
 
-Preferred: simulation runs in a **module Web Worker**; main thread renders
-and handles input. Fallback: the same `Simulator` class runs on the main
-thread when workers fail. No `SharedArrayBuffer` (GitHub Pages lacks
-cross-origin isolation headers).
+The module Worker owns canonical typed-array state and fixed-step timing. A
+small adapter falls back to the identical `RunController` on the main thread.
+Each controller generation rejects stale Worker callbacks. Static topology and
+WorldModel are regenerated deterministically on each side and are never sent in
+snapshots.
 
-### Worker protocol (JSON messages + transferable typed arrays)
+Main → Worker:
 
-main → worker:
-- `{t:'init', cfg}` — build a versioned world/run configuration
-- `{t:'start'}` — begin the prepared deterministic run
-- `{t:'decide', card}` / `{t:'signal', node}` / `{t:'reroll'}`
-- `{t:'speed', value}` / `{t:'pause'}` / `{t:'resume'}` / `{t:'policy', p}`
+- `init {cfg}` / `start`
+- `speed {value}` / `pause` / `resume`
+- `set-adaptation-mode {mode}`
+- `choose-adaptation {offerId, cardId}`
+- `inspect-cell {requestId, node}`
+- `snapshot-now`
 
-worker → main:
-- `{t:'ready'}` / `{t:'snapshot', tick, buffers…, metrics}` (transferable)
-- `{t:'draft', options, tick}` — simulation pauses until `decide`/`reroll`
-- `{t:'event', family, phase, center, radius}`
-- `{t:'extinct', summary}` — final metrics, hash, replay digest
+Worker → main:
 
-Static topology is generated independently by both sides from the seed —
-never transmitted.
+- `ready` / `started {inoculationCell}`
+- transferable `snapshot` (dynamic life/routes, pending count, active events)
+- `adaptation-offered` / `adaptation-selected` / `adaptation-mode`
+- `history-batch` / `event`
+- `cell-inspection {requestId, cell}`
+- `extinct {summary}` / `error`
 
-## State ownership
+Snapshot cadence is bounded at about 10 Hz even at 32×; rendering is reduced to
+about 15 fps at high speed. Inspector records refresh at no more than about 3 Hz.
+Static rivers, forests, biomes, and landmarks never cross the Worker boundary.
 
-- Canonical simulation state: worker (or fallback driver). Typed arrays, SoA.
-- Permanent progression/settings/archive: `platform/storage.js`
-  (localStorage, versioned schema, validated on load, corruption-safe).
-- UI state: explicit finite state machine in `interface/app-state.js`; semantic
-  surfaces receive snapshots and terminal summaries only.
+## World and Memory
 
-### App states
-
-Implemented by `src/interface/app-state.js`:
-
-```text
-title → starting → running ⇄ adaptation-draft → result → starting
-```
-
-Pause is an explicit overlay that never advances the worker or fallback.
-Memory Globe, archive, trophy, and settings routes remain future states; they
-are intentionally absent from the live UI rather than shipped as dead controls.
+The run world keeps the stable 2,562-cell icosphere and immutable graph-native
+geography. Central biome tables precompute growth, upkeep, uptake, renewal, and
+route factors. Memory uses 108 stable cells on that sphere plus a separate
+prerequisite DAG. Owned prerequisite paths and projected Imprints share the
+renderer but remain distinct scene metadata.
 
 ## Persistence
 
-One localStorage document per concern (`settings:v1`, `progress:v1`,
-`archive:v1`). Load = parse → validate → default-on-failure with a preserved
-raw copy for recovery. IndexedDB only if archive volume proves to need it.
+Separate localStorage documents own:
 
-## Failure recovery
+- Settings schema 2 (`settings:v2`), with safe migration from the old key;
+- progression schema 4 (`meta:v1`), including Echoes, 108-node ownership,
+  Imprints, graph version, quarantine, and one migration notice;
+- History schema 1 (`history:v1`), retaining 24/32 timelines, ≤80 events each,
+  ≤128 Memory purchases, and a hard 700 KB serialized cap.
 
-- Worker startup failure → main-thread fallback, same code path.
-- WebGL2 failure → Canvas 2D fallback renderer (playable, simplified).
-- Storage failure → in-memory session, honest notice, retry on next boot.
-- Shader compile failure → diagnostics + fallback renderer.
-- A blank screen is never acceptable: boot errors render a message.
+Parse/validate is field-by-field. Progress purchases persist before in-memory
+currency is committed. Storage failure leaves the session playable and is
+communicated honestly.
 
-## Determinism contract
+## Determinism boundary
 
-Seedable PRNG (xoshiro128**) only; `Math.random` is banned in simulation and
-content selection. Fixed iteration order. `Math.fround` at state-write
-boundaries. Render timing never feeds simulation. Same seed + same decision
-log = identical final hash at any speed, in worker or main-thread mode.
+The run digest includes seed, inoculation, simulation/replay version, compiled
+Memory effects/conditions, Adaptation mode changes, offers, and selections.
+World/events/growth/content/decision/inoculation streams are isolated xoshiro
+streams. Camera, selection, panel views, quality, motion, and History viewing
+never enter authority or consume RNG. Tests compare no-observation runs against
+hundreds of inspection/snapshot queries.

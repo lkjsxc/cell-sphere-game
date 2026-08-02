@@ -1,88 +1,97 @@
 # incremental-network-game
 
 > **Every extinction becomes memory.**
-> 球体世界に網状生命を育て、絶滅を次の記憶へ変える。
 
-A one-pointer roguelite incremental game played on a living spherical world.
-Cultivate a slime-mold-like network organism across a globe that inevitably
-dies — then turn each extinction into permanent memory on a spherical skill
-tree. Built with vanilla HTML/CSS/JavaScript and WebGL2: no engines, no
-frameworks, no runtime dependencies, no external requests.
+A calm, autonomous roguelite ecology on a living spherical world. Watch a
+seeded network inoculate itself, follow rivers and forests, survive spatial
+crises, and inevitably collapse. Inspect any cell without steering the run,
+review what happened in History, then turn extinction into permanent paths on
+a dense spherical Memory atlas.
 
-**Play:** https://lkjsxc.github.io/incremental-network-game/ *(Pages deployment
-verified on 2026-08-02; see `docs/status.md`)*
+**Play:** https://lkjsxc.github.io/incremental-network-game/
 
-Submitted to the [ZEN Study プログラミングコンテスト 2026 夏](https://progedu.github.io/webappcontest/2026/summer/index.html),
-Webページ部門 (ZEN大学). Deadline 2026-09-13.
+Submitted to the [ZEN Study Programming Contest 2026 Summer](https://progedu.github.io/webappcontest/2026/summer/index.html),
+Web Page category, ZEN University division. The published deadline is
+2026-09-13.
 
 ## How to play
 
-1. Drag the title globe or tap it to wake a bounded cellular bloom.
-2. Press **Inoculate**. The recommended Pioneer strain begins immediately.
-3. Watch it explore and reinforce shared cell boundaries; tap a visible cell
-   to place a **Signal**. Drag freely through either pole or pinch to inspect.
-4. Choose **Adaptations** at milestones and survive spatial crises.
-5. Extinction yields an authoritative **Network Score** and **Echoes**. Enter
-   the **Memory Globe**, purchase a reachable filament, then grow the next
-   world with the purchased effect applied.
+1. Rotate the title world, tap a cell to inspect it, then choose **Grow a world**.
+2. Inoculation is selected autonomously from suitable seeded geography.
+3. Watch growth at 1×–32×. Camera movement and inspection never change results.
+4. **AUTO: RANDOM** is the default: every three-card Adaptation offer is
+   selected uniformly by its own deterministic decision stream. Switch to
+   **MANUAL** in one action to queue offers and open them when convenient.
+5. Adaptations, History, Settings, and the cell inspector do not pause world
+   time by default. A panel-pause preference is available in Settings.
+6. At extinction, review score/cause/History, enter Memory, select a visible
+   node, read its details, and explicitly press **Unlock**.
+7. Spend several small Echo purchases, then grow the next world with compiled
+   permanent Memory.
 
-Speed controls: pause · 1× · 2× · 4× · 8× · 16× · 32× (Turbo). Same seed +
-same decisions = the same result at any speed.
+Optional idle globe rotation is available in Settings and defaults off.
+Reduced motion always disables its effective motion without erasing the saved
+preference.
 
 ## Technical highlights
 
-- Explicit spherical dual mesh: 2,562 simulation/render cells, 7,680 shared
-  boundaries, mostly hexagons, and exactly twelve pentagonal **World Knots**.
-- Deterministic typed-array simulation (xoshiro128**, fixed 10 Hz authority)
-  running in a Web Worker or the same main-thread `RunController` fallback.
-- WebGL2 dual-cell renderer with discrete procedural ocean/land materials,
-  etched boundaries, boundary-aligned transport, atmosphere, title bloom,
-  and graphite Memory Globe state; playable Canvas 2D fallback remains.
-- One complete persistent transaction: score → a bounded strongest-corridor
-  **Imprint** → Echoes → Memory purchase → next-run trait. Six Memory nodes
-  form the initial progression path; broader campaign content remains in development.
-- Production simulation powers unit/integration tests, balance smoke, and the
-  benchmark. No runtime dependency or downloaded media is used.
+- Explicit level-4 spherical dual: 2,562 stable cells, 7,680 boundaries,
+  mostly hexagons, and exactly twelve fivefold World Knots.
+- Deterministic graph-native terrain: bounded continents, priority-flood
+  drainage, connected rivers/tributaries/mouths, climate, coherent forests,
+  biomes, regions, and geography-backed landmarks.
+- Fixed 10 Hz typed-array simulation in a module Worker or the identical
+  main-thread `RunController` fallback. World, events, growth, inoculation,
+  offers, and random decisions use isolated xoshiro128** streams.
+- Non-blocking FIFO Adaptation offers with exact-uniform seeded automatic
+  selection, manual delayed choices, versioned replay, and bounded semantic
+  History.
+- WebGL2 primary renderer: seven steady-state draws for terrain, coast/cell
+  etching, drainage ribbons, atmosphere, and living routes. Canvas 2D remains
+  an observationally complete fallback.
+- Read-only cell inspector with static geography plus low-cadence authoritative
+  living detail.
+- Exactly 108 validated Memory nodes across Reach, Flow, Reserve, Ecology,
+  Perception, and Continuity; spherical selection precedes every purchase and
+  an accessible grouped list shares the same source of truth.
+- Separate validated stores for Settings, progression/Imprints, and a bounded
+  local-only History archive.
+- No runtime dependencies, engine, framework, CDN, remote media, analytics, or
+  post-load network requirement.
 
 ## Local development
 
 ```bash
-npm run serve        # http://127.0.0.1:8080
-npm test             # unit + integration (node:test, zero deps)
-npm run test:browser # headless-Chrome browser tests
-npm run verify       # structure + tests + balance smoke + benchmark + links
+npm run serve             # http://127.0.0.1:8080
+npm test                  # unit + integration
+npm run test:browser:file # real Chrome/WebGL2 over CDP pipe
+npm run verify            # fast structure/test/balance/benchmark/link gates
 ```
 
 Docker: `docker compose up serve` / `docker compose run --rm verify`.
 
 ## Repository map
 
+```text
+index.html       semantic screens, HUD, and overlays
+styles/          authored responsive CSS
+src/core/        PRNG, hash, clock, state machine, math
+src/world/       topology, terrain, hydrology, ecology, landmarks
+src/simulation/  deterministic authority, inspection, replay, History events
+src/game/        Adaptations, scoring, strains, 108-node Memory content
+src/rendering/   WebGL2 + Canvas 2D, camera, picking, static/dynamic passes
+src/interface/   screen/overlay composition and player intent
+src/platform/    capabilities, Settings, progression, History persistence
+tests/ scripts/  production-module tests, balance, benchmark, Chrome evidence
+docs/            design, architecture, evidence, and truthful status
 ```
-index.html          app shell (semantic DOM, all screens)
-styles/             design tokens + native CSS by responsibility
-src/core/           PRNG, fixed math, clock, state machine, hashing, seeds
-src/world/          icosphere topology + environmental fields
-src/simulation/     deterministic tick (no DOM/GL/storage imports)
-src/game/           adaptations, phenotypes, scoring, progression, balance
-src/rendering/      WebGL2 renderer, Canvas fallback, camera, picking
-src/interface/      screens, HUD, user intent
-src/platform/       storage, settings, audio, share, lifecycle
-tests/              unit / integration / browser / fixtures
-scripts/            serve, verify, benchmark, balance, structure gate
-docs/               vision, design, architecture, evidence, status
-```
 
-Every directory contains a README with purpose and invariants. Structure
-rules (≤200 lines/file, ≤16 children/dir, README per directory) are enforced
-by `npm run check:structure`.
+Every source directory has a README. Structure gates enforce files ≤200 lines,
+directories ≤16 children, repository-relative deployment paths, and the absence
+of runtime third-party imports.
 
-## Privacy
+## Privacy, license, and media
 
-All progression stays local (localStorage). No analytics, ads, accounts, or
-network calls after load. Sharing is explicit and browser-native.
-
-## License & media
-
-Code: Apache-2.0 (see `LICENSE`). All visuals and audio are generated
-procedurally or hand-authored in this repository — no third-party media,
-fonts, icons, or samples.
+All settings, History, Echoes, Memory, and Imprints stay in local browser
+storage. Code is Apache-2.0. Visuals and interface materials are procedural or
+authored in this repository.

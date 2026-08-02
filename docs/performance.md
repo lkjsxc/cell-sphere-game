@@ -1,57 +1,42 @@
 # Performance
 
-Performance and low-heat behavior are product features. This document records
-budgets, evidence, and benchmark history. Claims without measurements are
-marked **pending**.
+The product target remains mobile-first and low-heat, but thermal claims require
+a physical device. Node throughput is simulation evidence only.
 
-## Budgets
+## Current measured evidence (2026-08-02)
 
-### Rendering
+Environment: Node v22.22.3, Linux x64, 20 logical CPUs.
 
-| Mode | FPS target | DPR cap | Notes |
-|---|---|---|---|
-| Eco | 30 (15–20 idle, 8–12 Turbo) | 1.25 | minimal atmosphere/particles |
-| Balanced | 45–60, settle 30 | 1.5 | restrained effects |
-| Luminous | 60 | 2.0 | richer single-pass shading |
+- deterministic production benchmark seed 20260731: 2,910 ticks in 161 ms,
+  18,089 ticks/s, 9 MB reported heap, hash `98333073`;
+- current WorldModel, 100 worlds: mean 2.979 ms, median 2.690 ms,
+  p95 4.077 ms, maximum 12.435 ms; hash `749bda35`;
+- balance smoke medians: balanced 291.7 s, expansion 290.9 s, resilience
+  292.2 s (n=4 each; diagnostic sample);
+- real headless Chrome/WebGL2 390×844: mixed manual/Random production run at
+  32× reached result in 7.95 s with no browser errors;
+- Balanced renderer: seven steady-state draws; instrumented JavaScript command
+  submission on the title scene mean 0.11 ms, p95 0.20 ms (not GPU frame time);
+- 100-run production soak: 267,523 ticks in 6.928 s, 0 invalid, max 5 offers,
+  max 80 History events / 5,894 bytes; a separate forced-GC sample moved heap
+  4.57 → 5.80 MB after 100 runs (Node evidence);
+- 32 retained 49-event timelines serialized to 304,208 bytes (297.1 KiB);
+- 100,000 Memory nearest-node picks took 341.46 ms (3.415 µs/pick).
 
-≤ ~8 primary draw calls/frame; one compact dynamic edge upload per snapshot;
-no full geometry rebuilds; no DOM reads interleaved with GL writes; canvas
-resizes only on CSS size or quality change.
+## Runtime discipline
 
-### Simulation
+- Simulation stays fixed at 2,562 cells for all quality modes.
+- Eco/Balanced/Luminous cap DPR at about 1.1/1.5/2.0; Auto uses memory/save-data
+  hints. Quality never changes authority.
+- Worker snapshots remain around 10 Hz at all speeds. Rendering falls near
+  15 fps at 16×/32× and near 6 fps behind full-screen panels.
+- Inspector requests are one compact record at no more than about 3 Hz.
+- World rivers/forests/terrain and Memory placement are immutable per world.
+- History is event-driven, ≤80 entries/run, and ≤700 KB serialized.
+- Notices are capped at three simultaneous DOM nodes.
 
-- Ordinary 1× tick p95 < ~2 ms on a mid-range mobile-class CPU (**pending
-  physical device**; desktop throttled evidence below).
-- No allocation growth across a full run.
-- 3,000-tick benchmark target: comfortably < 10 s of Turbo wall time.
-- Connectivity/summaries amortized (every 10–20 ticks).
+## Missing evidence
 
-### Loading
-
-- No external requests after static files load.
-- Interactive title < 1.5 s after cache miss on an ordinary connection.
-- No blocking init task > 100 ms on a typical desktop.
-
-## Low-heat rules
-
-Cap frame rate instead of rendering redundant frames · reduce DPR before
-simulation fidelity · suppress particles/audio density at high speed ·
-render on demand in menus · pause when hidden · preallocate hot-path memory ·
-no large transparent overdraw · no frequent readbacks.
-
-## Benchmark history
-
-Format: date · commit · machine · environment · 3000-tick ms · ticks/s ·
-checksum. Do not compare unlike environments directly.
-
-| Date | Commit | Machine | Env | 3000 ticks | ticks/s | checksum |
-|---|---|---|---|---|---|---|
-| 2026-07-31 | (Gate B) | 20-core Linux, 32GB | Node v22.22.3 | full run 3,396 ticks / 197 ms | 17,234 | d02cae0d |
-
-## Evidence log
-
-- 2026-07-31: headless benchmark established: one full run (seed 20260731,
-  balanced pilot with Signals) = 3,396 ticks in ~200 ms = ~17k ticks/s on a
-  20-core Linux desktop (single thread), 7 MB heap. The 3,000-tick budget is
-  met with ~5x headroom on desktop. Physical mobile verification: **not
-  performed** — desktop numbers are not mobile numbers.
+Actual GPU frame time, dense-run/Memory p95 presentation time, browser heap
+trend, Canvas fallback browser timing, and physical smartphone temperature/
+battery behavior remain unmeasured.
