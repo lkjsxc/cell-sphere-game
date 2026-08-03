@@ -25,7 +25,7 @@ Vocabulary is evidence-scoped: **implemented**, **tested**, **measured**, **obse
 | 3. Execution protocol | deployed protective tag; measured baseline | this ledger, coherent commits | exact commands and revisions |
 | 4. Canonical rename | target `cell-sphere-game` | package, product, globals, storage, docs, GitHub | exact-name audit and Pages inspection |
 | 5. Stable composition | implemented viewport-only policy; measured Settings delta `0 px` at 1440×900 | `layout-policy.js`, camera resize | unit test and real-Chrome paired capture |
-| 6. Outside dismissal | observed meaningful target swallowed | surface coordinator and globe input | real mouse/touch target matrix |
+| 6. Outside dismissal | implemented scoped target classification; tested Settings→Adaptations and Settings→cell with native CDP pointers | `surface-coordinator.js`, browser scenario | mouse passes; touch/cancel matrix pending |
 | 7. Manual Adaptation | observed intermittent real-pointer no-op and unacknowledged authority | UI, protocol, Worker/fallback | success/rejection/double-click scenarios |
 | 8. Time dial | measured fixed hour/hidden pause baseline | one frame-loop dial controller | transform, pause, speed, reduced-motion tests |
 | 9. 642 Skill Cells | observed 642 rendered cells but 108 definitions | canonical skill content/scene/storage | mapping validator and full legal unlock |

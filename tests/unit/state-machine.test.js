@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { createStateMachine } from '../../src/core/state-machine.js';
+import { classifySurfaceTarget } from '../../src/interface/policies/surface-coordinator.js';
 
 const def = {
   initial: 'title',
@@ -35,6 +36,17 @@ test('onTransition hook observes moves', () => {
   const seen = [];
   const sm = createStateMachine({ ...def, onTransition: (from, event, to) => seen.push([from, event, to]) });
   sm.send('BEGIN'); assert.deepEqual(seen, [['title', 'BEGIN', 'starting']]);
+});
+
+test('surface targets preserve native controls and canvas while isolating empty chrome', () => {
+  const surface = {}; const trigger = {}; const child = {};
+  const match = (accepted) => ({ matches: (selector) => accepted.some((value) => selector.includes(value)) });
+  assert.equal(classifySurfaceTarget([child, surface], surface, [trigger]), 'inside');
+  assert.equal(classifySurfaceTarget([child, trigger], surface, [trigger]), 'current-trigger');
+  assert.equal(classifySurfaceTarget([match(['data-surface-trigger'])], surface, [trigger]), 'control');
+  assert.equal(classifySurfaceTarget([match(['button'])], surface, [trigger]), 'control');
+  assert.equal(classifySurfaceTarget([match(['canvas'])], surface, [trigger]), 'canvas');
+  assert.equal(classifySurfaceTarget([child], surface, [trigger]), 'empty');
 });
 
 test('production interface excludes rejected modal controls and copy', () => {

@@ -25,8 +25,8 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
   ok(await evaluate("document.getElementById('settings-dialog').hidden"), 'same Settings trigger did not close its surface');
   await evaluate("document.querySelector('.settings-open').click(); document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))");
   ok(await evaluate("document.getElementById('settings-dialog').hidden"), 'Escape did not close Settings');
-  await evaluate("document.querySelector('.settings-open').click()"); await click(190, 120); await wait(80);
-  ok(await evaluate("document.getElementById('settings-dialog').hidden && document.getElementById('cell-inspector').hidden"), 'outside dismissal leaked to globe selection');
+  await evaluate("document.querySelector('.settings-open').click()"); await click(195, 350); await wait(80);
+  ok(await evaluate("document.getElementById('settings-dialog').hidden && !document.getElementById('cell-inspector').hidden"), 'outside globe target did not dismiss and select'); await evaluate("document.getElementById('inspector-close').click()");
   await evaluate("document.querySelector('.settings-open').click()"); await setViewport(1440,900); await evaluate('window.__IN_APP__.camera.dist=4.1'); await wait(180); await screenshot('browser-settings-desktop.png'); await setViewport(390,844); await evaluate('window.__IN_APP__.camera.dist=6'); await wait(150);
   await evaluate(`(() => { const input=document.querySelector('[name=idleRotation]'); input.value='gentle';
     input.dispatchEvent(new Event('change',{bubbles:true})); document.getElementById('settings-close').click(); })()`);
@@ -49,7 +49,7 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
   ok(await evaluate(`window.__IN_APP__.snapshot.tick===${confirmTick} && !document.getElementById('new-world-dialog').hidden`), 'New World confirmation did not own its pause');
   await screenshot('browser-new-world-mobile.png'); await evaluate("document.getElementById('new-world-keep').click()"); presentationPause += performance.now() - effectPauseStart; await wait(300);
   ok(await evaluate(`window.__IN_APP__.snapshot.tick>${confirmTick}`), 'Keep watching did not restore prior running state');
-  await evaluate("document.getElementById('adaptations-button').click()"); await wait(650);
+  await setViewport(1440, 900); await wait(150); const settingsPoint = await evaluate(`(()=>{const r=document.querySelector('#run-screen .settings-open').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()`); await click(...settingsPoint); const adaptationPoint = await evaluate(`(()=>{const r=document.getElementById('adaptations-button').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()`); await click(...adaptationPoint); await wait(300); ok(await evaluate("document.getElementById('settings-dialog').hidden && !document.getElementById('adaptations-dialog').hidden"), 'Settings to Adaptations pointer replacement failed'); await setViewport(390, 844); await wait(350);
   const panelTick = await evaluate('window.__IN_APP__.snapshot.tick');
   ok(panelTick > pendingTick, 'Adaptations panel stopped world time');
   ok(await evaluate("document.getElementById('adaptation-manual').getAttribute('aria-pressed')==='true'"), 'Adaptations surface did not reflect Manual mode');
