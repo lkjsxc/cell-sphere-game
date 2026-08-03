@@ -2,9 +2,11 @@
 import { BALANCE as B } from '../game/balance.js';
 import { finalStateHash, serializeHistory, serializeReplay } from './replay.js';
 import { deriveImprint } from './imprint.js';
+import { liveScore } from '../game/scoring.js';
 
 export function buildRunResult(s) {
   return {
+    runId: s.runId,
     seed: s.seed,
     archetype: s.fields.archetypeName,
     tick: s.tick,
@@ -37,6 +39,15 @@ export function buildRunResult(s) {
     replayVersion: s.replayVersion,
     replay: serializeReplay(s),
   };
+}
+
+export function buildAbandonedRun(s) {
+  return { runId: s.runId, seed: s.seed, tick: s.tick,
+    elapsedSeconds: s.tick / B.TICKS_PER_SECOND, livingCount: s.aliveCount,
+    coverage: s.coverage, score: liveScore(s), archetype: s.fields.archetypeName,
+    inoculationCell: s.inoculationCell, adaptationMode: s.adaptationMode,
+    offers: s.adaptationOffers.map((offer) => ({ ...offer, options: offer.options.slice() })),
+    history: serializeHistory(s), cause: 'abandoned' };
 }
 
 export function dominantCause(s) {

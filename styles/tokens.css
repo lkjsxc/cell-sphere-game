@@ -40,6 +40,10 @@
   --state-warn: #f0a34a;
   --state-bad: #df6d55;
   --state-info: #8eb5b1;
+  --action-available: #9fcbb3;
+  --action-recommended: #f0c86f;
+  --action-urgent: #f09a4a;
+  --action-destructive: #df6d55;
 
   /* Category hues (Reach/Metabolism/Resilience/Transport/Symbiosis/Memory) */
   --cat-reach: #7fd8ff;

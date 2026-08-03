@@ -37,6 +37,10 @@
   50% { opacity: 0.55; }
 }
 
+@keyframes clock-sweep {
+  to { transform: translateX(-50%) rotate(360deg); }
+}
+
 /* Score reveal count-up is driven by JS transform/opacity only. */
 .score-reveal {
   animation: score-in var(--dur-slow) var(--ease-spring) both;
@@ -46,6 +50,8 @@
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 }
+
+:root[data-motion="reduced"] .clock-minute { animation: none; transform: translateX(-50%) rotate(42deg); }
 
 :root[data-motion="reduced"] *,
 :root[data-motion="reduced"] *::before,

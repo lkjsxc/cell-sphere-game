@@ -15,6 +15,7 @@ const TITLES = Object.freeze({
   'crisis.started': ['Crisis began', 'Spatial pressure crossed the world.'],
   'crisis.ended': ['Crisis passed', 'Surviving cells retained the trace.'],
   'run.extinct': ['Extinction', 'The last living cell released its energy.'],
+  'run.abandoned': ['World left behind', 'No Echoes, score reward, trophy, or Imprint was granted.'],
   'geo.coast.reached': ['First coast reached', 'Life encountered the ocean margin.'],
   'geo.river.reached': ['First river reached', 'A flowing corridor changed local conditions.'],
   'geo.forest.reached': ['First forest reached', 'The network entered dense living ground.'],

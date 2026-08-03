@@ -113,7 +113,7 @@ export class Canvas2DRenderer {
       for (const event of events) {
         if (dotCell(topo.positions, cell, event.center) < event.radiusDot) continue;
         const tint = EVENT_TINTS[event.family] ?? [0.7, 0.7, 0.7]; this.cellPath(cell);
-        ctx.fillStyle = `rgba(${tint[0] * 255 | 0},${tint[1] * 255 | 0},${tint[2] * 255 | 0},${0.22 * fade})`; ctx.fill();
+        ctx.fillStyle = `rgba(${tint[0] * 255 | 0},${tint[1] * 255 | 0},${tint[2] * 255 | 0},${0.10 * fade})`; ctx.fill();
       }
     }
   }

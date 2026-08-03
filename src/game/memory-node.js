@@ -6,6 +6,8 @@ const KINDS = Object.freeze([
   ...Array(8).fill('micro'), ...Array(4).fill('conditional'),
   ...Array(3).fill('unlock'), 'keystone', 'connector', 'capstone',
 ]);
+const RUN_GATES = Object.freeze([0, 0, 2, 6, 12, 24, 48, 96, 144,
+  148, 152, 155, 158, 160, 162, 164, 600, 900]);
 export const scalar = (key, value, operation = 'multiply') =>
   Object.freeze({ type: 'scalar', key, value, operation });
 export const conditional = (trigger, key, value, operation = 'multiply') =>
@@ -25,7 +27,7 @@ export function defineBranch(branch, connectorPrerequisite, rows) {
     const effects = effect.type === 'scalar' ? { [effect.key]: effect.value } : {};
     return Object.freeze({
       id: ids[index], nameEn: row[1], effectEn: completion.summary ?? row[2], description: completion.description ?? row[3],
-      cost: row[4], requires: Object.freeze(requires),
+      cost: row[4], requiredRuns: RUN_GATES[index], requires: Object.freeze(requires),
       branch: `${branch[0].toUpperCase()}${branch.slice(1)}`, tier: TIERS[index],
       kind: KINDS[index], cell: memoryAtlasCell(branch, index), effect, effects: Object.freeze(effects),
     });

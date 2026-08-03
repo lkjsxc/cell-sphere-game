@@ -1,4 +1,4 @@
-import { buildMemorySnapshot, compileMemory, createMemoryFields, getMemoryNode, MEMORY_ATLAS_REVERSE, MEMORY_NODES, purchaseMemory } from '../game/memory.js';
+import { buildMemorySnapshot, createMemoryFields, getMemoryNode, MEMORY_ATLAS_REVERSE, MEMORY_NODES, purchaseMemory } from '../game/memory.js';
 import { createRng } from '../core/prng.js';
 import { createTopology } from '../world/icosphere.js';
 import { createFields } from '../world/fields.js';
@@ -19,12 +19,13 @@ import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from './
 import { createSurfaceCoordinator } from './policies/surface-coordinator.js';
 import { applySafeLayout, safeLayout } from './policies/layout-policy.js';
 import { advanceContinuation, cancelContinuation, continuationLabel, createContinuation, setContinuationPause, startContinuation } from './policies/continuation.js';
-import { applyRunResult } from './policies/run-result.js';
+import { finishAbandoned, finishRun, startRun } from './policies/run-session.js';
+import { createNewWorldSurface } from './policies/new-world-surface.js';
 import { createHistorySurface } from './history-surface.js'; import { createHistoryPlayback } from './history-playback.js';
 import { createInspectorSurface } from './inspector-surface.js';
 import { createAdaptationSurface, createMemorySurface } from './panel-surfaces.js';
 import { createSettingsSurface } from './settings-surface.js';
-import { downloadData, parseImportedData, qualityDpr, seedForRun } from './app-data.js';
+import { downloadData, parseImportedData, qualityDpr } from './app-data.js';
 import * as ui from './surfaces.js';
 const TITLE_SEED = TITLE_SHOWCASE.seed;
 export function startGameApp(options) { const app = new GameApp(options); app.boot(); return app; }
@@ -35,29 +36,30 @@ class GameApp {
     this.flow = createAppState(); this.speed = settings.speed; this.snapshot = null; this.selectedNode = null;
     this.renderer = null; this.fields = null; this.worldFields = null; this.atlasFields = createMemoryFields(this.topo3); this.showcase = null;
     this.memorySnapshot = null; this.overlay = null;
-    this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null; this.lastResultKey = null; this.requestId = 0;
-    this.runSeed = null; this.visualSeed = null; this.historySnapshot = null; this.historyHighlights = [];
-    this.last = performance.now(); this.lastRender = 0; this.lastInspect = 0; this.cameraPolicy = createCameraPolicy(this.last);
-    this.driver = createRunDriver(caps, (message) => this.message(message)); this.pause = createPauseControl((paused) => this.applyPause(paused)); this.surfaces = createSurfaceCoordinator(() => this.closeActiveOverlay());
+    this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null; this.resultKeys = new Set(); this.requestId = 0;
+    this.runSeed = null; this.activeRunId = 0; this.visualSeed = null; this.historySnapshot = null; this.historyHighlights = [];
+    this.last = performance.now(); this.lastRender = 0; this.lastInspect = 0; this.cameraPolicy = createCameraPolicy(this.last); this.layoutClass = null;
+    this.driver = createRunDriver(caps, (message) => this.message(message)); this.pause = createPauseControl((paused, reasons) => this.applyPause(paused, reasons)); this.surfaces = createSurfaceCoordinator(() => this.closeActiveOverlay());
     this.historyPlayback = createHistoryPlayback(this); this.continuation = createContinuation(); this.countdownLabel = '';
   }
   get state() { return this.flow.state; } boot() {
     this.makeRenderer(TITLE_SEED); focusCamera(this.camera,
       this.topo.positions.subarray(TITLE_SHOWCASE.focusCell * 3, TITLE_SHOWCASE.focusCell * 3 + 3)); this.resize(false);
     this.showcase = new TitleShowcase(this.topo);
-    this.makeSurfaces(); this.bindUi(); this.bindCanvas(); this.bindLifecycle(); this.el.speed.value = String(this.speed);
-    this.el.boot.textContent = `Cells ready — ${this.renderer.backend === 'webgl2' ? 'WebGL2' : 'Canvas 2D'}`; ui.show(this.el, 'title');
-    if (this.meta.migrationNotice?.pending) { ui.toast(this.el, 'Your earlier Memory and Imprints were moved into adjacent atlas cells.');
+    this.makeSurfaces(); this.bindUi(); this.bindCanvas(); this.bindLifecycle(); this.el.speed.value = String(this.speed); this.updateClockSpeed();
+    this.el.boot.textContent = `Cells ready — ${this.renderer.backend === 'webgl2' ? 'WebGL2' : 'Canvas 2D'}`; ui.show(this.el, 'title'); ui.updateAdaptationMode(this.el, this.settings.adaptationMode);
+    if (this.meta.migrationNotice?.pending) { ui.toast(this.el, 'Your earlier skills and Imprints were moved into the Evolution Globe.');
       this.meta = { ...this.meta, migrationNotice: { ...this.meta.migrationNotice, pending: false } }; saveMeta(this.meta); }
     window.__IN_BOOT__ = Object.freeze({ renderer: this.renderer.backend, version: '0.2.0', playable: true }); window.__IN_APP__ = this;
     requestAnimationFrame((now) => this.frame(now)); console.info(`boot ok: ${this.renderer.backend}; passive world ready`);
   } makeSurfaces() {
-    this.adapt = createAdaptationSurface({ onClose: () => this.panelClosed('adaptations'), onChoose: (offer, card) => this.choose(offer, card) });
+    this.adapt = createAdaptationSurface({ onClose: () => this.panelClosed('adaptations'), onChoose: (offer, card) => this.choose(offer, card), onMode: (mode) => this.applyAdaptationMode(mode) });
     this.inspector = createInspectorSurface({ onClose: () => this.closeInspector(), onHistory: () => this.openHistory('current') });
     this.historyUi = createHistorySurface({ onClose: () => this.panelClosed('history'),
       onWorld: (world) => this.historyPlayback.selectWorld(world), onSeek: (tick, event, world) => this.historyPlayback.seek(tick, event, world),
       onLive: () => this.historyPlayback.live() });
-    this.memoryUi = createMemorySurface({ onCloseNode: () => this.closeMemoryNode(), onCloseList: () => this.panelClosed('memory-list'), onUnlock: (id) => this.buyMemory(id), onSelect: (id) => this.selectMemoryNode(id) });
+    this.memoryUi = createMemorySurface({ onCloseNode: () => this.closeMemoryNode(), onUnlock: (id) => this.buyMemory(id), onSelect: (id) => this.selectMemoryNode(id) });
+    this.newWorld = createNewWorldSurface({ onClose: () => this.panelClosed('new-world'), onConfirm: () => this.confirmNewWorld() });
     this.settingsUi = createSettingsSurface({ read: () => this.settings, onChange: (value) => this.applySettings(value), onClose: () => this.panelClosed('settings'), onAction: (action, value) => this.settingsAction(action, value) });
   }
   makeRenderer(seed, memory = false) {
@@ -73,12 +75,14 @@ class GameApp {
     this.el.resultNext.addEventListener('click', () => this.startRun()); this.el.memoryButton.addEventListener('click', () => this.enterMemory());
     this.el.pause.addEventListener('click', () => this.pause.set('manual', !this.pause.has('manual')));
     this.el.speed.addEventListener('change', () => this.setSpeed(Number(this.el.speed.value))); this.el.adaptationButton.addEventListener('click', () => this.openAdaptations());
+    document.getElementById('new-world-button')?.addEventListener('click', () => this.openNewWorld());
+    document.getElementById('evolution-focus-available')?.addEventListener('click', () => this.focusAvailableSkill());
     document.querySelectorAll('.settings-open').forEach((button) => button.addEventListener('click', () => this.openSettings()));
     document.querySelectorAll('.history-open').forEach((button) => button.addEventListener('click', () => this.openHistory()));
     this.el.resultHistory.addEventListener('click', () => this.openHistory('current')); this.el.resultDetails.addEventListener('click', () => this.openResultDetails());
     document.getElementById('result-details-close')?.addEventListener('click', () => this.panelClosed('result-details'));
-    document.getElementById('memory-list-button')?.addEventListener('click', () => this.openMemoryList());
-    document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key === ',') { event.preventDefault(); this.openSettings(); } });
+    document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key === ',') { event.preventDefault(); this.openSettings(); }
+      else if (event.key === 'Home' && this.state === 'memory') { event.preventDefault(); this.focusAvailableSkill(); } });
   }
   bindCanvas() { const interrupt = () => { interruptCameraPolicy(this.cameraPolicy, performance.now()); if (this.state === 'result') this.pauseContinuation('interaction', true); }; this.input = bindGlobeInput(this.canvas, this.camera, { canInteract: () => ['title', 'running', 'result', 'memory'].includes(this.state),
       onTap: (x, y) => this.tapGlobe(x, y), onInterrupt: interrupt, onInteractionStart: interrupt,
@@ -103,63 +107,62 @@ class GameApp {
   requestInspection() { if (this.selectedNode == null) return; this.driver.message({ t: 'inspect-cell', requestId: ++this.requestId, node: this.selectedNode }); this.lastInspect = performance.now(); }
   closeInspector() { this.inspector.close(); this.surfaces.close('inspector'); if (this.overlay === 'inspector') this.overlay = null;
     this.selectedNode = null; this.pauseContinuation('surface', false); this.resize(true); interruptCameraPolicy(this.cameraPolicy, performance.now()); }
-  startRun() {
-    this.closeActiveOverlay(); this.adaptationEffects.clear(); cancelContinuation(this.continuation); this.el.countdown.textContent = ''; this.pause.clear(); this.selectedNode = null; this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null;
-    const seed = seedForRun(this.meta.runs); this.runSeed = seed; this.makeRenderer(seed); this.flow.send(this.state === 'title' ? 'begin' : 'restart'); this.resize(false); this.snapshot = null; this.historySnapshot = null; this.historyHighlights = [];
-    ui.show(this.el, 'run'); ui.announce(this.el, 'The seeded world is choosing a suitable place to begin.');
-    const memory = compileMemory(this.meta); this.driver.start({ seed, strainId: 'pioneer', memoryEffects: memory.effects,
-      memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks, adaptationMode: this.settings.adaptationMode }, this.speed);
-  }
+  startRun() { startRun(this); }
   message(message) { if (!this.historyPlayback.handle(message)) handleRunMessage(this, message); }
   mergeHistory(events) { const bySeq = new Map(this.currentHistory.map((event) => [event.seq, event]));
     for (const event of normalizeHistoryEvents(events)) bySeq.set(event.seq, event); this.currentHistory = [...bySeq.values()].sort((a, b) => a.seq - b.seq); }
   adaptationModel() { return { offers: this.offers, cards: this.cards, mode: this.settings.adaptationMode, tick: this.snapshot?.tick ?? 0 }; }
   pendingCount() { return this.offers.filter((offer) => offer.resolvedTick == null).length; }
   choose(offerId, cardId) { this.driver.message({ t: 'choose-adaptation', offerId, cardId }); }
-  setSpeed(value) { this.speed = value; this.settings = { ...this.settings, speed: value }; saveSettings(this.settings); this.driver.setSpeed(value); }
-  applyPause(paused) { this.driver.setPaused(paused); this.el.pause.setAttribute('aria-pressed', String(paused)); this.el.pause.textContent = paused ? 'Resume' : 'Pause'; }
-  finishRun(result) {
-    const transaction = applyRunResult(this.meta, this.archive, result, this.settings.historyRetention, this.lastResultKey); if (!transaction.applied) return;
-    this.lastResultKey = transaction.key; this.closeActiveOverlay(); this.adaptationEffects.clear(); this.selectedNode = null; this.flow.send('extinct');
-    this.lastResult = result; this.currentHistory = normalizeHistoryEvents(result.history); this.meta = transaction.meta; this.archive = transaction.archive;
-    if (!saveMeta(this.meta)) ui.announce(this.el, 'Progress is temporary because browser storage is unavailable.'); saveHistory(this.archive, this.settings.historyRetention);
-    const record = this.archive.worlds.at(-1); this.historyPlayback.save(record && { id: record.id, seed: record.seed, completedAt: this.meta.runs });
-    ui.showResult(this.el, transaction.score, { ...result, adaptationOffers: result.offers }); this.resize(false);
-    if (this.settings.autoContinue) { startContinuation(this.continuation, performance.now()); this.updateContinuation(); }
-  }
+  setSpeed(value) { this.speed = value; this.settings = { ...this.settings, speed: value }; saveSettings(this.settings); this.driver.setSpeed(value); this.updateClockSpeed(); }
+  updateClockSpeed() { this.el.pause.style.setProperty('--clock-duration', `${Math.max(.55, 2.8 / Math.sqrt(this.speed))}s`); }
+  applyPause(paused, reasons = this.pause.values()) { this.driver.setPaused(paused); this.el.pause.setAttribute('aria-pressed', String(paused));
+    this.el.pause.classList.toggle('is-paused', paused); this.el.pause.dataset.action = paused && reasons.has('manual') ? 'recommended' : 'normal';
+    this.el.pause.setAttribute('aria-label', paused ? reasons.has('manual') ? 'Resume world time' : 'World time paused by an open confirmation' : 'Pause world time'); }
+  finishRun(result) { finishRun(this, result); }
+  finishAbandoned(summary) { finishAbandoned(this, summary); }
+  failRun(message) { this.pause.set('worker-failed', true); ui.announce(this.el, `${message} Start a new world to continue.`); }
   enterMemory() { this.closeActiveOverlay(); this.adaptationEffects.clear(); cancelContinuation(this.continuation); this.el.countdown.textContent = ''; this.flow.send('memory'); this.selectedNode = null;
     this.makeRenderer(0, true); this.memorySnapshot = buildMemorySnapshot(this.topo3, this.meta); if (this.memorySnapshot.focus) focusCamera(this.camera, this.memorySnapshot.focus);
-    ui.showMemory(this.el, this.meta, this.availableMemory()); this.resize(false); }
-  selectMemoryNode(id) { const node = getMemoryNode(id); if (!node) return; this.closeActiveOverlay(); this.selectedNode = node.cell;
+    this.memoryUi.syncTree(this.meta); ui.showMemory(this.el, this.meta, this.availableMemory()); this.resize(false); }
+  selectMemoryNode(id) { const node = getMemoryNode(id); if (!node) return;
+    if (this.overlay === 'memory-node' && this.memoryUi.selectedId === id) return this.closeMemoryNode();
+    this.closeActiveOverlay(); this.selectedNode = node.cell;
     focusCamera(this.camera, this.topo.positions.subarray(node.cell * 3, node.cell * 3 + 3)); interruptCameraPolicy(this.cameraPolicy, performance.now(), 60_000);
     this.memorySnapshot = buildMemorySnapshot(this.topo, this.meta, id); this.memoryUi.openNode(node, this.meta); this.overlay = 'memory-node';
     this.surfaces.open('memory-node', this.memoryUi.panel, document.getElementById('memory-node-heading')); this.resize(true); }
   closeMemoryNode() { this.memoryUi.closeNode(); this.surfaces.close('memory-node'); if (this.overlay === 'memory-node') this.overlay = null; this.selectedNode = null;
     this.memorySnapshot = buildMemorySnapshot(this.topo, this.meta); this.resize(true); interruptCameraPolicy(this.cameraPolicy, performance.now()); }
-  buyMemory(id) { const before = new Set(this.memorySnapshot.nodeStates.filter((node) => node.reachable).map((node) => node.id)); const purchase = purchaseMemory(this.meta, id); if (!purchase.ok) return; if (!saveMeta(purchase.meta)) return ui.announce(this.el, 'That Memory could not be stored; no Echoes were spent.');
+  buyMemory(id) { const before = new Set(this.memorySnapshot.nodeStates.filter((node) => node.reachable).map((node) => node.id)); const purchase = purchaseMemory(this.meta, id); if (!purchase.ok) return; if (!saveMeta(purchase.meta)) return ui.announce(this.el, 'That skill could not be stored; no Echoes were spent.');
     this.meta = purchase.meta; this.archive = appendMemoryEvent(this.archive, id, purchase.spent, this.meta.echoBalance, this.meta.runs); saveHistory(this.archive, this.settings.historyRetention);
-    const next = buildMemorySnapshot(this.topo, this.meta, id); const newly = next.nodeStates.filter((node) => node.reachable && !before.has(node.id)).map((node) => node.id); this.memorySnapshot = buildMemorySnapshot(this.topo, this.meta, id, newly); this.memoryUi.refresh(this.meta);
-    ui.showMemory(this.el, this.meta, this.availableMemory()); ui.toast(this.el, `${purchase.node.nameEn} joined Memory.`); }
-  openAdaptations() { if (this.state !== 'running') return; this.openFull('adaptations'); this.adapt.open(this.adaptationModel());
+    const next = buildMemorySnapshot(this.topo, this.meta, id); const newly = next.nodeStates.filter((node) => node.reachable && !before.has(node.id)).map((node) => node.id); this.memorySnapshot = buildMemorySnapshot(this.topo, this.meta, id, newly); this.memoryUi.refresh(this.meta, newly);
+    ui.showMemory(this.el, this.meta, this.availableMemory()); ui.announce(this.el, `${purchase.node.nameEn} unlocked. ${newly.length} adjacent skills are now available.`); }
+  openAdaptations() { if (this.state !== 'running' || this.surfaces.toggle('adaptations')) return; this.openFull('adaptations'); this.adapt.open(this.adaptationModel());
     this.activateSurface('adaptations', this.adapt.surface, 'adaptations-heading'); }
-  openHistory(scope = null) { this.historyPlayback.open(scope ?? (this.state === 'title' || this.state === 'memory' ? 'past' : 'current')); }
-  openSettings() { this.openFull('settings'); this.settingsUi.open(this.state === 'running'); this.activateSurface('settings', this.settingsUi.surface, 'settings-heading'); }
-  openMemoryList() { if (this.state !== 'memory') return; this.openFull('memory-list'); this.memoryUi.openList(this.meta);
-    this.activateSurface('memory-list', this.memoryUi.listSurface, 'memory-list-heading'); }
-  openResultDetails() { if (this.state !== 'result') return; this.openFull('result-details');
+  openHistory(scope = null) { if (this.surfaces.toggle('history')) return;
+    this.historyPlayback.open(scope ?? (this.state === 'title' || this.state === 'memory' ? 'past' : 'current')); }
+  openSettings() { if (this.surfaces.toggle('settings')) return; this.openFull('settings'); this.settingsUi.open(this.state === 'running'); this.activateSurface('settings', this.settingsUi.surface, 'settings-heading'); }
+  openResultDetails() { if (this.state !== 'result' || this.surfaces.toggle('result-details')) return; this.openFull('result-details');
     this.activateSurface('result-details', document.getElementById('result-details'), 'result-details-heading'); }
+  openNewWorld() { if (this.state !== 'running' || this.surfaces.toggle('new-world')) return; this.openFull('new-world');
+    this.pause.set('new-world', true); this.newWorld.open(this.snapshot); this.activateSurface('new-world', this.newWorld.surface, 'new-world-heading'); }
+  confirmNewWorld() { this.newWorld.pending(); if (!this.driver.abort()) this.panelClosed('new-world'); }
+  focusAvailableSkill() { const state = this.memorySnapshot?.nodeStates.find((node) => node.reachable && !node.owned && node.affordable)
+    ?? this.memorySnapshot?.nodeStates.find((node) => node.reachable && !node.owned); if (state) this.selectMemoryNode(state.id); }
   openFull(name) { this.closeActiveOverlay(); this.overlay = name; this.pause.set('panel', this.state === 'running' && this.settings.pauseOnPanels); this.pauseContinuation('surface', true); }
   activateSurface(name, element, heading) { this.surfaces.open(name, element, document.getElementById(heading)); this.resize(true); }
   panelClosed(name) { if (this.overlay === name) this.closeActiveOverlay(); }
   closeActiveOverlay() { const name = this.overlay; if (!name) return;
     if (name === 'inspector') this.inspector.close(); else if (name === 'memory-node') this.memoryUi.closeNode();
     else if (name === 'adaptations') this.adapt.close(); else if (name === 'history') { this.historyPlayback.close(); this.historyUi.close(); }
-    else if (name === 'settings') this.settingsUi.close(); else if (name === 'memory-list') this.memoryUi.closeList();
-    this.surfaces.close(name); this.overlay = null; this.pause.set('panel', false); this.pauseContinuation('surface', false);
-    if (name === 'inspector' || name === 'memory-node') this.selectedNode = null; this.resize(true);
+    else if (name === 'settings') this.settingsUi.close(); else if (name === 'new-world') this.newWorld.close();
+    this.surfaces.close(name); this.overlay = null; this.pause.set('panel', false); this.pause.set('new-world', false); this.pauseContinuation('surface', false);
+    if (name === 'inspector' || name === 'memory-node') this.selectedNode = null;
+    if (name === 'memory-node' && this.state === 'memory') this.memorySnapshot = buildMemorySnapshot(this.topo, this.meta); this.resize(true);
   }
-  applySettings(value) { const before = this.settings; this.settings = value; saveSettings(value); applySettingsToDocument(value);
-    if (value.speed !== this.speed) { this.speed = value.speed; this.el.speed.value = String(value.speed); this.driver.setSpeed(value.speed); }
+  applyAdaptationMode(mode) { this.applySettings({ ...this.settings, adaptationMode: mode }); }
+  applySettings(value) { const before = this.settings; this.settings = value; saveSettings(value); applySettingsToDocument(value); ui.updateAdaptationMode(this.el, value.adaptationMode);
+    if (value.speed !== this.speed) { this.speed = value.speed; this.el.speed.value = String(value.speed); this.driver.setSpeed(value.speed); this.updateClockSpeed(); }
     if (value.adaptationMode !== before.adaptationMode && this.state === 'running') this.driver.message({ t: 'set-adaptation-mode', mode: value.adaptationMode });
     if (this.overlay && value.pauseOnPanels !== before.pauseOnPanels) this.pause.set('panel', this.state === 'running' && value.pauseOnPanels);
     if (this.state === 'result' && value.autoContinue !== before.autoContinue) { if (value.autoContinue) startContinuation(this.continuation, performance.now());
@@ -169,7 +172,7 @@ class GameApp {
     if (action === 'camera-reset') { Object.assign(this.camera, createCamera()); this.selectedNode = null; }
     else if (action === 'export') downloadData(this.meta, this.archive, this.settings);
     else if (action === 'clear-history' && confirm('Clear all preserved History?')) { this.archive = clearHistory(); saveHistory(this.archive); this.historyPlayback.clear(); ui.announce(this.el, 'History was cleared.'); }
-    else if (action === 'reset-progress' && confirm('Reset Echoes, Memory, and Imprints? This cannot be undone.')) { this.meta = defaultMeta(); saveMeta(this.meta); ui.announce(this.el, 'Progression was reset.'); }
+    else if (action === 'reset-progress' && confirm('Reset Echoes, Evolution Globe skills, and Imprints? This cannot be undone.')) { this.meta = defaultMeta(); saveMeta(this.meta); ui.announce(this.el, 'Progression was reset.'); }
     else if (action === 'import') { const data = parseImportedData(value); this.meta = data.meta; this.archive = data.history; this.applySettings(data.settings);
       saveMeta(this.meta); saveHistory(this.archive, this.settings.historyRetention); ui.announce(this.el, 'Local data was imported.'); }
     else if (action === 'import-error') throw new Error('invalid import');
@@ -177,7 +180,7 @@ class GameApp {
   availableMemory() { return this.memorySnapshot?.nodeStates?.filter((node) => node.reachable && !node.owned).length ?? 0; }
   pauseContinuation(reason, paused) { setContinuationPause(this.continuation, reason, paused, performance.now()); this.updateContinuation(); }
   updateContinuation() { const label = continuationLabel(this.continuation); if (label === this.countdownLabel) return; this.countdownLabel = label; this.el.countdown.textContent = label; }
-  resize(preserveZoom = true) { const layout = safeLayout(this.canvas.clientWidth, this.canvas.clientHeight, this.state, this.surfaces.bounds());
+  resize(preserveZoom = true) { const cls = this.canvas.clientWidth < 600 ? 'compact' : this.canvas.clientWidth < 900 ? 'tablet' : 'wide'; const layout = safeLayout(this.canvas.clientWidth, this.canvas.clientHeight, this.state, this.surfaces.bounds()); preserveZoom &&= cls === this.layoutClass; this.layoutClass = cls;
     applySafeLayout(this.camera, layout, preserveZoom); this.renderer?.resize(this.canvas.clientWidth, this.canvas.clientHeight, qualityDpr(this.settings, this.caps)); }
   frame(now) { const dt = Math.min(100, now - this.last); this.last = now; this.driver.frame(dt, now);
     if (this.state === 'title') this.showcase?.update(now, this.settings.motion === 'reduced', document.hidden);

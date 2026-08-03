@@ -63,7 +63,7 @@ test('every legacy ownership subset migrates one-for-one without currency refund
     const owned = LEGACY_IDS.filter((_, index) => mask & (1 << index));
     const migrated = validateMeta({ schema: 3, bestScore: 99, totalEchoes: 70,
       echoBalance: 17, runs: 4, signalHintShown: true, memoryNodes: owned });
-    assert.equal(migrated.schema, 5); assert.equal(migrated.memoryGraphVersion, 2);
+    assert.equal(migrated.schema, 5); assert.equal(migrated.memoryGraphVersion, 2); assert.equal(migrated.worldSeedIndex, 4);
     assert.equal(migrated.memoryNodes.length, owned.length);
     const mapped = owned.map((id) => LEGACY_MEMORY_MAP[id]);
     assert.deepEqual(migrated.memoryNodes, MEMORY_NODE_IDS.filter((id) => mapped.includes(id)));
@@ -80,7 +80,7 @@ test('all six proof nodes preserve bounded value while First Trace becomes resil
   assert.deepEqual(compiled.effects, { reach: 1.06, conductance: 1.08, energyCap: 1.08,
     stressResist: 1.1448, maintenance: 0.96 });
   assert.equal(compiled.unlocks.length, 0);
-  assert.equal(campaignResolved(migrated), false);
+  assert.equal(campaignResolved(migrated), true);
 });
 
 test('schema 4 validates old ownership, then preserves it under graph 2', () => {
@@ -91,7 +91,7 @@ test('schema 4 validates old ownership, then preserves it under graph 2', () => 
   assert.deepEqual(meta.quarantinedMemoryNodes, ['foreign-memory', 'earlier-unknown']);
   assert.equal(meta.echoBalance, 79); assert.equal(meta.totalEchoes, 900);
   assert.deepEqual(meta.migrationNotice, { kind: 'memory-atlas-v5', pending: true });
-  assert.equal(meta.memoryGraphVersion, 2);
+  assert.equal(meta.memoryGraphVersion, 2); assert.equal(meta.worldSeedIndex, 12);
   const corrupt = validateMeta({ schema: 4, memoryNodes: ['continuity-unbroken-lesson'] });
   assert.deepEqual(corrupt.memoryNodes, []); assert.deepEqual(corrupt.quarantinedMemoryNodes, ['continuity-unbroken-lesson']);
 });
@@ -122,7 +122,7 @@ test('Memory purchases are immutable, repeat-safe, and conserve Echoes', () => {
 });
 
 test('the complete graph can be purchased transactionally for its exact total cost', () => {
-  const total = validateMemoryGraph().totalCost; let meta = { ...defaultMeta(), totalEchoes: total, echoBalance: total };
+  const total = validateMemoryGraph().totalCost; let meta = { ...defaultMeta(), totalEchoes: total, echoBalance: total, runs: 900 };
   while (meta.memoryNodes.length < MEMORY_NODES.length) {
     const next = MEMORY_NODES.find((node) => canPurchaseMemory(meta, node.id));
     assert.ok(next, `stalled after ${meta.memoryNodes.length} nodes`);

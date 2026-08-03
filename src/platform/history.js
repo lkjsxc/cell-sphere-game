@@ -20,6 +20,7 @@ const SIM_EVENT = Object.freeze({
   'adaptation-selected': ['adaptation', 'adaptation.selected.manual'],
   'adaptation-unresolved': ['adaptation', 'adaptation.unresolved'],
   'adaptation-mode': ['adaptation', 'adaptation.mode.changed'], 'run-extinct': ['life', 'run.extinct'],
+  'run-abandoned': ['life', 'run.abandoned'],
   coverage: ['world', 'geo.coverage.milestone'], phase: ['life', 'run.phase.abundance'],
   'geo-coast': ['world', 'geo.coast.reached'], 'geo-river': ['world', 'geo.river.reached'],
   'geo-forest': ['world', 'geo.forest.reached'], 'geo-mountain': ['world', 'geo.mountain.reached'],
@@ -102,6 +103,14 @@ export function appendWorld(history, result, score, runIndex, retention = 24) {
     seed: result.seed, tick: result.tick, score: score.total, rank: score.rank.en, cause: result.cause, echo: score.echoes,
     hash: result.hash, archetype: result.archetype, inoculationCell: result.inoculationCell,
     adaptations: (result.adaptationOffers ?? []).filter((offer) => offer.selectedCardId).map((offer) => offer.selectedCardId), events });
+  return validateHistory({ ...history, worlds: [...history.worlds, record] }, retention);
+}
+export function appendAbandonedWorld(history, result, retention = 24) {
+  const record = validateWorld({ id: `abandoned-${result.runId}-${result.seed}-${result.tick}`,
+    seed: result.seed, tick: result.tick, score: result.score, rank: 'Abandoned', cause: 'abandoned',
+    echo: 0, hash: '', archetype: result.archetype, inoculationCell: result.inoculationCell,
+    adaptations: (result.offers ?? []).filter((offer) => offer.selectedCardId).map((offer) => offer.selectedCardId),
+    events: normalizeHistoryEvents(result.history) });
   return validateHistory({ ...history, worlds: [...history.worlds, record] }, retention);
 }
 export function appendMemoryEvent(history, nodeId, cost, balance, run) { const event = { seq: history.memory.length, nodeId, cost, balance, run };

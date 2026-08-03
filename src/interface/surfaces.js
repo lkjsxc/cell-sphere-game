@@ -19,13 +19,14 @@ export function elements() {
     pause: /** @type {HTMLButtonElement} */ (byId('pause-button')),
     speed: /** @type {HTMLSelectElement} */ (byId('speed-select')),
     adaptationButton: /** @type {HTMLButtonElement} */ (byId('adaptations-button')),
-    adaptationBadge: byId('adaptation-badge'),
+    adaptationBadge: byId('adaptation-badge'), adaptationModeLabel: byId('adaptation-mode-label'),
     boot: byId('boot-status'), score: byId('hud-score'), pressure: byId('hud-pressure'), reach: byId('hud-reach'), trace: byId('hud-trace'),
     event: byId('hud-event-text'), resultRank: byId('result-rank'), resultScore: byId('result-score'),
     resultCause: byId('result-cause'), breakdown: byId('result-breakdown'), resultAdaptations: byId('result-adaptations'),
     echoes: byId('result-echoes'), resultImprint: byId('result-imprint'), memoryBalance: byId('memory-balance'),
     memoryAvailable: byId('memory-available'), countdown: byId('result-countdown'),
     resultNext: /** @type {HTMLButtonElement} */ (byId('result-next-button')),
+    evolutionButton: /** @type {HTMLButtonElement} */ (byId('memory-button')),
     resultDetails: /** @type {HTMLButtonElement} */ (byId('result-details-button')),
     live: byId('live-region'), toast: byId('toast-root'), adaptationCaption: byId('adaptation-caption'),
     resultHistory: byId('result-history-button'),
@@ -52,7 +53,15 @@ export function updateHud(el, snap) {
 export function updateAdaptationCount(el, count) {
   const n = Math.max(0, Math.floor(count));
   el.adaptationBadge.hidden = n === 0; el.adaptationBadge.textContent = String(n);
-  el.adaptationButton.setAttribute('aria-label', n ? `Adaptations, ${n} waiting` : 'Adaptations');
+  const manual = el.adaptationButton.dataset.mode === 'manual';
+  el.adaptationButton.dataset.action = manual && n >= 3 ? 'urgent' : manual && n ? 'recommended' : 'normal';
+  el.adaptationButton.setAttribute('aria-label', n ? `Adaptations, ${n} waiting, ${manual ? 'manual' : 'auto random'}` : `Adaptations, ${manual ? 'manual' : 'auto random'}`);
+}
+
+export function updateAdaptationMode(el, mode) {
+  const manual = mode === 'manual'; el.adaptationButton.dataset.mode = manual ? 'manual' : 'random';
+  el.adaptationModeLabel.textContent = manual ? 'MANUAL' : 'AUTO';
+  updateAdaptationCount(el, el.adaptationBadge.hidden ? 0 : Number(el.adaptationBadge.textContent));
 }
 
 export function announce(el, text) { el.event.textContent = text; el.live.textContent = text; }
@@ -65,7 +74,8 @@ export function toast(el, text, quiet = false) {
 }
 
 export function showResult(el, score, result) {
-  el.resultRank.textContent = `${score.rank.en.split(' ')[0].toUpperCase()} · +${score.echoes} Echoes`;
+  el.resultRank.textContent = result.campaignResolvedNow ? `FIRST CYCLE RESOLVED · +${score.echoes} Echoes`
+    : `${score.rank.en.split(' ')[0].toUpperCase()} · +${score.echoes} Echoes`;
   el.resultScore.textContent = number(score.total);
   el.resultCause.textContent = CAUSE[result.cause] ?? 'The final living cell released its remaining energy.';
   el.echoes.textContent = `${score.echoes} Echoes entered permanent memory.`;
@@ -92,5 +102,5 @@ export function formatCoverage(coverage, aliveCount, totalCells = 2562) {
 }
 
 export function showMemory(el, meta, available = 0) { el.memoryBalance.textContent = number(meta.echoBalance);
-  el.memoryAvailable.textContent = `${available} available`; show(el, 'memory'); }
+  el.memoryAvailable.textContent = `${available} ${available === 1 ? 'skill' : 'skills'} available`; show(el, 'memory'); }
 export function number(value) { return new Intl.NumberFormat('en').format(Math.round(value)); }

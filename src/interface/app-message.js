@@ -4,6 +4,7 @@ import { focusCamera } from '../rendering/camera.js';
 import * as ui from './surfaces.js';
 
 export function handleRunMessage(app, message) {
+  if (message.t === 'heartbeat') return;
   if (message.t === 'ready') return app.driver.ready();
   if (message.t === 'started') { if (app.state === 'starting') app.flow.send('ready');
     focusCamera(app.camera, app.topo.positions.subarray(message.inoculationCell * 3, message.inoculationCell * 3 + 3));
@@ -21,7 +22,10 @@ export function handleRunMessage(app, message) {
   if (message.t === 'adaptation-mode') { app.settings = { ...app.settings, adaptationMode: message.mode };
     saveSettings(app.settings); app.adapt.update(app.adaptationModel()); return; }
   if (message.t === 'event') return ui.announce(app.el, `${humanize(message.family)} · ${message.phase}`);
+  if (message.t === 'terminal-collapse') return ui.announce(app.el, 'Final trace — the remaining tissue is releasing.');
   if (message.t === 'extinct') return app.finishRun(message.summary);
+  if (message.t === 'aborted') return app.finishAbandoned(message.summary);
+  if (message.t === 'worker-failed') return app.failRun(message.message);
   if (message.t === 'error') ui.announce(app.el, `The world reported a recoverable error: ${message.message}`);
 }
 

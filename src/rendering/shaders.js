@@ -140,7 +140,7 @@ void main() {
     if (uEventStrength[i] > 0.001) {
       float d = dot(normalize(vCenter), uEventCenter[i]);
       float w = smoothstep(uEventRadius[i], min(1.0, uEventRadius[i] + 0.18), d);
-      col = mix(col, uEventTint[i], w * uEventStrength[i] * 0.48);
+      col = mix(col, uEventTint[i], w * uEventStrength[i] * 0.18 * (0.55 + inset * 0.45));
     }
   }
   for (int i = 0; i < 8; i++) {

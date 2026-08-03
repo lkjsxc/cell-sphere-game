@@ -4,8 +4,8 @@ import { appendWorld } from '../../platform/history.js';
 import { convertImprintToAtlas } from '../../platform/storage.js';
 
 export function applyRunResult(meta, archive, result, retention, lastKey = null) {
-  const key = `${result.seed}:${result.hash}:${result.tick}`;
-  if (key === lastKey) return Object.freeze({ applied: false, key, meta, archive, score: null });
+  const key = `${result.runId ?? 0}:${result.seed}:${result.hash}:${result.tick}`;
+  if (lastKey instanceof Set ? lastKey.has(key) : key === lastKey) return Object.freeze({ applied: false, key, meta, archive, score: null });
   const score = scoreResult(result); const converted = result.imprint?.edges?.length
     ? convertImprintToAtlas(result.imprint) : null;
   const nextMeta = {

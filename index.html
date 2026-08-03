@@ -22,8 +22,8 @@
 
     <section id="title-screen" class="screen" aria-labelledby="title-heading">
       <nav class="corner-nav" aria-label="World tools">
-        <button class="quiet-btn history-open" type="button">History</button>
-        <button class="quiet-btn settings-open" type="button">Settings</button>
+        <button class="quiet-btn history-open" data-surface-trigger="history" data-action="quiet" type="button">History</button>
+        <button class="quiet-btn settings-open" data-surface-trigger="settings" data-action="quiet" type="button">Settings</button>
       </nav>
       <div class="title-identity">
         <p class="title-index"><span aria-hidden="true">⬠</span> WORLD / 0001</p>
@@ -33,7 +33,7 @@
         <p id="boot-status" class="title-status" role="status">Waking the cells…</p>
       </div>
       <div class="title-actions">
-        <button id="begin-button" class="btn btn-primary" type="button">Grow a world</button>
+        <button id="begin-button" class="btn btn-primary" data-action="recommended" type="button">Grow a world</button>
         <p class="title-help">Drag to turn · tap a cell to inspect · growth is autonomous</p>
       </div>
     </section>
@@ -49,16 +49,14 @@
       <div class="hud-bottom">
         <div class="hud-event"><span id="hud-event-text">Autonomous inoculation is beginning.</span></div>
         <div class="command-rail material-clear" aria-label="Run controls">
-          <button id="pause-button" class="rail-btn" type="button" aria-pressed="false">Pause</button>
-          <label class="speed-control"><span>Speed</span>
-            <select id="speed-select" aria-label="Game speed">
-              <option value="1">1×</option><option value="2">2×</option><option value="4">4×</option>
-              <option value="8">8×</option><option value="16">16×</option><option value="32">32×</option>
-            </select>
-          </label>
-          <button id="adaptations-button" class="rail-btn" type="button">Adaptations <span id="adaptation-badge" class="badge" hidden>0</span></button>
-          <button class="rail-btn history-open" type="button">History</button>
-          <button class="rail-btn settings-open" type="button" aria-label="Open Settings">More</button>
+          <div class="time-group" aria-label="World time controls">
+            <button id="pause-button" class="time-dial" data-action="normal" type="button" aria-pressed="false" aria-label="Pause world time"><span class="clock-face" aria-hidden="true"><i class="clock-hand clock-hour"></i><i class="clock-hand clock-minute"></i><i class="clock-play"></i></span></button>
+            <label class="speed-control"><span class="sr-only">Game speed</span><select id="speed-select" aria-label="Game speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option><option value="16">16×</option><option value="32">32×</option></select></label>
+          </div>
+          <button id="adaptations-button" class="rail-btn dock-primary" data-surface-trigger="adaptations" data-action="normal" type="button"><span>Adaptations</span><small id="adaptation-mode-label">AUTO</small><span id="adaptation-badge" class="badge" hidden>0</span></button>
+          <button class="rail-btn history-open" data-surface-trigger="history" data-action="quiet" type="button"><span>History</span></button>
+          <button id="new-world-button" class="rail-btn" data-surface-trigger="new-world" data-action="destructive" type="button"><span>New World</span></button>
+          <button class="rail-btn settings-open" data-surface-trigger="settings" data-action="quiet" type="button" aria-label="Open Settings"><span>Settings</span></button>
         </div>
       </div>
     </section>
@@ -67,7 +65,7 @@
       <div class="result-strip material-clear sheet-enter">
         <div class="result-primary"><p id="result-rank" class="result-rank"></p><strong id="result-score" class="result-score score-reveal">0</strong></div>
         <div class="result-summary"><h2 id="result-heading">Extinction</h2><p id="result-cause" class="result-copy"></p><p id="result-echoes" class="result-echoes"></p><p id="result-countdown" class="result-countdown" role="status"></p></div>
-        <div class="result-actions"><button id="result-next-button" class="btn btn-primary" type="button">Next World</button><button id="memory-button" class="btn btn-secondary" type="button">Memory</button><button id="result-history-button" class="btn btn-secondary" type="button">History</button><button id="result-details-button" class="btn btn-secondary" type="button">Details</button><button class="btn btn-secondary settings-open" type="button">Settings</button></div>
+        <div class="result-actions"><button id="result-next-button" class="btn btn-primary" data-action="recommended" type="button"><span>Next World</span></button><button id="memory-button" class="btn btn-secondary" data-action="available" type="button"><span>Evolution Globe</span></button><button id="result-history-button" class="btn btn-secondary" data-surface-trigger="history" data-action="normal" type="button" aria-label="History"><span>History</span></button><button id="result-details-button" class="btn btn-secondary" data-surface-trigger="result-details" data-action="quiet" type="button" aria-label="Result details"><span>Details</span></button><button class="btn btn-secondary settings-open" data-surface-trigger="settings" data-action="quiet" type="button" aria-label="Settings"><span>Settings</span></button></div>
       </div>
     </section>
 
@@ -77,11 +75,12 @@
     </section>
 
     <section id="memory-screen" class="screen" hidden aria-labelledby="memory-heading">
-      <h2 id="memory-heading" class="sr-only">Memory</h2>
+      <h2 id="memory-heading" class="sr-only">Evolution Globe</h2>
       <div class="memory-bar material-clear">
-        <div><strong>Memory</strong><span><b id="memory-balance">0</b> Echoes</span><span id="memory-available">0 available</span></div>
-        <div class="memory-actions"><button id="restart-button" class="btn btn-primary" type="button">Next World</button><button id="memory-list-button" class="btn btn-secondary" type="button">List</button><button class="btn btn-secondary history-open" type="button">History</button><button class="btn btn-secondary settings-open" type="button">Settings</button></div>
+        <div class="evolution-identity"><span class="eyebrow">PERMANENT SKILL TREE</span><strong>Evolution Globe</strong><span class="evolution-line">Shape what every future world inherits.</span><span><b id="memory-balance">0</b> Echoes · <span id="memory-available">0 skills available</span></span></div>
+        <div class="memory-actions"><button id="restart-button" class="btn btn-primary" data-action="recommended" type="button">Next World</button><button id="evolution-focus-available" class="btn btn-secondary" data-action="quiet" type="button">Focus available</button><button class="btn btn-secondary history-open" data-surface-trigger="history" data-action="quiet" type="button">History</button><button class="btn btn-secondary settings-open" data-surface-trigger="settings" data-action="quiet" type="button">Settings</button></div>
       </div>
+      <div id="evolution-tree" class="sr-only" role="tree" aria-label="Evolution Globe skills"></div>
     </section>
 
     <section id="cell-inspector" class="context-surface material-regular" hidden aria-labelledby="inspector-heading">
@@ -91,17 +90,18 @@
       <div id="inspector-life"></div><div id="inspector-history"></div>
     </section>
 
-    <section id="memory-node-panel" class="context-surface material-regular" hidden aria-labelledby="memory-node-heading">
-      <header><p id="memory-node-branch" class="eyebrow">MEMORY CURRENT</p><button id="memory-node-close" class="close-btn" type="button">Close</button></header>
-      <h2 id="memory-node-heading" tabindex="-1">Memory cell</h2><p id="memory-node-summary" class="panel-copy"></p><p id="memory-node-detail" class="panel-copy"></p>
-      <dl id="memory-node-meta" class="inspection-grid"></dl><button id="memory-unlock" class="btn btn-primary" type="button">Unlock</button>
+    <section id="memory-node-panel" class="context-surface skill-detail material-regular" hidden aria-labelledby="memory-node-heading">
+      <header><p id="memory-node-branch" class="eyebrow">SKILL CELL</p><button id="memory-node-close" class="close-btn" data-action="quiet" type="button">Close</button></header>
+      <div class="surface-body"><h2 id="memory-node-heading" tabindex="-1">Skill Cell</h2><p id="memory-node-summary" class="panel-copy"></p><p id="memory-node-detail" class="panel-copy"></p><p id="memory-node-change" class="skill-change" hidden></p><dl id="memory-node-meta" class="inspection-grid"></dl></div>
+      <footer class="surface-actions"><button id="memory-unlock" class="btn btn-primary" data-action="recommended" type="button">Unlock</button></footer>
     </section>
 
     <section id="adaptations-dialog" class="context-surface context-wide material-regular" hidden aria-labelledby="adaptations-heading">
-      <header><div><p class="eyebrow">ADAPTATIONS</p><h2 id="adaptations-heading" tabindex="-1">Changes remembered</h2></div><button id="adaptations-close" class="close-btn" type="button">Close</button></header>
-      <p class="time-note">The world continues while you review.</p>
+      <header><div><p class="eyebrow">ADAPTATIONS</p><h2 id="adaptations-heading" tabindex="-1">Changes this world can carry</h2></div><button id="adaptations-close" class="close-btn" data-action="quiet" type="button">Close</button></header>
+      <div class="adaptation-mode-control" role="group" aria-label="Adaptation choice mode"><button id="adaptation-auto" type="button">AUTO · RANDOM</button><button id="adaptation-manual" type="button">MANUAL</button></div>
+      <p id="adaptation-mode-help" class="time-note"></p><p class="time-note">The world continues while you review.</p>
       <strong id="adaptations-pending">No pending offers</strong><p id="adaptations-offer-meta" class="panel-copy"></p><div id="adaptation-cards" class="card-row"></div>
-      <details><summary>Remembered this world</summary><ol id="adaptations-owned" class="compact-list"></ol></details>
+      <details><summary>Chosen this world</summary><ol id="adaptations-owned" class="compact-list"></ol></details>
     </section>
 
     <section id="history-dialog" class="context-surface context-history material-regular" hidden aria-labelledby="history-heading">
@@ -124,9 +124,9 @@
       </form>
     </section>
 
-    <section id="memory-list-dialog" class="context-surface context-wide material-regular" hidden aria-labelledby="memory-list-heading"><header><div><p class="eyebrow">MEMORY</p><h2 id="memory-list-heading" tabindex="-1">Atlas list</h2></div><button id="memory-list-close" class="close-btn" type="button">Close</button></header><div class="panel-toolbar"><select id="memory-list-filter" aria-label="Memory status"><option value="available">Available</option><option value="owned">Owned</option><option value="locked">Locked</option><option value="all">All cells</option></select></div><div id="memory-list" class="memory-list"></div></section>
+    <section id="new-world-dialog" class="context-surface context-confirm material-regular" hidden aria-labelledby="new-world-heading"><header><div><p class="eyebrow">NEW WORLD</p><h2 id="new-world-heading" tabindex="-1">Leave this world?</h2></div><button id="new-world-close" class="close-btn" data-action="quiet" type="button">Close</button></header><div class="surface-body"><p class="panel-copy">This world will be recorded as abandoned. It grants no Echoes, Imprint, trophy, or score reward.</p><dl id="new-world-stats" class="inspection-grid"></dl></div><footer class="surface-actions"><button id="new-world-keep" class="btn btn-primary" data-action="recommended" type="button">Keep watching</button><button id="new-world-confirm" class="btn btn-danger" data-action="destructive" type="button">Start next world</button></footer></section>
 
-    <div id="adaptation-caption" role="status" aria-live="polite" hidden></div>
+    <div id="surface-scrim" aria-hidden="true" hidden></div><div id="adaptation-caption" role="status" aria-live="polite" hidden></div>
     <div id="toast-root" aria-hidden="true"></div><div id="live-region" class="sr-only" aria-live="polite"></div><div id="diagnostics" hidden></div>
     <noscript><p style="padding:2rem">This game requires JavaScript and a current browser.</p></noscript>
   </div>

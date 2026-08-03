@@ -36,6 +36,17 @@
   box-shadow: 0 8px 32px rgba(201, 158, 69, 0.18);
 }
 
+button[data-action="quiet"] { color: var(--text-secondary); border-color: var(--border-faint); box-shadow: none; }
+button[data-action="available"] { color: var(--text-primary); border-color: var(--action-available); box-shadow: inset 0 0 0 1px rgba(159, 203, 179, .12); }
+button[data-action="recommended"] { color: var(--text-inverse); border-color: transparent;
+  background: linear-gradient(155deg, #f4dea0, var(--action-recommended)); font-weight: 750;
+  box-shadow: 0 .45rem 1.8rem rgba(240, 200, 111, .2); }
+button[data-action="urgent"] { color: var(--text-inverse); border-color: transparent;
+  background: linear-gradient(155deg, #ffd28b, var(--action-urgent)); font-weight: 800; }
+button[data-action="destructive"] { color: #f0a99b; border-color: rgba(223, 109, 85, .5); background: rgba(60, 24, 20, .28); }
+.context-confirm button[data-action="destructive"] { color: #fff2ed; background: #8f382c; border-color: var(--action-destructive); }
+button[data-action]:disabled { opacity: .38; filter: saturate(.4); box-shadow: none; cursor: not-allowed; }
+
 .btn-ghost {
   background: transparent;
   border-color: var(--border-faint);

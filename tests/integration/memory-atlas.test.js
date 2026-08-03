@@ -7,7 +7,7 @@ import {
   generateMemoryAtlas, validateAtlasMapping,
 } from '../../src/game/memory-atlas.js';
 import {
-  MEMORY_BRANCHES, MEMORY_NODES, availableMemoryNodes, buildMemorySnapshot, compileMemory, validateMemoryGraph,
+  MEMORY_BRANCHES, MEMORY_NODES, availableMemoryNodes, buildMemorySnapshot, canPurchaseMemory, compileMemory, validateMemoryGraph,
 } from '../../src/game/memory.js';
 import { MEMORY_STATUS } from '../../src/game/memory-scene.js';
 import { defaultMeta } from '../../src/platform/storage.js';
@@ -59,9 +59,22 @@ test('validator reports count, branch, reachability, disconnected territory, eff
   assert.match(validateMemoryGraph(effect).errors.join('\n'), /unknown effect/);
   const economy = clone(); economy[0].cost = 0;
   assert.match(validateMemoryGraph(economy).errors.join('\n'), /invalid cost/);
+  const gate = clone(); gate[1].requiredRuns = -1;
+  assert.match(validateMemoryGraph(gate).errors.join('\n'), /invalid run gate/);
 });
 
-test('all Memory cell status and semantic arrays are explicit', () => {
+test('visible run gates model half, keystone, connector, and capstone horizons', () => {
+  assert.equal(MEMORY_NODES.filter((node) => node.requiredRuns <= 144).length, 54);
+  assert.equal(MEMORY_NODES.filter((node) => node.kind === 'keystone').every((node) => node.requiredRuns === 164), true);
+  assert.equal(MEMORY_NODES.filter((node) => node.kind === 'connector').every((node) => node.requiredRuns === 600), true);
+  assert.equal(MEMORY_NODES.filter((node) => node.kind === 'capstone').every((node) => node.requiredRuns === 900), true);
+  const target = MEMORY_NODES[8]; const owned = MEMORY_NODES.slice(0, 8).map((node) => node.id);
+  const meta = { ...defaultMeta(), echoBalance: 10_000, memoryNodes: owned, runs: 143 };
+  assert.equal(canPurchaseMemory(meta, target.id), false);
+  assert.equal(canPurchaseMemory({ ...meta, runs: 144 }, target.id), true);
+});
+
+test('all Skill Cell status and semantic arrays are explicit', () => {
   const root = MEMORY_NODES[0]; const child = MEMORY_NODES[1];
   const ready = buildMemorySnapshot(topo, { ...defaultMeta(), echoBalance: 3 }, root.id);
   assert.equal(ready.memoryStatus[root.cell], MEMORY_STATUS.SELECTED_AFFORDABLE);

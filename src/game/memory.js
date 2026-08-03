@@ -33,10 +33,13 @@ export function memoryNodeState(meta, node, selectedId = null) {
   const ownedIds = new Set(Array.isArray(meta?.memoryNodes) ? meta.memoryNodes : []);
   const owned = ownedIds.has(node.id);
   const prerequisitesMet = node.requires.every((id) => ownedIds.has(id));
+  const runs = Number.isFinite(meta?.runs) ? Math.floor(meta.runs) : 0;
+  const experienceMet = runs >= node.requiredRuns; const requirementsMet = prerequisitesMet && experienceMet;
   const affordable = Number.isFinite(meta?.echoBalance) && meta.echoBalance >= node.cost;
-  return Object.freeze({ ...node, owned, reachable: !owned && prerequisitesMet,
-    locked: !owned && !prerequisitesMet, affordable,
-    selectedReady: selectedId === node.id && !owned && prerequisitesMet && affordable });
+  return Object.freeze({ ...node, owned, reachable: !owned && requirementsMet,
+    locked: !owned && !requirementsMet, affordable, prerequisitesMet, experienceMet,
+    runsRemaining: Math.max(0, node.requiredRuns - runs),
+    selectedReady: selectedId === node.id && !owned && requirementsMet && affordable });
 }
 
 export function groupAccessibleMemory(meta, selectedId = null) {
@@ -52,7 +55,7 @@ export function availableMemoryNodes(meta) {
 export function canPurchaseMemory(meta, id) {
   const node = BY_ID.get(id);
   if (!node || !Array.isArray(meta?.memoryNodes) || !Number.isFinite(meta.echoBalance)) return false;
-  if (meta.memoryNodes.includes(id) || meta.echoBalance < node.cost) return false;
+  if (meta.memoryNodes.includes(id) || meta.echoBalance < node.cost || (meta.runs ?? 0) < node.requiredRuns) return false;
   return node.requires.every((required) => meta.memoryNodes.includes(required));
 }
 
@@ -93,7 +96,7 @@ function mergeEffect(target, effect) {
 
 export function memoryEffects(meta) { return compileMemory(meta).effects; }
 
-export function campaignResolved(meta) { return meta.memoryNodes.includes('continuity-unbroken-lesson'); }
+export function campaignResolved(meta) { return Number.isFinite(meta?.runs) && meta.runs >= 4; }
 
 export function buildMemoryScene(meta, selectedId = null) {
   const groups = groupAccessibleMemory(meta, selectedId);
@@ -113,6 +116,7 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
     if (!/^[a-z][a-z-]+$/.test(node.id) || ids.has(node.id)) errors.push(`invalid id: ${node.id}`); ids.add(node.id); byId.set(node.id, node);
     if (!Number.isInteger(node.cell) || node.cell < 0 || node.cell >= topo.nodeCount || cells.has(node.cell)) errors.push(`invalid cell: ${node.id}`); cells.add(node.cell);
     if (!Number.isFinite(node.cost) || node.cost <= 0) errors.push(`invalid cost: ${node.id}`); else totalCost += node.cost;
+    if (!Number.isInteger(node.requiredRuns) || node.requiredRuns < 0) errors.push(`invalid run gate: ${node.id}`);
     composition[node.kind] = (composition[node.kind] ?? 0) + 1;
     branchCounts[node.branch] = (branchCounts[node.branch] ?? 0) + 1;
     const effects = node.effect.bonus ? [node.effect, node.effect.bonus] : [node.effect];
@@ -136,6 +140,7 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
     else {
       degree.set(required, degree.get(required) + 1); degree.set(node.id, degree.get(node.id) + 1);
       if (!cellsAdjacent(topo, node.cell, parent.cell)) errors.push(`nonadjacent prerequisite: ${node.id}->${required}`);
+      if (parent.requiredRuns > node.requiredRuns) errors.push(`run gate order: ${node.id}->${required}`);
     }
   }
   for (const node of nodes.filter((item) => item.kind === 'connector')) {

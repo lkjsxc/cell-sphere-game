@@ -4,7 +4,7 @@ import { validateHistory } from '../platform/history.js';
 import { validateSettings } from '../platform/settings.js';
 
 export function seedForRun(runCount, search = location.search) {
-  const params = new URLSearchParams(search); const given = Number(params.get('seed'));
+  const params = new URLSearchParams(search); const raw = params.get('seed'); const given = raw === null ? NaN : Number(raw);
   if (Number.isInteger(given) && given >= 0 && given < 0x40000000) return given;
   return (20260731 + runCount * 104729) & 0x3fffffff;
 }

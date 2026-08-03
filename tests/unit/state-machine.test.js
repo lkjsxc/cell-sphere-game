@@ -43,6 +43,9 @@ test('production interface excludes rejected modal controls and copy', () => {
     assert.equal(html.includes(text), false, text);
   }
   assert.equal(html.includes('id="adaptation-mode"'), false); assert.equal(html.includes('<dialog id="history-dialog"'), false);
+  for (const obsolete of ['>Memory<', 'Memory cell', 'Remembered', 'Atlas list', 'memory-list-button', 'memory-list-dialog']) assert.equal(html.includes(obsolete), false, obsolete);
+  for (const current of ['Evolution Globe', 'PERMANENT SKILL TREE', 'Shape what every future world inherits.', 'AUTO · RANDOM', 'Leave this world?']) assert.equal(html.includes(current), true, current);
+  assert.equal(/id="pause-button"[^>]*>Pause</.test(html), false);
   const dir = new URL('../../src/interface/', import.meta.url);
   const source = readdirSync(dir).filter((name) => name.endsWith('.js'))
     .map((name) => readFileSync(new URL(name, dir), 'utf8')).join('\n');

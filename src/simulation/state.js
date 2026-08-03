@@ -42,7 +42,7 @@ export function createRunState(cfg) {
     topo, fields, traits, activeTraits: { ...traits },
     memoryConditionals: Array.isArray(cfg.memoryConditionals) ? cfg.memoryConditionals : [],
     memoryUnlocks: Array.isArray(cfg.memoryUnlocks) ? cfg.memoryUnlocks : [],
-    challenge: cfg.challenge ?? null, seed,
+    challenge: cfg.challenge ?? null, seed, runId: Number.isInteger(cfg.runId) ? cfg.runId : 0,
     simRng, eventRng, contentRng, decisionRng, inoculationRng,
     tick: 0, entropy: 0, status: 'idle', extinction: null,
     terminalCollapseStart: -1, terminalDeadline: -1, terminalCause: null,

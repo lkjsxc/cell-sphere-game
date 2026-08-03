@@ -15,7 +15,7 @@ import { analyzeConnectivity } from './connectivity.js';
 import { runSummary } from './summary.js';
 import { logReplay, recordHistory, REPLAY } from './replay.js';
 import { buildSnapshot } from './snapshot.js';
-import { buildRunResult, dominantCause } from './result.js';
+import { buildAbandonedRun, buildRunResult, dominantCause } from './result.js';
 import { HistoryRecorder } from '../history/recorder.js';
 
 export class RunController {
@@ -42,7 +42,7 @@ export class RunController {
   /** Advance up to n authoritative ticks; offers never pause progress. */
   advance(n) {
     let done = 0;
-    while (done < n && this.state.status !== 'extinct') { this.step(); done++; }
+    while (done < n && (this.state.status === 'running' || this.state.status === 'terminal-collapse')) { this.step(); done++; }
     return done;
   }
 
@@ -87,6 +87,17 @@ export class RunController {
     this.historyRecorder.observe(s, true, true);
     this.emit({ t: 'history-batch', events: s.history.slice(historyStart).map((event) => ({ ...event })) });
     this.emit({ t: 'extinct', summary: this.buildResult() });
+    return true;
+  }
+
+  abort() {
+    const s = this.state;
+    if (s.status !== 'running' && s.status !== 'terminal-collapse') return false;
+    const historyStart = s.history.length; s.status = 'aborted';
+    recordHistory(s, 'run-abandoned', { value: s.aliveCount });
+    this.historyRecorder.observe(s, true, true);
+    this.emit({ t: 'history-batch', events: s.history.slice(historyStart).map((event) => ({ ...event })) });
+    this.emit({ t: 'aborted', summary: buildAbandonedRun(s) });
     return true;
   }
 

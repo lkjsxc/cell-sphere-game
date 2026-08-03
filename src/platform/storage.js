@@ -16,7 +16,7 @@ export const LEGACY_MEMORY_MAP = Object.freeze({
 
 export function defaultMeta() {
   return { schema: 5, memoryGraphVersion: MEMORY_GRAPH_VERSION,
-    bestScore: 0, totalEchoes: 0, echoBalance: 0, runs: 0,
+    bestScore: 0, totalEchoes: 0, echoBalance: 0, runs: 0, worldSeedIndex: 0,
     memoryNodes: [], quarantinedMemoryNodes: [], imprints: [], migrationNotice: null };
 }
 
@@ -28,6 +28,7 @@ export function validateMeta(raw) {
   out.echoBalance = Number.isFinite(raw.echoBalance) && raw.echoBalance >= 0 ? Math.floor(raw.echoBalance)
     : sourceSchema === 1 ? out.totalEchoes : 0;
   out.runs = boundedInteger(raw.runs, 0);
+  out.worldSeedIndex = Math.max(out.runs, boundedInteger(raw.worldSeedIndex, out.runs));
   const migrated = migrateMemoryIds(raw.memoryNodes, sourceSchema);
   const ownership = sourceSchema === 4 ? validateGraphOneOwnership(migrated) : migrated;
   out.memoryNodes = MEMORY_NODE_IDS.filter((id) => ownership.valid.includes(id));

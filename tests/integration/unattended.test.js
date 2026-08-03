@@ -15,6 +15,15 @@ function complete(seed, manual) {
   assert.equal(run.state.status, 'extinct'); return run.buildResult();
 }
 
+test('bounded transaction keys reject delayed results after a newer world', () => {
+  let meta = defaultMeta(); let archive = clearHistory(); const keys = new Set();
+  const first = { ...complete(101, false), runId: 1 }; const second = { ...complete(102, false), runId: 2 };
+  for (const result of [first, second]) { const transaction = applyRunResult(meta, archive, result, 24, keys);
+    assert.equal(transaction.applied, true); keys.add(transaction.key); meta = transaction.meta; archive = transaction.archive; }
+  assert.equal(applyRunResult(meta, archive, first, 24, keys).applied, false);
+  assert.equal(meta.runs, 2);
+});
+
 test('100 unattended result transitions award once and remain bounded', { timeout: 30_000 }, () => {
   let meta = defaultMeta(); let archive = clearHistory(); let lastKey = null; let echoes = 0; let now = 0;
   const flow = createAppState(); const countdown = createContinuation(9000); const heapStart = process.memoryUsage().heapUsed;
