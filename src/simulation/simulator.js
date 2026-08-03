@@ -1,6 +1,8 @@
 /** Authoritative deterministic run controller shared by Worker and fallback. */
 import { BALANCE as B } from '../game/balance.js';
 import { chooseAdaptationOrigin } from '../core/adaptation-origin.js';
+import { computeAdaptationArrivals } from '../core/adaptation-arrival.js';
+import { hashStringU32 } from '../core/hash.js';
 import { ADAPTATIONS, adaptationPresentationCategory, applyCardEffects, selectRandomOption } from '../game/adaptations.js';
 import { applyMemoryConditionals } from '../game/memory.js';
 import { beginTerminalCollapse, createRunState, reconcileLiveness, terminalCollapseReason } from './state.js';
@@ -130,6 +132,10 @@ export class RunController {
   resolveOffer(offer, cardId, selectionMode) {
     const s = this.state;
     const origin = chooseAdaptationOrigin(s);
+    const category = adaptationPresentationCategory(cardId);
+    const propagation = computeAdaptationArrivals({ topo: s.topo, fields: s.fields,
+      originCell: origin.cell, alive: s.alive, biomass: s.biomass, stress: s.stress,
+      energy: s.energy, category, salt: hashStringU32(`${cardId}:${origin.cell}`) });
     applyCardEffects(s.traits, cardId);
     s.ownedCards.push(cardId);
     offer.resolvedTick = s.tick;
@@ -139,8 +145,11 @@ export class RunController {
     logReplay(s, REPLAY.ADAPTATION_SELECT, offer.id, cardIndex(cardId), s.tick, modeIndex(selectionMode));
     recordHistory(s, 'adaptation-selected', { id: offer.id, card: cardIndex(cardId), mode: selectionMode });
     this.emit({ t: 'adaptation-selected', offerId: offer.id, cardId, tick: s.tick, selectionMode,
-      originCell: origin.cell, category: adaptationPresentationCategory(cardId),
-      affectedComponentId: origin.componentId });
+      originCell: origin.cell, category, affectedComponentId: origin.componentId,
+      arrivalVersion: propagation.version, arrivals: propagation.arrivals,
+      affectedCount: propagation.affectedCount, minArrival: propagation.minArrival,
+      medianArrival: propagation.medianArrival, maxArrival: propagation.maxArrival },
+    [propagation.arrivals.buffer]);
     this.emit({ t: 'history-batch', events: [{ ...s.history.at(-1) }] });
     this.historyRecorder.observe(s, true);
   }

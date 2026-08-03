@@ -41,8 +41,9 @@ uniform float uEntropy;
 uniform float uMemory;
 uniform vec3 uSelectedCenter;
 uniform float uHasSelection;
-uniform float uAdaptationTime;
-uniform float uAdaptationMaxDistance;
+uniform float uAdaptationTimeMs;
+uniform float uAdaptationTrailMs;
+uniform float uAdaptationReducedThreshold;
 uniform float uAdaptationReduced;
 uniform float uAdaptationActive;
 uniform vec3 uHistoryCenter[8];
@@ -148,23 +149,26 @@ void main() {
       col = mix(col, vec3(0.96, 0.73, 0.31), marked * (0.48 + plate * 0.30));
     }
   }
-  float distance = vAdaptation.x;
+  float arrival = vAdaptation.x;
   float category = vAdaptation.y;
-  float reachable = uAdaptationActive * (1.0 - step(254.5, distance));
-  float normalizedDistance = distance / max(1.0, uAdaptationMaxDistance);
-  float width = category < 1.5 ? 0.18 : category < 4.5 ? 0.105 : 0.075;
-  float wake = 1.0 - smoothstep(width, width + 0.035, abs(normalizedDistance - uAdaptationTime));
-  float origin = 1.0 - step(0.5, distance);
-  wake = mix(max(wake, origin * (1.0 - uAdaptationTime) * 0.45), origin, uAdaptationReduced);
+  float reachable = uAdaptationActive * (1.0 - step(65534.5, arrival));
+  float age = uAdaptationTimeMs - arrival;
+  float front = 1.0 - smoothstep(85.0, 175.0, abs(age));
+  float trail = step(0.0, age) * (1.0 - smoothstep(0.0, uAdaptationTrailMs, age));
+  float origin = 1.0 - step(0.5, arrival);
+  float charge = origin * smoothstep(-140.0, -20.0, uAdaptationTimeMs)
+    * (1.0 - smoothstep(0.0, 260.0, uAdaptationTimeMs));
+  float staticSubset = (1.0 - step(uAdaptationReducedThreshold + 0.5, arrival)) * (0.46 + origin * 0.54);
+  float wake = mix(max(max(front, trail * 0.48), charge), staticSubset, uAdaptationReduced);
   float form = 0.72 + inset * 0.28;
   vec3 adaptationTint = vec3(0.72, 0.76, 0.46);
   if (category > 1.5 && category < 2.5) { form = inset * (0.72 + striation * 0.28); adaptationTint = vec3(0.82, 0.55, 0.30); }
   else if (category < 3.5 && category > 2.5) { form = 0.25 + (1.0 - inset) * 0.75; adaptationTint = vec3(0.70, 0.80, 0.66); }
-  else if (category < 4.5 && category > 3.5) { form = 0.58 + 0.42 * sin(distance * 1.73 - uAdaptationTime * 28.0); adaptationTint = vec3(0.63, 0.76, 0.58); }
+  else if (category < 4.5 && category > 3.5) { form = 0.58 + 0.42 * sin(arrival * 0.031 - uAdaptationTimeMs * 0.018); adaptationTint = vec3(0.63, 0.76, 0.58); }
   else if (category < 5.5 && category > 4.5) { form = 0.48 + moisture * 0.28 + forest * 0.30; adaptationTint = vec3(0.48, 0.74, 0.42); }
-  else if (category > 5.5) { form = 0.62 + 0.18 * sin(dot(vCenter, vec3(191.0, 127.0, 83.0)) + distance); adaptationTint = vec3(0.72, 0.78, 0.73); }
+  else if (category > 5.5) { form = 0.62 + 0.18 * sin(dot(vCenter, vec3(191.0, 127.0, 83.0)) + arrival * 0.04); adaptationTint = vec3(0.72, 0.78, 0.73); }
   float adaptationEmphasis = reachable * wake * clamp(form, 0.15, 1.0);
-  col = mix(col, adaptationTint, adaptationEmphasis * 0.42);
+  col = mix(col, adaptationTint, adaptationEmphasis * 0.30);
   col += adaptationEmphasis * (0.035 + inset * 0.045);
   float selected = uHasSelection * step(0.99994, dot(normalize(vCenter), uSelectedCenter));
   col = mix(col, vec3(0.78, 0.92, 0.84), selected * (0.34 + plate * 0.28));

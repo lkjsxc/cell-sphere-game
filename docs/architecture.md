@@ -49,7 +49,7 @@ Worker → main:
 
 - `ready` / `started {inoculationCell}`
 - transferable cell-only `snapshot` (`biomass`, `stress`, `alive`, `lifeState`)
-- `adaptation-offered` / `adaptation-selected` / `adaptation-mode`
+- `adaptation-offered` / `adaptation-selected` with transferable weighted arrival field / `adaptation-mode`
 - `history-batch` / `event`
 - `cell-inspection {requestId, cell}`
 - transferable `history-preview` / `history-buffer` with matching request IDs

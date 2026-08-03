@@ -12,6 +12,7 @@ here is environment-independent and runs under Node and the browser.
 | `clock.js` | Fixed-step clock: real time × speed → integer tick counts. |
 | `state-machine.js` | Explicit FSM with declared legal transitions; illegal sends throw. |
 | `assert.js` | Boundary assertions for messages, saves, and configuration. |
+| `adaptation-arrival.js` | Pure deterministic weighted graph arrival field for bounded presentation. |
 
 Invariants:
 

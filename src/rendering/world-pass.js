@@ -17,7 +17,7 @@ export class WorldPass {
       atmosphere: this.make(SHELL.VS_ATMOSPHERE, SHELL.FS_ATMOSPHERE),
     };
     this.lifeData = new Float32Array(this.geometry.vertexCount * 3);
-    this.adaptationData = new Uint8Array(this.geometry.vertexCount * 2); this.adaptationToken = -1;
+    this.adaptationData = new Uint16Array(this.geometry.vertexCount * 2); this.adaptationToken = -1;
     this.overlay = {
       centers: new Float32Array(12), radii: new Float32Array(4),
       tints: new Float32Array(12), strengths: new Float32Array(4),
@@ -49,7 +49,7 @@ export class WorldPass {
     this.attribute(this.programs.globe, 'aTerrain', this.buffer(gl.ARRAY_BUFFER, g.terrain), 4);
     this.attribute(this.programs.globe, 'aLife', this.lifeBuffer, 3);
     this.adaptationBuffer = this.buffer(gl.ARRAY_BUFFER, this.adaptationData, gl.DYNAMIC_DRAW);
-    this.attribute(this.programs.globe, 'aAdaptation', this.adaptationBuffer, 2, gl.UNSIGNED_BYTE);
+    this.attribute(this.programs.globe, 'aAdaptation', this.adaptationBuffer, 2, gl.UNSIGNED_SHORT);
     this.globeIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.indices);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.globeIndex);
 
@@ -107,7 +107,7 @@ export class WorldPass {
     const token = event?.token ?? 0; if (token === this.adaptationToken) return;
     this.adaptationToken = token; const cells = this.geometry.vertexCell;
     for (let vertex = 0; vertex < cells.length; vertex++) {
-      this.adaptationData[vertex * 2] = event?.distances[cells[vertex]] ?? 255;
+      this.adaptationData[vertex * 2] = event?.arrivals[cells[vertex]] ?? 0xffff;
       this.adaptationData[vertex * 2 + 1] = event?.category ?? 0;
     }
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.adaptationBuffer);
@@ -125,8 +125,9 @@ export class WorldPass {
     gl.uniform1f(globe.u.get('uHasSelection'), selected >= 0 ? 1 : 0);
     gl.uniform3fv(globe.u.get('uSelectedCenter'), selected >= 0
       ? this.topo.positions.subarray(selected * 3, selected * 3 + 3) : this.zero3);
-    gl.uniform1f(globe.u.get('uAdaptationTime'), adaptation?.progress ?? 0);
-    gl.uniform1f(globe.u.get('uAdaptationMaxDistance'), adaptation?.maxDistance ?? 0);
+    gl.uniform1f(globe.u.get('uAdaptationTimeMs'), adaptation?.timeMs ?? 0);
+    gl.uniform1f(globe.u.get('uAdaptationTrailMs'), adaptation?.trailMs ?? 420);
+    gl.uniform1f(globe.u.get('uAdaptationReducedThreshold'), adaptation?.reducedThreshold ?? 0);
     gl.uniform1f(globe.u.get('uAdaptationReduced'), adaptation?.reduced ? 1 : 0);
     gl.uniform1f(globe.u.get('uAdaptationActive'), adaptation ? 1 : 0);
     this.historyCenters.fill(0); const count = Math.min(8, highlightedCells.length);

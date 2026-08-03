@@ -45,8 +45,8 @@ preference.
   main-thread `RunController` fallback. World, events, growth, inoculation,
   offers, and random decisions use isolated xoshiro128** streams.
 - Non-blocking FIFO Adaptation offers with exact-uniform seeded automatic
-  selection, manual delayed choices, versioned replay, schema-2 semantic
-  History, and bounded approximate cell-only timeline checkpoints.
+  selection, manual delayed choices, versioned replay, weighted state-sensitive
+  arrival fields, schema-2 History, and bounded cell-only timeline checkpoints.
 - Four-draw WebGL2 cellular renderer: geography, life stages, crises,
   Adaptation propagation, History, selection, and Memory are materials on the
   same cells. There is no organism-route, tip-sprite, or Memory-path pass.

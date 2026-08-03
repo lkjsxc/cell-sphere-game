@@ -18,8 +18,10 @@ there is no center-to-downstream line, ribbon, dash, or separate river draw.
 The cell surface expresses living, stressed, critical, frontier, and dead-remain
 states by whole-cell fill, inset, edge, roughness, and light response. Events
 and crises tint affected cells. A selected cell gets a pale material edge.
-Adaptations temporarily propagate through direct living neighbors in the same
-shader. History uploads an approximate cell checkpoint and primary-cell
+Adaptations use an authoritative exact-tick weighted arrival field: a 140 ms
+origin charge, narrow state/category-sensitive front, and 420 ms trail complete
+within 2.2 seconds without normalizing to the whole component. History uploads
+an approximate cell checkpoint and primary-cell
 highlight. Memory replaces the world fields with a graphite 642-cell atlas and
 explicit locked, unaffordable, affordable, owned, selected, Imprint, and brief
 unlock-emphasis materials.

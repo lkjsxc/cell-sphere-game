@@ -119,12 +119,14 @@ export class Canvas2DRenderer {
   }
 
   drawAdaptation(event) {
-    const max = Math.max(1, event.maxDistance); const width = event.category === 1 ? 0.18 : 0.10;
     for (let cell = 0; cell < this.topo.nodeCount; cell++) {
-      const distance = event.distances[cell]; if (distance === 255 || this.facing[cell] <= 0.02) continue;
-      let strength = event.reduced ? (distance === 0 ? 1 : 0)
-        : Math.max(0, 1 - Math.abs(distance / max - event.progress) / width);
-      if (event.category === 4) strength *= 0.65 + 0.35 * Math.sin(distance * 1.7 - event.progress * 28);
+      const arrival = event.arrivals[cell]; if (arrival === 0xffff || this.facing[cell] <= 0.02) continue;
+      const age = event.timeMs - arrival;
+      const front = Math.max(0, 1 - Math.abs(age) / 175);
+      const trail = age < 0 ? 0 : Math.max(0, 1 - age / event.trailMs) * 0.48;
+      let strength = event.reduced ? (arrival <= event.reducedThreshold ? (arrival ? 0.5 : 1) : 0)
+        : Math.max(front, trail);
+      if (event.category === 4) strength *= 0.65 + 0.35 * Math.sin(arrival * .031 - event.timeMs * .018);
       if (event.category === 5) strength *= 0.55 + (this.fields.forestDensity?.[cell] ?? 0) * 0.45;
       if (strength <= 0) continue;
       const style = adaptationStyle(event.category, strength); this.cellPath(cell, style.scale);

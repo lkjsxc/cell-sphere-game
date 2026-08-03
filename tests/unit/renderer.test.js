@@ -17,7 +17,6 @@ import * as SHS from '../../src/rendering/shaders-shell.js';
 import { parseUniformNames } from '../../src/rendering/gl-utils.js';
 import { createCellGeometry } from '../../src/rendering/cell-geometry.js';
 import { AttractState } from '../../src/rendering/attract-state.js';
-import { AdaptationPropagation } from '../../src/rendering/adaptation-propagation.js';
 import { createTopology } from '../../src/world/icosphere.js';
 import { createFields } from '../../src/world/fields.js';
 import { createRng } from '../../src/core/prng.js';
@@ -157,23 +156,6 @@ test('title organism grows through real adjacency and stays bounded', () => {
   attract.reset(12);
   assert.equal(snap.alive[12], 1);
   assert.equal(snap.alive.reduce((sum, value) => sum + value, 0), 1);
-});
-
-test('Adaptation BFS stays on living direct adjacency with a bounded two-event queue', () => {
-  const topo = { nodeCount: 4, nodeStart: Uint32Array.from([0, 1, 3, 5, 6]),
-    nodeNeighbors: Uint16Array.from([1, 0, 2, 1, 3, 2]) };
-  const alive = Uint8Array.from([1, 1, 0, 1]); const wave = new AdaptationPropagation(topo);
-  const base = { originCell: 0, category: 'transport' };
-  const first = wave.enqueue(base, alive, 0, false);
-  assert.deepEqual([...first.distances], [0, 1, 255, 255]);
-  assert.equal(first.affectedCount, 2); assert.equal(first.maxDistance, 1);
-  wave.enqueue({ ...base, category: 'reach' }, alive, 0, false);
-  wave.enqueue({ ...base, category: 'ecology' }, alive, 0, false);
-  assert.equal(wave.queueLength, 2); assert.equal(wave.retainedBytes, topo.nodeCount * 2);
-  assert.equal(wave.frame(100).token, 2, 'third event discards the oldest full event');
-  wave.clear(); wave.enqueue(base, alive, 0, true);
-  const reduced = wave.frame(0); assert.equal(reduced.reduced, true); assert.equal(reduced.progress, 0);
-  assert.equal(wave.frame(221), null, 'reduced-motion static emphasis clears on timeout');
 });
 
 test('cell life semantics distinguish topology frontier, stress, critical, and remains', () => {

@@ -42,9 +42,11 @@ most five. Manual commands validate offer and card IDs and apply once at the
 current tick. Switching to Random resolves pending FIFO offers at no more than
 one per tick. Random selection is exact-uniform through rejection sampling on
 a dedicated xoshiro stream. Each accepted choice records a deterministic living
-origin cell. Rendering may breadth-first propagate presentation through that
-origin’s living component, but the query is read-only and never enters replay,
-hash, card application, or RNG.
+origin cell. The authority computes a versioned presentation-only `Uint16Array` arrival field
+at that exact tick. Deterministic weighted shortest-path costs read biomass,
+energy, stress, living degree, terrain, category, and a card/origin hash; dead
+cells block traversal and a category-specific 28–40% cap keeps large components
+local. The field never enters replay, result hash, card application, or RNG.
 
 ## Observation
 

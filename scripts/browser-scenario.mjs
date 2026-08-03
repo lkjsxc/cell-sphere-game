@@ -60,9 +60,11 @@ export async function runScenario(t) {
   const waveStart = await evaluate(`(() => { const app=window.__IN_APP__, wave=app.adaptationEffects.frame(performance.now());
     return {caption:document.getElementById('adaptation-caption').textContent,hidden:document.getElementById('adaptation-caption').hidden,
       draws:app.renderer.drawCalls,queue:app.adaptationEffects.queueLength,bytes:app.adaptationEffects.retainedBytes,
-      reduced:wave?.reduced,progress:wave?.progress}; })()`);
+      reduced:wave?.reduced,progress:wave?.progress,affected:wave?.affectedCount,
+      min:wave?.minArrival,median:wave?.medianArrival,max:wave?.maxArrival}; })()`);
   ok(!waveStart.hidden && waveStart.caption.length > 20 && waveStart.draws === 4 && waveStart.queue <= 2
-    && waveStart.bytes <= 5124 && waveStart.reduced === false, 'full-motion Adaptation presentation contract failed');
+    && waveStart.bytes <= 10248 && waveStart.reduced === false && waveStart.affected > 0
+    && waveStart.min === 0 && waveStart.median <= waveStart.max, 'full-motion Adaptation presentation contract failed');
   await screenshot('browser-adaptation-wave-start.png');
   ok(await poll(() => evaluate('window.__IN_APP__.adaptationEffects.frame(performance.now())?.progress'),
     (value) => value > 0.35 && value < 0.85, 1400), 'Adaptation wave never reached its midpoint');
@@ -78,10 +80,10 @@ export async function runScenario(t) {
     document.getElementById('adaptations-button').click(); document.querySelector('#adaptation-cards .card').click(); document.getElementById('adaptations-close').click(); })()`);
   const reduced = await evaluate(`new Promise(resolve => { const end=performance.now()+2000; function read() {
     const effects=window.__IN_APP__.adaptationEffects, wave=effects.frame(performance.now());
-    if(wave) return resolve({reduced:wave.reduced,origin:wave.distances[wave.originCell],queue:effects.queueLength});
+    if(wave) return resolve({reduced:wave.reduced,origin:wave.arrivals[wave.originCell],queue:effects.queueLength});
     if(performance.now()>=end) return resolve(null); setTimeout(read,20); } read(); })`);
   ok(reduced?.reduced && reduced.origin === 0 && reduced.queue <= 2, 'reduced motion did not use static origin emphasis');
-  await screenshot('browser-adaptation-reduced.png'); await wait(260);
+  await screenshot('browser-adaptation-reduced.png'); await wait(430);
   ok(await evaluate('window.__IN_APP__.adaptationEffects.queueLength') === 0, 'reduced emphasis exceeded its timeout');
   await evaluate(`(() => { document.querySelector('#run-screen .settings-open').click(); const choices=document.querySelector('[name=adaptationMode]');
     choices.value='random'; choices.dispatchEvent(new Event('change',{bubbles:true})); document.getElementById('settings-close').click(); })()`);

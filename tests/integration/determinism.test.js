@@ -44,8 +44,9 @@ function runOrigins(seed, chunk, visual = false) {
   controller = new RunController({ seed }, (message) => {
     if (message.t !== 'adaptation-selected') return;
     events.push({ originCell: message.originCell, category: message.category,
-      component: message.affectedComponentId, living: controller.state.alive[message.originCell] });
-    if (visual) wave.enqueue(message, controller.state.alive, controller.state.tick * 100, false);
+      component: message.affectedComponentId, living: controller.state.alive[message.originCell],
+      affected: message.affectedCount, median: message.medianArrival, max: message.maxArrival });
+    if (visual) wave.enqueue(message, controller.state.tick * 100, false);
   });
   wave = new AdaptationPropagation(controller.state.topo); controller.start();
   while (controller.state.status !== 'extinct') { controller.advance(chunk); if (visual) wave.frame(controller.state.tick * 100); }

@@ -30,9 +30,10 @@ Truthful deployed handoff for the world-first cellular redesign.
   crisis, selection, Adaptation, visual History, and Memory states are direct
   cell materials. Organism route/tip/orbit and Memory path producers and their
   presentation payloads are deleted.
-- Adaptation selection starts a bounded two-second direct-living-neighbor wave
-  from a deterministic authoritative origin. Reduced motion uses a brief static
-  origin. The queue retains at most two events / 5,124 bytes.
+- Adaptation selection starts a bounded 2.2-second weighted living-neighbor wave
+  from a deterministic authoritative origin. Biomass, energy, stress, topology,
+  terrain, and category alter arrival; reduced motion emphasizes a local subset.
+  The queue retains at most two `Uint16` fields / 10,248 bytes.
 - History retains bounded semantic events plus strict approximate cell-only
   checkpoints. Previous/Next selects event time and primary cells; Live
   restores current authority immediately; newest-ten visual bundles are
