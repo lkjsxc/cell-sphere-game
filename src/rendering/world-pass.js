@@ -42,9 +42,6 @@ export class WorldPass {
     this.attribute(this.programs.globe, 'aCenter', this.buffer(gl.ARRAY_BUFFER, g.centers), 3);
     this.attribute(this.programs.globe, 'aMaterial', this.buffer(gl.ARRAY_BUFFER, g.material), 4);
     this.attribute(this.programs.globe, 'aTerrain', this.buffer(gl.ARRAY_BUFFER, g.terrain), 4);
-    this.attribute(this.programs.globe, 'aRiverDown', this.buffer(gl.ARRAY_BUFFER, g.riverDown), 3);
-    this.attribute(this.programs.globe, 'aRiverUp', this.buffer(gl.ARRAY_BUFFER, g.riverUp), 3);
-    this.attribute(this.programs.globe, 'aRiverMeta', this.buffer(gl.ARRAY_BUFFER, g.riverMeta), 2);
     this.attribute(this.programs.globe, 'aLife', this.lifeBuffer, 3);
     this.eventBuffer = this.buffer(gl.ARRAY_BUFFER, this.eventData, gl.DYNAMIC_DRAW);
     this.attribute(this.programs.globe, 'aEvent', this.eventBuffer, 2, gl.UNSIGNED_BYTE);

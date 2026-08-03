@@ -33,7 +33,7 @@ not a click-to-place game, and not a hidden-tab idle process.
 
 1. A judge understands the autonomous loop within ten seconds.
 2. Original engine-less spherical topology, geography, hydrology, and simulation.
-3. Rivers, forests, terrain, and cellular life stages remain distinct at a glance.
+3. Whole-cell lakes, shores, forests, terrain, and cellular life stages remain distinct at a glance.
 4. Extinction is inevitable, causal, narrated, and converted into permanent inheritance.
 5. Non-blocking Auto Random/Manual evolution supports ambient and strategic play.
 6. History makes autonomous behavior understandable during and after a run.

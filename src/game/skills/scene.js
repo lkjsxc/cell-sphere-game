@@ -11,9 +11,10 @@ export function createMemoryFields(topo) {
   const baseNutrient = floats(); const baseMoisture = floats(); const baseTemp = floats(); const altitude = floats();
   baseNutrient.fill(0.22); baseMoisture.fill(0.18); baseTemp.fill(0.35); altitude.fill(0.43);
   return Object.freeze({ baseNutrient, baseMoisture, baseTemp, altitude,
-    biomeId: new Uint8Array(topo.nodeCount).fill(9), forestDensity: floats(), riverStrength: floats(),
-    ridgeStrength: floats(), landMask: new Uint8Array(topo.nodeCount).fill(1), drainTo: new Int16Array(topo.nodeCount).fill(-1),
-    landmarks: Object.freeze([]), sources: Object.freeze([0]) });
+    biomeId: new Uint8Array(topo.nodeCount).fill(9), forestDensity: floats(), lakeDepth: floats(),
+    lakeShore: new Uint8Array(topo.nodeCount), freshwaterInfluence: floats(),
+    lakeId: new Int16Array(topo.nodeCount).fill(-1), ridgeStrength: floats(),
+    landMask: new Uint8Array(topo.nodeCount).fill(1), landmarks: Object.freeze([]), sources: Object.freeze([0]) });
 }
 
 export function renderMemorySnapshot(topo, meta, scene, emphasizedIds = []) {

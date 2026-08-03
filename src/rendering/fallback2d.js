@@ -7,7 +7,7 @@ import { EVENT_TINT_LIST } from './event-tints.js';
 const BIOME_COLOR = Object.freeze([
   [8, 42, 62], [14, 76, 88], [145, 126, 76], [35, 91, 45], [22, 73, 42],
   [83, 119, 50], [137, 116, 52], [164, 116, 53], [37, 110, 82], [96, 94, 72],
-  [112, 110, 104], [113, 128, 104], [205, 218, 218],
+  [112, 110, 104], [113, 128, 104], [205, 218, 218], [13, 66, 88],
 ]);
 
 export class Canvas2DRenderer {
@@ -49,16 +49,15 @@ export class Canvas2DRenderer {
     this.project(this.dual.corners, this.cornerX, this.cornerY, this.cornerFacing, basis, cx, cy, radius);
 
     for (let cell = 0; cell < topo.nodeCount; cell++) {
-      if (this.facing[cell] <= 0.02) continue;
+      if (this.facing[cell] <= .02) continue;
       const color = BIOME_COLOR[fields.biomeId?.[cell] ?? 5]; const forest = fields.forestDensity?.[cell] ?? 0;
-      this.cellPath(cell); ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${(0.58 + this.facing[cell] * 0.34) * dim})`; ctx.fill();
-      if (forest > 0.08) {
-        this.cellPath(cell, 0.72); ctx.fillStyle = `rgba(9,54,30,${forest * 0.34})`; ctx.fill();
-      }
-      const river = fields.riverStrength?.[cell] ?? 0;
-      if (river > 0) { this.cellPath(cell, .84); ctx.fillStyle = `rgba(45,92,91,${.10 + river * .12})`; ctx.fill(); }
+      const shore = fields.lakeShore?.[cell] ? .28 : 0; const canopy = forest * .38;
+      const red = Math.round((color[0] * (1 - canopy) + 9 * canopy) * (1 - shore) + 45 * shore);
+      const green = Math.round((color[1] * (1 - canopy) + 54 * canopy) * (1 - shore) + 100 * shore);
+      const blue = Math.round((color[2] * (1 - canopy) + 30 * canopy) * (1 - shore) + 76 * shore);
+      this.cellPath(cell); ctx.fillStyle = `rgba(${red},${green},${blue},${(.58 + this.facing[cell] * .34) * dim})`; ctx.fill();
     }
-    this.drawRivers(); if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1);
+    if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1);
     if (scene.adaptation) this.drawAdaptation(scene.adaptation);
     this.drawBoundaries(false); this.drawBoundaries(true);
     for (const cell of (scene.highlightedCells ?? []).slice(0, 8)) {
@@ -90,24 +89,6 @@ export class Canvas2DRenderer {
       if (offset === start) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
     ctx.closePath();
-  }
-
-  drawRivers() {
-    const { ctx, topo, fields } = this; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    for (let cell = 0; cell < topo.nodeCount; cell++) { const strength = fields.riverStrength?.[cell] ?? 0;
-      if (strength <= 0 || this.facing[cell] <= .02) continue; const down = fields.drainTo[cell]; if (down < 0) continue;
-      const exit = this.riverBoundary(cell, down); if (!exit) continue; const incoming = [];
-      for (let offset = topo.nodeStart[cell]; offset < topo.nodeStart[cell + 1]; offset++) { const next = topo.nodeNeighbors[offset];
-        if (fields.drainTo[next] === cell && (fields.riverStrength[next] ?? 0) > 0) { const point = this.riverBoundary(cell, next); if (point) incoming.push(point); } }
-      if (!incoming.length) incoming.push([this.px[cell], this.py[cell]]); ctx.strokeStyle = `rgba(49,105,106,${.48 + strength * .28})`; ctx.lineWidth = .65 + strength * 1.65;
-      for (const start of incoming) { ctx.beginPath(); ctx.moveTo(start[0], start[1]); ctx.quadraticCurveTo(this.px[cell], this.py[cell], exit[0], exit[1]); ctx.stroke(); }
-    }
-  }
-  riverBoundary(cell, neighbor) { const { topo, dual } = this;
-    for (let offset = topo.nodeStart[cell]; offset < topo.nodeStart[cell + 1]; offset++) if (topo.nodeNeighbors[offset] === neighbor) {
-      const edge = topo.nodeEdges[offset]; const a = dual.boundaryCornerA[edge]; const b = dual.boundaryCornerB[edge];
-      return [(this.cornerX[a] + this.cornerX[b]) * .5, (this.cornerY[a] + this.cornerY[b]) * .5]; }
-    return null;
   }
 
   drawCellOverlays(snapshot, fade) {
@@ -150,17 +131,20 @@ export class Canvas2DRenderer {
     }
   }
 
-  drawBoundaries(coast) {
+  drawBoundaries(emphasis) {
     const { ctx, topo, dual } = this; ctx.beginPath();
     for (let edge = 0; edge < topo.edgeCount; edge++) {
-      const isCoast = this.fields.landMask?.[topo.edgeA[edge]] !== this.fields.landMask?.[topo.edgeB[edge]];
-      if (isCoast !== coast) continue;
+      const cellA = topo.edgeA[edge]; const cellB = topo.edgeB[edge];
+      const coast = this.fields.landMask?.[cellA] !== this.fields.landMask?.[cellB];
+      const lakeA = this.fields.lakeId?.[cellA] ?? -1; const lakeB = this.fields.lakeId?.[cellB] ?? -1;
+      const lakeEdge = lakeA !== lakeB && (lakeA >= 0 || lakeB >= 0);
+      if ((coast || lakeEdge) !== emphasis) continue;
       const a = dual.boundaryCornerA[edge]; const b = dual.boundaryCornerB[edge];
       if (this.cornerFacing[a] <= 0 || this.cornerFacing[b] <= 0) continue;
       ctx.moveTo(this.cornerX[a], this.cornerY[a]); ctx.lineTo(this.cornerX[b], this.cornerY[b]);
     }
-    ctx.strokeStyle = coast ? 'rgba(82,151,159,.52)' : 'rgba(142,154,144,.13)';
-    ctx.lineWidth = coast ? 0.9 : 0.45; ctx.stroke();
+    ctx.strokeStyle = emphasis ? 'rgba(64,139,151,.58)' : 'rgba(142,154,144,.13)';
+    ctx.lineWidth = emphasis ? .9 : .45; ctx.stroke();
   }
 
   dispose() { /* no persistent GPU resources */ }

@@ -1,11 +1,13 @@
 import { BIOME, BIOME_EFFECTS, FEATURE, WATER } from './constants.js';
 import { smoothField, sphericalField } from './noise.js';
 
-/** Correlate climate, soils, forests, biomes, and hazard exposure. */
+/** Correlate climate, lake influence, soils, forests, biomes, and hazards. */
 export function createEcology(rng, topo, terrain, hydro) {
   const n = topo.nodeCount;
   const soil = smoothField(sphericalField(rng, topo.positions, n,
     { lobes: 10, sharpness: 3, signed: true }), topo, 1);
+  const climate = smoothField(sphericalField(rng, topo.positions, n,
+    { lobes: 7, sharpness: 2, signed: true }), topo, 2);
   const baseMoisture = new Float32Array(n); const baseTemp = new Float32Array(n);
   const baseNutrient = new Float32Array(n); const forestDensity = new Float32Array(n);
   const biomeId = new Uint8Array(n); const hazardSusceptibility = new Float32Array(n);
@@ -13,35 +15,37 @@ export function createEcology(rng, topo, terrain, hydro) {
   const growthSuitability = new Float32Array(n); const maintenanceMultiplier = new Float32Array(n);
   const uptakeMultiplier = new Float32Array(n); const resourceRenewal = new Float32Array(n);
   const routeCost = new Float32Array(n);
-  for (let i = 0; i < n; i++) {
-    const land = terrain.landMask[i];
-    const height = land ? Math.max(0, (terrain.baseElevation[i] - terrain.seaLevel)
-      / Math.max(0.05, 1 - terrain.seaLevel)) : 0;
-    const latitude = Math.abs(topo.positions[i * 3 + 1]);
-    const river = hydro.riverStrength[i]; const lake = hydro.lakeId[i] >= 0;
-    const moisture = clamp(0.13 + hydro.rainfall[i] * 0.69
-      + river * 0.14 + (lake ? 0.18 : 0) - height * 0.13);
-    const temp = clamp(0.86 - latitude * 0.58 - height * 0.42
-      + (soil[i] - 0.5) * 0.08);
-    const nutrient = clamp(0.2 + soil[i] * 0.36 + moisture * 0.24
-      + river * 0.14 + (terrain.coastDistance[i] < 0.05 ? 0.05 : 0));
-    const warmth = Math.max(0, 1 - Math.abs(temp - 0.62) * 2.1);
-    const forest = land && !lake ? clamp((moisture - 0.4) * 2.15 * warmth
-      * (1 - Math.max(0, height - 0.55) * 1.7)) : 0;
-    baseMoisture[i] = Math.fround(land ? moisture : Math.max(0.65, moisture));
-    baseTemp[i] = Math.fround(temp);
-    baseNutrient[i] = Math.fround(land ? nutrient : clamp(nutrient * 0.72));
-    forestDensity[i] = Math.fround(forest);
-    biomeId[i] = classifyBiome(i, height, terrain, hydro, moisture, temp, forest);
-    const factor = BIOME_EFFECTS[biomeId[i]];
-    growthSuitability[i] = factor.growth; maintenanceMultiplier[i] = factor.maintenance;
-    uptakeMultiplier[i] = factor.uptake; resourceRenewal[i] = factor.renewal; routeCost[i] = factor.routeCost;
-    const hazard = clamp(0.12 + terrain.ridgeStrength[i] * 0.28
-      + (1 - moisture) * 0.25 + hydro.rainfall[i] * 0.12 + soil[i] * 0.18);
-    hazardSusceptibility[i] = Math.fround(hazard);
-    toxVuln[i] = Math.fround(clamp(0.18 + hazard * 0.62 + (1 - nutrient) * 0.16));
-    eventVuln[i] = Math.fround(clamp(0.14 + hazard * 0.68 + latitude * 0.1));
-    addFeatures(i, height, terrain, hydro.featureFlags, forest);
+  for (let cell = 0; cell < n; cell++) {
+    const land = terrain.landMask[cell]; const lake = hydro.lakeId[cell] >= 0;
+    const height = land ? Math.max(0, (terrain.baseElevation[cell] - terrain.seaLevel)
+      / Math.max(.05, 1 - terrain.seaLevel)) : 0;
+    const latitude = Math.abs(topo.positions[cell * 3 + 1]);
+    const fresh = hydro.freshwaterInfluence[cell];
+    const oceanInfluence = 1 - terrain.coastDistance[cell];
+    let moisture = clamp(.18 + climate[cell] * .58 + oceanInfluence * .16
+      + fresh * .24 - height * .11);
+    if (lake) moisture = Math.max(moisture, .78 + fresh * .16);
+    const temp = clamp(.86 - latitude * .58 - height * .42 + (soil[cell] - .5) * .08);
+    const nutrient = clamp(.2 + soil[cell] * .36 + moisture * .24 + fresh * .14
+      + (terrain.coastDistance[cell] < .05 ? .05 : 0));
+    const warmth = Math.max(0, 1 - Math.abs(temp - .62) * 2.1);
+    const wetland = Boolean(hydro.featureFlags[cell] & FEATURE.WETLAND);
+    const forest = land && !lake && !wetland ? clamp((moisture - .4) * 2.15 * warmth
+      * (1 - Math.max(0, height - .55) * 1.7)) : 0;
+    baseMoisture[cell] = Math.fround(land ? moisture : Math.max(.65, moisture));
+    baseTemp[cell] = Math.fround(temp);
+    baseNutrient[cell] = Math.fround(land ? nutrient : clamp(nutrient * .72));
+    forestDensity[cell] = Math.fround(forest);
+    biomeId[cell] = classifyBiome(cell, height, terrain, hydro, moisture, temp, forest);
+    const factor = BIOME_EFFECTS[biomeId[cell]];
+    growthSuitability[cell] = factor.growth; maintenanceMultiplier[cell] = factor.maintenance;
+    uptakeMultiplier[cell] = factor.uptake; resourceRenewal[cell] = factor.renewal; routeCost[cell] = factor.routeCost;
+    const hazard = clamp(.12 + terrain.ridgeStrength[cell] * .28
+      + (1 - moisture) * .25 + climate[cell] * .12 + soil[cell] * .18);
+    hazardSusceptibility[cell] = Math.fround(hazard);
+    toxVuln[cell] = Math.fround(clamp(.18 + hazard * .62 + (1 - nutrient) * .16));
+    eventVuln[cell] = Math.fround(clamp(.14 + hazard * .68 + latitude * .1));
+    addFeatures(cell, height, terrain, hydro.featureFlags, forest);
   }
   const regionId = regionsFor(biomeId, topo);
   return {
@@ -51,27 +55,28 @@ export function createEcology(rng, topo, terrain, hydro) {
   };
 }
 
-function classifyBiome(i, height, terrain, hydro, moisture, temp, forest) {
-  if (!terrain.landMask[i]) return terrain.waterClass[i] === WATER.DEEP_OCEAN
+function classifyBiome(cell, height, terrain, hydro, moisture, temp, forest) {
+  if (!terrain.landMask[cell]) return terrain.waterClass[cell] === WATER.DEEP_OCEAN
     ? BIOME.DEEP_OCEAN : BIOME.SHALLOW_OCEAN;
-  if (hydro.lakeId[i] >= 0 || (hydro.riverStrength[i] > 0.3 && moisture > 0.63)) return BIOME.WETLAND;
-  if (temp < 0.15 || (height > 0.76 && temp < 0.25)) return BIOME.SNOW_ICE;
-  if (temp < 0.29) return BIOME.TUNDRA;
-  if (height > 0.72) return BIOME.MOUNTAIN;
-  if (height > 0.55 || terrain.ridgeStrength[i] > 0.72) return BIOME.HIGHLAND;
-  if (terrain.coastDistance[i] === 0) return BIOME.COAST;
-  if (forest > 0.58) return moisture > 0.65 ? BIOME.WET_FOREST : BIOME.FOREST;
-  if (forest > 0.34) return BIOME.FOREST;
-  if (moisture < 0.29) return BIOME.DESERT;
-  if (moisture < 0.45) return BIOME.DRY_GRASS;
+  if (hydro.lakeId[cell] >= 0) return BIOME.LAKE;
+  if (hydro.featureFlags[cell] & FEATURE.WETLAND) return BIOME.WETLAND;
+  if (temp < .15 || height > .76 && temp < .25) return BIOME.SNOW_ICE;
+  if (temp < .29) return BIOME.TUNDRA;
+  if (height > .72) return BIOME.MOUNTAIN;
+  if (height > .55 || terrain.ridgeStrength[cell] > .72) return BIOME.HIGHLAND;
+  if (terrain.coastDistance[cell] === 0) return BIOME.COAST;
+  if (forest > .58) return moisture > .65 ? BIOME.WET_FOREST : BIOME.FOREST;
+  if (forest > .34) return BIOME.FOREST;
+  if (moisture < .29) return BIOME.DESERT;
+  if (moisture < .45) return BIOME.DRY_GRASS;
   return BIOME.GRASS;
 }
 
-function addFeatures(i, height, terrain, flags, forest) {
-  if (terrain.landMask[i] && terrain.coastDistance[i] === 0) flags[i] |= FEATURE.COAST;
-  if (forest > 0.34) flags[i] |= FEATURE.FOREST;
-  if (terrain.ridgeStrength[i] > 0.62) flags[i] |= FEATURE.RIDGE;
-  if (height > 0.57) flags[i] |= FEATURE.HIGHLAND;
+function addFeatures(cell, height, terrain, flags, forest) {
+  if (terrain.landMask[cell] && terrain.coastDistance[cell] === 0) flags[cell] |= FEATURE.COAST;
+  if (forest > .34) flags[cell] |= FEATURE.FOREST;
+  if (terrain.ridgeStrength[cell] > .62) flags[cell] |= FEATURE.RIDGE;
+  if (height > .57) flags[cell] |= FEATURE.HIGHLAND;
 }
 
 function regionsFor(biome, topo) {
@@ -80,18 +85,14 @@ function regionsFor(biome, topo) {
   for (let root = 0; root < biome.length; root++) {
     if (ids[root] >= 0) continue;
     let head = 0; let tail = 1; queue[0] = root; ids[root] = id;
-    while (head < tail) {
-      const cell = queue[head++];
-      for (let p = topo.nodeStart[cell]; p < topo.nodeStart[cell + 1]; p++) {
-        const next = topo.nodeNeighbors[p];
-        if (ids[next] < 0 && biome[next] === biome[root]) {
-          ids[next] = id; queue[tail++] = next;
-        }
+    while (head < tail) { const cell = queue[head++];
+      for (let offset = topo.nodeStart[cell]; offset < topo.nodeStart[cell + 1]; offset++) {
+        const next = topo.nodeNeighbors[offset];
+        if (ids[next] < 0 && biome[next] === biome[root]) { ids[next] = id; queue[tail++] = next; }
       }
     }
     id++;
   }
   return ids;
 }
-
 function clamp(value) { return Math.max(0, Math.min(1, value)); }

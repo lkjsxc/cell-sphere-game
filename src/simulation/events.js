@@ -61,10 +61,11 @@ function chooseCenter(candidates, fields, family, rng) { let valid = candidates;
   else if (family === 'ash') valid = valid.filter((cell) => fields.landMask[cell] === 1 && fields.altitude[cell] > .58);
   return (valid.length ? valid : candidates)[rng.intBelow((valid.length ? valid : candidates).length)]; }
 function eventEdgeCost(topo, fields, family, from, to, wind, salt) {
-  const moisture = fields.baseMoisture[to]; const forest = fields.forestDensity[to]; const river = fields.riverStrength[to];
-  const altitude = fields.altitude[to]; const ocean = 1 - fields.landMask[to]; const ridge = Math.max(0, altitude - fields.altitude[from]);
-  let cost = 68 + variation(from, to, salt); if (family === 'drought') cost = 38 + moisture * 62 + forest * 38 + river * 72 + ridge * 90;
-  else if (family === 'bloom') cost = 86 - river * 48 - moisture * 26 - forest * 12 + ridge * 140;
+  const moisture = fields.baseMoisture[to]; const forest = fields.forestDensity[to];
+  const freshwater = fields.freshwaterInfluence[to]; const altitude = fields.altitude[to];
+  const ocean = 1 - fields.landMask[to]; const ridge = Math.max(0, altitude - fields.altitude[from]);
+  let cost = 68 + variation(from, to, salt); if (family === 'drought') cost = 38 + moisture * 62 + forest * 38 + freshwater * 72 + ridge * 90;
+  else if (family === 'bloom') cost = 86 - freshwater * 48 - moisture * 26 - forest * 12 + ridge * 140;
   else if (family === 'blight') cost = 58 - forest * 18 - fields.baseNutrient[to] * 14 + ridge * 45;
   else if (family === 'heat') cost += ocean * 34 + Math.max(0, altitude - .65) * 65;
   else if (family === 'freeze') cost += ocean * 18 + Math.max(0, .42 - altitude) * 42;

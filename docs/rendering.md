@@ -9,14 +9,14 @@ Steady-state WebGL2 submits exactly four draws:
 
 1. mineral-twilight background;
 2. one dual-cell surface carrying geography and all dynamic cellular material;
-3. quiet closed region/coast boundaries;
+3. quiet closed region/ocean/lake boundaries;
 4. atmosphere.
 
-Hydrology remains static world data in the same globe draw. Each river cell
-carries primary upstream/downstream directions, discharge, and class; the cell
-shader draws an inset muted channel toward shared boundaries. Canvas uses
-matching boundary-midpoint curves. There is no detached center-to-center bar or
-separate river draw.
+Lakes remain static world data in the same globe draw. Lake depth and shore
+status occupy the existing terrain material; lake cells have flat relief and
+full-cell depth color. The existing boundary pass emphasizes only shared
+lake/ocean cell edges. Canvas uses the same full-cell fills and shared edges;
+there is no interior waterway geometry or separate lake draw.
 
 The cell surface expresses living, stressed, critical, frontier, and dead-remain
 states by whole-cell fill, inset, edge, roughness, and light response. Events
@@ -41,7 +41,7 @@ topology/geography buffers build once; only bounded cell attributes update.
 The title decodes 89 cell-only frames generated from production seed `20260701`.
 Its 22-second nonlinear timeline preserves germination, a 535-cell branched peak,
 a recorded loop, environmental pressure, fragmentation, and a blank terminal
-beat before reset. Source hash `2e46b603…` and data hash `fd6b5289…` are checked
+beat before reset. Source hash `3f3e9227…` and data hash `22ac0d97…` are checked
 by `showcase:check`; no production simulation runs in the title runtime. Hidden
 documents freeze its clock and reduced motion holds a mature frame.
 
@@ -69,9 +69,9 @@ after four seconds of true idle, and is effectively disabled by reduced motion.
 
 ## Fallback and evidence
 
-Canvas 2D draws the same cellular semantics as polygons. Rivers are quiet
-terrain-cell material rather than center-to-center lines; organism and skill
-paths do not exist. The forced-fallback real-Chrome scenario completes a run,
+Canvas 2D draws the same cellular semantics as polygons. Lakes, shores, and
+wetlands are full-cell terrain fills; only existing shared cell boundaries
+emphasize water edges. Organism and skill paths do not exist. The forced-fallback real-Chrome scenario completes a run,
 opens visual History, renders the 642-cell Evolution Globe, captures mobile and
 desktop evidence, and reports no browser errors.
 

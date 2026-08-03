@@ -16,7 +16,7 @@ export const FLOW_MEMORY = defineBranch('flow', 'reach-horizon-crown', [
   ['weir-control', 'Weir Control', 'Unlock manual transport priorities.', 'The player may designate one corridor class to receive reinforcement before its peers.', 5, u('weirControl', 'mechanic')],
   ['flux-reading', 'Flux Reading', 'Reveal route throughput bands.', 'The atlas separates idle, useful, and overloaded corridors without inventing precision.', 7, u('fluxReading', 'information')],
   ['pulse-keeper', 'Pulse Keeper', 'Unlock threshold-based flow tending.', 'A saved rule may tend overloaded channels when visible pressure crosses its threshold.', 9, u('pulseKeeper', 'automation')],
-  ['river-crown', 'River Crown', 'Unlock Flow mastery for campaign rules.', 'Transport, reinforcement, and pruning become one remembered circulation discipline.', 14, u('flowMastery', 'keystone')],
+  ['river-crown', 'Current Crown', 'Unlock Flow mastery for campaign rules.', 'Transport, reinforcement, and pruning become one remembered circulation discipline.', 14, u('flowMastery', 'keystone')],
   ['running-horizon', 'Running Horizon', 'Join Flow and Reach mastery.', 'Every outward probe carries a measured current back through the route that justified it.', 18, u('flowReachConfluence', 'connector')],
   ['planetary-circulation', 'Planetary Circulation', 'Unlock the Planetary Circulation capstone.', 'A world-spanning current becomes an explicit late-campaign rule rather than a hidden bonus.', 26, u('planetaryCirculation', 'capstone')],
 ]);

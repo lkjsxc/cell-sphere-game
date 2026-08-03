@@ -33,8 +33,8 @@ Chrome/WebGL2 evidence reproduced the rejected interface before redesign:
 - the ordinary globe's terrain is promising, but repeated mint tip sprites,
   short warm/cyan route fragments, and a decorative background orbit compete
   with cell state and make life look placed above the world;
-- rivers, organism routes, boundaries, and dots require explanation rather than
-  reading immediately as geography or biology;
+- obsolete sub-cell waterways, organism routes, boundaries, and dots require
+  explanation rather than reading immediately as geography or biology;
 - the selected-cell sheet is nearly opaque, covers most of the 390×844 globe,
   and includes generic landmark cycling unrelated to the selected cell;
 - Adaptations and History are opaque full-height documents that replace the
@@ -64,7 +64,7 @@ Apple assets or platform styling.
 |---|---|---:|---:|---|
 | cell boundary | shared topology | yes | yes, quiet | retain without Knot line accents |
 | coastline | land/water boundary | yes | yes | retain as geography |
-| river ribbon | downstream drainage | yes | yes | make terrain-bound and unmistakable |
+| whole-cell lake | private drainage projection | yes | yes | connected cell fill plus shared lake edges |
 | organism ribbon | adjacent transfer | optional | no | remove production pass and snapshot payload |
 | frontier sprite | living/dead frontier | optional state | no | replace with cell material |
 | Memory path | distant prerequisite route | no | no | adjacent atlas cells only |

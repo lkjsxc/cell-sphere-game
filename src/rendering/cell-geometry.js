@@ -43,8 +43,7 @@ export function createCellGeometry(topo, fields) {
   const positions = new Float32Array(vertexCount * 3);
   const centers = new Float32Array(vertexCount * 3);
   const material = new Float32Array(vertexCount * 4);
-  const terrain = new Float32Array(vertexCount * 4); const riverDown = new Float32Array(vertexCount * 3);
-  const riverUp = new Float32Array(vertexCount * 3); const riverMeta = new Float32Array(vertexCount * 2);
+  const terrain = new Float32Array(vertexCount * 4);
   const vertexCell = new Uint16Array(vertexCount);
   const indices = new Uint16Array(dual.cellCorners.length * 3);
   let vertex = 0; let index = 0;
@@ -83,12 +82,14 @@ export function createCellGeometry(topo, fields) {
     boundaryPositions.set(offset(b, sideB, -0.0018, 1.0025), (base + 3) * 3);
     const cellA = topo.edgeA[edge]; const cellB = topo.edgeB[edge];
     const coast = fields.landMask?.[cellA] !== fields.landMask?.[cellB] ? 1 : 0;
-    for (let corner = 0; corner < 4; corner++) boundaryFeature.set([0, coast], (base + corner) * 2);
+    const lakeA = fields.lakeId?.[cellA] ?? -1; const lakeB = fields.lakeId?.[cellB] ?? -1;
+    const lakeEdge = lakeA !== lakeB && (lakeA >= 0 || lakeB >= 0) ? 1 : 0;
+    for (let corner = 0; corner < 4; corner++) boundaryFeature.set([lakeEdge, coast], (base + corner) * 2);
     boundaryIndices.set([base, base + 1, base + 2, base + 1, base + 3, base + 2], edge * 6);
   }
 
   return Object.freeze({
-    dual, vertexCount, positions, centers, material, terrain, riverDown, riverUp, riverMeta, vertexCell, indices,
+    dual, vertexCount, positions, centers, material, terrain, vertexCell, indices,
     boundaryPositions, boundaryFeature, boundaryIndices,
   });
 
@@ -98,20 +99,14 @@ export function createCellGeometry(topo, fields) {
     material.set([
       fields.baseNutrient[cell], fields.baseMoisture[cell], fields.baseTemp[cell], fields.altitude[cell],
     ], vertex * 4);
+    const lake = (fields.lakeId?.[cell] ?? -1) >= 0;
+    const shore = fields.lakeShore?.[cell] ?? 0;
+    const waterMaterial = lake ? fields.lakeDepth?.[cell] ?? 0
+      : shore ? 2 + (fields.freshwaterInfluence?.[cell] ?? 0) * .5 : 0;
     terrain.set([fields.biomeId?.[cell] ?? 5, fields.forestDensity?.[cell] ?? 0,
-      fields.riverStrength?.[cell] ?? 0, fields.ridgeStrength?.[cell] ?? 0], vertex * 4);
-    const down = directionCell(cell, fields.drainTo?.[cell]); const up = directionCell(cell, fields.riverUpstream?.[cell], down);
-    riverDown.set(centerFor(down), vertex * 3); riverUp.set(centerFor(up), vertex * 3);
-    riverMeta.set([fields.riverStrength?.[cell] ?? 0, fields.riverClass?.[cell] ?? 0], vertex * 2); vertexCell[vertex] = cell;
-    vertex++;
+      waterMaterial, fields.ridgeStrength?.[cell] ?? 0], vertex * 4);
+    vertexCell[vertex] = cell; vertex++;
   }
 
   function centerFor(cell) { return topo.positions.subarray(cell * 3, cell * 3 + 3); }
-  function directionCell(cell, candidate, excluded = -1) {
-    if (Number.isInteger(candidate) && candidate >= 0 && candidate < topo.nodeCount && candidate !== cell) return candidate;
-    for (let offset = topo.nodeStart[cell]; offset < topo.nodeStart[cell + 1]; offset++) {
-      const neighbor = topo.nodeNeighbors[offset]; if (neighbor !== excluded) return neighbor;
-    }
-    return cell;
-  }
 }

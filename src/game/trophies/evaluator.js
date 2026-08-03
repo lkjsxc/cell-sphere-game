@@ -27,7 +27,7 @@ export function reconcileTrophies(meta, archive) {
   const trophyIds = [...owned].filter((id) => ORDER.has(id)).sort((a, b) => ORDER.get(a) - ORDER.get(b));
   const next = { ...meta, trophyVersion: 1, trophyIds, trophyBackfillVersion: 1,
     trophyProgress: { adaptationIds: [...aggregate.adaptationIds].sort(), geographyMask: aggregate.geographyMask,
-      crisisMask: aggregate.crisisMask, adaptationCategoryMask: aggregate.adaptationCategoryMask } };
+      geographyVersion: 2, crisisMask: aggregate.crisisMask, adaptationCategoryMask: aggregate.adaptationCategoryMask } };
   return Object.freeze({ meta: next, awardedIds: Object.freeze(awardedIds), backfilled: backfill, evaluatedWorlds });
 }
 

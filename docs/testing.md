@@ -1,7 +1,7 @@
 # Testing and evidence
 
-`npm run verify` runs structure, unit, integration, balance smoke, benchmark,
-and deployment-path/link gates. `npm run test:browser:file` uses real headless
+`npm run verify` runs structure, the cell-visual source audit, unit, integration,
+the 500-seed lake audit, balance smoke, benchmark, showcase, and deployment-path/link gates. `npm run test:browser:file` uses real headless
 Chrome/WebGL2 through a CDP pipe when local HTTP sockets are sandbox-blocked.
 `npm run test:browser:canvas` starts the same browser with WebGL disabled and
 verifies the Canvas 2D path. The same-origin harness exits 77 rather than
@@ -10,9 +10,9 @@ reporting a false pass when Chrome cannot connect.
 ## Automated contracts
 
 Unit coverage includes topology/dual manifold, deterministic WorldModel hash,
-land bounds, climate/biomes/forest coherence, priority-flood acyclic drainage,
-river mouths/order, landmarks/sources, generation budget, renderer geometry
-and uniforms, tap/camera math, settings/pause/rotation, simulation queue/RNG,
+land bounds, climate/biomes/forest coherence, private drainage fields, connected
+and separated whole-cell lake IDs, frozen lake/shore/wetland records, bounded
+lake ecology, landmarks/sources, generation budget, renderer geometry and uniforms, tap/camera math, settings/pause/rotation, simulation queue/RNG,
 pure inspection, History cap, the 642-node graph/migration/economy, and the
 96-criterion Trophy catalog/topology/proof boundaries.
 
@@ -22,7 +22,8 @@ conditional skills, concrete effects for all 642 Skill Cell purchases, strict
 visual-History codec bounds/malformed input, primary-cell migration, stale load
 guards, and an observed run matching a quiet run in hash, score, extinction,
 decisions, semantic History, and Imprint. Trophy integration proves schema-5 load grants nothing, explicit
-legacy reconciliation, bounded schema-3 proof, idempotent result awards, and
+legacy reconciliation without converting old drainage evidence into lake proof,
+bounded schema-3 proof, idempotent result awards, and
 reward-free abandonment. A 100-world integration soak also
 checks automatic result transitions, duplicate-award rejection, hidden countdown
 pause ownership, unresolved Manual offers, persistence caps, and heap bounds.

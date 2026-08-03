@@ -4,6 +4,7 @@ import { validateMeta, defaultMeta } from '../../src/platform/storage.js';
 import { validateHistory, appendAbandonedWorld } from '../../src/platform/history.js';
 import { TROPHY_IDS } from '../../src/game/trophies/index.js';
 import { reconcileTrophies } from '../../src/game/trophies/evaluator.js';
+import { buildTrophyFacts, deriveLegacyTrophyFacts, validateTrophyFacts } from '../../src/game/trophies/facts.js';
 import { applyRunResult } from '../../src/interface/policies/run-result.js';
 
 test('schema-5 migration preserves progression and grants no trophies on load', () => {
@@ -17,10 +18,22 @@ test('schema-5 migration preserves progression and grants no trophies on load', 
 test('schema-6 Trophy state is canonical, bounded, and corruption-safe', () => {
   const raw = { ...defaultMeta(), trophyIds: [TROPHY_IDS[5], 'unknown-trophy', TROPHY_IDS[0], TROPHY_IDS[5]],
     trophyBackfillVersion: 1, trophyProgress: { adaptationIds: ['long-filaments', 'fake-card'],
-      geographyMask: 999, crisisMask: -1, adaptationCategoryMask: 63 } };
+      geographyMask: 999, geographyVersion: 2, crisisMask: -1, adaptationCategoryMask: 63 } };
   const clean = validateMeta(raw); assert.deepEqual(clean.trophyIds, [TROPHY_IDS[0], TROPHY_IDS[5]]);
-  assert.deepEqual(clean.trophyProgress, { adaptationIds: ['long-filaments'], geographyMask: 63, crisisMask: 0, adaptationCategoryMask: 63 });
+  assert.deepEqual(clean.trophyProgress, { adaptationIds: ['long-filaments'], geographyMask: 63,
+    geographyVersion: 2, crisisMask: 0, adaptationCategoryMask: 63 });
   assert.deepEqual(validateMeta(clean), clean);
+});
+
+test('schema-6 legacy geography progress preserves ownership but clears old lake bit', () => {
+  const owned = 'reach-river-touch';
+  const migrated = validateMeta({ ...defaultMeta(), trophyIds: [owned],
+    trophyProgress: { adaptationIds: [], geographyMask: 2, crisisMask: 0, adaptationCategoryMask: 0 } });
+  assert.ok(migrated.trophyIds.includes(owned)); assert.equal(migrated.trophyProgress.geographyMask & 2, 0);
+  assert.equal(migrated.trophyProgress.geographyVersion, 2);
+  const outcome = reconcileTrophies(validateMeta({ ...defaultMeta(), trophyProgress: {
+    adaptationIds: [], geographyMask: 2, crisisMask: 0, adaptationCategoryMask: 0 } }), { worlds: [] });
+  assert.equal(outcome.awardedIds.includes(owned), false);
 });
 
 test('legacy History backfills only at an explicit reconciliation transaction', () => {
@@ -31,6 +44,17 @@ test('legacy History backfills only at an explicit reconciliation transaction', 
   assert.deepEqual(meta.trophyIds, []); const result = reconcileTrophies(meta, archive);
   assert.equal(result.backfilled, true); assert.ok(result.awardedIds.includes('reach-coast-touch'));
   assert.ok(result.awardedIds.includes('evolution-first-world')); assert.equal(result.meta.trophyBackfillVersion, 1);
+});
+
+test('legacy waterway evidence is retained but never converted into lake proof', () => {
+  const migrated = validateTrophyFacts({ version: 1, geographyMask: 2 });
+  assert.equal(migrated.version, 2); assert.equal(migrated.geographyMask & 2, 0);
+  const legacy = deriveLegacyTrophyFacts({ tick: 20, events: [{ key: 'geo.river.reached' }] });
+  assert.equal(legacy.geographyMask & 2, 0);
+  const current = buildTrophyFacts({ history: [{ type: 'geo-lake' }], offers: [], reach: {} }, { breakdown: [] });
+  assert.equal(current.geographyMask & 2, 2);
+  const outcome = reconcileTrophies(defaultMeta(), { worlds: [{ score: 0, trophyFacts: legacy }] });
+  assert.equal(outcome.awardedIds.includes('reach-river-touch'), false);
 });
 
 test('accepted terminal result stores facts and recognizes trophies exactly once', () => {

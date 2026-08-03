@@ -32,7 +32,7 @@ function edgeCost(input, from, to, peakBiomass) {
   const bio = clamp(biomass[to] / peakBiomass); const strain = clamp(stress[to]);
   const fed = clamp((energy?.[to] ?? 0) / 3); const degree = livingDegree(topo, input.alive, to);
   const moisture = fields?.baseMoisture?.[to] ?? .5; const nutrient = fields?.baseNutrient?.[to] ?? .5;
-  const forest = fields?.forestDensity?.[to] ?? 0; const river = fields?.riverStrength?.[to] ?? 0;
+  const forest = fields?.forestDensity?.[to] ?? 0; const freshwater = fields?.freshwaterInfluence?.[to] ?? 0;
   const altitude = fields?.altitude?.[to] ?? .4;
   let cost = 116 + variation(from, to, salt);
   if (category === 'reach') cost += (degree >= 5 ? 30 : -22) + (1 - moisture) * 34 + (1 - bio) * 24;
@@ -40,7 +40,7 @@ function edgeCost(input, from, to, peakBiomass) {
   else if (category === 'resilience') cost += (1 - strain) * 52 + (strain > .82 ? 82 : 0) + (1 - bio) * 42;
   else if (category === 'transport') cost += (5 - degree) * 28 + (1 - bio) * 76 - Math.min(28, degree * 7);
   else if (category === 'ecology') cost += (1 - moisture) * 72 + (1 - forest) * 38
-    + Math.max(0, altitude - .72) * 90 - river * 36 - nutrient * 24;
+    + Math.max(0, altitude - .72) * 90 - freshwater * 36 - nutrient * 24;
   else cost += (1 - bio) * 30 + strain * 18 - degree * 5;
   if (degree <= 1 && category !== 'reach') cost += 48;
   return Math.max(42, Math.min(360, Math.round(cost)));

@@ -42,16 +42,16 @@ export function buildReachResult(state) {
 }
 function reachConditions(state) {
   let living = 0; let energy = 0; let deficit = 0; let nutrient = 0; let moisture = 0; let suitableTemp = 0;
-  let riverForest = 0; let heat = 0; let cold = 0; let dry = 0; let toxin = 0;
+  let freshwaterForest = 0; let heat = 0; let cold = 0; let dry = 0; let toxin = 0;
   for (let cell = 0; cell < state.topo.nodeCount; cell++) if (state.alive[cell]) { living++; const e = state.energy[cell]; energy += Math.max(0, e); deficit += Math.max(0, -e);
     nutrient += state.nutrient[cell]; moisture += state.moisture[cell]; suitableTemp += 1 - Math.min(1, Math.abs(state.temperature[cell] - .6) * 2);
-    riverForest += Math.max(state.fields.riverStrength[cell], state.fields.forestDensity[cell]); heat += Math.max(0, state.temperature[cell] - .75) * 4;
+    freshwaterForest += Math.max(state.fields.freshwaterInfluence[cell], state.fields.forestDensity[cell]); heat += Math.max(0, state.temperature[cell] - .75) * 4;
     cold += Math.max(0, .25 - state.temperature[cell]) * 4; dry += Math.max(0, .25 - state.moisture[cell]) * 4; toxin += state.toxicity[cell]; }
   const divisor = Math.max(1, living); const activeCrisis = state.events.some((event) => state.tick >= event.startTick && state.tick <= event.endTick) ? 1 : 0;
   const support = Math.min(1, (state.ownedCards.length + state.memoryConditionals.length) / 8);
   const positiveConditions = conditionList([['energy-surplus', 'energy surplus', energy / divisor / 3], ['available-frontier', 'available frontier', state.liveness.activeFrontierCount / divisor],
     ['accessible-nutrients', 'accessible nutrients', nutrient / divisor], ['suitable-moisture', 'suitable moisture', moisture / divisor],
-    ['favorable-temperature', 'favorable temperature', suitableTemp / divisor], ['riparian-ecology', 'river and forest affinity', riverForest / divisor], ['inherited-support', 'Adaptation and skill support', support]]);
+    ['favorable-temperature', 'favorable temperature', suitableTemp / divisor], ['freshwater-ecology', 'lake, shore, and forest affinity', freshwaterForest / divisor], ['inherited-support', 'Adaptation and skill support', support]]);
   const negativeConditions = conditionList([['entropy', 'entropy', state.entropy], ['maintenance-burden', 'maintenance burden', deficit / divisor],
     ['heat-stress', 'heat stress', heat / divisor], ['cold-stress', 'cold stress', cold / divisor], ['drought-stress', 'drought stress', dry / divisor],
     ['toxicity', 'toxicity', toxin / divisor], ['crisis-pressure', 'active crisis pressure', activeCrisis], ['fragmentation', 'fragmentation', 1 - state.connectedShare]]);

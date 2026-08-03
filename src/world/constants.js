@@ -6,9 +6,9 @@ export const ARCHETYPE = Object.freeze({
 });
 
 export const ARCHETYPE_NAME = Object.freeze({
-  [ARCHETYPE.CONTINENTAL]: 'Verdant Riverworld',
-  [ARCHETYPE.ARCHIPELAGO]: 'Archipelago',
-  [ARCHETYPE.RIFTED]: 'Fractured Basins',
+  [ARCHETYPE.CONTINENTAL]: 'Verdant Lakeworld',
+  [ARCHETYPE.ARCHIPELAGO]: 'Lake Archipelago',
+  [ARCHETYPE.RIFTED]: 'Fractured Lakes',
 });
 
 export const WATER = Object.freeze({
@@ -16,7 +16,6 @@ export const WATER = Object.freeze({
   DEEP_OCEAN: 1,
   SHALLOW_OCEAN: 2,
   LAKE: 3,
-  RIVER: 4,
 });
 
 export const BIOME = Object.freeze({
@@ -33,6 +32,7 @@ export const BIOME = Object.freeze({
   MOUNTAIN: 10,
   TUNDRA: 11,
   SNOW_ICE: 12,
+  LAKE: 13,
 });
 
 /** Bounded static factors consumed by simulation hot loops. */
@@ -50,6 +50,7 @@ export const BIOME_EFFECTS = Object.freeze([
   effect(0.30, 1.38, 0.48, 0.45, 1.55), // mountain
   effect(0.46, 1.22, 0.62, 0.52, 1.30), // tundra
   effect(0.14, 1.55, 0.28, 0.34, 1.62), // snow / ice
+  effect(0.76, 1.02, 1.06, 1.12, 1.10), // whole-cell lake
 ]);
 
 function effect(growth, maintenance, uptake, renewal, routeCost) {
@@ -58,26 +59,23 @@ function effect(growth, maintenance, uptake, renewal, routeCost) {
 
 export const LANDMARK = Object.freeze({
   SUMMIT: 1,
-  GREAT_RIVER: 2,
+  GREAT_LAKE: 2,
   FOREST_HEART: 3,
   WILD_COAST: 4,
   DRYLAND: 5,
-  LAKE: 6,
+  LAKE_SHORE: 6,
 });
 
 export const FEATURE = Object.freeze({
   COAST: 1 << 0,
-  RIVER: 1 << 1,
-  TRIBUTARY: 1 << 2,
-  RIVER_MOUTH: 1 << 3,
   LAKE: 1 << 4,
   FOREST: 1 << 5,
   RIDGE: 1 << 6,
   HIGHLAND: 1 << 7,
   SOURCE: 1 << 8,
   LANDMARK: 1 << 9,
-  RIVER_HEADWATER: 1 << 10,
-  RIVER_CONFLUENCE: 1 << 11,
-  RIVER_TRUNK: 1 << 12,
-  RIVER_DELTA: 1 << 13,
+  LAKE_SHORE: 1 << 10,
+  WETLAND: 1 << 11,
+  LAKE_OUTLET: 1 << 12,
+  GLACIAL_LAKE: 1 << 13,
 });

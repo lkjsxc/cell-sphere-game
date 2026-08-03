@@ -1,7 +1,7 @@
 import { atLeast as n, defineTrophyFamily as family, includes as bits } from './definition.js';
 export const REACH_TROPHIES = family('reach', [
   ['coast-touch', 'Tidal Margin', 'Reach a coastal cell in one completed world.', bits('geographyMask', 1)],
-  ['river-touch', 'River Listener', 'Reach a river cell in one completed world.', bits('geographyMask', 2)],
+  ['river-touch', 'Lake Listener', 'Reach a whole-cell lake in one completed world.', bits('geographyMask', 2)],
   ['forest-touch', 'Understory Thread', 'Reach a forest cell in one completed world.', bits('geographyMask', 4)],
   ['highland-touch', 'Highland Hold', 'Reach a highland or mountain cell.', bits('geographyMask', 8)],
   ['wetland-touch', 'Wetland Footing', 'Reach a wetland cell in one completed world.', bits('geographyMask', 16)],

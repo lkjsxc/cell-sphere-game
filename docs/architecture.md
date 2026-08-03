@@ -60,7 +60,7 @@ Worker → main:
 
 Snapshot cadence is bounded at about 10 Hz even at 32×; rendering is reduced to
 about 15 fps at high speed. Inspector records refresh at no more than about 3 Hz.
-Static rivers, forests, biomes, and landmarks never cross the Worker boundary.
+Static whole-cell lakes, shores, forests, biomes, and landmarks never cross the Worker boundary.
 
 ## World and Evolution Globe
 

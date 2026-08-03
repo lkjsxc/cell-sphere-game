@@ -35,13 +35,14 @@ Four compatible attention modes:
 
 ## Geography
 
-World archetypes currently vary among Verdant Riverworld, Archipelago, and
-Fractured Basins. Quantile continents feed priority-flood drainage, tributaries,
-river trunks/mouths, occasional lakes, climate, forests, and twelve biomes.
-Landmarks identify a summit, great river, forest heart, coast, dry basin, and
-lake where present. Rivers, forest, grassland, desert, wetlands, highlands,
-cold terrain, coasts, and ocean apply bounded centralized factors; no terrain
-is an unexplained arbitrary click wall.
+World archetypes vary among Verdant Lakeworld, Lake Archipelago, and Fractured
+Lakes. Quantile continents feed private priority-flood drainage and deterministic
+connected whole-cell lakes. Ordinary worlds expose 6–8 separated lakes, mostly
+3–18 cells, with whole-cell shores/wetlands, climate, forests, and fourteen
+biomes. Landmarks identify a summit, great lake, forest heart, coast, dry basin,
+and lake shore. Lake, forest, grassland, desert, wetland, highland, cold terrain,
+coast, and ocean cells apply bounded centralized factors; no terrain is an
+unexplained arbitrary click wall.
 
 ## Pacing
 

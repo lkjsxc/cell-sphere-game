@@ -131,31 +131,39 @@ test('every declared uniform is uploaded by the renderer modules', () => {
   assert.ok(!parseUniformNames(SH.FS_GLOBE).has('uSignalCenter'));
 });
 
-test('production renderer has four geographic/cellular draws and no line-artifact path', () => {
+test('production renderer keeps four draws and has no fine waterway machinery', () => {
   const renderer = read('../../src/rendering/renderer.js'); const shaders = read('../../src/rendering/shaders.js');
   const fallback = read('../../src/rendering/fallback2d.js');
   const world = read('../../src/rendering/world-pass.js'); const geometry = read('../../src/rendering/cell-geometry.js');
+  const production = `${world}\n${geometry}\n${shaders}\n${fallback}`;
   assert.match(renderer, /drawCalls = 4/);
   assert.doesNotMatch(renderer, /network|vein|tip|drawElementsInstanced/i);
   assert.doesNotMatch(fallback, /edgeActive|conductance|flux|renderNetwork|tip|vein/i);
   assert.doesNotMatch(shaders, /orbit|uTwinkle|uTime/);
-  assert.doesNotMatch(`${world}\n${geometry}`, /buildRiverGeometry|riverPositions|riverFeature|riverIndices|programs\.river|riverVao/);
+  assert.doesNotMatch(production, /riverDown|riverUp|riverMeta|aRiver|vRiver|drawRivers|riverBoundary|quadraticCurveTo|localChannel/i);
+  assert.match(shaders, /float lakeCell/); assert.match(geometry, /const lakeEdge/);
   assert.equal(existsSync(resolve(here, '../../src/rendering/network-pass.js')), false);
   assert.equal(existsSync(resolve(here, '../../src/rendering/shaders-network.js')), false);
 });
 
-test('dual-cell render geometry stays indexed, finite, and cell-addressable', () => {
-  const topo = createTopology(3);
-  const fields = createFields(createRng(42), topo);
+test('dual-cell lakes use terrain material and cell-boundary edges only', () => {
+  const topo = createTopology(3); const fields = createFields(createRng(42), topo);
   const geometry = createCellGeometry(topo, fields);
   assert.equal(geometry.dual.cellCount, topo.nodeCount);
   assert.equal(geometry.indices.length, topo.edgeCount * 6);
   assert.equal(geometry.boundaryIndices.length, topo.edgeCount * 6);
-  assert.equal('riverIndices' in geometry, false);
-  assert.equal(geometry.riverDown.length, geometry.vertexCount * 3); assert.equal(geometry.riverMeta.length, geometry.vertexCount * 2);
+  for (const removed of ['riverDown', 'riverUp', 'riverMeta', 'riverIndices']) assert.equal(removed in geometry, false);
   assert.equal(geometry.vertexCell.length, geometry.vertexCount);
-  for (const value of [...geometry.positions, ...geometry.terrain, ...geometry.riverDown, ...geometry.riverUp, ...geometry.riverMeta]) assert.ok(Number.isFinite(value));
+  for (const value of [...geometry.positions, ...geometry.terrain, ...geometry.boundaryFeature]) assert.ok(Number.isFinite(value));
   for (const index of geometry.indices) assert.ok(index < geometry.vertexCount);
+  let lakeVertices = 0; let shoreVertices = 0; let lakeEdges = 0;
+  for (let vertex = 0; vertex < geometry.vertexCount; vertex++) {
+    const cell = geometry.vertexCell[vertex]; const material = geometry.terrain[vertex * 4 + 2];
+    if (fields.lakeId[cell] >= 0) { lakeVertices++; assert.ok(material > 0 && material < 1.5); }
+    if (fields.lakeShore[cell]) { shoreVertices++; assert.ok(material >= 2); }
+  }
+  for (let vertex = 0; vertex < geometry.boundaryFeature.length / 2; vertex++) lakeEdges += geometry.boundaryFeature[vertex * 2] > 0;
+  assert.ok(lakeVertices > 0 && shoreVertices > 0 && lakeEdges > 0);
 });
 
 test('title showcase presents a production lifecycle and freezes when hidden or reduced', () => {

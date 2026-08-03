@@ -22,7 +22,8 @@ export function defaultMeta() {
   return { schema: 6, memoryGraphVersion: MEMORY_GRAPH_VERSION, trophyVersion: TROPHY_CATALOG_VERSION,
     bestScore: 0, totalEchoes: 0, echoBalance: 0, runs: 0, worldSeedIndex: 0,
     memoryNodes: [], quarantinedMemoryNodes: [], imprints: [], trophyIds: [], trophyBackfillVersion: 0,
-    trophyProgress: { adaptationIds: [], geographyMask: 0, crisisMask: 0, adaptationCategoryMask: 0 }, migrationNotice: null };
+    trophyProgress: { adaptationIds: [], geographyMask: 0, geographyVersion: 2,
+      crisisMask: 0, adaptationCategoryMask: 0 }, migrationNotice: null };
 }
 
 /** Schema 4 ownership is checked against graph 1 before graph 3 is stamped. */
@@ -129,7 +130,8 @@ function uniqueCells(values, limit) { return values.filter((value, index, all) =
   Number.isInteger(value) && value >= 0 && value < limit && all.indexOf(value) === index); }
 function validateTrophyProgress(raw) { const value = raw && typeof raw === 'object' ? raw : {}; const adaptationIds = [];
   if (Array.isArray(value.adaptationIds)) for (const id of value.adaptationIds) if (VALID_ADAPTATION_IDS.has(id) && !adaptationIds.includes(id)) adaptationIds.push(id);
-  return { adaptationIds, geographyMask: Math.min(63, boundedInteger(value.geographyMask, 0)),
+  const geographyMask = Math.min(63, boundedInteger(value.geographyMask, 0)) & (value.geographyVersion === 2 ? 63 : 61);
+  return { adaptationIds, geographyMask, geographyVersion: 2,
     crisisMask: Math.min(127, boundedInteger(value.crisisMask, 0)), adaptationCategoryMask: Math.min(63, boundedInteger(value.adaptationCategoryMask, 0)) }; }
 function boundedInteger(value, fallback) { return Number.isFinite(value) && value >= 0 ? Math.floor(value) : fallback; }
 function mergeQuarantine(found, raw) { const ids = [...new Set(found)]; if (Array.isArray(raw)) for (const id of raw)

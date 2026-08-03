@@ -4,14 +4,15 @@ import { BIOME, LANDMARK, WATER } from '../../world/fields.js';
 const BIOME_NAME = Object.freeze({
   [BIOME.DEEP_OCEAN]: 'Deep ocean', [BIOME.SHALLOW_OCEAN]: 'Shallow sea', [BIOME.COAST]: 'Coast',
   [BIOME.FOREST]: 'Temperate forest', [BIOME.WET_FOREST]: 'Dense wet forest', [BIOME.GRASS]: 'Grassland',
-  [BIOME.DRY_GRASS]: 'Dry grassland', [BIOME.DESERT]: 'Desert', [BIOME.WETLAND]: 'Wetland / floodplain',
+  [BIOME.DRY_GRASS]: 'Dry grassland', [BIOME.DESERT]: 'Desert', [BIOME.WETLAND]: 'Wetland',
   [BIOME.HIGHLAND]: 'Highland', [BIOME.MOUNTAIN]: 'Mountain', [BIOME.TUNDRA]: 'Tundra', [BIOME.SNOW_ICE]: 'Snow and ice',
+  [BIOME.LAKE]: 'Whole-cell lake',
 });
 const WATER_NAME = Object.freeze({ [WATER.LAND]: 'Land', [WATER.DEEP_OCEAN]: 'Deep ocean',
-  [WATER.SHALLOW_OCEAN]: 'Coastal water', [WATER.LAKE]: 'Lake basin', [WATER.RIVER]: 'River corridor' });
-const LANDMARK_NAME = Object.freeze({ [LANDMARK.SUMMIT]: 'Mountain Crown', [LANDMARK.GREAT_RIVER]: 'Great River',
+  [WATER.SHALLOW_OCEAN]: 'Coastal water', [WATER.LAKE]: 'Lake water' });
+const LANDMARK_NAME = Object.freeze({ [LANDMARK.SUMMIT]: 'Mountain Crown', [LANDMARK.GREAT_LAKE]: 'Great Lake',
   [LANDMARK.FOREST_HEART]: 'Forest Heart', [LANDMARK.WILD_COAST]: 'Coast Gate',
-  [LANDMARK.DRYLAND]: 'Dry Basin', [LANDMARK.LAKE]: 'Lake Basin' });
+  [LANDMARK.DRYLAND]: 'Dry Basin', [LANDMARK.LAKE_SHORE]: 'Lake Shore' });
 
 export function createInspectorSurface(options) {
   const panel = document.getElementById('cell-inspector'); const heading = document.getElementById('inspector-heading');
@@ -29,13 +30,20 @@ export function createInspectorSurface(options) {
     const rows = [
       ['Terrain', WATER_NAME[world.waterClass[node]]], ['Biome', BIOME_NAME[world.biomeId[node]]],
       ['Elevation', elevation(world, node)], ['Temperature', band(world.baseTemp[node], ['Very cold', 'Cold', 'Temperate', 'Warm'])],
-      ['Rainfall', band(world.rainfall[node], ['Very dry', 'Dry', 'Moderate', 'Very wet'])],
+      ['Freshwater influence', band(world.freshwaterInfluence[node], ['None', 'Trace', 'Local', 'Strong'])],
       ['Moisture', band(world.baseMoisture[node], ['Parched', 'Dry', 'Moist', 'Saturated'])],
       ['Nutrient potential', band(world.baseNutrient[node], ['Sparse', 'Limited', 'Rich', 'Abundant'])],
       ['Forest density', forest(world.forestDensity[node])], ['Region / basin', `Region ${world.regionId[node] + 1}`],
     ];
-    if (world.riverOrder[node]) rows.push(['River', `Order ${world.riverOrder[node]} · ${band(world.riverStrength[node], ['Minor', 'Tributary', 'Strong', 'Major trunk'])}`]);
-    if (world.lakeId[node] >= 0) rows.push(['Lake', `Basin ${world.lakeId[node] + 1}`]);
+    const lake = lakeRecord(world, node);
+    if (world.lakeId[node] >= 0) rows.push(['Lake', `Lake ${world.lakeId[node] + 1} · ${label(lake.type)}`],
+      ['Lake depth', `${label(lake.depthClass)} · ${Math.round(world.lakeDepth[node] * 1000) / 10}% relief`]);
+    if (world.lakeShore[node]) rows.push(['Lake shore', lake ? `Shore of Lake ${lake.id + 1}` : 'Freshwater margin']);
+    if (world.biomeId[node] === BIOME.WETLAND) rows.push(['Wetland', lake ? `Whole-cell shore wetland · Lake ${lake.id + 1}` : 'Whole-cell wetland']);
+    if (lake) rows.push(['Lake area', `${lake.area} whole cells · ${label(lake.areaClass)}`],
+      ['Lake water', `${label(lake.salinity)} · ${label(lake.type)}`],
+      ['Lake surface', elevationBand(lake.surfaceElevation, world.seaLevel)],
+      ['Lake catchment', `${lake.catchment} land cells`], ['Lake outlet', label(lake.outletStatus)]);
     fieldsRoot.replaceChildren(...definitionRows(rows)); renderDynamic(); renderHistory();
   }
 
@@ -74,5 +82,11 @@ function definitionRows(rows) { return rows.flatMap(([term, value]) => { const d
 function band(value, labels) { return labels[Math.max(0, Math.min(labels.length - 1, Math.floor(value * labels.length)))]; }
 function forest(value) { return value < 0.1 ? 'Open ground' : value < 0.34 ? 'Scattered canopy' : value < 0.58 ? 'Forest edge' : 'Dense forest core'; }
 function elevation(world, node) { if (!world.landMask[node]) return world.oceanDepth[node] > 0.34 ? 'Deep basin' : 'Shallow shelf';
-  const height = (world.baseElevation[node] - world.seaLevel) / Math.max(0.05, 1 - world.seaLevel);
+  const lake = world.lakeId[node] >= 0 ? world.lakes[world.lakeId[node]] : null;
+  const value = lake?.surfaceElevation ?? world.baseElevation[node];
+  return elevationBand(value, world.seaLevel); }
+function elevationBand(value, seaLevel) { const height = (value - seaLevel) / Math.max(.05, 1 - seaLevel);
   return band(height, ['Lowland', 'Rolling land', 'Highland', 'Mountain crown']); }
+function lakeRecord(world, node) { const id = world.lakeId[node]; if (id >= 0) return world.lakes[id];
+  return world.lakes.find((lake) => lake.shoreCells.includes(node) || lake.wetlandCells.includes(node)) ?? null; }
+function label(value) { return String(value ?? 'unknown').replaceAll('-', ' ').replace(/^./, (character) => character.toUpperCase()); }

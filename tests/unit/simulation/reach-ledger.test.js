@@ -27,5 +27,5 @@ test('rolling buckets expire and representative samples stay bounded', () => {
 function fixture() { const count = 32; return { tick: 0, aliveCount: 1, reach: createReachLedger(), topo: { nodeCount: count },
   alive: Uint8Array.from({ length: count }, (_, index) => index === 0 ? 1 : 0), energy: new Float32Array(count), nutrient: new Float32Array(count),
   moisture: new Float32Array(count), temperature: new Float32Array(count), toxicity: new Float32Array(count),
-  fields: { riverStrength: new Float32Array(count), forestDensity: new Float32Array(count) }, liveness: { activeFrontierCount: 0 },
+  fields: { freshwaterInfluence: new Float32Array(count), forestDensity: new Float32Array(count) }, liveness: { activeFrontierCount: 0 },
   events: [], ownedCards: [], memoryConditionals: [], entropy: 0, connectedShare: 1 }; }

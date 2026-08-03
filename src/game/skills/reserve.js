@@ -17,6 +17,6 @@ export const RESERVE_MEMORY = defineBranch('reserve', 'flow-river-crown', [
   ['reserve-ledger', 'Reserve Ledger', 'Reveal income and upkeep balance.', 'The atlas reports whether current energy is being stored, spent, or merely recirculated.', 7, u('reserveLedger', 'information')],
   ['famine-protocol', 'Famine Protocol', 'Unlock reserve-aware pruning rules.', 'A saved rule may prune marginal tissue only after visible reserves cross a chosen floor.', 9, u('famineProtocol', 'automation')],
   ['deepwell-crown', 'Deepwell Crown', 'Unlock Reserve mastery for campaign rules.', 'Gathering, storage, and deliberate release become one coherent survival discipline.', 14, u('reserveMastery', 'keystone')],
-  ['banked-river', 'Banked River', 'Join Reserve and Flow mastery.', 'Stored abundance waits near proven channels so renewed circulation can use it immediately.', 18, u('reserveFlowConfluence', 'connector')],
+  ['banked-river', 'Banked Current', 'Join Reserve and Flow mastery.', 'Stored abundance waits near proven channels so renewed circulation can use it immediately.', 18, u('reserveFlowConfluence', 'connector')],
   ['seed-vault-world', 'Seed-Vault World', 'Unlock the Seed-Vault World capstone.', 'The campaign may begin from a bounded planetary reserve earned through prior extinctions.', 26, u('seedVaultWorld', 'capstone')],
 ]);

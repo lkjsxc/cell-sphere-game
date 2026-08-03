@@ -10,7 +10,7 @@ import { RunController } from '../../src/simulation/simulator.js';
 function fields(count) {
   return { baseMoisture: new Float32Array(count).fill(.55),
     baseNutrient: new Float32Array(count).fill(.6), forestDensity: new Float32Array(count).fill(.3),
-    riverStrength: new Float32Array(count), altitude: new Float32Array(count).fill(.4) };
+    freshwaterInfluence: new Float32Array(count), altitude: new Float32Array(count).fill(.4) };
 }
 function state(topo) {
   return { topo, originCell: 0, alive: new Uint8Array(topo.nodeCount).fill(1),
@@ -55,7 +55,7 @@ test('all six categories produce distinct state-sensitive paths', () => {
   for (let i = 0; i < input.topo.nodeCount; i++) {
     input.biomass[i] = .15 + (i % 9) / 10; input.energy[i] = (i % 7) / 2;
     input.stress[i] = (i % 8) / 9; input.fields.baseMoisture[i] = (i % 11) / 10;
-    input.fields.forestDensity[i] = (i % 5) / 4; input.fields.riverStrength[i] = i % 13 === 0 ? 1 : 0;
+    input.fields.forestDensity[i] = (i % 5) / 4; input.fields.freshwaterInfluence[i] = i % 13 === 0 ? 1 : 0;
   }
   const categories = ['reach', 'metabolism', 'resilience', 'transport', 'ecology', 'perception'];
   const signatures = categories.map((category) => {

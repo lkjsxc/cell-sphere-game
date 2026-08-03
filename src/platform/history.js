@@ -23,7 +23,8 @@ const SIM_EVENT = Object.freeze({
   'adaptation-mode': ['adaptation', 'adaptation.mode.changed'], 'run-extinct': ['life', 'run.extinct'],
   'run-abandoned': ['life', 'run.abandoned'],
   coverage: ['world', 'geo.coverage.milestone'], phase: ['life', 'run.phase.abundance'],
-  'geo-coast': ['world', 'geo.coast.reached'], 'geo-river': ['world', 'geo.river.reached'],
+  'geo-coast': ['world', 'geo.coast.reached'], 'geo-lake': ['world', 'geo.lake.reached'],
+  'geo-river': ['world', 'geo.river.reached'],
   'geo-forest': ['world', 'geo.forest.reached'], 'geo-mountain': ['world', 'geo.mountain.reached'],
   'geo-wetland': ['world', 'geo.wetland.reached'], 'geo-world-knot': ['world', 'geo.world_knot.reached'],
 });

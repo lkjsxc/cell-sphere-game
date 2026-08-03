@@ -1,6 +1,6 @@
 /** Compact deterministic proof retained with completed semantic History. */
 import { ADAPTATIONS } from '../adaptations.js';
-const GEO = Object.freeze({ 'geo.coast.reached': 1, 'geo.river.reached': 2, 'geo.forest.reached': 4,
+const GEO = Object.freeze({ 'geo.coast.reached': 1, 'geo.lake.reached': 2, 'geo.forest.reached': 4,
   'geo.mountain.reached': 8, 'geo.wetland.reached': 16, 'geo.world_knot.reached': 32 });
 const CRISIS = Object.freeze({ drought: 1, heat: 2, freeze: 4, 'toxic-rain': 8, 'solar-flare': 16, ash: 32, blight: 64 });
 const CATEGORIES = Object.freeze({ reach: 1, metabolism: 2, resilience: 4, transport: 8, symbiosis: 16, memory: 32 });
@@ -22,7 +22,7 @@ export function buildTrophyFacts(result, score) {
   if ((result.peakCoverage ?? 0) >= .5 && (result.minConnectedWhileMajority ?? 0) >= .75) flags |= 4;
   if ((flags & 4) && morph[1] && morph[2] && (result.minConnectedWhileMajority ?? 0) >= .95) flags |= 8;
   if (categories === 63) flags |= 16;
-  return validateTrophyFacts({ version: 1, survivalSeconds: result.survivalSeconds, peakCoverageBp: bp(result.peakCoverage),
+  return validateTrophyFacts({ version: 2, survivalSeconds: result.survivalSeconds, peakCoverageBp: bp(result.peakCoverage),
     sustainedCoverageBp: bp(result.sustainedCoverage), geographyMask, crisisMask,
     crisesEndured: result.crisesEndured, crisesTotal: result.crisesTotal, reach: [reach.gained, frontier, regrowth, reconnection, adapted, skill],
     morph, offers: [selected, manual, random, pending], adaptationIds, adaptationCategoryMask: categories, scoreAxesBp: axes, flags });
@@ -34,7 +34,7 @@ export function deriveLegacyTrophyFacts(world) {
   const random = events.filter((event) => event.key === 'adaptation.selected.random').length; let flags = 0;
   if (selected >= 3 && !events.some((event) => event.key === 'adaptation.unresolved')) flags |= 2;
   if (categoryMask(adaptationIds) === 63) flags |= 16;
-  return validateTrophyFacts({ version: 1, survivalSeconds: (world?.tick ?? 0) / 10,
+  return validateTrophyFacts({ version: 2, survivalSeconds: (world?.tick ?? 0) / 10,
     peakCoverageBp: events.some((event) => event.key === 'geo.coverage.milestone') ? 1000 : 0,
     geographyMask: eventMask(events, GEO), crisisMask: crisisEventMask(events), crisesEndured: crisisCount(events),
     reach: [0, 0, 0, 0, 0, 0], morph, offers: [selected, manual, random, 0], adaptationIds,
@@ -44,9 +44,10 @@ export function deriveLegacyTrophyFacts(world) {
 export function validateTrophyFacts(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const array = (value, length, max = 1_000_000) => Array.from({ length }, (_, index) => integer(value?.[index], max));
-  return Object.freeze({ version: 1, survivalSeconds: integer(raw.survivalSeconds, 100_000),
+  const geographyMask = integer(raw.geographyMask, 63) & (raw.version === 1 ? 61 : 63);
+  return Object.freeze({ version: 2, survivalSeconds: integer(raw.survivalSeconds, 100_000),
     peakCoverageBp: integer(raw.peakCoverageBp, 10_000), sustainedCoverageBp: integer(raw.sustainedCoverageBp, 10_000),
-    geographyMask: integer(raw.geographyMask, 63), crisisMask: integer(raw.crisisMask, 127),
+    geographyMask, crisisMask: integer(raw.crisisMask, 127),
     crisesEndured: integer(raw.crisesEndured, 64), crisesTotal: integer(raw.crisesTotal, 64),
     reach: Object.freeze(array(raw.reach, 6)), morph: Object.freeze(array(raw.morph, 3, 80)),
     offers: Object.freeze(array(raw.offers, 4, 24)), adaptationIds: Object.freeze(unique(raw.adaptationIds).filter((id) => CARD.has(id)).slice(0, 24)),

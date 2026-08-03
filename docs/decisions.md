@@ -70,11 +70,12 @@ pause ownership unit test and browser time-continuation checks.
 
 ## D10 — Graph-native geography
 
-Independent scalar noise could not produce truthful rivers or inspectable
-regions. Preserve topology but generate quantile continents, priority-flood
-drainage, flow hierarchy, climate, forests, biomes, regions, and landmarks.
-Central biome factor arrays bound gameplay effects. Evidence: world hash,
-property tests, generation timing, browser screenshots.
+Independent scalar noise could not produce coherent inspectable regions.
+Preserve topology but generate quantile continents, private priority-flood
+drainage, connected whole-cell lakes, climate, forests, biomes, regions, and
+lake-backed landmarks. Central biome factor arrays bound gameplay effects.
+Evidence: world hash, lake property/audit tests, generation timing, and browser
+screenshots.
 
 ## D11 — 108-cell adjacent Memory atlas (superseded by D16)
 
@@ -137,3 +138,16 @@ store recognized IDs monotonically in schema 6. Present 96 exact criteria on a
 separate 162-cell sphere; 66 neutral cells remain inert. Evidence: catalog and
 proof-boundary audit, schema-5 no-grant migration test, idempotent result test,
 and WebGL2/Canvas screenshots.
+
+## D18 — Whole-cell lake hydrology
+
+The cell is the smallest visible geography unit. Internal rainfall, outlet,
+priority-flood elevation, drainage direction, and accumulation remain private
+inside world generation; no user-facing drainage systems or sub-cell water
+geometry survive. Public geography exposes separated connected lake components,
+full-cell shore/wetland ecology, bounded lake factors, and frozen lake records.
+WebGL2 reuses terrain and boundary materials; Canvas uses one full-cell terrain
+fill and shared cell edges. A source audit rejects fine-feature regressions and
+a 500-seed audit gates distribution, connectivity, ecology, determinism, and
+cost. The 200-line/16-child structure thresholds are now maintainability
+warnings; hard caps remain 400/24 so cohesive generation and audits stay legible.

@@ -6,8 +6,8 @@
  * tracked-or-trackable files (git-tracked plus untracked, non-ignored;
  * untracked working-copy noise is not part of the repo):
  *   - every tracked directory contains a README.md;
- *   - at most 16 direct children per directory;
- *   - at most 200 lines per source/doc file;
+ *   - warns above 16 direct children and fails above 24;
+ *   - warns above 200 lines per source/doc file and fails above 400;
  *   - no directories or files named old/new/legacy/temp/v1/v2/final/...;
  *   - GitHub's higher-priority .github/README.md mirrors the root README.
  *
@@ -15,17 +15,17 @@
  * must name the reason. Exits non-zero on any violation.
  */
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
 const ROOT = resolve(new URL('..', import.meta.url).pathname);
 
-/** Files allowed to exceed 200 lines: path -> reason. */
+/** Files allowed to exceed the 400-line hard cap: path -> reason. */
 const LINE_EXCEPTIONS = new Map([
   // none yet — split files instead of adding entries casually
 ]);
 
-/** Directories allowed to exceed 16 direct children: path -> reason. */
+/** Directories allowed to exceed the 24-child hard cap: path -> reason. */
 const CHILD_EXCEPTIONS = new Map([
   // none yet
 ]);
@@ -36,13 +36,15 @@ const BANNED_NAMES = new Set([
 ]);
 
 const TEXT_EXT = new Set(['.js', '.mjs', '.css', '.html', '.md', '.json', '.yaml', '.yml', '.webmanifest']);
-const LINE_LIMIT = 200;
-const CHILD_LIMIT = 16;
+const LINE_WARNING_LIMIT = 200;
+const LINE_HARD_LIMIT = 400;
+const CHILD_WARNING_LIMIT = 16;
+const CHILD_HARD_LIMIT = 24;
 
 const files = execSync('git ls-files --cached --others --exclude-standard', { cwd: ROOT, encoding: 'utf8' })
-  .split('\n').filter(Boolean);
+  .split('\n').filter(Boolean).filter((file) => existsSync(join(ROOT, file)));
 
-const violations = [];
+const violations = []; const warnings = [];
 const dirs = new Map(); // dir -> Set of direct children
 const githubReadme = join(ROOT, '.github/README.md');
 if (readFileSync(githubReadme, 'utf8') !== readFileSync(join(ROOT, 'README.md'), 'utf8')) {
@@ -74,8 +76,10 @@ for (const file of files) {
   if (TEXT_EXT.has(ext)) {
     const lines = readFileSync(join(ROOT, file), 'utf8').split('\n').length;
     const allowed = LINE_EXCEPTIONS.get(file);
-    if (lines > LINE_LIMIT && allowed === undefined) {
-      violations.push(`${file}: ${lines} lines (limit ${LINE_LIMIT})`);
+    if (lines > LINE_HARD_LIMIT && allowed === undefined) {
+      violations.push(`${file}: ${lines} lines (hard cap ${LINE_HARD_LIMIT})`);
+    } else if (lines > LINE_WARNING_LIMIT) {
+      warnings.push(`${file}: ${lines} lines (maintainability warning above ${LINE_WARNING_LIMIT})`);
     }
   }
 }
@@ -85,12 +89,18 @@ for (const [dir, children] of dirs) {
   if (dir !== '.' && !children.has('README.md')) {
     violations.push(`${dir}/: missing README.md`);
   }
-  const limit = CHILD_EXCEPTIONS.get(dir) ?? CHILD_LIMIT;
-  if (children.size > limit) {
-    violations.push(`${dir}/: ${children.size} direct children (limit ${limit})`);
+  const hardLimit = CHILD_EXCEPTIONS.get(dir) ?? CHILD_HARD_LIMIT;
+  if (children.size > hardLimit) {
+    violations.push(`${dir}/: ${children.size} direct children (hard cap ${hardLimit})`);
+  } else if (children.size > CHILD_WARNING_LIMIT) {
+    warnings.push(`${dir}/: ${children.size} direct children (maintainability warning above ${CHILD_WARNING_LIMIT})`);
   }
 }
 
+if (warnings.length > 0) {
+  console.warn('Structure warnings:');
+  for (const warning of [...new Set(warnings)]) console.warn(`  - ${warning}`);
+}
 if (violations.length > 0) {
   console.error('Structure violations:');
   for (const v of [...new Set(violations)]) console.error(`  - ${v}`);

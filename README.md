@@ -3,8 +3,8 @@
 > **Every extinction becomes memory.**
 
 A calm, autonomous roguelite ecology on a living spherical world. Watch a
-seeded life inoculate itself, spread cell by adjacent cell through rivers and
-forests, survive spatial crises, and inevitably collapse. Inspect any cell
+seeded life inoculate itself, spread cell by adjacent cell through whole-cell
+lakes, shores, and forests, survive spatial crises, and inevitably collapse. Inspect any cell
 without steering the run, review what happened in History, then turn extinction
 into permanent Skill Cells on the spherical Evolution Globe.
 
@@ -38,9 +38,10 @@ preference.
 
 - Explicit level-4 spherical dual: 2,562 stable cells, 7,680 boundaries,
   mostly hexagons, and exactly twelve fivefold World Knots.
-- Deterministic graph-native terrain: bounded continents, priority-flood
-  drainage, connected rivers/tributaries/mouths, climate, coherent forests,
-  biomes, regions, and geography-backed landmarks.
+- Deterministic graph-native terrain: bounded continents, private priority-flood
+  drainage, 6–8 separated connected whole-cell lakes in ordinary worlds,
+  lake shores and wetlands, climate, coherent forests, biomes, regions, and
+  geography-backed landmarks.
 - A checked-in 22-second title lifecycle generated from production simulation
   seed `20260701`: germination, branching, loop, pressure, and extinction.
 - Fixed 10 Hz typed-array simulation in a module Worker or the identical
@@ -77,7 +78,9 @@ npm run serve             # http://127.0.0.1:8080
 npm test                  # unit + integration
 npm run test:browser:file   # real Chrome/WebGL2 over CDP pipe
 npm run test:browser:canvas # force the real-Chrome Canvas 2D fallback
-npm run verify              # structure/test/balance/benchmark/link gates
+npm run audit:lakes         # 500-seed connected-lake distribution audit
+npm run audit:cell-visuals  # reject sub-cell production geography
+npm run verify              # structure/test/audit/balance/benchmark/link gates
 ```
 
 Docker: `docker compose up serve` / `docker compose run --rm verify`.
@@ -99,9 +102,9 @@ tests/ scripts/  production-module tests, balance, benchmark, Chrome evidence
 docs/            design, architecture, evidence, and truthful status
 ```
 
-Every source directory has a README. Structure gates enforce files ≤200 lines,
-directories ≤16 children, repository-relative deployment paths, and the absence
-of runtime third-party imports.
+Every source directory has a README. Structure gates warn above 200 lines or 16
+direct children and retain hard caps at 400 lines or 24 children. Link gates
+enforce repository-relative deployment paths and no runtime third-party imports.
 
 ## Privacy, license, and media
 

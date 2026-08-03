@@ -14,14 +14,14 @@ Evidence words are scoped: **implemented**, **tested**, **measured**, **observed
 
 ## Baseline contradictions
 
-- **observed** sub-cell teal channels cross cell interiors in `09-river-channel-closeup.png`.
+- **observed** obsolete sub-cell teal channels crossed cell interiors in the close-up baseline capture.
 - **observed** mobile current-event copy exists but has `display:none` in `03-run-mobile-event-hud.png`.
 - **observed** SCORE and ENTROPY are `DIV`; only REACH is a `BUTTON`.
 - **observed** the active dock exposes Adaptations, History, New World, and Settings.
 - **measured** Reach used the mobile sheet rectangle `0,489.53,390,354.47` at ticks 480 and 896; its globe drag changed the surface from open to hidden.
 - **observed** terminal composition is a replacement `result-screen` with a bottom result strip and no context surface.
 - **observed** automatic continuation advanced run ID `1 → 2`, but `13-auto-next-first-observed-frame.png` retained the previous terminal globe, SCORE `613,052`, ENTROPY `100%`, and last-cell state while the app already reported new run state `starting`.
-- **observed** Evolution copy includes `Locked, observe … more worlds`; Trophy evidence includes automatic one-cell coast/river/forest/highland/wetland awards.
+- **observed** Evolution copy includes `Locked, observe … more worlds`; Trophy evidence includes automatic one-cell geography awards.
 - **observed** Home/World/Evolution/Trophies expose different navigation clusters and ordering.
 
 ## Requirement-to-evidence map
@@ -36,7 +36,7 @@ Evidence words are scoped: **implemented**, **tested**, **measured**, **observed
 | E2 | shared Result/History/Event Log/Menu context shell | separate bottom/replacement surfaces present | desktop/mobile Chrome scenarios and gesture persistence |
 | E3 | compact dock/Adaptations, visible mobile event, fixed scene selector | contradicted by baseline | responsive matrix, 200% text, long labels |
 | F1 | Evolution cost plus one owned adjacent cell only | observed-world gates present | schema/audit/migration and run-zero purchase proof |
-| F2 | harder lake-centric Trophies and queued feedback | trivial river/geography awards present | horizon audit, legacy migration, queue tests/browser capture |
+| F2 | harder lake-centric Trophies and queued feedback | trivial geography awards present | horizon audit, legacy migration, queue tests/browser capture |
 | G | `cell-sphere-game` package/storage/repository/Pages identity | legacy identity deployed; GitHub ADMIN observed | namespace migration tests, renamed origin, Actions and exact Pages bytes |
 | H | deterministic Worker/fallback, 32×, bounded performance | baseline fast gates pass | final parity, balance, benchmark, Canvas, lake/event/Trophy audits and soaks |
 | I | coherent push and exact public deployment | target | clean tree, successful workflow, cache-busted public inspection |

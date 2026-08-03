@@ -100,7 +100,7 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   This is static economy evidence, not a claim that the four-hour completion
   target is calibrated. No simulation equation or golden checksum changed.
 - **2026-08-02 — Graph-native WorldModel.** Replaced independent scalar noise
-  with continent, climate, drainage, river, forest, and biome fields. The
+  with continent, climate, drainage, freshwater, forest, and biome fields. The
   initial default-world golden was `eccc4bba`; after central biome factor
   arrays joined the hash, the current golden is `749bda35`. The integrated
   production benchmark hash is `98333073` (2,910 ticks, 18,089 ticks/s on
@@ -131,15 +131,26 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   showcase source metadata was regenerated; its 89 frames and data hash
   `58b20fb2…` are unchanged.
 - **2026-08-03 — Terrain-aware event fields and major basins.** Spatial events
-  now use quantized weighted graph arrival and exact per-cell renderer state;
+  use quantized weighted graph arrival and exact per-cell renderer state;
   land-bound families recorded zero ocean violations across 1,386 audited
   events. Median generation was 0.192 ms/field and every audited field was
-  non-radial. Fourteen bounded outlets produce explicit principal stems: 1,000
-  worlds measured 4–5 major systems, median longest trunk 28 cells, 99.7% with
-  a trunk of at least 20 cells, maximum 61, and zero cycle, mouth, continuity,
-  accumulation, or isolation defects. The WorldModel golden is now `94553146`;
-  the production benchmark is 2,640 ticks, hash `637b2473`, 15,090 ticks/s.
-  Production title evidence was regenerated at 89 frames with data hash
-  `fd6b5289…` because world/event authority changed.
-  Smoke medians were 291.2/260.8/253.8 s for balanced/expansion/resilience;
-  these are measured diagnostics, not a claim that every policy meets target.
+  non-radial. This historical generation pass still exposed drainage systems
+  that were removed by the whole-cell lake decision below.
+- **2026-08-03 — Whole-cell lake vertical slice and golden rebaseline.** Rainfall,
+  outlets, filled elevation, drainage direction, and accumulation became private
+  generation details. Public geography now has connected separated 3–18-cell
+  lakes, typed depth/shore/influence fields, frozen lake records, `BIOME.LAKE`,
+  and lake/shore/wetland factors. The WorldModel golden changed from `94553146`
+  to `586696d6`; this is an intentional environment and inoculation change, not
+  a blind snapshot update. The 500-seed audit hash is `0e7f6f17`: 6–8 lakes per
+  world (median 7), median area 10 cells, 100% in the 3–18-cell band, median
+  lake coverage 5.399% of land, median influence coverage 24.512% of all cells,
+  five lake types, three salinity classes, and zero integrity/determinism errors.
+  Production benchmark: 2,715 ticks, hash `813c4f49`, 14,712 ticks/s on Node
+  v22.22.3/Linux x64. Smoke medians were 284.6/267.4/353.2 seconds for
+  balanced/expansion/resilience (n=4 diagnostic samples). The title showcase
+  remains 89 frames and was regenerated only after unit/integration tests passed;
+  source hash `3f3e9227…`, data hash `22ac0d97…`. The generator now enters
+  its terminal segment at the last ≥75%-peak production tick (`2732`), keeping
+  the 22-second title story legibly pressure → fragmentation → extinction
+  without synthesizing state.

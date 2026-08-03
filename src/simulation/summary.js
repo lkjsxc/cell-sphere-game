@@ -92,7 +92,7 @@ function recordMilestones(state) {
 function recordGeography(state) {
   const checks = [
     [1, 'geo-coast', (i) => state.fields.featureFlags[i] & FEATURE.COAST],
-    [2, 'geo-river', (i) => state.fields.featureFlags[i] & FEATURE.RIVER],
+    [2, 'geo-lake', (i) => state.fields.biomeId[i] === BIOME.LAKE],
     [4, 'geo-forest', (i) => state.fields.featureFlags[i] & FEATURE.FOREST],
     [8, 'geo-mountain', (i) => state.fields.biomeId[i] === BIOME.HIGHLAND || state.fields.biomeId[i] === BIOME.MOUNTAIN],
     [16, 'geo-wetland', (i) => state.fields.biomeId[i] === BIOME.WETLAND],

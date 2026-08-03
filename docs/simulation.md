@@ -6,9 +6,11 @@ or audio imports.
 ## Static inputs
 
 A stable level-4 geodesic graph supplies 2,562 cells and 7,680 edges. The
-immutable WorldModel adds land/water, elevation, depression-filled drainage,
-flow accumulation/order/strength, lakes, climate, nutrients, forest density,
-biome, region, hazards, features, landmarks, and central biome factors.
+immutable WorldModel adds land/ocean, elevation, connected whole-cell lakes,
+lake depth/shore/freshwater influence, frozen lake records, climate, nutrients,
+forest density, biome, region, hazards, features, landmarks, and central biome
+factors. Rainfall and priority-flood drainage analysis remain private generation
+details.
 
 A dedicated inoculation RNG performs weighted sampling among ecologically
 valid resource candidates above a plausibility floor; it does not always pick
@@ -52,8 +54,8 @@ local. The field never enters replay, result hash, card application, or RNG.
 
 Every scheduled family owns a deterministic weighted graph field with quantized
 arrival time, influence, and predecessor. Drought, bloom, and blight traverse
-land only; river, forest, moisture, altitude, ridges, ocean inertia, and a
-stable directional wind alter family-specific travel. Authority applies each
+land only; freshwater influence, lakes, shores, forest, moisture, altitude,
+ridges, ocean inertia, and a stable directional wind alter family-specific travel. Authority applies each
 cell relative to its own arrival. Snapshots transfer the exact current family
 and strength bytes consumed by WebGL2 and Canvas; neither renderer reconstructs
 a center/radius cap. Ended fields release their retained traversal arrays.

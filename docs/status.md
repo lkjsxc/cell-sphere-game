@@ -1,115 +1,109 @@
 # Status
 
-Release-candidate handoff for the cellular-world, progression, and evidence pass.
+Whole-cell lake vertical slice implemented and verified on `main`; the larger
+atomic-world and unified-shell release remains in progress.
 
-- **Starting commit:** `fcbb544f60b37b13005b29f954ad5dcd8231738e`.
-- **Implementation tip:** `e6a6bfb`.
-- **Released commit:** `6a143d3d51430b7e53165d9603ba5bee5130d969`.
-- **Branch/upstream:** `main` and `origin/main` synchronized at the released commit.
-- **Protective tag:** `pre-cell-sphere-game-rename-20260803` at the starting commit.
-- **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>. Workflow
-  `30808463755` completed verify job `91669226956` and Pages job `91669459530`;
-  deployment `5725150277` reports success for the released SHA.
+- **Slice base:** `e712035e18c295dca39c0db3f36e3eff5c41a40e`.
+- **Branch/upstream:** `main` tracking `origin/main`; this slice is ready for its
+  coherent implementation commit and push.
+- **Repository/Pages identity:** unchanged by this slice.
 
-## Product changes
+## Product and world changes
 
-- The right-biased sphere composition is viewport-derived and does not shift
-  when transient surfaces open. Outside gestures dismiss only when their native
-  target is neither a meaningful control nor a globe cell.
-- Manual Adaptation selections and mode changes use acknowledged protocol-v2
-  commands. Pending, applied, and rejected states are explicit; pointer input
-  cannot silently no-op.
-- The clock has hour and minute hands sharing one game-time phase. Pausing holds
-  both hands. Result continuation is a one-shot state machine; interaction and
-  detail surfaces suspend rather than permanently cancel it.
-- Reach Balance is authoritative. Every production birth/death passes through
-  one helper and records a fixed direct cause into a 15-second typed ring,
-  bounded samples, and full-run totals. Run/result surfaces expose gains,
-  losses, conditions, turning point, and exact cell highlighting.
-- All event effects propagate over deterministic topology-native fields. Rivers
-  use explicit continuous trunks and connected channel rendering.
-- Evolution Globe now fills all 642 level-3 cells: six connected 107-cell
-  territories, 636 adjacent prerequisites, 642 exact effects, six roots, and a
-  2,462-Echo economy gated through world 164.
-- Trophy Sphere is a separate 162-cell level-2 view with 96 authored criteria in
-  six families and 66 inert substrate cells. Schema-3 History retains bounded
-  deterministic proof; schema-6 ownership is monotonic. Schema-5 data grants no
-  Trophy merely on load. Explicit Trophy review and progression transactions
-  conservatively backfill retained proof.
+- Ordinary level-4 worlds expose 6–8 deterministic, spatially separated lakes.
+  Every ID is one connected 3–18-cell component; lake cells never overlap ocean
+  and remain `landMask=1`.
+- Public fields are `lakeId`, typed `lakeDepth`, typed `lakeShore`,
+  `freshwaterInfluence`, and frozen `lakes` records. Each record includes frozen
+  cell/shore/wetland lists, area/class, min/mean/max depth and class, surface
+  elevation, catchment, outlet cell/status, type, and salinity.
+- `BIOME.LAKE` has bounded growth/upkeep/uptake/renewal/route factors. Whole-cell
+  lake shores and wetlands affect climate, resources, event travel, Adaptation
+  arrival, Reach conditions, landmarks, inoculation, and inspection.
+- Rainfall, priority-flood elevation, outlet selection, drainage direction, and
+  accumulation remain private to `src/world/hydrology.js`. Public drainage
+  systems and obsolete water/feature/landmark enum members were removed.
+- Active geography uses Verdant Lakeworld, Lake Archipelago, Fractured Lakes,
+  Great Lake, and Lake Shore vocabulary. Inspector rows expose Lake, Lake shore,
+  Wetland, and complete lake-record facts.
 
-## Architecture and persistence
+## Rendering and compatibility
 
-- Boundaries remain `interface → rendering → simulation → world → core`.
-  Trophy recognition and presentation never enter simulation, score, Echo
-  income, or random streams.
-- Skill content now lives under `src/game/skills/`; Trophy content/proof lives
-  under `src/game/trophies/`; progression sphere coordination was extracted
-  from the 200-line app controller.
-- Worker/fallback determinism, run IDs, stale-response guards, terminal
-  first-wins behavior, and bounded result transaction keys remain intact.
-- Existing Echoes, Skill Cells, Imprints, History, scores, and world-seed cursor
-  migrate without refunds or guessed proof. Unknown Skill/Trophy/card IDs are
-  filtered or quarantined.
+- WebGL2 removed all directional waterway geometry, attributes, varyings, and
+  local channel equations. Lake depth/shore reuse terrain material, lake relief
+  is flat, and only shared cell boundaries emphasize lake edges. Four draws are
+  preserved.
+- Canvas removed curved/interior water rendering and static inset geography.
+  Lakes, shores, wetlands, and forest blend are one full-cell fill; existing
+  shared boundary strokes handle ocean/lake edges.
+- Simulation emits `geo-lake`; History maps `geo.lake.reached`. The old semantic
+  key remains readable as archived drainage evidence but contributes no lake
+  Trophy proof. Version-1 fact bit 2 and unversioned schema-6 accumulated bit 2
+  are cleared during validation; already-earned stable Trophy IDs remain owned.
+- `audit:cell-visuals` rejects obsolete identifiers and known fine-feature
+  patterns in production world/rendering source. `audit:lakes` replaces the old
+  audit; the temporary compatibility alias invokes the lake audit.
+- Structure heuristics now warn above 200 lines/16 children and fail above
+  400/24. The cohesive 222-line hydrology module intentionally emits one warning.
 
-## Simulation and balance evidence
+## Measured lake distribution
 
-- Full 180-world policy sweep: median survival 267.1–296.7 game seconds by
-  policy; first/random/resilience/efficiency medians are 270.1–296.7, with
-  balanced/expansion at 267.5/267.1. Maximum remains bounded at 362 seconds.
-- 1,000-world terminal soak: 151,803.4 ms; zero invalid outcomes, duplicate
-  terminal messages, or liveness repairs; tick min/median/p95/max
-  254/2,719/3,612/3,620.
-- Event audit at the graph-field commit: 1,386 events, zero land-bound ocean
-  crossings, all non-radial, median field generation about 0.192 ms.
-- River audit over 1,000 worlds: median longest trunk 28 cells; 99.7% had a
-  trunk at least 20; maximum 61; zero cycle, mouth, continuity, accumulation,
-  or isolation defects.
-- Skill audit: 642/642 unique cells/effects legally purchased, 636 relations,
-  mapping `d6bdc218`, balance after exhaustive purchase 0.
-- Trophy audit: 96 unique criteria/cells, mapping `93870583`, 66 neutral cells,
-  1,920,000 evaluator calls / 960,000 pass-fail boundaries in 178.323 ms.
+`npm run audit:lakes -- --count=500` on Node v22.22.3/Linux x64:
 
-## Rendering, UI, and accessibility evidence
+- aggregate deterministic hash `0e7f6f17`; 500 duplicate generations matched;
+- 6–8 lakes/world, median 7, mean 6.6;
+- area 3–18 cells, median 10, mean 10.388; 100% in the requested band;
+- shore median 22 cells; wetland median 8 cells;
+- median lake coverage 5.399% of land; median ecological-influence coverage
+  24.512% of all cells; median moisture lift 0.21553;
+- types: 625 marsh, 1,139 rift, 776 glacial, 729 rain-fed, 31 salt-basin;
+  salinity: 2,992 fresh, 217 brackish, 91 saline;
+- zero disconnected IDs, ID mismatches, ocean overlaps, touching IDs, shore or
+  wetland defects, influence bound defects, deterministic mismatches, or public
+  private-field leaks;
+- 2,881.24 ms total including duplicate generation; first-generation mean
+  2.833 ms, median 2.576 ms, p95 3.994 ms, max 19.905 ms.
 
-- WebGL2 remains four draws. The full browser scenario completed at 32× in
-  8.82 s with score 614,708; title JS presentation mean 0.07 ms, p95 0.20 ms.
-- Canvas 2D completed title, run, visual History, Evolution Globe, and Trophy
-  Sphere with score 613,052.
-- Chrome evidence covers 320×568 through 1920×1080, portrait, landscape,
-  tablet, desktop, and 200% run-dock text. Evolution and Trophy detail are
-  fixed-flow bottom sheets on mobile and safe left surfaces on desktop.
-- Pointer-only completion includes exact Skill/Trophy cell selection. Semantic
-  access includes the 642-item Skill tree and six-row, 96-cell Trophy grid with
-  roving arrow-key focus. Reduced motion, forced-color borders, focus restore,
-  explicit Close, Escape, and target-aware outside dismissal remain.
-- Mobile evidence is CDP viewport emulation, not physical-device evidence.
+## Golden, balance, and performance
+
+- WorldModel golden: `586696d6`.
+- Production benchmark: 2,715 ticks in 185 ms, 14,712 ticks/s, hash `813c4f49`,
+  peak coverage 0.1093, 9 MB reported heap.
+- Balance smoke medians (n=4 diagnostic): balanced 284.6 s, expansion 267.4 s,
+  resilience 353.2 s; every command passed and the 3,620-tick ceiling remains.
+- Title showcase was regenerated after focused and full tests established the
+  lake behavior. It remains 89 frames/22.25 s/228,754 bytes; production source
+  hash `3f3e9227…`, data hash `22ac0d97…`, terminal-segment source tick 2,732.
 
 ## Exact verification
 
-Environment: Node v22.22.3, Linux x64, 20 logical CPUs.
+- `npm run verify` — PASS all nine fast gates: structure, cell-visual audit,
+  showcase, 117 unit, 63 integration, 500-seed lake audit, balance smoke,
+  benchmark, and links. Verify benchmark: 2,715 ticks in 184 ms, 14,793
+  ticks/s, hash `813c4f49`.
+- `npm run check:structure` — PASS; 224 files/29 directories; one intentional
+  222-line hydrology warning, no hard-cap failure.
+- `npm run test:unit` — PASS, 117/117.
+- `npm run test:integration` — PASS, 63/63.
+- `npm run audit:cell-visuals` — PASS, 24 files scanned, four draws/full-cell
+  lakes true, zero violations.
+- `npm run audit:lakes -- --count=500` — PASS with distribution above.
+- `npm run audit:events` — PASS, 200 worlds/1,386 fields, zero ocean violations,
+  every field irregular/non-radial; median 0.1933 ms/field.
+- `npm run balance:smoke` — PASS.
+- `npm run benchmark` — PASS with result above.
+- `npm run showcase:check` — PASS, data hash `22ac0d97…`.
+- `npm run check:links` — PASS, 118 modules/10 HTML references.
 
-- `npm run verify` — PASS: structure; showcase; 118 unit; 61 integration;
-  balance smoke; benchmark; 118-module/10-HTML link gate.
-- Final host benchmark — 2,640 ticks in 181 ms, 14,561 ticks/s, hash `637b2473`.
-- `npm run balance` — PASS, 180 production worlds.
-- `node scripts/audits/terminal-soak.mjs --count=1000` — PASS as above.
-- `npm run audit:skills` — PASS.
-- `npm run audit:trophies` — PASS.
-- `npm run test:browser:file` — PASS, WebGL2, no browser errors.
-- `npm run test:browser:canvas` — PASS, forced Canvas 2D.
-- `docker compose run --rm verify` — PASS on Node v22.23.2 / 32 CPUs;
-  benchmark 2,640 ticks in 187 ms, 14,082 ticks/s, hash `637b2473`.
+## Known limitations / next actions
 
-## Known limitations and next actions
-
-- The requested `cell-sphere-game` product/repository/storage-key rename was not
-  performed: the repository's active agent contract explicitly requires the
-  canonical `incremental-network-game` name and tagline to survive redesigns.
-  A maintainer must revise that higher-priority contract before a truthful full
-  rename and GitHub repository rename can proceed.
-- Physical mobile touch/thermal/battery/GPU timing, screen-reader manual audit,
-  forced-colors visual review, Japanese localization, and the broader
-  100–200-hour challenge/discovery layer remain incomplete.
-- CI and Pages both succeeded. Cache-busted HTTP checks returned 200 and exact
-  SHA-256 byte matches for `index.html`, app controller, Skill/Trophy catalogs,
-  Reach ledger, Trophy CSS, title showcase, and this status file at `6a143d3`.
+- No browser/WebGL2/Canvas screenshot run or physical-mobile evidence was
+  collected for this isolated source slice; source/unit contracts cover both
+  rendering paths, not pixel appearance or GPU timing.
+- The n=4 resilience smoke median is above the 270–330 s ordinary target while
+  remaining below the hard ceiling; a deep balance run should determine whether
+  this is sample noise before tuning.
+- Stable internal legacy Trophy/Skill IDs and the old History key remain only
+  for persistence compatibility; active labels and new proof are lake-centric.
+- This slice has not yet been observed in CI or on Pages. Public deployment,
+  Docker evidence, and the repository rename remain release-level work.
