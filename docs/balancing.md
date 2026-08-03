@@ -21,22 +21,22 @@ simulation modules headlessly — never a copied or simplified model.
 These are **modeled 1×-equivalent targets**, not observed wall-clock claims.
 Owned skills bypass new gates and are never charged again.
 
-| Milestone | Implemented visible gate | Modeled 1× equivalent |
-|---|---:|---:|
+| Milestone | Implemented authority | Modeled 1× equivalent |
+|---|---|---:|
 | First campaign resolution | 4 completed worlds | 18–24 min target; 18–22 min from run duration before transition overhead |
-| Meaningful six-branch spread | six roots require 0 prior worlds and cost 14 Echoes total | first hour target |
+| Fresh Evolution choice | exactly six roots, 14 Echoes total | roots cost 2–3 Echoes and remain canonical bootstrap choices |
 | Trophy campaign marker | `Fifty Worlds` recognizes 50 completed worlds | about 4 h at the 270–330 s run target; modeled, not measured wall time |
-| Roughly half (324 skills) | 82 completed worlds | about 6–7 h |
-| All six keystones | 143 completed worlds plus adjacency/Echoes | about 11–12 h |
-| Late integration cells | 153 completed worlds | about 12–13 h |
-| All 642 Skill Cells | capstones require 164 completed worlds | about 13–14 h |
+| Roughly half (324 skills) | physical frontier plus the applicable portion of 2,462 Echoes | not recalibrated after authority migration |
+| All 642 Skill Cells | traverse physical frontier and spend exactly 2,462 Echoes | long-horizon target; no current measured completion time |
 | True completion | skills plus challenge/discovery breadth | 100–200 h target; challenge breadth is not yet fully implemented |
 
-Gates are shown in every Skill Cell detail as `Worlds observed`; they are not
-hidden cooldowns, real-time waits, or speed restrictions. At 32× they compress
-legitimately. The 2,462-Echo economy keeps roots welcoming and is fundable near the gate horizon while
-adjacency, observed-world gates, and later challenge breadth—not duplicated raw
-power—create the long horizon.
+Evolution has no run-count, elapsed-time, or layout-parent purchase gate. The
+2,462-Echo economy is intentionally unchanged: costs and all effects retain their
+stable IDs and exact values, while any one physically adjacent owned cell supplies
+the frontier. This removes the previous clock floor, so the former 13–14 hour
+completion estimate is retired rather than presented as recalibrated evidence.
+A deep Echo-income campaign audit is still required before claiming a replacement
+mastery duration.
 
 ## Bot policies
 
@@ -125,6 +125,17 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   states only that shipped effect. New-save/default-run balance and golden hash
   are unchanged because bonuses apply only after purchase. Full-atlas campaign
   pacing still needs deep calibration.
+- **2026-08-04 — Evolution physical-frontier authority.** Replaced layout-parent
+  and completed-world authority with enough Echoes plus any one actual adjacent
+  owned level-3 cell. Exactly six canonical roots remain bootstrap choices;
+  recognized disconnected migration islands remain owned and each opens a
+  frontier. Graph/schema versions are 4/7. The 2,462-Echo economy is preserved
+  exactly (`34b4e4a9`), as are all authored/current effects (`8444edfd`): 1,920
+  physical boundaries yield 3,840 directed frontier states. Exhaustive audit
+  covers all 411,522 single-owner target states and legally buys all 642 cells
+  at run zero with zero balance remaining. No simulation golden changes. The
+  generated title payload remains 89 frames with data hash `22ac0d97…`; only its
+  source metadata is `9277d6a0…`.
 - **2026-08-03 — Acknowledged Adaptation protocol.** Added command/run/offer
   identity and explicit rejection without changing simulation equations, RNG,
   decision order, or the `c55ddab5` benchmark golden. The production title

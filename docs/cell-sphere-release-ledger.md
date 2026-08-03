@@ -35,11 +35,30 @@ Evidence words are scoped: **implemented**, **tested**, **measured**, **observed
 | E1 | clickable stable SCORE/ENTROPY/REACH details | only REACH interactive | semantics plus stable-rectangle measurements |
 | E2 | shared Result/History/Event Log/Menu context shell | separate bottom/replacement surfaces present | desktop/mobile Chrome scenarios and gesture persistence |
 | E3 | compact dock/Adaptations, visible mobile event, fixed scene selector | contradicted by baseline | responsive matrix, 200% text, long labels |
-| F1 | Evolution cost plus one owned adjacent cell only | observed-world gates present | schema/audit/migration and run-zero purchase proof |
+| F1 | Evolution cost plus one owned adjacent cell only | implemented/tested locally from `ce554ef`; not deployed | schema/audit/migration and run-zero purchase proof complete |
 | F2 | harder lake-centric Trophies and queued feedback | trivial geography awards present | horizon audit, legacy migration, queue tests/browser capture |
 | G | `cell-sphere-game` package/storage/repository/Pages identity | legacy identity deployed; GitHub ADMIN observed | namespace migration tests, renamed origin, Actions and exact Pages bytes |
 | H | deterministic Worker/fallback, 32×, bounded performance | baseline fast gates pass | final parity, balance, benchmark, Canvas, lake/event/Trophy audits and soaks |
 | I | coherent push and exact public deployment | target | clean tree, successful workflow, cache-busted public inspection |
+
+## Evolution physical-frontier evidence
+
+- **implemented locally** graph 4 precomputes stable ID-to-cell addresses and all
+  1,920 physical level-3 boundaries. A recognized unowned Skill Cell is
+  purchasable exactly with enough Echoes and any one adjacent owned cell.
+- **implemented locally** exactly six canonical roots remain bootstrap choices
+  under the initial-save rule. Every non-root uses ordinary physical adjacency;
+  no run count or authored layout parent participates.
+- **implemented locally** progression schema 7 preserves every recognized owned
+  ID, including disconnected graph-1/graph-3 migration islands. Unknown IDs
+  remain quarantined; migration never refunds, charges, closes, or auto-purchases.
+- **tested** 3,840 directed adjacent frontiers and 3,810 canonical root-bootstrap
+  states accept at run zero; 403,872 nonadjacent non-root states reject. All 642
+  cells acquire legally for exactly 2,462 Echoes with zero remainder. The audit
+  checks all 411,522 possible single-owner/target states, economy hash `34b4e4a9`, effect
+  hash `8444edfd`, six roots, and zero obsolete authority fields/copy.
+- **not deployed**: no push, CI, Pages, public URL, Docker, physical-mobile, or
+  assistive-technology claim belongs to this isolated migration slice.
 
 ## Atomic world-session / untouched Auto Next evidence
 

@@ -23,4 +23,5 @@ Invariants:
 - Every cell compiles a concrete scalar/conditional effect; milestone identities
   remain separate metadata and never advertise an unavailable control.
 - Purchases return a new meta document and spend exactly the declared cost.
-- Every prerequisite is represented by one shared boundary between atlas cells.
+- Purchase authority is enough Echoes plus any one physically adjacent owned
+  atlas cell; six canonical roots alone bootstrap a save with no owned cells.

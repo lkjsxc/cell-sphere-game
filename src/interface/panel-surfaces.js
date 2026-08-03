@@ -81,13 +81,13 @@ export function createMemorySurface(options) {
     byId('memory-node-branch').textContent = `${state.branch.toUpperCase()} · TIER ${state.tier}`;
     byId('memory-node-heading').textContent = state.nameEn; byId('memory-node-summary').textContent = state.effectEn;
     byId('memory-node-detail').textContent = state.description;
-    const status = state.owned ? 'Unlocked' : state.runsRemaining ? `Locked · observe ${state.runsRemaining} more worlds`
-      : state.locked ? 'Locked · prerequisite skills needed' : state.affordable ? 'Available' : 'Available · more Echoes needed';
-    const prereqs = state.requires.length ? state.requires.map((id) => getMemoryNode(id)?.nameEn ?? id).join(', ') : 'No prerequisite';
+    const status = state.owned ? 'Unlocked' : state.locked ? 'Locked · adjacent unlocked cell needed'
+      : state.affordable ? 'Available' : 'Available · more Echoes needed';
+    const neighbor = state.adjacentOwnedId ? getMemoryNode(state.adjacentOwnedId)?.nameEn ?? state.adjacentOwnedId
+      : state.bootstrap ? 'Fresh-save bootstrap root' : 'Adjacent unlocked cell';
     byId('memory-node-meta').replaceChildren(...definitionRows([
       ['Status', status], ['Cost', `${state.cost} Echoes · ${meta.echoBalance} held`],
-      ['Worlds observed', state.requiredRuns ? `${meta.runs} of ${state.requiredRuns} required` : 'Ready from first world'],
-      ['Prerequisite skills', prereqs]]));
+      ['Adjacent unlocked cell', neighbor]]));
     unlock.hidden = state.owned; unlock.disabled = !state.selectedReady;
     unlock.textContent = `Unlock for ${state.cost} Echoes`; unlock.dataset.action = state.selectedReady ? 'recommended' : 'normal';
   }
@@ -96,8 +96,10 @@ export function createMemorySurface(options) {
       const button = document.createElement('button'); button.type = 'button'; button.setAttribute('role', 'treeitem');
       button.setAttribute('aria-level', String(state.tier + 1)); button.setAttribute('aria-selected', String(state.id === selected?.id));
       const status = state.owned ? 'Unlocked' : state.reachable ? state.affordable ? 'Available' : 'Available, more Echoes needed'
-        : state.runsRemaining ? `Locked, observe ${state.runsRemaining} more worlds` : 'Locked';
-      button.textContent = `${state.nameEn}. ${status}. ${state.cost} Echoes.`; button.addEventListener('click', () => options.onSelect(node.id)); return button;
+        : 'Locked, adjacent unlocked cell needed';
+      const neighbor = state.adjacentOwnedId ? ` Adjacent unlocked cell: ${getMemoryNode(state.adjacentOwnedId)?.nameEn ?? state.adjacentOwnedId}.`
+        : state.bootstrap ? ' Fresh-save bootstrap root.' : '';
+      button.textContent = `${state.nameEn}. ${status}.${neighbor} ${state.cost} Echoes.`; button.addEventListener('click', () => options.onSelect(node.id)); return button;
     }));
   }
   return { panel, openNode(node, nextMeta) { selected = node; meta = nextMeta; change.hidden = true;

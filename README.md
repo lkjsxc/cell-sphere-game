@@ -58,14 +58,15 @@ preference.
   living detail.
 - Exactly 642 validated, purchasable Skill Cells fill a separate 642-cell
   Evolution Globe across Reach, Flow, Reserve, Ecology, Perception, and
-  Continuity. Every
-  prerequisite is directly adjacent, every purchase has a concrete compiled
-  effect, and a semantic grouped list shares the same source of truth.
+  Continuity. A current purchase needs enough Echoes and any one physically
+  adjacent unlocked cell; exactly six canonical roots bootstrap a fresh save.
+  Every purchase has a concrete compiled effect, and the semantic grouped list
+  shares the same authority.
 - A separate 162-cell Trophy Sphere with exactly 96 authored achievements in
   six families. Recognition uses bounded deterministic proof, is monotonic,
   backfills only on explicit Trophy review or progression transactions, and
   never changes simulation authority.
-- Separate validated stores for Settings, progression/Imprints/Trophies,
+- Separate validated stores for Settings, schema-7 progression/Imprints/Trophies,
   schema-3 semantic History, and ten device-local IndexedDB visual bundles. JSON
   export/import intentionally remains semantic only.
 - No runtime dependencies, engine, framework, CDN, remote media, analytics, or
@@ -79,6 +80,7 @@ npm test                  # unit + integration
 npm run test:browser:file   # real Chrome/WebGL2 over CDP pipe
 npm run test:browser:canvas # force the real-Chrome Canvas 2D fallback
 npm run audit:lakes         # 500-seed connected-lake distribution audit
+npm run audit:skills        # exhaustive Evolution physical-frontier/economy audit
 npm run audit:cell-visuals  # reject sub-cell production geography
 npm run verify              # structure/test/audit/balance/benchmark/link gates
 ```

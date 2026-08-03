@@ -1,6 +1,6 @@
 import { conditional as c, defineBranch, scalar as s, unlock as u } from './node.js';
 
-export const PERCEPTION_MEMORY = defineBranch('perception', 'ecology-living-crown', [
+export const PERCEPTION_MEMORY = defineBranch('perception', [
   ['quiet-echo', 'Quiet Echo', 'Stress resistance rises by 6%.', 'The retired opening intervention becomes a steadier ability to read pressure before tissue fails.', 2, s('stressResist', 1.06)],
   ['lingering-attention', 'Lingering Attention', 'Network upkeep falls by 2%.', 'Calm observation filters harmless variation before the network spends energy responding to it.', 3, s('maintenance', 0.98)],
   ['wide-receptors', 'Wide Receptors', 'Nutrient uptake rises by 3%.', 'Broader local receptors identify diffuse nourishment without directing growth from the camera.', 3, s('uptake', 1.03)],

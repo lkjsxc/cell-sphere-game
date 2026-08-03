@@ -10,7 +10,7 @@ import { applyRunResult } from '../../src/interface/policies/run-result.js';
 test('schema-5 migration preserves progression and grants no trophies on load', () => {
   const loaded = validateMeta({ schema: 5, runs: 12, bestScore: 90000, totalEchoes: 70, echoBalance: 17,
     worldSeedIndex: 12, memoryNodes: ['reach-horizon-instinct'], imprints: [] });
-  assert.equal(loaded.schema, 6); assert.equal(loaded.runs, 12); assert.equal(loaded.bestScore, 90000);
+  assert.equal(loaded.schema, 7); assert.equal(loaded.runs, 12); assert.equal(loaded.bestScore, 90000);
   assert.deepEqual(loaded.trophyIds, []); assert.equal(loaded.trophyBackfillVersion, 0);
   assert.equal(loaded.migrationNotice, null);
 });

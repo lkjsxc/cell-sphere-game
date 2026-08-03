@@ -1,6 +1,6 @@
 import { conditional as c, defineBranch, scalar as s, unlock as u } from './node.js';
 
-export const ECOLOGY_MEMORY = defineBranch('ecology', 'reserve-deepwell-crown', [
+export const ECOLOGY_MEMORY = defineBranch('ecology', [
   ['tempered-scars', 'Tempered Scars', 'Stress resistance rises by 8%.', 'Past crises leave tissue prepared for pressure without making the next world harmless.', 2, s('stressResist', 1.08)],
   ['sunlit-membrane', 'Sunlit Membrane', 'Heat tolerance widens by 3%.', 'Surface tissue keeps functioning across a slightly broader range of warm terrain.', 3, s('heatTol', 1.03)],
   ['dew-binding', 'Dew Binding', 'Drought tolerance widens by 3%.', 'A fine extracellular film holds brief moisture long enough for cells to share it.', 3, s('droughtTol', 1.03)],

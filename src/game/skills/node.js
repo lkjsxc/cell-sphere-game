@@ -1,11 +1,13 @@
 /** Shared immutable schema for all 642 Evolution Globe Skill Cells. */
-import { MEMORY_BRANCH_SIZE, memoryAtlasCell, memoryAtlasParent } from './atlas.js';
+import { MEMORY_BRANCH_SIZE, memoryAtlasCell } from './atlas.js';
 
 const LANDMARK_SLOTS = Object.freeze([0, 6, 12, 18, 24, 31, 37, 43, 49, 56, 62, 68, 74, 81, 87, 93, 99, 106]);
 const LANDMARK_KINDS = Object.freeze([
   ...Array(8).fill('micro'), ...Array(4).fill('conditional'),
   ...Array(3).fill('unlock'), 'keystone', 'connector', 'capstone',
 ]);
+// Stable cell-position bands preserve the graph-3 economy without a run-count proxy.
+const MINOR_COST_STARTS = Object.freeze([21, 42, 63, 83, 104]);
 const WORDS = Object.freeze({
   reach: [['Fine', 'Patient', 'Sunward', 'Tender', 'Distant', 'Frugal', 'Open', 'Rooted', 'Branching'], ['Runner', 'Front', 'Bud', 'Thread', 'Tip', 'Path', 'Stem', 'Trace', 'Horizon', 'Foothold']],
   flow: [['Clear', 'Pulsed', 'Steady', 'Braided', 'Quiet', 'Swift', 'Open', 'Elastic', 'Deep'], ['Current', 'Channel', 'Junction', 'Pulse', 'Vessel', 'Exchange', 'Stream', 'Conduit', 'Circuit', 'Flow']],
@@ -31,24 +33,21 @@ export const conditional = (trigger, key, value, operation = 'multiply') => Obje
 export const unlock = (key, mode, bonus = null) => Object.freeze({ type: 'unlock', key, mode, ...(bonus ? { bonus } : {}) });
 
 /** Eighteen authored landmarks are interleaved with 89 exact minor skills. */
-export function defineBranch(branch, _connectorPrerequisite, rows) {
+export function defineBranch(branch, rows) {
   if (rows.length !== 18) throw new Error(`${branch} must define 18 authored landmarks`);
   const landmarkAt = new Map(LANDMARK_SLOTS.map((slot, index) => [slot, index])); let filler = 0;
-  const drafts = Array.from({ length: MEMORY_BRANCH_SIZE }, (_, index) => {
+  return Object.freeze(Array.from({ length: MEMORY_BRANCH_SIZE }, (_, index) => {
     const landmark = landmarkAt.get(index);
-    if (landmark !== undefined) return landmarkDraft(branch, rows[landmark], landmark, index);
-    return minorDraft(branch, filler++, index);
-  });
-  const ids = drafts.map((node) => node.id);
-  return Object.freeze(drafts.map((node, index) => Object.freeze({ ...node,
-    requires: Object.freeze(index ? [ids[memoryAtlasParent(branch, index)]] : []),
-  })));
+    const node = landmark !== undefined ? landmarkDraft(branch, rows[landmark], landmark, index)
+      : minorDraft(branch, filler++, index);
+    return Object.freeze(node);
+  }));
 }
 
 function landmarkDraft(branch, row, landmark, index) {
   const completion = completeUnlock(branch, LANDMARK_KINDS[landmark], row[5]); const effect = completion.effect;
   return { id: `${branch}-${row[0]}`, nameEn: row[1], effectEn: completion.summary ?? row[2],
-    description: completion.description ?? row[3], cost: row[4], requiredRuns: runGate(index),
+    description: completion.description ?? row[3], cost: row[4],
     branch: title(branch), tier: tier(index), kind: LANDMARK_KINDS[landmark], authored: true, cell: memoryAtlasCell(branch, index),
     effect, effects: Object.freeze(effect.type === 'scalar' ? { [effect.key]: effect.value } : {}) };
 }
@@ -57,11 +56,10 @@ function minorDraft(branch, filler, index) {
   const [key, value] = MICRO_EFFECTS[branch][filler % MICRO_EFFECTS[branch].length]; const effect = scalar(key, value);
   return { id: `${branch}-cell-${name.toLowerCase().replace(' ', '-')}`, nameEn: name, effectEn: scalarSummary(key, value),
     description: `This permanent ${title(branch)} cell applies its stated change to every later world.`,
-    cost: 1 + Math.floor(runGate(index) / 32), requiredRuns: runGate(index), branch: title(branch),
-    tier: tier(index), kind: 'micro', authored: false, cell: memoryAtlasCell(branch, index), effect,
-    effects: Object.freeze({ [key]: value }) };
+    cost: minorCost(index), branch: title(branch), tier: tier(index), kind: 'micro', authored: false,
+    cell: memoryAtlasCell(branch, index), effect, effects: Object.freeze({ [key]: value }) };
 }
-function runGate(index) { return Math.floor(index * 164 / (MEMORY_BRANCH_SIZE - 1)); }
+function minorCost(index) { return 1 + MINOR_COST_STARTS.filter((start) => index >= start).length; }
 function tier(index) { return Math.min(8, 1 + Math.floor(index * 8 / MEMORY_BRANCH_SIZE)); }
 function title(value) { return `${value[0].toUpperCase()}${value.slice(1)}`; }
 function scalarSummary(key, value) {

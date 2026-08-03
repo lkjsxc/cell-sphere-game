@@ -168,9 +168,7 @@ test('replay schema 2 distinguishes offers, selections, modes, ids, and ticks', 
 
 test('owned conditional Memory compiles once and changes only its named future condition', () => {
   const target = MEMORY_NODES.find((node) => node.effect.trigger === 'coverage-below-25');
-  const byId = new Map(MEMORY_NODES.map((node) => [node.id, node])); const owned = new Set();
-  const own = (node) => { for (const id of node.requires) own(byId.get(id)); owned.add(node.id); }; own(target);
-  const memory = compileMemory({ memoryNodes: [...owned] });
+  const memory = compileMemory({ memoryNodes: [target.id] });
   const controller = new RunController({ seed: 9182, memoryEffects: memory.effects,
     memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks });
   controller.start(); controller.advance(1);

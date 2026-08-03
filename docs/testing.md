@@ -13,12 +13,17 @@ Unit coverage includes topology/dual manifold, deterministic WorldModel hash,
 land bounds, climate/biomes/forest coherence, private drainage fields, connected
 and separated whole-cell lake IDs, frozen lake/shore/wetland records, bounded
 lake ecology, landmarks/sources, generation budget, renderer geometry and uniforms, tap/camera math, settings/pause/rotation, simulation queue/RNG,
-pure inspection, History cap, the 642-node graph/migration/economy, and the
-96-criterion Trophy catalog/topology/proof boundaries.
+pure inspection, History cap, the 642-node graph-4/schema-7 migration/economy,
+and the 96-criterion Trophy catalog/topology/proof boundaries. Evolution tests
+cover exactly six empty-save roots, run-zero acquisition, each of 3,840 directed
+physical frontiers, nonadjacent rejection, one-neighbor sufficiency, repeat and
+insufficient-fund transactions, preserved disconnected islands, and a legal
+642-cell purchase sequence spending exactly 2,462 Echoes.
 
 Integration coverage includes seed/chunk/speed invariance, zero-input Random
 completion, exact manual resolution ticks, stream isolation, replay schema,
-conditional skills, concrete effects for all 642 Skill Cell purchases, strict
+conditional skills, concrete effects for all 642 Skill Cell purchases, no
+current experience/layout-parent authority or copy, strict
 visual-History codec bounds/malformed input, primary-cell migration, stale load
 guards, and an observed run matching a quiet run in hash, score, extinction,
 decisions, semantic History, and Imprint. Trophy integration proves schema-5 load grants nothing, explicit

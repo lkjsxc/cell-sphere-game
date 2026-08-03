@@ -1,6 +1,6 @@
 import { conditional as c, defineBranch, scalar as s, unlock as u } from './node.js';
 
-export const RESERVE_MEMORY = defineBranch('reserve', 'flow-river-crown', [
+export const RESERVE_MEMORY = defineBranch('reserve', [
   ['deep-vault', 'Deep Vault', 'Energy capacity rises by 8%.', 'Layered storage remembers how much abundance can be held without stalling useful growth.', 2, s('energyCap', 1.08)],
   ['amber-granules', 'Amber Granules', 'Energy capacity rises by 3%.', 'Small reserves distributed through the body keep opportunity close to active tissue.', 3, s('energyCap', 1.03)],
   ['measured-appetite', 'Measured Appetite', 'Nutrient uptake rises by 3%.', 'The network feeds steadily enough to store surplus without stripping one patch bare.', 3, s('uptake', 1.03)],

@@ -52,7 +52,8 @@ unexplained arbitrary click wall.
 - terminal ceiling: about 360 game seconds;
 - 1×–32× alters wall time only;
 - first campaign-resolution target: 18–24 minutes;
-- all Skill Cells modeled at 60–100 hours of 1×-equivalent play; true completion targets 100–200 hours.
+- all Skill Cells remain a long-horizon target; the unchanged 2,462-Echo economy
+  needs campaign recalibration before a new completion-hour claim.
 
 The current smoke median meets the ordinary-run target; campaign and complete
 mastery timing remain targets, not measured completion claims.
@@ -74,13 +75,16 @@ immediately. The expanded event list exposes the same selected event in text.
 
 All 642 cells on the separate globe are purchasable Skill Cells in six connected
 107-cell currents: Reach, Flow, Reserve, Ecology, Perception, and Continuity.
-Every prerequisite is direct spherical adjacency. Composition is 582 micro, 24
-conditional, 18 advanced, 6 keystones, 6 connectors, and 6 capstones. Costs total
-2,462 Echoes. Six roots cost 2–3 Echoes; early runs expose several purchases.
-Every purchase compiles a concrete bounded scalar or conditional effect for the
-next run. Visible `Worlds observed` gates place 324 skills by world 82,
-keystones at 143, connectors at 153, and capstones at 164. The globe is primary;
-a synchronized offscreen semantic tree preserves non-pointer purchase access.
+Composition is 582 micro, 24 conditional, 18 advanced, 6 keystones, 6 connectors,
+and 6 capstones. Costs total 2,462 Echoes. Six canonical roots cost 2–3 Echoes
+and are the only choices when a save owns no cells. After the first purchase, a
+recognized unowned cell is available exactly when the player can afford it and
+owns any one cell across one of its physical level-3 boundaries. A single
+neighbor suffices, including a preserved disconnected migration island; run
+count and authored layout order have no purchase authority. Every purchase
+compiles a concrete bounded scalar or conditional effect for the next run. The
+globe is primary; a synchronized offscreen semantic tree exposes the same
+adjacent owner and preserves non-pointer purchase access.
 
 ## Trophy Sphere
 

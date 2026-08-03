@@ -72,9 +72,11 @@ The run world keeps the stable 2,562-cell icosphere and immutable graph-native
 geography. Central biome tables precompute growth, upkeep, uptake, renewal, and
 transport factors. Evolution Globe switches the same renderer and picking
 contract to a separate 642-cell level-3 globe. All 642 cells are Skill Cells in
-six exact 107-cell territories; their 636 prerequisite relations are also direct
-spherical adjacency. Imprints are bounded cell material; no prerequisite path
-geometry exists. Trophy Sphere switches the same renderer to a 162-cell level-2
+six exact 107-cell territories. Authority precomputes the stable ID-to-cell map
+and all 1,920 physical level-3 boundaries: enough Echoes plus any one adjacent
+owned cell permits a non-root purchase. Six canonical roots remain bootstrap
+choices under the initial-save rule. Imprints are bounded cell material; no progression-path geometry
+exists. Trophy Sphere switches the same renderer to a 162-cell level-2
 topology. Exactly 96 read-only Trophy cells occupy six connected constellations;
 66 substrate cells remain neutral and unselectable. Trophy recognition consumes
 only completed semantic proof and never feeds simulation, score, or Echoes.
@@ -85,7 +87,7 @@ Separate localStorage documents own:
 
 - Settings schema 3 (`settings:v2`), including automatic continuation and safe
   migration from earlier values;
-- progression schema 6 (`meta:v1`), including Echoes, 642-cell ownership,
+- progression schema 7 (`meta:v1`), including Echoes, graph-4 642-cell ownership,
   cell-converted Imprints, Trophy IDs/proof aggregates, graph versions,
   quarantine, a seed cursor, and one migration notice;
 - semantic History schema 3 (`history:v2`, migrating earlier schemas), retaining
@@ -94,8 +96,11 @@ Separate localStorage documents own:
 - device-local IndexedDB visual History: strict `INHV` v1 cell-only bundles,
   newest ten completed worlds, each at most 256 KiB.
 
-Parse/validate is field-by-field. Progress purchases persist before in-memory
-currency is committed. Result awards pass through an idempotent transaction,
+Parse/validate is field-by-field. Every recognized owned ID is preserved even
+when old ownership forms disconnected islands; each island becomes a physical
+frontier source, while unknown IDs remain quarantined. No migration closes
+ownership, refunds, charges, or auto-purchases. Progress purchases persist before
+in-memory currency is committed. Result awards pass through an idempotent transaction,
 so repeated completion delivery cannot duplicate Echoes, History, or Imprints.
 Storage failure leaves the session playable and is communicated honestly. JSON
 export/import remains semantic only; visual checkpoints are explicitly

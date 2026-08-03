@@ -4,10 +4,11 @@ import assert from 'node:assert/strict';
 import { validateSettings, defaultSettings } from '../../src/platform/settings.js';
 import { defaultMeta, LEGACY_MEMORY_MAP, saveMeta, validateMeta } from '../../src/platform/storage.js';
 import {
-  MEMORY_BRANCHES, MEMORY_LANDMARK_IDS, MEMORY_NODE_IDS, MEMORY_NODES, availableMemoryNodes,
-  buildMemorySnapshot, campaignResolved, canPurchaseMemory, compileMemory,
+  MEMORY_BRANCHES, MEMORY_LANDMARK_IDS, MEMORY_NODE_IDS, MEMORY_NODES, MEMORY_PHYSICAL_ADJACENCY,
+  MEMORY_ROOT_IDS, availableMemoryNodes, buildMemorySnapshot, campaignResolved, canPurchaseMemory, compileMemory,
   groupAccessibleMemory, purchaseMemory, validateMemoryGraph,
 } from '../../src/game/skills/index.js';
+import { parseImportedData } from '../../src/interface/app-data.js';
 import { createTopology } from '../../src/world/icosphere.js';
 import { createCamera, viewProjection } from '../../src/rendering/camera.js';
 import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from '../../src/interface/camera-policy.js';
@@ -64,7 +65,7 @@ test('every legacy ownership subset migrates one-for-one without currency refund
     const owned = LEGACY_IDS.filter((_, index) => mask & (1 << index));
     const migrated = validateMeta({ schema: 3, bestScore: 99, totalEchoes: 70,
       echoBalance: 17, runs: 4, signalHintShown: true, memoryNodes: owned });
-    assert.equal(migrated.schema, 6); assert.equal(migrated.memoryGraphVersion, 3); assert.equal(migrated.worldSeedIndex, 4);
+    assert.equal(migrated.schema, 7); assert.equal(migrated.memoryGraphVersion, 4); assert.equal(migrated.worldSeedIndex, 4);
     assert.equal(migrated.memoryNodes.length, owned.length);
     const mapped = owned.map((id) => LEGACY_MEMORY_MAP[id]);
     assert.deepEqual(migrated.memoryNodes, MEMORY_NODE_IDS.filter((id) => mapped.includes(id)));
@@ -84,7 +85,7 @@ test('all six proof nodes preserve bounded value while First Trace becomes resil
   assert.equal(campaignResolved(migrated), true);
 });
 
-test('schema 4 validates old ownership, then preserves it in the 642-cell graph', () => {
+test('schema 4 preserves every recognized island without parent closure or currency changes', () => {
   const meta = validateMeta({ schema: 4, memoryGraphVersion: 1, bestScore: 500,
     totalEchoes: 900, echoBalance: 79, runs: 12,
     memoryNodes: [...MEMORY_LANDMARK_IDS, 'foreign-memory'], quarantinedMemoryNodes: ['earlier-unknown'] });
@@ -92,9 +93,39 @@ test('schema 4 validates old ownership, then preserves it in the 642-cell graph'
   assert.deepEqual(meta.quarantinedMemoryNodes, ['foreign-memory', 'earlier-unknown']);
   assert.equal(meta.echoBalance, 79); assert.equal(meta.totalEchoes, 900);
   assert.deepEqual(meta.migrationNotice, { kind: 'memory-atlas-v5', pending: true });
-  assert.equal(meta.memoryGraphVersion, 3); assert.equal(meta.worldSeedIndex, 12);
-  const corrupt = validateMeta({ schema: 4, memoryNodes: ['continuity-unbroken-lesson'] });
-  assert.deepEqual(corrupt.memoryNodes, []); assert.deepEqual(corrupt.quarantinedMemoryNodes, ['continuity-unbroken-lesson']);
+  assert.equal(meta.memoryGraphVersion, 4); assert.equal(meta.worldSeedIndex, 12);
+  const island = validateMeta({ schema: 4, echoBalance: 11, memoryNodes: ['continuity-unbroken-lesson'] });
+  assert.deepEqual(island.memoryNodes, ['continuity-unbroken-lesson']);
+  assert.deepEqual(island.quarantinedMemoryNodes, []); assert.equal(island.echoBalance, 11);
+});
+
+test('each migrated disconnected island remains owned and opens its own physical frontier', () => {
+  const islands = [];
+  for (const id of MEMORY_NODE_IDS) {
+    if (islands.every((owned) => !MEMORY_PHYSICAL_ADJACENCY[id].includes(owned))) islands.push(id);
+    if (islands.length === 3) break;
+  }
+  const migrated = validateMeta({ schema: 6, memoryGraphVersion: 3, runs: 0, echoBalance: 100,
+    memoryNodes: [...islands].reverse(), quarantinedMemoryNodes: ['foreign-memory'], requiredRuns: 999 });
+  assert.deepEqual(new Set(migrated.memoryNodes), new Set(islands)); assert.equal(migrated.runs, 0);
+  assert.deepEqual(migrated.quarantinedMemoryNodes, ['foreign-memory']);
+  for (const id of islands) {
+    const frontier = MEMORY_PHYSICAL_ADJACENCY[id].find((candidate) => !islands.includes(candidate));
+    assert.equal(canPurchaseMemory(migrated, frontier), true, `${id}->${frontier}`);
+  }
+  const unrelated = MEMORY_NODE_IDS.find((id) => !MEMORY_ROOT_IDS.includes(id) && !islands.includes(id)
+    && islands.every((owned) => !MEMORY_PHYSICAL_ADJACENCY[id].includes(owned)));
+  if (unrelated) assert.equal(canPurchaseMemory(migrated, unrelated), false);
+});
+
+test('old semantic exports preserve recognized ownership and quarantine unknown IDs', () => {
+  const owned = ['continuity-unbroken-lesson', 'reach-cell-fine-runner'];
+  const parsed = parseImportedData(JSON.stringify({ schema: 1, product: 'incremental-network-game',
+    meta: { schema: 6, memoryGraphVersion: 3, echoBalance: 9, memoryNodes: [...owned, 'foreign-memory'],
+      quarantinedMemoryNodes: ['older-foreign'] }, history: null, settings: null }));
+  assert.deepEqual(new Set(parsed.meta.memoryNodes), new Set(owned)); assert.equal(parsed.meta.echoBalance, 9);
+  assert.deepEqual(parsed.meta.quarantinedMemoryNodes, ['foreign-memory', 'older-foreign']);
+  assert.equal(parsed.meta.schema, 7); assert.equal(parsed.meta.memoryGraphVersion, 4);
 });
 
 test('old edge Imprints become bounded, connected level-3 morphology fossils idempotently', () => {
@@ -123,7 +154,7 @@ test('Memory purchases are immutable, repeat-safe, and conserve Echoes', () => {
 });
 
 test('the complete graph can be purchased transactionally for its exact total cost', () => {
-  const total = validateMemoryGraph().totalCost; let meta = { ...defaultMeta(), totalEchoes: total, echoBalance: total, runs: 900 };
+  const total = validateMemoryGraph().totalCost; let meta = { ...defaultMeta(), totalEchoes: total, echoBalance: total, runs: 0 };
   while (meta.memoryNodes.length < MEMORY_NODES.length) {
     const next = MEMORY_NODES.find((node) => canPurchaseMemory(meta, node.id));
     assert.ok(next, `stalled after ${meta.memoryNodes.length} nodes`);

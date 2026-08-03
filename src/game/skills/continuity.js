@@ -1,6 +1,6 @@
 import { conditional as c, defineBranch, scalar as s, unlock as u } from './node.js';
 
-export const CONTINUITY_MEMORY = defineBranch('continuity', 'perception-watchful-crown', [
+export const CONTINUITY_MEMORY = defineBranch('continuity', [
   ['remembered-burden', 'Inherited Burden', 'Network upkeep falls by 4%.', 'The Continuity lesson is preserved as a bounded reduction in connected tissue upkeep.', 3, s('maintenance', 0.96)],
   ['faithful-junctions', 'Faithful Junctions', 'Flux reinforcement rises by 3%.', 'Junctions preserve the geometry that once held separate regions in useful contact.', 3, s('reinforce', 1.03)],
   ['threaded-scars', 'Threaded Scars', 'Regrowth into scars is 3% stronger.', 'A faint living thread remains legible when the network returns to damaged ground.', 3, s('regrow', 1.03)],

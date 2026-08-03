@@ -124,18 +124,21 @@ and a no-input real-Chrome second-result → third-world transition.
 
 The sparse 108-cell projection left most of the dedicated globe inert. Partition
 the level-3 icosphere by its six cardinal Voronoi territories: symmetry yields
-six connected 107-cell regions exactly. A deterministic breadth-first tree gives
-all 636 prerequisites direct adjacency. Interleave the 108 authored landmarks
-with 534 low-amplitude permanent skills, retain stable landmark IDs, and gate
-each branch through world 164. Evidence: mapping hash `d6bdc218`, graph/economy/
-migration tests, full legal purchase, and WebGL2/Canvas pointer selection.
+six connected 107-cell regions exactly. A deterministic breadth-first layout
+orders each territory. Interleave the 108 authored landmarks with 534 low-
+amplitude permanent skills and retain stable landmark IDs. The initial slice
+also coupled that layout to purchase order and completed-world thresholds;
+D19 supersedes only that acquisition authority. Evidence: mapping hash
+`d6bdc218`, graph/economy/migration tests, full legal purchase, and WebGL2/Canvas
+pointer selection.
 
 ## D17 — Trophy proof is deferred and authority-neutral
 
 Achievements must recognize actual play without creating load-time rewards or
 simulation inputs. Retain bounded integer proof with completed semantic History,
 conservatively derive old proof only at explicit progression transactions, and
-store recognized IDs monotonically in schema 6. Present 96 exact criteria on a
+store recognized IDs monotonically (introduced in schema 6 and retained in
+current schema 7). Present 96 exact criteria on a
 separate 162-cell sphere; 66 neutral cells remain inert. Evidence: catalog and
 proof-boundary audit, schema-5 no-grant migration test, idempotent result test,
 and WebGL2/Canvas screenshots.
@@ -152,3 +155,16 @@ fill and shared cell edges. A source audit rejects fine-feature regressions and
 a 500-seed audit gates distribution, connectivity, ecology, determinism, and
 cost. The 200-line/16-child structure thresholds are now maintainability
 warnings; hard caps remain 400/24 so cohesive generation and audits stay legible.
+
+## D19 — Evolution purchase authority is the physical frontier
+
+The player-visible sphere, not a hidden clock or authored traversal tree, defines
+Evolution access. Precompute the stable ID-to-cell map and all physical level-3
+neighbors. A current cell can be bought exactly when it is recognized, unowned,
+affordable, and touches any one owned cell. Exactly six canonical roots remain
+the initial-save exception. Preserve every recognized
+migrated island and let each act as a frontier; never close ownership or alter
+currency during migration. Retain the exact 2,462-Echo economy and all effects.
+Evidence: graph/schema 4/7, 3,840 directed frontier checks, exhaustive 411,522
+single-owner states, run-zero full acquisition, persistence tests, and hashes
+`34b4e4a9` (economy) / `8444edfd` (effects).

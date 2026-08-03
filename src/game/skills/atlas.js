@@ -43,7 +43,7 @@ function buildAtlas(topo) {
 
 const BUILT = buildAtlas(createTopology(MEMORY_ATLAS_LEVEL));
 export const MEMORY_ATLAS_CELLS = BUILT.cells;
-export const MEMORY_PARENT_INDEXES = BUILT.parents;
+const MEMORY_LAYOUT_PARENT_INDEXES = BUILT.parents;
 export const MEMORY_ATLAS_HASH = hexU32(hashStringU32(MEMORY_ATLAS_CELLS.join(',')));
 
 export function memoryAtlasCell(branch, index) {
@@ -53,13 +53,6 @@ export function memoryAtlasCell(branch, index) {
   return MEMORY_ATLAS_CELLS[branchIndex * MEMORY_BRANCH_SIZE + index];
 }
 
-export function memoryAtlasParent(branch, index) {
-  const branchIndex = BRANCH_KEYS.indexOf(branch);
-  if (branchIndex < 0 || !Number.isInteger(index) || index < 0 || index >= MEMORY_BRANCH_SIZE)
-    throw new Error(`invalid Evolution Globe address: ${branch}/${index}`);
-  return MEMORY_PARENT_INDEXES[branchIndex * MEMORY_BRANCH_SIZE + index];
-}
-
 export function createMemoryReverseMap(cells = MEMORY_ATLAS_CELLS) {
   const reverse = new Int16Array(642).fill(-1);
   cells.forEach((cell, index) => { if (cell >= 0 && cell < reverse.length && reverse[cell] < 0) reverse[cell] = index; });
@@ -67,7 +60,7 @@ export function createMemoryReverseMap(cells = MEMORY_ATLAS_CELLS) {
 }
 export const MEMORY_ATLAS_REVERSE = createMemoryReverseMap();
 
-export function atlasRelations(cells = MEMORY_ATLAS_CELLS, parents = MEMORY_PARENT_INDEXES) {
+function atlasLayoutRelations(cells = MEMORY_ATLAS_CELLS, parents = MEMORY_LAYOUT_PARENT_INDEXES) {
   const relations = [];
   for (let branch = 0; branch < 6; branch++) for (let index = 1; index < MEMORY_BRANCH_SIZE; index++) {
     const offset = branch * MEMORY_BRANCH_SIZE;
@@ -85,9 +78,10 @@ export function validateAtlasMapping(cells = MEMORY_ATLAS_CELLS, topo = createTo
     else if (seen.has(cell)) errors.push(`duplicate mapped cell: ${cell}`);
     seen.add(cell);
   });
-  for (const [from, to] of atlasRelations(cells)) if (!adjacent(topo, from, to)) errors.push(`nonadjacent relation: ${from}->${to}`);
+  for (const [from, to] of atlasLayoutRelations(cells)) if (!adjacent(topo, from, to)) errors.push(`nonadjacent layout step: ${from}->${to}`);
   return Object.freeze({ valid: errors.length === 0, errors: Object.freeze(errors), cells: cells.length,
-    unique: seen.size, relations: atlasRelations(cells).length, hash: hexU32(hashStringU32(Array.from(cells).join(','))) });
+    unique: seen.size, layoutRelations: atlasLayoutRelations(cells).length,
+    hash: hexU32(hashStringU32(Array.from(cells).join(','))) });
 }
 
 /** Deterministic reconstruction diagnostic for saves, tests, and release evidence. */

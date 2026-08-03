@@ -21,8 +21,9 @@ Accessibility is a completion criterion, not a claim of audited conformance.
 - Context surfaces focus their heading, never trap focus as if blocking, restore
   the invoking control, and close through Close, their trigger, Escape, outside
   pointer input, or opening another surface.
-- Skill status, cost, named prerequisites, locked reason, and explicit Unlock
-  intent exist in DOM; the semantic tree and globe share one source of truth.
+- Skill status, cost, an actual adjacent unlocked cell when present, the locked
+  adjacency reason, fresh-save root status, and explicit Unlock intent exist in
+  DOM; the semantic tree and globe share one source of truth.
 - Trophy Sphere exposes all 96 criteria in a six-row semantic grid with roving
   arrow-key focus. Pointer and semantic selection open the same read-only earned
   or not-earned detail; neutral sphere cells do nothing.

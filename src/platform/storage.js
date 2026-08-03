@@ -1,6 +1,6 @@
 /** Versioned, corruption-safe persistence for cross-run progression. */
 import { ADAPTATIONS } from '../game/adaptations.js';
-import { MEMORY_GRAPH_VERSION, MEMORY_LANDMARK_IDS, MEMORY_NODE_IDS } from '../game/skills/index.js';
+import { MEMORY_GRAPH_VERSION, MEMORY_NODE_IDS } from '../game/skills/index.js';
 import { TROPHY_CATALOG_VERSION, TROPHY_IDS } from '../game/trophies/index.js';
 import { createTopology } from '../world/icosphere.js';
 
@@ -9,9 +9,6 @@ const VALID_MEMORY_IDS = new Set(MEMORY_NODE_IDS);
 const VALID_TROPHY_IDS = new Set(TROPHY_IDS);
 const VALID_ADAPTATION_IDS = new Set(ADAPTATIONS.map((card) => card.id));
 const ATLAS_TOPOLOGY = Object.freeze({ kind: 'icosphere', levels: 3, nodeCount: 642, edgeCount: 1920 });
-const OLD_PARENTS = Object.freeze([
-  [],[0],[0],[1],[1,2],[2],[3,4],[4,5],[6],[6,7],[7],[8,9,10],[8],[9],[10],[11,12,13,14],[15],[16],
-]);
 export const LEGACY_MEMORY_MAP = Object.freeze({
   'first-trace': 'perception-quiet-echo', 'deep-reserve': 'reserve-deep-vault',
   'remembered-reach': 'reach-horizon-instinct', 'flow-imprint': 'flow-channel-imprint',
@@ -19,14 +16,14 @@ export const LEGACY_MEMORY_MAP = Object.freeze({
 });
 
 export function defaultMeta() {
-  return { schema: 6, memoryGraphVersion: MEMORY_GRAPH_VERSION, trophyVersion: TROPHY_CATALOG_VERSION,
+  return { schema: 7, memoryGraphVersion: MEMORY_GRAPH_VERSION, trophyVersion: TROPHY_CATALOG_VERSION,
     bestScore: 0, totalEchoes: 0, echoBalance: 0, runs: 0, worldSeedIndex: 0,
     memoryNodes: [], quarantinedMemoryNodes: [], imprints: [], trophyIds: [], trophyBackfillVersion: 0,
     trophyProgress: { adaptationIds: [], geographyMask: 0, geographyVersion: 2,
       crisisMask: 0, adaptationCategoryMask: 0 }, migrationNotice: null };
 }
 
-/** Schema 4 ownership is checked against graph 1 before graph 3 is stamped. */
+/** Recognized ownership is monotonic across graph versions; topology never closes islands. */
 export function validateMeta(raw) {
   const base = defaultMeta(); if (raw === null || typeof raw !== 'object') return base;
   const sourceSchema = Number.isInteger(raw.schema) ? raw.schema : 1; const out = { ...base };
@@ -35,10 +32,9 @@ export function validateMeta(raw) {
     : sourceSchema === 1 ? out.totalEchoes : 0;
   out.runs = boundedInteger(raw.runs, 0);
   out.worldSeedIndex = Math.max(out.runs, boundedInteger(raw.worldSeedIndex, out.runs));
-  const migrated = migrateMemoryIds(raw.memoryNodes, sourceSchema);
-  const ownership = sourceSchema === 4 ? validateGraphOneOwnership(migrated) : migrated;
+  const ownership = migrateMemoryIds(raw.memoryNodes, sourceSchema);
   out.memoryNodes = MEMORY_NODE_IDS.filter((id) => ownership.valid.includes(id));
-  out.quarantinedMemoryNodes = mergeQuarantine([...ownership.quarantine], raw.quarantinedMemoryNodes);
+  out.quarantinedMemoryNodes = mergeQuarantine(ownership.quarantine, raw.quarantinedMemoryNodes);
   if (Array.isArray(raw.imprints)) out.imprints = raw.imprints.map((value) => validateImprint(value, sourceSchema)).filter(Boolean).slice(-8);
   if (sourceSchema >= 6) {
     const ownedTrophies = new Set(Array.isArray(raw.trophyIds) ? raw.trophyIds.filter((id) => VALID_TROPHY_IDS.has(id)) : []);
@@ -62,20 +58,6 @@ function migrateMemoryIds(raw, sourceSchema) {
     else if (!quarantine.includes(candidate)) quarantine.push(candidate);
   }
   return { valid, quarantine };
-}
-
-function validateGraphOneOwnership(migrated) {
-  const requested = new Set(migrated.valid); const accepted = new Set(); let changed = true;
-  while (changed) { changed = false;
-    for (let branch = 0; branch < 6; branch++) for (let index = 0; index < 18; index++) {
-      const id = MEMORY_LANDMARK_IDS[branch * 18 + index]; if (!requested.has(id) || accepted.has(id)) continue;
-      const parents = OLD_PARENTS[index].map((parent) => MEMORY_LANDMARK_IDS[branch * 18 + parent]);
-      if (index === 16) parents.push(MEMORY_LANDMARK_IDS[((branch + 5) % 6) * 18 + 15]);
-      if (parents.every((parent) => accepted.has(parent))) { accepted.add(id); changed = true; }
-    }
-  }
-  return { valid: MEMORY_NODE_IDS.filter((id) => accepted.has(id)),
-    quarantine: [...migrated.quarantine, ...migrated.valid.filter((id) => !accepted.has(id))] };
 }
 
 function validateImprint(raw, sourceSchema) {

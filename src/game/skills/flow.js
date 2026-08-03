@@ -1,6 +1,6 @@
 import { conditional as c, defineBranch, scalar as s, unlock as u } from './node.js';
 
-export const FLOW_MEMORY = defineBranch('flow', 'reach-horizon-crown', [
+export const FLOW_MEMORY = defineBranch('flow', [
   ['channel-imprint', 'Channel Imprint', 'Transport capacity rises by 8%.', 'The strongest routes retain the shape of past traffic and carry more from the first pulse.', 3, s('conductance', 1.08)],
   ['pliant-veins', 'Pliant Veins', 'Transport capacity rises by 3%.', 'Soft young channels widen under useful traffic before mineralizing into fixed routes.', 3, s('conductance', 1.03)],
   ['rhythmic-thickening', 'Rhythmic Thickening', 'Flux reinforcement rises by 3%.', 'Repeated pulses leave measured layers instead of brittle knots around busy edges.', 3, s('reinforce', 1.03)],

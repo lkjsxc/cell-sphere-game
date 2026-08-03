@@ -1,6 +1,6 @@
 import { conditional as c, defineBranch, scalar as s, unlock as u } from './node.js';
 
-export const REACH_MEMORY = defineBranch('reach', 'continuity-stillpoint-crown', [
+export const REACH_MEMORY = defineBranch('reach', [
   ['horizon-instinct', 'Horizon Instinct', 'Frontiers advance 6% more readily.', 'The network remembers the texture of promising ground before committing a new tip.', 2, s('reach', 1.06)],
   ['tender-runners', 'Tender Runners', 'New tips advance 2% more readily.', 'Fine exploratory runners test nearby cells without turning every trial into a trunk.', 3, s('reach', 1.02)],
   ['frugal-budding', 'Frugal Budding', 'Expansion costs 2% less energy.', 'A remembered budding rhythm spends less stored energy on each outward step.', 3, s('growCost', 0.98)],
