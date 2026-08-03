@@ -4,9 +4,12 @@ Release-candidate handoff for the cellular-world, progression, and evidence pass
 
 - **Starting commit:** `fcbb544f60b37b13005b29f954ad5dcd8231738e`.
 - **Implementation tip:** `e6a6bfb`.
-- **Branch/upstream before release push:** `main`, 12 commits ahead of `origin/main`.
+- **Released commit:** `6a143d3d51430b7e53165d9603ba5bee5130d969`.
+- **Branch/upstream:** `main` and `origin/main` synchronized at the released commit.
 - **Protective tag:** `pre-cell-sphere-game-rename-20260803` at the starting commit.
-- **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>; it still serves the starting revision until this candidate is pushed and Pages completes.
+- **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>. Workflow
+  `30808463755` completed verify job `91669226956` and Pages job `91669459530`;
+  deployment `5725150277` reports success for the released SHA.
 
 ## Product changes
 
@@ -87,7 +90,7 @@ Environment: Node v22.22.3, Linux x64, 20 logical CPUs.
 
 - `npm run verify` — PASS: structure; showcase; 118 unit; 61 integration;
   balance smoke; benchmark; 118-module/10-HTML link gate.
-- Host benchmark — 2,640 ticks in 167 ms, 15,811 ticks/s, hash `637b2473`.
+- Final host benchmark — 2,640 ticks in 181 ms, 14,561 ticks/s, hash `637b2473`.
 - `npm run balance` — PASS, 180 production worlds.
 - `node scripts/audits/terminal-soak.mjs --count=1000` — PASS as above.
 - `npm run audit:skills` — PASS.
@@ -107,5 +110,6 @@ Environment: Node v22.22.3, Linux x64, 20 logical CPUs.
 - Physical mobile touch/thermal/battery/GPU timing, screen-reader manual audit,
   forced-colors visual review, Japanese localization, and the broader
   100–200-hour challenge/discovery layer remain incomplete.
-- Next release actions: commit this evidence, push `main`, verify CI and Pages at
-  the pushed SHA, then cache-bust and byte-compare the public deployment.
+- CI and Pages both succeeded. Cache-busted HTTP checks returned 200 and exact
+  SHA-256 byte matches for `index.html`, app controller, Skill/Trophy catalogs,
+  Reach ledger, Trophy CSS, title showcase, and this status file at `6a143d3`.
