@@ -20,9 +20,24 @@ import { TitleShowcase, TITLE_SHOWCASE } from '../../src/showcase/player.js';
 import { createTopology } from '../../src/world/icosphere.js';
 import { createFields } from '../../src/world/fields.js';
 import { createRng } from '../../src/core/prng.js';
+import { applySafeLayout, safeLayout } from '../../src/interface/policies/layout-policy.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(here, p), 'utf8');
+
+test('scene composition is viewport-stable and right-biased only when room exists', () => {
+  const cases = [[1440, 900, .66, .72], [1920, 1080, .66, .72], [1024, 768, .57, .66], [390, 844, .49, .53]];
+  for (const [width, height, minimum, maximum] of cases) {
+    const a = safeLayout(width, height, 'running'); const b = safeLayout(width, height, 'running');
+    const center = .5 + a.offsetX / 2;
+    assert.ok(center >= minimum && center <= maximum, `${width}x${height} center ${center}`);
+    assert.deepEqual(a, b); assert.ok(Number.isFinite(a.distance));
+  }
+  const camera = createCamera(); const layout = safeLayout(1440, 900, 'memory');
+  applySafeLayout(camera, layout, false); const distance = camera.dist;
+  applySafeLayout(camera, safeLayout(1440, 900, 'memory'), true);
+  assert.equal(camera.dist, distance); assert.equal(camera.offsetX, layout.offsetX);
+});
 
 test('viewProjection yields 16 finite numbers', () => {
   const vp = viewProjection(createCamera(), 16 / 9);

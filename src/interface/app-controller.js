@@ -180,7 +180,7 @@ class GameApp {
   availableMemory() { return this.memorySnapshot?.nodeStates?.filter((node) => node.reachable && !node.owned).length ?? 0; }
   pauseContinuation(reason, paused) { setContinuationPause(this.continuation, reason, paused, performance.now()); this.updateContinuation(); }
   updateContinuation() { const label = continuationLabel(this.continuation); if (label === this.countdownLabel) return; this.countdownLabel = label; this.el.countdown.textContent = label; }
-  resize(preserveZoom = true) { const cls = this.canvas.clientWidth < 600 ? 'compact' : this.canvas.clientWidth < 900 ? 'tablet' : 'wide'; const layout = safeLayout(this.canvas.clientWidth, this.canvas.clientHeight, this.state, this.surfaces.bounds()); preserveZoom &&= cls === this.layoutClass; this.layoutClass = cls;
+  resize(preserveZoom = true) { const cls = this.canvas.clientWidth < 600 ? 'compact' : this.canvas.clientWidth < 900 ? 'tablet' : 'wide'; const layout = safeLayout(this.canvas.clientWidth, this.canvas.clientHeight, this.state); preserveZoom &&= cls === this.layoutClass; this.layoutClass = cls;
     applySafeLayout(this.camera, layout, preserveZoom); this.renderer?.resize(this.canvas.clientWidth, this.canvas.clientHeight, qualityDpr(this.settings, this.caps)); }
   frame(now) { const dt = Math.min(100, now - this.last); this.last = now; this.driver.frame(dt, now);
     if (this.state === 'title') this.showcase?.update(now, this.settings.motion === 'reduced', document.hidden);

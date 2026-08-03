@@ -1,25 +1,22 @@
-/** Compute camera placement from the actual unobscured canvas rectangle. */
-export function safeLayout(width, height, state, surface = null) {
-  const pad = 16; let left = 0; let top = 0; let right = width; let bottom = height;
-  if (surface && surface.width > 0 && surface.height > 0) {
-    if (surface.width < width * 0.5 && surface.left < width * 0.5) left = Math.min(right, surface.right + pad);
-    else if (surface.top > height * 0.4) bottom = Math.max(top, surface.top - pad);
-  } else if (state === 'title') {
-    if (width >= 900) left = Math.min(width * 0.42, 440);
-    else bottom = height * 0.62;
-  } else if (state === 'result' || state === 'memory') bottom = height - Math.min(132, height * 0.2);
-  const centerX = (left + right) / 2; const centerY = (top + bottom) / 2;
-  const compact = width < 600; const tablet = width >= 600 && width < 900;
-  const span = Math.max(1, Math.min(right - left, bottom - top));
-  const base = state === 'memory' ? compact ? 5.5 : tablet ? 4.65 : 3.75
-    : compact ? 5.9 : tablet ? 5.15 : 4.2;
-  const fit = Math.max(0, (Math.min(width, height) - span) / Math.min(width, height));
+/** Stable scene composition; transient surfaces never participate. */
+export function safeLayout(width, height, state, insets = {}) {
+  const w = Math.max(1, width); const h = Math.max(1, height);
+  const left = inset(insets.left, w); const rightInset = inset(insets.right, w - left);
+  const top = inset(insets.top, h); const bottomInset = inset(insets.bottom, h - top);
+  const right = w - rightInset; const bottom = h - bottomInset;
+  const usableWidth = Math.max(1, right - left); const usableHeight = Math.max(1, bottom - top);
+  const aspect = usableWidth / usableHeight; const slack = smoothstep(.92, 1.72, aspect);
+  const centerX = left + usableWidth * (.5 + .2 * slack);
+  const portrait = 1 - smoothstep(.72, 1.05, aspect);
+  const centerYRatio = state === 'result' ? .43 - .05 * portrait
+    : state === 'memory' || state === 'evolution' || state === 'trophies' ? .48 - .1 * portrait
+      : state === 'title' ? .5 - .08 * portrait : .48 - .05 * portrait;
+  const centerY = top + usableHeight * centerYRatio;
+  const open = smoothstep(.72, 1.5, aspect); const largeSphere = ['memory', 'evolution', 'trophies'].includes(state);
+  const distance = largeSphere ? mix(5.5, 3.75, open) : mix(5.9, 4.2, open);
   return Object.freeze({
-    rect: Object.freeze({ left, top, right, bottom, width: right - left, height: bottom - top }),
-    offsetX: (centerX / width - 0.5) * 2,
-    offsetY: (0.5 - centerY / height) * 2,
-    distance: state === 'memory' && !compact && !tablet ? Math.min(3.8, base + fit * 1.5)
-      : Math.min(6.4, base + fit * 1.5),
+    rect: Object.freeze({ left, top, right, bottom, width: usableWidth, height: usableHeight }),
+    offsetX: (centerX / w - .5) * 2, offsetY: (.5 - centerY / h) * 2, distance,
   });
 }
 
@@ -27,3 +24,6 @@ export function applySafeLayout(camera, layout, preserveZoom = false) {
   camera.offsetX = layout.offsetX; camera.offsetY = layout.offsetY;
   if (!preserveZoom) camera.dist = layout.distance;
 }
+function inset(value, maximum) { return Math.min(maximum, Math.max(0, Number(value) || 0)); }
+function smoothstep(a, b, value) { const x = Math.max(0, Math.min(1, (value - a) / (b - a))); return x * x * (3 - 2 * x); }
+function mix(a, b, amount) { return a + (b - a) * amount; }
