@@ -5,11 +5,12 @@
  *
  * Gates:
  *   1. check:structure     repository legibility rules
- *   2. test:unit           node:test unit suites
- *   3. test:integration    deterministic golden + speed-invariance suites
- *   4. balance:smoke       bounded headless balance simulation
- *   5. benchmark           3000-tick performance checkpoint
- *   6. check:links         static asset/import/deployment path checks
+ *   2. showcase:check      generated title data matches production sources
+ *   3. test:unit           node:test unit suites
+ *   4. test:integration    deterministic golden + speed-invariance suites
+ *   5. balance:smoke       bounded headless balance simulation
+ *   6. benchmark           3000-tick performance checkpoint
+ *   7. check:links         static asset/import/deployment path checks
  *
  * Browser tests (scripts/browser-test.mjs) need Chrome and are run
  * separately via `npm run test:browser`.
@@ -18,6 +19,7 @@ import { spawnSync } from 'node:child_process';
 
 const gates = [
   ['check:structure', 'node scripts/check-structure.mjs'],
+  ['showcase:check', 'node scripts/generate-title-showcase.mjs --check'],
   ['test:unit', 'node --test tests/unit/*.test.js'],
   ['test:integration', 'node --test tests/integration/*.test.js'],
   ['balance:smoke', 'node scripts/balance.mjs --smoke'],

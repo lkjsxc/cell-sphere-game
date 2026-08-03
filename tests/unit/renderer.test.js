@@ -16,7 +16,7 @@ import * as SHB from '../../src/rendering/shaders-boundary.js';
 import * as SHS from '../../src/rendering/shaders-shell.js';
 import { parseUniformNames } from '../../src/rendering/gl-utils.js';
 import { createCellGeometry } from '../../src/rendering/cell-geometry.js';
-import { AttractState } from '../../src/rendering/attract-state.js';
+import { TitleShowcase, TITLE_SHOWCASE } from '../../src/showcase/player.js';
 import { createTopology } from '../../src/world/icosphere.js';
 import { createFields } from '../../src/world/fields.js';
 import { createRng } from '../../src/core/prng.js';
@@ -143,19 +143,19 @@ test('dual-cell render geometry stays indexed, finite, and cell-addressable', ()
   for (const index of geometry.indices) assert.ok(index < geometry.vertexCount);
 });
 
-test('title organism grows through real adjacency and stays bounded', () => {
-  const topo = createTopology(2);
-  const attract = new AttractState(topo, 0);
-  for (let step = 1; step <= 80; step++) attract.update(step * 300, true);
-  const snap = attract.snapshot;
-  const alive = snap.alive.reduce((sum, value) => sum + value, 0);
-  assert.ok(alive > 0 && alive <= 54, `bounded autonomous bloom: ${alive}`);
-  assert.ok(snap.tick > 54, 'title bloom reseeds autonomously after resting');
-  assert.equal(snap.lifeState.length, topo.nodeCount);
-  assert.ok(snap.lifeState.some((value) => value === LIFE_STATE.FRONTIER));
-  attract.reset(12);
-  assert.equal(snap.alive[12], 1);
-  assert.equal(snap.alive.reduce((sum, value) => sum + value, 0), 1);
+test('title showcase presents a production lifecycle and freezes when hidden or reduced', () => {
+  const title = new TitleShowcase(createTopology(4));
+  assert.equal(title.snapshot.alive.reduce((sum, value) => sum + value, 0), 1);
+  title.update(0, false, false); title.update(6000, false, false);
+  assert.ok(title.snapshot.metrics.aliveCount > 100);
+  assert.ok(title.snapshot.lifeState.some((value) => value === LIFE_STATE.FRONTIER));
+  title.update(9000, false, false); const visibleFrame = title.frameIndex;
+  title.update(9000, false, true); title.update(19000, false, false);
+  assert.equal(title.frameIndex, visibleFrame, 'hidden time advanced the lifecycle');
+  title.update(20000, true, false); assert.equal(title.frameIndex, TITLE_SHOWCASE.reducedFrame);
+  title.update(80000, true, false); assert.equal(title.frameIndex, TITLE_SHOWCASE.reducedFrame);
+  title.apply(TITLE_SHOWCASE.frameCount - 1);
+  assert.equal(title.snapshot.metrics.aliveCount, 0, 'showcase does not fade to extinction');
 });
 
 test('cell life semantics distinguish topology frontier, stress, critical, and remains', () => {

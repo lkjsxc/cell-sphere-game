@@ -41,6 +41,8 @@ preference.
 - Deterministic graph-native terrain: bounded continents, priority-flood
   drainage, connected rivers/tributaries/mouths, climate, coherent forests,
   biomes, regions, and geography-backed landmarks.
+- A checked-in 22-second title lifecycle generated from production simulation
+  seed `20260701`: germination, branching, loop, pressure, and extinction.
 - Fixed 10 Hz typed-array simulation in a module Worker or the identical
   main-thread `RunController` fallback. World, events, growth, inoculation,
   offers, and random decisions use isolated xoshiro128** streams.

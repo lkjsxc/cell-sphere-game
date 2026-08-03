@@ -36,7 +36,7 @@ select-before-Unlock; repeated currency/persistence; Memory restoration after
 History; a second unattended result counting down into the third world; an
 accessible list; reload; no obsolete guidance; and no console/runtime errors.
 
-Generated WebGL2 evidence includes title layouts at 390×844, 430×932,
+Generated WebGL2 evidence includes six fixed title lifecycle phases plus title layouts at 390×844, 430×932,
 768×1024, 1024×768, 1440×900, and 1920×1080; mobile/tablet/desktop inspector;
 mobile/desktop Settings, run, Adaptations, visual History, result, and Memory;
 full/reduced Adaptation propagation; and automatic continuation. Dedicated

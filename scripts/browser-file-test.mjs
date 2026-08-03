@@ -97,7 +97,8 @@ function protocol(child) {
       const message = JSON.parse(raw);
       if (message.id && pending.has(message.id)) {
         pending.get(message.id)(message); pending.delete(message.id);
-      } else if (message.method === 'Runtime.exceptionThrown') errors.push(message.params.exceptionDetails.text);
+      } else if (message.method === 'Runtime.exceptionThrown') errors.push(
+        message.params.exceptionDetails.exception?.description ?? message.params.exceptionDetails.text);
       else if (message.method === 'Runtime.consoleAPICalled' && message.params.type === 'error') {
         errors.push(message.params.args.map((arg) => arg.value ?? arg.description ?? '').join(' '));
       } else if (message.method === 'Log.entryAdded' && message.params.entry.level === 'error') {

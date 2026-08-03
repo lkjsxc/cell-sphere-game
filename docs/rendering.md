@@ -32,6 +32,15 @@ snapshot payloads. Presentation snapshots contain four cell arrays totaling
 25,620 bytes at level 4, down from 102,426 bytes before the redesign. Static
 topology/geography buffers build once; only bounded cell attributes update.
 
+## Title showcase
+
+The title decodes 89 cell-only frames generated from production seed `20260701`.
+Its 22-second nonlinear timeline preserves germination, a 535-cell branched peak,
+a recorded loop, environmental pressure, fragmentation, and a blank terminal
+beat before reset. Source hash `4d3f5659…` and data hash `58b20fb2…` are checked
+by `showcase:check`; no production simulation runs in the title runtime. Hidden
+documents freeze its clock and reduced motion holds a mature frame.
+
 ## Camera, surfaces, and picking
 
 The camera stores an orthonormal direction/right/up frame, allowing repeated

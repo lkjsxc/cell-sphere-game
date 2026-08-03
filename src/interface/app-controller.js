@@ -4,7 +4,7 @@ import { createTopology } from '../world/icosphere.js';
 import { createFields } from '../world/fields.js';
 import { GLRenderer } from '../rendering/renderer.js';
 import { Canvas2DRenderer } from '../rendering/fallback2d.js';
-import { AttractState } from '../rendering/attract-state.js';
+import { TitleShowcase, TITLE_SHOWCASE } from '../showcase/player.js';
 import { createCamera, focusCamera, applyInertia } from '../rendering/camera.js';
 import { pickNode } from '../rendering/picking.js';
 import { bindGlobeInput } from './globe-input.js';
@@ -26,14 +26,14 @@ import { createAdaptationSurface, createMemorySurface } from './panel-surfaces.j
 import { createSettingsSurface } from './settings-surface.js';
 import { downloadData, parseImportedData, qualityDpr, seedForRun } from './app-data.js';
 import * as ui from './surfaces.js';
-const TITLE_SEED = 20260731;
+const TITLE_SEED = TITLE_SHOWCASE.seed;
 export function startGameApp(options) { const app = new GameApp(options); app.boot(); return app; }
 class GameApp {
   constructor({ canvas, caps, settings }) {
     Object.assign(this, { canvas, caps, settings }); this.el = ui.elements(); this.topo4 = createTopology(4); this.topo3 = createTopology(3); this.topo = this.topo4;
     this.adaptationEffects = createAdaptationEffects(this.topo4, this.el.adaptationCaption); this.camera = createCamera(); this.meta = loadMeta(); this.archive = loadHistory(settings.historyRetention);
     this.flow = createAppState(); this.speed = settings.speed; this.snapshot = null; this.selectedNode = null;
-    this.renderer = null; this.fields = null; this.worldFields = null; this.atlasFields = createMemoryFields(this.topo3); this.attract = null;
+    this.renderer = null; this.fields = null; this.worldFields = null; this.atlasFields = createMemoryFields(this.topo3); this.showcase = null;
     this.memorySnapshot = null; this.overlay = null;
     this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null; this.lastResultKey = null; this.requestId = 0;
     this.runSeed = null; this.visualSeed = null; this.historySnapshot = null; this.historyHighlights = [];
@@ -42,9 +42,9 @@ class GameApp {
     this.historyPlayback = createHistoryPlayback(this); this.continuation = createContinuation(); this.countdownLabel = '';
   }
   get state() { return this.flow.state; } boot() {
-    this.makeRenderer(TITLE_SEED); focusCamera(this.camera, openingDirection(this.fields, this.topo)); this.resize(false);
-    const x = this.canvas.clientWidth * (0.5 + this.camera.offsetX * 0.5);
-    this.attract = new AttractState(this.topo, pickNode(this.canvas, x, this.canvas.clientHeight / 2, this.camera, this.topo)?.node ?? 0);
+    this.makeRenderer(TITLE_SEED); focusCamera(this.camera,
+      this.topo.positions.subarray(TITLE_SHOWCASE.focusCell * 3, TITLE_SHOWCASE.focusCell * 3 + 3)); this.resize(false);
+    this.showcase = new TitleShowcase(this.topo);
     this.makeSurfaces(); this.bindUi(); this.bindCanvas(); this.bindLifecycle(); this.el.speed.value = String(this.speed);
     this.el.boot.textContent = `Cells ready — ${this.renderer.backend === 'webgl2' ? 'WebGL2' : 'Canvas 2D'}`; ui.show(this.el, 'title');
     if (this.meta.migrationNotice?.pending) { ui.toast(this.el, 'Your earlier Memory and Imprints were moved into adjacent atlas cells.');
@@ -180,18 +180,17 @@ class GameApp {
   resize(preserveZoom = true) { const layout = safeLayout(this.canvas.clientWidth, this.canvas.clientHeight, this.state, this.surfaces.bounds());
     applySafeLayout(this.camera, layout, preserveZoom); this.renderer?.resize(this.canvas.clientWidth, this.canvas.clientHeight, qualityDpr(this.settings, this.caps)); }
   frame(now) { const dt = Math.min(100, now - this.last); this.last = now; this.driver.frame(dt, now);
-    if (this.state === 'title') this.attract?.update(now, this.settings.motion === 'reduced');
+    if (this.state === 'title') this.showcase?.update(now, this.settings.motion === 'reduced', document.hidden);
     const active = this.input?.isActive(); if (!active && this.selectedNode == null && this.settings.cameraInertia) applyInertia(this.camera);
     applyAutoRotation(this.camera, this.settings, this.cameraPolicy, { active, selected: this.selectedNode != null,
       overlay: Boolean(this.overlay), hidden: document.hidden }, now, dt);
     if (this.state === 'result' && advanceContinuation(this.continuation, now)) { this.startRun(); return; }
     if (this.state === 'result') this.updateContinuation();
     if (this.inspector?.node != null && (this.state === 'running' || this.state === 'result') && now - this.lastInspect > 333) this.requestInspection();
-    const snap = this.historySnapshot ?? (this.state === 'title' ? this.attract?.snapshot : this.state === 'memory' ? this.memorySnapshot : this.snapshot);
+    const snap = this.historySnapshot ?? (this.state === 'title' ? this.showcase?.snapshot : this.state === 'memory' ? this.memorySnapshot : this.snapshot);
     const cadence = this.speed >= 16 ? 66 : 0;
     if (!cadence || now - this.lastRender >= cadence) { this.renderer.render({ snapshot: snap ?? null, camera: this.camera, selectedNode: this.selectedNode,
       adaptation: this.adaptationEffects.frame(now), highlightedCells: this.historyHighlights,
       time: now / 1000, pulse: this.settings.motion !== 'reduced' }); this.lastRender = now; }
     requestAnimationFrame((time) => this.frame(time)); }
 }
-function openingDirection(fields, topo) { const cell = fields.landmarks.find((mark) => mark.kind === 2)?.cell ?? fields.sources[0]; return topo.positions.subarray(cell * 3, cell * 3 + 3); }

@@ -8,6 +8,17 @@ export async function runScenario(t) {
   ok(render.draws === 4 && render.p95 < 20, 'renderer draw/time budget regressed');
   const signalCopy = await evaluate("document.body.innerText.includes('Signal')");
   ok(!signalCopy, 'obsolete run guidance remains visible');
+  for (const [index, name] of [[0,'wake'],[12,'branch'],[26,'mature'],[42,'pressure'],[72,'fragment'],[88,'extinct']]) {
+    await evaluate(`(() => { const s=window.__IN_APP__.showcase; s.reduced=false;
+      s.startedAt=performance.now()-${index * 250}; s.apply(${index}); })()`);
+    await wait(80); await screenshot(`browser-title-phase-${name}.png`);
+  }
+  const reducedTitle = await evaluate(`(() => { const app=window.__IN_APP__; app.settings={...app.settings,motion:'reduced'};
+    app.showcase.update(performance.now(),true,false); return {frame:app.showcase.frameIndex,expected:app.showcase.reducedFrame}; })()`);
+  ok(reducedTitle.frame === reducedTitle.expected, 'reduced title did not hold its representative frame');
+  await wait(80); await screenshot('browser-title-reduced.png');
+  await evaluate(`(() => { const app=window.__IN_APP__; app.settings={...app.settings,motion:'full'};
+    const s=app.showcase; s.reduced=false; s.startedAt=performance.now(); s.apply(0); })()`);
 
   const idleBefore = await evaluate('window.__IN_APP__.camera.direction.slice()'); await wait(650);
   const idleAfter = await evaluate('window.__IN_APP__.camera.direction.slice()');

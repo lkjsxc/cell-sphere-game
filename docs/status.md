@@ -20,6 +20,9 @@ Truthful deployed handoff for the world-first cellular redesign.
   Adaptations, Settings, History, and Memory. Wide context uses a translucent
   left surface; narrow context uses a ≤42% bottom sheet; History is a bottom
   timeline; result is a compact bottom strip.
+- The title is an 89-frame / 228,754-byte production-generated lifecycle from
+  seed `20260701`, not a runtime simulation or cosmetic BFS. It records a
+  535-cell peak, loop, pressure, decline, and extinction over 22 seconds.
 - Ordinary globe input remains inspection-only. Automatic Adaptation choices,
   automatic continuation, idle rotation off, panel pause off, and 1× speed are
   new-save defaults.
