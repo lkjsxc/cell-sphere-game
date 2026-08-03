@@ -12,8 +12,7 @@ import { createTopology } from '../../src/world/icosphere.js';
 import { createCamera, viewProjection } from '../../src/rendering/camera.js';
 import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from '../../src/interface/camera-policy.js';
 import { createPauseControl } from '../../src/interface/pause-control.js';
-import { advanceContinuation, createContinuation, setContinuationPause,
-  startContinuation } from '../../src/interface/policies/continuation.js';
+import { advanceContinuation, completeContinuation, createContinuation, setContinuationPause, startContinuation } from '../../src/interface/policies/continuation.js';
 
 const LEGACY_IDS = Object.keys(LEGACY_MEMORY_MAP);
 
@@ -168,16 +167,17 @@ test('idle globe rotation is opt-in, interruptible, reduced-motion safe, and fin
   for (const value of viewProjection(camera, 1)) assert.ok(Number.isFinite(value));
 });
 
-test('result continuation fires once and pauses for interaction or hidden state', () => {
+test('result continuation fires once and releases temporary suspension reasons', () => {
   const state = createContinuation(9000); let now = 0;
   for (let run = 0; run < 100; run++) {
-    startContinuation(state, now); now += 4000; assert.equal(advanceContinuation(state, now), false);
-    setContinuationPause(state, 'hidden', true, now); now += 20_000; assert.equal(advanceContinuation(state, now), false);
-    setContinuationPause(state, 'hidden', false, now); now += 5000;
-    assert.equal(advanceContinuation(state, now), true); assert.equal(advanceContinuation(state, now + 1000), false);
+    const generation = startContinuation(state, now, { resultKey: `result-${run}`, runId: run }); now += 4000;
+    assert.equal(advanceContinuation(state, now), false); setContinuationPause(state, 'hidden', true, now); now += 20_000; assert.equal(advanceContinuation(state, now), false); setContinuationPause(state, 'hidden', false, now); now += 5000;
+    assert.equal(advanceContinuation(state, now), true); assert.equal(state.status, 'firing');
+    assert.equal(completeContinuation(state, generation), true); assert.equal(advanceContinuation(state, now + 1000), false);
   }
-  startContinuation(state, now); setContinuationPause(state, 'interaction', true, now); now += 90_000;
-  assert.equal(advanceContinuation(state, now), false); assert.equal(state.remainingMs, 9000);
+  startContinuation(state, now); setContinuationPause(state, 'gesture', true, now); now += 90_000; assert.equal(advanceContinuation(state, now), false); assert.equal(state.remainingMs, 9000);
+  setContinuationPause(state, 'gesture', false, now, 350); now += 349; assert.equal(advanceContinuation(state, now), false);
+  now += 1; assert.equal(advanceContinuation(state, now), false); assert.equal(state.status, 'counting');
 });
 
 test('pause reasons release only their own ownership', () => {

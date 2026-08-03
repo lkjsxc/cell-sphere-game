@@ -30,9 +30,9 @@ Vocabulary is evidence-scoped: **implemented**, **tested**, **measured**, **obse
 | 8. Time dial | implemented one frame-loop phase; measured both hands moving and frozen visibly on pause | `time-dial.js`, pause semantics, CSS | unit and real-Chrome transform tests pass |
 | 9. 642 Skill Cells | observed 642 rendered cells but 108 definitions | canonical skill content/scene/storage | mapping validator and full legal unlock |
 | 10. Skill migration | target lossless old ownership migration | progression adapter/export/import | old-save and corrupt-field fixtures |
-| 11. Auto continuation | observed permanent interaction suspension | one-shot continuation state machine | result interaction lifecycle matrix |
+| 11. Auto continuation | implemented explicit six-state machine with result/run identity and temporary leases; measured drag resumed with 8.47 s | continuation policy, result lifecycle | unit, 100-cycle soak, real-CDP drag→next run pass |
 | 12. Reach Balance | target authoritative direct and condition evidence | lifecycle ledger, snapshots, result UI | exact reconciliation and parity |
-| 13. Result globe | observed direct rotation neutral to score | globe input and continuation leases | real-CDP drag and screenshots |
+| 13. Result globe | tested direct CDP rotation with unchanged score/result key and resumed countdown | globe input and gesture lease | before/after screenshots and browser scenario pass |
 | 14. Trophy Sphere | target 96 implemented achievements on 162 cells | definitions, evaluator, persistence, scene/UI | schema, idempotency, browser/fallback |
 | 15. Graph effects | target terrain/family propagation | shared graph field, events, renderer | determinism, permeability, screenshots |
 | 16. Major rivers | target explicit trunks/tributaries | hydrology, fields, renderer, audit | 500–1,000 seed distributions |

@@ -124,9 +124,9 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
   ok(await evaluate(`window.__IN_APP__.adaptationEffects.queueLength===0
     && window.__IN_APP__.adaptationEffects.retainedBytes===0
     && document.getElementById('adaptation-caption').hidden`), 'result retained Adaptation presentation state');
-  await screenshot('browser-result-mobile.png'); await setViewport(1440,900); await evaluate('window.__IN_APP__.camera.dist=4.1'); await wait(180); await screenshot('browser-result-desktop.png');
+  await screenshot('browser-result-mobile.png'); const resultDirection = await evaluate('window.__IN_APP__.camera.direction.slice()'); await drag([170,300],[245,350]); await wait(500); ok(distance(resultDirection, await evaluate('window.__IN_APP__.camera.direction.slice()')) > .03 && await evaluate("window.__IN_APP__.continuation.status==='counting'"), 'result drag did not rotate and resume continuation'); await screenshot('browser-result-rotated-mobile.png'); await setViewport(1440,900); await evaluate('window.__IN_APP__.camera.dist=4.1'); await wait(180); await screenshot('browser-result-desktop.png');
   await setViewport(390,844); await evaluate('window.__IN_APP__.camera.dist=6'); await wait(150); await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-result-history-mobile.png');
-  await evaluate("document.getElementById('history-close').click(); document.getElementById('memory-button').click()"); await wait(300);
+  await evaluate("document.getElementById('history-close').click()"); ok(await evaluate("window.__IN_APP__.continuation.status==='counting'"), 'closing result History did not resume countdown'); await evaluate("document.getElementById('memory-button').click()"); await wait(300);
   const atlas = await evaluate(`(() => { const app=window.__IN_APP__, snap=app.memorySnapshot; return {
     nodes:snap.nodeStates.length,cells:snap.memoryStatus.length,level:app.topo.levels,frontier:snap.nodeStates.filter(n=>n.reachable).length,
     paths:'links' in snap.memoryScene,draws:app.renderer.drawCalls}; })()`);
@@ -165,8 +165,8 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
   await evaluate("document.getElementById('memory-node-close').click(); document.querySelector('#memory-screen .history-open').click()"); await wait(250);
   await evaluate("document.getElementById('history-close').click()"); ok(await evaluate('window.__IN_APP__.topo.levels===3 && window.__IN_APP__.memorySnapshot.memoryStatus.length===642'), 'History did not restore the Memory atlas');
   const ownedBeforeAuto = await evaluate('window.__IN_APP__.meta.memoryNodes.length'); await evaluate("document.getElementById('restart-button').click()");
-  ok(await poll(() => evaluate("document.getElementById('result-screen').hidden"), (hidden) => hidden === false, 40000), 'second unattended run did not finish');
-  ok(await poll(() => evaluate('window.__IN_APP__.state'), (state) => state === 'running', 14000), 'result countdown did not start the next world');
+  ok(await poll(() => evaluate("document.getElementById('result-screen').hidden"), (hidden) => hidden === false, 40000), 'second unattended run did not finish'); const autoDirection = await evaluate('window.__IN_APP__.camera.direction.slice()'); await drag([900,400],[1030,470]); await wait(500); ok(distance(autoDirection, await evaluate('window.__IN_APP__.camera.direction.slice()')) > .03, 'second result did not rotate');
+  ok(await poll(() => evaluate('window.__IN_APP__.state'), (state) => state === 'running', 14000), 'result countdown did not resume after interaction');
   ok(await evaluate(`window.__IN_APP__.meta.runs>=2 && window.__IN_APP__.meta.memoryNodes.length===${ownedBeforeAuto}`), 'automatic continuation duplicated or spent progression');
   await screenshot('browser-auto-next-desktop.png'); await evaluate('location.reload()'); await wait(3000);
   const persisted = await evaluate(`(() => { const meta=JSON.parse(localStorage.getItem('incremental-network-game:meta:v1'));

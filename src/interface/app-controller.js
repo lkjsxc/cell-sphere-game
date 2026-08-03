@@ -19,7 +19,7 @@ import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from './
 import { createSurfaceCoordinator } from './policies/surface-coordinator.js';
 import { applySafeLayout, safeLayout } from './policies/layout-policy.js';
 import { createTimeDial } from './policies/time-dial.js';
-import { advanceContinuation, cancelContinuation, continuationLabel, createContinuation, setContinuationPause, startContinuation } from './policies/continuation.js';
+import { advanceContinuation, cancelContinuation, completeContinuation, continuationLabel, createContinuation, setContinuationPause, startContinuation } from './policies/continuation.js';
 import { finishAbandoned, finishRun, startRun } from './policies/run-session.js';
 import { createNewWorldSurface } from './policies/new-world-surface.js';
 import { createHistorySurface } from './history-surface.js'; import { createHistoryPlayback } from './history-playback.js';
@@ -85,12 +85,12 @@ class GameApp {
     document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key === ',') { event.preventDefault(); this.openSettings(); }
       else if (event.key === 'Home' && this.state === 'memory') { event.preventDefault(); this.focusAvailableSkill(); } });
   }
-  bindCanvas() { const interrupt = () => { interruptCameraPolicy(this.cameraPolicy, performance.now()); if (this.state === 'result') this.pauseContinuation('interaction', true); }; this.input = bindGlobeInput(this.canvas, this.camera, { canInteract: () => ['title', 'running', 'result', 'memory'].includes(this.state),
+  bindCanvas() { const interrupt = () => { interruptCameraPolicy(this.cameraPolicy, performance.now()); if (this.state === 'result') this.pauseContinuation('gesture', true); }; this.input = bindGlobeInput(this.canvas, this.camera, { canInteract: () => ['title', 'running', 'result', 'memory'].includes(this.state),
       onTap: (x, y) => this.tapGlobe(x, y), onInterrupt: interrupt, onInteractionStart: interrupt,
-      onInteractionEnd: () => interruptCameraPolicy(this.cameraPolicy, performance.now()) }); }
+      onInteractionEnd: () => { interruptCameraPolicy(this.cameraPolicy, performance.now()); if (this.state === 'result') this.pauseContinuation('gesture', false, 350); } }); }
   bindLifecycle() {
-    const resize = () => this.resize(true); const stopNext = () => { if (this.state === 'result') this.pauseContinuation('interaction', true); };
-    if (typeof ResizeObserver === 'function') new ResizeObserver(resize).observe(this.canvas); else addEventListener('resize', resize); this.el.result.addEventListener('pointerdown', stopNext); document.addEventListener('keydown', stopNext);
+    const resize = () => this.resize(true); const press = () => { if (this.state === 'result') this.pauseContinuation('press', true); }; const release = () => { if (this.state === 'result') this.pauseContinuation('press', false); };
+    if (typeof ResizeObserver === 'function') new ResizeObserver(resize).observe(this.canvas); else addEventListener('resize', resize); this.el.result.addEventListener('pointerdown', press); document.addEventListener('pointerup', release); document.addEventListener('pointercancel', release);
     document.addEventListener('visibilitychange', () => { this.pause.set('hidden', document.hidden && ['starting', 'running'].includes(this.state)); this.pauseContinuation('hidden', document.hidden); });
   }
   tapGlobe(x, y) {
@@ -165,7 +165,7 @@ class GameApp {
     if (value.speed !== this.speed) { this.speed = value.speed; this.el.speed.value = String(value.speed); this.driver.setSpeed(value.speed); }
     if (value.adaptationMode !== before.adaptationMode && this.state === 'running') this.driver.message({ t: 'set-adaptation-mode', mode: value.adaptationMode });
     if (this.overlay && value.pauseOnPanels !== before.pauseOnPanels) this.pause.set('panel', this.state === 'running' && value.pauseOnPanels);
-    if (this.state === 'result' && value.autoContinue !== before.autoContinue) { if (value.autoContinue) startContinuation(this.continuation, performance.now());
+    if (this.state === 'result' && value.autoContinue !== before.autoContinue) { if (value.autoContinue) { const r = this.lastResult; startContinuation(this.continuation, performance.now(), { runId: this.activeRunId, resultKey: r && `${r.runId}:${r.seed}:${r.hash}:${r.tick}` }); }
       else { cancelContinuation(this.continuation); this.el.countdown.textContent = ''; } }
     this.resize(true); interruptCameraPolicy(this.cameraPolicy, performance.now()); }
   settingsAction(action, value) { try {
@@ -178,7 +178,7 @@ class GameApp {
     else if (action === 'import-error') throw new Error('invalid import');
   } catch { ui.announce(this.el, 'That local-data action could not be completed.'); } }
   availableMemory() { return this.memorySnapshot?.nodeStates?.filter((node) => node.reachable && !node.owned).length ?? 0; }
-  pauseContinuation(reason, paused) { setContinuationPause(this.continuation, reason, paused, performance.now()); this.updateContinuation(); }
+  pauseContinuation(reason, paused, grace = 0) { setContinuationPause(this.continuation, reason, paused, performance.now(), grace); this.updateContinuation(); }
   updateContinuation() { const label = continuationLabel(this.continuation); if (label === this.countdownLabel) return; this.countdownLabel = label; this.el.countdown.textContent = label; }
   resize(preserveZoom = true) { const cls = this.canvas.clientWidth < 600 ? 'compact' : this.canvas.clientWidth < 900 ? 'tablet' : 'wide'; const layout = safeLayout(this.canvas.clientWidth, this.canvas.clientHeight, this.state); preserveZoom &&= cls === this.layoutClass; this.layoutClass = cls;
     applySafeLayout(this.camera, layout, preserveZoom); this.renderer?.resize(this.canvas.clientWidth, this.canvas.clientHeight, qualityDpr(this.settings, this.caps)); }
@@ -187,7 +187,7 @@ class GameApp {
     const active = this.input?.isActive(); if (!active && this.selectedNode == null && this.settings.cameraInertia) applyInertia(this.camera);
     applyAutoRotation(this.camera, this.settings, this.cameraPolicy, { active, selected: this.selectedNode != null,
       overlay: Boolean(this.overlay), hidden: document.hidden }, now, dt);
-    if (this.state === 'result' && advanceContinuation(this.continuation, now)) { this.startRun(); return; }
+    if (this.state === 'result' && advanceContinuation(this.continuation, now)) { const valid = this.continuation.runId === this.activeRunId && this.resultKeys.has(this.continuation.resultKey); if (valid) { completeContinuation(this.continuation, this.continuation.generation); this.startRun(); return; } cancelContinuation(this.continuation); }
     if (this.state === 'result') this.updateContinuation();
     if (this.inspector?.node != null && (this.state === 'running' || this.state === 'result') && now - this.lastInspect > 333) this.requestInspection();
     const snap = this.historySnapshot ?? (this.state === 'title' ? this.showcase?.snapshot : this.state === 'memory' ? this.memorySnapshot : this.snapshot);

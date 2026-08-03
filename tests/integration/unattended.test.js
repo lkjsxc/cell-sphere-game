@@ -6,7 +6,7 @@ import { defaultMeta } from '../../src/platform/storage.js';
 import { clearHistory, serializeHistory } from '../../src/platform/history.js';
 import { createAppState } from '../../src/interface/app-state.js';
 import { applyRunResult } from '../../src/interface/policies/run-result.js';
-import { advanceContinuation, createContinuation, setContinuationPause,
+import { advanceContinuation, completeContinuation, createContinuation, setContinuationPause,
   startContinuation } from '../../src/interface/policies/continuation.js';
 
 function complete(seed, manual) {
@@ -37,6 +37,7 @@ test('100 unattended result transitions award once and remain bounded', { timeou
     if (world % 10 === 0) { setContinuationPause(countdown, 'hidden', true, now); now += 30_000;
       assert.equal(advanceContinuation(countdown, now), false); setContinuationPause(countdown, 'hidden', false, now); }
     now += 5000; assert.equal(advanceContinuation(countdown, now), true);
+    assert.equal(completeContinuation(countdown, countdown.generation), true);
   }
   assert.equal(meta.runs, 100); assert.equal(meta.totalEchoes, echoes); assert.equal(meta.echoBalance, echoes);
   assert.equal(archive.worlds.length, 24); assert.ok(serializeHistory(archive, 24).length < 700_000);

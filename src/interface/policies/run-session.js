@@ -40,7 +40,7 @@ export function finishRun(app, result) {
   app.historyPlayback.save(record && { id: record.id, seed: record.seed, completedAt: app.meta.runs });
   ui.showResult(app.el, transaction.score, { ...result, adaptationOffers: result.offers,
     campaignResolvedNow: transaction.meta.runs === 4 }); app.resize(false);
-  if (app.settings.autoContinue) { startContinuation(app.continuation, performance.now()); app.updateContinuation(); }
+  if (app.settings.autoContinue) { startContinuation(app.continuation, performance.now(), { resultKey: transaction.key, runId: result.runId }); app.updateContinuation(); }
   return true;
 }
 
