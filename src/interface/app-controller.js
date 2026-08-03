@@ -14,10 +14,11 @@ import { applySettingsToDocument, saveSettings } from '../platform/settings.js';
 import { createAppState } from './app-state.js';
 import { createRunDriver } from './run-driver.js';
 import { handleRunMessage } from './app-message.js'; import { createAdaptationEffects } from './policies/adaptation-effects.js';
-import { createPauseControl } from './pause-control.js';
+import { createPauseControl, pauseLabel } from './pause-control.js';
 import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from './camera-policy.js';
 import { createSurfaceCoordinator } from './policies/surface-coordinator.js';
 import { applySafeLayout, safeLayout } from './policies/layout-policy.js';
+import { createTimeDial } from './policies/time-dial.js';
 import { advanceContinuation, cancelContinuation, continuationLabel, createContinuation, setContinuationPause, startContinuation } from './policies/continuation.js';
 import { finishAbandoned, finishRun, startRun } from './policies/run-session.js';
 import { createNewWorldSurface } from './policies/new-world-surface.js';
@@ -38,15 +39,15 @@ class GameApp {
     this.memorySnapshot = null; this.overlay = null;
     this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null; this.resultKeys = new Set(); this.requestId = 0;
     this.runSeed = null; this.activeRunId = 0; this.visualSeed = null; this.historySnapshot = null; this.historyHighlights = [];
-    this.last = performance.now(); this.lastRender = 0; this.lastInspect = 0; this.cameraPolicy = createCameraPolicy(this.last); this.layoutClass = null;
+    this.last = performance.now(); this.lastRender = 0; this.lastInspect = 0; this.cameraPolicy = createCameraPolicy(this.last); this.layoutClass = null; this.effectivePaused = false;
     this.driver = createRunDriver(caps, (message) => this.message(message)); this.pause = createPauseControl((paused, reasons) => this.applyPause(paused, reasons)); this.surfaces = createSurfaceCoordinator(() => this.closeActiveOverlay());
-    this.historyPlayback = createHistoryPlayback(this); this.continuation = createContinuation(); this.countdownLabel = '';
+    this.historyPlayback = createHistoryPlayback(this); this.continuation = createContinuation(); this.countdownLabel = ''; this.timeDial = createTimeDial(this.el.pause);
   }
   get state() { return this.flow.state; } boot() {
     this.makeRenderer(TITLE_SEED); focusCamera(this.camera,
       this.topo.positions.subarray(TITLE_SHOWCASE.focusCell * 3, TITLE_SHOWCASE.focusCell * 3 + 3)); this.resize(false);
     this.showcase = new TitleShowcase(this.topo);
-    this.makeSurfaces(); this.bindUi(); this.bindCanvas(); this.bindLifecycle(); this.el.speed.value = String(this.speed); this.updateClockSpeed();
+    this.makeSurfaces(); this.bindUi(); this.bindCanvas(); this.bindLifecycle(); this.el.speed.value = String(this.speed);
     this.el.boot.textContent = `Cells ready — ${this.renderer.backend === 'webgl2' ? 'WebGL2' : 'Canvas 2D'}`; ui.show(this.el, 'title'); ui.updateAdaptationMode(this.el, this.settings.adaptationMode);
     if (this.meta.migrationNotice?.pending) { ui.toast(this.el, 'Your earlier skills and Imprints were moved into the Evolution Globe.');
       this.meta = { ...this.meta, migrationNotice: { ...this.meta.migrationNotice, pending: false } }; saveMeta(this.meta); }
@@ -114,11 +115,10 @@ class GameApp {
   adaptationModel() { return { offers: this.offers, cards: this.cards, mode: this.settings.adaptationMode, tick: this.snapshot?.tick ?? 0 }; }
   pendingCount() { return this.offers.filter((offer) => offer.resolvedTick == null).length; }
   choose(offerId, cardId) { this.driver.message({ t: 'choose-adaptation', offerId, cardId }); }
-  setSpeed(value) { this.speed = value; this.settings = { ...this.settings, speed: value }; saveSettings(this.settings); this.driver.setSpeed(value); this.updateClockSpeed(); }
-  updateClockSpeed() { this.el.pause.style.setProperty('--clock-duration', `${Math.max(.55, 2.8 / Math.sqrt(this.speed))}s`); }
-  applyPause(paused, reasons = this.pause.values()) { this.driver.setPaused(paused); this.el.pause.setAttribute('aria-pressed', String(paused));
-    this.el.pause.classList.toggle('is-paused', paused); this.el.pause.dataset.action = paused && reasons.has('manual') ? 'recommended' : 'normal';
-    this.el.pause.setAttribute('aria-label', paused ? reasons.has('manual') ? 'Resume world time' : 'World time paused by an open confirmation' : 'Pause world time'); }
+  setSpeed(value) { this.speed = value; this.settings = { ...this.settings, speed: value }; saveSettings(this.settings); this.driver.setSpeed(value); }
+  applyPause(paused, reasons = this.pause.values()) { if (paused !== this.effectivePaused) { this.effectivePaused = paused; this.driver.setPaused(paused); } this.timeDial.reset(performance.now());
+    this.el.pause.setAttribute('aria-pressed', String(reasons.has('manual'))); this.el.pause.classList.toggle('is-paused', paused);
+    this.el.pause.dataset.action = paused && reasons.size === 1 && reasons.has('manual') ? 'recommended' : 'normal'; this.el.pause.setAttribute('aria-label', pauseLabel(reasons)); }
   finishRun(result) { finishRun(this, result); }
   finishAbandoned(summary) { finishAbandoned(this, summary); }
   failRun(message) { this.pause.set('worker-failed', true); ui.announce(this.el, `${message} Start a new world to continue.`); }
@@ -162,7 +162,7 @@ class GameApp {
   }
   applyAdaptationMode(mode) { this.applySettings({ ...this.settings, adaptationMode: mode }); }
   applySettings(value) { const before = this.settings; this.settings = value; saveSettings(value); applySettingsToDocument(value); ui.updateAdaptationMode(this.el, value.adaptationMode);
-    if (value.speed !== this.speed) { this.speed = value.speed; this.el.speed.value = String(value.speed); this.driver.setSpeed(value.speed); this.updateClockSpeed(); }
+    if (value.speed !== this.speed) { this.speed = value.speed; this.el.speed.value = String(value.speed); this.driver.setSpeed(value.speed); }
     if (value.adaptationMode !== before.adaptationMode && this.state === 'running') this.driver.message({ t: 'set-adaptation-mode', mode: value.adaptationMode });
     if (this.overlay && value.pauseOnPanels !== before.pauseOnPanels) this.pause.set('panel', this.state === 'running' && value.pauseOnPanels);
     if (this.state === 'result' && value.autoContinue !== before.autoContinue) { if (value.autoContinue) startContinuation(this.continuation, performance.now());
@@ -182,7 +182,7 @@ class GameApp {
   updateContinuation() { const label = continuationLabel(this.continuation); if (label === this.countdownLabel) return; this.countdownLabel = label; this.el.countdown.textContent = label; }
   resize(preserveZoom = true) { const cls = this.canvas.clientWidth < 600 ? 'compact' : this.canvas.clientWidth < 900 ? 'tablet' : 'wide'; const layout = safeLayout(this.canvas.clientWidth, this.canvas.clientHeight, this.state); preserveZoom &&= cls === this.layoutClass; this.layoutClass = cls;
     applySafeLayout(this.camera, layout, preserveZoom); this.renderer?.resize(this.canvas.clientWidth, this.canvas.clientHeight, qualityDpr(this.settings, this.caps)); }
-  frame(now) { const dt = Math.min(100, now - this.last); this.last = now; this.driver.frame(dt, now);
+  frame(now) { const dt = Math.min(100, now - this.last); this.last = now; this.timeDial.frame(now, { running: this.state === 'running', paused: this.pause.paused, speed: this.speed, reduced: this.settings.motion === 'reduced' }); this.driver.frame(dt, now);
     if (this.state === 'title') this.showcase?.update(now, this.settings.motion === 'reduced', document.hidden);
     const active = this.input?.isActive(); if (!active && this.selectedNode == null && this.settings.cameraInertia) applyInertia(this.camera);
     applyAutoRotation(this.camera, this.settings, this.cameraPolicy, { active, selected: this.selectedNode != null,

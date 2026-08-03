@@ -3,6 +3,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createClock, advanceClock } from '../../src/core/clock.js';
+import { advanceTimeDial, createTimeDialState, visualDialRate } from '../../src/interface/policies/time-dial.js';
+import { pauseLabel } from '../../src/interface/pause-control.js';
 
 test('1x: 100ms yields exactly 1 tick at 10Hz', () => {
   const c = createClock(10);
@@ -36,4 +38,24 @@ test('fractional accumulation is preserved across slices', () => {
   for (let i = 0; i < 100; i++) total += advanceClock(c, 33, 1, 100);
   // 3300ms at 10Hz = 33 ticks exactly.
   assert.equal(total, 33);
+});
+
+test('both visual dial hands move, freeze, and resume from one bounded phase', () => {
+  const state = createTimeDialState(60); const start = advanceTimeDial(state, 0, { running: true, speed: 1 });
+  const moving = advanceTimeDial(state, 100, { running: true, speed: 1 });
+  assert.ok(moving.minute > start.minute); assert.ok(moving.hour > start.hour);
+  assert.ok(moving.minute - start.minute > moving.hour - start.hour);
+  const frozen = advanceTimeDial(state, 1100, { running: true, paused: true, speed: 32 });
+  assert.deepEqual(frozen, moving); const resumed = advanceTimeDial(state, 1200, { running: true, speed: 32 });
+  assert.ok(resumed.minute > frozen.minute); assert.ok(resumed.minute - frozen.minute < 50);
+  const reduced = advanceTimeDial(state, 1300, { running: true, reduced: true, speed: 32 });
+  assert.deepEqual(reduced, resumed); assert.ok(visualDialRate(32) > visualDialRate(1));
+  assert.equal(visualDialRate(32), visualDialRate(16), '32x exceeded the visual cap');
+});
+
+test('time dial labels explain the owner without releasing another lease', () => {
+  assert.equal(pauseLabel(new Set()), 'Pause world time');
+  assert.equal(pauseLabel(new Set(['manual'])), 'Resume world time');
+  assert.match(pauseLabel(new Set(['manual', 'panel'])), /panel/);
+  assert.match(pauseLabel(new Set(['worker-failed'])), /unavailable/);
 });

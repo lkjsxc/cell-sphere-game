@@ -27,7 +27,7 @@ Vocabulary is evidence-scoped: **implemented**, **tested**, **measured**, **obse
 | 5. Stable composition | implemented viewport-only policy; measured Settings delta `0 px` at 1440×900 | `layout-policy.js`, camera resize | unit test and real-Chrome paired capture |
 | 6. Outside dismissal | implemented scoped target classification; tested Settings→Adaptations and Settings→cell with native CDP pointers | `surface-coordinator.js`, browser scenario | mouse passes; touch/cancel matrix pending |
 | 7. Manual Adaptation | observed intermittent real-pointer no-op and unacknowledged authority | UI, protocol, Worker/fallback | success/rejection/double-click scenarios |
-| 8. Time dial | measured fixed hour/hidden pause baseline | one frame-loop dial controller | transform, pause, speed, reduced-motion tests |
+| 8. Time dial | implemented one frame-loop phase; measured both hands moving and frozen visibly on pause | `time-dial.js`, pause semantics, CSS | unit and real-Chrome transform tests pass |
 | 9. 642 Skill Cells | observed 642 rendered cells but 108 definitions | canonical skill content/scene/storage | mapping validator and full legal unlock |
 | 10. Skill migration | target lossless old ownership migration | progression adapter/export/import | old-save and corrupt-field fixtures |
 | 11. Auto continuation | observed permanent interaction suspension | one-shot continuation state machine | result interaction lifecycle matrix |

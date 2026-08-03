@@ -185,7 +185,7 @@ test('pause reasons release only their own ownership', () => {
   pause.set('manual', true); pause.set('panel', true); pause.set('panel', false);
   assert.equal(pause.paused, true); assert.equal(pause.has('manual'), true);
   pause.set('manual', false); assert.equal(pause.paused, false);
-  assert.deepEqual(changes.map((entry) => entry[0]), [true, false]);
+  assert.deepEqual(changes.map((entry) => entry[0]), [true, true, true, false]);
 });
 
 test('saveMeta reports persistence honestly and writes a validated copy', () => {
