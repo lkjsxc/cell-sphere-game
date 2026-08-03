@@ -1,6 +1,6 @@
 /** Explicit Adaptation and Evolution Globe skill surfaces. */
 import { cardById } from '../game/adaptations.js';
-import { MEMORY_NODES, getMemoryNode, memoryNodeState } from '../game/memory.js';
+import { MEMORY_NODES, getMemoryNode, memoryNodeState } from '../game/skills/index.js';
 
 export const ADAPTATION_COPY = Object.freeze({
   'long-filaments': ['Long Reach', 'Frontiers extend faster.', 'New living cells cost more to maintain.'],

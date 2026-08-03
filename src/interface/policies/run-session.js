@@ -1,5 +1,5 @@
 /** Run start, terminal reward, and reward-free abandonment transactions. */
-import { buildMemorySnapshot, compileMemory } from '../../game/memory.js';
+import { buildMemorySnapshot, compileMemory } from '../../game/skills/index.js';
 import { normalizeHistoryEvents, appendAbandonedWorld, saveHistory } from '../../platform/history.js';
 import { saveMeta } from '../../platform/storage.js';
 import { seedForRun } from '../app-data.js';

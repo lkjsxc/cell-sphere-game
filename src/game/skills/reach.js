@@ -1,4 +1,4 @@
-import { conditional as c, defineBranch, scalar as s, unlock as u } from './memory-node.js';
+import { conditional as c, defineBranch, scalar as s, unlock as u } from './node.js';
 
 export const REACH_MEMORY = defineBranch('reach', 'continuity-stillpoint-crown', [
   ['horizon-instinct', 'Horizon Instinct', 'Frontiers advance 6% more readily.', 'The network remembers the texture of promising ground before committing a new tip.', 2, s('reach', 1.06)],

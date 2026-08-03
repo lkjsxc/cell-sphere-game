@@ -1,16 +1,16 @@
 /** Permanent Memory atlas: graph queries, transactions, and run compilation. */
-import { CONTINUITY_MEMORY } from './memory-continuity.js';
-import { ECOLOGY_MEMORY } from './memory-ecology.js';
-import { FLOW_MEMORY } from './memory-flow.js';
-import { PERCEPTION_MEMORY } from './memory-perception.js';
-import { REACH_MEMORY } from './memory-reach.js';
-import { RESERVE_MEMORY } from './memory-reserve.js';
-import { renderMemorySnapshot } from './memory-scene.js';
-import { MEMORY_ATLAS_HASH } from './memory-atlas.js';
-export { createMemoryFields } from './memory-scene.js';
-export { MEMORY_ATLAS_REVERSE } from './memory-atlas.js';
-import { createTopology } from '../world/icosphere.js';
-export { applyMemoryConditionals } from './memory-node.js';
+import { CONTINUITY_MEMORY } from './continuity.js';
+import { ECOLOGY_MEMORY } from './ecology.js';
+import { FLOW_MEMORY } from './flow.js';
+import { PERCEPTION_MEMORY } from './perception.js';
+import { REACH_MEMORY } from './reach.js';
+import { RESERVE_MEMORY } from './reserve.js';
+import { renderMemorySnapshot } from './scene.js';
+import { MEMORY_ATLAS_HASH } from './atlas.js';
+export { createMemoryFields } from './scene.js';
+export { MEMORY_ATLAS_REVERSE } from './atlas.js';
+import { createTopology } from '../../world/icosphere.js';
+export { applyMemoryConditionals } from './node.js';
 
 export const MEMORY_GRAPH_VERSION = 3;
 export const MEMORY_BRANCHES = Object.freeze(['Reach', 'Flow', 'Reserve', 'Ecology', 'Perception', 'Continuity']);

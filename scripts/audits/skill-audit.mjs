@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /** Exhaustive Evolution Globe address, graph, effect, gate, and economy audit. */
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { MEMORY_ATLAS_REVERSE, validateAtlasMapping } from '../../src/game/memory-atlas.js';
-import { MEMORY_BRANCHES, MEMORY_NODES, canPurchaseMemory, purchaseMemory, validateMemoryGraph } from '../../src/game/memory.js';
+import { MEMORY_ATLAS_REVERSE, validateAtlasMapping } from '../../src/game/skills/atlas.js';
+import { MEMORY_BRANCHES, MEMORY_NODES, canPurchaseMemory, purchaseMemory, validateMemoryGraph } from '../../src/game/skills/index.js';
 import { defaultMeta } from '../../src/platform/storage.js';
 
 const atlas = validateAtlasMapping(); const graph = validateMemoryGraph();

@@ -1,4 +1,4 @@
-import { conditional as c, defineBranch, scalar as s, unlock as u } from './memory-node.js';
+import { conditional as c, defineBranch, scalar as s, unlock as u } from './node.js';
 
 export const ECOLOGY_MEMORY = defineBranch('ecology', 'reserve-deepwell-crown', [
   ['tempered-scars', 'Tempered Scars', 'Stress resistance rises by 8%.', 'Past crises leave tissue prepared for pressure without making the next world harmless.', 2, s('stressResist', 1.08)],

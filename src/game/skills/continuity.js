@@ -1,4 +1,4 @@
-import { conditional as c, defineBranch, scalar as s, unlock as u } from './memory-node.js';
+import { conditional as c, defineBranch, scalar as s, unlock as u } from './node.js';
 
 export const CONTINUITY_MEMORY = defineBranch('continuity', 'perception-watchful-crown', [
   ['remembered-burden', 'Inherited Burden', 'Network upkeep falls by 4%.', 'The Continuity lesson is preserved as a bounded reduction in connected tissue upkeep.', 3, s('maintenance', 0.96)],

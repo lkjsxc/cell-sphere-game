@@ -1,4 +1,4 @@
-import { conditional as c, defineBranch, scalar as s, unlock as u } from './memory-node.js';
+import { conditional as c, defineBranch, scalar as s, unlock as u } from './node.js';
 
 export const PERCEPTION_MEMORY = defineBranch('perception', 'ecology-living-crown', [
   ['quiet-echo', 'Quiet Echo', 'Stress resistance rises by 6%.', 'The retired opening intervention becomes a steadier ability to read pressure before tissue fails.', 2, s('stressResist', 1.06)],

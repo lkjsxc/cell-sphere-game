@@ -1,4 +1,4 @@
-import { conditional as c, defineBranch, scalar as s, unlock as u } from './memory-node.js';
+import { conditional as c, defineBranch, scalar as s, unlock as u } from './node.js';
 
 export const RESERVE_MEMORY = defineBranch('reserve', 'flow-river-crown', [
   ['deep-vault', 'Deep Vault', 'Energy capacity rises by 8%.', 'Layered storage remembers how much abundance can be held without stalling useful growth.', 2, s('energyCap', 1.08)],

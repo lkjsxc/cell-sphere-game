@@ -7,7 +7,7 @@ import {
   MEMORY_BRANCHES, MEMORY_LANDMARK_IDS, MEMORY_NODE_IDS, MEMORY_NODES, availableMemoryNodes,
   buildMemorySnapshot, campaignResolved, canPurchaseMemory, compileMemory,
   groupAccessibleMemory, purchaseMemory, validateMemoryGraph,
-} from '../../src/game/memory.js';
+} from '../../src/game/skills/index.js';
 import { createTopology } from '../../src/world/icosphere.js';
 import { createCamera, viewProjection } from '../../src/rendering/camera.js';
 import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from '../../src/interface/camera-policy.js';

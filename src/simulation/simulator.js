@@ -4,7 +4,7 @@ import { chooseAdaptationOrigin } from '../core/adaptation-origin.js';
 import { computeAdaptationArrivals } from '../core/adaptation-arrival.js';
 import { hashStringU32 } from '../core/hash.js';
 import { ADAPTATIONS, adaptationPresentationCategory, applyCardEffects, selectRandomOption } from '../game/adaptations.js';
-import { applyMemoryConditionals } from '../game/memory.js';
+import { applyMemoryConditionals } from '../game/skills/index.js';
 import { beginTerminalCollapse, createRunState, reconcileLiveness, terminalCollapseReason } from './state.js';
 import { updateEnvironment } from './environment.js';
 import { runMetabolism } from './metabolism.js';

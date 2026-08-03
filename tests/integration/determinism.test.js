@@ -5,7 +5,7 @@ import { RunController } from '../../src/simulation/simulator.js';
 import { REPLAY, REPLAY_VERSION } from '../../src/simulation/replay.js';
 import { BALANCE as B } from '../../src/game/balance.js';
 import { scoreResult } from '../../src/game/scoring.js';
-import { compileMemory, MEMORY_NODES } from '../../src/game/memory.js';
+import { compileMemory, MEMORY_NODES } from '../../src/game/skills/index.js';
 import { appendWorld, loadHistory, normalizeHistoryEvents, saveHistory, serializeHistory } from '../../src/platform/history.js';
 import { AdaptationPropagation } from '../../src/rendering/adaptation-propagation.js';
 

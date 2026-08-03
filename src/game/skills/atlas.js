@@ -1,6 +1,6 @@
 /** Stable six-territory embedding across every level-3 Evolution Globe cell. */
-import { hashStringU32, hexU32 } from '../core/hash.js';
-import { createTopology } from '../world/icosphere.js';
+import { hashStringU32, hexU32 } from '../../core/hash.js';
+import { createTopology } from '../../world/icosphere.js';
 
 export const MEMORY_ATLAS_LEVEL = 3;
 export const MEMORY_BRANCH_SIZE = 107;

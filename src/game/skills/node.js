@@ -1,5 +1,5 @@
 /** Shared immutable schema for all 642 Evolution Globe Skill Cells. */
-import { MEMORY_BRANCH_SIZE, memoryAtlasCell, memoryAtlasParent } from './memory-atlas.js';
+import { MEMORY_BRANCH_SIZE, memoryAtlasCell, memoryAtlasParent } from './atlas.js';
 
 const LANDMARK_SLOTS = Object.freeze([0, 6, 12, 18, 24, 31, 37, 43, 49, 56, 62, 68, 74, 81, 87, 93, 99, 106]);
 const LANDMARK_KINDS = Object.freeze([

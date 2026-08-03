@@ -10,11 +10,7 @@ same frozen definitions; this directory never owns DOM or persistence state.
 | `adaptations.js` | ≥24 cards, weighted offers, exact-uniform passive selection. |
 | `events-content.js` | Eight spatial crisis families and content parameters. |
 | `scoring.js` | Network Score, rank, breakdown, and Echo income. |
-| `memory.js` | 642-cell globe graph, queries, transactions, compilation, and validation. |
-| `memory-node.js` | Shared immutable cell/effect schema and completed milestone bonuses. |
-| `memory-{branch}.js` | Eighteen authored landmarks for each of six progression branches. |
-| `memory-atlas.js` | Exact six-territory level-3 embedding, reverse map, and validator. |
-| `memory-scene.js` | Direct per-cell atlas status and morphology-fossil projection. |
+| `skills/` | 642-cell content, globe graph, transactions, compilation, projection, and validation. |
 
 Invariants:
 

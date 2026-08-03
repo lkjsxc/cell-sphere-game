@@ -1,5 +1,5 @@
 /** Versioned, corruption-safe persistence for cross-run progression. */
-import { MEMORY_GRAPH_VERSION, MEMORY_LANDMARK_IDS, MEMORY_NODE_IDS } from '../game/memory.js';
+import { MEMORY_GRAPH_VERSION, MEMORY_LANDMARK_IDS, MEMORY_NODE_IDS } from '../game/skills/index.js';
 import { createTopology } from '../world/icosphere.js';
 
 const KEY = 'incremental-network-game:meta:v1';

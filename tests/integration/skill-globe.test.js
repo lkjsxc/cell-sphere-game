@@ -5,12 +5,12 @@ import assert from 'node:assert/strict';
 import {
   MEMORY_ATLAS_CELLS, MEMORY_ATLAS_HASH, MEMORY_ATLAS_REVERSE,
   generateMemoryAtlas, validateAtlasMapping,
-} from '../../src/game/memory-atlas.js';
+} from '../../src/game/skills/atlas.js';
 import {
   MEMORY_BRANCHES, MEMORY_NODES, availableMemoryNodes, buildMemorySnapshot,
   canPurchaseMemory, compileMemory, validateMemoryGraph,
-} from '../../src/game/memory.js';
-import { MEMORY_STATUS } from '../../src/game/memory-scene.js';
+} from '../../src/game/skills/index.js';
+import { MEMORY_STATUS } from '../../src/game/skills/scene.js';
 import { defaultMeta } from '../../src/platform/storage.js';
 import { createTopology } from '../../src/world/icosphere.js';
 import { createCamera, focusCamera } from '../../src/rendering/camera.js';
@@ -102,7 +102,7 @@ test('all advanced Skill Cells ship a concrete downstream trait effect', () => {
 });
 
 test('Evolution scene source has no edge-path construction or edge state arrays', () => {
-  const source = readFileSync(new URL('../../src/game/memory-scene.js', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../../src/game/skills/scene.js', import.meta.url), 'utf8');
   for (const stale of ['tracePath', 'paintEdge', 'edgeActive', 'conductance', 'flux']) assert.equal(source.includes(stale), false, stale);
   assert.equal(source.includes('.edges'), false); assert.equal(source.includes('memoryStatus'), true);
 });

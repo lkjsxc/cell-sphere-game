@@ -1,4 +1,4 @@
-import { conditional as c, defineBranch, scalar as s, unlock as u } from './memory-node.js';
+import { conditional as c, defineBranch, scalar as s, unlock as u } from './node.js';
 
 export const FLOW_MEMORY = defineBranch('flow', 'reach-horizon-crown', [
   ['channel-imprint', 'Channel Imprint', 'Transport capacity rises by 8%.', 'The strongest routes retain the shape of past traffic and carry more from the first pulse.', 3, s('conductance', 1.08)],
