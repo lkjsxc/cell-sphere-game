@@ -4,8 +4,8 @@ Release handoff for the visual-integrity, completion, and progression pass.
 
 - **Starting commit:** `75a843e5e5b929d45e6375ae465f8b9171c7ff31`.
 - **Implementation tip before this record:** `eb2c0f0`.
-- **Branch/upstream:** `main`, five implementation commits ahead of `origin/main`; push and Pages inspection are pending this record.
-- **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>.
+- **Branch/upstream:** `main`; implementation and release documentation are synchronized with `origin/main`. This file is the final evidence follow-up.
+- **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>. Workflow `30791379842` completed verification (`91615441512`) and Pages deployment (`91615583669`) for release commit `b21eea5`.
 - **Protective tag:** `pre-visual-integrity-pass-20260803` at the starting commit.
 
 ## Playable product
@@ -103,14 +103,16 @@ Environment: Node v22.22.3, Linux x64, 20 logical CPUs.
   title, run, visual History, and Evolution Globe.
 - `docker compose run --rm verify` — PASS: 109 unit, 50 integration, all gates;
   benchmark 2,853 ticks in 190 ms, 15,018 ticks/s, hash `c55ddab5`.
+- Cache-busted public `index.html`, entry point, run driver, Worker, skill gates,
+  showcase data, primary CSS, and this status file returned HTTP 200 and matched
+  release-commit bytes exactly by SHA-256.
 
 ## Known limitations and next actions
 
-- Push the coherent commits, wait for the Pages workflow, then verify workflow
-  head SHA and cache-busted deployed bytes before calling this deployed.
-- Public-URL Chrome navigation may remain sandbox-network blocked; if so, verify
-  public bytes over HTTP and exercise those exact repository bytes through the
-  CDP-pipe Chrome harness without claiming a public-browser screenshot.
+- Public-URL headless Chrome navigation is sandbox-network blocked with
+  `ERR_INTERNET_DISCONNECTED`. The deployed bytes were verified over HTTPS and
+  those exact repository bytes were exercised through the CDP-pipe Chrome
+  harness; no public-browser screenshot is claimed.
 - Physical mobile touch/thermal/battery/GPU timing, screen-reader traversal,
   forced-colors review, Japanese localization, and 100–200 hour challenge,
   discovery, and trophy breadth remain incomplete.

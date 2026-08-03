@@ -28,4 +28,14 @@ Evidence is generated under ignored `reports/baseline-visual-pass/` and `reports
 - `npm run test:browser:canvas` — pass; real headless Chrome forced Canvas 2D.
 - Public HTTP inspection — sampled `index.html`, `src/main.js`, renderer, CSS, and status bytes matched HEAD.
 
-Public-URL Chrome screenshot navigation was blocked by `ERR_INTERNET_DISCONNECTED`; exact public bytes were verified over HTTP and the same files were exercised in Chrome through the repository's file/CDP harness. No physical-device claim is made.
+## Release evidence
+
+Workflow `30791379842` completed verification job `91615441512` and Pages job
+`91615583669` for `b21eea5`. Cache-busted public `index.html`, entry point, run
+driver, Worker, progression gates, showcase data, primary CSS, and status bytes
+matched that release commit by SHA-256.
+
+Public-URL Chrome screenshot navigation remained blocked by
+`ERR_INTERNET_DISCONNECTED`; exact public bytes were verified over HTTPS and the
+same files were exercised in Chrome through the repository's file/CDP harness.
+No physical-device or public-browser screenshot claim is made.
