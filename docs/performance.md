@@ -27,7 +27,7 @@ Environment: Node v22.22.3, Linux x64, 20 logical CPUs.
 - 32 retained 49-event timelines serialized to 304,208 bytes (297.1 KiB);
 - a detailed visual History run encoded 101 frames / 259,594 bytes; decode was
   3.248 ms and 10,000 nearest-frame seeks took 1.357 ms;
-- 100,000 Memory nearest-cell picks took 341.46 ms (3.415 µs/pick).
+- 100,000 Evolution Globe nearest-cell picks took 341.46 ms (3.415 µs/pick).
 
 ## Runtime discipline
 
@@ -37,12 +37,12 @@ Environment: Node v22.22.3, Linux x64, 20 logical CPUs.
 - Worker snapshots remain around 10 Hz at all speeds. Rendering falls near
   15 fps at 16×/32× and near 6 fps while context surfaces are open.
 - Inspector requests are one compact record at no more than about 3 Hz.
-- World rivers/forests/terrain and the 642-cell Memory atlas are immutable per scene.
+- World rivers/forests/terrain and the 642-cell Evolution Globe are immutable per scene.
 - History is event-driven, ≤80 entries/run, and ≤700 KB serialized.
 - Notices are capped at three simultaneous DOM nodes.
 
 ## Missing evidence
 
-Actual GPU frame time, dense-run/Memory p95 presentation time, browser heap
+Actual GPU frame time, dense-run/Evolution p95 presentation time, browser heap
 trend, Canvas fallback browser timing, and physical smartphone temperature/
 battery behavior remain unmeasured.

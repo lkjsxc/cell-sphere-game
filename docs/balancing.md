@@ -16,6 +16,27 @@ simulation modules headlessly — never a copied or simplified model.
 - Same seed + decisions ⇒ identical hash at any speed (gate).
 - No NaN/Infinity/negative biomass/invalid neighbor/impossible score (gate).
 
+## Progression horizon model
+
+These are **modeled 1×-equivalent targets**, not observed wall-clock claims.
+Owned skills bypass new gates and are never charged again.
+
+| Milestone | Implemented visible gate | Modeled 1× equivalent |
+|---|---:|---:|
+| First campaign resolution | 4 completed worlds | 18–24 min target; 18–22 min from run duration before transition overhead |
+| Meaningful six-branch spread | six roots require 0 prior worlds and cost 14 Echoes total | first hour target |
+| Roughly half (54 skills) | 144 completed worlds | about 11–14 h |
+| All six keystones | 164 completed worlds plus adjacency/Echoes | about 13–16 h |
+| Cross-branch connectors | 600 completed worlds | about 47–57 h |
+| All 108 Skill Cells | capstones require 900 completed worlds | about 70–85 h |
+| True completion | skills plus challenge/trophy/discovery breadth | 100–200 h target; breadth is not yet fully implemented |
+
+Gates are shown in every Skill Cell detail as `Worlds observed`; they are not
+hidden cooldowns, real-time waits, or speed restrictions. At 32× they compress
+legitimately. The unchanged 818-Echo economy keeps roots welcoming while
+adjacency, observed-world gates, and later challenge breadth—not duplicated raw
+power—create the long horizon.
+
 ## Bot policies
 
 random-valid · balanced · expansion · resilience · efficiency ·
@@ -69,7 +90,7 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   score and Echo projection; no simulation equation or golden checksum
   changed. Evidence: `tests/unit/scoring.test.js`; a balance recalibration is
   still required before changing thresholds or score bands.
-- **2026-08-02 — Memory atlas economy foundation.** The 108-node graph costs
+- **2026-08-02 — Evolution Globe economy foundation.** The 108-node graph costs
   818 Echoes in total: 48 micro nodes, 24 conditional morphology/ecology
   nodes, 18 mechanic/information/automation unlocks, and six each of
   keystones, cross-branch connectors, and capstones. Six roots cost 2–3
@@ -86,7 +107,7 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   four-seed smoke above is evidence of the resulting environment shift, not a
   claim that balanced/resilience timing now meets target.
 - **2026-08-02 — World-first cellular presentation.** Deleted organism route,
-  tip, orbit, and Memory-path rendering and reduced steady-state WebGL2 from
+  tip, orbit, and prerequisite-path rendering and reduced steady-state WebGL2 from
   seven draws to five. Presentation snapshots fell from 102,426 to 25,620
   bytes. Simulation equations and the default benchmark hash did not change.
 - **2026-08-03 — Reconciled terminal authority.** Every tick now recounts living
@@ -98,7 +119,7 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   hash `c55ddab5`; throughput measured 15,160 ticks/s versus the 18,022 ticks/s
   turn baseline (15.9% lower, still 5× the gate) because 2,562 cells are
   reconciled every tick. This safety cost is retained deliberately.
-- **2026-08-02 — Completed advanced Memory cells.** Every milestone, keystone,
+- **2026-08-02 — Completed advanced Skill Cells.** Every milestone, keystone,
   connector, and capstone now includes a concrete bounded scalar bonus; UI copy
   states only that shipped effect. New-save/default-run balance and golden hash
   are unchanged because bonuses apply only after purchase. Full-atlas campaign

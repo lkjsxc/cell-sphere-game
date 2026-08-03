@@ -17,7 +17,7 @@ pure inspection, History cap, and the 108-node graph/migration/economy.
 
 Integration coverage includes seed/chunk/speed invariance, zero-input Random
 completion, exact manual resolution ticks, stream isolation, replay schema,
-conditional Memory, concrete effects for all 108 Memory purchases, strict
+conditional skills, concrete effects for all 108 Skill Cell purchases, strict
 visual-History codec bounds/malformed input, primary-cell migration, stale load
 guards, and an observed run matching a quiet run in hash, score, extinction,
 decisions, semantic History, and Imprint. A 100-world integration soak also
@@ -31,16 +31,17 @@ rotation default off; drag; title inspector; Settings and opt-in idle rotation;
 manual queued offer without pause; explicit panel/close/reopen/choice; switch
 back to Random; nonmodal History scrub/previous/next/Live with highlighted
 primary cells and continuing authority; 32× result; compact result History;
-IndexedDB visual-detail reload when available; 642-cell/108-purchase Memory;
-select-before-Unlock; repeated currency/persistence; Memory restoration after
-History; a second unattended result counting down into the third world; an
-accessible list; reload; no obsolete guidance; and no console/runtime errors.
+IndexedDB visual-detail reload when available; 642-cell/108-skill Evolution
+Globe; select-before-Unlock; fixed-flow mobile skill detail; semantic offscreen
+tree; Evolution restoration after History; a second unattended result counting
+down into the third world; New World cancel/accept with no reward; reload; and
+no obsolete guidance or console/runtime errors.
 
 Generated WebGL2 evidence includes six fixed title lifecycle phases plus title layouts at 390×844, 430×932,
 768×1024, 1024×768, 1440×900, and 1920×1080; mobile/tablet/desktop inspector;
-mobile/desktop Settings, run, Adaptations, visual History, result, and Memory;
+mobile/desktop Settings, run, Adaptations, visual History, result, and Evolution Globe;
 full/reduced Adaptation propagation; and automatic continuation. Dedicated
-Canvas screenshots cover mobile/desktop title, History, and Memory.
+Canvas screenshots cover mobile/desktop title, History, and Evolution Globe.
 
 ## Honest limitations
 

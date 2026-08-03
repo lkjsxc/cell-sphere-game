@@ -22,12 +22,12 @@ Adaptations use an authoritative exact-tick weighted arrival field: a 140 ms
 origin charge, narrow state/category-sensitive front, and 420 ms trail complete
 within 2.2 seconds without normalizing to the whole component. History uploads
 an approximate cell checkpoint and primary-cell
-highlight. Memory replaces the world fields with a graphite 642-cell atlas and
+highlight. Evolution Globe replaces the world fields with a graphite 642-cell atlas and
 explicit locked, unaffordable, affordable, owned, selected, Imprint, and brief
 unlock-emphasis materials.
 
-There is no organism route, vein, tip, node-sprite, background-orbit, or Memory
-path draw. The deleted passes no longer receive edge, conductance, or flux
+There is no organism route, vein, tip, node-sprite, background-orbit, or
+prerequisite-path draw. The deleted passes no longer receive edge, conductance, or flux
 snapshot payloads. Presentation snapshots contain four cell arrays totaling
 25,620 bytes at level 4, down from 102,426 bytes before the redesign. Static
 topology/geography buffers build once; only bounded cell attributes update.
@@ -64,9 +64,9 @@ after four seconds of true idle, and is effectively disabled by reduced motion.
 ## Fallback and evidence
 
 Canvas 2D draws the same cellular semantics as polygons. Rivers are quiet
-terrain-cell material rather than center-to-center lines; organism and Memory
+terrain-cell material rather than center-to-center lines; organism and skill
 paths do not exist. The forced-fallback real-Chrome scenario completes a run,
-opens visual History, renders the 642-cell Memory atlas, captures mobile and
+opens visual History, renders the 642-cell Evolution Globe, captures mobile and
 desktop evidence, and reports no browser errors.
 
 Current WebGL2 evidence covers 390×844, 430×932, 768×1024, 1024×768,

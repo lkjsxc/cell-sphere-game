@@ -13,11 +13,11 @@ Rendering consumes immutable world fields/snapshots and never mutates authority.
 ## Three independent state concerns
 
 ```text
-primary screen: title → starting → running → result → memory → starting
+primary screen: title → starting → running → result → Evolution Globe → starting
 simulation:     idle | running | terminal-collapse | extinct
 pause reasons:  manual, hidden, optional panel lease
 overlay:        none | inspector | adaptations | history | settings |
-                result-details | memory-node | memory-list
+                result-details | evolution-skill | new-world-confirmation
 ```
 
 An Adaptation offer is queued data, never a primary/simulation phase. One
@@ -25,7 +25,7 @@ overlay is active at a time. Closing a panel releases only its own pause reason
 and cannot resume a manually paused world. The result countdown is a pure
 presentation policy: hidden documents and open detail surfaces suspend its
 remaining time, while interaction cancels it; starting the next world never
-spends Echoes or purchases Memory.
+spends Echoes or unlocks a Skill Cell.
 
 ## Execution topology
 
@@ -43,7 +43,10 @@ Main → Worker:
 - `choose-adaptation {offerId, cardId}`
 - `inspect-cell {requestId, node}`
 - `history-preview {requestId, tick}` / `history-buffer {requestId}`
-- `snapshot-now`
+- `snapshot-now` / `status` / `abort`
+
+Every command and response carries a monotonic session `runId`; stale messages
+from an earlier world are rejected before they reach interface transactions.
 
 Worker → main:
 
@@ -53,20 +56,20 @@ Worker → main:
 - `history-batch` / `event`
 - `cell-inspection {requestId, cell}`
 - transferable `history-preview` / `history-buffer` with matching request IDs
-- `extinct {summary}` / `error`
+- `terminal-collapse` / `extinct {summary}` / `aborted {summary}` / `heartbeat` / `error`
 
 Snapshot cadence is bounded at about 10 Hz even at 32×; rendering is reduced to
 about 15 fps at high speed. Inspector records refresh at no more than about 3 Hz.
 Static rivers, forests, biomes, and landmarks never cross the Worker boundary.
 
-## World and Memory
+## World and Evolution Globe
 
 The run world keeps the stable 2,562-cell icosphere and immutable graph-native
 geography. Central biome tables precompute growth, upkeep, uptake, renewal, and
-transport factors. Memory switches the same renderer and picking contract to a
-separate 642-cell level-3 atlas. Its 108 unique progression cells form a DAG in
+transport factors. Evolution Globe switches the same renderer and picking
+contract to a separate 642-cell level-3 atlas. Its 108 Skill Cells form a DAG in
 which every prerequisite relation is also direct spherical adjacency. Imprints
-are bounded cell material; no Memory path geometry exists.
+are bounded cell material; no prerequisite path geometry exists.
 
 ## Persistence
 
@@ -75,9 +78,9 @@ Separate localStorage documents own:
 - Settings schema 3 (`settings:v2`), including automatic continuation and safe
   migration from earlier values;
 - progression schema 5 (`meta:v1`), including Echoes, 108-cell ownership,
-  cell-converted Imprints, graph version, quarantine, and one migration notice;
+  cell-converted Imprints, graph version, quarantine, a seed cursor, and one migration notice;
 - semantic History schema 2 (`history:v2`, migrating `history:v1`), retaining
-  24/32 timelines, ≤80 events and ≤8 primary cells/event, ≤128 Memory
+  24/32 timelines, ≤80 events and ≤8 primary cells/event, ≤128 skill
   purchases, and a hard 700 KB serialized cap;
 - device-local IndexedDB visual History: strict `INHV` v1 cell-only bundles,
   newest ten completed worlds, each at most 256 KiB.
@@ -92,7 +95,7 @@ approximate and device-local.
 ## Determinism boundary
 
 The run digest includes seed, inoculation, simulation/replay version, compiled
-Memory effects/conditions, Adaptation mode changes, offers, and selections.
+skill effects/conditions, Adaptation mode changes, offers, and selections.
 World/events/growth/content/decision/inoculation streams are isolated xoshiro
 streams. Camera, selection, panel views, quality, motion, cellular Adaptation waves,
 and History viewing never enter authority or consume RNG. Tests compare

@@ -20,9 +20,9 @@ release candidate from the later frozen submission/tag/form.
 - Docker Node 22 verification passes on the current worktree.
 - Real headless Chrome/WebGL2 covers six responsive viewport sizes, four draws,
   nonmodal surfaces, cellular Adaptations, visual History, compact result,
-  adjacent-cell Memory purchases, persistence, and unattended continuation.
+  adjacent Skill Cell purchases, persistence, and unattended continuation.
 - A second real-Chrome run forces Canvas 2D through title, result, History, and
-  Memory. Physical smartphone, assistive-technology, and actual GPU evidence
+  Evolution Globe. Physical smartphone, assistive-technology, and actual GPU evidence
   remain pending.
 
 ## Final freeze checklist
@@ -33,7 +33,7 @@ release candidate from the later frozen submission/tag/form.
 - [x] Test WebGL2 reduced motion and force the Canvas fallback in real Chrome.
 - [x] Run local and Docker verification on the release candidate.
 - [x] Verify cache-busted public Pages HTML/core modules match reviewed release bytes.
-- [x] Review responsive title/run/surfaces/History/result/Memory screenshots
+- [x] Review responsive title/run/surfaces/History/result/Evolution Globe screenshots
       from fresh disposable browser storage.
 - [ ] Create reviewed submission branch and annotated tag without rewriting main.
 - [ ] Submit form and preserve public repository/page throughout judging.

@@ -6,7 +6,7 @@ A calm, autonomous roguelite ecology on a living spherical world. Watch a
 seeded life inoculate itself, spread cell by adjacent cell through rivers and
 forests, survive spatial crises, and inevitably collapse. Inspect any cell
 without steering the run, review what happened in History, then turn extinction
-into permanent adjacent cells on a spherical Memory atlas.
+into permanent Skill Cells on the spherical Evolution Globe.
 
 **Play:** https://lkjsxc.github.io/incremental-network-game/
 
@@ -25,9 +25,9 @@ Web Page category, ZEN University division. The published deadline is
 5. Adaptations, History, Settings, and the cell inspector do not pause world
    time by default. A panel-pause preference is available in Settings.
 6. At extinction, the world stays visible behind a compact result strip. Review
-   History or Memory, choose **Next World**, or let the nine-second countdown
+   History or the **Evolution Globe**, choose **Next World**, or let the nine-second countdown
    continue unattended.
-7. In Memory, select an adjacent atlas cell, read its details, and explicitly
+7. In the Evolution Globe, select an adjacent Skill Cell, read its details, and explicitly
    press **Unlock**. Several small Echo purchases improve later worlds.
 
 Optional idle globe rotation is available in Settings and defaults off.
@@ -50,12 +50,12 @@ preference.
   selection, manual delayed choices, versioned replay, weighted state-sensitive
   arrival fields, schema-2 History, and bounded cell-only timeline checkpoints.
 - Four-draw WebGL2 cellular renderer: geography, life stages, crises,
-  Adaptation propagation, History, selection, and Memory are materials on the
-  same cells. There is no organism-route, tip-sprite, or Memory-path pass.
+  Adaptation propagation, History, selection, and Evolution Globe skills are
+  materials on the same cells. There are no detached route or prerequisite lines.
   Canvas 2D remains an observationally complete cellular fallback.
 - Read-only cell inspector with static geography plus low-cadence authoritative
   living detail.
-- Exactly 108 validated Memory cells on a separate 642-cell level-3 atlas
+- Exactly 108 validated Skill Cells on a separate 642-cell Evolution Globe
   across Reach, Flow, Reserve, Ecology, Perception, and Continuity. Every
   prerequisite is directly adjacent, every purchase has a concrete compiled
   effect, and a semantic grouped list shares the same source of truth.
@@ -85,7 +85,7 @@ styles/          authored responsive CSS
 src/core/        PRNG, hash, clock, state machine, math
 src/world/       topology, terrain, hydrology, ecology, landmarks
 src/simulation/  deterministic authority, inspection, replay, History events
-src/game/        Adaptations, scoring, strains, 108-node Memory content
+src/game/        Adaptations, scoring, strains, 108-skill progression content
 src/rendering/   WebGL2 + Canvas 2D, camera, picking, static/dynamic passes
 src/history/     strict bounded visual codec, recorder, preview projection
 src/interface/   screen/overlay composition and player intent
@@ -100,6 +100,6 @@ of runtime third-party imports.
 
 ## Privacy, license, and media
 
-All settings, History, Echoes, Memory, and Imprints stay in local browser
+All settings, History, Echoes, Evolution Globe skills, and Imprints stay in local browser
 storage. Code is Apache-2.0. Visuals and interface materials are procedural or
 authored in this repository.

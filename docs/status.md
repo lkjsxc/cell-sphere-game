@@ -1,95 +1,116 @@
 # Status
 
-Truthful deployed handoff for the world-first cellular redesign.
+Release handoff for the visual-integrity, completion, and progression pass.
 
-- **Starting commit:** `540f31a45c7846bc64c49c2ac21208042d4faccc`.
-- **Implementation/evidence commit:** `48fba48` (`test(browser): stabilize visual History evidence`).
-- **Reviewed release commit:** `dba92c4dc04e0a37ce2343db09b8992bd8dc1629`.
-- **Branch/upstream:** `main` was synchronized with `origin/main` at the reviewed
-  release commit before this final evidence record.
+- **Starting commit:** `75a843e5e5b929d45e6375ae465f8b9171c7ff31`.
+- **Implementation tip before this record:** `eb2c0f0`.
+- **Branch/upstream:** `main`, five implementation commits ahead of `origin/main`; push and Pages inspection are pending this record.
 - **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>.
-  Workflow `30760066713` completed successfully (verify job `91528877439`,
-  Pages job `91528950821`). Cache-busted public `index.html`, renderer/shader,
-  Memory atlas, continuation, History codec, and this status file all returned
-  HTTP 200 and matched release-commit bytes exactly.
-- **Protective tag:** `pre-world-first-interface-20260802` at `540f31a`.
+- **Protective tag:** `pre-visual-integrity-pass-20260803` at the starting commit.
 
 ## Playable product
 
-- The globe is the product background on title, run, result, inspector,
-  Adaptations, Settings, History, and Memory. Wide context uses a translucent
-  left surface; narrow context uses a ≤42% bottom sheet; History is a bottom
-  timeline; result is a compact bottom strip.
-- The title is an 89-frame / 228,754-byte production-generated lifecycle from
-  seed `20260701`, not a runtime simulation or cosmetic BFS. It records a
-  535-cell peak, loop, pressure, decline, and extinction over 22 seconds.
-- Ordinary globe input remains inspection-only. Automatic Adaptation choices,
-  automatic continuation, idle rotation off, panel pause off, and 1× speed are
-  new-save defaults.
-- Enabled-by-default result continuation starts the next world after nine
-  unattended seconds. Pointer/key input cancels it; hidden documents and open
-  detail surfaces suspend remaining time; it never spends Echoes.
-- WebGL2 uses four steady draws. Living, frontier, stressed, critical, dead,
-  crisis, selection, Adaptation, visual History, and Memory states are direct
-  cell materials. Organism route/tip/orbit and Memory path producers and their
-  presentation payloads are deleted.
-- Adaptation selection starts a bounded 2.2-second weighted living-neighbor wave
-  from a deterministic authoritative origin. Biomass, energy, stress, topology,
-  terrain, and category alter arrival; reduced motion emphasizes a local subset.
-  The queue retains at most two `Uint16` fields / 10,248 bytes.
-- History retains bounded semantic events plus strict approximate cell-only
-  checkpoints. Previous/Next selects event time and primary cells; Live
-  restores current authority immediately; newest-ten visual bundles are
-  device-local IndexedDB data.
-- Memory is a separate level-3 globe: 642 total cells, 108 unique purchase
-  cells, 108 direct-adjacency prerequisites, six roots and connected branches,
-  mapping hash `5a08107c`, graph version 2, and unchanged 818-Echo economy.
-  Schema 5 converts old edge Imprints to bounded cell fossils. Every purchase,
-  including all 36 advanced milestones, has a concrete compiled run effect.
-- Canvas 2D is a tested cellular fallback. Its rivers are terrain-cell material,
-  not center-to-center organism-like lines.
+- Every world reaches an authoritative terminal state. Liveness is reconciled
+  against cell state, a visible terminal-collapse phase is bounded by tick
+  3,620, and extinction is committed exactly once.
+- The production-generated title lifecycle uses seed `20260701`: 89 frames,
+  228,754 bytes, 535-cell peak, loop, pressure, fragmentation, and extinction
+  over 22.25 seconds. Reduced motion holds a representative frame and hidden
+  documents freeze it.
+- The renderer has four steady WebGL2 draws. Detached cyan river ribbons and
+  all organism/prerequisite path geometry are absent. Canvas 2D remains a
+  cellular fallback.
+- Adaptations propagate from an authoritative living origin through a
+  deterministic weighted local subset. Category, biomass, energy, stress,
+  terrain, and topology affect a bounded `Uint16` arrival field.
+- The compact run dock provides a clock-dial pause control, speed selector,
+  Adaptations with pending count and direct `AUTO · RANDOM` / `MANUAL` control,
+  History, New World, and Settings. Action salience distinguishes recommended,
+  available, quiet, urgent, and destructive actions.
+- Context surfaces close through Close, the same trigger, Escape, outside
+  pointer input, or replacement by another surface. Focus restores to the
+  invoker and outside dismissal does not leak a globe selection.
+- New World is an in-run confirmation transaction. Cancel owns and releases its
+  own pause lease. Accept advances seed/run identity once, grants no reward,
+  records a visible abandoned History event, and begins the next world only
+  after authoritative abort acknowledgment.
+- Result keeps **Next World** visually recommended; Evolution Globe remains
+  available but secondary. The fourth completed world reports **First Cycle
+  Resolved**.
+- **Evolution Globe · Permanent Skill Tree** replaces the old visible feature
+  name. It has a larger 642-cell globe, 108 Skill Cells, no visible List mode,
+  a synchronized offscreen semantic tree, fixed detail header/body/footer, and
+  a quiet Focus available action.
 
-## Measured evidence
+## Architecture and reliability
 
-Environment unless stated: Node v22.22.3, Linux x64, 20 logical CPUs.
+- Worker and main-thread fallback messages carry monotonic run IDs. Stale
+  snapshots/results are rejected. Heartbeats and status probes turn Worker
+  silence into an explicit recoverable failure instead of an eternal run.
+- Terminal, abort, and extinction races are first-wins. Result transaction keys
+  are bounded to 16 entries; continuation retention remains bounded.
+- Progress schema 5 persists a validated world-seed cursor. Migration preserves
+  all owned skills, Echoes, History, Imprints, and prior idempotency guarantees.
+- Layering remains `interface → rendering → simulation → world → core`; no DOM,
+  storage, renderer, or time source entered simulation authority.
 
-- `npm run verify`: PASS — structure; 110/110 unit; 29/29 integration;
-  balance smoke; benchmark; 92-module/9-HTML link gate.
-- Benchmark: 2,910 ticks in 152 ms, 19,096 ticks/s, hash `98333073`, 10 MB
-  reported heap. Smoke medians remain 291.7/290.9/292.2 game seconds for
-  balanced/expansion/resilience.
-- `npm run test:browser:file`: PASS in real headless Chrome/WebGL2. Responsive
-  evidence covers 390×844, 430×932, 768×1024, 1024×768, 1440×900, and
-  1920×1080; 32× result in 8.54 s; four draws in the current renderer; the
-  recorded release run used five; JS submission mean 0.07 ms,
-  p95 0.20 ms; visual IndexedDB reload; four Memory purchases; History restores
-  the level-3 atlas; second unattended result starts the third world; no browser
-  errors. These are not physical-device or GPU timings.
-- `npm run test:browser:canvas`: PASS in real headless Chrome with WebGL
-  disabled through title, complete run, visual History, and Memory.
-- Detailed visual History: 101 frames, 259,594 bytes, 3.248 ms decode, 1.357 ms
-  for 10,000 nearest-frame seeks.
-- 100-world unattended transition soak: 271,785 ticks / 12.678 s; zero invalid
-  or duplicate awards; 92 unresolved Manual offers; 24 worlds / 252,005 bytes
-  retained; eight Imprints; forced-GC heap 4.82→6.44 MiB.
-- `docker compose run --rm verify`: PASS after mirroring the changed canonical
-  README; 110 unit, 29 integration, balance, benchmark, and links all pass in
-  the Node 22 container.
+## Simulation, balance, and progression
 
-## Honest limitations / next actions
+- Production smoke remains deterministic and finite; the current benchmark
+  result is 2,853 ticks with hash `c55ddab5`.
+- A 1,000-world production soak completed in 146,847.5 ms with zero invalid
+  outcomes, duplicate terminal messages, or liveness repairs. Terminal tick
+  min/median/p95/max was 263/2,701/3,613/3,620.
+- Weighted propagation measured over 40 production worlds: median 34% affected,
+  median arrival 678 ms, maximum median 1,107 ms; computation median 0.042 ms,
+  p95 0.198 ms.
+- First resolution is four worlds (18–24 min target at 1×). Visible
+  `Worlds observed` gates place 54 skills at world 144, all keystones at 164,
+  connectors at 600, and capstones at 900. This models roughly 70–85 hours for
+  all 108 skills at 1×; the 100–200 hour challenge/trophy breadth target remains
+  honestly incomplete.
 
-- Current responsive evidence is desktop headless Chrome emulation, not a
-  physical smartphone. Touch feel, temperature, battery, and actual GPU frame
-  time remain unmeasured.
-- Screen-reader traversal, forced-colors visual review, 200% zoom, and Japanese
-  localization remain incomplete. Arbitrary world-cell inspection still needs
-  pointer hit testing; Memory has a semantic list alternative.
-- The same-origin harness exits 77 in this container because Chrome networking
-  is seccomp-blocked; CDP-pipe/file evidence is real Chrome but bypasses HTTP
-  same-origin behavior.
-- Deep geography/archetype Monte Carlo, dense late-run cellular visual tuning,
-  four-run campaign resolution, trophies/challenges/audio/sharing/PWA breadth,
-  physical-device review, and final contest branch/tag/form freeze remain.
-- Remaining release administration is the contest-specific branch/tag/form
-  freeze after physical-device and assistive-technology review; it is not
-  falsely recorded as complete here.
+## Rendering, UI, and accessibility evidence
+
+- Real Chrome geometry assertions cover 320×568, 360×640, 375×667, 390×844,
+  430×932, 844×390, 768×1024, 1024×768, 1280×720, 1366×768,
+  1440×900, and 1920×1080, plus 200% run-dock text.
+- The compact dock stays within 72 CSS px where required; visible controls are
+  at least 43×43 measured / 44×44 authored and do not overlap or leave the
+  viewport. Skill detail geometry is asserted in portrait, landscape, tablet,
+  and desktop layouts.
+- Current Chrome captures were visually inspected for title phases, required
+  run viewports, Adaptations, New World, result hierarchy, Evolution Globe,
+  selection, purchase, and fixed-flow skill details. No physical-device claim
+  is made.
+- Pointer-only completion remains intact. The semantic skill tree supports
+  keyboard focus/selection; arbitrary world-cell inspection still requires
+  pointer hit testing. Screen-reader and forced-colors manual audits remain.
+
+## Exact verification
+
+Environment: Node v22.22.3, Linux x64, 20 logical CPUs.
+
+- `npm run verify` — PASS: structure; showcase freshness; 109 unit; 50
+  integration; balance smoke; benchmark; 96-module/9-HTML link gate.
+- Benchmark — 2,853 ticks in 192 ms, 14,868 ticks/s, hash `c55ddab5`.
+- `node scripts/terminal-soak.mjs --count=1000` — PASS with the results above.
+- `npm run test:browser:file` — PASS in real headless Chrome/WebGL2: score
+  605,185; 32× result in 9.08 s; four draws; title JS presentation mean
+  0.09 ms / p95 0.20 ms; visual IndexedDB reload; responsive and interaction
+  matrices pass with no browser errors.
+- `npm run test:browser:canvas` — PASS in real Chrome with WebGL disabled through
+  title, run, visual History, and Evolution Globe.
+- `docker compose run --rm verify` — PASS: 109 unit, 50 integration, all gates;
+  benchmark 2,853 ticks in 190 ms, 15,018 ticks/s, hash `c55ddab5`.
+
+## Known limitations and next actions
+
+- Push the coherent commits, wait for the Pages workflow, then verify workflow
+  head SHA and cache-busted deployed bytes before calling this deployed.
+- Public-URL Chrome navigation may remain sandbox-network blocked; if so, verify
+  public bytes over HTTP and exercise those exact repository bytes through the
+  CDP-pipe Chrome harness without claiming a public-browser screenshot.
+- Physical mobile touch/thermal/battery/GPU timing, screen-reader traversal,
+  forced-colors review, Japanese localization, and 100–200 hour challenge,
+  discovery, and trophy breadth remain incomplete.

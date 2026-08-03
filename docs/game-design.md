@@ -15,7 +15,7 @@ Four compatible attention modes:
 - **Curious naturalist:** rotate and inspect geography/life without influence.
 - **Strategic curator:** switch to MANUAL and resolve queued three-card offers
   when convenient while world time continues.
-- **Long-term gardener:** spend extinction Echoes on a dense spherical Memory
+- **Long-term gardener:** spend extinction Echoes on the spherical Evolution Globe
   atlas and shape later worlds.
 
 ## Run loop
@@ -28,8 +28,8 @@ Four compatible attention modes:
 5. Inspect cells and review semantic History during play.
 6. Spatial crises, entropy, fragmentation, and inevitable extinction unfold.
 7. A compact result strip explains score/cause and Echoes without hiding the
-   terminal world; details, History, and Memory remain optional.
-8. Enter Memory, select an adjacent cell on the globe, read it, then explicitly
+   terminal world; details, History, and the Evolution Globe remain optional.
+8. Enter Evolution Globe, select an adjacent Skill Cell, read it, then explicitly
    Unlock; or use the semantic list.
 9. Choose the next world or let the nine-second unattended countdown continue.
 
@@ -51,7 +51,7 @@ is an unexplained arbitrary click wall.
 - terminal ceiling: about 360 game seconds;
 - 1×–32× alters wall time only;
 - first campaign-resolution target: 18–24 minutes;
-- broad Memory/mastery target: about four hours.
+- all Skill Cells modeled at 60–100 hours of 1×-equivalent play; true completion targets 100–200 hours.
 
 The current smoke median meets the ordinary-run target; campaign and complete
 mastery timing remain targets, not measured completion claims.
@@ -64,12 +64,12 @@ A selection starts a bounded two-second presentation wave from an authoritative
 living origin through direct living neighbors; it visualizes consequence but
 never changes the already-applied deterministic effect.
 History stores semantic lifecycle, geography, morphology, crisis, Adaptation,
-extinction, and Memory-purchase events rather than tick logs. Bounded visual
+extinction, and Skill Cell purchase events rather than tick logs. Bounded visual
 checkpoints let the globe scrub to approximate earlier cellular states; event
 primary cells receive direct material emphasis and Live restores authority
 immediately. The expanded event list exposes the same selected event in text.
 
-## Memory atlas
+## Evolution Globe · Permanent Skill Tree
 
 Exactly 108 unique cells occupy a separate 642-cell atlas in six 18-cell
 currents: Reach, Flow, Reserve, Ecology, Perception, and Continuity. Every
@@ -77,7 +77,9 @@ prerequisite is also direct spherical adjacency. Composition is 48 micro, 24
 conditional, 18 milestones, 6 keystones, 6 connectors, and 6 capstones. Costs
 total 818 Echoes. Six roots cost 2–3 Echoes; early runs expose several purchases.
 Every purchase compiles a concrete bounded scalar or conditional effect for the
-next run. The globe is primary; the grouped list is a semantic alternative.
+next run. Visible `Worlds observed` gates place 54 skills at world 144, keystones
+at 164, connectors at 600, and capstones at 900. The globe is primary; a
+synchronized offscreen semantic tree preserves non-pointer purchase access.
 
 The long campaign, challenges, broader strain selection, trophies, audio, and
 complete Japanese localization are not yet complete and are not exposed as

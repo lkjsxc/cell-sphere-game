@@ -17,7 +17,7 @@ inspector state, and result.
 
 ## Tick order
 
-1. Rebuild the tiny effective trait block from compiled conditional Memory.
+1. Rebuild the tiny effective trait block from compiled conditional skills.
 2. Environment every 5 ticks: entropy/season LUTs, moisture/temperature,
    toxins, biome-scaled renewal, spatial event effects.
 3. Metabolism: biome-scaled uptake/upkeep, energy, stress, tissue maturity.
