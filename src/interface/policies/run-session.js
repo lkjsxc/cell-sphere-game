@@ -81,7 +81,7 @@ export function finishRun(app, result) {
   const identified = { ...result, resultTransactionKey: app.worldIdentity.resultTransactionKey };
   const transaction = applyRunResult(app.meta, app.archive, identified,
     app.settings.historyRetention, app.resultKeys); if (!transaction.applied) return false;
-  app.resultKeys.add(transaction.key); if (app.resultKeys.size > 16) app.resultKeys.delete(app.resultKeys.values().next().value);
+  app.resultKeys = new Set(transaction.meta.resultKeys);
   app.closeActiveOverlay(); app.adaptationEffects.clear(); app.selectedNode = null; app.flow.send('extinct');
   app.lastResult = identified; app.lastScore = transaction.score; app.lastResultIdentity = app.worldIdentity;
   app.meta = transaction.meta; app.archive = transaction.archive;

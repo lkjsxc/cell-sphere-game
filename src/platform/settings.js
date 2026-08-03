@@ -1,9 +1,5 @@
 /** Versioned, validated durable player preferences. */
-const KEY = 'incremental-network-game:settings:v3';
-const LEGACY_KEYS = Object.freeze([
-  'incremental-network-game:settings:v2',
-  'incremental-network-game:settings:v1',
-]);
+import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 
 export function defaultSettings() {
   const reduced = typeof matchMedia === 'function'
@@ -45,23 +41,9 @@ export function validateSettings(raw) {
   out.schema = 3; return out;
 }
 
-export function loadSettings() {
-  try {
-    const current = globalThis.localStorage?.getItem(KEY);
-    if (current) return validateSettings(JSON.parse(current));
-    for (const key of LEGACY_KEYS) {
-      const previous = globalThis.localStorage?.getItem(key);
-      if (!previous) continue;
-      const migrated = validateSettings(JSON.parse(previous)); saveSettings(migrated); return migrated;
-    }
-    return defaultSettings();
-  } catch { return defaultSettings(); }
-}
+export function loadSettings() { return loadNamespacedDocument('settings', validateSettings, defaultSettings); }
 
-export function saveSettings(settings) {
-  try { globalThis.localStorage?.setItem(KEY, JSON.stringify(validateSettings(settings))); return true; }
-  catch { return false; }
-}
+export function saveSettings(settings) { return saveNamespacedDocument('settings', settings, validateSettings); }
 
 export function applySettingsToDocument(settings) {
   const root = document.documentElement;

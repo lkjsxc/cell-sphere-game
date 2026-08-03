@@ -7,18 +7,18 @@ export const REQUIRED_VIEWPORTS = Object.freeze([
 export async function captureTitleEvidence(t) {
   const { evaluate, screenshot, wait, setViewport } = t;
   for (const [index, name] of [[0,'wake'],[12,'branch'],[26,'mature'],[42,'pressure'],[72,'fragment'],[88,'extinct']]) {
-    await evaluate(`(() => { const s=window.__IN_APP__.showcase; s.reduced=false;
+    await evaluate(`(() => { const s=window.__CELL_SPHERE_APP__.showcase; s.reduced=false;
       s.startedAt=performance.now()-${index * 250}; s.apply(${index}); })()`);
     await wait(80); await screenshot(`browser-title-phase-${name}.png`);
   }
-  const reduced = await evaluate(`(() => { const app=window.__IN_APP__; app.settings={...app.settings,motion:'reduced'};
+  const reduced = await evaluate(`(() => { const app=window.__CELL_SPHERE_APP__; app.settings={...app.settings,motion:'reduced'};
     app.showcase.update(performance.now(),true,false); return [app.showcase.frameIndex,app.showcase.reducedFrame]; })()`);
   assert(reduced[0] === reduced[1], 'reduced title did not hold its representative frame');
   await wait(80); await screenshot('browser-title-reduced.png');
-  await evaluate(`(() => { const app=window.__IN_APP__; app.settings={...app.settings,motion:'full'};
+  await evaluate(`(() => { const app=window.__CELL_SPHERE_APP__; app.settings={...app.settings,motion:'full'};
     const s=app.showcase; s.reduced=false; s.startedAt=performance.now(); s.apply(0); })()`);
-  const before = await evaluate('window.__IN_APP__.camera.direction.slice()'); await wait(650);
-  const after = await evaluate('window.__IN_APP__.camera.direction.slice()');
+  const before = await evaluate('window.__CELL_SPHERE_APP__.camera.direction.slice()'); await wait(650);
+  const after = await evaluate('window.__CELL_SPHERE_APP__.camera.direction.slice()');
   assert(distance(before, after) < 1e-8, 'globe rotated although default auto-rotation is off');
   for (const [width, height] of REQUIRED_VIEWPORTS) {
     await setViewport(width, height); await wait(120);
@@ -54,7 +54,7 @@ export async function assertSkillGeometry(t) {
   const { evaluate, setViewport, wait, screenshot } = t;
   for (const [width, height] of [[320,568],[360,640],[390,844],[430,932],[844,390],[768,1024],[1440,900]]) {
     await setViewport(width,height); await wait(100);
-    const g = await evaluate(`(() => { const app=window.__IN_APP__,panel=document.getElementById('memory-node-panel'),body=panel.querySelector('.surface-body'),
+    const g = await evaluate(`(() => { const app=window.__CELL_SPHERE_APP__,panel=document.getElementById('memory-node-panel'),body=panel.querySelector('.surface-body'),
       footer=panel.querySelector('.surface-actions'),close=document.getElementById('memory-node-close').getBoundingClientRect(); body.scrollTop=body.scrollHeight;
       const last=document.querySelector('#memory-node-meta dd:last-of-type')?.getBoundingClientRect(),f=footer.getBoundingClientRect(),p=panel.getBoundingClientRect(); body.scrollTop=0;
       return {dist:app.camera.dist,p:[p.left,p.top,p.right,p.bottom],close:[close.left,close.top,close.right,close.bottom],

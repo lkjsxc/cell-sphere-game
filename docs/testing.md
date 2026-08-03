@@ -1,7 +1,8 @@
 # Testing and evidence
 
-`npm run verify` runs structure, the cell-visual source audit, unit, integration,
-the 500-seed lake audit, balance smoke, benchmark, showcase, and deployment-path/link gates. `npm run test:browser:file` uses real headless
+`npm run verify` runs structure, canonical identity and cell-visual source audits,
+unit, integration, the 500-seed lake audit, balance smoke, benchmark, showcase,
+and deployment-path/link gates. `npm run test:browser:file` uses real headless
 Chrome/WebGL2 through a CDP pipe when local HTTP sockets are sandbox-blocked.
 `npm run test:browser:canvas` starts the same browser with WebGL disabled and
 verifies the Canvas 2D path. The same-origin harness exits 77 rather than
@@ -14,7 +15,13 @@ land bounds, climate/biomes/forest coherence, private drainage fields, connected
 and separated whole-cell lake IDs, frozen lake/shore/wetland records, bounded
 lake ecology, landmarks/sources, generation budget, renderer geometry and uniforms, tap/camera math, settings/pause/rotation, simulation queue/RNG,
 pure inspection, History cap, the 642-node graph-4/schema-8 migration/economy,
-and the 96-criterion Trophy catalog/topology/rich-condition boundaries. Evolution tests
+and the 96-criterion Trophy catalog/topology/rich-condition boundaries. Identity
+coverage verifies fresh canonical saves; exact legacy schema-8 Echoes, scores,
+runs, seed cursor, 642 ownership, Imprints, current/Legacy Trophies, queue/proof,
+result keys, Settings, and History; canonical coexistence priority; field-level
+corruption; safe malformed recovery; partial/exception/repeated migration;
+transactional import rollback; canonical export; and nonblocking visual-History
+unavailable/corrupt/duplicate/retention behavior. Evolution tests
 cover exactly six empty-save roots, run-zero acquisition, each of 3,840 directed
 physical frontiers, nonadjacent rejection, one-neighbor sufficiency, repeat and
 insufficient-fund transactions, preserved disconnected islands, and a legal
@@ -41,8 +48,12 @@ identities, one typed blank frame per cycle, and complete current-world teardown
 
 ## Real Chrome scenario
 
-The disposable-profile file/CDP scenario uses trusted pointer and keyboard input
-for scene, surface, gesture, confirmation, Result, and purchase semantics. It
+The disposable-profile file/CDP scenario first seeds all three old localStorage
+namespaces and an old-product semantic export, reloads, proves exact canonical
+adoption and source retention, changes the old copy, reloads to prove canonical
+coexistence priority/no duplicate reward, then starts the ordinary scenario from
+a fresh canonical save. It uses trusted pointer and keyboard input for scene,
+surface, gesture, confirmation, Result, and purchase semantics. It
 checks one stable Home/World/Evolution/Trophies tablist, exact World camera return
 while authority advances off-scene, four renderer draws, and one shell rectangle
 across SCORE/ENTROPY/REACH and many snapshots. Globe drag retains metric scroll,

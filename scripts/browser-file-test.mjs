@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { assertBlankReplacement, installFirstReplacementCapture, runScenario } from './browser/shell-scenario.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const PROFILE = `/tmp/incremental-network-game-browser-${process.pid}`;
+const PROFILE = `/tmp/cell-sphere-game-browser-${process.pid}`;
 const REPORTS = resolve(ROOT, 'reports');
 const forceCanvas = process.argv.includes('--canvas');
 const chrome = findChrome();
@@ -75,19 +75,19 @@ try {
 process.exit(exitCode);
 
 async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait, errors }) {
-  const boot = await evaluate('window.__IN_BOOT__'); if (boot?.renderer !== 'canvas2d') throw new Error('Canvas fallback did not boot');
+  const boot = await evaluate('window.__CELL_SPHERE_BOOT__'); if (boot?.renderer !== 'canvas2d') throw new Error('Canvas fallback did not boot');
   await screenshot('browser-canvas-title-mobile.png'); await setViewport(1440, 900); await wait(180); await screenshot('browser-canvas-title-desktop.png');
   await evaluate(`(()=>{document.getElementById('begin-button').click();const speed=document.getElementById('speed-select');speed.value='32';speed.dispatchEvent(new Event('change'))})()`);
-  if (!await poll(() => evaluate('window.__IN_APP__.phase'), (phase) => phase === 'result', 50000)) throw new Error('Canvas run did not finish');
+  if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 50000)) throw new Error('Canvas run did not finish');
   const score = await evaluate("Number(document.getElementById('result-score').textContent.replaceAll(',',''))");
   await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-canvas-history-desktop.png');
   await evaluate("document.getElementById('scene-evolution').click()"); await wait(180); await screenshot('browser-canvas-evolution-desktop.png');
-  const atlas = await evaluate('window.__IN_APP__.memorySnapshot.memoryStatus.length'); await evaluate("document.getElementById('scene-trophies').click()"); await wait(180); await screenshot('browser-canvas-trophies-desktop.png');
-  const trophies = await evaluate(`({cells:window.__IN_APP__.trophySnapshot.memoryStatus.length,nodes:window.__IN_APP__.trophySnapshot.nodeStates.length})`);
-  await installFirstReplacementCapture(evaluate); const oldRun = await evaluate('window.__IN_APP__.activeRunId'); await evaluate("document.getElementById('trophy-next-button').click()");
-  if (!await poll(() => evaluate('window.__IN_APP__.activeRunId'), (runId) => runId > oldRun, 5000)) throw new Error('Canvas replacement did not start');
-  assertBlankReplacement(await evaluate('window.__IN_APP__.__firstReplacementFrame'), 'Canvas 2D');
-  const bounded = await evaluate(`(()=>{const a=window.__IN_APP__;return {...a.worldResourceAudit(),raf:a.frameAudit}})()`);
+  const atlas = await evaluate('window.__CELL_SPHERE_APP__.memorySnapshot.memoryStatus.length'); await evaluate("document.getElementById('scene-trophies').click()"); await wait(180); await screenshot('browser-canvas-trophies-desktop.png');
+  const trophies = await evaluate(`({cells:window.__CELL_SPHERE_APP__.trophySnapshot.memoryStatus.length,nodes:window.__CELL_SPHERE_APP__.trophySnapshot.nodeStates.length})`);
+  await installFirstReplacementCapture(evaluate); const oldRun = await evaluate('window.__CELL_SPHERE_APP__.activeRunId'); await evaluate("document.getElementById('trophy-next-button').click()");
+  if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.activeRunId'), (runId) => runId > oldRun, 5000)) throw new Error('Canvas replacement did not start');
+  assertBlankReplacement(await evaluate('window.__CELL_SPHERE_APP__.__firstReplacementFrame'), 'Canvas 2D');
+  const bounded = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {...a.worldResourceAudit(),raf:a.frameAudit}})()`);
   if (bounded.interactionListeners !== 8 || bounded.historyRequests || bounded.adaptationEffects || bounded.adaptationBytes || bounded.adaptationTimers
     || bounded.raf.errors || bounded.raf.scheduled < bounded.raf.frames - 1) throw new Error(`Canvas replacement resources/RAF leaked: ${JSON.stringify(bounded)}`);
   if (score <= 0 || atlas !== 642 || trophies.cells !== 162 || trophies.nodes !== 96 || errors.length) throw new Error('Canvas fallback state failed'); return { score };

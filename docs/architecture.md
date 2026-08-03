@@ -95,34 +95,40 @@ whole-cell lake/shore reach, lake diversity/type/salinity, ecology combinations,
 sustained lake living/loops, and lake-region drought/freeze survival. These
 facts intentionally join the final deterministic hash but consume no RNG.
 
-## Persistence
+## Identity and persistence
 
-Separate localStorage documents own:
+`src/core/identity.js` is the platform-neutral authority for the
+`cell-sphere-game` product/tagline/version, repository/Pages targets, export
+identity, browser diagnostics, and persistence namespaces. Separate canonical
+localStorage documents own:
 
-- Settings schema 3 (`settings:v2`), including automatic continuation and safe
-  migration from earlier values;
-- progression schema 8 (`meta:v1`), including Echoes, graph-4 642-cell ownership,
-  cell-converted Imprints, current Trophy IDs, separate Legacy ownership,
-  persisted unread FIFO, facts-v3 cumulative aggregates, graph versions,
-  quarantine, a seed cursor, and one migration notice;
-- semantic History schema 4 (`history:v2`, migrating earlier schemas), retaining
-  24/32 timelines, ≤80 events and ≤8 primary cells/event, ≤128 skill
-  purchases, and a hard 700 KB serialized cap;
-- device-local IndexedDB visual History: strict `INHV` v1 cell-only bundles,
-  newest ten completed worlds, each at most 256 KiB.
+- Settings schema 3 (`cell-sphere-game:settings:v3`);
+- progression schema 8 (`cell-sphere-game:meta:v1`), including Echoes, scores,
+  graph-4 642-cell ownership, cell-converted Imprints, current and Legacy Trophy
+  IDs, unread FIFO/progress, seed cursor, and the last 16 result transaction keys;
+- semantic History schema 4 (`cell-sphere-game:history:v2`), retaining 24/32
+  timelines, ≤80 events and ≤8 primary cells/event, ≤128 Skill/Trophy events,
+  and a hard 700 KB serialized cap;
+- device-local IndexedDB visual History (`cell-sphere-game:recent-runs`): strict
+  `INHV` v1 cell-only bundles, newest ten worlds, each at most 256 KiB.
 
-Parse/validate is field-by-field. Every recognized owned ID is preserved even
-when old ownership forms disconnected islands; each island becomes a physical
-frontier source, while unknown IDs remain quarantined. No migration closes
-ownership, refunds, charges, or auto-purchases. Progress purchases persist before
-in-memory currency is committed. Result awards pass through an idempotent transaction,
-so repeated completion delivery cannot duplicate Echoes, History, Imprints, a
-Trophy Cell, semantic Trophy event, or notification ID. The global presentation
-queue is not retired with a world generation; Trophy-Sphere emphasis reads only
-that queue and never becomes an old-world cell highlight.
-Storage failure leaves the session playable and is communicated honestly. JSON
-export/import remains semantic only; visual checkpoints are explicitly
-approximate and device-local.
+Namespace adoption stages field-validated documents, writes canonical values,
+reads them back, and records a receipt only after normalized verification.
+Legacy sources remain untouched. Valid canonical data always wins coexistence;
+a parseable but partially corrupt canonical document degrades field-by-field.
+Malformed canonical progression blocks legacy rollback unless the verified
+source/target receipt proves the fallback equals the last canonical checkpoint.
+Partial writes remain repeatable and storage failure leaves play available with
+an honest temporary-state diagnostic.
+
+IndexedDB adoption starts after the canonical database opens and never blocks
+app startup. It decodes at most ten retained legacy records, merges by record ID
+with valid canonical records winning duplicates, verifies every target write,
+and marks completion only afterward. Result transaction keys persist with schema
+8, so reload delivery cannot duplicate Echoes, History, Imprints, Trophies, or
+notifications. New semantic JSON exports use the canonical product and filename;
+imports accept both canonical and explicit legacy product values. Visual
+checkpoints remain approximate and device-local.
 
 ## Determinism boundary
 

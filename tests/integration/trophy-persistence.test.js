@@ -64,8 +64,12 @@ test('accepted terminal result stores facts, semantic award, and persistent queu
   assert.deepEqual(first.meta.trophyQueue, ['evolution-first-world']); assert.ok(first.archive.worlds[0].trophyFacts);
   assert.equal(first.archive.worlds[0].events.filter((event) => event.key === 'trophy.earned').length, 1);
   assert.equal(first.archive.trophies.filter((event) => event.subjectId === 'evolution-first-world').length, 1);
+  assert.deepEqual(first.meta.resultKeys, [first.key]);
   keys.add(first.key); const duplicate = applyRunResult(first.meta, first.archive, result, 24, keys);
   assert.equal(duplicate.applied, false); assert.deepEqual(duplicate.trophyIds, []); assert.equal(duplicate.archive.worlds.length, 1);
+  const afterReload = applyRunResult(validateMeta(JSON.parse(JSON.stringify(first.meta))), first.archive, result, 24, new Set());
+  assert.equal(afterReload.applied, false); assert.equal(afterReload.meta.totalEchoes, first.meta.totalEchoes);
+  assert.equal(afterReload.archive.worlds.length, 1);
 });
 
 test('non-world progression recognition still appends one bounded semantic Trophy event', () => {

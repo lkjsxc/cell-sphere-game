@@ -4,8 +4,7 @@ import { MEMORY_GRAPH_VERSION, MEMORY_NODE_IDS } from '../game/skills/index.js';
 import { LEGACY_TROPHY_IDS, TROPHY_CATALOG_VERSION, TROPHY_IDS } from '../game/trophies/index.js';
 import { TROPHY_MAX_KEYS, TROPHY_SUM_KEYS } from '../game/trophies/keys.js';
 import { createTopology } from '../world/icosphere.js';
-
-const KEY = 'incremental-network-game:meta:v1';
+import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 const VALID_MEMORY_IDS = new Set(MEMORY_NODE_IDS);
 const VALID_TROPHY_IDS = new Set(TROPHY_IDS);
 const VALID_LEGACY_TROPHY_IDS = new Set(LEGACY_TROPHY_IDS);
@@ -19,7 +18,7 @@ export const LEGACY_MEMORY_MAP = Object.freeze({
 
 export function defaultMeta() {
   return { schema: 8, memoryGraphVersion: MEMORY_GRAPH_VERSION, trophyVersion: TROPHY_CATALOG_VERSION,
-    bestScore: 0, totalEchoes: 0, echoBalance: 0, runs: 0, worldSeedIndex: 0,
+    bestScore: 0, totalEchoes: 0, echoBalance: 0, runs: 0, worldSeedIndex: 0, resultKeys: [],
     memoryNodes: [], quarantinedMemoryNodes: [], imprints: [], trophyIds: [], legacyTrophyIds: [], trophyQueue: [], trophyBackfillVersion: 0,
     trophyProgress: { version: 3, adaptationIds: [], geographyMask: 0, geographyVersion: 3,
       crisisMask: 0, adaptationCategoryMask: 0, lakeTypeMask: 0, lakeSalinityMask: 0, aggregate: {} }, migrationNotice: null };
@@ -34,6 +33,8 @@ export function validateMeta(raw) {
     : sourceSchema === 1 ? out.totalEchoes : 0;
   out.runs = boundedInteger(raw.runs, 0);
   out.worldSeedIndex = Math.max(out.runs, boundedInteger(raw.worldSeedIndex, out.runs));
+  if (Array.isArray(raw.resultKeys)) out.resultKeys = [...new Set(raw.resultKeys.filter((key) =>
+    typeof key === 'string' && key.length > 0 && key.length <= 128))].slice(-16);
   const ownership = migrateMemoryIds(raw.memoryNodes, sourceSchema);
   out.memoryNodes = MEMORY_NODE_IDS.filter((id) => ownership.valid.includes(id));
   out.quarantinedMemoryNodes = mergeQuarantine(ownership.quarantine, raw.quarantinedMemoryNodes);
@@ -127,8 +128,6 @@ function mergeQuarantine(found, raw) { const ids = [...new Set(found)]; if (Arra
   if (typeof id === 'string' && /^[a-z][a-z-]{0,63}$/.test(id) && !ids.includes(id)) ids.push(id); return ids.slice(0, 32); }
 function validMigrationNotice(value) { return value && typeof value === 'object' && value.kind === 'memory-atlas-v5' && typeof value.pending === 'boolean'; }
 
-export function loadMeta() { try { const raw = globalThis.localStorage?.getItem(KEY); return validateMeta(raw ? JSON.parse(raw) : null); }
-  catch { return defaultMeta(); } }
-export function saveMeta(meta) { try { if (!globalThis.localStorage?.setItem) return false;
-    globalThis.localStorage.setItem(KEY, JSON.stringify(validateMeta(meta))); return true; } catch { return false; } }
+export function loadMeta() { return loadNamespacedDocument('meta', validateMeta, defaultMeta); }
+export function saveMeta(meta) { return saveNamespacedDocument('meta', meta, validateMeta); }
 /** @typedef {ReturnType<typeof defaultMeta>} Meta */

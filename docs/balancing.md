@@ -217,3 +217,10 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   generated 89-frame payload remains byte-identical with data hash
   `22ac0d97…`; only its production-source hash changed from `3f3e9227…` to
   `e15a13fd…`. The benchmark golden remains `813c4f49`.
+- **2026-08-03 — Canonical identity source metadata.** Added platform-neutral
+  product/persistence identity and retained the explicit `INHV` v1 legacy
+  visual codec, which is included in the showcase source fingerprint. No
+  simulation equation, RNG stream, tick, frame, or encoded byte changed. The
+  generated payload remains 89 frames / 228,754 bytes with data hash
+  `22ac0d97…`; only source metadata changed to `a461fcf1…`. The production
+  benchmark remains 2,715 ticks with hash `256388b9`.

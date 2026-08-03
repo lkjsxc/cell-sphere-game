@@ -1,6 +1,6 @@
 # Game design
 
-**incremental-network-game** — *Every extinction becomes memory.*
+**cell-sphere-game** — *Every extinction becomes memory.*
 
 ## Product thesis
 

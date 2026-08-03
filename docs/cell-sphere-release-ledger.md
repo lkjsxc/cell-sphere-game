@@ -37,7 +37,7 @@ Evidence words are scoped: **implemented**, **tested**, **measured**, **observed
 | E3 | compact dock/Adaptations, visible mobile event, fixed scene selector | implemented and locally observed; not deployed | responsive matrix, 200% text, long labels |
 | F1 | Evolution cost plus one owned adjacent cell only | implemented/tested locally from `ce554ef`; not deployed | schema/audit/migration and run-zero purchase proof complete |
 | F2 | harder lake-centric Trophies and queued feedback | implemented/tested in isolated worktree from `25edde7`; not deployed | production/model horizon audit, Legacy migration, fake-clock queue tests; final browser evidence pending |
-| G | `cell-sphere-game` package/storage/repository/Pages identity | legacy identity deployed; GitHub ADMIN observed | namespace migration tests, renamed origin, Actions and exact Pages bytes |
+| G | `cell-sphere-game` package/storage/repository/Pages identity | implemented/tested in isolated worktree; external rename/deploy not executed | parent repository rename/push, successful Actions, and exact canonical Pages bytes |
 | H | deterministic Worker/fallback, 32×, bounded performance | baseline fast gates pass | final parity, balance, benchmark, Canvas, lake/event/Trophy audits and soaks |
 | I | coherent push and exact public deployment | target | clean tree, successful workflow, cache-busted public inspection |
 
@@ -77,6 +77,30 @@ Evidence words are scoped: **implemented**, **tested**, **measured**, **observed
   no overlap, and no horizontal overflow.
 - **not deployed**: no push, CI, Pages, public URL, Docker, physical-mobile, or
   assistive-technology claim belongs to this isolated shell slice.
+
+## Canonical identity / namespace evidence
+
+- **implemented locally** one platform-neutral identity module owns the exact
+  product/tagline/version, target repository/Pages URLs, canonical storage and
+  IndexedDB names, export identity/filename, and `__CELL_SPHERE_*` diagnostics.
+- **implemented locally** schema-8 progression now persists bounded result
+  transaction keys as well as scores, Echoes, run/seed cursors, all 642 Skill
+  ownership, Imprints, current/Legacy Trophies, queue, and cumulative proof.
+  Settings and semantic History migrate in the same staged, verified namespace
+  transaction; canonical values win coexistence and legacy sources remain intact.
+- **implemented locally** malformed-canonical fallback is allowed only when a
+  source/target receipt proves the legacy normalization equals the last verified
+  canonical checkpoint. Partial writes are repeatable; import is all-or-rollback;
+  storage-unavailable play remains explicit and session-safe.
+- **implemented locally** visual History adoption is asynchronous and startup-
+  nonblocking. At most ten valid decoded records merge by ID into the canonical
+  IndexedDB, canonical duplicates win, and the receipt is written only after
+  target verification. `INHV` v1 remains intentionally supported to avoid loss.
+- **tested locally** the identity audit rejects transitional active copy/config
+  and ambiguous browser globals. Unit/integration and real-browser migration
+  results belong in `docs/status.md` after final execution.
+- **not executed externally**: repository rename, remote change, push, Actions,
+  Pages deployment, and public canonical URL verification remain parent actions.
 
 ## Trophy mastery / presentation timing evidence
 

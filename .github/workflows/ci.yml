@@ -19,6 +19,8 @@ jobs:
           node-version: 22
       - name: Structure gate
         run: node scripts/check-structure.mjs
+      - name: Canonical identity audit
+        run: node scripts/audits/identity-audit.mjs
       - name: Unit tests
         run: node --test tests/unit/*.test.js tests/unit/simulation/*.test.js
       - name: Integration tests

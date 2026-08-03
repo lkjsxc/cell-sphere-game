@@ -33,16 +33,18 @@ import { availableSkills, buySkill, closeSkill, closeTrophy, enterEvolution, ent
   focusTrophy, initializeProgression, presentEvolution, presentTrophies, progressionTap, reconcileBeforeHistoryClear, selectSkill, selectTrophy } from './policies/progression-spheres.js';
 import { createSettingsSurface } from './settings-surface.js';
 import { downloadData, parseImportedData, qualityDpr } from './app-data.js';
+import { saveImportedNamespace } from '../platform/namespace-migration.js';
+import { DIAGNOSTIC_GLOBALS, PAGES_URL, PRODUCT, REPOSITORY, STORAGE_KEYS, TAGLINE, VERSION } from '../core/identity.js';
 import * as ui from './surfaces.js';
 const TITLE_SEED = TITLE_SHOWCASE.seed;
 export function startGameApp(options) { const app = new GameApp(options); app.boot(); return app; }
 class GameApp {
-  constructor({ canvas, caps, settings }) {
-    Object.assign(this, { canvas, caps, settings }); this.el = ui.elements(); this.topo4 = createTopology(4); this.topo = this.topo4; initializeProgression(this);
+  constructor({ canvas, caps, settings, storageMigration = null }) {
+    Object.assign(this, { canvas, caps, settings, storageMigration }); this.el = ui.elements(); this.topo4 = createTopology(4); this.topo = this.topo4; initializeProgression(this);
     this.adaptationEffects = createAdaptationEffects(this.topo4, this.el.adaptationCaption); this.camera = createCamera(); this.meta = loadMeta(); this.archive = loadHistory(settings.historyRetention);
-    this.flow = createAppState(); this.speed = settings.speed; this.snapshot = null; this.selectedNode = null;
+    this.resultKeys = new Set(this.meta.resultKeys); this.flow = createAppState(); this.speed = settings.speed; this.snapshot = null; this.selectedNode = null;
     this.renderer = null; this.fields = null; this.worldFields = null; this.showcase = null; this.overlay = null; this.cameraByScene = new Map();
-    this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null; this.lastScore = null; this.lastResultIdentity = null; this.resultKeys = new Set(); this.requestId = 0; this.requestGeneration = 0;
+    this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null; this.lastScore = null; this.lastResultIdentity = null; this.requestId = 0; this.requestGeneration = 0;
     this.runSeed = null; this.activeRunId = 0; this.worldIdentity = null; this.retiredWorldIdentity = null;
     this.worldSessionSequence = 0; this.presentationGeneration = 0; this.worldReplacement = createWorldReplacementState();
     this.visualSeed = null; this.historySnapshot = null; this.historyHighlights = [];
@@ -60,10 +62,15 @@ class GameApp {
       this.topo.positions.subarray(TITLE_SHOWCASE.focusCell * 3, TITLE_SHOWCASE.focusCell * 3 + 3)); this.resize(false);
     this.showcase = new TitleShowcase(this.topo);
     this.makeSurfaces(); this.bindUi(); this.bindCanvas(); this.bindLifecycle(); this.el.speed.value = String(this.speed);
-    this.el.boot.textContent = `Cells ready — ${this.renderer.backend === 'webgl2' ? 'WebGL2' : 'Canvas 2D'}`; ui.show(this.el, 'home'); this.sceneSelector.update('home'); ui.updateAdaptationMode(this.el, this.settings.adaptationMode);
+    const temporary = this.storageMigration && (!this.storageMigration.available || !this.storageMigration.complete);
+    this.el.boot.textContent = `Cells ready — ${this.renderer.backend === 'webgl2' ? 'WebGL2' : 'Canvas 2D'}${temporary ? ' · progress is temporary' : ''}`;
+    ui.show(this.el, 'home'); this.sceneSelector.update('home'); ui.updateAdaptationMode(this.el, this.settings.adaptationMode);
     if (this.meta.migrationNotice?.pending) { ui.toast(this.el, 'Your earlier skills and Imprints were moved into the Evolution Globe.');
       this.meta = { ...this.meta, migrationNotice: { ...this.meta.migrationNotice, pending: false } }; saveMeta(this.meta); }
-    window.__IN_BOOT__ = Object.freeze({ renderer: this.renderer.backend, version: '0.2.0', playable: true }); window.__IN_APP__ = this;
+    if (temporary) ui.announce(this.el, 'Browser storage is unavailable or recovery is incomplete; this session remains playable but changes may be temporary.');
+    window[DIAGNOSTIC_GLOBALS.boot] = Object.freeze({ product: PRODUCT, tagline: TAGLINE, version: VERSION,
+      repository: REPOSITORY, pages: PAGES_URL, storage: STORAGE_KEYS, storageMigration: this.storageMigration,
+      renderer: this.renderer.backend, playable: true }); window[DIAGNOSTIC_GLOBALS.app] = this;
     requestAnimationFrame((now) => this.frame(now)); console.info(`boot ok: ${this.renderer.backend}; passive world ready`);
   } makeSurfaces() {
     this.sceneSelector = createSceneSelector({ onSelect: (scene) => this.selectScene(scene) });
@@ -242,9 +249,11 @@ class GameApp {
     else if (action === 'camera-reset') { Object.assign(this.camera, createCamera()); this.selectedNode = null; }
     else if (action === 'export') downloadData(this.meta, this.archive, this.settings);
     else if (action === 'clear-history' && confirm('Clear all preserved History?')) { const trophies = reconcileBeforeHistoryClear(this); this.archive = clearHistory(); saveHistory(this.archive); this.historyPlayback.clear(); ui.announce(this.el, `History was cleared.${trophies.length ? ` ${trophies.length} proven trophies were preserved.` : ''}`); }
-    else if (action === 'reset-progress' && confirm('Reset Echoes, Evolution Globe skills, Imprints, and Trophies? This cannot be undone.')) { this.meta = defaultMeta(); saveMeta(this.meta); this.trophyNotifications.replace(this.meta); ui.announce(this.el, 'Progression was reset.'); }
-    else if (action === 'import') { const data = parseImportedData(value); this.meta = data.meta; this.archive = data.history; this.applySettings(data.settings);
-      saveMeta(this.meta); saveHistory(this.archive, this.settings.historyRetention); this.trophyNotifications.replace(this.meta); ui.announce(this.el, 'Local data was imported.'); }
+    else if (action === 'reset-progress' && confirm('Reset Echoes, Evolution Globe skills, Imprints, and Trophies? This cannot be undone.')) { this.meta = defaultMeta(); this.resultKeys = new Set(); saveMeta(this.meta); this.trophyNotifications.replace(this.meta); ui.announce(this.el, 'Progression was reset.'); }
+    else if (action === 'import') { const data = parseImportedData(value); const persistence = saveImportedNamespace(data);
+      this.meta = data.meta; this.resultKeys = new Set(this.meta.resultKeys); this.archive = data.history; this.applySettings(data.settings);
+      this.trophyNotifications.replace(this.meta); ui.announce(this.el, persistence.ok ? 'Local data was imported.'
+        : 'Local data was imported for this session, but browser storage could not commit it safely.'); }
     else if (action === 'import-error') throw new Error('invalid import');
   } catch { ui.announce(this.el, 'That local-data action could not be completed.'); } }
   availableMemory() { return availableSkills(this); }

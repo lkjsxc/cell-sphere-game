@@ -6,7 +6,8 @@ import { reconcileTrophies } from '../../game/trophies/evaluator.js';
 
 export function applyRunResult(meta, archive, result, retention, lastKey = null) {
   const key = result.resultTransactionKey ?? `${result.runId ?? 0}:${result.seed}:${result.hash}:${result.tick}`;
-  if (lastKey instanceof Set ? lastKey.has(key) : key === lastKey) return Object.freeze({ applied: false, key, meta, archive, score: null, trophyIds: [] });
+  const alreadyApplied = meta.resultKeys?.includes(key) || (lastKey instanceof Set ? lastKey.has(key) : key === lastKey);
+  if (alreadyApplied) return Object.freeze({ applied: false, key, meta, archive, score: null, trophyIds: [] });
   const score = scoreResult(result); const converted = result.imprint?.edges?.length
     ? convertImprintToAtlas(result.imprint) : null;
   const nextMeta = {
@@ -15,6 +16,7 @@ export function applyRunResult(meta, archive, result, retention, lastKey = null)
     totalEchoes: meta.totalEchoes + score.echoes,
     echoBalance: meta.echoBalance + score.echoes,
     bestScore: Math.max(meta.bestScore, score.total),
+    resultKeys: [...(meta.resultKeys ?? []).filter((entry) => entry !== key), key].slice(-16),
     imprints: converted ? [...meta.imprints, converted].slice(-8) : meta.imprints,
   };
   const appended = appendWorld(archive, result, score, nextMeta.runs, retention); const record = appended.worlds.at(-1);

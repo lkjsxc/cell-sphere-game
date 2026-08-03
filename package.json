@@ -1,9 +1,9 @@
 {
-  "name": "incremental-network-game",
+  "name": "cell-sphere-game",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "incremental-network-game — a deterministic spherical roguelite incremental game. Every extinction becomes memory.",
+  "description": "cell-sphere-game — a deterministic spherical roguelite ecology. Every extinction becomes memory.",
   "engines": {
     "node": ">=22"
   },
@@ -28,12 +28,13 @@
     "audit:events": "node scripts/audits/event-audit.mjs",
     "audit:skills": "node scripts/audits/skill-audit.mjs",
     "audit:trophies": "node scripts/audits/trophy-audit.mjs",
+    "audit:identity": "node scripts/audits/identity-audit.mjs",
     "benchmark": "node scripts/benchmark.mjs",
     "verify": "node scripts/verify.mjs"
   },
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lkjsxc/incremental-network-game"
+    "url": "https://github.com/lkjsxc/cell-sphere-game"
   }
 }

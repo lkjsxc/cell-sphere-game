@@ -1,8 +1,6 @@
 /** Bounded semantic History schema 4. Visual detail is stored separately. */
 import { buildTrophyFacts, validateTrophyFacts } from '../game/trophies/facts.js';
-const KEY = 'incremental-network-game:history:v2';
-const LEGACY_KEY = 'incremental-network-game:history:v1';
-const BACKUP_KEY = `${KEY}:corrupt`;
+import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 const MAX_BYTES = 700_000;
 const MAX_EVENTS = 80;
 const MAX_MEMORY_EVENTS = 128;
@@ -88,18 +86,14 @@ export function validateHistory(raw, retention = 24) {
 }
 
 export function loadHistory(retention = 24) {
-  try {
-    const storage = globalThis.localStorage; const text = storage?.getItem(KEY) ?? storage?.getItem(LEGACY_KEY);
-    if (!text) return defaultHistory();
-    try { return validateHistory(JSON.parse(text), retention); }
-    catch { try { storage?.setItem(BACKUP_KEY, text.slice(0, MAX_BYTES)); } catch { /* session only */ } return defaultHistory(); }
-  } catch { return defaultHistory(); }
+  return loadNamespacedDocument('history', (value) => validateHistory(value, retention), defaultHistory);
 }
 export function saveHistory(history, retention = 24) {
   try {
     const value = validateHistory(history, retention); let text = JSON.stringify(value);
     while (text.length > MAX_BYTES && value.worlds.length > 1) { value.worlds.shift(); text = JSON.stringify(value); }
-    if (text.length > MAX_BYTES) return false; globalThis.localStorage?.setItem(KEY, text); return true;
+    if (text.length > MAX_BYTES) return false;
+    return saveNamespacedDocument('history', value, (item) => validateHistory(item, retention));
   } catch { return false; }
 }
 export function normalizeHistoryEvents(events) { return (Array.isArray(events) ? events : []).slice(0, MAX_EVENTS).map(validateEvent).filter(Boolean); }

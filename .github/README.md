@@ -1,4 +1,4 @@
-# incremental-network-game
+# cell-sphere-game
 
 > **Every extinction becomes memory.**
 
@@ -8,7 +8,11 @@ lakes, shores, and forests, survive spatial crises, and inevitably collapse. Ins
 without steering the run, review what happened in History, then turn extinction
 into permanent Skill Cells on the spherical Evolution Globe.
 
-**Play:** https://lkjsxc.github.io/incremental-network-game/
+**Play:** https://lkjsxc.github.io/cell-sphere-game/
+
+The source is prepared for the canonical repository and Pages path. External
+repository rename, push, workflow execution, and deployment are intentionally
+not claimed by this worktree.
 
 Submitted to the [ZEN Study Programming Contest 2026 Summer](https://progedu.github.io/webappcontest/2026/summer/index.html),
 Web Page category, ZEN University division. The published deadline is
@@ -73,11 +77,13 @@ preference.
   Earned cells are monotonic; simultaneous acquisitions use a persisted FIFO
   notification with names/reasons, unread badge, sequential accessible reveal,
   and no world-cell highlight leakage.
-- Schema-8 progression explicitly separates retired `reach-river-touch` Legacy
-  ownership from the current `reach-lake-network` criterion. Schema-4 semantic
-  History stores exactly-once Trophy entries; v1 river proof never becomes lake
-  proof. Settings and ten device-local IndexedDB visual bundles remain separate. JSON
-  export/import intentionally remains semantic only.
+- Canonical `cell-sphere-game:*` schema-8 progression, schema-3 Settings, and
+  schema-4 semantic History adopt verified legacy namespaces transactionally,
+  without deleting recovery sources or duplicating balances/rewards. Persisted
+  result keys keep completion idempotent across reloads. The newest ten validated
+  visual bundles migrate asynchronously by record ID between IndexedDB databases;
+  strict `INHV` v1 remains an explicit supported legacy visual codec. New JSON
+  exports are canonical while legacy product exports remain accepted.
 - No runtime dependencies, engine, framework, CDN, remote media, analytics, or
   post-load network requirement.
 
@@ -91,6 +97,7 @@ npm run test:browser:canvas # force the real-Chrome Canvas 2D fallback
 npm run audit:lakes         # 500-seed connected-lake distribution audit
 npm run audit:skills        # exhaustive Evolution physical-frontier/economy audit
 npm run audit:trophies      # 24 fresh worlds + 240-world modeled mastery campaign
+npm run audit:identity      # canonical package/source/storage/browser identity
 npm run audit:cell-visuals  # reject sub-cell production geography
 npm run verify              # structure/test/audit/balance/benchmark/link gates
 ```

@@ -6,7 +6,7 @@ import { decodeVisualHistory, encodeVisualHistory, MAX_BYTES, thinFrames } from 
 import { createPreviewBuffers, nearestFrame, projectPreview } from '../../src/history/preview.js';
 import { RunController } from '../../src/simulation/simulator.js';
 import { scoreResult } from '../../src/game/scoring.js';
-import { createRecentRuns, validateRecentRun } from '../../src/platform/recent-runs.js';
+import { createRecentRuns, migrateRecentRunRecords, validateRecentRun } from '../../src/platform/recent-runs.js';
 import { createHistoryLoadGuard, createHistoryPlayback } from '../../src/interface/history-playback.js';
 import { loadHistory, normalizeHistoryEvents, validateHistory } from '../../src/platform/history.js';
 
@@ -79,8 +79,42 @@ test('recent-runs validates buffers and gracefully degrades without IndexedDB', 
   assert.ok(validateRecentRun({ id: '1-2-abcd', seed: 2, completedAt: 1, buffer }));
   assert.equal(validateRecentRun({ id: '1-2-abcd', seed: 3, completedAt: 1, buffer }), null);
   const recent = createRecentRuns(null); assert.equal(await recent.ready(), false);
+  assert.equal((await recent.migration()).status, 'unavailable');
   assert.equal(await recent.put({}), false); assert.equal(await recent.get('missing'), null); assert.deepEqual(await recent.list(), []);
 });
+
+test('recent-runs migration validates, deduplicates by ID, retains ten, and receipts only verified writes', async () => {
+  const records = Array.from({ length: 12 }, (_, index) => recentRecord(`run-${index}`, index + 1, index + 1));
+  const duplicateCanonical = recentRecord('run-11', 99, 50); const target = recentTarget([duplicateCanonical]);
+  const corrupt = { ...records[0], id: 'corrupt', seed: 999 };
+  const result = await migrateRecentRunRecords([...records, corrupt], target);
+  assert.equal(result.status, 'complete'); assert.ok(result.copied <= 10); assert.equal(result.duplicates, 1);
+  assert.equal(target.receipts.length, 1); assert.equal(target.records.size, 10);
+  assert.equal(target.records.get('run-11').seed, 99, 'valid canonical duplicate must win');
+  for (const record of target.records.values()) assert.ok(validateRecentRun(record));
+  const repeated = await migrateRecentRunRecords([...records, corrupt], target);
+  assert.equal(repeated.status, 'complete'); assert.equal(repeated.copied, 0); assert.equal(target.records.size, 10);
+});
+
+test('recent-runs migration handles unavailable and partial destinations without a receipt', async () => {
+  const record = recentRecord('run-one', 1, 1); let marked = false;
+  const unavailable = await migrateRecentRunRecords([record], { async list() { throw new Error('blocked'); } });
+  assert.equal(unavailable.status, 'unavailable');
+  const partial = await migrateRecentRunRecords([record], { async list() { return []; }, async get() { return null; },
+    async put() { return false; }, async markReceipt() { marked = true; return true; } });
+  assert.equal(partial.status, 'partial'); assert.equal(marked, false);
+});
+
+function recentRecord(id, seed, completedAt) {
+  return { id, seed, completedAt, buffer: encodeVisualHistory({ cellCount: 32, seed }, [frame(0, 3)]) };
+}
+function recentTarget(initial = []) {
+  const target = { records: new Map(initial.map((record) => [record.id, record])), receipts: [],
+    async list() { return [...this.records.values()]; }, async get(id) { return this.records.get(id) ?? null; },
+    async put(record) { this.records.set(record.id, record); return true; }, async remove(id) { this.records.delete(id); return true; },
+    async markReceipt(receipt) { this.receipts.push(receipt); return true; } };
+  return target;
+}
 
 test('past-world load guard rejects stale asynchronous completions', () => {
   const guard = createHistoryLoadGuard(); const first = guard.next(); const second = guard.next();

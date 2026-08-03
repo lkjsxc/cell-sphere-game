@@ -14,6 +14,7 @@ here is environment-independent and runs under Node and the browser.
 | `assert.js` | Boundary assertions for messages, saves, and configuration. |
 | `adaptation-arrival.js` | Pure deterministic weighted graph arrival field for bounded presentation. |
 | `world-session.js` | Immutable authority/presentation identity tuple and exact matching. |
+| `identity.js` | Canonical product/tagline/repository/Pages/storage/export/browser identity and isolated legacy names. |
 
 Invariants:
 

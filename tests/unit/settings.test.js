@@ -9,6 +9,7 @@ import {
   groupAccessibleMemory, purchaseMemory, validateMemoryGraph,
 } from '../../src/game/skills/index.js';
 import { parseImportedData } from '../../src/interface/app-data.js';
+import { LEGACY_PRODUCT } from '../../src/core/identity.js';
 import { createTopology } from '../../src/world/icosphere.js';
 import { createCamera, viewProjection } from '../../src/rendering/camera.js';
 import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from '../../src/interface/camera-policy.js';
@@ -120,7 +121,7 @@ test('each migrated disconnected island remains owned and opens its own physical
 
 test('old semantic exports preserve recognized ownership and quarantine unknown IDs', () => {
   const owned = ['continuity-unbroken-lesson', 'reach-cell-fine-runner'];
-  const parsed = parseImportedData(JSON.stringify({ schema: 1, product: 'incremental-network-game',
+  const parsed = parseImportedData(JSON.stringify({ schema: 1, product: LEGACY_PRODUCT,
     meta: { schema: 6, memoryGraphVersion: 3, echoBalance: 9, memoryNodes: [...owned, 'foreign-memory'],
       quarantinedMemoryNodes: ['older-foreign'] }, history: null, settings: null }));
   assert.deepEqual(new Set(parsed.meta.memoryNodes), new Set(owned)); assert.equal(parsed.meta.echoBalance, 9);
@@ -259,10 +260,12 @@ test('pause reasons release only their own ownership', () => {
 
 test('saveMeta reports persistence honestly and writes a validated copy', () => {
   assert.equal(saveMeta(defaultMeta()), false);
-  let written = null; globalThis.localStorage = { setItem: (_key, value) => { written = value; } };
+  const values = new Map(); globalThis.localStorage = { getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value) };
   try {
     const meta = { ...defaultMeta(), memoryNodes: ['reach-horizon-instinct', 'unknown-node'] };
     assert.equal(saveMeta(meta), true); assert.deepEqual(meta.memoryNodes, ['reach-horizon-instinct', 'unknown-node']);
+    const written = [...values].find(([key]) => key.endsWith(':meta:v1'))?.[1];
     assert.deepEqual(JSON.parse(written).memoryNodes, ['reach-horizon-instinct']);
   } finally { delete globalThis.localStorage; }
 });

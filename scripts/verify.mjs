@@ -5,14 +5,15 @@
  *
  * Gates:
  *   1. check:structure     repository legibility rules
- *   2. audit:cell-visuals  rejects sub-cell production geography
- *   3. showcase:check      generated title data matches production sources
- *   4. test:unit           node:test unit suites
- *   5. test:integration    deterministic golden + speed-invariance suites
- *   6. audit:lakes         500-seed whole-cell lake distribution
- *   7. balance:smoke       bounded headless balance simulation
- *   8. benchmark           performance checkpoint
- *   9. check:links         static asset/import/deployment path checks
+ *   2. audit:identity      canonical source/package/browser/storage identity
+ *   3. audit:cell-visuals  rejects sub-cell production geography
+ *   4. showcase:check      generated title data matches production sources
+ *   5. test:unit           node:test unit suites
+ *   6. test:integration    deterministic golden + speed-invariance suites
+ *   7. audit:lakes         500-seed whole-cell lake distribution
+ *   8. balance:smoke       bounded headless balance simulation
+ *   9. benchmark           performance checkpoint
+ *  10. check:links         static asset/import/deployment path checks
  *
  * Browser tests (scripts/browser-test.mjs) need Chrome and are run
  * separately via `npm run test:browser`.
@@ -21,6 +22,7 @@ import { spawnSync } from 'node:child_process';
 
 const gates = [
   ['check:structure', 'node scripts/check-structure.mjs'],
+  ['audit:identity', 'node scripts/audits/identity-audit.mjs'],
   ['audit:cell-visuals', 'node scripts/audits/cell-visual-audit.mjs'],
   ['showcase:check', 'node scripts/generate-title-showcase.mjs --check'],
   ['test:unit', 'node --test tests/unit/*.test.js tests/unit/simulation/*.test.js'],

@@ -7,8 +7,10 @@ release candidate from the later frozen submission/tag/form.
 
 - Web Page category — ZEN University division.
 - Published deadline: 2026-09-13.
-- Repository: <https://github.com/lkjsxc/incremental-network-game>.
-- Playable URL: <https://lkjsxc.github.io/incremental-network-game/>.
+- Target repository: <https://github.com/lkjsxc/cell-sphere-game>.
+- Target playable URL: <https://lkjsxc.github.io/cell-sphere-game/>.
+- The source identity is prepared locally; external repository rename and Pages
+  deployment have not been executed or claimed by this migration.
 
 ## Current release candidate evidence
 

@@ -1,6 +1,6 @@
 # Vision
 
-**incremental-network-game** — *Every extinction becomes memory.*
+**cell-sphere-game** — *Every extinction becomes memory.*
 
 A mobile-first passive-observation roguelite on a rich spherical ecology. The
 player watches autonomous network life discover geography, rotates and inspects
