@@ -4,6 +4,7 @@ import { ADAPTATIONS, drawAdaptationOptions } from '../game/adaptations.js';
 import { telegraphLead } from './events.js';
 import { BIOME, FEATURE } from '../world/fields.js';
 import { logReplay, recordHistory, REPLAY } from './replay.js';
+import { recordTrophyCrisisSurvival, sampleTrophyLiving } from './trophy-proof.js';
 
 const PHASES = Object.freeze([
   Object.freeze({ tick: 0, id: 'abundance' }),
@@ -25,6 +26,7 @@ export function runSummary(state, emit) {
   if (coverage > 0.5 && state.connectedShare < state.minConnectedWhileMajority) {
     state.minConnectedWhileMajority = state.connectedShare;
   }
+  sampleTrophyLiving(state);
   announceEvents(state, emit);
   recordMilestones(state);
   recordGeography(state);
@@ -60,7 +62,7 @@ function announceEvents(state, emit) {
     }
     if (!(ev.announced & 4) && state.tick > ev.endTick) {
       ev.announced |= 4;
-      if (ev.crisis && state.aliveCount > 0) state.crisesEndured++;
+      if (ev.crisis && state.aliveCount > 0) { state.crisesEndured++; recordTrophyCrisisSurvival(state, ev.family); }
       recordHistory(state, 'event-end', { id: ev.id, family: ev.family, cell: ev.center });
       emit({ t: 'event', phase: 'end', family: ev.family, tick: state.tick });
       ev.nodes = new Uint16Array(0); ev.falloff = new Float32Array(0); ev.arrivalTicks = new Uint8Array(0); ev.arrivalCost = null; ev.predecessor = null;

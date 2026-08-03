@@ -3,20 +3,21 @@
 The product target remains mobile-first and low-heat, but thermal claims require
 a physical device. Node throughput is simulation evidence only.
 
-## Current measured evidence (2026-08-03)
+## Current measured evidence (2026-08-04)
 
 Environment: Node v22.22.3, Linux x64, 20 logical CPUs.
 
-- deterministic production benchmark seed 20260731: 2,715 ticks in 185 ms,
-  14,712 ticks/s, 9 MB reported heap, hash `813c4f49`;
+- deterministic production benchmark seed 20260731: 2,715 ticks in 177 ms,
+  15,296 ticks/s, hash `256388b9`; bounded facts-v3 proof intentionally joins
+  this hash and its one-second scan remains above the 3,000 ticks/s gate;
 - 500-seed whole-cell lake audit (with a duplicate deterministic generation):
   2,843.6 ms total, mean first-generation 2.776 ms, p95 3.732 ms, maximum
   24.097 ms, aggregate hash `0e7f6f17`, zero integrity/determinism failures;
 - balance smoke medians: balanced 284.6 s, expansion 267.4 s, resilience
   353.2 s (n=4 each; diagnostic sample);
-- real headless Chrome/WebGL2: mixed manual/Random production run at 32×
-  reached result in 8.54 s with no browser errors, four purchases, and an
-  unattended second-result → third-world transition;
+- real headless Chrome/WebGL2: the production run reached result at 32× in
+  7.88 s, score 595,964, with four draws, sequential Trophy feedback, and no
+  browser errors; Canvas 2D completed with score 614,507;
 - cellular renderer: four steady-state draws; instrumented JavaScript command
   submission on the title scene mean 0.07 ms, p95 0.20 ms (not GPU frame time);
 - 100-world unattended transition soak: 271,785 ticks in 12.678 s, zero
@@ -40,7 +41,8 @@ Environment: Node v22.22.3, Linux x64, 20 logical CPUs.
 - Inspector requests are one compact record at no more than about 3 Hz.
 - World lakes/shores/forests/terrain and the 642-cell Evolution Globe are immutable per scene.
 - History is event-driven, ≤80 entries/run, and ≤700 KB serialized.
-- Notices are capped at three simultaneous DOM nodes.
+- Toast, Adaptation, and Trophy messages use one-at-a-time bounded FIFO
+  presenters; the persisted Trophy queue stores only unique current IDs.
 
 ## Missing evidence
 

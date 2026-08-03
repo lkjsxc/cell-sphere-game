@@ -29,8 +29,9 @@ inspector state, and result.
 7. Zero living cells finalize immediately; spent tissue or the 360 s ceiling enters
    a bounded terminal collapse of at most 20 ticks.
 8. Connectivity every 20 ticks.
-9. Summary every 10 ticks: score metrics, geography/morphology milestones,
-   crisis lifecycle, Adaptation offers, History batches.
+9. Summary every 10 ticks: SCORE metrics, geography/morphology milestones,
+   bounded whole-cell Trophy living proof, crisis lifecycle, Adaptation offers,
+   History batches.
 10. Resolve at most one automatic FIFO Adaptation at the authoritative tick.
 
 ## Adaptations
@@ -77,7 +78,10 @@ turning point. Inspection and highlighting are observational only.
 nutrient, moisture, temperature, toxicity, stress, and internal transport
 summary) and performs no writes. Presentation snapshots expose only biomass,
 stress, alive, and explicit life-state cell arrays—never transport edges.
-Snapshot/history/result serialization likewise consumes no RNG.
+Snapshot/history/result serialization likewise consumes no RNG. Trophy proof
+marks each cell only on its first authoritative birth and scans bounded living
+lake regions only at the existing one-second summary cadence; no per-tick extra
+world scan or unbounded history is introduced.
 Observational-neutrality integration tests compare hash, score, cause,
 Adaptations, History, replay, and Imprint after hundreds of queries.
 

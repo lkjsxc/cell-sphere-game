@@ -8,11 +8,17 @@
 .trophy-identity { display: grid; gap: 2px; color: var(--text-secondary); font-size: var(--fs-caption); }
 .trophy-identity .eyebrow { margin: 0; }.trophy-identity strong { color: var(--text-primary); font-size: var(--fs-lead); }
 #trophy-count, .result-trophies { color: var(--accent-gold); }
+.scene-badge { display: inline-grid; place-items: center; min-width: 1.2rem; height: 1.2rem; margin-left: 2px; padding-inline: 3px; color: var(--text-inverse); background: var(--state-warn); border-radius: var(--radius-pill); font-size: .65rem; }
+.trophy-notification { position: absolute; z-index: var(--z-toast); bottom: calc(7rem + var(--safe-bottom)); right: calc(var(--sp-4) + var(--safe-right)); width: min(25rem, calc(100vw - 2 * var(--sp-3))); border: 1px solid color-mix(in srgb, var(--accent-gold), var(--line-subtle) 50%); border-radius: var(--radius-l); box-shadow: 0 12px 38px rgba(0,0,0,.45); }
+.trophy-notification[hidden] { display: none; }.trophy-notification button { display: grid; gap: 4px; width: 100%; min-height: var(--touch-min); padding: var(--sp-3) var(--sp-4); color: var(--text-primary); background: transparent; text-align: left; }
+.trophy-notification strong { color: var(--accent-gold); font-size: var(--fs-lead); }.trophy-notification span:not(.eyebrow), .trophy-notification small { color: var(--text-secondary); }.trophy-notification .eyebrow { margin: 0; }
+.trophy-notification:not(.is-static) { animation: trophy-reveal var(--dur-slow) var(--ease-out) both; } @keyframes trophy-reveal { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
 .trophy-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--sp-1); }
 .trophy-detail { border-color: color-mix(in srgb, var(--accent-gold), var(--line-subtle) 55%); }
 .trophy-status { padding: var(--sp-3); border: 1px solid var(--line-subtle); border-radius: var(--radius-m); color: var(--text-secondary); }
 @media (max-width: 719px) {
   .trophy-bar { width: calc(100vw - 2 * var(--sp-2)); display: grid; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); }
+  .trophy-notification { top: auto; right: var(--sp-2); bottom: calc(6.5rem + var(--safe-bottom)); width: calc(100vw - 2 * var(--sp-2)); }
   .trophy-actions { flex-wrap: nowrap; overflow-x: auto; justify-content: start; }
   .trophy-actions .btn { white-space: nowrap; padding-inline: var(--sp-2); font-size: var(--fs-caption); }
 }

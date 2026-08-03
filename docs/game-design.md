@@ -89,13 +89,32 @@ adjacent owner and preserves non-pointer purchase access.
 
 ## Trophy Sphere
 
-A separate level-2 sphere maps exactly 96 authored achievements across Reach,
-Form, Endurance, Adaptation, Evolution, and Mastery. Each family has 16 exact,
-visible criteria. Completed worlds retain compact quantized proof; old semantic
-History is conservatively backfilled only when the player explicitly enters the
-Trophy Sphere or another progression transaction occurs. Loading or importing
-data alone grants nothing. Trophy ownership is monotonic and observational: it
-changes no traits, scoring, Echoes, event schedule, or random stream.
+A separate level-2 sphere maps exactly 96 authored mastery criteria across
+Reach, Form, Endurance, Adaptation, Evolution, and Mastery. Each family has 16
+exact visible criteria. Conditions use validated `all`/`any`, threshold, and
+bitset combinators over a whitelist. One onboarding completion exists; ordinary
+one-cell geography, one event, and one card cannot earn current mastery.
+
+Completed worlds retain facts-v3 bounded proof. Whole-cell authority records
+lake cells and shores reached, distinct/complete lakes, type/salinity diversity,
+lake/wetland/forest/highland combinations, sustained large-lake living and
+loops, and drought/freeze lake-region survival at the existing one-second
+summary cadence. Cumulative masks, card diversity, crises, policy practice,
+Reach/regrowth, and per-world maxima persist after History retention.
+
+Progression schema 8 moves retired `reach-river-touch` ownership into an
+explicit Legacy list. The current lake criterion is `reach-lake-network`; no
+Legacy ownership or facts-v1 river bit can satisfy it. Every other recognized
+old earned ID remains current and owned. Loading/importing grants nothing;
+explicit transactions backfill once and migrations are idempotent.
+
+At commit, a Trophy Cell is owned once, a semantic History/Event Log entry is
+appended once, and its ID joins a persisted unique FIFO. One nonblocking reveal
+shows name, criterion, family, and `n / 96` progress for 4.2 seconds; hover/focus
+holds it, reduced motion is static, click opens its Trophy detail, and the tab
+badge counts unread acquisitions. The global queue survives atomic Auto Next
+without carrying retired world highlights. Trophy ownership remains
+observational: it changes no traits, SCORE, Echoes, event schedule, or RNG.
 
 The broader challenge campaign, audio, and complete Japanese localization are
 not yet complete and are not exposed as decorative controls.

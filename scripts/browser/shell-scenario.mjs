@@ -49,7 +49,7 @@ export async function runScenario(t) {
       && !evidence.eventDockOverlap && !evidence.eventShellOverlap,
     `responsive shell failed ${width}x${height}: ${JSON.stringify(evidence)}`); await trustedId(t, 'metric-close');
   }
-  await setViewport(390, 844); const accessibilityMatrix = await evaluate(`(()=>{const root=document.documentElement,tabs=[...document.querySelectorAll('#scene-selector [role=tab]')],labels=tabs.map(x=>x.textContent);root.style.fontSize='32px';root.dataset.motion='reduced';root.dataset.contrast='high';tabs[2].textContent='Evolution inherited adaptations';const rects=tabs.map(x=>x.getBoundingClientRect()),values={noOverflow:document.documentElement.scrollWidth<=innerWidth,labelsContained:tabs.every(x=>getComputedStyle(x).overflow==='hidden')&&rects.every((r,i)=>!i||r.left>=rects[i-1].right-1),motion:getComputedStyle(root).getPropertyValue('--dur-base').trim(),border:getComputedStyle(document.getElementById('scene-selector')).borderTopWidth};tabs.forEach((x,i)=>x.textContent=labels[i]);root.style.fontSize='';root.dataset.motion='full';root.dataset.contrast='normal';return values})()`);
+  await setViewport(390, 844); const accessibilityMatrix = await evaluate(`(()=>{const root=document.documentElement,tabs=[...document.querySelectorAll('#scene-selector [role=tab]')],labels=tabs.map(x=>x.firstChild.nodeValue);root.style.fontSize='32px';root.dataset.motion='reduced';root.dataset.contrast='high';tabs[2].firstChild.nodeValue='Evolution inherited adaptations';const rects=tabs.map(x=>x.getBoundingClientRect()),values={noOverflow:document.documentElement.scrollWidth<=innerWidth,labelsContained:tabs.every(x=>getComputedStyle(x).overflow==='hidden')&&rects.every((r,i)=>!i||r.left>=rects[i-1].right-1),motion:getComputedStyle(root).getPropertyValue('--dur-base').trim(),border:getComputedStyle(document.getElementById('scene-selector')).borderTopWidth};tabs.forEach((x,i)=>x.firstChild.nodeValue=labels[i]);root.style.fontSize='';root.dataset.motion='full';root.dataset.contrast='normal';return values})()`);
   ok(accessibilityMatrix.noOverflow && accessibilityMatrix.labelsContained && accessibilityMatrix.motion === '0ms' && accessibilityMatrix.border !== '0px', `accessibility matrix failed: ${JSON.stringify(accessibilityMatrix)}`);
 
   await setViewport(390, 844); await wait(140); await trustedId(t, 'menu-button');
@@ -78,12 +78,13 @@ export async function runScenario(t) {
   await trustedId(t, 'event-log-close'); ok(distance(historyCamera, await evaluate('window.__IN_APP__.camera.direction.slice()')) > 0, 'globe drag did not rotate');
 
   ok(await poll(() => evaluate('window.__IN_APP__.phase'), (phase) => phase === 'result', 45000), '32x run did not finish');
-  const elapsed = (performance.now() - run32StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__IN_APP__,s=document.getElementById('context-shell');return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!document.getElementById('result-control').hidden,event:document.getElementById('current-event-button').offsetHeight,pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,adapt:document.getElementById('adaptations-button').disabled}})()`);
+  const elapsed = (performance.now() - run32StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__IN_APP__,s=document.getElementById('context-shell');return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!document.getElementById('result-control').hidden,event:document.getElementById('current-event-button').offsetHeight,pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,adapt:document.getElementById('adaptations-button').disabled,trophies:document.getElementById('result-trophies').textContent}})()`);
   ok(result.score > 0 && result.scene === 'world' && result.phase === 'result' && result.overlay === 'result' && result.surface === 'result'
-    && result.runVisible && result.resultControl && result.event >= 44 && result.pause && result.speed && result.adapt, `terminal world failed: ${JSON.stringify(result)}`);
-  await screenshot('shell-result-desktop.png'); await trustedId(t, 'result-close'); ok(await evaluate(`document.getElementById('context-shell').hidden`), 'Result did not close');
+    && result.runVisible && result.resultControl && result.event >= 44 && result.pause && result.speed && result.adapt
+    && result.trophies.includes('First Extinction'), `terminal world failed: ${JSON.stringify(result)}`);
+  await evaluate(`window.__IN_APP__.trophyNotifications.hold('browser-evidence',true)`); await screenshot('shell-result-desktop.png'); await trustedId(t, 'result-close'); ok(await evaluate(`document.getElementById('context-shell').hidden`), 'Result did not close');
   ok(await evaluate(`window.__IN_APP__.continuation.status==='cancelled'`), 'trusted Result interaction did not permanently cancel Auto Next');
-  await trustedId(t, 'result-control'); await drag([950, 330], [1090, 420]); ok(await evaluate(`window.__IN_APP__.overlay==='result'`), 'globe drag dismissed Result');
+  await trustedId(t, 'result-control'); await drag([800, 330], [930, 420]); const dragState = await evaluate(`({overlay:window.__IN_APP__.overlay,surface:window.__IN_APP__.surfaces.active,selected:window.__IN_APP__.selectedNode})`); ok(dragState.overlay === 'result', `globe drag dismissed Result: ${JSON.stringify(dragState)}`);
   await click(1000, 450); await wait(120); ok(await evaluate(`window.__IN_APP__.overlay==='inspector'&&document.activeElement===document.getElementById('inspector-heading')`), 'cell tap did not replace Result and focus Inspector');
   await trustedId(t, 'inspector-close'); await trustedId(t, 'result-control'); await trustedId(t, 'result-reach-button');
   const finalMetric = await shellRect(evaluate); ok(finalMetric.surface === 'metric' && sameRect(finalMetric, metricRects.reach, .25), 'final metric geometry changed');
@@ -95,11 +96,18 @@ export async function runScenario(t) {
   ok(await evaluate(`window.__IN_APP__.meta.memoryNodes.length`) === ownedBefore + 1, 'Skill unlock transaction failed');
   ok(await evaluate(`window.__IN_APP__.phase==='result'&&window.__IN_APP__.worldIdentity.resultTransactionKey===${JSON.stringify(runIdentity)}`), 'Evolution replaced terminal world authority');
   await trustedId(t, 'scene-trophies'); ok(await evaluate(`window.__IN_APP__.trophySnapshot.nodeStates.length===96`), 'Trophy scene incomplete');
-  await trustedId(t, 'scene-world');
+  const firstNotice = await evaluate(`(()=>{const a=window.__IN_APP__;return {name:document.getElementById('trophy-notification-name').textContent,badge:Number(document.getElementById('trophy-tab-badge').textContent),queue:a.meta.trophyQueue.slice()}})()`);
+  ok(firstNotice.badge === 2 && firstNotice.queue.length === 2, `Trophy queue did not preserve simultaneous awards: ${JSON.stringify(firstNotice)}`);
+  const secondNotice = await evaluate(`(()=>{const a=window.__IN_APP__;a.settings={...a.settings,motion:'reduced'};a.trophyNotifications.acknowledge('browser-sequence');return {name:document.getElementById('trophy-notification-name').textContent,badge:Number(document.getElementById('trophy-tab-badge').textContent),static:document.getElementById('trophy-notification').classList.contains('is-static')}})()`);
+  ok(secondNotice.badge === 1 && secondNotice.name !== firstNotice.name && secondNotice.static, `Sequential reduced Trophy reveal failed: ${JSON.stringify({firstNotice,secondNotice})}`);
+  await screenshot('browser-trophy-queue-reduced.png'); await trustedId(t, 'scene-world');
 
-  await installFirstReplacementCapture(evaluate); await trustedId(t, 'result-control'); await trustedId(t, 'result-next-button');
-  ok(await poll(() => evaluate('window.__IN_APP__.phase'), (phase) => phase === 'running', 6000), 'manual Next World did not start');
+  await installFirstReplacementCapture(evaluate); await evaluate(`window.__IN_APP__.requestWorldReplacement('auto-next',window.__IN_APP__.lastResultIdentity)`);
+  ok(await poll(() => evaluate('window.__IN_APP__.phase'), (phase) => phase === 'running', 6000), 'automatic replacement path did not start');
   assertBlankReplacement(await evaluate('window.__IN_APP__.__firstReplacementFrame'), boot.renderer);
+  ok(await evaluate(`document.getElementById('trophy-notification-name').textContent===${JSON.stringify(secondNotice.name)}`), 'Trophy notification did not survive automatic replacement');
+  await trustedId(t, 'trophy-notification-action'); ok(await evaluate(`window.__IN_APP__.scene==='trophies'&&window.__IN_APP__.trophyUi.selectedId!==null&&document.getElementById('trophy-tab-badge').hidden`), 'Trophy notification click did not route to detail and acknowledge');
+  await evaluate(`window.__IN_APP__.trophyNotifications.hold('browser-evidence',false)`);
   const bounded = await evaluate(`(()=>{const a=window.__IN_APP__;return {...a.worldResourceAudit(),raf:a.frameAudit}})()`);
   ok(!bounded.historyRequests && !bounded.adaptationEffects && !bounded.adaptationBytes && !bounded.adaptationTimers && !bounded.raf.errors, `replacement resources leaked: ${JSON.stringify(bounded)}`);
   const idb = await evaluate('window.__IN_APP__.historyPlayback.recentRuns.ready()'); ok(errors.length === 0, `browser errors: ${errors.join(' | ')}`);

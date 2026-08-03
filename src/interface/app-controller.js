@@ -27,6 +27,8 @@ import { createAdaptationSurface, createMemorySurface } from './panel-surfaces.j
 import { createMetricSurface } from './inspection/metric-surface.js'; import { createEventLogSurface, eventLogWorlds } from './inspection/event-log-surface.js';
 import { createSceneSelector } from './policies/scene-selector.js';
 import { createTrophySurface } from './policies/trophy-surface.js';
+import { buildTrophySnapshot } from '../game/trophies/scene.js';
+import { createTrophyNotifications } from './policies/trophy-notifications.js';
 import { availableSkills, buySkill, closeSkill, closeTrophy, enterEvolution, enterTrophies, focusAvailableSkill,
   focusTrophy, initializeProgression, presentEvolution, presentTrophies, progressionTap, reconcileBeforeHistoryClear, selectSkill, selectTrophy } from './policies/progression-spheres.js';
 import { createSettingsSurface } from './settings-surface.js';
@@ -69,12 +71,17 @@ class GameApp {
     this.inspector = createInspectorSurface({ onClose: () => this.closeInspector(), onHistory: () => this.openHistory('current') });
     this.metricUi = createMetricSurface({ onClose: () => this.panelClosed('metric'), onSelect: (cells) => this.focusEventCells(cells) });
     this.eventLogUi = createEventLogSurface({ onClose: () => this.panelClosed('event-log'), onFocus: (cells) => this.focusEventCells(cells),
-      onHistory: (world, event) => this.openHistoryEvent(world, event) });
+      onHistory: (world, event) => this.openHistoryEvent(world, event), onTrophy: (id) => { this.selectScene('trophies'); selectTrophy(this, id); } });
     this.historyUi = createHistorySurface({ onClose: () => this.panelClosed('history'),
       onWorld: (world) => this.historyPlayback.selectWorld(world), onSeek: (tick, event, world) => this.historyPlayback.seek(tick, event, world),
       onLive: () => this.historyPlayback.live() });
     this.memoryUi = createMemorySurface({ onCloseNode: () => this.closeMemoryNode(), onUnlock: (id) => this.buyMemory(id), onSelect: (id) => this.selectMemoryNode(id) });
     this.trophyUi = createTrophySurface({ onClose: () => this.closeTrophy(), onSelect: (id) => this.selectTrophy(id) });
+    this.trophyNotifications = createTrophyNotifications({ reduced: () => this.settings.motion === 'reduced',
+      announce: (text) => { this.el.live.textContent = text; }, onSelect: (id) => { if (this.scene !== 'trophies') this.selectScene('trophies'); selectTrophy(this, id); },
+      onAcknowledge: (id) => { this.meta = { ...this.meta, trophyQueue: (this.meta.trophyQueue ?? []).filter((entry) => entry !== id) }; saveMeta(this.meta);
+        if (this.scene === 'trophies') this.trophySnapshot = buildTrophySnapshot(this.topo2, this.meta, this.trophyUi.selectedId, this.meta.trophyQueue); } });
+    this.trophyNotifications.sync(this.meta);
     this.newWorld = createNewWorldSurface({ onClose: () => this.panelClosed('new-world'), onConfirm: () => this.confirmNewWorld() });
     this.settingsUi = createSettingsSurface({ read: () => this.settings, onChange: (value) => this.applySettings(value), onClose: () => this.panelClosed('menu'), onAction: (action, value) => this.settingsAction(action, value) });
   }
@@ -235,9 +242,9 @@ class GameApp {
     else if (action === 'camera-reset') { Object.assign(this.camera, createCamera()); this.selectedNode = null; }
     else if (action === 'export') downloadData(this.meta, this.archive, this.settings);
     else if (action === 'clear-history' && confirm('Clear all preserved History?')) { const trophies = reconcileBeforeHistoryClear(this); this.archive = clearHistory(); saveHistory(this.archive); this.historyPlayback.clear(); ui.announce(this.el, `History was cleared.${trophies.length ? ` ${trophies.length} proven trophies were preserved.` : ''}`); }
-    else if (action === 'reset-progress' && confirm('Reset Echoes, Evolution Globe skills, and Imprints? This cannot be undone.')) { this.meta = defaultMeta(); saveMeta(this.meta); ui.announce(this.el, 'Progression was reset.'); }
+    else if (action === 'reset-progress' && confirm('Reset Echoes, Evolution Globe skills, Imprints, and Trophies? This cannot be undone.')) { this.meta = defaultMeta(); saveMeta(this.meta); this.trophyNotifications.replace(this.meta); ui.announce(this.el, 'Progression was reset.'); }
     else if (action === 'import') { const data = parseImportedData(value); this.meta = data.meta; this.archive = data.history; this.applySettings(data.settings);
-      saveMeta(this.meta); saveHistory(this.archive, this.settings.historyRetention); ui.announce(this.el, 'Local data was imported.'); }
+      saveMeta(this.meta); saveHistory(this.archive, this.settings.historyRetention); this.trophyNotifications.replace(this.meta); ui.announce(this.el, 'Local data was imported.'); }
     else if (action === 'import-error') throw new Error('invalid import');
   } catch { ui.announce(this.el, 'That local-data action could not be completed.'); } }
   availableMemory() { return availableSkills(this); }

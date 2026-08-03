@@ -65,7 +65,7 @@ test('every legacy ownership subset migrates one-for-one without currency refund
     const owned = LEGACY_IDS.filter((_, index) => mask & (1 << index));
     const migrated = validateMeta({ schema: 3, bestScore: 99, totalEchoes: 70,
       echoBalance: 17, runs: 4, signalHintShown: true, memoryNodes: owned });
-    assert.equal(migrated.schema, 7); assert.equal(migrated.memoryGraphVersion, 4); assert.equal(migrated.worldSeedIndex, 4);
+    assert.equal(migrated.schema, 8); assert.equal(migrated.memoryGraphVersion, 4); assert.equal(migrated.worldSeedIndex, 4);
     assert.equal(migrated.memoryNodes.length, owned.length);
     const mapped = owned.map((id) => LEGACY_MEMORY_MAP[id]);
     assert.deepEqual(migrated.memoryNodes, MEMORY_NODE_IDS.filter((id) => mapped.includes(id)));
@@ -125,7 +125,7 @@ test('old semantic exports preserve recognized ownership and quarantine unknown 
       quarantinedMemoryNodes: ['older-foreign'] }, history: null, settings: null }));
   assert.deepEqual(new Set(parsed.meta.memoryNodes), new Set(owned)); assert.equal(parsed.meta.echoBalance, 9);
   assert.deepEqual(parsed.meta.quarantinedMemoryNodes, ['foreign-memory', 'older-foreign']);
-  assert.equal(parsed.meta.schema, 7); assert.equal(parsed.meta.memoryGraphVersion, 4);
+  assert.equal(parsed.meta.schema, 8); assert.equal(parsed.meta.memoryGraphVersion, 4);
 });
 
 test('old edge Imprints become bounded, connected level-3 morphology fossils idempotently', () => {

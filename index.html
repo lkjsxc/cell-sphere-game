@@ -26,7 +26,7 @@
       <button id="scene-home" role="tab" type="button" data-scene="home" aria-controls="title-screen" aria-selected="true" tabindex="0">Home</button>
       <button id="scene-world" role="tab" type="button" data-scene="world" aria-controls="run-screen" aria-selected="false" tabindex="-1">World</button>
       <button id="scene-evolution" role="tab" type="button" data-scene="evolution" aria-controls="memory-screen" aria-selected="false" tabindex="-1">Evolution</button>
-      <button id="scene-trophies" role="tab" type="button" data-scene="trophies" aria-controls="trophy-screen" aria-selected="false" tabindex="-1">Trophies</button>
+      <button id="scene-trophies" role="tab" type="button" data-scene="trophies" aria-controls="trophy-screen" aria-selected="false" tabindex="-1">Trophies <span id="trophy-tab-badge" class="scene-badge" hidden></span></button>
     </nav>
 
     <section id="title-screen" class="screen" data-scene="home" role="tabpanel" aria-labelledby="scene-home title-heading">
@@ -79,7 +79,7 @@
     </section>
 
     <section id="trophy-screen" class="screen" data-scene="trophies" role="tabpanel" hidden aria-labelledby="scene-trophies trophy-heading">
-      <h2 id="trophy-heading" class="sr-only">Trophy Sphere</h2><div class="trophy-bar material-clear"><div class="trophy-identity"><span class="eyebrow">PRESERVED ACHIEVEMENTS</span><strong>Trophy Sphere</strong><span>Recognition from deterministic world evidence.</span><b id="trophy-count">0 / 96 earned</b></div><div class="trophy-actions"><button id="trophy-next-button" class="btn btn-primary" data-action="recommended" type="button">Next World</button><button id="trophy-focus" class="btn btn-secondary" data-action="quiet" type="button">Focus Trophy</button><button class="btn btn-secondary history-open" data-surface-trigger="history" data-action="quiet" type="button">History</button><button class="btn btn-secondary menu-open" data-surface-trigger="menu" data-action="quiet" type="button">Menu</button></div></div>
+      <h2 id="trophy-heading" class="sr-only">Trophy Sphere</h2><div class="trophy-bar material-clear"><div class="trophy-identity"><span class="eyebrow">PRESERVED ACHIEVEMENTS</span><strong>Trophy Sphere</strong><span>Recognition from deterministic world evidence.</span><b id="trophy-count">0 / 96 earned</b><span id="trophy-legacy" hidden></span></div><div class="trophy-actions"><button id="trophy-next-button" class="btn btn-primary" data-action="recommended" type="button">Next World</button><button id="trophy-focus" class="btn btn-secondary" data-action="quiet" type="button">Focus Trophy</button><button class="btn btn-secondary history-open" data-surface-trigger="history" data-action="quiet" type="button">History</button><button class="btn btn-secondary menu-open" data-surface-trigger="menu" data-action="quiet" type="button">Menu</button></div></div>
       <div id="trophy-grid" class="sr-only" role="grid" aria-label="All 96 Trophy criteria"></div>
     </section>
 
@@ -158,6 +158,7 @@
     </aside>
 
     <div id="surface-scrim" aria-hidden="true" hidden></div><div id="adaptation-caption" role="status" aria-live="polite" hidden></div>
+    <aside id="trophy-notification" class="trophy-notification material-regular" aria-live="polite" hidden><button id="trophy-notification-action" type="button"><span id="trophy-notification-family" class="eyebrow">TROPHY</span><strong id="trophy-notification-name">Trophy earned</strong><span id="trophy-notification-reason"></span><small id="trophy-notification-progress"></small></button></aside>
     <div id="toast-root" aria-hidden="true"></div><div id="live-region" class="sr-only" aria-live="polite"></div><div id="diagnostics" hidden></div>
     <noscript><p style="padding:2rem">This game requires JavaScript and a current browser.</p></noscript>
   </div>

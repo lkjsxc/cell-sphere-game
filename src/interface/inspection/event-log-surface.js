@@ -33,6 +33,8 @@ export function eventLogWorlds(current, archive = { worlds: [] }) {
     events: (current.events ?? []).slice(-EVENT_LOG_ROW_CAP), seed: current.seed, tick: current.tick ?? 0 });
   for (const world of (archive.worlds ?? []).slice().reverse()) worlds.push({ id: world.id, current: false,
     label: `${world.archetype} · seed ${world.seed}`, events: (world.events ?? []).slice(-EVENT_LOG_ROW_CAP), seed: world.seed, tick: world.tick ?? 0 });
+  if (archive.trophies?.length) worlds.push({ id: 'trophy-progression', current: false, label: 'Trophy progression',
+    events: archive.trophies.slice(-EVENT_LOG_ROW_CAP), seed: null, tick: archive.trophies.at(-1)?.tick ?? 0 });
   if (!worlds.length) worlds.push({ id: 'empty', current: false, label: 'No recorded worlds', events: [], seed: null, tick: 0 });
   return { worlds: worlds.slice(0, 33) };
 }
@@ -41,7 +43,8 @@ function entry(event, world, options) {
   const [title, explanation] = describeHistoryEvent(event); const category = historyEventCategory(event); const cells = (event.primaryCells ?? []).slice(0, 8);
   const phase = event.key?.startsWith('run.phase.') ? event.key.split('.').at(-1) : event.kind ?? category;
   button.append(strong(`${historyGameTime(event.tick)} · ${title}`), span(`${category} · ${phase} · ${world?.current ? 'current world' : 'archive'}${cells.length ? ` · ${cells.length} ${cells.length === 1 ? 'cell' : 'cells'}` : ''}`), span(explanation));
-  button.addEventListener('click', () => { if (cells.length && world?.current) options.onFocus(cells, event); else options.onHistory(world, event); });
+  button.addEventListener('click', () => { if (event.kind === 'trophy') options.onTrophy?.(event.subjectId);
+    else if (cells.length && world?.current) options.onFocus(cells, event); else options.onHistory(world, event); });
   li.append(button); return li;
 }
 function option(world) { const node = document.createElement('option'); node.value = world.id; node.textContent = world.label; return node; }

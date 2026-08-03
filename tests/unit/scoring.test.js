@@ -12,7 +12,7 @@ const HIGH = Object.freeze({
   peakConnectedShare: 0.95, totalUptake: 500, totalMaintenance: 80, crisisQ: 1,
 });
 
-test('Network Score improves for stronger authoritative metrics', () => {
+test('SCORE improves for stronger authoritative metrics', () => {
   const low = evaluate(LOW);
   const high = evaluate(HIGH);
   assert.ok(high.total > low.total, `${high.total} <= ${low.total}`);

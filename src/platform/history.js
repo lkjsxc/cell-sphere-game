@@ -1,4 +1,4 @@
-/** Bounded semantic History schema 3. Visual detail is stored separately. */
+/** Bounded semantic History schema 4. Visual detail is stored separately. */
 import { buildTrophyFacts, validateTrophyFacts } from '../game/trophies/facts.js';
 const KEY = 'incremental-network-game:history:v2';
 const LEGACY_KEY = 'incremental-network-game:history:v1';
@@ -6,9 +6,10 @@ const BACKUP_KEY = `${KEY}:corrupt`;
 const MAX_BYTES = 700_000;
 const MAX_EVENTS = 80;
 const MAX_MEMORY_EVENTS = 128;
+const MAX_TROPHY_EVENTS = 128;
 const CELL_COUNT = 2562;
 
-export function defaultHistory() { return { schema: 3, worlds: [], memory: [] }; }
+export function defaultHistory() { return { schema: 4, worlds: [], memory: [], trophies: [] }; }
 function finiteInt(value, min = 0) { return Number.isFinite(value) && value >= min ? Math.floor(value) : null; }
 
 const SIM_EVENT = Object.freeze({
@@ -82,6 +83,7 @@ export function validateHistory(raw, retention = 24) {
     && Number.isFinite(event.cost) && event.cost >= 0).slice(-MAX_MEMORY_EVENTS)
     .map((event, index) => ({ seq: finiteInt(event.seq) ?? index, nodeId: event.nodeId.slice(0, 48),
       cost: Math.floor(event.cost), balance: finiteInt(event.balance) ?? 0, run: finiteInt(event.run) ?? 0 }));
+  if (Array.isArray(raw.trophies)) out.trophies = raw.trophies.map(validateTrophyEvent).filter(Boolean).slice(-MAX_TROPHY_EVENTS);
   return out;
 }
 
@@ -119,6 +121,22 @@ export function appendAbandonedWorld(history, result, retention = 24) {
 }
 export function appendMemoryEvent(history, nodeId, cost, balance, run) { const event = { seq: history.memory.length, nodeId, cost, balance, run };
   return validateHistory({ ...history, memory: [...history.memory, event] }, 32); }
+export function appendTrophyEvents(history, ids, worldId = history.worlds.at(-1)?.id) {
+  if (!ids?.length) return history; const source = validateHistory(history, 32); const world = source.worlds.find((entry) => entry.id === worldId);
+  const known = new Set(source.trophies.map((event) => event.subjectId)); const added = ids.filter((id) => !known.has(id)).map((id, index) => ({
+    seq: source.trophies.length + index, tick: world?.tick ?? 0, kind: 'trophy', importance: 3, key: 'trophy.earned',
+    subjectId: id, primaryCells: [], worldId: world?.id ?? null, run: source.worlds.length }));
+  if (!added.length) return source; const worlds = source.worlds.map((entry) => {
+    if (entry.id !== worldId) return entry; let seq = entry.events.reduce((max, event) => Math.max(max, event.seq), -1) + 1;
+    return { ...entry, events: [...entry.events, ...added.map((event) => ({ ...event, seq: seq++ }))].slice(-MAX_EVENTS) };
+  }); return validateHistory({ ...source, worlds, trophies: [...source.trophies, ...added] }, 32);
+}
+function validateTrophyEvent(raw, index) { if (!raw || typeof raw !== 'object' || raw.key !== 'trophy.earned'
+    || typeof raw.subjectId !== 'string' || !/^[a-z][a-z-]{2,63}$/.test(raw.subjectId)) return null;
+  return { seq: finiteInt(raw.seq) ?? index, tick: finiteInt(raw.tick) ?? 0, kind: 'trophy', importance: 3,
+    key: 'trophy.earned', subjectId: raw.subjectId, primaryCells: [], worldId: typeof raw.worldId === 'string' ? raw.worldId.slice(0, 48) : null,
+    run: finiteInt(raw.run) ?? 0 };
+}
 export function clearHistory() { return defaultHistory(); }
 export function serializeHistory(history) { return JSON.stringify(validateHistory(history, 32), null, 2); }
 export function parseHistory(text, retention = 24) { return validateHistory(JSON.parse(text), retention); }

@@ -13,8 +13,8 @@ Unit coverage includes topology/dual manifold, deterministic WorldModel hash,
 land bounds, climate/biomes/forest coherence, private drainage fields, connected
 and separated whole-cell lake IDs, frozen lake/shore/wetland records, bounded
 lake ecology, landmarks/sources, generation budget, renderer geometry and uniforms, tap/camera math, settings/pause/rotation, simulation queue/RNG,
-pure inspection, History cap, the 642-node graph-4/schema-7 migration/economy,
-and the 96-criterion Trophy catalog/topology/proof boundaries. Evolution tests
+pure inspection, History cap, the 642-node graph-4/schema-8 migration/economy,
+and the 96-criterion Trophy catalog/topology/rich-condition boundaries. Evolution tests
 cover exactly six empty-save roots, run-zero acquisition, each of 3,840 directed
 physical frontiers, nonadjacent rejection, one-neighbor sufficiency, repeat and
 insufficient-fund transactions, preserved disconnected islands, and a legal
@@ -26,10 +26,14 @@ conditional skills, concrete effects for all 642 Skill Cell purchases, no
 current experience/layout-parent authority or copy, strict
 visual-History codec bounds/malformed input, primary-cell migration, stale load
 guards, and an observed run matching a quiet run in hash, score, extinction,
-decisions, semantic History, and Imprint. Trophy integration proves schema-5 load grants nothing, explicit
-legacy reconciliation without converting old drainage evidence into lake proof,
-bounded schema-3 proof, idempotent result awards, and
-reward-free abandonment. A 100-world simulation/result soak checks automatic
+decisions, semantic History, Imprint, and bounded lake proof. Trophy integration
+proves schema-5 load grants nothing, schema-7 river ownership becomes separate
+Legacy ownership, facts-v1 bit 2 never becomes lake proof, all other old IDs are
+grandfathered, facts-v3 and schema-8 imports are idempotent, result/skill/History
+recognition is exactly once, queues survive progression transactions, and
+abandonment is reward-free. Fake-clock tests cover 2.7 s toast, 3.75 s
+Adaptation, 4.2 s Trophy FIFO order, duplicate suppression, stale-generation
+no-op, hover/focus holds, reduced motion, and selected-route acknowledgement. A 100-world simulation/result soak checks automatic
 result transitions, duplicate-award rejection, hidden countdown pause ownership,
 unresolved Manual offers, persistence caps, and heap bounds. A separate 100-cycle
 production-coordinator soak checks first-wins races, unique seeds/authorities/
@@ -52,9 +56,11 @@ and 1440×900 with no horizontal overflow or event/dock overlap. It also emulate
 200% text, long selector labels, reduced motion, and authored high contrast.
 Mobile Adaptations is bounded to 36dvh with three 44px choices and a visible
 current-event control. The run completes at 32×, purchases one physically
-adjacent Skill Cell, visits all 642 Evolution and 96 Trophy records, intercepts
-the next world's zero-life first frame, and checks bounded resources and browser
-errors. Dedicated Canvas 2D evidence completes a run and repeats terminal
+adjacent Skill Cell, verifies two sequential persisted Trophy names and badge,
+a static reduced-motion reveal, Result names, survival through the automatic
+replacement coordinator, and click routing to Trophy detail. It visits all 642
+Evolution and 96 Trophy records, intercepts the next world's zero-life first
+frame, and checks bounded resources and browser errors. Dedicated Canvas 2D evidence completes a run and repeats terminal
 History, Evolution, Trophies, and atomic replacement.
 
 ## Honest limitations

@@ -25,7 +25,7 @@ Owned skills bypass new gates and are never charged again.
 |---|---|---:|
 | First campaign resolution | 4 completed worlds | 18–24 min target; 18–22 min from run duration before transition overhead |
 | Fresh Evolution choice | exactly six roots, 14 Echoes total | roots cost 2–3 Echoes and remain canonical bootstrap choices |
-| Trophy campaign marker | `Fifty Worlds` recognizes 50 completed worlds | about 4 h at the 270–330 s run target; modeled, not measured wall time |
+| Trophy mastery | production facts + adjacent-skill modeled campaign | 2 after world 1/purchase, 6 after 4, 9 after 12, 20 after 48, 63 after 240; modeled |
 | Roughly half (324 skills) | physical frontier plus the applicable portion of 2,462 Echoes | not recalibrated after authority migration |
 | All 642 Skill Cells | traverse physical frontier and spend exactly 2,462 Echoes | long-horizon target; no current measured completion time |
 | True completion | skills plus challenge/discovery breadth | 100–200 h target; challenge breadth is not yet fully implemented |
@@ -36,7 +36,33 @@ stable IDs and exact values, while any one physically adjacent owned cell suppli
 the frontier. This removes the previous clock floor, so the former 13–14 hour
 completion estimate is retired rather than presented as recalibrated evidence.
 A deep Echo-income campaign audit is still required before claiming a replacement
-mastery duration.
+Evolution-completion duration. Trophy pacing is separately calibrated below.
+
+## Trophy acquisition calibration
+
+`npm run audit:trophies` executes the production `RunController`: 24 fresh
+Automatic worlds plus one deterministic 240-world campaign alternating
+Automatic and Manual policies and buying one affordable physically adjacent
+Skill per world. It is a modeled campaign, not observed 1× wall time or a player
+population distribution.
+
+| Horizon | Target total | Modeled total | Newly since prior horizon |
+|---:|---:|---:|---:|
+| fresh completed world | usually 0–2 | 1 in all 24 production worlds | onboarding only |
+| 1 world + one adjacent purchase | 0–2 | 2 | 2 |
+| 4 worlds | 3–8 | 6 | 4 |
+| 12 worlds / roughly first hour | 8–18 | 9 | 3 |
+| 48 worlds / roughly four hours | 15–30 | 20 | 11 |
+| 240 worlds / roughly twenty hours | meaningful, far from 96 | 63 | 43 |
+
+The deterministic audit hash is `40aa0e55`; runtime was 52.110 s in the local
+Node v22/Linux container. It found 96 unique IDs/copy/conditions, no impossible
+criterion, no duplicate condition or copy, no non-onboarding criterion earned
+in at least half of fresh worlds, and exact Legacy isolation. It reports 26
+logical dominance pairs honestly; most are explicit long-horizon run/Skill or
+nested mastery relationships rather than duplicate copy. Full completion still
+requires the 324/448/512/642-Skill criteria, high-percentile world axes,
+diverse Manual/Automatic practice, cumulative weather, and lake mastery.
 
 ## Bot policies
 
@@ -165,6 +191,19 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   its terminal segment at the last ≥75%-peak production tick (`2732`), keeping
   the 22-second title story legibly pressure → fragmentation → extinction
   without synthesizing state.
+- **2026-08-04 — Trophy mastery and whole-cell lake proof.** Replaced trivial
+  one-cell/single-event awards with 96 unique rich criteria, facts v3, persisted
+  cumulative aggregates, and schema-8 Legacy isolation. Authority adds one
+  bounded whole-cell reach marker per cell and one existing-cadence summary scan;
+  those deterministic proof values intentionally join the terminal hash but
+  never simulation equations or RNG. The production/model audit measured
+  `1 / 2 / 6 / 9 / 20 / 63` acquisitions for fresh / one-plus-purchase /
+  4 / 12 / 48 / 240 horizons, hash `40aa0e55`, with zero impossible or trivial
+  majority-rate criteria. The intentional proof-hash expansion changes the
+  production benchmark hash from `813c4f49` to `256388b9` (2,715 ticks,
+  15,296 ticks/s in the final verify environment). Showcase frames remain
+  byte-identical (`22ac0d97…`, 89 frames, 228,754 bytes); source metadata is
+  `3c1a1717…`.
 - **2026-08-04 — Transparent live SCORE projection.** Snapshot metrics now retain
   the already-computed six authoritative axis contributions and declared
   weights so the shared SCORE surface can explain the live/final point model.

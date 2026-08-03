@@ -14,6 +14,7 @@ and `node:test`.
 | `connectivity.js` | Largest-component BFS. |
 | `events.js` | Seeded event schedule and footprints. |
 | `summary.js` | Metrics, semantic milestones, events, passive offers. |
+| `trophy-proof.js` | Bounded whole-cell reach/lake/ecology/crisis proof. |
 | `snapshot.js` | Compact transferable renderer observations. |
 | `result.js` | Plain result including offers, history, and inoculation. |
 | `replay.js` | Versioned decisions, bounded history, authority hash. |
@@ -41,6 +42,7 @@ extinction check`
   trait block once per tick rather than iterated per cell.
 - Presentation snapshots are cell-only (`biomass`, `stress`, `alive`,
   `lifeState`) plus exact event bytes and a compact rolling Reach summary. Visual History quantizes those semantics independently; neither
-  snapshots nor recorder buffers enter replay, result hashes, or RNG.
+  snapshots nor recorder buffers enter replay, result hashes, or RNG. Completed
+  Trophy proof is authority-neutral but intentionally joins the terminal hash.
 - Replay schema 2 records offer, selection, and mode IDs/ticks/card indices;
   final hashes fold replay and owned decisions.

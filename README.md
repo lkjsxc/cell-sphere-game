@@ -51,7 +51,7 @@ preference.
   offers, and random decisions use isolated xoshiro128** streams.
 - Non-blocking FIFO Adaptation offers with exact-uniform seeded automatic
   selection, manual delayed choices, versioned replay, weighted state-sensitive
-  arrival fields, schema-3 History with bounded Trophy proof, and cell-only timeline checkpoints.
+  arrival fields, schema-4 History with bounded Trophy proof, and cell-only timeline checkpoints.
 - Four-draw WebGL2 cellular renderer: geography, life stages, crises,
   Adaptation propagation, History, selection, and Evolution Globe skills are
   materials on the same cells. There are no detached route or prerequisite lines.
@@ -67,12 +67,16 @@ preference.
   adjacent unlocked cell; exactly six canonical roots bootstrap a fresh save.
   Every purchase has a concrete compiled effect, and the semantic grouped list
   shares the same authority.
-- A separate 162-cell Trophy Sphere with exactly 96 authored achievements in
-  six families. Recognition uses bounded deterministic proof, is monotonic,
-  backfills only on explicit Trophy review or progression transactions, and
-  never changes simulation authority.
-- Separate validated stores for Settings, schema-7 progression/Imprints/Trophies,
-  schema-3 semantic History, and ten device-local IndexedDB visual bundles. JSON
+- A separate 162-cell Trophy Sphere with exactly 96 difficult achievements in
+  six families. Rich validated conditions consume bounded whole-cell lake,
+  ecology, crisis, Manual/Automatic, morphology, SCORE, and cumulative proof.
+  Earned cells are monotonic; simultaneous acquisitions use a persisted FIFO
+  notification with names/reasons, unread badge, sequential accessible reveal,
+  and no world-cell highlight leakage.
+- Schema-8 progression explicitly separates retired `reach-river-touch` Legacy
+  ownership from the current `reach-lake-network` criterion. Schema-4 semantic
+  History stores exactly-once Trophy entries; v1 river proof never becomes lake
+  proof. Settings and ten device-local IndexedDB visual bundles remain separate. JSON
   export/import intentionally remains semantic only.
 - No runtime dependencies, engine, framework, CDN, remote media, analytics, or
   post-load network requirement.
@@ -86,6 +90,7 @@ npm run test:browser:file   # real Chrome/WebGL2 over CDP pipe
 npm run test:browser:canvas # force the real-Chrome Canvas 2D fallback
 npm run audit:lakes         # 500-seed connected-lake distribution audit
 npm run audit:skills        # exhaustive Evolution physical-frontier/economy audit
+npm run audit:trophies      # 24 fresh worlds + 240-world modeled mastery campaign
 npm run audit:cell-visuals  # reject sub-cell production geography
 npm run verify              # structure/test/audit/balance/benchmark/link gates
 ```

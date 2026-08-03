@@ -69,9 +69,9 @@ test('semantic schema 2 migrates cellId to bounded unique primaryCells', () => {
   assert.deepEqual(events[1].primaryCells, [4, 5, 6, 7, 8, 9, 10, 11]);
   const migrated = validateHistory({ schema: 1, worlds: [{ seed: 1, tick: 3, score: 0,
     events: [{ tick: 1, type: 'inoculation', cellId: 2 }] }], memory: [] });
-  assert.equal(migrated.schema, 3); assert.deepEqual(migrated.worlds[0].events[0].primaryCells, [2]);
+  assert.equal(migrated.schema, 4); assert.deepEqual(migrated.worlds[0].events[0].primaryCells, [2]);
   globalThis.localStorage = { getItem: (key) => key.endsWith(':v1') ? JSON.stringify(migrated) : null };
-  try { assert.equal(loadHistory().schema, 3); } finally { delete globalThis.localStorage; }
+  try { assert.equal(loadHistory().schema, 4); } finally { delete globalThis.localStorage; }
 });
 
 test('recent-runs validates buffers and gracefully degrades without IndexedDB', async () => {

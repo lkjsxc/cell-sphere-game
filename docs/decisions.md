@@ -138,7 +138,7 @@ Achievements must recognize actual play without creating load-time rewards or
 simulation inputs. Retain bounded integer proof with completed semantic History,
 conservatively derive old proof only at explicit progression transactions, and
 store recognized IDs monotonically (introduced in schema 6 and retained in
-current schema 7). Present 96 exact criteria on a
+current schema 8; D20 narrows Legacy ownership). Present 96 exact criteria on a
 separate 162-cell sphere; 66 neutral cells remain inert. Evidence: catalog and
 proof-boundary audit, schema-5 no-grant migration test, idempotent result test,
 and WebGL2/Canvas screenshots.
@@ -168,3 +168,18 @@ currency during migration. Retain the exact 2,462-Echo economy and all effects.
 Evidence: graph/schema 4/7, 3,840 directed frontier checks, exhaustive 411,522
 single-owner states, run-zero full acquisition, persistence tests, and hashes
 `34b4e4a9` (economy) / `8444edfd` (effects).
+
+## D20 — Hard Trophy mastery, Legacy isolation, and global feedback
+
+Current Trophies represent diverse long-term mastery, not contact. Keep 96
+current cells but allow rich whitelisted combinators over facts-v3 and persisted
+cumulative aggregates. Record whole-cell lake proof at first birth and existing
+summary cadence; include it in the final hash without affecting RNG or authority.
+Schema 8 maps `reach-river-touch` ownership to a separate explicit Legacy list;
+new lake mastery uses `reach-lake-network`, and v1 bit 2 is never lake proof.
+At exactly-once recognition, append semantic History and a persisted unique FIFO.
+The global queue outlives world presentation generations; run-owned captions do
+not. Central UI-only durations are 2.7 s toast, 3.75 s Adaptation, and 4.2 s
+Trophy, with hover/focus holds and static reduced motion. Evidence: production
+24/240-world audit hash `40aa0e55`, migration/result/queue fake-clock tests, and
+real-browser sequential feedback scenario.

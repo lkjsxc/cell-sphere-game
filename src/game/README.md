@@ -9,7 +9,7 @@ same frozen definitions; this directory never owns DOM or persistence state.
 | `strains.js` | Starting morphologies and the closed run-trait model. |
 | `adaptations.js` | ≥24 cards, weighted offers, exact-uniform passive selection. |
 | `events-content.js` | Eight spatial crisis families and content parameters. |
-| `scoring.js` | Network Score, rank, breakdown, and Echo income. |
+| `scoring.js` | SCORE, rank, breakdown, and Echo income. |
 | `skills/` | 642-cell content, globe graph, transactions, compilation, projection, and validation. |
 | `trophies/` | 96 authored criteria, bounded proof, deferred evaluation, and Trophy Sphere projection. |
 

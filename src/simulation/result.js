@@ -4,6 +4,7 @@ import { finalStateHash, serializeHistory, serializeReplay } from './replay.js';
 import { deriveImprint } from './imprint.js';
 import { liveScore } from '../game/scoring.js';
 import { buildReachResult } from './lifecycle/reach-ledger.js';
+import { buildLakeProof } from './trophy-proof.js';
 
 export function buildRunResult(s) {
   return {
@@ -37,6 +38,7 @@ export function buildRunResult(s) {
     imprint: deriveImprint(s),
     causes: { ...s.causes },
     reach: buildReachResult(s),
+    lakeProof: buildLakeProof(s),
     hash: finalStateHash(s),
     replayVersion: s.replayVersion,
     replay: serializeReplay(s),

@@ -57,7 +57,7 @@ function semanticResult(result) {
   return {
     hash: result.hash, tick: result.tick, cause: result.cause,
     inoculationCell: result.inoculationCell, ownedCards: result.ownedCards,
-    offers: result.offers, replay: result.replay, reach: result.reach,
+    offers: result.offers, replay: result.replay, reach: result.reach, lakeProof: result.lakeProof,
   };
 }
 
@@ -186,7 +186,7 @@ test('semantic History validates, prunes, serializes, and survives storage failu
   for (let run = 1; run <= 35; run++) archive = appendWorld(archive, { ...result, seed: run }, score, run, 24);
   assert.equal(archive.worlds.length, 24); assert.ok(serializeHistory(archive).length < 700000);
   globalThis.localStorage = { getItem: () => '{broken', setItem: () => {} };
-  try { assert.deepEqual(loadHistory(), { schema: 3, worlds: [], memory: [] });
+  try { assert.deepEqual(loadHistory(), { schema: 4, worlds: [], memory: [], trophies: [] });
     globalThis.localStorage.setItem = () => { throw new Error('quota'); }; assert.equal(saveHistory(archive), false); }
   finally { delete globalThis.localStorage; }
 });

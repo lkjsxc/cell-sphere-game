@@ -36,7 +36,7 @@ Evidence words are scoped: **implemented**, **tested**, **measured**, **observed
 | E2 | shared Result/History/Event Log/Menu context shell | implemented and locally observed; not deployed | desktop/mobile Chrome scenarios and gesture persistence |
 | E3 | compact dock/Adaptations, visible mobile event, fixed scene selector | implemented and locally observed; not deployed | responsive matrix, 200% text, long labels |
 | F1 | Evolution cost plus one owned adjacent cell only | implemented/tested locally from `ce554ef`; not deployed | schema/audit/migration and run-zero purchase proof complete |
-| F2 | harder lake-centric Trophies and queued feedback | trivial geography awards present | horizon audit, legacy migration, queue tests/browser capture |
+| F2 | harder lake-centric Trophies and queued feedback | implemented/tested in isolated worktree from `25edde7`; not deployed | production/model horizon audit, Legacy migration, fake-clock queue tests; final browser evidence pending |
 | G | `cell-sphere-game` package/storage/repository/Pages identity | legacy identity deployed; GitHub ADMIN observed | namespace migration tests, renamed origin, Actions and exact Pages bytes |
 | H | deterministic Worker/fallback, 32×, bounded performance | baseline fast gates pass | final parity, balance, benchmark, Canvas, lake/event/Trophy audits and soaks |
 | I | coherent push and exact public deployment | target | clean tree, successful workflow, cache-busted public inspection |
@@ -78,6 +78,42 @@ Evidence words are scoped: **implemented**, **tested**, **measured**, **observed
 - **not deployed**: no push, CI, Pages, public URL, Docker, physical-mobile, or
   assistive-technology claim belongs to this isolated shell slice.
 
+## Trophy mastery / presentation timing evidence
+
+- **implemented locally** exactly 96 current cells remain in six 16-cell
+  families. One onboarding completion is automatic; 24 fresh production
+  Automatic worlds each earned exactly one Trophy. Rich whitelisted conditions
+  combine high-percentile world outcomes, sustained morphology/ecology,
+  Manual/Automatic practice, adjacent Evolution ownership, cumulative diversity,
+  and whole-cell lake mastery.
+- **implemented locally** bounded facts v3 records lake cells/shores/distinct and
+  complete basins, five type/three salinity masks, lake-wetland-forest-highland
+  combinations, sustained large-lake regions/loops, and lake-adjacent
+  drought/freeze survival. First-birth markers and the existing one-second
+  summary cadence add no per-tick unbounded scan; proof intentionally joins the
+  deterministic final hash and consumes no RNG.
+- **implemented locally** progression schema 8 maps old
+  `reach-river-touch` ownership to a separate Legacy list and introduces current
+  `reach-lake-network`. Facts-v1 bit 2 is masked. Every other old current ID is
+  grandfathered; validation/import is idempotent and grants nothing on load.
+- **modeled/measured by production authority** the deterministic campaign earns
+  2 / 6 / 9 / 20 / 63 total current Trophies after 1+purchase / 4 / 12 / 48 /
+  240 worlds. The 24-world fresh cohort is `1:24`; audit hash `40aa0e55`, 52.110 s,
+  63/96 at twenty-hour-equivalent, zero impossible/duplicate/trivial-majority
+  criteria. This is modeled 1×-equivalent progression, not observed player time.
+- **implemented/tested locally** award commit adds ownership, one semantic
+  History/Event Log entry, and one persisted unique FIFO ID exactly once. A
+  global 4.2 s actionable reveal shows name/reason/family/progress, holds for
+  hover/focus, uses a static reduced-motion state, updates the Trophy tab badge,
+  routes click to exact detail, and survives world replacement without old world
+  cell highlights. Result lists exact new names.
+- **implemented/tested locally** centralized UI timing is toast 2.7 s,
+  Adaptation caption 3.75 s, Trophy 4.2 s. Important copy queues rather than
+  replacing; generation tokens retire stale run captions. Simulation events,
+  Auto Next, camera, preview reload, and Worker watchdog timing are unchanged.
+- **not deployed** and no physical-device/screen-reader claim. Final WebGL2 and
+  Canvas browser commands are recorded in status only after execution.
+
 ## Evolution physical-frontier evidence
 
 - **implemented locally** graph 4 precomputes stable ID-to-cell addresses and all
@@ -86,7 +122,7 @@ Evidence words are scoped: **implemented**, **tested**, **measured**, **observed
 - **implemented locally** exactly six canonical roots remain bootstrap choices
   under the initial-save rule. Every non-root uses ordinary physical adjacency;
   no run count or authored layout parent participates.
-- **implemented locally** progression schema 7 preserves every recognized owned
+- **implemented locally** progression schema 8 preserves every recognized owned
   ID, including disconnected graph-1/graph-3 migration islands. Unknown IDs
   remain quarantined; migration never refunds, charges, closes, or auto-purchases.
 - **tested** 3,840 directed adjacent frontiers and 3,810 canonical root-bootstrap

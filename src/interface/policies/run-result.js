@@ -1,6 +1,6 @@
 /** Pure, idempotent cross-run transaction; browser persistence happens outside. */
 import { scoreResult } from '../../game/scoring.js';
-import { appendWorld } from '../../platform/history.js';
+import { appendTrophyEvents, appendWorld } from '../../platform/history.js';
 import { convertImprintToAtlas } from '../../platform/storage.js';
 import { reconcileTrophies } from '../../game/trophies/evaluator.js';
 
@@ -17,8 +17,9 @@ export function applyRunResult(meta, archive, result, retention, lastKey = null)
     bestScore: Math.max(meta.bestScore, score.total),
     imprints: converted ? [...meta.imprints, converted].slice(-8) : meta.imprints,
   };
-  const nextArchive = appendWorld(archive, result, score, nextMeta.runs, retention);
-  const trophies = reconcileTrophies(nextMeta, nextArchive);
+  const appended = appendWorld(archive, result, score, nextMeta.runs, retention); const record = appended.worlds.at(-1);
+  const trophies = reconcileTrophies(nextMeta, appended, record?.trophyFacts);
+  const nextArchive = appendTrophyEvents(appended, trophies.awardedIds, record?.id);
   return Object.freeze({ applied: true, key, meta: trophies.meta, archive: nextArchive, score,
     trophyIds: trophies.awardedIds, trophiesBackfilled: trophies.backfilled });
 }

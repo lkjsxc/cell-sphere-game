@@ -1,7 +1,7 @@
 /** Real-browser Trophy migration, topology, selection, and restoration evidence. */
 export async function assertNoLoadGrant(t) {
   const state = await t.evaluate(`({schema:window.__IN_APP__.meta.schema,trophies:window.__IN_APP__.meta.trophyIds.length,backfill:window.__IN_APP__.meta.trophyBackfillVersion})`);
-  ok(state.schema === 7 && state.trophies === 0 && state.backfill === 0, `Trophies changed on load: ${JSON.stringify(state)}`);
+  ok(state.schema === 8 && state.trophies === 0 && state.backfill === 0, `Trophies changed on load: ${JSON.stringify(state)}`);
 }
 export async function exerciseTrophies(t) {
   const { evaluate, screenshot, click, wait, poll, setViewport } = t;

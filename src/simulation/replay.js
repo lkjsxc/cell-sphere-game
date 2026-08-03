@@ -78,10 +78,15 @@ export function finalStateHash(state) {
   h = hashF32(h, state.edgePeak, 1000);
   h = hashU8(h, state.alive);
   h = hashU8(h, state.edgeActive);
+  const proof = state.trophyProof;
   h = hashF32(h, new Float32Array([
     state.tick, state.totalUptake, state.totalMaintenance,
     state.peakCoverage, state.peakConnectedShare, state.inoculationCell,
     state.adaptationMode === 'random' ? 1 : 0, state.replayVersion,
+    proof.lakeCellsReached, proof.shoreCellsReached, proof.distinctLakesReached, proof.completeShores,
+    proof.ecologyMask, proof.lakeTypeMask, proof.lakeSalinityMask, proof.lakeLivingSamples,
+    proof.largeLakeLivingSamples, proof.lakeRegionPeak, proof.droughtLakeSurvivals,
+    proof.freezeLakeSurvivals, proof.loopSurplusPeak, proof.loopLivingSamples,
   ]), 1000);
   const replayValues = [];
   for (const entry of state.replay) replayValues.push(entry.length, ...entry);

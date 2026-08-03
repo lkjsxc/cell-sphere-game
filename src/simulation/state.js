@@ -12,6 +12,7 @@ import { scheduleEvents } from './events.js';
 import { recordHistory } from './replay.js';
 import { birthCell, killCell } from './lifecycle/cell-lifecycle.js';
 import { createReachLedger, REACH_CAUSE } from './lifecycle/reach-ledger.js';
+import { createTrophyProof } from './trophy-proof.js';
 
 const STREAM = Object.freeze({
   world: 0x51ab3d71,
@@ -65,7 +66,7 @@ export function createRunState(cfg) {
     entropyLut: buildEntropyLut(), seasonLut: buildSeasonLut(),
     nodeSeasonOffset: buildNodeSeasonOffsets(topo),
     events: scheduleEvents(eventRng, topo, fields, cfg.challenge ?? null),
-    crisesEndured: 0, crisesTotal: 0,
+    crisesEndured: 0, crisesTotal: 0, trophyProof: createTrophyProof(topo, fields),
 
     adaptationMode, adaptationOffers: [], nextOfferIndex: 0,
     lastOffered: [], lastAdaptationResolutionTick: -1, ownedCards: [],

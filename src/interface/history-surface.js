@@ -26,6 +26,7 @@ const TITLES = Object.freeze({
   'morph.loop.first': ['First loop formed', 'Living cells enclosed a resilient circuit.'],
   'morph.component.split': ['Network split', 'Living tissue separated into components.'],
   'morph.component.reconnected': ['Network reconnected', 'Separated components joined again.'],
+  'trophy.earned': ['Trophy preserved', 'A difficult criterion became permanent progression exactly once.'],
 });
 
 export function createHistorySurface(options) {
@@ -93,7 +94,7 @@ export function describeHistoryEvent(event) { const base = TITLES[event.key] ?? 
   const subject = event.subjectId ? ` · ${humanize(event.subjectId)}` : ''; return [base[0] + subject, base[1]]; }
 function humanize(value) { return String(value).split(/[.-]/).at(-1).replaceAll('_', ' ').replace(/^./, (c) => c.toUpperCase()); }
 export function historyEventCategory(event) { if (event.kind === 'adaptation') return 'adaptation'; if (event.kind === 'crisis') return 'crisis';
-  if (event.key.startsWith('geo.') || event.key.startsWith('run.world')) return 'world'; return 'life'; }
+  if (event.kind === 'trophy') return 'life'; if (event.key.startsWith('geo.') || event.key.startsWith('run.world')) return 'world'; return 'life'; }
 export function historyGameTime(tick) { const seconds = Math.floor(tick / 10); return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
 function strong(text) { const node = document.createElement('strong'); node.textContent = text; return node; }
 function byId(id) { return /** @type {HTMLElement} */ (document.getElementById(id)); }

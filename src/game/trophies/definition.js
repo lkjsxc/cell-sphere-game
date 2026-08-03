@@ -1,6 +1,8 @@
-/** Compact authored Trophy schema; conditions are interpreted by evaluator.js. */
+/** Authored Trophy condition combinators; evaluator.js interprets this data only. */
 export const atLeast = (key, value) => Object.freeze({ rule: 'at-least', key, value });
 export const includes = (key, mask) => Object.freeze({ rule: 'includes', key, mask });
+export const allOf = (...conditions) => Object.freeze({ rule: 'all', conditions: Object.freeze(conditions) });
+export const anyOf = (...conditions) => Object.freeze({ rule: 'any', conditions: Object.freeze(conditions) });
 
 /** Rows: slug, name, exact criterion, condition. */
 export function defineTrophyFamily(family, rows) {

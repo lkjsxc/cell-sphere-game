@@ -89,7 +89,11 @@ choices under the initial-save rule. Imprints are bounded cell material; no prog
 exists. Trophy Sphere switches the same renderer to a 162-cell level-2
 topology. Exactly 96 read-only Trophy cells occupy six connected constellations;
 66 substrate cells remain neutral and unselectable. Trophy recognition consumes
-only completed semantic proof and never feeds simulation, score, or Echoes.
+only completed facts-v3 proof and never feeds simulation, SCORE, or Echoes.
+Bounded birth-time markers plus the existing one-second summary cadence record
+whole-cell lake/shore reach, lake diversity/type/salinity, ecology combinations,
+sustained lake living/loops, and lake-region drought/freeze survival. These
+facts intentionally join the final deterministic hash but consume no RNG.
 
 ## Persistence
 
@@ -97,10 +101,11 @@ Separate localStorage documents own:
 
 - Settings schema 3 (`settings:v2`), including automatic continuation and safe
   migration from earlier values;
-- progression schema 7 (`meta:v1`), including Echoes, graph-4 642-cell ownership,
-  cell-converted Imprints, Trophy IDs/proof aggregates, graph versions,
+- progression schema 8 (`meta:v1`), including Echoes, graph-4 642-cell ownership,
+  cell-converted Imprints, current Trophy IDs, separate Legacy ownership,
+  persisted unread FIFO, facts-v3 cumulative aggregates, graph versions,
   quarantine, a seed cursor, and one migration notice;
-- semantic History schema 3 (`history:v2`, migrating earlier schemas), retaining
+- semantic History schema 4 (`history:v2`, migrating earlier schemas), retaining
   24/32 timelines, ≤80 events and ≤8 primary cells/event, ≤128 skill
   purchases, and a hard 700 KB serialized cap;
 - device-local IndexedDB visual History: strict `INHV` v1 cell-only bundles,
@@ -111,7 +116,10 @@ when old ownership forms disconnected islands; each island becomes a physical
 frontier source, while unknown IDs remain quarantined. No migration closes
 ownership, refunds, charges, or auto-purchases. Progress purchases persist before
 in-memory currency is committed. Result awards pass through an idempotent transaction,
-so repeated completion delivery cannot duplicate Echoes, History, or Imprints.
+so repeated completion delivery cannot duplicate Echoes, History, Imprints, a
+Trophy Cell, semantic Trophy event, or notification ID. The global presentation
+queue is not retired with a world generation; Trophy-Sphere emphasis reads only
+that queue and never becomes an old-world cell highlight.
 Storage failure leaves the session playable and is communicated honestly. JSON
 export/import remains semantic only; visual checkpoints are explicitly
 approximate and device-local.

@@ -30,7 +30,10 @@ Accessibility is a completion criterion, not a claim of audited conformance.
   DOM; the semantic tree and globe share one source of truth.
 - Trophy Sphere exposes all 96 criteria in a six-row semantic grid with roving
   arrow-key focus. Pointer and semantic selection open the same read-only earned
-  or not-earned detail; neutral sphere cells do nothing.
+  or not-earned detail; neutral sphere cells do nothing. A persisted tab badge
+  counts unread acquisitions. One actionable reveal at a time announces Trophy
+  name and criterion, exposes family/progress, holds on hover or focus, and opens
+  the exact detail on click. Reduced motion uses a static reveal.
 - One polite live region announces meaningful changes; rapid metrics do not.
 - Reduced motion disables effective idle rotation and expanding waves and
   replaces two-second Adaptation propagation with brief static origin emphasis;

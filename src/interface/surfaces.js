@@ -1,4 +1,7 @@
 /** Core semantic surfaces. Dynamic text uses textContent, never innerHTML. */
+import { getTrophy } from '../game/trophies/index.js';
+import { createTimedPresentationQueue, PRESENTATION_DURATION } from './policies/presentation-timing.js';
+const TOAST_QUEUES = new WeakMap();
 const CAUSE = Object.freeze({
   starvation: 'Local resources fell below the cost of the network.',
   heat: 'Heat stress fractured the remaining transport routes.',
@@ -25,6 +28,7 @@ export function elements() {
     event: byId('hud-event-text'), resultRank: byId('result-rank'), resultScore: byId('result-score'),
     resultCause: byId('result-cause'), breakdown: byId('result-breakdown'), resultAdaptations: byId('result-adaptations'),
     echoes: byId('result-echoes'), resultImprint: byId('result-imprint'), resultTrophies: byId('result-trophies'), memoryBalance: byId('memory-balance'), trophyCount: byId('trophy-count'),
+    trophyBadge: byId('trophy-tab-badge'), trophyLegacy: byId('trophy-legacy'),
     memoryAvailable: byId('memory-available'), countdown: byId('result-countdown'), resultFirstCycle: byId('result-first-cycle'),
     resultNext: /** @type {HTMLButtonElement} */ (byId('result-next-button')), resultControl: byId('result-control'),
     evolutionButton: /** @type {HTMLButtonElement} */ (byId('memory-button')),
@@ -84,10 +88,11 @@ export function updateCurrentEvent(el, event, terminal = false) {
 }
 
 export function toast(el, text, quiet = false) {
-  if (quiet) return;
-  while (el.toast.children.length >= 3) el.toast.firstElementChild?.remove();
-  const node = document.createElement('div'); node.className = 'toast toast-enter'; node.textContent = text;
-  el.toast.append(node); setTimeout(() => node.remove(), 1800);
+  if (quiet) return; let queue = TOAST_QUEUES.get(el.toast);
+  if (!queue) { queue = createTimedPresentationQueue({ duration: PRESENTATION_DURATION.toast,
+      onShow: (message) => { const node = document.createElement('div'); node.className = 'toast toast-enter'; node.textContent = message; el.toast.replaceChildren(node); },
+      onIdle: () => el.toast.replaceChildren() }); TOAST_QUEUES.set(el.toast, queue); }
+  queue.enqueue(text);
 }
 
 export function showResult(el, score, result) {
@@ -97,7 +102,8 @@ export function showResult(el, score, result) {
   el.resultCause.textContent = CAUSE[result.cause] ?? 'The final living cell released its remaining energy.';
   el.echoes.textContent = `${score.echoes} Echoes entered permanent memory.`;
   el.resultImprint.textContent = result.imprint?.edges?.length ? 'Imprint preserved · strongest morphology retained.' : '';
-  const trophies = result.trophyIds?.length ?? 0; el.resultTrophies.textContent = trophies ? `${trophies} ${trophies === 1 ? 'Trophy' : 'Trophies'} recognized.` : '';
+  const names = (result.trophyIds ?? []).map((id) => getTrophy(id)?.nameEn).filter(Boolean);
+  el.resultTrophies.textContent = names.length ? `New Trophies · ${names.join(' · ')}` : 'No new Trophy this world.';
   const offers = result.adaptationOffers ?? result.offers ?? [];
   const random = offers.filter((offer) => offer.selectionMode === 'random' && offer.selectedCardId).length;
   const manual = offers.filter((offer) => offer.selectionMode === 'manual' && offer.selectedCardId).length;
@@ -124,5 +130,7 @@ export function formatCoverage(coverage, aliveCount, totalCells = 2562) {
 
 export function showMemory(el, meta, available = 0) { el.memoryBalance.textContent = number(meta.echoBalance);
   el.memoryAvailable.textContent = `${available} ${available === 1 ? 'skill' : 'skills'} available`; }
-export function showTrophies(el, meta) { const count = meta.trophyIds?.length ?? 0; el.trophyCount.textContent = `${count} / 96 earned`; }
+export function showTrophies(el, meta) { const count = meta.trophyIds?.length ?? 0; el.trophyCount.textContent = `${count} / 96 earned`;
+  const legacy = meta.legacyTrophyIds?.length ?? 0; if (el.trophyLegacy) { el.trophyLegacy.hidden = legacy === 0;
+    el.trophyLegacy.textContent = legacy ? `Legacy · ${legacy} retired river-era Trophy preserved separately; it supplies no current lake proof.` : ''; } }
 export function number(value) { return new Intl.NumberFormat('en').format(Math.round(value)); }

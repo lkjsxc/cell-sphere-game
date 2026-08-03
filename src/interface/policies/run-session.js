@@ -84,9 +84,10 @@ export function finishRun(app, result) {
   app.resultKeys.add(transaction.key); if (app.resultKeys.size > 16) app.resultKeys.delete(app.resultKeys.values().next().value);
   app.closeActiveOverlay(); app.adaptationEffects.clear(); app.selectedNode = null; app.flow.send('extinct');
   app.lastResult = identified; app.lastScore = transaction.score; app.lastResultIdentity = app.worldIdentity;
-  app.currentHistory = normalizeHistoryEvents(result.history).slice(-80); app.meta = transaction.meta; app.archive = transaction.archive;
-  ui.updateCurrentEvent(app.el, app.currentHistory.at(-1), true); app.eventLogUi.update(app.eventLogModel());
-  app.pendingTrophyIds.push(...transaction.trophyIds); const skills = buildMemorySnapshot(app.topo3, app.meta).nodeStates;
+  app.meta = transaction.meta; app.archive = transaction.archive;
+  app.currentHistory = app.archive.worlds.at(-1)?.events?.slice(-80) ?? normalizeHistoryEvents(result.history).slice(-80);
+  ui.updateCurrentEvent(app.el, app.currentHistory.at(-1), true); app.eventLogUi.update(app.eventLogModel()); app.trophyNotifications.sync(app.meta);
+  const skills = buildMemorySnapshot(app.topo3, app.meta).nodeStates;
   app.el.evolutionButton.dataset.action = skills.some((node) => node.reachable && node.affordable && !node.owned) ? 'available' : 'quiet';
   if (!saveMeta(app.meta)) ui.announce(app.el, 'Progress is temporary because browser storage is unavailable.');
   saveHistory(app.archive, app.settings.historyRetention); const record = app.archive.worlds.at(-1);
