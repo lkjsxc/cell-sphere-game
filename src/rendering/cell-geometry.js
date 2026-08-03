@@ -86,10 +86,9 @@ export function createCellGeometry(topo, fields) {
     boundaryIndices.set([base, base + 1, base + 2, base + 1, base + 3, base + 2], edge * 6);
   }
 
-  const rivers = buildRiverGeometry(topo, fields);
   return Object.freeze({
     dual, vertexCount, positions, centers, material, terrain, vertexCell, indices,
-    boundaryPositions, boundaryFeature, boundaryIndices, ...rivers,
+    boundaryPositions, boundaryFeature, boundaryIndices,
   });
 
   function writeVertex(position, cell) {
@@ -107,29 +106,4 @@ export function createCellGeometry(topo, fields) {
   function centerFor(cell) {
     return topo.positions.subarray(cell * 3, cell * 3 + 3);
   }
-}
-
-/** Connected center-to-downstream ribbons keep rivers distinct from cell edges. */
-function buildRiverGeometry(topo, fields) {
-  const cells = [];
-  for (let cell = 0; cell < topo.nodeCount; cell++) {
-    if ((fields.riverStrength?.[cell] ?? 0) > 0 && (fields.drainTo?.[cell] ?? -1) >= 0) cells.push(cell);
-  }
-  const riverPositions = new Float32Array(cells.length * 12);
-  const riverFeature = new Float32Array(cells.length * 8);
-  const riverIndices = new Uint16Array(cells.length * 6);
-  cells.forEach((cell, segment) => {
-    const down = fields.drainTo[cell]; const a = Array.from(topo.positions.subarray(cell * 3, cell * 3 + 3));
-    const b = Array.from(topo.positions.subarray(down * 3, down * 3 + 3));
-    const sideA = cross(a, tangentToward(a, b)); const sideB = cross(b, tangentToward(b, a, false));
-    const strength = fields.riverStrength[cell]; const width = 0.0032 + strength * 0.008;
-    const base = segment * 4;
-    riverPositions.set(offset(a, sideA, width, 1.006), base * 3);
-    riverPositions.set(offset(a, sideA, -width, 1.006), (base + 1) * 3);
-    riverPositions.set(offset(b, sideB, width, 1.006), (base + 2) * 3);
-    riverPositions.set(offset(b, sideB, -width, 1.006), (base + 3) * 3);
-    for (let corner = 0; corner < 4; corner++) riverFeature.set([1, strength], (base + corner) * 2);
-    riverIndices.set([base, base + 1, base + 2, base + 1, base + 3, base + 2], segment * 6);
-  });
-  return { riverPositions, riverFeature, riverIndices };
 }

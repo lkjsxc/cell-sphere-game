@@ -8,7 +8,7 @@ Evidence is generated under ignored `reports/baseline-visual-pass/` and `reports
 |---|---|---|---|---|
 | Result can stall at visually dead reach | Authority trusted incrementally maintained `aliveCount`; collapse onset was not a hard terminal maximum. | `balance.js`, `state.js`, `death.js`, `simulator.js`, snapshot/result/worker/driver, reliability test and soak | 64-seed integration matrix and 100-world calibration pass; one result, final count zero, tick ≤3,620. Run ID/watchdog tracked separately below. | Tested |
 | Tiny living population reads `0%` | HUD rounded `coverage * 100`; one of 2,562 cells rounded to zero. | `surfaces.js`, `index.html`, `components.css` | Formatter tests cover zero, one/two/three cells, decimal and integer ranges. | Tested |
-| Detached cyan bars / V fragments | Separate center-to-downstream river quads use high-opacity cyan boundary shader. | — | Baseline WebGL screenshots and geometry audit; Canvas uses cell material instead. | Reproduced |
+| Detached cyan bars / V fragments | Separate center-to-downstream river quads used a high-opacity cyan boundary shader. | Cell geometry, world pass, boundary shader, renderer, tests and rendering docs | Static negative gate passes; real Chrome/WebGL completes at four draws; mobile/desktop run and wave captures contain no detached cyan geometry. | Tested |
 | Title organism is arbitrary and weak | Fixed 54-cell FIFO BFS ignores ecology, then clears and reseeds through an LCG. | — | Baseline title matrix plus six existing title captures. | Reproduced |
 | Adaptation is a broad wash | Unweighted whole-component BFS is normalized to its maximum distance in the shader. | — | `browser-adaptation-wave-*` and propagation audit. | Reproduced |
 | Run dock is bulky / actions equal | Fixed five-column mobile rail and uniform dark pills. | — | `browser-run-mobile.png`. | Reproduced |
@@ -23,7 +23,7 @@ Evidence is generated under ignored `reports/baseline-visual-pass/` and `reports
 ## Baseline commands
 
 - `npm run verify` — pass; 110 unit, 29 integration; benchmark 2,910 ticks / 161 ms, 18,022 ticks/s, hash `98333073`, 11 MB reported heap.
-- `npm run test:browser:file` — pass; real headless Chrome/WebGL2; 32× result 8.19 s; five draws.
+- `npm run test:browser:file` — baseline pass; real headless Chrome/WebGL2; 32× result 8.19 s; five draws before artifact-path removal.
 - `npm run test:browser:canvas` — pass; real headless Chrome forced Canvas 2D.
 - Public HTTP inspection — sampled `index.html`, `src/main.js`, renderer, CSS, and status bytes matched HEAD.
 

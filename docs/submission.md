@@ -18,7 +18,7 @@ release candidate from the later frozen submission/tag/form.
 - Local verify: 110 unit + 29 integration, including a 100-world unattended
   result-transition soak; balance, benchmark, structure, and links pass.
 - Docker Node 22 verification passes on the current worktree.
-- Real headless Chrome/WebGL2 covers six responsive viewport sizes, five draws,
+- Real headless Chrome/WebGL2 covers six responsive viewport sizes, four draws,
   nonmodal surfaces, cellular Adaptations, visual History, compact result,
   adjacent-cell Memory purchases, persistence, and unattended continuation.
 - A second real-Chrome run forces Canvas 2D through title, result, History, and

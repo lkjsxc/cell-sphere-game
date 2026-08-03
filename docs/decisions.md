@@ -12,7 +12,7 @@ Evidence: `package.json`, link gate, contest rules fetch recorded in status.
 ## D2 — WebGL2 primary, Canvas 2D fallback
 
 Desktop/smartphone Chrome support WebGL2 broadly, while a blank unsupported
-page is unacceptable. WebGL2 owns the five-draw authored cellular presentation;
+page is unacceptable. WebGL2 owns the four-draw authored cellular presentation;
 Canvas keeps geography, cellular life, selection, events, History, and Memory
 playable without drawing organism routes. Evidence: renderer unit contracts and
 dedicated real-Chrome WebGL2 and forced-Canvas scenarios.

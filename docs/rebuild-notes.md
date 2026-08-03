@@ -84,7 +84,7 @@ before-state for the cell-only renderer gate.
 - Deleted organism route/tip shaders, geometry builders, passes, imports, and
   edge presentation payloads; deleted the decorative orbit equation.
 - Moved all living, crisis, selection, Adaptation, History, and Memory meaning
-  into direct cell materials. WebGL2 now submits five draws and presentation
+  into direct cell materials. WebGL2 now submits four draws and presentation
   snapshots total 25,620 bytes.
 - Replaced opaque/full-height documents with one coordinated translucent left
   surface on wide screens or ≤42% bottom sheet on narrow screens; History is a

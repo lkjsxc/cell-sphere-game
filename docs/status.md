@@ -26,7 +26,7 @@ Truthful deployed handoff for the world-first cellular redesign.
 - Enabled-by-default result continuation starts the next world after nine
   unattended seconds. Pointer/key input cancels it; hidden documents and open
   detail surfaces suspend remaining time; it never spends Echoes.
-- WebGL2 uses five steady draws. Living, frontier, stressed, critical, dead,
+- WebGL2 uses four steady draws. Living, frontier, stressed, critical, dead,
   crisis, selection, Adaptation, visual History, and Memory states are direct
   cell materials. Organism route/tip/orbit and Memory path producers and their
   presentation payloads are deleted.
@@ -56,7 +56,8 @@ Environment unless stated: Node v22.22.3, Linux x64, 20 logical CPUs.
   balanced/expansion/resilience.
 - `npm run test:browser:file`: PASS in real headless Chrome/WebGL2. Responsive
   evidence covers 390×844, 430×932, 768×1024, 1024×768, 1440×900, and
-  1920×1080; 32× result in 8.54 s; five draws; JS submission mean 0.07 ms,
+  1920×1080; 32× result in 8.54 s; four draws in the current renderer; the
+  recorded release run used five; JS submission mean 0.07 ms,
   p95 0.20 ms; visual IndexedDB reload; four Memory purchases; History restores
   the level-3 atlas; second unattended result starts the third world; no browser
   errors. These are not physical-device or GPU timings.

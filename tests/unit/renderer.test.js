@@ -118,13 +118,15 @@ test('every declared uniform is uploaded by the renderer modules', () => {
   assert.ok(!parseUniformNames(SH.FS_GLOBE).has('uSignalCenter'));
 });
 
-test('production renderer has five geographic/cellular draws and no route programs', () => {
+test('production renderer has four geographic/cellular draws and no line-artifact path', () => {
   const renderer = read('../../src/rendering/renderer.js'); const shaders = read('../../src/rendering/shaders.js');
   const fallback = read('../../src/rendering/fallback2d.js');
-  assert.match(renderer, /drawCalls = 5/);
+  const world = read('../../src/rendering/world-pass.js'); const geometry = read('../../src/rendering/cell-geometry.js');
+  assert.match(renderer, /drawCalls = 4/);
   assert.doesNotMatch(renderer, /network|vein|tip|drawElementsInstanced/i);
   assert.doesNotMatch(fallback, /edgeActive|conductance|flux|renderNetwork|tip|vein/i);
   assert.doesNotMatch(shaders, /orbit|uTwinkle|uTime/);
+  assert.doesNotMatch(`${world}\n${geometry}`, /buildRiverGeometry|riverPositions|riverFeature|riverIndices|programs\.river|riverVao/);
   assert.equal(existsSync(resolve(here, '../../src/rendering/network-pass.js')), false);
   assert.equal(existsSync(resolve(here, '../../src/rendering/shaders-network.js')), false);
 });
@@ -135,8 +137,8 @@ test('dual-cell render geometry stays indexed, finite, and cell-addressable', ()
   const geometry = createCellGeometry(topo, fields);
   assert.equal(geometry.dual.cellCount, topo.nodeCount);
   assert.equal(geometry.indices.length, topo.edgeCount * 6);
-  assert.equal(geometry.boundaryIndices.length, topo.edgeCount * 6); assert.ok(geometry.riverIndices.length > 0
-    && geometry.riverPositions.length === geometry.riverIndices.length * 2);
+  assert.equal(geometry.boundaryIndices.length, topo.edgeCount * 6);
+  assert.equal('riverIndices' in geometry, false);
   assert.equal(geometry.vertexCell.length, geometry.vertexCount);
   for (const value of [...geometry.positions, ...geometry.terrain]) assert.ok(Number.isFinite(value));
   for (const index of geometry.indices) assert.ok(index < geometry.vertexCount);

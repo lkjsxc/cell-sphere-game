@@ -17,7 +17,7 @@ Key modules:
 - `adaptation-propagation.js`: bounded neighbor BFS and two-event queue.
 - `shaders*.js`: original GLSL for geography and cellular materials.
 - `fallback2d.js`: equivalent projected cell semantics without organism lines.
-- `renderer.js`: five-draw composition and context-loss callback.
+- `renderer.js`: four-draw composition and context-loss callback.
 
 Memory reconfigures the same renderer for a dedicated 642-cell level-3 atlas.
 Status, branch, tier, kind, selection, and morphology fossils are cellular;

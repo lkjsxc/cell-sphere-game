@@ -60,7 +60,7 @@ try {
   const evidence = forceCanvas ? await runCanvasScenario(tools) : await runScenario(tools);
   console.log(forceCanvas ? `test:browser:file — PASS (canvas2d fallback; score ${evidence.score}; cellular title, History, and Memory)`
     : `test:browser:file — PASS (${evidence.backend}; observational loop; score ${evidence.score}; `
-      + `32x ${evidence.elapsed.toFixed(2)}s; 5 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
+      + `32x ${evidence.elapsed.toFixed(2)}s; 4 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
       + `visual IDB reload ${evidence.idb ? 'yes' : 'unavailable'}; 108-node Memory purchase ${evidence.nodeId})`);
   exitCode = 0;
 } catch (error) {

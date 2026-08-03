@@ -5,7 +5,7 @@ export async function runScenario(t) {
   const render = await evaluate(`new Promise(resolve => { const app=window.__IN_APP__, original=app.renderer.render.bind(app.renderer), samples=[];
     app.renderer.render=(scene)=>{const start=performance.now(); original(scene); samples.push(performance.now()-start)};
     setTimeout(()=>{app.renderer.render=original; samples.sort((a,b)=>a-b); resolve({draws:app.renderer.drawCalls,p95:samples[Math.floor(samples.length*.95)]||0,mean:samples.reduce((a,b)=>a+b,0)/Math.max(1,samples.length)});},1200); })`);
-  ok(render.draws === 5 && render.p95 < 20, 'renderer draw/time budget regressed');
+  ok(render.draws === 4 && render.p95 < 20, 'renderer draw/time budget regressed');
   const signalCopy = await evaluate("document.body.innerText.includes('Signal')");
   ok(!signalCopy, 'obsolete run guidance remains visible');
 
@@ -61,7 +61,7 @@ export async function runScenario(t) {
     return {caption:document.getElementById('adaptation-caption').textContent,hidden:document.getElementById('adaptation-caption').hidden,
       draws:app.renderer.drawCalls,queue:app.adaptationEffects.queueLength,bytes:app.adaptationEffects.retainedBytes,
       reduced:wave?.reduced,progress:wave?.progress}; })()`);
-  ok(!waveStart.hidden && waveStart.caption.length > 20 && waveStart.draws === 5 && waveStart.queue <= 2
+  ok(!waveStart.hidden && waveStart.caption.length > 20 && waveStart.draws === 4 && waveStart.queue <= 2
     && waveStart.bytes <= 5124 && waveStart.reduced === false, 'full-motion Adaptation presentation contract failed');
   await screenshot('browser-adaptation-wave-start.png');
   ok(await poll(() => evaluate('window.__IN_APP__.adaptationEffects.frame(performance.now())?.progress'),
@@ -120,7 +120,7 @@ export async function runScenario(t) {
     nodes:snap.nodeStates.length,cells:snap.memoryStatus.length,level:app.topo.levels,frontier:snap.nodeStates.filter(n=>n.reachable).length,
     paths:'links' in snap.memoryScene,draws:app.renderer.drawCalls}; })()`);
   ok(atlas.nodes === 108 && atlas.cells === 642 && atlas.level === 3, 'Memory did not reconfigure to the level-3 atlas');
-  ok(atlas.frontier === 6 && !atlas.paths && atlas.draws === 5, 'early frontier or direct-cell rendering regressed');
+  ok(atlas.frontier === 6 && !atlas.paths && atlas.draws === 4, 'early frontier or direct-cell rendering regressed');
   const before = await evaluate('window.__IN_APP__.meta.echoBalance');
   const nodeId = await evaluate(`window.__IN_APP__.memorySnapshot.nodeStates.find(n=>n.reachable&&n.affordable)?.id`);
   ok(nodeId, 'no affordable Memory node'); await evaluate(`window.__IN_APP__.selectMemoryNode(${JSON.stringify(nodeId)})`);

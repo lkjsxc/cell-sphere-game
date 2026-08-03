@@ -3,15 +3,17 @@
 WebGL2 is primary; Canvas 2D is an honestly maintained cellular fallback. Both
 consume immutable world fields/snapshots and share camera/picking cell IDs.
 
-## Five-draw hierarchy
+## Four-draw hierarchy
 
-Steady-state WebGL2 submits exactly five draws:
+Steady-state WebGL2 submits exactly four draws:
 
 1. mineral-twilight background;
 2. one dual-cell surface carrying geography and all dynamic cellular material;
-3. quiet region/coast boundaries;
-4. terrain-bound geographic drainage accents;
-5. atmosphere.
+3. quiet closed region/coast boundaries;
+4. atmosphere.
+
+Hydrology remains world and biome data and contributes only subtle cell material;
+there is no center-to-downstream line, ribbon, dash, or separate river draw.
 
 The cell surface expresses living, stressed, critical, frontier, and dead-remain
 states by whole-cell fill, inset, edge, roughness, and light response. Events
@@ -57,6 +59,6 @@ opens visual History, renders the 642-cell Memory atlas, captures mobile and
 desktop evidence, and reports no browser errors.
 
 Current WebGL2 evidence covers 390×844, 430×932, 768×1024, 1024×768,
-1440×900, and 1920×1080. It reports five draws and JavaScript render submission
+1440×900, and 1920×1080. It reports four draws and JavaScript render submission
 mean 0.07 ms / p95 0.20 ms. These are not GPU timings. Physical-mobile thermal
 behavior and actual GPU frame time remain unmeasured.

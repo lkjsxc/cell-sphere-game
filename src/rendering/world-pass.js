@@ -14,7 +14,6 @@ export class WorldPass {
     this.programs = {
       globe: this.make(SH.VS_GLOBE, SH.FS_GLOBE),
       boundary: this.make(BOUNDARY.VS_BOUNDARY, BOUNDARY.FS_BOUNDARY),
-      river: this.make(BOUNDARY.VS_BOUNDARY, BOUNDARY.FS_BOUNDARY),
       atmosphere: this.make(SHELL.VS_ATMOSPHERE, SHELL.FS_ATMOSPHERE),
     };
     this.lifeData = new Float32Array(this.geometry.vertexCount * 3);
@@ -59,12 +58,6 @@ export class WorldPass {
     this.attribute(this.programs.boundary, 'aFeature', this.buffer(gl.ARRAY_BUFFER, g.boundaryFeature), 2);
     this.boundaryIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.boundaryIndices);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.boundaryIndex);
-
-    this.riverVao = this.vao();
-    this.attribute(this.programs.river, 'aPos', this.buffer(gl.ARRAY_BUFFER, g.riverPositions), 3);
-    this.attribute(this.programs.river, 'aFeature', this.buffer(gl.ARRAY_BUFFER, g.riverFeature), 2);
-    this.riverIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.riverIndices);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.riverIndex);
 
     this.atmosphereVao = this.vao();
     this.attribute(this.programs.atmosphere, 'aPos', this.buffer(gl.ARRAY_BUFFER, this.topo.positions), 3);
@@ -151,15 +144,6 @@ export class WorldPass {
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false); gl.bindVertexArray(this.boundaryVao);
     gl.drawElements(gl.TRIANGLES, this.geometry.boundaryIndices.length, gl.UNSIGNED_SHORT, 0);
-    gl.depthMask(true);
-
-    const river = this.programs.river;
-    gl.useProgram(river.program);
-    gl.uniformMatrix4fv(river.u.get('uViewProj'), false, vp);
-    gl.uniform3fv(river.u.get('uEye'), eye);
-    gl.uniform1f(river.u.get('uEntropy'), snapshot?.entropy ?? 0);
-    gl.depthMask(false); gl.bindVertexArray(this.riverVao);
-    gl.drawElements(gl.TRIANGLES, this.geometry.riverIndices.length, gl.UNSIGNED_SHORT, 0);
     gl.depthMask(true);
 
     const atmosphere = this.programs.atmosphere;

@@ -12,7 +12,7 @@ export class GLRenderer {
     if (!gl) throw new Error('WebGL2 unavailable');
     this.gl = gl;
     this.backend = 'webgl2';
-    this.drawCalls = 5;
+    this.drawCalls = 4;
     this.background = this.make(SHELL.VS_BACKGROUND, SHELL.FS_BACKGROUND);
     this.world = new WorldPass(gl, topo, fields);
     this.onContextLoss = opts.onContextLoss ?? (() => {});
