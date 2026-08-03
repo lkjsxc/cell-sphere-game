@@ -25,6 +25,7 @@
     "audit:rivers": "node scripts/audits/river-audit.mjs",
     "audit:events": "node scripts/audits/event-audit.mjs",
     "audit:skills": "node scripts/audits/skill-audit.mjs",
+    "audit:trophies": "node scripts/audits/trophy-audit.mjs",
     "benchmark": "node scripts/benchmark.mjs",
     "verify": "node scripts/verify.mjs"
   },
