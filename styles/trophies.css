@@ -15,10 +15,5 @@
   .trophy-bar { width: calc(100vw - 2 * var(--sp-2)); display: grid; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); }
   .trophy-actions { flex-wrap: nowrap; overflow-x: auto; justify-content: start; }
   .trophy-actions .btn { white-space: nowrap; padding-inline: var(--sp-2); font-size: var(--fs-caption); }
-  .result-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .result-actions .btn:nth-child(n+4) { padding: 0; }.result-actions .btn:nth-child(n+4) span { display: none; }
-  .result-actions .btn:nth-child(3) { padding-inline: 2px; font-size: 11px; }
-  .result-actions .btn:nth-child(3)::before { content: "Trophies"; }
-  .result-summary #result-trophies { display: block; }
 }
 @media (forced-colors: active) { .trophy-detail, .trophy-status, .trophy-bar { border: 1px solid CanvasText; } }

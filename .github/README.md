@@ -16,21 +16,23 @@ Web Page category, ZEN University division. The published deadline is
 
 ## How to play
 
-1. Rotate the title world, tap a cell to inspect it, then choose **Grow a world**.
+1. Use the fixed **Home | World | Evolution | Trophies** selector, rotate the
+   title world, then choose **Grow a world**.
 2. Inoculation is selected autonomously from suitable seeded geography.
 3. Watch growth at 1×–32×. Camera movement and inspection never change results.
 4. **Automatic** Adaptation choices are the default: every three-card offer is
    selected uniformly by its own deterministic decision stream. Choose
-   **Manual** in Settings to queue offers and open them when convenient.
-5. Adaptations, History, Settings, and the cell inspector do not pause world
-   time by default. A panel-pause preference is available in Settings.
-6. At extinction, the world stays visible behind a compact result strip. Choose
-   **Next World**, or leave the result completely untouched for the nine-second Auto Next.
-   The first genuine interaction cancels Auto Next for that result.
+   **Manual** in Menu → Preferences to queue offers and open them when convenient.
+5. Adaptations, History, Event Log, Menu, metrics, and the cell inspector do not
+   pause world time by default. A panel-pause preference is available in Menu.
+6. At extinction, the exact terminal world and HUD stay visible while the shared
+   left/mobile context shell opens **Result**. Choose **Next World**, or leave the
+   result completely untouched for the nine-second Auto Next. The first genuine
+   interaction cancels Auto Next for that result.
 7. In the Evolution Globe, select an adjacent Skill Cell, read its details, and explicitly
    press **Unlock**. Several small Echo purchases improve later worlds.
 
-Optional idle globe rotation is available in Settings and defaults off.
+Optional idle globe rotation is available in Menu → Preferences and defaults off.
 Reduced motion always disables its effective motion without erasing the saved
 preference.
 
@@ -54,6 +56,9 @@ preference.
   Adaptation propagation, History, selection, and Evolution Globe skills are
   materials on the same cells. There are no detached route or prerequisite lines.
   Canvas 2D remains an observationally complete cellular fallback.
+- One orthogonal authority/scene model, one fixed four-scene selector, and one
+  physical context shell for Result, History, Event Log, Menu, SCORE, ENTROPY,
+  REACH, Adaptations, Inspector, Skill details, and Trophy details.
 - Read-only cell inspector with static geography plus low-cadence authoritative
   living detail.
 - Exactly 642 validated, purchasable Skill Cells fill a separate 642-cell
@@ -90,7 +95,7 @@ Docker: `docker compose up serve` / `docker compose run --rm verify`.
 ## Repository map
 
 ```text
-index.html       semantic screens, HUD, and nonmodal context surfaces
+index.html       four semantic scenes, stable HUD, selector, and one context shell
 styles/          authored responsive CSS
 src/core/        PRNG, hash, clock, state machine, math
 src/world/       topology, terrain, hydrology, ecology, landmarks

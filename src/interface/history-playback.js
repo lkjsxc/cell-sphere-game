@@ -24,16 +24,18 @@ export function createHistoryPlayback(app) {
   }
   function save(record) { if (record) request('save', record); }
   function open(scope = null) {
-    seedBefore = app.visualSeed; progressionBefore = ['memory', 'trophies'].includes(app.state) ? app.state : null; decoded = null; buffers = null; app.historySnapshot = null; app.historyHighlights = []; 
+    const phase = app.phase ?? app.state; const scene = app.scene ?? (app.state === 'memory' ? 'evolution' : app.state);
+    seedBefore = app.visualSeed; progressionBefore = ['evolution', 'trophies'].includes(scene) ? scene : null; decoded = null; buffers = null; app.historySnapshot = null; app.historyHighlights = [];
     const worlds = [];
-    if (['starting', 'running', 'result'].includes(app.state)) worlds.push({ id: 'current', current: true,
-      label: app.state === 'result' ? `Latest world · seed ${app.runSeed}` : `Current world · seed ${app.runSeed}`,
+    if (['starting', 'running', 'result'].includes(phase)) worlds.push({ id: 'current', current: true, terminal: phase === 'result',
+      label: phase === 'result' ? `Latest world · seed ${app.runSeed}` : `Current world · seed ${app.runSeed}`,
       seed: app.runSeed, tick: app.lastResult?.tick ?? app.snapshot?.tick ?? 0, events: app.currentHistory });
     for (const item of app.archive.worlds.slice().reverse()) worlds.push({ ...item, current: false,
       label: `${item.archetype} · ${item.score.toLocaleString('en')} · seed ${item.seed}`, tick: item.tick });
     if (!worlds.length) worlds.push({ id: 'empty', current: false, label: 'No completed worlds', seed: seedBefore, tick: 0, events: [] });
-    app.openFull('history'); app.historyUi.open({ worlds, liveTick: app.snapshot?.tick ?? 0 },
-      scope === 'current' ? 'current' : scope === 'past' ? worlds.find((item) => !item.current)?.id : worlds[0].id);
+    const defaultId = scope === 'current' ? 'current' : scope === 'past' ? worlds.find((item) => !item.current)?.id
+      : worlds.some((item) => item.id === scope) ? scope : worlds[0].id;
+    app.openFull('history'); app.historyUi.open({ worlds, liveTick: app.snapshot?.tick ?? 0 }, defaultId);
     app.activateSurface('history', app.historyUi.surface, 'history-heading');
   }
   function selectWorld(world) {
@@ -68,7 +70,7 @@ export function createHistoryPlayback(app) {
   function retire() { loads.invalidate(); requests.clear(); app.historySnapshot = null; app.historyHighlights = [];
     decoded = null; buffers = null; seedBefore = null; progressionBefore = null; }
   function restoreFields() {
-    if (progressionBefore && app.topo !== (progressionBefore === 'memory' ? app.topo3 : app.topo2)) { app.makeRenderer(0, progressionBefore); app.resize(true); return; }
+    if (progressionBefore && app.topo !== (progressionBefore === 'evolution' ? app.topo3 : app.topo2)) { app.makeRenderer(0, progressionBefore === 'evolution' ? 'memory' : 'trophies'); app.resize(true); return; }
     if (!progressionBefore && seedBefore != null && (app.visualSeed !== seedBefore || app.topo !== app.topo4)) { app.makeRenderer(seedBefore); app.resize(true); }
   }
   function useDecoded(value) { decoded = value; buffers = createPreviewBuffers(value.cellCount); }

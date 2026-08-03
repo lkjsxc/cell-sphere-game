@@ -111,17 +111,16 @@
   .history-world-row { grid-template-columns: auto minmax(0, 1fr); }.history-world-row p { grid-column: 1 / -1; }
   .history-scrubber { grid-template-columns: auto minmax(5rem, 1fr) auto; }.history-scrubber #history-live { grid-column: 1 / -1; }
   .command-rail { width: calc(100vw - 2 * var(--sp-2)); display: grid;
-    grid-template-columns: 90px minmax(74px, 1fr) repeat(3, 44px); gap: 2px; overflow: visible; }
-  .hud-bottom { align-items: end; }.hud-event { display: none; }.rail-btn { height: 44px; padding-inline: 2px; overflow: hidden; }
+    grid-template-columns: 90px minmax(74px, 1fr) 68px; gap: 2px; overflow: visible; }
+  .hud-bottom { align-items: end; }.rail-btn { height: 44px; padding-inline: 2px; overflow: hidden; }
   .rail-btn.dock-primary { overflow: visible; }
   .dock-primary > span { font-size: 11px; line-height: 1.05; }.rail-btn small { font-size: 9px; line-height: 1.05; }
   .time-dial { width: var(--touch-min); height: var(--touch-min); }.speed-control select { width: var(--touch-min); height: 44px; padding: 0 2px; font-size: 12px; }
   .rail-btn:not(.dock-primary) span { display: none; }
-  .rail-btn:not(.dock-primary)::before { font-size: 1.05rem; }.history-open.rail-btn::before { content: "↺"; }
-  #new-world-button::before { content: "↻"; }.settings-open.rail-btn::before { content: "•••"; letter-spacing: -2px; }
+  .rail-btn:not(.dock-primary)::before { font-size: 1.05rem; }
 }
 @media (max-width: 410px) { .corner-nav { gap: 0; }.quiet-btn { padding: 0 var(--sp-2); }.command-rail { width: calc(100vw - var(--sp-2)); } }
-@media (min-width: 600px) and (max-width: 899px) { .command-rail { width: auto; grid-template-columns: 90px minmax(8rem, 12rem) repeat(3, 44px); } }
+@media (min-width: 600px) and (max-width: 899px) { .command-rail { width: auto; grid-template-columns: 90px minmax(8rem, 12rem) 68px; } }
 @media (min-width: 700px) and (max-height: 520px) {
   .context-surface { inset: calc(var(--sp-3) + var(--safe-top)) auto calc(var(--sp-3) + var(--safe-bottom)) calc(var(--sp-3) + var(--safe-left)); width: min(24rem, 44vw); max-height: none; border-radius: var(--radius-l); }
   .context-surface::before { display: none; }.skill-detail { max-height: none; }.skill-detail header, .context-confirm header { padding-top: 0; }

@@ -1,5 +1,5 @@
 /** Renderer snapshot construction from canonical authority. */
-import { liveScore } from '../game/scoring.js';
+import { evaluate, metricsFromState } from '../game/scoring.js';
 import { writeLifeStates } from '../core/life-state.js';
 import { buildEventCellState } from './events.js';
 import { buildReachSummary } from './lifecycle/reach-ledger.js';
@@ -7,6 +7,7 @@ import { buildReachSummary } from './lifecycle/reach-ledger.js';
 export function buildSnapshot(state) {
   const lifeState = writeLifeStates(state.topo, state.alive, state.biomass, state.stress,
     new Uint8Array(state.topo.nodeCount)); const eventCells = buildEventCellState(state);
+  const scoreProjection = evaluate(metricsFromState(state));
   return {
     tick: state.tick,
     entropy: state.entropy,
@@ -29,7 +30,8 @@ export function buildSnapshot(state) {
       viableEnergyCells: state.liveness.viableEnergyCount,
       activeFrontierCells: state.liveness.activeFrontierCount,
       terminalCause: state.terminalCause,
-      score: liveScore(state),
+      score: scoreProjection.total,
+      scoreProjection,
       vitality: vitality(state),
     },
     events: state.events

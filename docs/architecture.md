@@ -10,18 +10,28 @@ content/effects to simulation and interface; `platform` contains browser
 adapters only. Simulation imports no DOM, WebGL, storage, audio, or interface.
 Rendering consumes immutable world fields/snapshots and never mutates authority.
 
-## Three independent state concerns
+## Orthogonal authority, scene, and surface state
 
 ```text
-primary screen: title → replacing → preparing → starting → running → result → …
+world phase:    idle | starting | running | result
+selected scene: home | world | evolution | trophies
 simulation:     idle | running | terminal-collapse | extinct
 pause reasons:  manual, hidden, optional panel lease
-overlay:        none | inspector | adaptations | history | settings |
-                result-details | evolution-skill | new-world-confirmation
+authored slot:  none | result | history | event-log | menu | metric |
+                inspector | adaptations | skill | trophy | new-world-confirmation
 ```
 
-An Adaptation offer is queued data, never a primary/simulation phase. One
-overlay is active at a time. Closing a panel releases only its own pause reason
+World phase never masquerades as a memory or Trophy scene. A running authority
+continues under the visible-document and pause policy while Home, Evolution, or
+Trophies is selected; the one render loop draws only the selected scene. Each
+scene stores its camera, so World restores the exact active or terminal globe.
+Skill purchases during a run compile only into the next world. One fixed
+`role=tablist` selector owns primary scene navigation.
+
+One physical context shell owns desktop-left/mobile-bottom geometry, z-order,
+focus, scrim, and active content. Opening another mode replaces the child in
+that slot without changing globe layout. An Adaptation offer is queued data,
+never an authority phase. Closing a surface releases only its own pause reason
 and cannot resume a manually paused world. The result countdown is a pure
 presentation policy: hidden documents pause elapsed time, while the first trusted
 pointer, touch, wheel, keyboard, control, focus, surface, metric, cell, globe, or
@@ -111,8 +121,9 @@ approximate and device-local.
 The run digest includes seed, inoculation, simulation/replay version, compiled
 skill effects/conditions, Adaptation mode changes, offers, and selections.
 World/events/growth/content/decision/inoculation streams are isolated xoshiro
-streams. Camera, selection, panel views, quality, motion, cellular Adaptation waves,
-and History viewing never enter authority or consume RNG. Tests compare
+streams. Scene selection, camera, selection, shell views, quality, motion,
+cellular Adaptation waves, metrics, Event Log, and History viewing never enter
+authority or consume RNG. Tests compare
 no-observation runs against hundreds of inspection/snapshot queries. Separate
 100-cycle tests drive the production replacement coordinator and real result
 transactions: one seed/authority/blank frame/reward per generation, hidden

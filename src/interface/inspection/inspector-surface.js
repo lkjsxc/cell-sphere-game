@@ -71,7 +71,7 @@ export function createInspectorSurface(options) {
   }
 
   return {
-    panel, open(next) { model = next; panel.hidden = false; render(); heading.focus?.(); },
+    panel, open(next) { model = next; panel.hidden = false; render(); },
     updateDynamic(dynamic, events = model?.events ?? []) { if (!model) return; model = { ...model, dynamic, events }; renderDynamic(); renderHistory(); },
     close() { panel.hidden = true; model = null; }, get node() { return model?.node ?? null; },
   };

@@ -32,14 +32,51 @@ Evidence words are scoped: **implemented**, **tested**, **measured**, **observed
 | B | cell-only visible world and connected whole-cell lakes | target | source visual-grammar gate, lake audit, WebGL2/Canvas captures |
 | C | atomic first-wins world replacement and blank new frame | implemented and locally tested from `6811336`; not deployed | state-machine tests, stale rejection, 100-cycle soak, first-frame captures |
 | D | untouched-only Auto Next; trusted input cancels permanently | implemented and locally tested from `6811336`; not deployed | timer/unit interaction matrix and trusted CDP scenarios |
-| E1 | clickable stable SCORE/ENTROPY/REACH details | only REACH interactive | semantics plus stable-rectangle measurements |
-| E2 | shared Result/History/Event Log/Menu context shell | separate bottom/replacement surfaces present | desktop/mobile Chrome scenarios and gesture persistence |
-| E3 | compact dock/Adaptations, visible mobile event, fixed scene selector | contradicted by baseline | responsive matrix, 200% text, long labels |
+| E1 | clickable stable SCORE/ENTROPY/REACH details | implemented and locally observed; not deployed | semantics plus stable-rectangle measurements |
+| E2 | shared Result/History/Event Log/Menu context shell | implemented and locally observed; not deployed | desktop/mobile Chrome scenarios and gesture persistence |
+| E3 | compact dock/Adaptations, visible mobile event, fixed scene selector | implemented and locally observed; not deployed | responsive matrix, 200% text, long labels |
 | F1 | Evolution cost plus one owned adjacent cell only | implemented/tested locally from `ce554ef`; not deployed | schema/audit/migration and run-zero purchase proof complete |
 | F2 | harder lake-centric Trophies and queued feedback | trivial geography awards present | horizon audit, legacy migration, queue tests/browser capture |
 | G | `cell-sphere-game` package/storage/repository/Pages identity | legacy identity deployed; GitHub ADMIN observed | namespace migration tests, renamed origin, Actions and exact Pages bytes |
 | H | deterministic Worker/fallback, 32×, bounded performance | baseline fast gates pass | final parity, balance, benchmark, Canvas, lake/event/Trophy audits and soaks |
 | I | coherent push and exact public deployment | target | clean tree, successful workflow, cache-busted public inspection |
+
+## Unified shell / stable surface evidence
+
+- **implemented locally** orthogonal `idle | starting | running | result`
+  authority and `home | world | evolution | trophies` scene state. One renderer
+  draws only the selected scene; active authority advances off-scene and World
+  restores its saved camera. One fixed semantic tablist owns scene navigation.
+- **implemented locally** one physical context shell owns desktop-left/mobile-
+  bottom geometry, focus, scrim, and replacement for Result, History, Event Log,
+  Menu, all three metrics, Adaptations, Inspector, and progression details.
+  Canvas pointerdown never dismisses it; cumulative tap/drag classification owns
+  blank dismissal and cell replacement.
+- **implemented locally** the active dock contains only time/pause, speed,
+  Adaptations, and Menu. The current-event button remains 44px or taller across
+  portrait/landscape viewports and opens an 80-row-bounded semantic Event Log.
+  Menu owns preferences, scene/data routes, and the existing reward-free
+  confirmed New World transaction.
+- **implemented locally** terminal World retains the final snapshot, renderer,
+  camera, HUD metrics, event, Menu, selector, and globe input while Result opens
+  in the shared shell. Result can close/reopen, cell inspection can replace it,
+  and drag does not dismiss it. Completed time, speed, and Adaptations expose
+  disabled terminal semantics.
+- **tested locally** unit projections cover actual Score axes/weights/ranks,
+  snapshot-derived Entropy rate/context, authoritative Reach ledger values, and
+  current/archive Event Log bounds. The trusted-CDP scenario samples metric
+  geometry through updates, scene keyboard semantics, drag/scroll persistence,
+  Menu confirmation, compact Adaptations, Result, History, Event Log, 200% text,
+  reduced motion, high contrast, long labels, and atomic replacement.
+- **measured locally** in real headless Chrome/WebGL2 at 1440×900, SCORE,
+  ENTROPY, and REACH each retained the exact shell rectangle
+  `left=16, top=144, right=476.796875, bottom=884, width=460.796875,
+  height=740` through multiple authority updates. The 320×568, 390×844,
+  430×932, 768×1024, 844×390, and 1440×900 matrix retained 44px selector
+  controls, a 67.09375px current-event control, bounded dock/event rectangles,
+  no overlap, and no horizontal overflow.
+- **not deployed**: no push, CI, Pages, public URL, Docker, physical-mobile, or
+  assistive-technology claim belongs to this isolated shell slice.
 
 ## Evolution physical-frontier evidence
 

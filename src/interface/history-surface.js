@@ -43,7 +43,7 @@ export function createHistorySurface(options) {
   function chooseWorld(id) {
     world = model.worlds.find((item) => item.id === id) ?? model.worlds[0]; if (!world) return;
     worldSelect.value = world.id; events = world.events ?? []; range.max = String(Math.max(0, world.tick));
-    range.value = String(world.current ? Math.min(world.tick, model.liveTick) : world.tick); latest.textContent = world.current ? 'Live' : 'Latest';
+    range.value = String(world.current ? Math.min(world.tick, model.liveTick) : world.tick); latest.textContent = world.terminal ? 'Final' : world.current ? 'Live' : 'Latest';
     eventIndex = events.length - 1; renderSelected(); renderList(); setAvailability(null);
     options.onWorld(world);
   }
@@ -58,14 +58,14 @@ export function createHistorySurface(options) {
   function renderSelected() {
     const event = events[eventIndex]; prev.disabled = eventIndex <= 0; next.disabled = eventIndex < 0 || eventIndex >= events.length - 1;
     if (!event) { selected.textContent = 'No semantic events were recorded at this time.'; return; }
-    const [title, detail] = describe(event); selected.replaceChildren(strong(title), document.createTextNode(` — ${detail}`));
+    const [title, detail] = describeHistoryEvent(event); selected.replaceChildren(strong(title), document.createTextNode(` — ${detail}`));
   }
   function renderList() {
-    const visible = events.filter((event) => filter.value === 'all' || eventCategory(event) === filter.value);
+    const visible = events.filter((event) => filter.value === 'all' || historyEventCategory(event) === filter.value).slice(-80);
     list.replaceChildren(...visible.map((event) => {
       const row = document.createElement('li'); row.className = 'history-entry'; const button = document.createElement('button');
-      button.type = 'button'; button.className = 'history-event-btn'; const [title, detail] = describe(event);
-      button.append(strong(`${gameTime(event.tick)} · ${title}`), document.createTextNode(detail));
+      button.type = 'button'; button.className = 'history-event-btn'; const [title, detail] = describeHistoryEvent(event);
+      button.append(strong(`${historyGameTime(event.tick)} · ${title}`), document.createTextNode(detail));
       button.addEventListener('click', () => { eventIndex = events.indexOf(event); seek(event.tick); }); row.append(button); return row;
     }));
     if (!visible.length) { const empty = document.createElement('li'); empty.className = 'history-entry'; empty.textContent = 'No events in this category.'; list.append(empty); }
@@ -75,8 +75,8 @@ export function createHistorySurface(options) {
       ? 'Approximate visual detail was not preserved for this world; semantic events remain.' : 'Loading device-local visual detail…');
   }
   function updateFrame(frameTick, liveTick = world?.tick ?? 0) {
-    range.value = String(frameTick); const behind = world?.current && liveTick > frameTick ? ` · ${gameTime(liveTick - frameTick)} behind live` : '';
-    time.textContent = `${gameTime(frameTick)}${behind} · nearest approximate checkpoint`;
+    range.value = String(frameTick); const behind = world?.current && liveTick > frameTick ? ` · ${historyGameTime(liveTick - frameTick)} behind live` : '';
+    time.textContent = `${historyGameTime(frameTick)}${behind} · nearest approximate checkpoint`;
   }
   return { surface, open(nextModel, defaultId) { model = nextModel; worldSelect.replaceChildren(...model.worlds.map((item) => {
       const option = document.createElement('option'); option.value = item.id; option.textContent = item.label; return option; }));
@@ -89,11 +89,11 @@ export function createHistorySurface(options) {
 }
 function nearestEvent(events, tick) { let best = -1; let distance = Infinity;
   events.forEach((event, index) => { const d = Math.abs(event.tick - tick); if (d < distance) { best = index; distance = d; } }); return best; }
-function describe(event) { const base = TITLES[event.key] ?? [humanize(event.key), 'A meaningful change was preserved.'];
+export function describeHistoryEvent(event) { const base = TITLES[event.key] ?? [humanize(event.key), 'A meaningful change was preserved.'];
   const subject = event.subjectId ? ` · ${humanize(event.subjectId)}` : ''; return [base[0] + subject, base[1]]; }
 function humanize(value) { return String(value).split(/[.-]/).at(-1).replaceAll('_', ' ').replace(/^./, (c) => c.toUpperCase()); }
-function eventCategory(event) { if (event.kind === 'adaptation') return 'adaptation'; if (event.kind === 'crisis') return 'crisis';
+export function historyEventCategory(event) { if (event.kind === 'adaptation') return 'adaptation'; if (event.kind === 'crisis') return 'crisis';
   if (event.key.startsWith('geo.') || event.key.startsWith('run.world')) return 'world'; return 'life'; }
-function gameTime(tick) { const seconds = Math.floor(tick / 10); return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
+export function historyGameTime(tick) { const seconds = Math.floor(tick / 10); return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
 function strong(text) { const node = document.createElement('strong'); node.textContent = text; return node; }
 function byId(id) { return /** @type {HTMLElement} */ (document.getElementById(id)); }

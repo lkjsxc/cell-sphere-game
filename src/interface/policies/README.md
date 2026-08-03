@@ -1,7 +1,7 @@
 # Interface policies
 
-Pure coordination policies for nonmodal surfaces, safe globe framing, and the
-untouched-only result countdown. `adaptation-effects.js` bridges authoritative
+Pure coordination policies for the stable scene selector, single nonmodal
+surface shell, safe globe framing, and the untouched-only result countdown. `adaptation-effects.js` bridges authoritative
 selection messages to bounded presentation-only cell waves and captions.
 `run-session.js` owns first-wins atomic world replacement, complete presentation
 retirement, typed blank installation, and authority startup. `run-result.js`

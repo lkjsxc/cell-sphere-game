@@ -12,7 +12,7 @@ const CAUSE = Object.freeze({
 const byId = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
 export function elements() {
   return {
-    title: byId('title-screen'), run: byId('run-screen'), result: byId('result-screen'), memory: byId('memory-screen'), trophies: byId('trophy-screen'),
+    title: byId('title-screen'), run: byId('run-screen'), memory: byId('memory-screen'), trophies: byId('trophy-screen'),
     begin: /** @type {HTMLButtonElement} */ (byId('begin-button')),
     memoryButton: /** @type {HTMLButtonElement} */ (byId('memory-button')),
     restart: /** @type {HTMLButtonElement} */ (byId('restart-button')),
@@ -21,22 +21,21 @@ export function elements() {
     adaptationButton: /** @type {HTMLButtonElement} */ (byId('adaptations-button')),
     adaptationBadge: byId('adaptation-badge'), adaptationModeLabel: byId('adaptation-mode-label'),
     boot: byId('boot-status'), score: byId('hud-score'), pressure: byId('hud-pressure'), reach: byId('hud-reach'), trace: byId('hud-trace'),
-    reachButton: byId('reach-balance-button'), resultReach: byId('result-reach-button'),
+    scoreButton: byId('score-button'), entropyButton: byId('entropy-button'), reachButton: byId('reach-button'), resultReach: byId('result-reach-button'),
     event: byId('hud-event-text'), resultRank: byId('result-rank'), resultScore: byId('result-score'),
     resultCause: byId('result-cause'), breakdown: byId('result-breakdown'), resultAdaptations: byId('result-adaptations'),
     echoes: byId('result-echoes'), resultImprint: byId('result-imprint'), resultTrophies: byId('result-trophies'), memoryBalance: byId('memory-balance'), trophyCount: byId('trophy-count'),
-    memoryAvailable: byId('memory-available'), countdown: byId('result-countdown'),
-    resultNext: /** @type {HTMLButtonElement} */ (byId('result-next-button')),
+    memoryAvailable: byId('memory-available'), countdown: byId('result-countdown'), resultFirstCycle: byId('result-first-cycle'),
+    resultNext: /** @type {HTMLButtonElement} */ (byId('result-next-button')), resultControl: byId('result-control'),
     evolutionButton: /** @type {HTMLButtonElement} */ (byId('memory-button')),
-    resultDetails: /** @type {HTMLButtonElement} */ (byId('result-details-button')),
-    live: byId('live-region'), toast: byId('toast-root'), adaptationCaption: byId('adaptation-caption'),
+    live: byId('live-region'), toast: byId('toast-root'), adaptationCaption: byId('adaptation-caption'), eventTime: byId('hud-event-time'), eventButton: byId('current-event-button'),
     resultHistory: byId('result-history-button'),
   };
 }
 
-export function show(el, state) {
-  for (const [name, screen] of Object.entries({ title: el.title, run: el.run, result: el.result, memory: el.memory, trophies: el.trophies })) {
-    screen.hidden = name !== state;
+export function show(el, scene) {
+  for (const [name, screen] of Object.entries({ home: el.title, world: el.run, evolution: el.memory, trophies: el.trophies })) {
+    screen.hidden = name !== scene;
   }
 }
 
@@ -56,7 +55,9 @@ export function resetWorldPresentation(el, snapshot = null) {
     metrics: { score: 0, coverage: 0, aliveCount: 0 }, reach: null });
   el.event.textContent = ''; el.live.textContent = ''; el.resultRank.textContent = ''; el.resultScore.textContent = '0';
   el.resultCause.textContent = ''; el.echoes.textContent = ''; el.resultTrophies.textContent = '';
-  el.resultImprint.textContent = ''; el.resultAdaptations.textContent = ''; el.breakdown.replaceChildren();
+  el.resultImprint.textContent = ''; el.resultAdaptations.textContent = ''; el.resultFirstCycle.textContent = ''; el.breakdown.replaceChildren();
+  el.resultControl.hidden = true; el.pause.disabled = false; el.pause.classList.remove('is-complete'); el.speed.disabled = false; el.adaptationButton.disabled = false;
+  updateAdaptationMode(el, el.adaptationButton.dataset.mode === 'manual' ? 'manual' : 'random');
 }
 
 export function updateAdaptationCount(el, count) {
@@ -74,6 +75,13 @@ export function updateAdaptationMode(el, mode) {
 }
 
 export function announce(el, text) { el.event.textContent = text; el.live.textContent = text; }
+export function updateCurrentEvent(el, event, terminal = false) {
+  if (!event) return;
+  const seconds = Math.floor((event.tick ?? 0) / 10); const time = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+  const title = String(event.key ?? event.family ?? 'world update').split(/[.-]/).at(-1).replaceAll('_', ' ');
+  el.eventTime.textContent = `${time} · ${terminal ? 'FINAL' : String(event.kind ?? 'WORLD').toUpperCase()}`;
+  el.event.textContent = title.replace(/^./, (letter) => letter.toUpperCase()); el.eventButton.dataset.read = 'false';
+}
 
 export function toast(el, text, quiet = false) {
   if (quiet) return;
@@ -95,11 +103,14 @@ export function showResult(el, score, result) {
   const manual = offers.filter((offer) => offer.selectionMode === 'manual' && offer.selectedCardId).length;
   const pending = offers.filter((offer) => !offer.selectedCardId).length;
   el.resultAdaptations.textContent = `Adaptations · ${random} automatic · ${manual} manual${pending ? ` · ${pending} unchosen` : ''}`;
+  el.resultFirstCycle.textContent = result.campaignResolvedNow ? 'First cycle milestone · four worlds observed.' : '';
   el.breakdown.replaceChildren(...score.breakdown.map((part) => {
     const row = document.createElement('p'); row.className = 'breakdown-row';
     row.textContent = `${part.en}  ${number(part.points)}`; return row;
   }));
-  show(el, 'result');
+  el.resultControl.hidden = false; el.pause.disabled = true; el.pause.classList.add('is-complete'); el.pause.setAttribute('aria-label', 'World time complete');
+  el.speed.disabled = true; el.speed.setAttribute('aria-label', 'Game speed, next-world preference');
+  el.adaptationButton.disabled = true; el.adaptationModeLabel.textContent = 'COMPLETE'; el.adaptationButton.setAttribute('aria-label', 'Adaptations, completed world');
 }
 
 export function formatCoverage(coverage, aliveCount, totalCells = 2562) {
@@ -112,6 +123,6 @@ export function formatCoverage(coverage, aliveCount, totalCells = 2562) {
 }
 
 export function showMemory(el, meta, available = 0) { el.memoryBalance.textContent = number(meta.echoBalance);
-  el.memoryAvailable.textContent = `${available} ${available === 1 ? 'skill' : 'skills'} available`; show(el, 'memory'); }
-export function showTrophies(el, meta) { const count = meta.trophyIds?.length ?? 0; el.trophyCount.textContent = `${count} / 96 earned`; show(el, 'trophies'); }
+  el.memoryAvailable.textContent = `${available} ${available === 1 ? 'skill' : 'skills'} available`; }
+export function showTrophies(el, meta) { const count = meta.trophyIds?.length ?? 0; el.trophyCount.textContent = `${count} / 96 earned`; }
 export function number(value) { return new Intl.NumberFormat('en').format(Math.round(value)); }

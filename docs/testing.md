@@ -37,29 +37,30 @@ identities, one typed blank frame per cycle, and complete current-world teardown
 
 ## Real Chrome scenario
 
-The file/CDP scenario clears itself through a disposable profile and checks:
-rotation default off; drag; title inspector; Settings and opt-in idle rotation;
-manual queued offer without pause; explicit panel/close/reopen/choice; switch
-back to Random; nonmodal History scrub/previous/next/Live with highlighted
-primary cells and continuing authority; 32× result; compact result History;
-IndexedDB visual-detail reload when available; 642-cell/642-skill Evolution
-Globe; select-before-Unlock; 162-cell/96-achievement Trophy Sphere with pointer
-and semantic selection; fixed-flow mobile skill detail; semantic offscreen
-tree; Evolution restoration after History; trusted result interaction cancellation;
-a second truly untouched result continuing once into the third world; intercepted
-zero-life first replacement frames; New World cancel/accept with no reward;
-reload; and no obsolete guidance or console/runtime errors.
+The disposable-profile file/CDP scenario uses trusted pointer and keyboard input
+for scene, surface, gesture, confirmation, Result, and purchase semantics. It
+checks one stable Home/World/Evolution/Trophies tablist, exact World camera return
+while authority advances off-scene, four renderer draws, and one shell rectangle
+across SCORE/ENTROPY/REACH and many snapshots. Globe drag retains metric scroll,
+Result, History, and Event Log. Blank/cell tap policy, Inspector focus, terminal
+HUD/input retention, Result close/reopen, disabled completed-world time controls,
+Menu grouping and reward-free New World confirmation, bounded Event Log rows,
+and History final/live restoration are exercised.
 
-Generated WebGL2 evidence includes six fixed title lifecycle phases plus title layouts at 390×844, 430×932,
-768×1024, 1024×768, 1440×900, and 1920×1080; mobile/tablet/desktop inspector;
-mobile/desktop Settings, run, Adaptations, visual History, result, and Evolution Globe;
-full/reduced Adaptation propagation; and automatic continuation. Dedicated
-Canvas screenshots cover mobile/desktop title, History, and Evolution Globe.
+The responsive matrix covers 320×568, 390×844, 430×932, 768×1024, 844×390,
+and 1440×900 with no horizontal overflow or event/dock overlap. It also emulates
+200% text, long selector labels, reduced motion, and authored high contrast.
+Mobile Adaptations is bounded to 36dvh with three 44px choices and a visible
+current-event control. The run completes at 32×, purchases one physically
+adjacent Skill Cell, visits all 642 Evolution and 96 Trophy records, intercepts
+the next world's zero-life first frame, and checks bounded resources and browser
+errors. Dedicated Canvas 2D evidence completes a run and repeats terminal
+History, Evolution, Trophies, and atomic replacement.
 
 ## Honest limitations
 
 The CDP file path is real Chrome/WebGL2 but bypasses same-origin HTTP security
 to accommodate this container. Physical Android, thermal, screen-reader,
-Japanese localization, 200% zoom, forced-colors review, browser heap trend,
+Japanese localization, browser zoom, forced-colors review, browser heap trend,
 actual GPU frame timing, and unrestricted public-URL visual observation remain
 unmeasured unless status records newer specific evidence.

@@ -25,12 +25,12 @@ Four compatible attention modes:
 3. Watch life spread into adjacent cells through climate/biome opportunities and costs.
 4. Receive three-option Adaptations without interruption. Random automatic
    selection is default and exactly uniform; Manual offers remain until chosen.
-5. Inspect cells and review semantic History during play.
+5. Inspect cells, open the bounded Event Log, and scrub semantic History during play.
 6. Spatial crises, entropy, fragmentation, and inevitable extinction unfold.
-7. A compact result strip explains score/cause and Echoes without hiding the
-   terminal world; details, History, and the Evolution Globe remain optional.
-8. Enter Evolution Globe, select an adjacent Skill Cell, read it, then explicitly
-   Unlock; or use the semantic list.
+7. The terminal world, camera, HUD, metrics, event control, Menu, and globe input
+   remain in World while the shared context shell automatically opens Result.
+8. Enter Evolution, select an adjacent Skill Cell, read it, then explicitly
+   Unlock; an active current world is unchanged and receives new Skills next run.
 9. Choose the next world or leave the result untouched for the nine-second Auto Next; any genuine interaction cancels it for that result.
 
 ## Geography
@@ -68,8 +68,9 @@ never changes the already-applied deterministic effect.
 History stores semantic lifecycle, geography, morphology, crisis, Adaptation,
 extinction, and Skill Cell purchase events rather than tick logs. Bounded visual
 checkpoints let the globe scrub to approximate earlier cellular states; event
-primary cells receive direct material emphasis and Live restores authority
-immediately. The expanded event list exposes the same selected event in text.
+primary cells receive direct material emphasis and Live/final restores authority
+immediately. The bounded Event Log exposes time, category, explanation, phase,
+cell references, and current/archive identity from the same semantic records.
 
 ## Evolution Globe · Permanent Skill Tree
 

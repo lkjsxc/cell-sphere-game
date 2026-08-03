@@ -17,16 +17,15 @@ export function requestWorldReplacement(app, reason, expectedIdentity = null) {
   if (state.status !== 'idle' || !expectedMatches(app, expectedIdentity)) { state.rejected++; return false; }
   state.status = 'requested'; state.reason = reason; state.expectedIdentity = expectedIdentity;
   state.requestSequence++; state.accepted++;
-  if (reason === 'confirmed-new-world' && app.state === 'running' && app.driver.outcome == null) {
+  if (reason === 'confirmed-new-world' && phaseOf(app) === 'running' && app.driver.outcome == null) {
     state.status = 'awaiting-authority'; app.newWorld?.pending();
     if (app.driver.abort(app.worldIdentity)) return true;
   }
   return performWorldReplacement(app);
 }
 export function startRun(app, reason = null) {
-  const selectedReason = reason ?? (app.state === 'title' ? 'title-grow' : app.state === 'result' ? 'manual-next'
-    : app.state === 'memory' ? 'evolution-restart' : app.state === 'trophies' ? 'trophy-restart' : 'requested-restart');
-  const expected = app.state === 'result' ? app.lastResultIdentity : null;
+  const phase = phaseOf(app); const selectedReason = reason ?? (phase === 'idle' ? 'title-grow' : phase === 'result' ? 'manual-next' : 'requested-restart');
+  const expected = phase === 'result' ? app.lastResultIdentity : null;
   return requestWorldReplacement(app, selectedReason, expected);
 }
 export function performWorldReplacement(app) {
@@ -39,8 +38,8 @@ export function performWorldReplacement(app) {
     presentationGeneration: ++app.presentationGeneration });
   app.worldIdentity = identity; app.activeRunId = identity.runId; app.runSeed = seed;
   app.makeRenderer(seed, 'world', identity); const blank = createBlankSnapshot(app.topo4.nodeCount, identity);
-  app.snapshot = blank; app.driver.installSnapshot(blank); app.flow.send(transitionFor(app.state));
-  ui.show(app.el, 'run'); ui.resetWorldPresentation(app.el, blank); app.resize(false);
+  app.snapshot = blank; app.driver.installSnapshot(blank); app.flow.send(transitionFor(phaseOf(app))); app.flow.select?.('world');
+  app.sceneSelector?.update?.('world'); ui.show(app.el, 'world'); ui.resetWorldPresentation(app.el, blank); app.updateSceneActions?.(); app.resize(false);
   app.renderer.bindWorldSession(identity); app.renderer.resetDynamicState();
   const rendered = app.renderer.render({ snapshot: blank, worldIdentity: identity, camera: app.camera,
     selectedNode: null, adaptation: null, highlightedCells: [], time: performance.now() / 1000, pulse: false });
@@ -57,10 +56,10 @@ export function retireWorldPresentation(app) {
   const retired = app.worldIdentity; app.retiredWorldIdentity = retired; app.worldIdentity = null; app.activeRunId = 0;
   app.driver.stop(); app.renderer?.resetDynamicState(); app.requestId++; app.requestGeneration++; resetContinuation(app.continuation);
   app.countdownLabel = ''; app.el.countdown.textContent = ''; app.pause.clear(); app.adaptationEffects.clear();
-  app.historyPlayback.retire(); app.surfaces.reset?.(); app.inspector.close(); app.historyUi.reset?.(); app.reachUi.reset?.();
+  app.historyPlayback.retire(); app.surfaces.reset?.(); app.inspector.close(); app.historyUi.reset?.(); app.metricUi?.reset?.(); app.eventLogUi?.reset?.();
   app.adapt.reset?.(); app.newWorld.close(); app.settingsUi.close(); app.memoryUi.closeNode(); app.trophyUi.close();
   app.overlay = null; app.selectedNode = null; app.offers = []; app.cards = []; app.currentHistory = [];
-  app.lastResult = null; app.lastResultIdentity = null; app.historySnapshot = null; app.historyHighlights = [];
+  app.lastResult = null; app.lastScore = null; app.lastResultIdentity = null; app.historySnapshot = null; app.historyHighlights = [];
   app.snapshot = null; app.driver.installSnapshot(null); app.worldFields = null; app.fields = null;
   app.lastInspect = 0; app.lastRender = 0; app.timeDial.reset(performance.now()); ui.resetWorldPresentation(app.el, null);
   return retired;
@@ -84,19 +83,21 @@ export function finishRun(app, result) {
     app.settings.historyRetention, app.resultKeys); if (!transaction.applied) return false;
   app.resultKeys.add(transaction.key); if (app.resultKeys.size > 16) app.resultKeys.delete(app.resultKeys.values().next().value);
   app.closeActiveOverlay(); app.adaptationEffects.clear(); app.selectedNode = null; app.flow.send('extinct');
-  app.lastResult = identified; app.lastResultIdentity = app.worldIdentity;
-  app.currentHistory = normalizeHistoryEvents(result.history); app.meta = transaction.meta; app.archive = transaction.archive;
+  app.lastResult = identified; app.lastScore = transaction.score; app.lastResultIdentity = app.worldIdentity;
+  app.currentHistory = normalizeHistoryEvents(result.history).slice(-80); app.meta = transaction.meta; app.archive = transaction.archive;
+  ui.updateCurrentEvent(app.el, app.currentHistory.at(-1), true); app.eventLogUi.update(app.eventLogModel());
   app.pendingTrophyIds.push(...transaction.trophyIds); const skills = buildMemorySnapshot(app.topo3, app.meta).nodeStates;
   app.el.evolutionButton.dataset.action = skills.some((node) => node.reachable && node.affordable && !node.owned) ? 'available' : 'quiet';
   if (!saveMeta(app.meta)) ui.announce(app.el, 'Progress is temporary because browser storage is unavailable.');
   saveHistory(app.archive, app.settings.historyRetention); const record = app.archive.worlds.at(-1);
   app.historyPlayback.save(record && { id: record.id, seed: record.seed, completedAt: app.meta.runs });
   ui.showResult(app.el, transaction.score, { ...result, adaptationOffers: result.offers,
-    trophyIds: transaction.trophyIds, campaignResolvedNow: transaction.meta.runs === 4 }); app.resize(false);
+    trophyIds: transaction.trophyIds, campaignResolvedNow: transaction.meta.runs === 4 });
   if (app.worldReplacement.status === 'awaiting-authority') return performWorldReplacement(app);
+  app.selectScene('world');
   if (app.settings.autoContinue) startContinuation(app.continuation, performance.now(), app.worldIdentity);
   else disableContinuation(app.continuation, app.worldIdentity);
-  app.updateContinuation(); return true;
+  app.updateContinuation(); app.openResult(); return true;
 }
 export function finishAbandoned(app, summary) {
   if (!sameWorldIdentity(summary, app.worldIdentity) || app.worldReplacement.status !== 'awaiting-authority') return false;
@@ -109,7 +110,8 @@ function expectedMatches(app, expected) {
   if (typeof expected === 'string') return expected === app.lastResultIdentity?.resultTransactionKey;
   return sameWorldIdentity(expected, app.worldIdentity) || sameWorldIdentity(expected, app.lastResultIdentity);
 }
-function transitionFor(state) {
-  if (state === 'title') return 'begin'; if (state === 'running') return 'abort';
-  if (state === 'starting') return 'replace'; return 'restart';
+function phaseOf(app) { return app.phase ?? (app.state === 'title' ? 'idle' : app.state); }
+function transitionFor(phase) {
+  if (phase === 'idle') return 'begin'; if (phase === 'running') return 'abort';
+  if (phase === 'starting') return 'replace'; return 'restart';
 }

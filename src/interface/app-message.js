@@ -9,12 +9,12 @@ export function handleRunMessage(app, message) {
   if (!sameWorldIdentity(message, app.worldIdentity)) return false;
   if (message.t === 'heartbeat') return true;
   if (message.t === 'ready') return app.driver.ready(message);
-  if (message.t === 'started') { if (app.state !== 'starting' || !markWorldStarted(app, message)) return false;
+  if (message.t === 'started') { if (app.phase !== 'starting' || !markWorldStarted(app, message)) return false;
     app.flow.send('ready'); focusCamera(app.camera, app.topo.positions.subarray(message.inoculationCell * 3, message.inoculationCell * 3 + 3));
     ui.announce(app.el, `Life inoculated cell ${message.inoculationCell}.`); return true; }
   if (message.t === 'snapshot') { app.snapshot = message; app.adaptationEffects.onSnapshot(message);
-    ui.updateHud(app.el, message); app.adapt.update(app.adaptationModel()); app.reachUi.update(message.reach); return; }
-  if (message.t === 'history-batch') return app.mergeHistory(message.events);
+    ui.updateHud(app.el, message); app.adapt.update(app.adaptationModel()); app.metricUi.update(app.metricModel()); return; }
+  if (message.t === 'history-batch') { app.mergeHistory(message.events); return true; }
   if (message.t === 'cell-inspection') { if (message.requestId === app.requestId && message.cell.node === app.selectedNode) {
     app.inspector.updateDynamic(message.cell, app.currentHistory.filter((event) => event.primaryCells.includes(app.selectedNode))); } return; }
   if (message.t === 'adaptation-offered') { app.offers.push(message.offer); ui.updateAdaptationCount(app.el, app.pendingCount()); return; }
@@ -29,7 +29,8 @@ export function handleRunMessage(app, message) {
   if (message.t === 'adaptation-mode-rejected') { app.adapt.rejectMode(message); app.adapt.update(app.adaptationModel());
     ui.updateAdaptationMode(app.el, app.settings.adaptationMode); app.settingsUi.sync(); ui.announce(app.el, `Adaptation mode not changed: ${humanize(message.reason)}.`); return; }
   if (message.t === 'event') return ui.announce(app.el, `${humanize(message.family)} · ${message.phase}`);
-  if (message.t === 'terminal-collapse') return ui.announce(app.el, 'Final trace — the remaining tissue is releasing.');
+  if (message.t === 'terminal-collapse') { ui.announce(app.el, 'Final trace — the remaining tissue is releasing.');
+    app.el.eventTime.textContent = `${app.gameTime(app.snapshot?.tick ?? 0)} · TERMINAL`; return true; }
   if (message.t === 'extinct') return app.finishRun({ ...message.summary, ...identityFields(message) });
   if (message.t === 'aborted') return app.finishAbandoned({ ...message.summary, ...identityFields(message) });
   if (message.t === 'worker-failed' && message.recoverable && message.phase === 'pre-authority') return recoverPreAuthorityFailure(app, message);

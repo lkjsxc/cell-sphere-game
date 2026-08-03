@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertBlankReplacement, installFirstReplacementCapture, runScenario } from './browser/scenario.mjs';
+import { assertBlankReplacement, installFirstReplacementCapture, runScenario } from './browser/shell-scenario.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROFILE = `/tmp/incremental-network-game-browser-${process.pid}`;
@@ -54,14 +54,15 @@ try {
     await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }, session);
   };
   const tools = { evaluate, wait, poll, errors: cdp.errors, click,
-    drag: (from, to) => drag(cdp, session, from, to), screenshot: (name) => screenshot(cdp, session, name),
+    key: (value) => key(cdp, session, value), drag: (from, to) => drag(cdp, session, from, to), screenshot: (name) => screenshot(cdp, session, name),
     setViewport: (width, height) => cdp.send('Emulation.setDeviceMetricsOverride',
       { width, height, deviceScaleFactor: 1, mobile: width < 600 }, session) };
   const evidence = forceCanvas ? await runCanvasScenario(tools) : await runScenario(tools);
-  console.log(forceCanvas ? `test:browser:file — PASS (canvas2d fallback; score ${evidence.score}; cellular title, History, Evolution, and Trophy spheres)`
-    : `test:browser:file — PASS (${evidence.backend}; observational loop; score ${evidence.score}; `
+  console.log(forceCanvas ? `test:browser:file — PASS (canvas2d fallback; score ${evidence.score}; unified shell, History, Evolution, and Trophies)`
+    : `test:browser:file — PASS (${evidence.backend}; unified shell; score ${evidence.score}; `
       + `32x ${evidence.elapsed.toFixed(2)}s; 4 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
-      + `visual IDB reload ${evidence.idb ? 'yes' : 'unavailable'}; 642-skill purchase ${evidence.nodeId})`);
+      + `visual IDB ${evidence.idb ? 'yes' : 'unavailable'}; adjacent Skill purchase ${evidence.nodeId})`);
+  if (evidence.metricRects) console.log(`metric rects ${JSON.stringify(evidence.metricRects)} responsive ${JSON.stringify(evidence.responsive)}`);
   exitCode = 0;
 } catch (error) {
   console.error(`test:browser:file — FAIL: ${error.message}`);
@@ -76,18 +77,17 @@ process.exit(exitCode);
 async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait, errors }) {
   const boot = await evaluate('window.__IN_BOOT__'); if (boot?.renderer !== 'canvas2d') throw new Error('Canvas fallback did not boot');
   await screenshot('browser-canvas-title-mobile.png'); await setViewport(1440, 900); await wait(180); await screenshot('browser-canvas-title-desktop.png');
-  await evaluate(`(() => { const speed=document.getElementById('speed-select'); speed.value='32'; speed.dispatchEvent(new Event('change')); document.getElementById('begin-button').click(); })()`);
-  if (!await poll(() => evaluate("document.getElementById('result-screen').hidden"), (hidden) => hidden === false, 50000)) throw new Error('Canvas run did not finish');
+  await evaluate(`(()=>{document.getElementById('begin-button').click();const speed=document.getElementById('speed-select');speed.value='32';speed.dispatchEvent(new Event('change'))})()`);
+  if (!await poll(() => evaluate('window.__IN_APP__.phase'), (phase) => phase === 'result', 50000)) throw new Error('Canvas run did not finish');
   const score = await evaluate("Number(document.getElementById('result-score').textContent.replaceAll(',',''))");
   await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-canvas-history-desktop.png');
-  await evaluate("document.getElementById('history-close').click(); document.getElementById('memory-button').click()"); await wait(180); await screenshot('browser-canvas-memory-desktop.png');
-  const atlas = await evaluate('window.__IN_APP__.memorySnapshot.memoryStatus.length'); await evaluate("document.querySelector('#memory-screen .trophy-open').click()"); await wait(180); await screenshot('browser-canvas-trophy-desktop.png');
+  await evaluate("document.getElementById('scene-evolution').click()"); await wait(180); await screenshot('browser-canvas-evolution-desktop.png');
+  const atlas = await evaluate('window.__IN_APP__.memorySnapshot.memoryStatus.length'); await evaluate("document.getElementById('scene-trophies').click()"); await wait(180); await screenshot('browser-canvas-trophies-desktop.png');
   const trophies = await evaluate(`({cells:window.__IN_APP__.trophySnapshot.memoryStatus.length,nodes:window.__IN_APP__.trophySnapshot.nodeStates.length})`);
-  await installFirstReplacementCapture(evaluate); const oldRun = await evaluate('window.__IN_APP__.activeRunId');
-  await evaluate("document.getElementById('trophy-next-button').click()");
+  await installFirstReplacementCapture(evaluate); const oldRun = await evaluate('window.__IN_APP__.activeRunId'); await evaluate("document.getElementById('trophy-next-button').click()");
   if (!await poll(() => evaluate('window.__IN_APP__.activeRunId'), (runId) => runId > oldRun, 5000)) throw new Error('Canvas replacement did not start');
   assertBlankReplacement(await evaluate('window.__IN_APP__.__firstReplacementFrame'), 'Canvas 2D');
-  const bounded = await evaluate(`(() => { const a=window.__IN_APP__; return {...a.worldResourceAudit(),raf:a.frameAudit}; })()`);
+  const bounded = await evaluate(`(()=>{const a=window.__IN_APP__;return {...a.worldResourceAudit(),raf:a.frameAudit}})()`);
   if (bounded.interactionListeners !== 8 || bounded.historyRequests || bounded.adaptationEffects || bounded.adaptationBytes || bounded.adaptationTimers
     || bounded.raf.errors || bounded.raf.scheduled < bounded.raf.frames - 1) throw new Error(`Canvas replacement resources/RAF leaked: ${JSON.stringify(bounded)}`);
   if (score <= 0 || atlas !== 642 || trophies.cells !== 162 || trophies.nodes !== 96 || errors.length) throw new Error('Canvas fallback state failed'); return { score };
@@ -121,6 +121,12 @@ function protocol(child) {
     setTimeout(() => { if (pending.delete(id)) reject(new Error(`CDP timeout: ${method}`)); }, 10000);
   });
   return { send, errors };
+}
+
+async function key(cdp, session, value) {
+  const code = value.startsWith('Arrow') ? value : value;
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: value, code }, session);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: value, code }, session);
 }
 
 async function drag(cdp, session, from, to) {

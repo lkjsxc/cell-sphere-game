@@ -5,6 +5,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { createStateMachine } from '../../src/core/state-machine.js';
 import { classifySurfaceTarget } from '../../src/interface/policies/surface-coordinator.js';
 import { createAppState } from '../../src/interface/app-state.js';
+import { isPrimaryPointer, isTapGesture } from '../../src/interface/globe-input.js';
 
 const def = {
   initial: 'title',
@@ -23,10 +24,13 @@ test('legal transitions move state', () => {
   sm.send('READY'); assert.equal(sm.state, 'running'); sm.send('EXTINCT'); assert.equal(sm.state, 'result');
 });
 
-test('Trophy Sphere is an explicit primary state with reversible Evolution access', () => {
-  const title = createAppState(); title.send('trophies'); assert.equal(title.state, 'trophies'); title.send('memory'); assert.equal(title.state, 'memory');
-  title.send('trophies'); title.send('restart'); assert.equal(title.state, 'starting');
-  const result = createAppState(); result.send('begin'); result.send('ready'); result.send('extinct'); result.send('trophies'); assert.equal(result.state, 'trophies');
+test('world authority and selected scene are orthogonal', () => {
+  const app = createAppState(); assert.equal(app.phase, 'idle'); assert.equal(app.scene, 'home');
+  app.select('trophies'); assert.equal(app.phase, 'idle'); assert.equal(app.scene, 'trophies');
+  app.send('begin'); app.send('ready'); app.select('evolution'); assert.equal(app.phase, 'running'); assert.equal(app.scene, 'evolution');
+  app.select('home'); assert.equal(app.phase, 'running'); app.send('extinct'); assert.equal(app.phase, 'result'); assert.equal(app.scene, 'home');
+  app.select('world'); assert.equal(app.phase, 'result'); assert.equal(app.scene, 'world');
+  assert.throws(() => app.select('memory'), /unknown scene/);
 });
 
 test('illegal transitions throw', () => {
@@ -43,6 +47,13 @@ test('onTransition hook observes moves', () => {
   const seen = [];
   const sm = createStateMachine({ ...def, onTransition: (from, event, to) => seen.push([from, event, to]) });
   sm.send('BEGIN'); assert.deepEqual(seen, [['title', 'BEGIN', 'starting']]);
+});
+
+test('globe gesture classification uses cumulative travel and primary mouse input', () => {
+  assert.equal(isPrimaryPointer({ pointerType: 'mouse', button: 0 }), true);
+  assert.equal(isPrimaryPointer({ pointerType: 'mouse', button: 2 }), false); assert.equal(isPrimaryPointer({ pointerType: 'touch', button: 0 }), true);
+  assert.equal(isTapGesture({ travel: 12 }, 520, false), true); assert.equal(isTapGesture({ travel: 12.01 }, 100, false), false);
+  assert.equal(isTapGesture({ travel: 2 }, 521, false), false); assert.equal(isTapGesture({ travel: 2 }, 100, true), false);
 });
 
 test('surface targets preserve native controls and canvas while isolating empty chrome', () => {
@@ -63,8 +74,10 @@ test('production interface excludes rejected modal controls and copy', () => {
   }
   assert.equal(html.includes('id="adaptation-mode"'), false); assert.equal(html.includes('<dialog id="history-dialog"'), false);
   for (const obsolete of ['>Memory<', 'Memory cell', 'Remembered', 'Atlas list', 'memory-list-button', 'memory-list-dialog']) assert.equal(html.includes(obsolete), false, obsolete);
-  for (const current of ['Evolution Globe', 'PERMANENT SKILL TREE', 'Shape what every future world inherits.', 'AUTO · RANDOM', 'Leave this world?']) assert.equal(html.includes(current), true, current);
+  for (const current of ['Evolution Globe', 'PERMANENT SKILL TREE', 'Shape what every future world inherits.', 'AUTO · RANDOM', 'Leave this world?', 'Event Log']) assert.equal(html.includes(current), true, current);
   assert.equal(/id="pause-button"[^>]*>Pause</.test(html), false);
+  assert.equal((html.match(/role="tab"/g) ?? []).length, 4); assert.equal(html.includes('NETWORK SCORE'), false);
+  assert.equal(html.includes('id="result-screen"'), false); assert.equal(html.includes('id="context-shell"'), true);
   const dir = new URL('../../src/interface/', import.meta.url);
   const source = readdirSync(dir).filter((name) => name.endsWith('.js'))
     .map((name) => readFileSync(new URL(name, dir), 'utf8')).join('\n');

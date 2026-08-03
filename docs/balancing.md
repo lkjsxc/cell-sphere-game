@@ -165,6 +165,13 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   its terminal segment at the last ≥75%-peak production tick (`2732`), keeping
   the 22-second title story legibly pressure → fragmentation → extinction
   without synthesizing state.
+- **2026-08-04 — Transparent live SCORE projection.** Snapshot metrics now retain
+  the already-computed six authoritative axis contributions and declared
+  weights so the shared SCORE surface can explain the live/final point model.
+  No simulation equation, RNG stream, score total, benchmark hash, or encoded
+  title frame changed. The generated showcase remains 89 frames / 228,754 bytes
+  with data hash `22ac0d97…`; only production source metadata changed to
+  `8c9286d7…`.
 - **2026-08-03 — Atomic world-session presentation metadata.** Added the
   immutable world-session envelope and typed blank renderer frame without
   changing simulation equations, seeded decisions, or showcase bytes. The

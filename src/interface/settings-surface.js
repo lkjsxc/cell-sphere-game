@@ -1,16 +1,19 @@
-/** Nonmodal Settings surface. The controller owns persistence and pause leases. */
+/** Unified Menu surface. The controller owns persistence and pause leases. */
 import { validateSettings } from '../platform/settings.js';
 
 const byId = (id) => document.getElementById(id);
 
 export function createSettingsSurface(options) {
-  const surface = byId('settings-dialog'); const form = /** @type {HTMLFormElement} */ (byId('settings-form'));
-  const close = /** @type {HTMLButtonElement} */ (byId('settings-close')); const note = byId('settings-time-note');
+  const surface = byId('menu-dialog'); const form = /** @type {HTMLFormElement} */ (byId('settings-form'));
+  const close = /** @type {HTMLButtonElement} */ (byId('menu-close')); const note = byId('settings-time-note');
   let settings = options.read();
   close.addEventListener('click', () => options.onClose());
   form.addEventListener('change', () => {
     settings = validateSettings(readForm(form, settings)); options.onChange(settings); render(form, settings);
   });
+  for (const [id, action] of [['menu-history', 'history'], ['menu-result', 'result'], ['menu-event-log', 'event-log'],
+    ['menu-new-world', 'new-world'], ['menu-home', 'scene-home'], ['menu-evolution', 'scene-evolution'], ['menu-trophies', 'scene-trophies']])
+    byId(id)?.addEventListener('click', () => options.onAction(action));
   byId('camera-reset')?.addEventListener('click', () => options.onAction('camera-reset'));
   byId('export-data')?.addEventListener('click', () => options.onAction('export'));
   byId('clear-history')?.addEventListener('click', () => options.onAction('clear-history'));
@@ -22,7 +25,10 @@ export function createSettingsSurface(options) {
   });
   return {
     surface,
-    open(worldContinues) { settings = options.read(); render(form, settings); if (note) note.hidden = !worldContinues; surface.hidden = false; },
+    open(context = {}) { settings = options.read(); render(form, settings); if (note) note.hidden = !context.worldContinues;
+      const active = ['starting', 'running', 'result'].includes(context.phase); byId('menu-world-identity').textContent = active
+        ? `Seed ${context.seed} · ${context.phase === 'result' ? 'completed' : context.phase} · world ${context.worldSessionId ?? '—'}` : 'No active world. Start one from Home or Next World.';
+      byId('menu-result').hidden = context.phase !== 'result'; byId('menu-new-world').hidden = context.phase !== 'running'; surface.hidden = false; },
     sync() { settings = options.read(); render(form, settings); }, close() { surface.hidden = true; },
   };
 }

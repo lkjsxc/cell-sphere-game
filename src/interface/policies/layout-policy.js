@@ -8,11 +8,10 @@ export function safeLayout(width, height, state, insets = {}) {
   const aspect = usableWidth / usableHeight; const slack = smoothstep(.92, 1.72, aspect);
   const centerX = left + usableWidth * (.5 + .2 * slack);
   const portrait = 1 - smoothstep(.72, 1.05, aspect);
-  const centerYRatio = state === 'result' ? .43 - .05 * portrait
-    : state === 'memory' || state === 'evolution' || state === 'trophies' ? .48 - .1 * portrait
-      : state === 'title' ? .5 - .08 * portrait : .48 - .05 * portrait;
+  const centerYRatio = state === 'evolution' || state === 'trophies' ? .48 - .1 * portrait
+    : state === 'home' ? .5 - .08 * portrait : .48 - .05 * portrait;
   const centerY = top + usableHeight * centerYRatio;
-  const open = smoothstep(.72, 1.5, aspect); const largeSphere = ['memory', 'evolution', 'trophies'].includes(state);
+  const open = smoothstep(.72, 1.5, aspect); const largeSphere = ['evolution', 'trophies'].includes(state);
   const distance = largeSphere ? mix(5.5, 3.75, open) : mix(5.9, 4.2, open);
   return Object.freeze({
     rect: Object.freeze({ left, top, right, bottom, width: usableWidth, height: usableHeight }),

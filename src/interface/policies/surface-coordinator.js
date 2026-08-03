@@ -1,4 +1,4 @@
-/** Coordinates one nonmodal surface while preserving meaningful native gestures. */
+/** Coordinates one physical shell without pre-empting globe gesture classification. */
 const CONTROL_SELECTOR = 'button,a[href],input,select,textarea,label,[role="button"],[role="link"],[data-action]';
 export function classifySurfaceTarget(path, surface, currentTriggers) {
   if (surface && path.includes(surface)) return 'inside';
@@ -10,9 +10,9 @@ export function classifySurfaceTarget(path, surface, currentTriggers) {
 }
 
 export function createSurfaceCoordinator(onDismiss, runProgrammaticFocus = (callback) => callback()) {
-  let active = null; let opener = null; let element = null; let triggers = [];
-  let restoreFocus = true; let focusGeneration = 0; const sequences = new Map(); const emptyClicks = new Map();
-  const scrim = document.getElementById('surface-scrim');
+  let active = null; let opener = null; let element = null; let triggers = []; let policy = {};
+  let restoreFocus = true; let focusGeneration = 0; const sequences = new Map();
+  const shell = document.getElementById('context-shell'); const scrim = document.getElementById('surface-scrim');
   const pathOf = (event) => event.composedPath?.() ?? [event.target];
   const dismiss = (preserveTarget) => { restoreFocus = !preserveTarget; onDismiss(active); };
   const keydown = (event) => {
@@ -20,57 +20,54 @@ export function createSurfaceCoordinator(onDismiss, runProgrammaticFocus = (call
     event.preventDefault(); event.stopPropagation(); dismiss(false);
   };
   const pointerdown = (event) => {
-    if (!active) return;
-    const category = classifySurfaceTarget(pathOf(event), element, triggers);
-    const sequence = { category, x: event.clientX, y: event.clientY, target: event.target };
-    sequences.set(event.pointerId, sequence);
-    if (category === 'control' || category === 'canvas') dismiss(true);
-    else if (category === 'empty') { event.preventDefault(); event.stopImmediatePropagation(); }
+    if (!active || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    sequences.set(event.pointerId, { category: classifySurfaceTarget(pathOf(event), element, triggers),
+      x: event.clientX, y: event.clientY, travel: 0 });
   };
+  const pointermove = (event) => { const sequence = sequences.get(event.pointerId); if (!sequence) return;
+    const distance = Math.hypot(event.clientX - sequence.x, event.clientY - sequence.y); sequence.travel += distance;
+    sequence.x = event.clientX; sequence.y = event.clientY; };
   const pointerup = (event) => {
     const sequence = sequences.get(event.pointerId); sequences.delete(event.pointerId);
-    if (!sequence || sequence.category !== 'empty') return;
-    event.preventDefault(); event.stopImmediatePropagation();
-    const moved = Math.hypot(event.clientX - sequence.x, event.clientY - sequence.y);
-    if (moved <= 12) { if (active) dismiss(false); emptyClicks.set(event.pointerId, sequence.target); }
+    if (!sequence || sequence.category !== 'empty' || sequence.travel > 12 || policy.dismissOnBlank === false) return;
+    dismiss(true);
   };
-  const pointercancel = (event) => { sequences.delete(event.pointerId); emptyClicks.delete(event.pointerId); };
-  const click = (event) => {
-    if (!emptyClicks.has(event.pointerId)) return;
-    const target = emptyClicks.get(event.pointerId); emptyClicks.delete(event.pointerId);
-    if (event.target !== target) return;
-    event.preventDefault(); event.stopImmediatePropagation();
-  };
+  const pointercancel = (event) => sequences.delete(event.pointerId);
   document.addEventListener('keydown', keydown); document.addEventListener('pointerdown', pointerdown, true);
-  document.addEventListener('pointerup', pointerup, true); document.addEventListener('pointercancel', pointercancel, true);
-  document.addEventListener('click', click, true);
+  document.addEventListener('pointermove', pointermove, true); document.addEventListener('pointerup', pointerup, true);
+  document.addEventListener('pointercancel', pointercancel, true);
   return {
-    open(name, nextElement, focusTarget = null, extraTriggers = []) {
-      active = name; element = nextElement;
+    open(name, nextElement, focusTarget = null, extraTriggers = [], nextPolicy = {}) {
+      if (element && element !== nextElement) element.hidden = true;
+      active = name; element = nextElement; policy = nextPolicy;
       triggers = [...document.querySelectorAll(`[data-surface-trigger="${name}"]`), ...extraTriggers].filter(Boolean);
       const focused = document.activeElement;
       opener = focused instanceof HTMLElement && !nextElement.contains(focused) ? focused : triggers[0] ?? null;
       for (const trigger of triggers) trigger.setAttribute('aria-expanded', 'true');
+      if (shell) { shell.hidden = false; shell.dataset.surface = name; }
       element.hidden = false; if (scrim) scrim.hidden = false; const token = ++focusGeneration;
       requestAnimationFrame(() => { if (token !== focusGeneration || active !== name) return;
         runProgrammaticFocus(() => focusTarget?.focus?.({ preventScroll: true })); });
     },
-    close(name) {
+    close(name, options = {}) {
       if (name !== active) return;
       if (element) element.hidden = true; for (const trigger of triggers) trigger.setAttribute('aria-expanded', 'false');
-      if (scrim) scrim.hidden = true; const restore = restoreFocus ? opener : null;
-      active = null; opener = null; element = null; triggers = []; restoreFocus = true; sequences.clear();
+      if (shell) { shell.hidden = true; shell.dataset.surface = 'none'; } if (scrim) scrim.hidden = true;
+      const restore = restoreFocus && !options.skipFocus ? opener : null;
+      active = null; opener = null; element = null; triggers = []; policy = {}; restoreFocus = true; sequences.clear();
       const token = ++focusGeneration; if (restore?.isConnected) requestAnimationFrame(() => {
         if (token !== focusGeneration || active) return;
         runProgrammaticFocus(() => restore.focus({ preventScroll: true })); });
     },
+    blankTap() { if (!active || policy.dismissOnBlank === false) return false; dismiss(true); return true; },
     reset() { focusGeneration++; restoreFocus = false; if (element) element.hidden = true;
-      for (const trigger of triggers) trigger.setAttribute('aria-expanded', 'false'); if (scrim) scrim.hidden = true;
-      active = null; opener = null; element = null; triggers = []; restoreFocus = true; sequences.clear(); emptyClicks.clear(); },
+      for (const trigger of triggers) trigger.setAttribute('aria-expanded', 'false');
+      if (shell) { shell.hidden = true; shell.dataset.surface = 'none'; } if (scrim) scrim.hidden = true;
+      active = null; opener = null; element = null; triggers = []; policy = {}; restoreFocus = true; sequences.clear(); },
     toggle(name) { if (active !== name) return false; dismiss(false); return true; },
     get active() { return active; },
     dispose() { document.removeEventListener('keydown', keydown); document.removeEventListener('pointerdown', pointerdown, true);
-      document.removeEventListener('pointerup', pointerup, true); document.removeEventListener('pointercancel', pointercancel, true);
-      document.removeEventListener('click', click, true); },
+      document.removeEventListener('pointermove', pointermove, true); document.removeEventListener('pointerup', pointerup, true);
+      document.removeEventListener('pointercancel', pointercancel, true); },
   };
 }

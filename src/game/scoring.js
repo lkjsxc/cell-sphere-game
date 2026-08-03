@@ -1,5 +1,5 @@
 /**
- * Network Score: one boastable integer plus a transparent breakdown.
+ * SCORE: one boastable integer plus a transparent breakdown.
  *
  * The score is a pure function of authoritative run metrics, so it is
  * identical at every speed and on every device. Rendering quality, frame
@@ -114,7 +114,7 @@ export function evaluate(metrics) {
     const w = W[c.key];
     const qv = q[c.key];
     quality += w * qv;
-    return { key: c.key, en: c.en, ja: c.ja, q: qv, points: Math.round(w * qv * B.SCORE_SCALE) };
+    return { key: c.key, en: c.en, ja: c.ja, q: qv, weight: w, points: Math.round(w * qv * B.SCORE_SCALE) };
   });
   const total = Math.max(0, Math.round(B.SCORE_SCALE * quality * rate * mult));
   return {
