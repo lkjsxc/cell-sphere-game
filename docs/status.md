@@ -1,10 +1,11 @@
 # Status
 
 The canonical source/package/storage/export/browser identity migration is
-implemented and locally verified in an isolated detached worktree based on
-`7b80e7dbb42f48dd7cbcf2a43f4587a0290b28f4`. Repository rename, remote change,
-push, Actions, Pages deployment, and public canonical URL verification were
-intentionally not executed.
+implemented and locally verified on isolated branch `feat/cell-sphere-identity`
+from `7b80e7dbb42f48dd7cbcf2a43f4587a0290b28f4`. The reviewed implementation
+commit is `bcd9b1d81e58b78a4100983c6fa388d7c9ff2a3c`. Repository rename, remote
+change, push, Actions, Pages deployment, and public canonical URL verification
+were intentionally not executed.
 
 ## Canonical identity
 
