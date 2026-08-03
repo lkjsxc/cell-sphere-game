@@ -7,7 +7,7 @@ Accessibility is a completion criterion, not a claim of audited conformance.
 - English player UI with semantic buttons, sections, headings, lists, forms,
   fieldsets, definition lists, timestamps, and explicit close actions.
 - Touch controls target at least 44 CSS px and honor mobile safe areas.
-- Evolution Globe exposes a synchronized offscreen `role="tree"` for all 108
+- Evolution Globe exposes a synchronized offscreen `role="tree"` for all 642
   Skill Cells; Home or the quiet Focus available control selects the nearest
   reachable skill. Arbitrary world-cell inspection still requires pointer hit testing.
 - Cell inspector exposes static geography and low-cadence living state in a
@@ -23,6 +23,9 @@ Accessibility is a completion criterion, not a claim of audited conformance.
   pointer input, or opening another surface.
 - Skill status, cost, named prerequisites, locked reason, and explicit Unlock
   intent exist in DOM; the semantic tree and globe share one source of truth.
+- Trophy Sphere exposes all 96 criteria in a six-row semantic grid with roving
+  arrow-key focus. Pointer and semantic selection open the same read-only earned
+  or not-earned detail; neutral sphere cells do nothing.
 - One polite live region announces meaningful changes; rapid metrics do not.
 - Reduced motion disables effective idle rotation and expanding waves and
   replaces two-second Adaptation propagation with brief static origin emphasis;

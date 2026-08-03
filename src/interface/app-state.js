@@ -5,11 +5,12 @@ export function createAppState() {
   return createStateMachine({
     initial: 'title',
     transitions: {
-      title: { begin: 'starting' },
+      title: { begin: 'starting', trophies: 'trophies' },
       starting: { ready: 'running', fail: 'title' },
       running: { extinct: 'result', abort: 'starting' },
-      result: { memory: 'memory', restart: 'starting' },
-      memory: { restart: 'starting' },
+      result: { memory: 'memory', trophies: 'trophies', restart: 'starting' },
+      memory: { trophies: 'trophies', restart: 'starting' },
+      trophies: { memory: 'memory', restart: 'starting' },
     },
   });
 }

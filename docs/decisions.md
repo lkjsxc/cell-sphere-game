@@ -127,3 +127,13 @@ all 636 prerequisites direct adjacency. Interleave the 108 authored landmarks
 with 534 low-amplitude permanent skills, retain stable landmark IDs, and gate
 each branch through world 164. Evidence: mapping hash `d6bdc218`, graph/economy/
 migration tests, full legal purchase, and WebGL2/Canvas pointer selection.
+
+## D17 — Trophy proof is deferred and authority-neutral
+
+Achievements must recognize actual play without creating load-time rewards or
+simulation inputs. Retain bounded integer proof with completed semantic History,
+conservatively derive old proof only at explicit progression transactions, and
+store recognized IDs monotonically in schema 6. Present 96 exact criteria on a
+separate 162-cell sphere; 66 neutral cells remain inert. Evidence: catalog and
+proof-boundary audit, schema-5 no-grant migration test, idempotent result test,
+and WebGL2/Canvas screenshots.

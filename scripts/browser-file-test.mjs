@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runScenario } from './browser-scenario.mjs';
+import { runScenario } from './browser/scenario.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROFILE = `/tmp/incremental-network-game-browser-${process.pid}`;
@@ -58,7 +58,7 @@ try {
     setViewport: (width, height) => cdp.send('Emulation.setDeviceMetricsOverride',
       { width, height, deviceScaleFactor: 1, mobile: width < 600 }, session) };
   const evidence = forceCanvas ? await runCanvasScenario(tools) : await runScenario(tools);
-  console.log(forceCanvas ? `test:browser:file — PASS (canvas2d fallback; score ${evidence.score}; cellular title, History, and Evolution Globe)`
+  console.log(forceCanvas ? `test:browser:file — PASS (canvas2d fallback; score ${evidence.score}; cellular title, History, Evolution, and Trophy spheres)`
     : `test:browser:file — PASS (${evidence.backend}; observational loop; score ${evidence.score}; `
       + `32x ${evidence.elapsed.toFixed(2)}s; 4 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
       + `visual IDB reload ${evidence.idb ? 'yes' : 'unavailable'}; 642-skill purchase ${evidence.nodeId})`);
@@ -81,8 +81,8 @@ async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait
   const score = await evaluate("Number(document.getElementById('result-score').textContent.replaceAll(',',''))");
   await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-canvas-history-desktop.png');
   await evaluate("document.getElementById('history-close').click(); document.getElementById('memory-button').click()"); await wait(180); await screenshot('browser-canvas-memory-desktop.png');
-  const atlas = await evaluate('window.__IN_APP__.memorySnapshot.memoryStatus.length'); if (score <= 0 || atlas !== 642 || errors.length) throw new Error('Canvas fallback state failed');
-  return { score };
+  const atlas = await evaluate('window.__IN_APP__.memorySnapshot.memoryStatus.length'); await evaluate("document.querySelector('#memory-screen .trophy-open').click()"); await wait(180); await screenshot('browser-canvas-trophy-desktop.png');
+  const trophies = await evaluate(`({cells:window.__IN_APP__.trophySnapshot.memoryStatus.length,nodes:window.__IN_APP__.trophySnapshot.nodeStates.length})`); if (score <= 0 || atlas !== 642 || trophies.cells !== 162 || trophies.nodes !== 96 || errors.length) throw new Error('Canvas fallback state failed'); return { score };
 }
 
 function protocol(child) {

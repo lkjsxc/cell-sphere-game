@@ -84,7 +84,7 @@ export class WorldPass {
     const cells = this.geometry.vertexCell;
     if (!snapshot) { this.lifeData.fill(0); this.eventData.fill(0); }
     else {
-      const memory = snapshot.status === 'memory';
+      const memory = snapshot.status === 'memory' || snapshot.status === 'trophies';
       for (let vertex = 0; vertex < cells.length; vertex++) {
         const cell = cells[vertex]; this.eventData[vertex * 2] = snapshot.eventFamily?.[cell] ?? 0;
         this.eventData[vertex * 2 + 1] = snapshot.eventStrength?.[cell] ?? 0;
@@ -121,7 +121,7 @@ export class WorldPass {
     gl.uniformMatrix4fv(globe.u.get('uViewProj'), false, vp);
     gl.uniform3fv(globe.u.get('uEye'), eye);
     gl.uniform1f(globe.u.get('uEntropy'), snapshot?.entropy ?? 0);
-    gl.uniform1f(globe.u.get('uMemory'), snapshot?.status === 'memory' ? 1 : 0);
+    gl.uniform1f(globe.u.get('uMemory'), ['memory', 'trophies'].includes(snapshot?.status) ? 1 : 0);
     const selected = Number.isInteger(selectedNode) ? selectedNode : -1;
     gl.uniform1f(globe.u.get('uHasSelection'), selected >= 0 ? 1 : 0);
     gl.uniform3fv(globe.u.get('uSelectedCenter'), selected >= 0

@@ -11,6 +11,7 @@ same frozen definitions; this directory never owns DOM or persistence state.
 | `events-content.js` | Eight spatial crisis families and content parameters. |
 | `scoring.js` | Network Score, rank, breakdown, and Echo income. |
 | `skills/` | 642-cell content, globe graph, transactions, compilation, projection, and validation. |
+| `trophies/` | 96 authored criteria, bounded proof, deferred evaluation, and Trophy Sphere projection. |
 
 Invariants:
 

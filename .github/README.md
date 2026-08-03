@@ -60,6 +60,10 @@ preference.
   Continuity. Every
   prerequisite is directly adjacent, every purchase has a concrete compiled
   effect, and a semantic grouped list shares the same source of truth.
+- A separate 162-cell Trophy Sphere with exactly 96 authored achievements in
+  six families. Recognition uses bounded deterministic proof, is monotonic,
+  backfills only on explicit Trophy review or progression transactions, and
+  never changes simulation authority.
 - Separate validated stores for Settings, progression/Imprints, schema-2
   semantic History, and ten device-local IndexedDB visual bundles. JSON
   export/import intentionally remains semantic only.
@@ -86,7 +90,7 @@ styles/          authored responsive CSS
 src/core/        PRNG, hash, clock, state machine, math
 src/world/       topology, terrain, hydrology, ecology, landmarks
 src/simulation/  deterministic authority, inspection, replay, History events
-src/game/        Adaptations, scoring, strains, 642-skill progression content
+src/game/        Adaptations, scoring, 642 skills, and 96 Trophy criteria
 src/rendering/   WebGL2 + Canvas 2D, camera, picking, static/dynamic passes
 src/history/     strict bounded visual codec, recorder, preview projection
 src/interface/   screen/overlay composition and player intent

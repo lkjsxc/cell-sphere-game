@@ -32,6 +32,7 @@ export function finishRun(app, result) {
   app.closeActiveOverlay(); app.adaptationEffects.clear();
   app.selectedNode = null; app.flow.send('extinct'); app.lastResult = result;
   app.currentHistory = normalizeHistoryEvents(result.history); app.meta = transaction.meta; app.archive = transaction.archive;
+  app.pendingTrophyIds.push(...transaction.trophyIds);
   const skills = buildMemorySnapshot(app.topo3, app.meta).nodeStates;
   app.el.evolutionButton.dataset.action = skills.some((node) => node.reachable && node.affordable && !node.owned) ? 'available' : 'quiet';
   if (!saveMeta(app.meta)) ui.announce(app.el, 'Progress is temporary because browser storage is unavailable.');
@@ -39,7 +40,7 @@ export function finishRun(app, result) {
   const record = app.archive.worlds.at(-1);
   app.historyPlayback.save(record && { id: record.id, seed: record.seed, completedAt: app.meta.runs });
   ui.showResult(app.el, transaction.score, { ...result, adaptationOffers: result.offers,
-    campaignResolvedNow: transaction.meta.runs === 4 }); app.resize(false);
+    trophyIds: transaction.trophyIds, campaignResolvedNow: transaction.meta.runs === 4 }); app.resize(false);
   if (app.settings.autoContinue) { startContinuation(app.continuation, performance.now(), { resultKey: transaction.key, runId: result.runId }); app.updateContinuation(); }
   return true;
 }

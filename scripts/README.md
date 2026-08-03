@@ -17,7 +17,7 @@ ES modules using Node built-ins only (Node >= 22).
 | `audits/event-audit.mjs` | `npm run audit:events` | Measures graph-field shape, permeability, and generation cost. |
 | `browser-test.mjs` | `npm run test:browser` | Same-origin headless-Chrome boot check; reports sandbox socket blocks as exit 77. |
 | `browser-file-test.mjs` | `npm run test:browser:file` / `test:browser:canvas` | Socket-free real Chrome harness for WebGL2 and forced Canvas 2D. |
-| `browser-scenario.mjs` | via file test | Six-viewport observational run, surfaces, visual History, 32×, adjacent-cell Memory, and unattended continuation evidence. |
+| `browser/` | via file test | Responsive observational run, surfaces, visual History, Evolution/Trophy spheres, and continuation evidence. |
 
 Invariants:
 

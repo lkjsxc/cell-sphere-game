@@ -69,8 +69,11 @@ geography. Central biome tables precompute growth, upkeep, uptake, renewal, and
 transport factors. Evolution Globe switches the same renderer and picking
 contract to a separate 642-cell level-3 globe. All 642 cells are Skill Cells in
 six exact 107-cell territories; their 636 prerequisite relations are also direct
-spherical adjacency. Imprints
-are bounded cell material; no prerequisite path geometry exists.
+spherical adjacency. Imprints are bounded cell material; no prerequisite path
+geometry exists. Trophy Sphere switches the same renderer to a 162-cell level-2
+topology. Exactly 96 read-only Trophy cells occupy six connected constellations;
+66 substrate cells remain neutral and unselectable. Trophy recognition consumes
+only completed semantic proof and never feeds simulation, score, or Echoes.
 
 ## Persistence
 
@@ -78,9 +81,10 @@ Separate localStorage documents own:
 
 - Settings schema 3 (`settings:v2`), including automatic continuation and safe
   migration from earlier values;
-- progression schema 5 (`meta:v1`), including Echoes, 642-cell ownership,
-  cell-converted Imprints, graph version, quarantine, a seed cursor, and one migration notice;
-- semantic History schema 2 (`history:v2`, migrating `history:v1`), retaining
+- progression schema 6 (`meta:v1`), including Echoes, 642-cell ownership,
+  cell-converted Imprints, Trophy IDs/proof aggregates, graph versions,
+  quarantine, a seed cursor, and one migration notice;
+- semantic History schema 3 (`history:v2`, migrating earlier schemas), retaining
   24/32 timelines, ≤80 events and ≤8 primary cells/event, ≤128 skill
   purchases, and a hard 700 KB serialized cap;
 - device-local IndexedDB visual History: strict `INHV` v1 cell-only bundles,

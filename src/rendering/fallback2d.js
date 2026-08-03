@@ -114,7 +114,7 @@ export class Canvas2DRenderer {
     const { ctx, topo } = this;
     for (let cell = 0; cell < topo.nodeCount; cell++) {
       if (this.facing[cell] <= 0.02) continue;
-      if (snapshot.status === 'memory') {
+      if (snapshot.status === 'memory' || snapshot.status === 'trophies') {
         const styles = memoryStyles(snapshot.memoryStatus[cell], snapshot.memoryKind[cell], snapshot.memoryImprintWeight[cell], fade, snapshot.memoryBranch[cell]);
         if (!styles) continue; this.cellPath(cell); ctx.fillStyle = styles.fill; ctx.fill();
         if (styles.inset) { this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill(); }

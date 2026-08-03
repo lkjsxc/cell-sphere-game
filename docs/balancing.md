@@ -25,11 +25,12 @@ Owned skills bypass new gates and are never charged again.
 |---|---:|---:|
 | First campaign resolution | 4 completed worlds | 18–24 min target; 18–22 min from run duration before transition overhead |
 | Meaningful six-branch spread | six roots require 0 prior worlds and cost 14 Echoes total | first hour target |
+| Trophy campaign marker | `Fifty Worlds` recognizes 50 completed worlds | about 4 h at the 270–330 s run target; modeled, not measured wall time |
 | Roughly half (324 skills) | 82 completed worlds | about 6–7 h |
 | All six keystones | 143 completed worlds plus adjacency/Echoes | about 11–12 h |
 | Late integration cells | 153 completed worlds | about 12–13 h |
 | All 642 Skill Cells | capstones require 164 completed worlds | about 13–14 h |
-| True completion | skills plus challenge/trophy/discovery breadth | 100–200 h target; breadth is not yet fully implemented |
+| True completion | skills plus challenge/discovery breadth | 100–200 h target; challenge breadth is not yet fully implemented |
 
 Gates are shown in every Skill Cell detail as `Worlds observed`; they are not
 hidden cooldowns, real-time waits, or speed restrictions. At 32× they compress

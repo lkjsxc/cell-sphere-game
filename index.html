@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="styles/components.css">
   <link rel="stylesheet" href="styles/surfaces.css">
   <link rel="stylesheet" href="styles/atlas.css">
+  <link rel="stylesheet" href="styles/trophies.css">
   <link rel="stylesheet" href="styles/motion.css">
 </head>
 <body>
@@ -22,6 +23,7 @@
 
     <section id="title-screen" class="screen" aria-labelledby="title-heading">
       <nav class="corner-nav" aria-label="World tools">
+        <button class="quiet-btn trophy-open" data-action="quiet" type="button">Trophies</button>
         <button class="quiet-btn history-open" data-surface-trigger="history" data-action="quiet" type="button">History</button>
         <button class="quiet-btn settings-open" data-surface-trigger="settings" data-action="quiet" type="button">Settings</button>
       </nav>
@@ -64,8 +66,8 @@
     <section id="result-screen" class="screen" hidden aria-labelledby="result-heading">
       <div class="result-strip material-clear sheet-enter">
         <div class="result-primary"><p id="result-rank" class="result-rank"></p><strong id="result-score" class="result-score score-reveal">0</strong></div>
-        <div class="result-summary"><h2 id="result-heading">Extinction</h2><p id="result-cause" class="result-copy"></p><p id="result-echoes" class="result-echoes"></p><button id="result-reach-button" class="reach-link" data-surface-trigger="reach-balance" type="button">Reach Balance</button><p id="result-countdown" class="result-countdown" role="status"></p></div>
-        <div class="result-actions"><button id="result-next-button" class="btn btn-primary" data-action="recommended" type="button"><span>Next World</span></button><button id="memory-button" class="btn btn-secondary" data-action="available" type="button"><span>Evolution Globe</span></button><button id="result-history-button" class="btn btn-secondary" data-surface-trigger="history" data-action="normal" type="button" aria-label="History"><span>History</span></button><button id="result-details-button" class="btn btn-secondary" data-surface-trigger="result-details" data-action="quiet" type="button" aria-label="Result details"><span>Details</span></button><button class="btn btn-secondary settings-open" data-surface-trigger="settings" data-action="quiet" type="button" aria-label="Settings"><span>Settings</span></button></div>
+        <div class="result-summary"><h2 id="result-heading">Extinction</h2><p id="result-cause" class="result-copy"></p><p id="result-echoes" class="result-echoes"></p><p id="result-trophies" class="result-trophies"></p><button id="result-reach-button" class="reach-link" data-surface-trigger="reach-balance" type="button">Reach Balance</button><p id="result-countdown" class="result-countdown" role="status"></p></div>
+        <div class="result-actions"><button id="result-next-button" class="btn btn-primary" data-action="recommended" type="button"><span>Next World</span></button><button id="memory-button" class="btn btn-secondary" data-action="available" type="button"><span>Evolution Globe</span></button><button class="btn btn-secondary trophy-open" data-action="normal" type="button"><span>Trophy Sphere</span></button><button id="result-history-button" class="btn btn-secondary" data-surface-trigger="history" data-action="normal" type="button" aria-label="History"><span>History</span></button><button id="result-details-button" class="btn btn-secondary" data-surface-trigger="result-details" data-action="quiet" type="button" aria-label="Result details"><span>Details</span></button><button class="btn btn-secondary settings-open" data-surface-trigger="settings" data-action="quiet" type="button" aria-label="Settings"><span>Settings</span></button></div>
       </div>
     </section>
 
@@ -78,9 +80,14 @@
       <h2 id="memory-heading" class="sr-only">Evolution Globe</h2>
       <div class="memory-bar material-clear">
         <div class="evolution-identity"><span class="eyebrow">PERMANENT SKILL TREE</span><strong>Evolution Globe</strong><span class="evolution-line">Shape what every future world inherits.</span><span><b id="memory-balance">0</b> Echoes · <span id="memory-available">0 skills available</span></span></div>
-        <div class="memory-actions"><button id="restart-button" class="btn btn-primary" data-action="recommended" type="button">Next World</button><button id="evolution-focus-available" class="btn btn-secondary" data-action="quiet" type="button">Focus available</button><button class="btn btn-secondary history-open" data-surface-trigger="history" data-action="quiet" type="button">History</button><button class="btn btn-secondary settings-open" data-surface-trigger="settings" data-action="quiet" type="button">Settings</button></div>
+        <div class="memory-actions"><button id="restart-button" class="btn btn-primary" data-action="recommended" type="button">Next World</button><button id="evolution-focus-available" class="btn btn-secondary" data-action="quiet" type="button">Focus available</button><button class="btn btn-secondary trophy-open" data-action="quiet" type="button">Trophy Sphere</button><button class="btn btn-secondary history-open" data-surface-trigger="history" data-action="quiet" type="button">History</button><button class="btn btn-secondary settings-open" data-surface-trigger="settings" data-action="quiet" type="button">Settings</button></div>
       </div>
       <div id="evolution-tree" class="sr-only" role="tree" aria-label="Evolution Globe skills"></div>
+    </section>
+
+    <section id="trophy-screen" class="screen" hidden aria-labelledby="trophy-heading">
+      <h2 id="trophy-heading" class="sr-only">Trophy Sphere</h2><div class="trophy-bar material-clear"><div class="trophy-identity"><span class="eyebrow">PRESERVED ACHIEVEMENTS</span><strong>Trophy Sphere</strong><span>Recognition from deterministic world evidence.</span><b id="trophy-count">0 / 96 earned</b></div><div class="trophy-actions"><button id="trophy-next-button" class="btn btn-primary" data-action="recommended" type="button">Next World</button><button id="trophy-focus" class="btn btn-secondary" data-action="quiet" type="button">Focus Trophy</button><button id="trophy-evolution-button" class="btn btn-secondary" data-action="quiet" type="button">Evolution Globe</button><button class="btn btn-secondary settings-open" data-surface-trigger="settings" data-action="quiet" type="button">Settings</button></div></div>
+      <div id="trophy-grid" class="sr-only" role="grid" aria-label="All 96 Trophy criteria"></div>
     </section>
 
     <section id="cell-inspector" class="context-surface material-regular" hidden aria-labelledby="inspector-heading">
@@ -95,6 +102,8 @@
       <div class="surface-body"><h2 id="memory-node-heading" tabindex="-1">Skill Cell</h2><p id="memory-node-summary" class="panel-copy"></p><p id="memory-node-detail" class="panel-copy"></p><p id="memory-node-change" class="skill-change" hidden></p><dl id="memory-node-meta" class="inspection-grid"></dl></div>
       <footer class="surface-actions"><button id="memory-unlock" class="btn btn-primary" data-action="recommended" type="button">Unlock</button></footer>
     </section>
+
+    <section id="trophy-detail-panel" class="context-surface trophy-detail material-regular" hidden aria-labelledby="trophy-detail-heading"><header><p id="trophy-detail-family" class="eyebrow">TROPHY</p><button id="trophy-detail-close" class="close-btn" type="button">Close</button></header><div class="surface-body"><h2 id="trophy-detail-heading" tabindex="-1">Trophy</h2><p id="trophy-detail-criterion" class="panel-copy"></p><p id="trophy-detail-status" class="trophy-status"></p></div></section>
 
     <section id="adaptations-dialog" class="context-surface context-wide material-regular" hidden aria-labelledby="adaptations-heading">
       <header><div><p class="eyebrow">ADAPTATIONS</p><h2 id="adaptations-heading" tabindex="-1">Changes this world can carry</h2></div><button id="adaptations-close" class="close-btn" data-action="quiet" type="button">Close</button></header>

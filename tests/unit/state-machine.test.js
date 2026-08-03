@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { createStateMachine } from '../../src/core/state-machine.js';
 import { classifySurfaceTarget } from '../../src/interface/policies/surface-coordinator.js';
+import { createAppState } from '../../src/interface/app-state.js';
 
 const def = {
   initial: 'title',
@@ -20,6 +21,12 @@ test('legal transitions move state', () => {
   const sm = createStateMachine(def);
   assert.equal(sm.state, 'title'); sm.send('BEGIN'); assert.equal(sm.state, 'starting');
   sm.send('READY'); assert.equal(sm.state, 'running'); sm.send('EXTINCT'); assert.equal(sm.state, 'result');
+});
+
+test('Trophy Sphere is an explicit primary state with reversible Evolution access', () => {
+  const title = createAppState(); title.send('trophies'); assert.equal(title.state, 'trophies'); title.send('memory'); assert.equal(title.state, 'memory');
+  title.send('trophies'); title.send('restart'); assert.equal(title.state, 'starting');
+  const result = createAppState(); result.send('begin'); result.send('ready'); result.send('extinct'); result.send('trophies'); assert.equal(result.state, 'trophies');
 });
 
 test('illegal transitions throw', () => {

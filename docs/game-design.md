@@ -81,6 +81,15 @@ next run. Visible `Worlds observed` gates place 324 skills by world 82,
 keystones at 143, connectors at 153, and capstones at 164. The globe is primary;
 a synchronized offscreen semantic tree preserves non-pointer purchase access.
 
-The long campaign, challenges, broader strain selection, trophies, audio, and
-complete Japanese localization are not yet complete and are not exposed as
-decorative controls.
+## Trophy Sphere
+
+A separate level-2 sphere maps exactly 96 authored achievements across Reach,
+Form, Endurance, Adaptation, Evolution, and Mastery. Each family has 16 exact,
+visible criteria. Completed worlds retain compact quantized proof; old semantic
+History is conservatively backfilled only when the player explicitly enters the
+Trophy Sphere or another progression transaction occurs. Loading or importing
+data alone grants nothing. Trophy ownership is monotonic and observational: it
+changes no traits, scoring, Echoes, event schedule, or random stream.
+
+The broader challenge campaign, audio, and complete Japanese localization are
+not yet complete and are not exposed as decorative controls.

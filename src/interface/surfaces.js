@@ -12,7 +12,7 @@ const CAUSE = Object.freeze({
 const byId = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
 export function elements() {
   return {
-    title: byId('title-screen'), run: byId('run-screen'), result: byId('result-screen'), memory: byId('memory-screen'),
+    title: byId('title-screen'), run: byId('run-screen'), result: byId('result-screen'), memory: byId('memory-screen'), trophies: byId('trophy-screen'),
     begin: /** @type {HTMLButtonElement} */ (byId('begin-button')),
     memoryButton: /** @type {HTMLButtonElement} */ (byId('memory-button')),
     restart: /** @type {HTMLButtonElement} */ (byId('restart-button')),
@@ -24,7 +24,7 @@ export function elements() {
     reachButton: byId('reach-balance-button'), resultReach: byId('result-reach-button'),
     event: byId('hud-event-text'), resultRank: byId('result-rank'), resultScore: byId('result-score'),
     resultCause: byId('result-cause'), breakdown: byId('result-breakdown'), resultAdaptations: byId('result-adaptations'),
-    echoes: byId('result-echoes'), resultImprint: byId('result-imprint'), memoryBalance: byId('memory-balance'),
+    echoes: byId('result-echoes'), resultImprint: byId('result-imprint'), resultTrophies: byId('result-trophies'), memoryBalance: byId('memory-balance'), trophyCount: byId('trophy-count'),
     memoryAvailable: byId('memory-available'), countdown: byId('result-countdown'),
     resultNext: /** @type {HTMLButtonElement} */ (byId('result-next-button')),
     evolutionButton: /** @type {HTMLButtonElement} */ (byId('memory-button')),
@@ -35,7 +35,7 @@ export function elements() {
 }
 
 export function show(el, state) {
-  for (const [name, screen] of Object.entries({ title: el.title, run: el.run, result: el.result, memory: el.memory })) {
+  for (const [name, screen] of Object.entries({ title: el.title, run: el.run, result: el.result, memory: el.memory, trophies: el.trophies })) {
     screen.hidden = name !== state;
   }
 }
@@ -81,6 +81,7 @@ export function showResult(el, score, result) {
   el.resultCause.textContent = CAUSE[result.cause] ?? 'The final living cell released its remaining energy.';
   el.echoes.textContent = `${score.echoes} Echoes entered permanent memory.`;
   el.resultImprint.textContent = result.imprint?.edges?.length ? 'Imprint preserved · strongest morphology retained.' : '';
+  const trophies = result.trophyIds?.length ?? 0; el.resultTrophies.textContent = trophies ? `${trophies} ${trophies === 1 ? 'Trophy' : 'Trophies'} recognized.` : '';
   const offers = result.adaptationOffers ?? result.offers ?? [];
   const random = offers.filter((offer) => offer.selectionMode === 'random' && offer.selectedCardId).length;
   const manual = offers.filter((offer) => offer.selectionMode === 'manual' && offer.selectedCardId).length;
@@ -104,4 +105,5 @@ export function formatCoverage(coverage, aliveCount, totalCells = 2562) {
 
 export function showMemory(el, meta, available = 0) { el.memoryBalance.textContent = number(meta.echoBalance);
   el.memoryAvailable.textContent = `${available} ${available === 1 ? 'skill' : 'skills'} available`; show(el, 'memory'); }
+export function showTrophies(el, meta) { const count = meta.trophyIds?.length ?? 0; el.trophyCount.textContent = `${count} / 96 earned`; show(el, 'trophies'); }
 export function number(value) { return new Intl.NumberFormat('en').format(Math.round(value)); }

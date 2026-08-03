@@ -1,7 +1,7 @@
 /** Real-Chrome passive-world acceptance scenario shared by the file harness. */
-import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from './browser-evidence.mjs'; export async function runScenario(t) {
+import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from './evidence.mjs'; import { assertNoLoadGrant, exerciseTrophies } from './trophies.mjs'; export async function runScenario(t) {
   const { evaluate, screenshot, drag, click, wait, poll, setViewport, errors } = t;
-  const boot = await evaluate('window.__IN_BOOT__'); ok(boot?.playable && boot?.renderer, 'app did not boot');
+  const boot = await evaluate('window.__IN_BOOT__'); ok(boot?.playable && boot?.renderer, 'app did not boot'); await assertNoLoadGrant(t);
   const render = await evaluate(`new Promise(resolve => { const app=window.__IN_APP__, original=app.renderer.render.bind(app.renderer), samples=[];
     app.renderer.render=(scene)=>{const start=performance.now(); original(scene); samples.push(performance.now()-start)};
     setTimeout(()=>{app.renderer.render=original; samples.sort((a,b)=>a-b); resolve({draws:app.renderer.drawCalls,p95:samples[Math.floor(samples.length*.95)]||0,mean:samples.reduce((a,b)=>a+b,0)/Math.max(1,samples.length)});},1200); })`);
@@ -160,7 +160,7 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
     named: document.body.innerText.includes('Evolution Globe'), staleList: document.body.innerText.includes('Atlas list') })`);
   ok(evolutionState.distance <= 3.8 && evolutionState.named && !evolutionState.staleList,
     `Evolution Globe scale or terminology regressed: ${JSON.stringify(evolutionState)}`);
-  await screenshot('browser-memory-desktop.png');
+  await screenshot('browser-memory-desktop.png'); await exerciseTrophies(t);
   await evaluate("document.getElementById('memory-node-close').click(); document.querySelector('#memory-screen .history-open').click()"); await wait(250);
   await evaluate("document.getElementById('history-close').click()"); ok(await evaluate('window.__IN_APP__.topo.levels===3 && window.__IN_APP__.memorySnapshot.memoryStatus.length===642'), 'History did not restore the Memory atlas');
   const ownedBeforeAuto = await evaluate('window.__IN_APP__.meta.memoryNodes.length'); await evaluate("document.getElementById('restart-button').click()");
