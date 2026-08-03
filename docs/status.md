@@ -1,118 +1,111 @@
 # Status
 
-Release handoff for the visual-integrity, completion, and progression pass.
+Release-candidate handoff for the cellular-world, progression, and evidence pass.
 
-- **Starting commit:** `75a843e5e5b929d45e6375ae465f8b9171c7ff31`.
-- **Implementation tip before this record:** `eb2c0f0`.
-- **Branch/upstream:** `main`; implementation and release documentation are synchronized with `origin/main`. This file is the final evidence follow-up.
-- **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>. Workflow `30791379842` completed verification (`91615441512`) and Pages deployment (`91615583669`) for release commit `b21eea5`.
-- **Protective tag:** `pre-visual-integrity-pass-20260803` at the starting commit.
+- **Starting commit:** `fcbb544f60b37b13005b29f954ad5dcd8231738e`.
+- **Implementation tip:** `e6a6bfb`.
+- **Branch/upstream before release push:** `main`, 12 commits ahead of `origin/main`.
+- **Protective tag:** `pre-cell-sphere-game-rename-20260803` at the starting commit.
+- **Playable URL:** <https://lkjsxc.github.io/incremental-network-game/>; it still serves the starting revision until this candidate is pushed and Pages completes.
 
-## Playable product
+## Product changes
 
-- Every world reaches an authoritative terminal state. Liveness is reconciled
-  against cell state, a visible terminal-collapse phase is bounded by tick
-  3,620, and extinction is committed exactly once.
-- The production-generated title lifecycle uses seed `20260701`: 89 frames,
-  228,754 bytes, 535-cell peak, loop, pressure, fragmentation, and extinction
-  over 22.25 seconds. Reduced motion holds a representative frame and hidden
-  documents freeze it.
-- The renderer has four steady WebGL2 draws. Detached cyan river ribbons and
-  all organism/prerequisite path geometry are absent. Canvas 2D remains a
-  cellular fallback.
-- Adaptations propagate from an authoritative living origin through a
-  deterministic weighted local subset. Category, biomass, energy, stress,
-  terrain, and topology affect a bounded `Uint16` arrival field.
-- The compact run dock provides a clock-dial pause control, speed selector,
-  Adaptations with pending count and direct `AUTO · RANDOM` / `MANUAL` control,
-  History, New World, and Settings. Action salience distinguishes recommended,
-  available, quiet, urgent, and destructive actions.
-- Context surfaces close through Close, the same trigger, Escape, outside
-  pointer input, or replacement by another surface. Focus restores to the
-  invoker and outside dismissal does not leak a globe selection.
-- New World is an in-run confirmation transaction. Cancel owns and releases its
-  own pause lease. Accept advances seed/run identity once, grants no reward,
-  records a visible abandoned History event, and begins the next world only
-  after authoritative abort acknowledgment.
-- Result keeps **Next World** visually recommended; Evolution Globe remains
-  available but secondary. The fourth completed world reports **First Cycle
-  Resolved**.
-- **Evolution Globe · Permanent Skill Tree** replaces the old visible feature
-  name. Its larger 642-cell globe now has 642 purchasable Skill Cells, no visible List mode,
-  a synchronized offscreen semantic tree, fixed detail header/body/footer, and
-  a quiet Focus available action.
+- The right-biased sphere composition is viewport-derived and does not shift
+  when transient surfaces open. Outside gestures dismiss only when their native
+  target is neither a meaningful control nor a globe cell.
+- Manual Adaptation selections and mode changes use acknowledged protocol-v2
+  commands. Pending, applied, and rejected states are explicit; pointer input
+  cannot silently no-op.
+- The clock has hour and minute hands sharing one game-time phase. Pausing holds
+  both hands. Result continuation is a one-shot state machine; interaction and
+  detail surfaces suspend rather than permanently cancel it.
+- Reach Balance is authoritative. Every production birth/death passes through
+  one helper and records a fixed direct cause into a 15-second typed ring,
+  bounded samples, and full-run totals. Run/result surfaces expose gains,
+  losses, conditions, turning point, and exact cell highlighting.
+- All event effects propagate over deterministic topology-native fields. Rivers
+  use explicit continuous trunks and connected channel rendering.
+- Evolution Globe now fills all 642 level-3 cells: six connected 107-cell
+  territories, 636 adjacent prerequisites, 642 exact effects, six roots, and a
+  2,462-Echo economy gated through world 164.
+- Trophy Sphere is a separate 162-cell level-2 view with 96 authored criteria in
+  six families and 66 inert substrate cells. Schema-3 History retains bounded
+  deterministic proof; schema-6 ownership is monotonic. Schema-5 data grants no
+  Trophy merely on load. Explicit Trophy review and progression transactions
+  conservatively backfill retained proof.
 
-## Architecture and reliability
+## Architecture and persistence
 
-- Worker and main-thread fallback messages carry monotonic run IDs. Stale
-  snapshots/results are rejected. Heartbeats and status probes turn Worker
-  silence into an explicit recoverable failure instead of an eternal run.
-- Terminal, abort, and extinction races are first-wins. Result transaction keys
-  are bounded to 16 entries; continuation retention remains bounded.
-- Progress schema 5 persists a validated world-seed cursor. Migration preserves
-  all owned skills, Echoes, History, Imprints, and prior idempotency guarantees.
-- Layering remains `interface → rendering → simulation → world → core`; no DOM,
-  storage, renderer, or time source entered simulation authority.
+- Boundaries remain `interface → rendering → simulation → world → core`.
+  Trophy recognition and presentation never enter simulation, score, Echo
+  income, or random streams.
+- Skill content now lives under `src/game/skills/`; Trophy content/proof lives
+  under `src/game/trophies/`; progression sphere coordination was extracted
+  from the 200-line app controller.
+- Worker/fallback determinism, run IDs, stale-response guards, terminal
+  first-wins behavior, and bounded result transaction keys remain intact.
+- Existing Echoes, Skill Cells, Imprints, History, scores, and world-seed cursor
+  migrate without refunds or guessed proof. Unknown Skill/Trophy/card IDs are
+  filtered or quarantined.
 
-## Simulation, balance, and progression
+## Simulation and balance evidence
 
-- Production smoke remains deterministic and finite; the current benchmark
-  result is 2,853 ticks with hash `c55ddab5`.
-- A 1,000-world production soak completed in 146,847.5 ms with zero invalid
-  outcomes, duplicate terminal messages, or liveness repairs. Terminal tick
-  min/median/p95/max was 263/2,701/3,613/3,620.
-- Weighted propagation measured over 40 production worlds: median 34% affected,
-  median arrival 678 ms, maximum median 1,107 ms; computation median 0.042 ms,
-  p95 0.198 ms.
-- First resolution is four worlds (18–24 min target at 1×). Visible
-  `Worlds observed` gates place 54 skills at world 144, all keystones at 164,
-  connectors at 600, and capstones at 900. This models roughly 70–85 hours for
-  all 642 skills at 1×; the 100–200 hour challenge/trophy breadth target remains
-  honestly incomplete.
+- Full 180-world policy sweep: median survival 267.1–296.7 game seconds by
+  policy; first/random/resilience/efficiency medians are 270.1–296.7, with
+  balanced/expansion at 267.5/267.1. Maximum remains bounded at 362 seconds.
+- 1,000-world terminal soak: 151,803.4 ms; zero invalid outcomes, duplicate
+  terminal messages, or liveness repairs; tick min/median/p95/max
+  254/2,719/3,612/3,620.
+- Event audit at the graph-field commit: 1,386 events, zero land-bound ocean
+  crossings, all non-radial, median field generation about 0.192 ms.
+- River audit over 1,000 worlds: median longest trunk 28 cells; 99.7% had a
+  trunk at least 20; maximum 61; zero cycle, mouth, continuity, accumulation,
+  or isolation defects.
+- Skill audit: 642/642 unique cells/effects legally purchased, 636 relations,
+  mapping `d6bdc218`, balance after exhaustive purchase 0.
+- Trophy audit: 96 unique criteria/cells, mapping `93870583`, 66 neutral cells,
+  1,920,000 evaluator calls / 960,000 pass-fail boundaries in 178.323 ms.
 
 ## Rendering, UI, and accessibility evidence
 
-- Real Chrome geometry assertions cover 320×568, 360×640, 375×667, 390×844,
-  430×932, 844×390, 768×1024, 1024×768, 1280×720, 1366×768,
-  1440×900, and 1920×1080, plus 200% run-dock text.
-- The compact dock stays within 72 CSS px where required; visible controls are
-  at least 43×43 measured / 44×44 authored and do not overlap or leave the
-  viewport. Skill detail geometry is asserted in portrait, landscape, tablet,
-  and desktop layouts.
-- Current Chrome captures were visually inspected for title phases, required
-  run viewports, Adaptations, New World, result hierarchy, Evolution Globe,
-  selection, purchase, and fixed-flow skill details. No physical-device claim
-  is made.
-- Pointer-only completion remains intact. The semantic skill tree supports
-  keyboard focus/selection; arbitrary world-cell inspection still requires
-  pointer hit testing. Screen-reader and forced-colors manual audits remain.
+- WebGL2 remains four draws. The full browser scenario completed at 32× in
+  8.82 s with score 614,708; title JS presentation mean 0.07 ms, p95 0.20 ms.
+- Canvas 2D completed title, run, visual History, Evolution Globe, and Trophy
+  Sphere with score 613,052.
+- Chrome evidence covers 320×568 through 1920×1080, portrait, landscape,
+  tablet, desktop, and 200% run-dock text. Evolution and Trophy detail are
+  fixed-flow bottom sheets on mobile and safe left surfaces on desktop.
+- Pointer-only completion includes exact Skill/Trophy cell selection. Semantic
+  access includes the 642-item Skill tree and six-row, 96-cell Trophy grid with
+  roving arrow-key focus. Reduced motion, forced-color borders, focus restore,
+  explicit Close, Escape, and target-aware outside dismissal remain.
+- Mobile evidence is CDP viewport emulation, not physical-device evidence.
 
 ## Exact verification
 
 Environment: Node v22.22.3, Linux x64, 20 logical CPUs.
 
-- `npm run verify` — PASS: structure; showcase freshness; 109 unit; 50
-  integration; balance smoke; benchmark; 96-module/9-HTML link gate.
-- Benchmark — 2,853 ticks in 192 ms, 14,868 ticks/s, hash `c55ddab5`.
-- `node scripts/terminal-soak.mjs --count=1000` — PASS with the results above.
-- `npm run test:browser:file` — PASS in real headless Chrome/WebGL2: score
-  605,185; 32× result in 9.08 s; four draws; title JS presentation mean
-  0.09 ms / p95 0.20 ms; visual IndexedDB reload; responsive and interaction
-  matrices pass with no browser errors.
-- `npm run test:browser:canvas` — PASS in real Chrome with WebGL disabled through
-  title, run, visual History, and Evolution Globe.
-- `docker compose run --rm verify` — PASS: 109 unit, 50 integration, all gates;
-  benchmark 2,853 ticks in 190 ms, 15,018 ticks/s, hash `c55ddab5`.
-- Cache-busted public `index.html`, entry point, run driver, Worker, skill gates,
-  showcase data, primary CSS, and this status file returned HTTP 200 and matched
-  release-commit bytes exactly by SHA-256.
+- `npm run verify` — PASS: structure; showcase; 118 unit; 61 integration;
+  balance smoke; benchmark; 118-module/10-HTML link gate.
+- Host benchmark — 2,640 ticks in 167 ms, 15,811 ticks/s, hash `637b2473`.
+- `npm run balance` — PASS, 180 production worlds.
+- `node scripts/audits/terminal-soak.mjs --count=1000` — PASS as above.
+- `npm run audit:skills` — PASS.
+- `npm run audit:trophies` — PASS.
+- `npm run test:browser:file` — PASS, WebGL2, no browser errors.
+- `npm run test:browser:canvas` — PASS, forced Canvas 2D.
+- `docker compose run --rm verify` — PASS on Node v22.23.2 / 32 CPUs;
+  benchmark 2,640 ticks in 187 ms, 14,082 ticks/s, hash `637b2473`.
 
 ## Known limitations and next actions
 
-- Public-URL headless Chrome navigation is sandbox-network blocked with
-  `ERR_INTERNET_DISCONNECTED`. The deployed bytes were verified over HTTPS and
-  those exact repository bytes were exercised through the CDP-pipe Chrome
-  harness; no public-browser screenshot is claimed.
-- Physical mobile touch/thermal/battery/GPU timing, screen-reader traversal,
-  forced-colors review, Japanese localization, and 100–200 hour challenge,
-  discovery, and trophy breadth remain incomplete.
+- The requested `cell-sphere-game` product/repository/storage-key rename was not
+  performed: the repository's active agent contract explicitly requires the
+  canonical `incremental-network-game` name and tagline to survive redesigns.
+  A maintainer must revise that higher-priority contract before a truthful full
+  rename and GitHub repository rename can proceed.
+- Physical mobile touch/thermal/battery/GPU timing, screen-reader manual audit,
+  forced-colors visual review, Japanese localization, and the broader
+  100–200-hour challenge/discovery layer remain incomplete.
+- Next release actions: commit this evidence, push `main`, verify CI and Pages at
+  the pushed SHA, then cache-bust and byte-compare the public deployment.

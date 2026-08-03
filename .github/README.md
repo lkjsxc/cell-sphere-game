@@ -48,7 +48,7 @@ preference.
   offers, and random decisions use isolated xoshiro128** streams.
 - Non-blocking FIFO Adaptation offers with exact-uniform seeded automatic
   selection, manual delayed choices, versioned replay, weighted state-sensitive
-  arrival fields, schema-2 History, and bounded cell-only timeline checkpoints.
+  arrival fields, schema-3 History with bounded Trophy proof, and cell-only timeline checkpoints.
 - Four-draw WebGL2 cellular renderer: geography, life stages, crises,
   Adaptation propagation, History, selection, and Evolution Globe skills are
   materials on the same cells. There are no detached route or prerequisite lines.
@@ -64,8 +64,8 @@ preference.
   six families. Recognition uses bounded deterministic proof, is monotonic,
   backfills only on explicit Trophy review or progression transactions, and
   never changes simulation authority.
-- Separate validated stores for Settings, progression/Imprints, schema-2
-  semantic History, and ten device-local IndexedDB visual bundles. JSON
+- Separate validated stores for Settings, progression/Imprints/Trophies,
+  schema-3 semantic History, and ten device-local IndexedDB visual bundles. JSON
   export/import intentionally remains semantic only.
 - No runtime dependencies, engine, framework, CDN, remote media, analytics, or
   post-load network requirement.

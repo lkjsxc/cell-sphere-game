@@ -20,11 +20,13 @@ jobs:
       - name: Structure gate
         run: node scripts/check-structure.mjs
       - name: Unit tests
-        run: node --test tests/unit/*.test.js
+        run: node --test tests/unit/*.test.js tests/unit/simulation/*.test.js
       - name: Integration tests
         run: node --test tests/integration/*.test.js
       - name: Balance smoke
         run: node scripts/balance.mjs --smoke
+      - name: Progression audits
+        run: node scripts/audits/skill-audit.mjs && node scripts/audits/trophy-audit.mjs
       - name: Benchmark
         run: node scripts/benchmark.mjs
       - name: Link / deployment path checks
