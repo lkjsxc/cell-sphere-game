@@ -55,8 +55,9 @@ preference.
   Canvas 2D remains an observationally complete cellular fallback.
 - Read-only cell inspector with static geography plus low-cadence authoritative
   living detail.
-- Exactly 108 validated Skill Cells on a separate 642-cell Evolution Globe
-  across Reach, Flow, Reserve, Ecology, Perception, and Continuity. Every
+- Exactly 642 validated, purchasable Skill Cells fill a separate 642-cell
+  Evolution Globe across Reach, Flow, Reserve, Ecology, Perception, and
+  Continuity. Every
   prerequisite is directly adjacent, every purchase has a concrete compiled
   effect, and a semantic grouped list shares the same source of truth.
 - Separate validated stores for Settings, progression/Imprints, schema-2
@@ -85,7 +86,7 @@ styles/          authored responsive CSS
 src/core/        PRNG, hash, clock, state machine, math
 src/world/       topology, terrain, hydrology, ecology, landmarks
 src/simulation/  deterministic authority, inspection, replay, History events
-src/game/        Adaptations, scoring, strains, 108-skill progression content
+src/game/        Adaptations, scoring, strains, 642-skill progression content
 src/rendering/   WebGL2 + Canvas 2D, camera, picking, static/dynamic passes
 src/history/     strict bounded visual codec, recorder, preview projection
 src/interface/   screen/overlay composition and player intent

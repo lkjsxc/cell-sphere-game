@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { validateSettings, defaultSettings } from '../../src/platform/settings.js';
 import { defaultMeta, LEGACY_MEMORY_MAP, saveMeta, validateMeta } from '../../src/platform/storage.js';
 import {
-  MEMORY_BRANCHES, MEMORY_NODE_IDS, MEMORY_NODES, availableMemoryNodes,
+  MEMORY_BRANCHES, MEMORY_LANDMARK_IDS, MEMORY_NODE_IDS, MEMORY_NODES, availableMemoryNodes,
   buildMemorySnapshot, campaignResolved, canPurchaseMemory, compileMemory,
   groupAccessibleMemory, purchaseMemory, validateMemoryGraph,
 } from '../../src/game/memory.js';
@@ -40,14 +40,14 @@ test('settings reject garbage, invalid enums, and prototype pollution', () => {
 
 test('Memory atlas has the exact validated composition and economy', () => {
   const report = validateMemoryGraph();
-  assert.equal(MEMORY_NODES.length, 108); assert.equal(report.valid, true, report.errors.join('\n'));
+  assert.equal(MEMORY_NODES.length, 642); assert.equal(report.valid, true, report.errors.join('\n'));
   assert.deepEqual(report.composition,
-    { micro: 48, conditional: 24, unlock: 18, keystone: 6, connector: 6, capstone: 6 });
-  assert.deepEqual(report.branchCounts, Object.fromEntries(MEMORY_BRANCHES.map((branch) => [branch, 18])));
-  assert.equal(report.roots.length, 6); assert.equal(report.reachable, 108);
-  assert.equal(report.totalCost, 818);
-  assert.equal(new Set(MEMORY_NODE_IDS).size, 108); assert.equal(new Set(MEMORY_NODES.map((n) => n.cell)).size, 108);
-  assert.equal(MEMORY_NODES.filter((node) => node.effect.type === 'scalar').length, 48);
+    { micro: 582, conditional: 24, unlock: 18, keystone: 6, connector: 6, capstone: 6 });
+  assert.deepEqual(report.branchCounts, Object.fromEntries(MEMORY_BRANCHES.map((branch) => [branch, 107])));
+  assert.equal(report.roots.length, 6); assert.equal(report.reachable, 642);
+  assert.equal(report.totalCost, 2462);
+  assert.equal(new Set(MEMORY_NODE_IDS).size, 642); assert.equal(new Set(MEMORY_NODES.map((n) => n.cell)).size, 642);
+  assert.equal(MEMORY_NODES.filter((node) => node.effect.type === 'scalar').length, 582);
   for (const node of MEMORY_NODES) {
     assert.match(node.id, /^[a-z][a-z-]+$/); assert.ok(node.nameEn.length >= 5);
     assert.ok(node.effectEn.length >= 12); assert.ok(node.description.length >= 35);
@@ -62,7 +62,7 @@ test('every legacy ownership subset migrates one-for-one without currency refund
     const owned = LEGACY_IDS.filter((_, index) => mask & (1 << index));
     const migrated = validateMeta({ schema: 3, bestScore: 99, totalEchoes: 70,
       echoBalance: 17, runs: 4, signalHintShown: true, memoryNodes: owned });
-    assert.equal(migrated.schema, 5); assert.equal(migrated.memoryGraphVersion, 2); assert.equal(migrated.worldSeedIndex, 4);
+    assert.equal(migrated.schema, 5); assert.equal(migrated.memoryGraphVersion, 3); assert.equal(migrated.worldSeedIndex, 4);
     assert.equal(migrated.memoryNodes.length, owned.length);
     const mapped = owned.map((id) => LEGACY_MEMORY_MAP[id]);
     assert.deepEqual(migrated.memoryNodes, MEMORY_NODE_IDS.filter((id) => mapped.includes(id)));
@@ -82,15 +82,15 @@ test('all six proof nodes preserve bounded value while First Trace becomes resil
   assert.equal(campaignResolved(migrated), true);
 });
 
-test('schema 4 validates old ownership, then preserves it under graph 2', () => {
+test('schema 4 validates old ownership, then preserves it in the 642-cell graph', () => {
   const meta = validateMeta({ schema: 4, memoryGraphVersion: 1, bestScore: 500,
     totalEchoes: 900, echoBalance: 79, runs: 12,
-    memoryNodes: [...MEMORY_NODE_IDS, 'foreign-memory'], quarantinedMemoryNodes: ['earlier-unknown'] });
-  assert.deepEqual(meta.memoryNodes, MEMORY_NODE_IDS); assert.equal(meta.memoryNodes.length, 108);
+    memoryNodes: [...MEMORY_LANDMARK_IDS, 'foreign-memory'], quarantinedMemoryNodes: ['earlier-unknown'] });
+  assert.deepEqual(meta.memoryNodes, MEMORY_LANDMARK_IDS); assert.equal(meta.memoryNodes.length, 108);
   assert.deepEqual(meta.quarantinedMemoryNodes, ['foreign-memory', 'earlier-unknown']);
   assert.equal(meta.echoBalance, 79); assert.equal(meta.totalEchoes, 900);
   assert.deepEqual(meta.migrationNotice, { kind: 'memory-atlas-v5', pending: true });
-  assert.equal(meta.memoryGraphVersion, 2); assert.equal(meta.worldSeedIndex, 12);
+  assert.equal(meta.memoryGraphVersion, 3); assert.equal(meta.worldSeedIndex, 12);
   const corrupt = validateMeta({ schema: 4, memoryNodes: ['continuity-unbroken-lesson'] });
   assert.deepEqual(corrupt.memoryNodes, []); assert.deepEqual(corrupt.quarantinedMemoryNodes, ['continuity-unbroken-lesson']);
 });
@@ -129,7 +129,7 @@ test('the complete graph can be purchased transactionally for its exact total co
     assert.equal(result.meta.echoBalance, before.echoBalance - next.cost);
     assert.equal(result.meta.totalEchoes, before.totalEchoes); meta = result.meta;
   }
-  assert.equal(meta.echoBalance, 0); assert.equal(meta.memoryNodes.length, 108);
+  assert.equal(meta.echoBalance, 0); assert.equal(meta.memoryNodes.length, 642);
 });
 
 test('stable level-3 cells drive direct Memory status arrays without path cells', () => {
@@ -140,7 +140,7 @@ test('stable level-3 cells drive direct Memory status arrays without path cells'
   const shuffled = buildMemorySnapshot(topo, { ...meta, memoryNodes: [...owned].reverse() }, 'reach-world-seeder');
   assert.deepEqual(snapshot.memoryStatus, shuffled.memoryStatus);
   assert.equal(snapshot.memoryStatus.length, 642); assert.equal(snapshot.memoryNodeIndex.length, 642);
-  assert.equal(snapshot.memoryImprintWeight[0] > 0, true); assert.equal(snapshot.nodeStates.length, 108);
+  assert.equal(snapshot.memoryImprintWeight[0] > 0, true); assert.equal(snapshot.nodeStates.length, 642);
   assert.equal('alive' in snapshot, false); assert.equal('links' in snapshot.memoryScene, false);
   for (const node of snapshot.nodeStates) {
     assert.ok(node.cell < topo.nodeCount); assert.ok(snapshot.memoryStatus[node.cell] >= 4); const p = node.cell * 3;

@@ -25,15 +25,15 @@ Owned skills bypass new gates and are never charged again.
 |---|---:|---:|
 | First campaign resolution | 4 completed worlds | 18–24 min target; 18–22 min from run duration before transition overhead |
 | Meaningful six-branch spread | six roots require 0 prior worlds and cost 14 Echoes total | first hour target |
-| Roughly half (54 skills) | 144 completed worlds | about 11–14 h |
-| All six keystones | 164 completed worlds plus adjacency/Echoes | about 13–16 h |
-| Cross-branch connectors | 600 completed worlds | about 47–57 h |
-| All 108 Skill Cells | capstones require 900 completed worlds | about 70–85 h |
+| Roughly half (324 skills) | 82 completed worlds | about 6–7 h |
+| All six keystones | 143 completed worlds plus adjacency/Echoes | about 11–12 h |
+| Late integration cells | 153 completed worlds | about 12–13 h |
+| All 642 Skill Cells | capstones require 164 completed worlds | about 13–14 h |
 | True completion | skills plus challenge/trophy/discovery breadth | 100–200 h target; breadth is not yet fully implemented |
 
 Gates are shown in every Skill Cell detail as `Worlds observed`; they are not
 hidden cooldowns, real-time waits, or speed restrictions. At 32× they compress
-legitimately. The unchanged 818-Echo economy keeps roots welcoming while
+legitimately. The 2,462-Echo economy keeps roots welcoming and is fundable near the gate horizon while
 adjacency, observed-world gates, and later challenge breadth—not duplicated raw
 power—create the long horizon.
 

@@ -38,7 +38,7 @@ Release handoff for the visual-integrity, completion, and progression pass.
   available but secondary. The fourth completed world reports **First Cycle
   Resolved**.
 - **Evolution Globe · Permanent Skill Tree** replaces the old visible feature
-  name. It has a larger 642-cell globe, 108 Skill Cells, no visible List mode,
+  name. Its larger 642-cell globe now has 642 purchasable Skill Cells, no visible List mode,
   a synchronized offscreen semantic tree, fixed detail header/body/footer, and
   a quiet Focus available action.
 
@@ -67,7 +67,7 @@ Release handoff for the visual-integrity, completion, and progression pass.
 - First resolution is four worlds (18–24 min target at 1×). Visible
   `Worlds observed` gates place 54 skills at world 144, all keystones at 164,
   connectors at 600, and capstones at 900. This models roughly 70–85 hours for
-  all 108 skills at 1×; the 100–200 hour challenge/trophy breadth target remains
+  all 642 skills at 1×; the 100–200 hour challenge/trophy breadth target remains
   honestly incomplete.
 
 ## Rendering, UI, and accessibility evidence

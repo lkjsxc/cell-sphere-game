@@ -129,7 +129,7 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
   const atlas = await evaluate(`(() => { const app=window.__IN_APP__, snap=app.memorySnapshot; return {
     nodes:snap.nodeStates.length,cells:snap.memoryStatus.length,level:app.topo.levels,frontier:snap.nodeStates.filter(n=>n.reachable).length,
     paths:'links' in snap.memoryScene,draws:app.renderer.drawCalls}; })()`);
-  ok(atlas.nodes === 108 && atlas.cells === 642 && atlas.level === 3, 'Memory did not reconfigure to the level-3 atlas');
+  ok(atlas.nodes === 642 && atlas.cells === 642 && atlas.level === 3, 'Evolution Globe did not expose all 642 Skill Cells');
   ok(atlas.frontier === 6 && !atlas.paths && atlas.draws === 4, 'early frontier or direct-cell rendering regressed');
   const before = await evaluate('window.__IN_APP__.meta.echoBalance');
   const nodeId = await evaluate(`window.__IN_APP__.memorySnapshot.nodeStates.find(n=>n.reachable&&n.affordable)?.id`);

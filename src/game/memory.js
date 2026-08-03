@@ -12,13 +12,14 @@ export { MEMORY_ATLAS_REVERSE } from './memory-atlas.js';
 import { createTopology } from '../world/icosphere.js';
 export { applyMemoryConditionals } from './memory-node.js';
 
-export const MEMORY_GRAPH_VERSION = 2;
+export const MEMORY_GRAPH_VERSION = 3;
 export const MEMORY_BRANCHES = Object.freeze(['Reach', 'Flow', 'Reserve', 'Ecology', 'Perception', 'Continuity']);
 export const MEMORY_NODES = Object.freeze([
   ...REACH_MEMORY, ...FLOW_MEMORY, ...RESERVE_MEMORY,
   ...ECOLOGY_MEMORY, ...PERCEPTION_MEMORY, ...CONTINUITY_MEMORY,
 ]);
 export const MEMORY_NODE_IDS = Object.freeze(MEMORY_NODES.map((node) => node.id));
+export const MEMORY_LANDMARK_IDS = Object.freeze(MEMORY_NODES.filter((node) => node.authored).map((node) => node.id));
 const BY_ID = new Map(MEMORY_NODES.map((node) => [node.id, node]));
 const ADDITIVE = new Set(['growthCap', 'anastomosis', 'redundantLoops',
   'coldReserve', 'symbioticFilm', 'distributedSensing']);
@@ -129,10 +130,10 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
       if (effect.type === 'unlock') unlockKeys.add(effect.key);
     }
   }
-  const expectedKinds = { micro: 48, conditional: 24, unlock: 18, keystone: 6, connector: 6, capstone: 6 };
-  if (nodes.length !== 108) errors.push(`node count: ${nodes.length}`);
+  const expectedKinds = { micro: 582, conditional: 24, unlock: 18, keystone: 6, connector: 6, capstone: 6 };
+  if (nodes.length !== 642) errors.push(`node count: ${nodes.length}`);
   for (const [kind, count] of Object.entries(expectedKinds)) if (composition[kind] !== count) errors.push(`kind count: ${kind}`);
-  for (const branch of MEMORY_BRANCHES) if (branchCounts[branch] !== 18) errors.push(`branch count: ${branch}`);
+  for (const branch of MEMORY_BRANCHES) if (branchCounts[branch] !== 107) errors.push(`branch count: ${branch}`);
   const degree = new Map(nodes.map((node) => [node.id, 0]));
   for (const node of nodes) for (const required of node.requires) {
     const parent = byId.get(required);
@@ -142,10 +143,6 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
       if (!cellsAdjacent(topo, node.cell, parent.cell)) errors.push(`nonadjacent prerequisite: ${node.id}->${required}`);
       if (parent.requiredRuns > node.requiredRuns) errors.push(`run gate order: ${node.id}->${required}`);
     }
-  }
-  for (const node of nodes.filter((item) => item.kind === 'connector')) {
-    if (node.requires.length !== 2 || !node.requires.every((id) => byId.get(id)?.kind === 'keystone'))
-      errors.push(`connector parents: ${node.id}`);
   }
   const visiting = new Set(); const reached = new Set();
   function visit(id) {

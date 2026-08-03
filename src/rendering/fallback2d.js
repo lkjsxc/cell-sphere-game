@@ -115,7 +115,7 @@ export class Canvas2DRenderer {
     for (let cell = 0; cell < topo.nodeCount; cell++) {
       if (this.facing[cell] <= 0.02) continue;
       if (snapshot.status === 'memory') {
-        const styles = memoryStyles(snapshot.memoryStatus[cell], snapshot.memoryKind[cell], snapshot.memoryImprintWeight[cell], fade);
+        const styles = memoryStyles(snapshot.memoryStatus[cell], snapshot.memoryKind[cell], snapshot.memoryImprintWeight[cell], fade, snapshot.memoryBranch[cell]);
         if (!styles) continue; this.cellPath(cell); ctx.fillStyle = styles.fill; ctx.fill();
         if (styles.inset) { this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill(); }
         if (styles.stroke) { ctx.strokeStyle = styles.stroke; ctx.lineWidth = styles.width; ctx.stroke(); }
@@ -176,11 +176,12 @@ function adaptationStyle(category, strength) {
   return { fill: `rgba(205,214,119,${alpha})`, scale: 1 };
 }
 
-function memoryStyles(status, kind, fossil, fade) {
+function memoryStyles(status, kind, fossil, fade, branch) {
   if (!status && !fossil) return null;
   const selected = status >= 5; const plain = selected ? status - 4 : status;
   const special = kind >= 4; const stroke = selected ? 'rgba(225,244,232,.98)' : plain === 2 ? 'rgba(171,185,168,.65)' : null;
-  if (plain === 1) return { fill: `rgba(55,58,59,${0.68 * fade})`, stroke, width: 1.2 };
+  const tint = ['55,58,59', '82,106,72', '61,99,112', '111,88,53', '62,99,66', '91,75,108', '105,77,69'][branch] ?? '55,58,59';
+  if (plain === 1) return { fill: `rgba(${tint},${0.76 * fade})`, stroke, width: 1.2 };
   if (plain === 2) return { fill: `rgba(104,119,105,${0.52 * fade})`, inset: 'rgba(38,43,41,.62)', scale: 0.62, stroke, width: 1.0 };
   if (plain === 3) return { fill: `rgba(177,202,137,${0.90 * fade})`, inset: 'rgba(230,235,184,.75)', scale: 0.54, stroke, width: 1.5 };
   if (plain === 4) return { fill: `rgba(117,158,128,${0.82 * fade})`, inset: special ? 'rgba(224,218,163,.78)' : 'rgba(197,220,185,.62)', scale: special ? 0.45 : 0.62, stroke, width: 1.5 };

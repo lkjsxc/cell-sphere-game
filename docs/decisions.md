@@ -76,7 +76,7 @@ drainage, flow hierarchy, climate, forests, biomes, regions, and landmarks.
 Central biome factor arrays bound gameplay effects. Evidence: world hash,
 property tests, generation timing, browser screenshots.
 
-## D11 — 108-cell adjacent Memory atlas
+## D11 — 108-cell adjacent Memory atlas (superseded by D16)
 
 The first 108-node placement needed 153 nonadjacent prerequisite paths, recreating
 the line-and-dot problem. Use a separate level-3 642-cell globe, solve 108 unique
@@ -117,3 +117,13 @@ start a nine-second next-world countdown. Interaction cancels it; hidden state
 and detail surfaces suspend remaining time; only explicit Memory input spends
 Echoes. Result awards are idempotent. Evidence: policy tests, 100-world soak,
 and a no-input real-Chrome second-result → third-world transition.
+
+## D16 — Every Evolution Globe cell is a Skill Cell
+
+The sparse 108-cell projection left most of the dedicated globe inert. Partition
+the level-3 icosphere by its six cardinal Voronoi territories: symmetry yields
+six connected 107-cell regions exactly. A deterministic breadth-first tree gives
+all 636 prerequisites direct adjacency. Interleave the 108 authored landmarks
+with 534 low-amplitude permanent skills, retain stable landmark IDs, and gate
+each branch through world 164. Evidence: mapping hash `d6bdc218`, graph/economy/
+migration tests, full legal purchase, and WebGL2/Canvas pointer selection.

@@ -1,5 +1,5 @@
 /** Versioned, corruption-safe persistence for cross-run progression. */
-import { MEMORY_GRAPH_VERSION, MEMORY_NODE_IDS } from '../game/memory.js';
+import { MEMORY_GRAPH_VERSION, MEMORY_LANDMARK_IDS, MEMORY_NODE_IDS } from '../game/memory.js';
 import { createTopology } from '../world/icosphere.js';
 
 const KEY = 'incremental-network-game:meta:v1';
@@ -20,7 +20,7 @@ export function defaultMeta() {
     memoryNodes: [], quarantinedMemoryNodes: [], imprints: [], migrationNotice: null };
 }
 
-/** Schema 4 ownership is checked against graph 1 before graph 2 is stamped. */
+/** Schema 4 ownership is checked against graph 1 before graph 3 is stamped. */
 export function validateMeta(raw) {
   const base = defaultMeta(); if (raw === null || typeof raw !== 'object') return base;
   const sourceSchema = Number.isInteger(raw.schema) ? raw.schema : 1; const out = { ...base };
@@ -57,9 +57,9 @@ function validateGraphOneOwnership(migrated) {
   const requested = new Set(migrated.valid); const accepted = new Set(); let changed = true;
   while (changed) { changed = false;
     for (let branch = 0; branch < 6; branch++) for (let index = 0; index < 18; index++) {
-      const id = MEMORY_NODE_IDS[branch * 18 + index]; if (!requested.has(id) || accepted.has(id)) continue;
-      const parents = OLD_PARENTS[index].map((parent) => MEMORY_NODE_IDS[branch * 18 + parent]);
-      if (index === 16) parents.push(MEMORY_NODE_IDS[((branch + 5) % 6) * 18 + 15]);
+      const id = MEMORY_LANDMARK_IDS[branch * 18 + index]; if (!requested.has(id) || accepted.has(id)) continue;
+      const parents = OLD_PARENTS[index].map((parent) => MEMORY_LANDMARK_IDS[branch * 18 + parent]);
+      if (index === 16) parents.push(MEMORY_LANDMARK_IDS[((branch + 5) % 6) * 18 + 15]);
       if (parents.every((parent) => accepted.has(parent))) { accepted.add(id); changed = true; }
     }
   }

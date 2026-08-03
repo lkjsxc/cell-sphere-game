@@ -94,10 +94,10 @@ before-state for the cell-only renderer gate.
 - Added strict cell-only visual History checkpoints, primary-cell event focus,
   nearest-frame scrub, immediate Live restoration, and newest-ten IndexedDB
   retention. A detailed run is 101 frames / 259,594 bytes.
-- Rebuilt Memory on a separate 642-cell level-3 globe: 108 unique cells, 108
-  direct-adjacency prerequisite relations, six roots/connected branches,
-  mapping hash `5a08107c`, schema-5 edge-Imprint→cell migration, and the same
-  818-Echo economy. Every advanced cell now has a shipped bounded trait effect.
+- Rebuilt Evolution on a separate 642-cell level-3 globe: all 642 cells are
+  purchasable through 636 direct-adjacency prerequisites and six connected
+  107-cell branches. Mapping hash `d6bdc218`, schema-5 edge-Imprint→cell
+  migration, and a 2,462-Echo economy are validated; every cell has an effect.
 - Added compact result details plus enabled-by-default nine-second unattended
   continuation with interaction cancellation, hidden/surface suspension, and
   idempotent result awards.

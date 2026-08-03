@@ -7,4 +7,4 @@ migration and pause/camera policy, icosphere/dual topology, deterministic
 continents/hydrology/rivers/forests/biomes/landmarks, renderer geometry and
 shader uniforms, traits and Adaptations, event schedules, score projection,
 non-blocking simulation authority, pure inspection, and the validated
-108-node Memory graph/economy/migration/transaction.
+642-node Evolution graph/economy/migration/transaction.

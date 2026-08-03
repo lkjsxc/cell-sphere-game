@@ -71,15 +71,15 @@ immediately. The expanded event list exposes the same selected event in text.
 
 ## Evolution Globe · Permanent Skill Tree
 
-Exactly 108 unique cells occupy a separate 642-cell atlas in six 18-cell
-currents: Reach, Flow, Reserve, Ecology, Perception, and Continuity. Every
-prerequisite is also direct spherical adjacency. Composition is 48 micro, 24
-conditional, 18 milestones, 6 keystones, 6 connectors, and 6 capstones. Costs
-total 818 Echoes. Six roots cost 2–3 Echoes; early runs expose several purchases.
+All 642 cells on the separate globe are purchasable Skill Cells in six connected
+107-cell currents: Reach, Flow, Reserve, Ecology, Perception, and Continuity.
+Every prerequisite is direct spherical adjacency. Composition is 582 micro, 24
+conditional, 18 advanced, 6 keystones, 6 connectors, and 6 capstones. Costs total
+2,462 Echoes. Six roots cost 2–3 Echoes; early runs expose several purchases.
 Every purchase compiles a concrete bounded scalar or conditional effect for the
-next run. Visible `Worlds observed` gates place 54 skills at world 144, keystones
-at 164, connectors at 600, and capstones at 900. The globe is primary; a
-synchronized offscreen semantic tree preserves non-pointer purchase access.
+next run. Visible `Worlds observed` gates place 324 skills by world 82,
+keystones at 143, connectors at 153, and capstones at 164. The globe is primary;
+a synchronized offscreen semantic tree preserves non-pointer purchase access.
 
 The long campaign, challenges, broader strain selection, trophies, audio, and
 complete Japanese localization are not yet complete and are not exposed as

@@ -39,7 +39,7 @@ export function renderMemorySnapshot(topo, meta, scene, emphasizedIds = []) {
     entropy: 0.30, status: 'memory', events: [], memoryStatus: status, memoryBranch: branch,
     memoryTier: tier, memoryKind: kind, memoryImprintWeight: imprintWeight,
     memoryNodeIndex: nodeIndex, memoryEmphasis: emphasis, memoryScene: scene, nodeStates: scene.nodes,
-    metrics: Object.freeze({ coverage: scene.nodes.filter((node) => node.owned).length / 108,
+    metrics: Object.freeze({ coverage: scene.nodes.filter((node) => node.owned).length / count,
       score: 0, pendingAdaptations: 0 }), focus: focusDirection(topo, focusCells),
   });
   return snapshot;

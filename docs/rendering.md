@@ -41,7 +41,7 @@ topology/geography buffers build once; only bounded cell attributes update.
 The title decodes 89 cell-only frames generated from production seed `20260701`.
 Its 22-second nonlinear timeline preserves germination, a 535-cell branched peak,
 a recorded loop, environmental pressure, fragmentation, and a blank terminal
-beat before reset. Source hash `c416a121…` and data hash `fd6b5289…` are checked
+beat before reset. Source hash `e9493f53…` and data hash `fd6b5289…` are checked
 by `showcase:check`; no production simulation runs in the title runtime. Hidden
 documents freeze its clock and reduced motion holds a mature frame.
 

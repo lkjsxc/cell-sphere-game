@@ -24,6 +24,7 @@
     "terminal:soak": "node scripts/audits/terminal-soak.mjs",
     "audit:rivers": "node scripts/audits/river-audit.mjs",
     "audit:events": "node scripts/audits/event-audit.mjs",
+    "audit:skills": "node scripts/audits/skill-audit.mjs",
     "benchmark": "node scripts/benchmark.mjs",
     "verify": "node scripts/verify.mjs"
   },

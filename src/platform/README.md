@@ -10,7 +10,7 @@ Small browser adapters that degrade honestly when APIs or storage are absent.
 | `history.js` | Schema-2 semantic archive, 24/32 worlds, 80 events/run, 700 KB cap. |
 | `recent-runs.js` | Native IndexedDB visual bundles, newest ten, strict `INHV` validation. |
 
-Progress migration validates schema-4 ownership before stamping graph 2,
+Progress migration validates schema-4 ownership before stamping graph 3,
 quarantines unknown IDs, preserves Echo totals, and projects old edge Imprints
 to bounded atlas cells. Semantic History stores stable event keys and up to
 eight primary cells. Approximate visual detail is a separate, device-local

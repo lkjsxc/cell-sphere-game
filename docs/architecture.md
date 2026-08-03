@@ -67,8 +67,9 @@ Static rivers, forests, biomes, and landmarks never cross the Worker boundary.
 The run world keeps the stable 2,562-cell icosphere and immutable graph-native
 geography. Central biome tables precompute growth, upkeep, uptake, renewal, and
 transport factors. Evolution Globe switches the same renderer and picking
-contract to a separate 642-cell level-3 atlas. Its 108 Skill Cells form a DAG in
-which every prerequisite relation is also direct spherical adjacency. Imprints
+contract to a separate 642-cell level-3 globe. All 642 cells are Skill Cells in
+six exact 107-cell territories; their 636 prerequisite relations are also direct
+spherical adjacency. Imprints
 are bounded cell material; no prerequisite path geometry exists.
 
 ## Persistence
@@ -77,7 +78,7 @@ Separate localStorage documents own:
 
 - Settings schema 3 (`settings:v2`), including automatic continuation and safe
   migration from earlier values;
-- progression schema 5 (`meta:v1`), including Echoes, 108-cell ownership,
+- progression schema 5 (`meta:v1`), including Echoes, 642-cell ownership,
   cell-converted Imprints, graph version, quarantine, a seed cursor, and one migration notice;
 - semantic History schema 2 (`history:v2`, migrating `history:v1`), retaining
   24/32 timelines, ≤80 events and ≤8 primary cells/event, ≤128 skill

@@ -137,7 +137,7 @@ void main() {
   float fossil = fract(vLife.z); float emphasis = step(31.0, vLife.z);
   float broadGlyph = smoothstep(0.38, 0.60, abs(sin(dot(vPos, vec3(11.0, 7.0, 5.0)) * (1.0 + atlasKind * 0.12))));
   vec3 atlasBase = mix(vec3(0.13, 0.14, 0.145), vec3(0.30, 0.27, 0.22), fossil * 0.48);
-  atlasBase = mix(atlasBase, branchColor * 0.28, lockedCell * 0.38);
+  atlasBase = mix(atlasBase, branchColor * (0.38 + inset * 0.22), lockedCell * (0.58 + inset * 0.28));
   atlasBase = mix(atlasBase, branchColor * 0.58, unaffordableCell * (0.40 + (1.0 - inset) * 0.26));
   atlasBase = mix(atlasBase, branchColor * 1.22, affordableCell * (0.64 + inset * 0.30));
   atlasBase = mix(atlasBase, branchColor * (0.82 + broadGlyph * 0.24), ownedCell * (0.58 + inset * 0.34));

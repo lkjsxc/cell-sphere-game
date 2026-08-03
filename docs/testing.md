@@ -13,11 +13,11 @@ Unit coverage includes topology/dual manifold, deterministic WorldModel hash,
 land bounds, climate/biomes/forest coherence, priority-flood acyclic drainage,
 river mouths/order, landmarks/sources, generation budget, renderer geometry
 and uniforms, tap/camera math, settings/pause/rotation, simulation queue/RNG,
-pure inspection, History cap, and the 108-node graph/migration/economy.
+pure inspection, History cap, and the 642-node graph/migration/economy.
 
 Integration coverage includes seed/chunk/speed invariance, zero-input Random
 completion, exact manual resolution ticks, stream isolation, replay schema,
-conditional skills, concrete effects for all 108 Skill Cell purchases, strict
+conditional skills, concrete effects for all 642 Skill Cell purchases, strict
 visual-History codec bounds/malformed input, primary-cell migration, stale load
 guards, and an observed run matching a quiet run in hash, score, extinction,
 decisions, semantic History, and Imprint. A 100-world integration soak also
@@ -31,7 +31,7 @@ rotation default off; drag; title inspector; Settings and opt-in idle rotation;
 manual queued offer without pause; explicit panel/close/reopen/choice; switch
 back to Random; nonmodal History scrub/previous/next/Live with highlighted
 primary cells and continuing authority; 32× result; compact result History;
-IndexedDB visual-detail reload when available; 642-cell/108-skill Evolution
+IndexedDB visual-detail reload when available; 642-cell/642-skill Evolution
 Globe; select-before-Unlock; fixed-flow mobile skill detail; semantic offscreen
 tree; Evolution restoration after History; a second unattended result counting
 down into the third world; New World cancel/accept with no reward; reload; and
