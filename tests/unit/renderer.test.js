@@ -100,9 +100,8 @@ function project(matrix, point) {
 
 test('parseUniformNames strips array brackets', () => {
   const names = parseUniformNames(SH.FS_GLOBE);
-  assert.ok(names.has('uEventCenter'), 'array uniform base name lost');
-  assert.ok(!names.has('uEventCenter[4]'), 'bracketed name leaked');
-  assert.ok(names.has('uEntropy'));
+  assert.equal(names.has('uEventCenter'), false, 'renderer still reconstructs spherical caps');
+  assert.ok(names.has('uEntropy')); assert.match(SH.VS_GLOBE, /in vec2 aEvent/);
 });
 
 test('every declared uniform is uploaded by the renderer modules', () => {
@@ -126,7 +125,7 @@ test('every declared uniform is uploaded by the renderer modules', () => {
       assert.ok(uploaded.has(u), `${name}: uniform "${u}" declared but never uploaded`);
     }
   }
-  for (const u of ['uEventCenter', 'uEventStrength', 'uSelectedCenter', 'uHasSelection']) {
+  for (const u of ['uSelectedCenter', 'uHasSelection']) {
     assert.ok(parseUniformNames(SH.FS_GLOBE).has(u), `globe missing ${u}`);
   }
   assert.ok(!parseUniformNames(SH.FS_GLOBE).has('uSignalCenter'));
@@ -153,8 +152,9 @@ test('dual-cell render geometry stays indexed, finite, and cell-addressable', ()
   assert.equal(geometry.indices.length, topo.edgeCount * 6);
   assert.equal(geometry.boundaryIndices.length, topo.edgeCount * 6);
   assert.equal('riverIndices' in geometry, false);
+  assert.equal(geometry.riverDown.length, geometry.vertexCount * 3); assert.equal(geometry.riverMeta.length, geometry.vertexCount * 2);
   assert.equal(geometry.vertexCell.length, geometry.vertexCount);
-  for (const value of [...geometry.positions, ...geometry.terrain]) assert.ok(Number.isFinite(value));
+  for (const value of [...geometry.positions, ...geometry.terrain, ...geometry.riverDown, ...geometry.riverUp, ...geometry.riverMeta]) assert.ok(Number.isFinite(value));
   for (const index of geometry.indices) assert.ok(index < geometry.vertexCount);
 });
 

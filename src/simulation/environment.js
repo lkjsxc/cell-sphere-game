@@ -8,6 +8,7 @@
  */
 import { BALANCE as B } from '../game/balance.js';
 import { clamp01, smootherstep } from '../core/math.js';
+import { eventEnvelopeAt } from './events.js';
 
 /** Global deterioration curve, indexed by tick. 0 until rise start, 1 at end. */
 export function buildEntropyLut() {
@@ -101,14 +102,10 @@ function applyEventEffects(state) {
   const t = state.tick;
   for (const ev of state.events) {
     if (t < ev.startTick || t > ev.endTick) continue;
-    const env = eventEnvelope(t, ev);
-    if (env <= 0) continue;
-    const strength = ev.amount * ev.intensity * env;
-    const nodes = ev.nodes;
-    const falloff = ev.falloff;
+    const nodes = ev.nodes; const falloff = ev.falloff;
     for (let k = 0; k < nodes.length; k++) {
-      const i = nodes[k];
-      const w = strength * falloff[k];
+      const env = eventEnvelopeAt(t, ev, ev.arrivalTicks[k]); if (env <= 0) continue;
+      const i = nodes[k]; const w = ev.amount * ev.intensity * env * falloff[k];
       switch (ev.kind) {
         case 'moisture': state.moisture[i] = Math.fround(clamp01(state.moisture[i] - w)); break;
         case 'heat': state.temperature[i] = Math.fround(clamp01(state.temperature[i] + w)); break;
@@ -134,13 +131,4 @@ function applyEventEffects(state) {
       }
     }
   }
-}
-
-/** Smooth attack/release envelope for an event at tick t. */
-function eventEnvelope(t, ev) {
-  const rise = ev.peakTick - ev.startTick;
-  const fall = ev.endTick - ev.peakTick;
-  const up = rise > 0 ? smootherstep((t - ev.startTick) / rise) : 1;
-  const down = fall > 0 ? 1 - smootherstep((t - ev.peakTick) / fall) : 1;
-  return up * down;
 }

@@ -9,3 +9,4 @@ export const EVENT_TINTS = Object.freeze({
   bloom: [0.45, 1.0, 0.6],
   blight: [0.85, 0.45, 0.75],
 });
+export const EVENT_TINT_LIST = Object.freeze(Object.values(EVENT_TINTS));

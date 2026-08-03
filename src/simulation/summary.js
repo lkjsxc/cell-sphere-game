@@ -42,13 +42,13 @@ function announceEvents(state, emit) {
       ev.announced |= 1;
       recordHistory(state, 'event-telegraph', { id: ev.id, family: ev.family, cell: ev.center });
       emit({ t: 'event', phase: 'telegraph', family: ev.family, nameJa: ev.nameJa,
-        descJa: ev.descJa, center: ev.center, radiusDot: ev.radiusDot, tick: state.tick });
+        descJa: ev.descJa, center: ev.center, fieldVersion: ev.fieldVersion, tick: state.tick });
     }
     if (!(ev.announced & 2) && state.tick >= ev.startTick) {
       ev.announced |= 2;
       recordHistory(state, 'event-start', { id: ev.id, family: ev.family, cell: ev.center });
       emit({ t: 'event', phase: 'active', family: ev.family, nameJa: ev.nameJa,
-        center: ev.center, radiusDot: ev.radiusDot, tick: state.tick });
+        center: ev.center, fieldVersion: ev.fieldVersion, tick: state.tick });
       if (ev.crisis) state.crisesTotal++;
       if (ev.crisis && state.traits.feverGrowth) {
         for (let i = 0; i < state.topo.nodeCount; i++) {
@@ -63,6 +63,7 @@ function announceEvents(state, emit) {
       if (ev.crisis && state.aliveCount > 0) state.crisesEndured++;
       recordHistory(state, 'event-end', { id: ev.id, family: ev.family, cell: ev.center });
       emit({ t: 'event', phase: 'end', family: ev.family, tick: state.tick });
+      ev.nodes = new Uint16Array(0); ev.falloff = new Float32Array(0); ev.arrivalTicks = new Uint8Array(0); ev.arrivalCost = null; ev.predecessor = null;
     }
   }
 }

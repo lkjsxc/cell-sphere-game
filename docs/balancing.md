@@ -129,3 +129,16 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   decision order, or the `c55ddab5` benchmark golden. The production title
   showcase source metadata was regenerated; its 89 frames and data hash
   `58b20fb2…` are unchanged.
+- **2026-08-03 — Terrain-aware event fields and major basins.** Spatial events
+  now use quantized weighted graph arrival and exact per-cell renderer state;
+  land-bound families recorded zero ocean violations across 1,386 audited
+  events. Median generation was 0.192 ms/field and every audited field was
+  non-radial. Fourteen bounded outlets produce explicit principal stems: 1,000
+  worlds measured 4–5 major systems, median longest trunk 28 cells, 99.7% with
+  a trunk of at least 20 cells, maximum 61, and zero cycle, mouth, continuity,
+  accumulation, or isolation defects. The WorldModel golden is now `94553146`;
+  the production benchmark is 2,640 ticks, hash `637b2473`, 15,090 ticks/s.
+  Production title evidence was regenerated at 89 frames with data hash
+  `fd6b5289…` because world/event authority changed.
+  Smoke medians were 291.2/260.8/253.8 s for balanced/expansion/resilience;
+  these are measured diagnostics, not a claim that every policy meets target.

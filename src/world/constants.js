@@ -76,4 +76,8 @@ export const FEATURE = Object.freeze({
   HIGHLAND: 1 << 7,
   SOURCE: 1 << 8,
   LANDMARK: 1 << 9,
+  RIVER_HEADWATER: 1 << 10,
+  RIVER_CONFLUENCE: 1 << 11,
+  RIVER_TRUNK: 1 << 12,
+  RIVER_DELTA: 1 << 13,
 });

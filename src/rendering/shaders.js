@@ -6,13 +6,21 @@ in vec3 aPos;
 in vec3 aCenter;
 in vec4 aMaterial;
 in vec4 aTerrain;
+in vec3 aRiverDown;
+in vec3 aRiverUp;
+in vec2 aRiverMeta;
 in vec3 aLife;
+in vec2 aEvent;
 in vec2 aAdaptation;
 out vec3 vPos;
 out vec3 vCenter;
 out vec4 vMaterial;
 out vec4 vTerrain;
+out vec3 vRiverDown;
+out vec3 vRiverUp;
+out vec2 vRiverMeta;
 out vec3 vLife;
+out vec2 vEvent;
 out vec2 vAdaptation;
 void main() {
   float atlasRelief = step(0.5, aLife.x) * (0.002 + step(2.5, aLife.x) * 0.006)
@@ -22,7 +30,11 @@ void main() {
   vCenter = aCenter;
   vMaterial = aMaterial;
   vTerrain = aTerrain;
+  vRiverDown = aRiverDown;
+  vRiverUp = aRiverUp;
+  vRiverMeta = aRiverMeta;
   vLife = aLife;
+  vEvent = aEvent;
   vAdaptation = aAdaptation;
   gl_Position = uViewProj * vec4(vPos, 1.0);
 }`;
@@ -33,7 +45,9 @@ in vec3 vPos;
 in vec3 vCenter;
 in vec4 vMaterial;
 in vec4 vTerrain;
+in vec3 vRiverDown; in vec3 vRiverUp; in vec2 vRiverMeta;
 in vec3 vLife;
+in vec2 vEvent;
 in vec2 vAdaptation;
 out vec4 outColor;
 uniform vec3 uEye;
@@ -48,10 +62,6 @@ uniform float uAdaptationReduced;
 uniform float uAdaptationActive;
 uniform vec3 uHistoryCenter[8];
 uniform int uHistoryCount;
-uniform vec3 uEventCenter[4];
-uniform float uEventRadius[4];
-uniform vec3 uEventTint[4];
-uniform float uEventStrength[4];
 void main() {
   float nutrient = vMaterial.x;
   float moisture = vMaterial.y;
@@ -75,10 +85,20 @@ void main() {
   else base = vec3(0.72, 0.78, 0.78);
   float canopy = forest * (0.82 + 0.18 * sin(dot(vCenter, vec3(71.3, 43.7, 97.1))));
   base = mix(base, vec3(0.035, 0.16, 0.09), canopy * 0.44);
-  base = mix(base, vec3(0.18, 0.42, 0.46), river * 0.16);
+  base = mix(base, vec3(0.18, 0.38, 0.39), river * 0.06);
   base = mix(base, vec3(0.52, 0.50, 0.43), ridge * 0.20);
   base *= 0.86 + nutrient * 0.20 + moisture * 0.05;
   base = mix(base, vec3(0.22, 0.23, 0.21) + nutrient * 0.05, uMemory * 0.82);
+  vec3 cellN = normalize(vCenter); vec3 localRiver = normalize(vPos) - cellN;
+  vec3 downRaw = vRiverDown - cellN * dot(vRiverDown, cellN); vec3 upRaw = vRiverUp - cellN * dot(vRiverUp, cellN);
+  vec3 downDir = downRaw / max(length(downRaw), .0001); vec3 upDir = upRaw / max(length(upRaw), .0001);
+  float downAlong = dot(localRiver, downDir); float upAlong = dot(localRiver, upDir);
+  float downDistance = length(localRiver - downDir * max(0.0, downAlong)); float upDistance = length(localRiver - upDir * max(0.0, upAlong));
+  float riverWidth = .0014 + vRiverMeta.x * .0025; float downChannel = step(-.0005, downAlong) * (1.0 - smoothstep(riverWidth, riverWidth * 1.8, downDistance));
+  float upChannel = step(-.0005, upAlong) * (1.0 - smoothstep(riverWidth, riverWidth * 1.8, upDistance));
+  float junction = step(3.5, vRiverMeta.y) * (1.0 - smoothstep(riverWidth, riverWidth * 3.2, length(localRiver)));
+  float channel = step(.01, vRiverMeta.x) * max(max(downChannel, upChannel), junction) * (1.0 - uMemory);
+  base = mix(base, vec3(.16, .38, .39), channel * (.58 + vRiverMeta.x * .24));
   float life = clamp(vLife.x, 0.0, 1.0);
   float stress = clamp(vLife.y, 0.0, 1.0);
   float state = floor(vLife.z + 0.5);
@@ -136,13 +156,16 @@ void main() {
   vec3 col = base * (0.22 + 0.90 * diffuse) + base * plate * 0.07;
   col += vec3(0.38, 0.39, 0.20) * alive * life * (0.08 + 0.12 * plate) * night;
   col += rim * vec3(0.08, 0.13, 0.14) * (1.0 - uEntropy * 0.5);
-  for (int i = 0; i < 4; i++) {
-    if (uEventStrength[i] > 0.001) {
-      float d = dot(normalize(vCenter), uEventCenter[i]);
-      float w = smoothstep(uEventRadius[i], min(1.0, uEventRadius[i] + 0.18), d);
-      col = mix(col, uEventTint[i], w * uEventStrength[i] * 0.18 * (0.55 + inset * 0.45));
-    }
-  }
+  float eventFamily = floor(vEvent.x + 0.5); float eventAmount = clamp(vEvent.y / 255.0, 0.0, 1.0);
+  vec3 eventTint = vec3(0.70); if (eventFamily < 1.5) eventTint = vec3(0.85, 0.62, 0.30);
+  else if (eventFamily < 2.5) eventTint = vec3(1.0, 0.42, 0.28);
+  else if (eventFamily < 3.5) eventTint = vec3(0.55, 0.75, 1.0);
+  else if (eventFamily < 4.5) eventTint = vec3(0.62, 0.85, 0.35);
+  else if (eventFamily < 5.5) eventTint = vec3(1.0, 0.92, 0.60);
+  else if (eventFamily < 6.5) eventTint = vec3(0.55, 0.50, 0.48);
+  else if (eventFamily < 7.5) eventTint = vec3(0.45, 1.0, 0.60);
+  else eventTint = vec3(0.85, 0.45, 0.75);
+  col = mix(col, eventTint, eventAmount * 0.20 * (0.55 + inset * 0.45));
   for (int i = 0; i < 8; i++) {
     if (i < uHistoryCount) {
       float marked = step(0.99994, dot(normalize(vCenter), uHistoryCenter[i]));

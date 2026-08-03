@@ -12,7 +12,9 @@ ES modules using Node built-ins only (Node >= 22).
 | `benchmark.mjs` | `npm run benchmark` | 3000-tick headless benchmark with checksum and JSON output. |
 | `balance.mjs` | `npm run balance` / `balance:smoke` | Monte-Carlo balance harness using production simulation modules. |
 | `generate-title-showcase.mjs` | `npm run showcase:generate` / `showcase:check` | Generates and verifies the bounded production-simulation title lifecycle. |
-| `terminal-soak.mjs` | `npm run terminal:soak` | Runs 1,000 production worlds through the hard terminal contract. |
+| `audits/terminal-soak.mjs` | `npm run terminal:soak` | Runs 1,000 production worlds through the hard terminal contract. |
+| `audits/river-audit.mjs` | `npm run audit:rivers` | Measures major stems, basins, tributaries, and drainage integrity. |
+| `audits/event-audit.mjs` | `npm run audit:events` | Measures graph-field shape, permeability, and generation cost. |
 | `browser-test.mjs` | `npm run test:browser` | Same-origin headless-Chrome boot check; reports sandbox socket blocks as exit 77. |
 | `browser-file-test.mjs` | `npm run test:browser:file` / `test:browser:canvas` | Socket-free real Chrome harness for WebGL2 and forced Canvas 2D. |
 | `browser-scenario.mjs` | via file test | Six-viewport observational run, surfaces, visual History, 32×, adjacent-cell Memory, and unattended continuation evidence. |

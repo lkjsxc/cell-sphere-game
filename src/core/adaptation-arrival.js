@@ -1,4 +1,5 @@
 /** Deterministic weighted, bounded presentation traversal over living cells. */
+import { GRAPH_UNREACHABLE, weightedGraphField } from './graph-field.js';
 export const ADAPTATION_ARRIVAL_VERSION = 1;
 export const ADAPTATION_UNREACHABLE = 0xffff;
 const FRACTION = Object.freeze({ reach: .40, metabolism: .30, resilience: .34,
@@ -17,47 +18,13 @@ export function computeAdaptationArrivals(input) {
     living++; if (biomass[i] > peakBiomass) peakBiomass = biomass[i];
   }
   const limit = living <= 24 ? living : Math.max(12, Math.ceil(living * (FRACTION[category] ?? .34)));
-  const heapCapacity = topo.edgeCount ? topo.edgeCount * 2 + 1 : count * 8;
-  const heapCells = new Uint16Array(heapCapacity); const heapCosts = new Uint32Array(heapCapacity);
-  const settled = new Uint8Array(count); let heapSize = 0; const reached = [];
-  arrivals[origin] = 0; push(origin, 0);
-  while (heapSize && reached.length < limit) {
-    const [cell, cost] = pop();
-    if (cost !== arrivals[cell] || cost > MAX_TRAVEL_MS || settled[cell]) continue;
-    settled[cell] = 1; reached.push(cost);
-    for (let o = topo.nodeStart[cell]; o < topo.nodeStart[cell + 1]; o++) {
-      const next = topo.nodeNeighbors[o]; if (alive[next] !== 1) continue;
-      const candidate = cost + edgeCost(input, cell, next, peakBiomass);
-      if (candidate > MAX_TRAVEL_MS || candidate >= arrivals[next]) continue;
-      arrivals[next] = candidate; push(next, candidate);
-    }
+  const field = weightedGraphField({ topo, sources: [origin], maxCost: MAX_TRAVEL_MS, maxSettled: limit,
+    passable: (_from, to) => alive[to] === 1, edgeCost: (from, to) => edgeCost(input, from, to, peakBiomass) });
+  const reached = [];
+  for (let cell = 0; cell < count; cell++) if (field.distance[cell] !== GRAPH_UNREACHABLE) {
+    arrivals[cell] = field.distance[cell]; reached.push(field.distance[cell]);
   }
-  for (let i = 0; i < count; i++) if (!settled[i]) arrivals[i] = ADAPTATION_UNREACHABLE;
   return result(arrivals, origin, category, reached);
-
-  function less(aCost, aCell, bCost, bCell) {
-    return aCost < bCost || (aCost === bCost && aCell < bCell);
-  }
-  function push(cell, cost) {
-    let i = heapSize++; heapCells[i] = cell; heapCosts[i] = cost;
-    while (i > 0) { const p = (i - 1) >> 1;
-      if (!less(cost, cell, heapCosts[p], heapCells[p])) break;
-      heapCells[i] = heapCells[p]; heapCosts[i] = heapCosts[p]; i = p;
-      heapCells[i] = cell; heapCosts[i] = cost;
-    }
-  }
-  function pop() {
-    const cell = heapCells[0]; const cost = heapCosts[0]; const size = --heapSize;
-    if (size >= 0) { const tailCell = heapCells[size]; const tailCost = heapCosts[size]; let i = 0;
-      while (true) { const left = i * 2 + 1; if (left >= size) break; const right = left + 1;
-        let child = right < size && less(heapCosts[right], heapCells[right], heapCosts[left], heapCells[left]) ? right : left;
-        if (!less(heapCosts[child], heapCells[child], tailCost, tailCell)) break;
-        heapCells[i] = heapCells[child]; heapCosts[i] = heapCosts[child]; i = child;
-      }
-      if (size > 0) { heapCells[i] = tailCell; heapCosts[i] = tailCost; }
-    }
-    return [cell, cost];
-  }
 }
 
 function edgeCost(input, from, to, peakBiomass) {

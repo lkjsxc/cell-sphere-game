@@ -43,7 +43,8 @@ export function createCellGeometry(topo, fields) {
   const positions = new Float32Array(vertexCount * 3);
   const centers = new Float32Array(vertexCount * 3);
   const material = new Float32Array(vertexCount * 4);
-  const terrain = new Float32Array(vertexCount * 4);
+  const terrain = new Float32Array(vertexCount * 4); const riverDown = new Float32Array(vertexCount * 3);
+  const riverUp = new Float32Array(vertexCount * 3); const riverMeta = new Float32Array(vertexCount * 2);
   const vertexCell = new Uint16Array(vertexCount);
   const indices = new Uint16Array(dual.cellCorners.length * 3);
   let vertex = 0; let index = 0;
@@ -87,7 +88,7 @@ export function createCellGeometry(topo, fields) {
   }
 
   return Object.freeze({
-    dual, vertexCount, positions, centers, material, terrain, vertexCell, indices,
+    dual, vertexCount, positions, centers, material, terrain, riverDown, riverUp, riverMeta, vertexCell, indices,
     boundaryPositions, boundaryFeature, boundaryIndices,
   });
 
@@ -99,11 +100,18 @@ export function createCellGeometry(topo, fields) {
     ], vertex * 4);
     terrain.set([fields.biomeId?.[cell] ?? 5, fields.forestDensity?.[cell] ?? 0,
       fields.riverStrength?.[cell] ?? 0, fields.ridgeStrength?.[cell] ?? 0], vertex * 4);
-    vertexCell[vertex] = cell;
+    const down = directionCell(cell, fields.drainTo?.[cell]); const up = directionCell(cell, fields.riverUpstream?.[cell], down);
+    riverDown.set(centerFor(down), vertex * 3); riverUp.set(centerFor(up), vertex * 3);
+    riverMeta.set([fields.riverStrength?.[cell] ?? 0, fields.riverClass?.[cell] ?? 0], vertex * 2); vertexCell[vertex] = cell;
     vertex++;
   }
 
-  function centerFor(cell) {
-    return topo.positions.subarray(cell * 3, cell * 3 + 3);
+  function centerFor(cell) { return topo.positions.subarray(cell * 3, cell * 3 + 3); }
+  function directionCell(cell, candidate, excluded = -1) {
+    if (Number.isInteger(candidate) && candidate >= 0 && candidate < topo.nodeCount && candidate !== cell) return candidate;
+    for (let offset = topo.nodeStart[cell]; offset < topo.nodeStart[cell + 1]; offset++) {
+      const neighbor = topo.nodeNeighbors[offset]; if (neighbor !== excluded) return neighbor;
+    }
+    return cell;
   }
 }

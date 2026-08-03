@@ -24,7 +24,7 @@ test('showcase metadata and checked-in bytes are exact', () => {
 test('showcase has germination, branching, maturity, pressure, fragmentation, and extinction', () => {
   const { history } = payload(); const counts = history.frames.map((frame) => frame.aliveCount);
   assert.deepEqual(counts.slice(0, 4), [1, 1, 1, 1]);
-  assert.ok(counts[12] > 200 && counts[26] === TITLE_SHOWCASE.peakLiving);
+  assert.ok(counts[12] > 150 && counts[13] > 200 && counts[26] === TITLE_SHOWCASE.peakLiving);
   assert.ok(TITLE_SHOWCASE.loopTick > 0 && TITLE_SHOWCASE.pressureTick > TITLE_SHOWCASE.loopTick);
   assert.ok(counts[42] > counts[72] && counts[72] > counts[84]);
   assert.equal(counts.at(-1), 0);

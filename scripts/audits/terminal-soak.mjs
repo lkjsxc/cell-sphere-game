@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /** Deep deterministic terminal-completion soak using production authority. */
 import { performance } from 'node:perf_hooks';
-import { BALANCE as B } from '../src/game/balance.js';
-import { RunController } from '../src/simulation/simulator.js';
+import { BALANCE as B } from '../../src/game/balance.js';
+import { RunController } from '../../src/simulation/simulator.js';
 
 const count = Number(process.argv.find((arg) => arg.startsWith('--count='))?.split('=')[1] ?? 1000);
 if (!Number.isInteger(count) || count < 1 || count > 100_000) throw new Error('count must be 1..100000');

@@ -2,7 +2,7 @@
 import { LIFE_STATE } from '../core/life-state.js';
 import { createDualMesh } from '../world/dual-mesh.js';
 import { cameraBasis } from './camera.js';
-import { EVENT_TINTS } from './event-tints.js';
+import { EVENT_TINT_LIST } from './event-tints.js';
 
 const BIOME_COLOR = Object.freeze([
   [8, 42, 62], [14, 76, 88], [145, 126, 76], [35, 91, 45], [22, 73, 42],
@@ -56,9 +56,9 @@ export class Canvas2DRenderer {
         this.cellPath(cell, 0.72); ctx.fillStyle = `rgba(9,54,30,${forest * 0.34})`; ctx.fill();
       }
       const river = fields.riverStrength?.[cell] ?? 0;
-      if (river > 0) { this.cellPath(cell, 0.72); ctx.fillStyle = `rgba(71,177,205,${0.22 + river * 0.24})`; ctx.fill(); }
+      if (river > 0) { this.cellPath(cell, .84); ctx.fillStyle = `rgba(45,92,91,${.10 + river * .12})`; ctx.fill(); }
     }
-    if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1);
+    this.drawRivers(); if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1);
     if (scene.adaptation) this.drawAdaptation(scene.adaptation);
     this.drawBoundaries(false); this.drawBoundaries(true);
     for (const cell of (scene.highlightedCells ?? []).slice(0, 8)) {
@@ -92,8 +92,26 @@ export class Canvas2DRenderer {
     ctx.closePath();
   }
 
+  drawRivers() {
+    const { ctx, topo, fields } = this; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (let cell = 0; cell < topo.nodeCount; cell++) { const strength = fields.riverStrength?.[cell] ?? 0;
+      if (strength <= 0 || this.facing[cell] <= .02) continue; const down = fields.drainTo[cell]; if (down < 0) continue;
+      const exit = this.riverBoundary(cell, down); if (!exit) continue; const incoming = [];
+      for (let offset = topo.nodeStart[cell]; offset < topo.nodeStart[cell + 1]; offset++) { const next = topo.nodeNeighbors[offset];
+        if (fields.drainTo[next] === cell && (fields.riverStrength[next] ?? 0) > 0) { const point = this.riverBoundary(cell, next); if (point) incoming.push(point); } }
+      if (!incoming.length) incoming.push([this.px[cell], this.py[cell]]); ctx.strokeStyle = `rgba(49,105,106,${.48 + strength * .28})`; ctx.lineWidth = .65 + strength * 1.65;
+      for (const start of incoming) { ctx.beginPath(); ctx.moveTo(start[0], start[1]); ctx.quadraticCurveTo(this.px[cell], this.py[cell], exit[0], exit[1]); ctx.stroke(); }
+    }
+  }
+  riverBoundary(cell, neighbor) { const { topo, dual } = this;
+    for (let offset = topo.nodeStart[cell]; offset < topo.nodeStart[cell + 1]; offset++) if (topo.nodeNeighbors[offset] === neighbor) {
+      const edge = topo.nodeEdges[offset]; const a = dual.boundaryCornerA[edge]; const b = dual.boundaryCornerB[edge];
+      return [(this.cornerX[a] + this.cornerX[b]) * .5, (this.cornerY[a] + this.cornerY[b]) * .5]; }
+    return null;
+  }
+
   drawCellOverlays(snapshot, fade) {
-    const { ctx, topo } = this; const events = snapshot.events ?? [];
+    const { ctx, topo } = this;
     for (let cell = 0; cell < topo.nodeCount; cell++) {
       if (this.facing[cell] <= 0.02) continue;
       if (snapshot.status === 'memory') {
@@ -110,11 +128,8 @@ export class Canvas2DRenderer {
         if (styles.inset) { this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill();
           if (styles.stroke) { ctx.strokeStyle = styles.stroke; ctx.lineWidth = styles.width; ctx.stroke(); } }
       }
-      for (const event of events) {
-        if (dotCell(topo.positions, cell, event.center) < event.radiusDot) continue;
-        const tint = EVENT_TINTS[event.family] ?? [0.7, 0.7, 0.7]; this.cellPath(cell);
-        ctx.fillStyle = `rgba(${tint[0] * 255 | 0},${tint[1] * 255 | 0},${tint[2] * 255 | 0},${0.10 * fade})`; ctx.fill();
-      }
+      const eventAmount = (snapshot.eventStrength?.[cell] ?? 0) / 255; const tint = EVENT_TINT_LIST[(snapshot.eventFamily?.[cell] ?? 0) - 1];
+      if (eventAmount > 0 && tint) { this.cellPath(cell); ctx.fillStyle = `rgba(${tint[0] * 255 | 0},${tint[1] * 255 | 0},${tint[2] * 255 | 0},${eventAmount * .20 * fade})`; ctx.fill(); }
     }
   }
 
@@ -149,11 +164,6 @@ export class Canvas2DRenderer {
   }
 
   dispose() { /* no persistent GPU resources */ }
-}
-
-function dotCell(positions, a, b) {
-  const ai = a * 3; const bi = b * 3;
-  return positions[ai] * positions[bi] + positions[ai + 1] * positions[bi + 1] + positions[ai + 2] * positions[bi + 2];
 }
 
 function adaptationStyle(category, strength) {

@@ -5,7 +5,7 @@ export function createFeatures(rng, topo, terrain, hydro, ecology) {
   const { nodeCount: n, positions } = topo;
   const candidates = [];
   for (let i = 0; i < n; i++) {
-    if (!terrain.landMask[i] || hydro.lakeId[i] >= 0) continue;
+    if (!terrain.landMask[i] || hydro.lakeId[i] >= 0 || ecology.baseTemp[i] <= .25 || ecology.baseMoisture[i] <= .3) continue;
     const tempFit = Math.max(0, 1 - Math.abs(ecology.baseTemp[i] - 0.6) * 1.8);
     const moistFit = Math.max(0, 1 - Math.abs(ecology.baseMoisture[i] - 0.58) * 1.55);
     const harsh = ecology.biomeId[i] === BIOME.MOUNTAIN

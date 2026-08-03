@@ -21,7 +21,9 @@
     "balance:smoke": "node scripts/balance.mjs --smoke",
     "showcase:generate": "node scripts/generate-title-showcase.mjs",
     "showcase:check": "node scripts/generate-title-showcase.mjs --check",
-    "terminal:soak": "node scripts/terminal-soak.mjs",
+    "terminal:soak": "node scripts/audits/terminal-soak.mjs",
+    "audit:rivers": "node scripts/audits/river-audit.mjs",
+    "audit:events": "node scripts/audits/event-audit.mjs",
     "benchmark": "node scripts/benchmark.mjs",
     "verify": "node scripts/verify.mjs"
   },

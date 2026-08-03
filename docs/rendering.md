@@ -12,12 +12,16 @@ Steady-state WebGL2 submits exactly four draws:
 3. quiet closed region/coast boundaries;
 4. atmosphere.
 
-Hydrology remains world and biome data and contributes only subtle cell material;
-there is no center-to-downstream line, ribbon, dash, or separate river draw.
+Hydrology remains static world data in the same globe draw. Each river cell
+carries primary upstream/downstream directions, discharge, and class; the cell
+shader draws an inset muted channel toward shared boundaries. Canvas uses
+matching boundary-midpoint curves. There is no detached center-to-center bar or
+separate river draw.
 
 The cell surface expresses living, stressed, critical, frontier, and dead-remain
 states by whole-cell fill, inset, edge, roughness, and light response. Events
-and crises tint affected cells. A selected cell gets a pale material edge.
+and crises use the authority's transferred per-cell family/strength bytes; no
+shader or Canvas path reconstructs a spherical cap. A selected cell gets a pale material edge.
 Adaptations use an authoritative exact-tick weighted arrival field: a 140 ms
 origin charge, narrow state/category-sensitive front, and 420 ms trail complete
 within 2.2 seconds without normalizing to the whole component. History uploads
@@ -37,7 +41,7 @@ topology/geography buffers build once; only bounded cell attributes update.
 The title decodes 89 cell-only frames generated from production seed `20260701`.
 Its 22-second nonlinear timeline preserves germination, a 535-cell branched peak,
 a recorded loop, environmental pressure, fragmentation, and a blank terminal
-beat before reset. Source hash `4d3f5659…` and data hash `58b20fb2…` are checked
+beat before reset. Source hash `95995037…` and data hash `fd6b5289…` are checked
 by `showcase:check`; no production simulation runs in the title runtime. Hidden
 documents freeze its clock and reduced motion holds a mature frame.
 
@@ -49,9 +53,11 @@ pinch/wheel zoom is bounded. Analytic offset-aware ray/sphere picking returns
 the nearest stable cell. Relief is deliberately shallow, so picking remains on
 the documented unit sphere.
 
-Wide-screen context surfaces use a translucent left material and shift/scale the
-globe into the remaining safe region. Narrow screens use a translucent bottom
-sheet capped near 42% of viewport height and keep the selected region above it.
+Wide-screen scenes reserve a stable left composition column and anchor the
+globe at a continuous aspect-derived right bias. Context surfaces use that
+negative space and never affect camera offset, basis, or distance. Narrow
+screens use a translucent bottom sheet capped near 42% of viewport height
+without reframing the globe.
 History uses a bottom timeline sheet at all widths. The result is a compact
 bottom strip, so the terminal world stays visible. These are nonmodal surfaces:
 they neither create a backdrop nor pause authority unless the explicit panel-

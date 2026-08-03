@@ -19,7 +19,7 @@ inspector state, and result.
 
 1. Rebuild the tiny effective trait block from compiled conditional skills.
 2. Environment every 5 ticks: entropy/season LUTs, moisture/temperature,
-   toxins, biome-scaled renewal, spatial event effects.
+   toxins, biome-scaled renewal, and per-cell graph-arrival event effects.
 3. Metabolism: biome-scaled uptake/upkeep, energy, stress, tissue maturity.
 4. Transport: terrain-cost-scaled flux, reinforcement, decay, pruning/rejoin.
 5. Growth: seeded frontier trials using habitat, climate, resources, crowding.
@@ -47,6 +47,16 @@ at that exact tick. Deterministic weighted shortest-path costs read biomass,
 energy, stress, living degree, terrain, category, and a card/origin hash; dead
 cells block traversal and a category-specific 28–40% cap keeps large components
 local. The field never enters replay, result hash, card application, or RNG.
+
+## Spatial events
+
+Every scheduled family owns a deterministic weighted graph field with quantized
+arrival time, influence, and predecessor. Drought, bloom, and blight traverse
+land only; river, forest, moisture, altitude, ridges, ocean inertia, and a
+stable directional wind alter family-specific travel. Authority applies each
+cell relative to its own arrival. Snapshots transfer the exact current family
+and strength bytes consumed by WebGL2 and Canvas; neither renderer reconstructs
+a center/radius cap. Ended fields release their retained traversal arrays.
 
 ## Observation
 

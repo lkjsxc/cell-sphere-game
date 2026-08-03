@@ -58,8 +58,8 @@ test('presentation snapshots omit route authority and expose compact cell semant
   assert.equal(snapshot.lifeState[state.inoculationCell], LIFE_STATE.FRONTIER);
   const transfers = snapshotTransfers(snapshot);
   assert.deepEqual(transfers, [snapshot.biomass.buffer, snapshot.stress.buffer,
-    snapshot.alive.buffer, snapshot.lifeState.buffer]);
-  assert.equal(transfers.reduce((sum, buffer) => sum + buffer.byteLength, 0), state.topo.nodeCount * 10);
+    snapshot.alive.buffer, snapshot.lifeState.buffer, snapshot.eventStrength.buffer, snapshot.eventFamily.buffer]);
+  assert.equal(transfers.reduce((sum, buffer) => sum + buffer.byteLength, 0), state.topo.nodeCount * 12);
   assert.ok(['idle', 'running', 'extinct'].includes(state.status));
 });
 

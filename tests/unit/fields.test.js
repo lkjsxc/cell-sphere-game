@@ -13,7 +13,7 @@ const floats = ['altitude', 'baseElevation', 'filledElevation', 'oceanDepth',
   'baseMoisture', 'baseTemp', 'baseNutrient', 'forestDensity',
   'ridgeStrength', 'hazardSusceptibility', 'toxVuln', 'eventVuln',
   'growthSuitability', 'maintenanceMultiplier', 'uptakeMultiplier', 'resourceRenewal', 'routeCost'];
-const integers = ['landMask', 'waterClass', 'drainTo', 'riverOrder', 'lakeId',
+const integers = ['landMask', 'waterClass', 'drainTo', 'riverOrder', 'riverClass', 'riverSystem', 'riverUpstream', 'lakeId',
   'biomeId', 'featureFlags', 'regionId'];
 
 function worldHash(fields) {
@@ -54,7 +54,7 @@ function adjacent(a, b) {
 test('world hash and every explicit array are deterministic', () => {
   const a = fieldsFor(20260731); const b = fieldsFor(20260731);
   assert.equal(worldHash(a), worldHash(b));
-  assert.equal(worldHash(a), '749bda35');
+  assert.equal(worldHash(a), '94553146');
   for (const key of [...floats, ...integers]) assert.deepEqual(a[key], b[key], key);
   assert.deepEqual(a.landmarks, b.landmarks);
   assert.deepEqual(a.sources, b.sources);
@@ -72,7 +72,8 @@ test('normal worlds have bounded coherent land and typed classes', () => {
       assert.ok(f[key] instanceof Float32Array && f[key].length === topo.nodeCount);
     }
     assert.ok(f.drainTo instanceof Int32Array && f.lakeId instanceof Int16Array);
-    assert.ok(f.riverOrder instanceof Uint8Array && f.featureFlags instanceof Uint32Array);
+    assert.ok(f.riverOrder instanceof Uint8Array && f.riverClass instanceof Uint8Array && f.featureFlags instanceof Uint32Array);
+    assert.ok(f.riverSystem instanceof Int16Array && f.riverUpstream instanceof Int32Array);
   }
 });
 
@@ -132,7 +133,11 @@ test('accumulation increases downstream and rivers reach real mouths', () => {
   }
   assert.ok(rivers > 120 && tributaries > 40 && mouths > 5);
   assert.ok(componentSizes((i) => !!(f.featureFlags[i] & FEATURE.RIVER))[0] > 40);
-  assert.ok(Math.max(...f.riverStrength) > 0.95);
+  assert.ok(Math.max(...f.riverStrength) > 0.95); assert.ok(f.majorRivers.length >= 4 && f.majorRivers.length <= 6);
+  assert.ok(Math.max(...f.majorRivers.map((river) => river.length)) >= 20);
+  for (const river of f.majorRivers) { const cells = [...river.cells]; assert.equal(cells.length, river.length);
+    assert.equal(f.riverClass[river.headwater], 3); assert.equal(f.riverClass[river.mouth], 5);
+    for (let index = 0; index < cells.length - 1; index++) assert.equal(f.drainTo[cells[index]], cells[index + 1]); }
 });
 
 test('lake IDs, landmarks, and sources reference authoritative cells', () => {

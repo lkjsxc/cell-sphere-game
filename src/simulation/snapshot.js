@@ -1,10 +1,11 @@
 /** Renderer snapshot construction from canonical authority. */
 import { liveScore } from '../game/scoring.js';
 import { writeLifeStates } from '../core/life-state.js';
+import { buildEventCellState } from './events.js';
 
 export function buildSnapshot(state) {
   const lifeState = writeLifeStates(state.topo, state.alive, state.biomass, state.stress,
-    new Uint8Array(state.topo.nodeCount));
+    new Uint8Array(state.topo.nodeCount)); const eventCells = buildEventCellState(state);
   return {
     tick: state.tick,
     entropy: state.entropy,
@@ -15,6 +16,8 @@ export function buildSnapshot(state) {
     stress: state.stress.slice(),
     alive: state.alive.slice(),
     lifeState,
+    eventStrength: eventCells.strength,
+    eventFamily: eventCells.family,
     metrics: {
       coverage: state.coverage,
       peakCoverage: state.peakCoverage,
@@ -30,7 +33,7 @@ export function buildSnapshot(state) {
     events: state.events
       .filter((event) => event.announced & 2 && state.tick <= event.endTick)
       .map((event) => ({ id: event.id, family: event.family, center: event.center,
-        radiusDot: event.radiusDot, kind: event.kind, intensity: event.intensity })),
+        fieldVersion: event.fieldVersion, kind: event.kind, intensity: event.intensity })),
   };
 }
 
@@ -49,5 +52,5 @@ function vitality(state) {
 
 export function snapshotTransfers(snapshot) {
   return [snapshot.biomass.buffer, snapshot.stress.buffer, snapshot.alive.buffer,
-    snapshot.lifeState.buffer];
+    snapshot.lifeState.buffer, snapshot.eventStrength.buffer, snapshot.eventFamily.buffer];
 }

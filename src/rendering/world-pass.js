@@ -4,7 +4,6 @@ import { createCellGeometry } from './cell-geometry.js';
 import * as SH from './shaders.js';
 import * as SHELL from './shaders-shell.js';
 import * as BOUNDARY from './shaders-boundary.js';
-import { EVENT_TINTS } from './event-tints.js';
 
 export class WorldPass {
   constructor(gl, topo, fields) {
@@ -16,12 +15,8 @@ export class WorldPass {
       boundary: this.make(BOUNDARY.VS_BOUNDARY, BOUNDARY.FS_BOUNDARY),
       atmosphere: this.make(SHELL.VS_ATMOSPHERE, SHELL.FS_ATMOSPHERE),
     };
-    this.lifeData = new Float32Array(this.geometry.vertexCount * 3);
+    this.lifeData = new Float32Array(this.geometry.vertexCount * 3); this.eventData = new Uint8Array(this.geometry.vertexCount * 2);
     this.adaptationData = new Uint16Array(this.geometry.vertexCount * 2); this.adaptationToken = -1;
-    this.overlay = {
-      centers: new Float32Array(12), radii: new Float32Array(4),
-      tints: new Float32Array(12), strengths: new Float32Array(4),
-    };
     this.lastSnapshot = null;
     this.lastTick = -1;
     this.zero3 = new Float32Array(3);
@@ -47,7 +42,12 @@ export class WorldPass {
     this.attribute(this.programs.globe, 'aCenter', this.buffer(gl.ARRAY_BUFFER, g.centers), 3);
     this.attribute(this.programs.globe, 'aMaterial', this.buffer(gl.ARRAY_BUFFER, g.material), 4);
     this.attribute(this.programs.globe, 'aTerrain', this.buffer(gl.ARRAY_BUFFER, g.terrain), 4);
+    this.attribute(this.programs.globe, 'aRiverDown', this.buffer(gl.ARRAY_BUFFER, g.riverDown), 3);
+    this.attribute(this.programs.globe, 'aRiverUp', this.buffer(gl.ARRAY_BUFFER, g.riverUp), 3);
+    this.attribute(this.programs.globe, 'aRiverMeta', this.buffer(gl.ARRAY_BUFFER, g.riverMeta), 2);
     this.attribute(this.programs.globe, 'aLife', this.lifeBuffer, 3);
+    this.eventBuffer = this.buffer(gl.ARRAY_BUFFER, this.eventData, gl.DYNAMIC_DRAW);
+    this.attribute(this.programs.globe, 'aEvent', this.eventBuffer, 2, gl.UNSIGNED_BYTE);
     this.adaptationBuffer = this.buffer(gl.ARRAY_BUFFER, this.adaptationData, gl.DYNAMIC_DRAW);
     this.attribute(this.programs.globe, 'aAdaptation', this.adaptationBuffer, 2, gl.UNSIGNED_SHORT);
     this.globeIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.indices);
@@ -82,11 +82,12 @@ export class WorldPass {
     this.lastSnapshot = snapshot;
     this.lastTick = snapshot?.tick ?? -1;
     const cells = this.geometry.vertexCell;
-    if (!snapshot) this.lifeData.fill(0);
+    if (!snapshot) { this.lifeData.fill(0); this.eventData.fill(0); }
     else {
       const memory = snapshot.status === 'memory';
       for (let vertex = 0; vertex < cells.length; vertex++) {
-        const cell = cells[vertex];
+        const cell = cells[vertex]; this.eventData[vertex * 2] = snapshot.eventFamily?.[cell] ?? 0;
+        this.eventData[vertex * 2 + 1] = snapshot.eventStrength?.[cell] ?? 0;
         if (memory) {
           this.lifeData[vertex * 3] = snapshot.memoryStatus[cell];
           this.lifeData[vertex * 3 + 1] = snapshot.memoryBranch[cell] + snapshot.memoryKind[cell] * 0.1;
@@ -100,8 +101,8 @@ export class WorldPass {
         }
       }
     }
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.lifeBuffer);
-    this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.lifeData);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.lifeBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.lifeData);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.eventBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.eventData);
   }
   uploadAdaptation(event) {
     const token = event?.token ?? 0; if (token === this.adaptationToken) return;
@@ -133,7 +134,6 @@ export class WorldPass {
     this.historyCenters.fill(0); const count = Math.min(8, highlightedCells.length);
     for (let i = 0; i < count; i++) this.historyCenters.set(this.topo.positions.subarray(highlightedCells[i] * 3, highlightedCells[i] * 3 + 3), i * 3);
     gl.uniform1i(globe.u.get('uHistoryCount'), count); gl.uniform3fv(globe.u.get('uHistoryCenter'), this.historyCenters);
-    this.setEventOverlays(globe, snapshot);
     gl.bindVertexArray(this.globeVao);
     gl.drawElements(gl.TRIANGLES, this.geometry.indices.length, gl.UNSIGNED_SHORT, 0);
 
@@ -157,23 +157,6 @@ export class WorldPass {
     gl.drawElements(gl.TRIANGLES, this.topo.triangles.length, gl.UNSIGNED_SHORT, 0);
     gl.disable(gl.CULL_FACE);
   }
-  setEventOverlays(program, snapshot) {
-    const gl = this.gl; const data = this.overlay;
-    data.centers.fill(0); data.radii.fill(0); data.tints.fill(0); data.strengths.fill(0);
-    const events = snapshot?.events ?? [];
-    for (let i = 0; i < Math.min(4, events.length); i++) {
-      const event = events[i]; const source = event.center * 3; const target = i * 3;
-      data.centers.set(this.topo.positions.subarray(source, source + 3), target);
-      data.radii[i] = event.radiusDot;
-      data.tints.set(EVENT_TINTS[event.family] ?? [0.7, 0.7, 0.7], target);
-      data.strengths[i] = Math.min(1, event.intensity);
-    }
-    gl.uniform3fv(program.u.get('uEventCenter'), data.centers);
-    gl.uniform1fv(program.u.get('uEventRadius'), data.radii);
-    gl.uniform3fv(program.u.get('uEventTint'), data.tints);
-    gl.uniform1fv(program.u.get('uEventStrength'), data.strengths);
-  }
-
   dispose() {
     for (const vao of this.vaos) this.gl.deleteVertexArray(vao);
     for (const buffer of this.buffers) this.gl.deleteBuffer(buffer);

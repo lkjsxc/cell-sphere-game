@@ -34,12 +34,12 @@ Vocabulary is evidence-scoped: **implemented**, **tested**, **measured**, **obse
 | 12. Reach Balance | target authoritative direct and condition evidence | lifecycle ledger, snapshots, result UI | exact reconciliation and parity |
 | 13. Result globe | tested direct CDP rotation with unchanged score/result key and resumed countdown | globe input and gesture lease | before/after screenshots and browser scenario pass |
 | 14. Trophy Sphere | target 96 implemented achievements on 162 cells | definitions, evaluator, persistence, scene/UI | schema, idempotency, browser/fallback |
-| 15. Graph effects | target terrain/family propagation | shared graph field, events, renderer | determinism, permeability, screenshots |
-| 16. Major rivers | target explicit trunks/tributaries | hydrology, fields, renderer, audit | 500–1,000 seed distributions |
-| 17. Shared graph primitives | target reusable pure traversal | core/world graph modules | focused unit use across systems |
+| 15. Graph effects | implemented weighted arrival/influence/predecessor fields and exact renderer bytes; measured 0 ocean violations and 100% irregular fields in 1,386 events | graph core, events, WebGL/Canvas | unit, 200-world audit, browser pass |
+| 16. Major rivers | implemented bounded outlets, explicit trunks/classes and shared-boundary channels; 1,000 worlds: median longest 28, 99.7% ≥20, max 61, zero integrity defects | hydrology, fields, WebGL/Canvas, audits | unit, audit, browser/fallback captures |
+| 17. Shared graph primitives | implemented deterministic bounded Dijkstra reused by Adaptation and event fields | `core/graph-field.js` | parity and event/Adaptation tests |
 | 18. Protocol contracts | implemented v2 Adaptation envelopes with run/command/offer identity and bounded rejection reasons | driver, Worker/fallback, authority | accepted, invalid option, duplicate, stale version, mode tests |
 | 19. Responsive quality | tested baseline viewport matrix | CSS, semantics, browser evidence | required geometry matrix and 200% text |
-| 20. Performance | measured four baseline draws and 9.25 s 32× | bounded fields/uploads/evaluation | benchmark, browser timing, draw counts |
+| 20. Performance | measured four draws, 8.80 s 32×, 0.192 ms median event field, benchmark 15,896 ticks/s | bounded fields/uploads/evaluation | benchmark, browser timing, audits |
 | 21. Persistence/export | target validated current schema | platform stores and migrations | idempotent localStorage/IndexedDB/import |
 | 22. Automated tests | target additive coverage | unit, integration, browser, audits | exact command results |
 | 23. Visual evidence | observed baseline capture inventory | ignored reports | paired final screenshots and overlays |
