@@ -69,6 +69,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+.metric-trace {
+  color: var(--accent-gold);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
 /* Speed control segmented control. */
 .segmented {
   display: flex;

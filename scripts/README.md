@@ -11,6 +11,7 @@ ES modules using Node built-ins only (Node >= 22).
 | `verify.mjs` | `npm run verify` | Runs all fast gates in order and prints a summary. |
 | `benchmark.mjs` | `npm run benchmark` | 3000-tick headless benchmark with checksum and JSON output. |
 | `balance.mjs` | `npm run balance` / `balance:smoke` | Monte-Carlo balance harness using production simulation modules. |
+| `terminal-soak.mjs` | `npm run terminal:soak` | Runs 1,000 production worlds through the hard terminal contract. |
 | `browser-test.mjs` | `npm run test:browser` | Same-origin headless-Chrome boot check; reports sandbox socket blocks as exit 77. |
 | `browser-file-test.mjs` | `npm run test:browser:file` / `test:browser:canvas` | Socket-free real Chrome harness for WebGL2 and forced Canvas 2D. |
 | `browser-scenario.mjs` | via file test | Six-viewport observational run, surfaces, visual History, 32×, adjacent-cell Memory, and unattended continuation evidence. |

@@ -14,7 +14,7 @@ Rendering consumes immutable world fields/snapshots and never mutates authority.
 
 ```text
 primary screen: title → starting → running → result → memory → starting
-simulation:     idle | running | extinct
+simulation:     idle | running | terminal-collapse | extinct
 pause reasons:  manual, hidden, optional panel lease
 overlay:        none | inspector | adaptations | history | settings |
                 result-details | memory-node | memory-list

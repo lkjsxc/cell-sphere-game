@@ -42,6 +42,9 @@ Each is a deterministic heuristic using only player-visible information.
 | 2026-08-02 | integrated passive world | balanced | 4 | 291.7 s | 273–322.6 | 0.14 | meets target in diagnostic smoke |
 | 2026-08-02 | integrated passive world | expansion | 4 | 290.9 s | 272.9–311.5 | 0.09 | low coverage, target duration |
 | 2026-08-02 | integrated passive world | resilience | 4 | 292.2 s | 194.9–362 | 0.14 | wide range needs deeper sample |
+| 2026-08-03 | reconciled terminal authority | balanced | 4 | 291.7 s | 264.7–313.3 | 0.14 | exact liveness; bounded final fade |
+| 2026-08-03 | reconciled terminal authority | expansion | 4 | 268.7 s | 267.7–289.5 | 0.09 | just below median target in n=4 smoke |
+| 2026-08-03 | reconciled terminal authority | resilience | 4 | 247.2 s | 83.7–361.5 | 0.14 | wide range remains; not a calibrated claim |
 
 The integrated biome factors moved the diagnostic medians into the 270–330 s
 target while reducing coverage. This is n=4 smoke evidence, not a calibrated
@@ -86,6 +89,15 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   tip, orbit, and Memory-path rendering and reduced steady-state WebGL2 from
   seven draws to five. Presentation snapshots fell from 102,426 to 25,620
   bytes. Simulation equations and the default benchmark hash did not change.
+- **2026-08-03 — Reconciled terminal authority.** Every tick now recounts living
+  cells and biomass, repairs deterministic production drift, and fails strict
+  test divergence. Spent tissue enters a bounded fade below 0.2 total biomass;
+  the ordinary ceiling begins the same fade, and tick 3,620 is an enforced hard
+  maximum. A 100-world calibration measured median 273.5 s, p95 361.9 s, zero
+  invalid/duplicate terminals. The benchmark fixture now ends at 2,853 ticks,
+  hash `c55ddab5`; throughput measured 15,160 ticks/s versus the 18,022 ticks/s
+  turn baseline (15.9% lower, still 5× the gate) because 2,562 cells are
+  reconciled every tick. This safety cost is retained deliberately.
 - **2026-08-02 — Completed advanced Memory cells.** Every milestone, keystone,
   connector, and capstone now includes a concrete bounded scalar bonus; UI copy
   states only that shipped effect. New-save/default-run balance and golden hash

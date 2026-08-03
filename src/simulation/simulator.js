@@ -3,7 +3,7 @@ import { BALANCE as B } from '../game/balance.js';
 import { chooseAdaptationOrigin } from '../core/adaptation-origin.js';
 import { ADAPTATIONS, adaptationPresentationCategory, applyCardEffects, selectRandomOption } from '../game/adaptations.js';
 import { applyMemoryConditionals } from '../game/memory.js';
-import { createRunState } from './state.js';
+import { beginTerminalCollapse, createRunState, reconcileLiveness, terminalCollapseReason } from './state.js';
 import { updateEnvironment } from './environment.js';
 import { runMetabolism } from './metabolism.js';
 import { runTransport } from './transport.js';
@@ -40,42 +40,51 @@ export class RunController {
   /** Advance up to n authoritative ticks; offers never pause progress. */
   advance(n) {
     let done = 0;
-    while (done < n && this.state.status === 'running') {
-      this.step();
-      done++;
-    }
+    while (done < n && this.state.status !== 'extinct') { this.step(); done++; }
     return done;
   }
 
   step() {
     const s = this.state;
-    if (s.status !== 'running') return false;
-    const historyLength = s.history.length;
+    if (s.status !== 'running' && s.status !== 'terminal-collapse') return false;
+    const historyLength = s.history.length; const collapsing = s.status === 'terminal-collapse';
     s.tick++;
-    applyMemoryConditionals(s);
-    if (s.tick % B.ENV_EVERY === 0) updateEnvironment(s);
-    runMetabolism(s);
-    runTransport(s);
-    runGrowth(s);
-    runDeath(s);
-    if (s.tick % B.CONNECTIVITY_EVERY === 0) analyzeConnectivity(s);
-    if (s.tick % B.SUMMARY_EVERY === 0) runSummary(s, (message) => this.emit(message));
-    this.resolveNextRandomOffer();
-
-    if (s.aliveCount <= 0) {
-      const historyStart = s.history.length;
-      s.status = 'extinct';
-      s.extinction = { tick: s.tick, cause: dominantCause(s) };
-      for (const offer of s.adaptationOffers) {
-        if (offer.resolvedTick == null) recordHistory(s, 'adaptation-unresolved', { id: offer.id });
-      }
-      recordHistory(s, 'run-extinct', { cause: s.extinction.cause });
-      this.historyRecorder.observe(s, true, true);
-      this.emit({ t: 'history-batch', events: s.history.slice(historyStart).map((event) => ({ ...event })) });
-      this.emit({ t: 'extinct', summary: this.buildResult() });
-    } else {
-      this.historyRecorder.observe(s, s.history.length !== historyLength);
+    if (!collapsing) {
+      applyMemoryConditionals(s);
+      if (s.tick % B.ENV_EVERY === 0) updateEnvironment(s);
+      runMetabolism(s); runTransport(s); runGrowth(s);
     }
+    runDeath(s);
+    const living = reconcileLiveness(s);
+    if (living.livingCount === 0) return this.finishExtinction();
+    if (!collapsing) {
+      if (s.tick % B.CONNECTIVITY_EVERY === 0) analyzeConnectivity(s);
+      if (s.tick % B.SUMMARY_EVERY === 0) runSummary(s, (message) => this.emit(message));
+      this.resolveNextRandomOffer();
+      const reason = terminalCollapseReason(s);
+      if (reason && beginTerminalCollapse(s, reason)) {
+        this.emit({ t: 'terminal-collapse', tick: s.tick, cause: reason,
+          livingCount: s.aliveCount, deadline: s.terminalDeadline });
+        this.emit({ t: 'history-batch', events: [{ ...s.history.at(-1) }] });
+      }
+    }
+    this.historyRecorder.observe(s, s.history.length !== historyLength);
+    return true;
+  }
+
+  finishExtinction() {
+    const s = this.state; if (s.status === 'extinct') return false;
+    const historyStart = s.history.length;
+    s.status = 'extinct'; s.aliveCount = 0; s.coverage = 0;
+    s.connectedShare = 0; s.largestComponent = 0;
+    s.extinction = { tick: s.tick, cause: dominantCause(s), terminalCause: s.terminalCause ?? 'natural' };
+    for (const offer of s.adaptationOffers) if (offer.resolvedTick == null) {
+      recordHistory(s, 'adaptation-unresolved', { id: offer.id });
+    }
+    recordHistory(s, 'run-extinct', { cause: s.extinction.cause });
+    this.historyRecorder.observe(s, true, true);
+    this.emit({ t: 'history-batch', events: s.history.slice(historyStart).map((event) => ({ ...event })) });
+    this.emit({ t: 'extinct', summary: this.buildResult() });
     return true;
   }
 

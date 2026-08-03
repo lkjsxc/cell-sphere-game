@@ -20,7 +20,7 @@ export function elements() {
     speed: /** @type {HTMLSelectElement} */ (byId('speed-select')),
     adaptationButton: /** @type {HTMLButtonElement} */ (byId('adaptations-button')),
     adaptationBadge: byId('adaptation-badge'),
-    boot: byId('boot-status'), score: byId('hud-score'), pressure: byId('hud-pressure'), reach: byId('hud-reach'),
+    boot: byId('boot-status'), score: byId('hud-score'), pressure: byId('hud-pressure'), reach: byId('hud-reach'), trace: byId('hud-trace'),
     event: byId('hud-event-text'), resultRank: byId('result-rank'), resultScore: byId('result-score'),
     resultCause: byId('result-cause'), breakdown: byId('result-breakdown'), resultAdaptations: byId('result-adaptations'),
     echoes: byId('result-echoes'), resultImprint: byId('result-imprint'), memoryBalance: byId('memory-balance'),
@@ -42,7 +42,10 @@ export function updateHud(el, snap) {
   const metrics = snap.metrics ?? {};
   el.score.textContent = number(metrics.score ?? 0);
   el.pressure.textContent = `${Math.round((snap.entropy ?? 0) * 100)}%`;
-  el.reach.textContent = `${Math.round((metrics.coverage ?? 0) * 100)}%`;
+  const aliveCount = Math.max(0, Math.floor(metrics.aliveCount ?? 0));
+  el.reach.textContent = formatCoverage(metrics.coverage ?? 0, aliveCount, snap.alive?.length ?? 2562);
+  el.trace.hidden = aliveCount === 0 || aliveCount > 3;
+  el.trace.textContent = snap.status === 'terminal-collapse' ? 'FINAL TRACE' : `LAST ${aliveCount} ${aliveCount === 1 ? 'CELL' : 'CELLS'}`;
   updateAdaptationCount(el, metrics.pendingAdaptations ?? snap.pendingAdaptations ?? 0);
 }
 
@@ -77,6 +80,15 @@ export function showResult(el, score, result) {
     row.textContent = `${part.en}  ${number(part.points)}`; return row;
   }));
   show(el, 'result');
+}
+
+export function formatCoverage(coverage, aliveCount, totalCells = 2562) {
+  const living = Math.max(0, Math.floor(aliveCount));
+  if (living === 0) return '0%';
+  const percent = Math.max(coverage * 100, living / Math.max(1, totalCells) * 100);
+  if (percent < 0.1) return `<0.1% · ${living} ${living === 1 ? 'cell' : 'cells'}`;
+  if (percent < 10) return `${percent.toFixed(1)}%`;
+  return `${Math.round(percent)}%`;
 }
 
 export function showMemory(el, meta, available = 0) { el.memoryBalance.textContent = number(meta.echoBalance);

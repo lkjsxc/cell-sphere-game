@@ -33,11 +33,8 @@ export function runDeath(state) {
       state.causes[dominantCause(state, i)] += shrink;
     }
 
-    // Dormant cysts: low-stress tissue clings on during terminal pressure.
-    let eps = B.BIOMASS_EPS;
-    if (traits.dormantCysts && state.entropy > 0.8 && stress[i] < 0.5) eps *= 0.3;
-
-    if (biomass[i] <= eps) killNode(state, i);
+    // Cysts slow damage but never own sub-epsilon living authority.
+    if (biomass[i] <= B.BIOMASS_EPS) killNode(state, i);
   }
 
   reclaimDetritus(state);
@@ -111,17 +108,16 @@ function reclaimDetritus(state) {
   }
 }
 
-/** Hard ceiling: after the run ceiling, collapse converts power to score. */
+/** Deterministic terminal fade reaches zero by its authoritative deadline. */
 function terminalCascade(state) {
-  if (state.tick <= B.RUN_CEILING_TICKS) return;
-  const over = (state.tick - B.RUN_CEILING_TICKS) / 400;
-  const k = B.COLLAPSE_KILL_RATE * (1 + over);
+  if (state.status !== 'terminal-collapse') return;
+  const remaining = Math.max(1, state.terminalDeadline - state.tick + 1);
   const { alive, biomass } = state;
   for (let i = 0; i < state.topo.nodeCount; i++) {
     if (alive[i] !== 1) continue;
-    const loss = biomass[i] * k;
+    const loss = biomass[i] / remaining;
     biomass[i] = Math.fround(Math.max(0, biomass[i] - loss));
     state.causes.collapse += loss;
-    if (biomass[i] <= B.BIOMASS_EPS) killNode(state, i);
+    if (state.tick >= state.terminalDeadline || biomass[i] <= B.BIOMASS_EPS) killNode(state, i);
   }
 }

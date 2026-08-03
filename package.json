@@ -19,6 +19,7 @@
     "check:links": "node scripts/check-links.mjs",
     "balance": "node scripts/balance.mjs",
     "balance:smoke": "node scripts/balance.mjs --smoke",
+    "terminal:soak": "node scripts/terminal-soak.mjs",
     "benchmark": "node scripts/benchmark.mjs",
     "verify": "node scripts/verify.mjs"
   },

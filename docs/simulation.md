@@ -23,16 +23,19 @@ inspector state, and result.
 3. Metabolism: biome-scaled uptake/upkeep, energy, stress, tissue maturity.
 4. Transport: terrain-cost-scaled flux, reinforcement, decay, pruning/rejoin.
 5. Growth: seeded frontier trials using habitat, climate, resources, crowding.
-6. Death/reclamation and terminal cascade.
-7. Connectivity every 20 ticks.
-8. Summary every 10 ticks: score metrics, geography/morphology milestones,
+6. Death/reclamation, then an exact liveness reconciliation over all 2,562 cells.
+7. Zero living cells finalize immediately; spent tissue or the 360 s ceiling enters
+   a bounded terminal collapse of at most 20 ticks.
+8. Connectivity every 20 ticks.
+9. Summary every 10 ticks: score metrics, geography/morphology milestones,
    crisis lifecycle, Adaptation offers, History batches.
-9. Resolve at most one automatic FIFO Adaptation at the authoritative tick.
-10. Extinction check.
+10. Resolve at most one automatic FIFO Adaptation at the authoritative tick.
 
 ## Adaptations
 
-Canonical status is only `idle`, `running`, or `extinct`. Offers never pause.
+Canonical status is `idle`, `running`, `terminal-collapse`, or `extinct`.
+Offers never pause. Terminal state is monotonic and every run finalizes by tick
+3,620; natural zero-liveness finalizes in the same authoritative tick.
 Each record contains stable ID/index, offer tick/reason, three unique fixed
 options, resolution tick/card/mode. Queue cap is eight; ordinary runs create at
 most five. Manual commands validate offer and card IDs and apply once at the

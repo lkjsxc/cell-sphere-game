@@ -50,6 +50,7 @@ export function createRunDriver(caps, onMessage) {
     debt += (dt / 1000) * speed * B.TICKS_PER_SECOND;
     const ticks = Math.floor(debt); debt -= ticks;
     if (ticks) fallback.advance(ticks);
+    if (fallback.state.status === 'extinct') return;
     if (now - lastSnapshot > (speed >= 16 ? 80 : 100) || !snapshot) {
       snapshot = fallback.snapshot(); lastSnapshot = now; emit({ t: 'snapshot', ...snapshot });
     }

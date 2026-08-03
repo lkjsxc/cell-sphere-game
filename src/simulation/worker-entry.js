@@ -30,7 +30,7 @@ function frame() {
   tickDebt -= ticks;
   if (ticks <= 0) return;
   controller.advance(ticks);
-  maybeSnapshot();
+  if (controller.state.status !== 'extinct') maybeSnapshot();
 }
 
 self.onmessage = (event) => {

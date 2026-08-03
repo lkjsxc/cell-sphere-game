@@ -3,6 +3,7 @@
  * Random streams are isolated by authority concern.
  */
 import { traitsFor } from '../game/strains.js';
+import { BALANCE as B } from '../game/balance.js';
 import { createRng } from '../core/prng.js';
 import { createTopology } from '../world/icosphere.js';
 import { createFields } from '../world/fields.js';
@@ -44,6 +45,9 @@ export function createRunState(cfg) {
     challenge: cfg.challenge ?? null, seed,
     simRng, eventRng, contentRng, decisionRng, inoculationRng,
     tick: 0, entropy: 0, status: 'idle', extinction: null,
+    terminalCollapseStart: -1, terminalDeadline: -1, terminalCause: null,
+    strictInvariants: cfg.strictInvariants === true,
+    diagnostics: { livenessRepairs: 0, nonFiniteRepairs: 0 },
 
     biomass: new Float32Array(N), energy: new Float32Array(N),
     nutrient: fields.baseNutrient.slice(), moisture: fields.baseMoisture.slice(),
@@ -65,6 +69,9 @@ export function createRunState(cfg) {
     lastOffered: [], lastAdaptationResolutionTick: -1, ownedCards: [],
 
     aliveCount: 0, coverage: 0, peakCoverage: 0, sustainedSum: 0,
+    liveness: { livingCount: 1, totalBiomass: 1.2, maxBiomass: 1.2,
+      viableEnergyCount: 1, activeFrontierCount: 1, validGrowthCandidateCount: 1,
+      unchangedTicks: 0, previousLivingCount: 1, previousBiomass: 1.2 },
     sustainedSamples: 0, connectedShare: 0, peakConnectedShare: 0,
     minConnectedWhileMajority: 1, largestComponent: 0,
     totalUptake: 0, totalMaintenance: 0, phenotypes: [],
@@ -82,6 +89,7 @@ export function createRunState(cfg) {
   state.biomass[start] = Math.fround(1.2);
   state.energy[start] = Math.fround(3.0);
   state.aliveCount = 1;
+  state.coverage = 1 / N;
   recordHistory(state, 'run-created');
   recordHistory(state, 'inoculation', { cell: start });
   return state;
@@ -115,6 +123,66 @@ export function selectInoculation(fields, rng) {
     if (roll <= 0) return candidate.cell;
   }
   return plausible[plausible.length - 1].cell;
+}
+
+/** Reconcile cheap authoritative liveness metrics after every growth/death tick. */
+export function reconcileLiveness(state) {
+  const { topo, alive, biomass, energy, stress, edgeActive, flux } = state;
+  const l = state.liveness; let count = 0; let total = 0; let max = 0;
+  let viable = 0; let frontier = 0; let candidates = 0; let invalid = 0;
+  for (let i = 0; i < topo.nodeCount; i++) {
+    if (!Number.isFinite(biomass[i])) { invalid++; biomass[i] = 0; }
+    if (!Number.isFinite(energy[i])) { invalid++; energy[i] = 0; }
+    if (!Number.isFinite(stress[i])) { invalid++; stress[i] = 0; }
+    if (alive[i] !== 1) continue;
+    if (biomass[i] <= B.BIOMASS_EPS) { alive[i] = 0; invalid++; continue; }
+    count++; total += biomass[i]; if (biomass[i] > max) max = biomass[i];
+    if (energy[i] > 0) viable++;
+    let hasDeadNeighbor = false;
+    for (let o = topo.nodeStart[i]; o < topo.nodeStart[i + 1]; o++) {
+      if (alive[topo.nodeNeighbors[o]] !== 1) { hasDeadNeighbor = true; break; }
+    }
+    if (hasDeadNeighbor && energy[i] > 0) frontier++;
+    if (hasDeadNeighbor && energy[i] >= B.GROW_COST) candidates++;
+  }
+  const drift = state.aliveCount !== count;
+  if (drift || invalid || state.strictInvariants) for (let e = 0; e < topo.edgeCount; e++) {
+    if (edgeActive[e] && (alive[topo.edgeA[e]] !== 1 || alive[topo.edgeB[e]] !== 1)) {
+      edgeActive[e] = 0; flux[e] = 0; invalid++;
+    }
+  }
+  if ((drift || invalid) && state.strictInvariants) {
+    throw new Error(`liveness invariant divergence: count=${state.aliveCount}/${count}, invalid=${invalid}`);
+  }
+  if (drift || invalid) state.diagnostics.livenessRepairs++;
+  if (invalid) state.diagnostics.nonFiniteRepairs += invalid;
+  const changed = count !== l.previousLivingCount || Math.abs(total - l.previousBiomass) > 1e-5;
+  l.unchangedTicks = changed ? 0 : l.unchangedTicks + 1;
+  Object.assign(l, { livingCount: count, totalBiomass: total, maxBiomass: max,
+    viableEnergyCount: viable, activeFrontierCount: frontier,
+    validGrowthCandidateCount: candidates, previousLivingCount: count, previousBiomass: total });
+  state.aliveCount = count; state.coverage = count / topo.nodeCount;
+  return l;
+}
+
+/** Return a truthful deterministic reason for entering bounded terminal fade. */
+export function terminalCollapseReason(state) {
+  if (state.tick >= B.RUN_CEILING_TICKS) return 'hard-maximum';
+  const l = state.liveness;
+  const spent = l.viableEnergyCount === 0 && l.activeFrontierCount === 0
+    && l.validGrowthCandidateCount === 0;
+  return spent && l.totalBiomass <= B.TERMINAL_BIOMASS_THRESHOLD
+    && l.unchangedTicks >= B.TERMINAL_STALL_TICKS ? 'terminal-stall' : null;
+}
+
+export function beginTerminalCollapse(state, reason) {
+  if (state.status !== 'running') return false;
+  state.status = 'terminal-collapse'; state.terminalCause = reason;
+  state.terminalCollapseStart = state.tick;
+  state.terminalDeadline = Math.min(B.RUN_HARD_MAX_TICKS,
+    state.tick + B.TERMINAL_COLLAPSE_TICKS);
+  recordHistory(state, 'terminal-collapse', { id: reason });
+  return true;
 }
 
 function isLand(fields, i) {
