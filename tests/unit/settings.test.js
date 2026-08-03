@@ -62,7 +62,7 @@ test('every legacy ownership subset migrates one-for-one without currency refund
     const owned = LEGACY_IDS.filter((_, index) => mask & (1 << index));
     const migrated = validateMeta({ schema: 3, bestScore: 99, totalEchoes: 70,
       echoBalance: 17, runs: 4, signalHintShown: true, memoryNodes: owned });
-    assert.equal(migrated.schema, 5); assert.equal(migrated.memoryGraphVersion, 3); assert.equal(migrated.worldSeedIndex, 4);
+    assert.equal(migrated.schema, 6); assert.equal(migrated.memoryGraphVersion, 3); assert.equal(migrated.worldSeedIndex, 4);
     assert.equal(migrated.memoryNodes.length, owned.length);
     const mapped = owned.map((id) => LEGACY_MEMORY_MAP[id]);
     assert.deepEqual(migrated.memoryNodes, MEMORY_NODE_IDS.filter((id) => mapped.includes(id)));

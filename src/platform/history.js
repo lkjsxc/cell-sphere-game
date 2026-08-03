@@ -1,4 +1,5 @@
-/** Bounded semantic History schema 2. Visual detail is stored separately. */
+/** Bounded semantic History schema 3. Visual detail is stored separately. */
+import { buildTrophyFacts, validateTrophyFacts } from '../game/trophies/facts.js';
 const KEY = 'incremental-network-game:history:v2';
 const LEGACY_KEY = 'incremental-network-game:history:v1';
 const BACKUP_KEY = `${KEY}:corrupt`;
@@ -7,7 +8,7 @@ const MAX_EVENTS = 80;
 const MAX_MEMORY_EVENTS = 128;
 const CELL_COUNT = 2562;
 
-export function defaultHistory() { return { schema: 2, worlds: [], memory: [] }; }
+export function defaultHistory() { return { schema: 3, worlds: [], memory: [] }; }
 function finiteInt(value, min = 0) { return Number.isFinite(value) && value >= min ? Math.floor(value) : null; }
 
 const SIM_EVENT = Object.freeze({
@@ -63,13 +64,14 @@ function validateWorld(raw) {
   if (seed === null || seed >= 0x40000000 || tick === null || score === null) return null;
   const events = Array.isArray(raw.events) ? raw.events.slice(0, MAX_EVENTS).map(validateEvent).filter(Boolean)
     .sort((a, b) => a.seq - b.seq || a.tick - b.tick) : [];
-  return { id: typeof raw.id === 'string' ? raw.id.slice(0, 48) : `${seed}-${tick}`, seed, tick, score,
+  const world = { id: typeof raw.id === 'string' ? raw.id.slice(0, 48) : `${seed}-${tick}`, seed, tick, score,
     rank: typeof raw.rank === 'string' ? raw.rank.slice(0, 24) : 'Seed',
     cause: typeof raw.cause === 'string' ? raw.cause.slice(0, 32) : 'unknown',
     archetype: typeof raw.archetype === 'string' ? raw.archetype.slice(0, 40) : 'Living World',
     echo: finiteInt(raw.echo) ?? 0, hash: typeof raw.hash === 'string' ? raw.hash.slice(0, 16) : '',
     inoculationCell: Number.isInteger(raw.inoculationCell) ? raw.inoculationCell : null,
-    adaptations: Array.isArray(raw.adaptations) ? raw.adaptations.filter((id) => typeof id === 'string').slice(0, 12) : [], events };
+    adaptations: Array.isArray(raw.adaptations) ? raw.adaptations.filter((id) => typeof id === 'string').slice(0, 24) : [], events };
+  const trophyFacts = validateTrophyFacts(raw.trophyFacts); if (trophyFacts) world.trophyFacts = trophyFacts; return world;
 }
 
 export function validateHistory(raw, retention = 24) {
@@ -102,7 +104,8 @@ export function appendWorld(history, result, score, runIndex, retention = 24) {
   const events = normalizeHistoryEvents(result.history); const record = validateWorld({ id: `${runIndex}-${result.seed}-${result.hash}`,
     seed: result.seed, tick: result.tick, score: score.total, rank: score.rank.en, cause: result.cause, echo: score.echoes,
     hash: result.hash, archetype: result.archetype, inoculationCell: result.inoculationCell,
-    adaptations: (result.adaptationOffers ?? []).filter((offer) => offer.selectedCardId).map((offer) => offer.selectedCardId), events });
+    adaptations: (result.adaptationOffers ?? result.offers ?? []).filter((offer) => offer.selectedCardId).map((offer) => offer.selectedCardId),
+    trophyFacts: result.trophyFacts ?? buildTrophyFacts(result, score), events });
   return validateHistory({ ...history, worlds: [...history.worlds, record] }, retention);
 }
 export function appendAbandonedWorld(history, result, retention = 24) {

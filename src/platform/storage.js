@@ -1,9 +1,13 @@
 /** Versioned, corruption-safe persistence for cross-run progression. */
+import { ADAPTATIONS } from '../game/adaptations.js';
 import { MEMORY_GRAPH_VERSION, MEMORY_LANDMARK_IDS, MEMORY_NODE_IDS } from '../game/skills/index.js';
+import { TROPHY_CATALOG_VERSION, TROPHY_IDS } from '../game/trophies/index.js';
 import { createTopology } from '../world/icosphere.js';
 
 const KEY = 'incremental-network-game:meta:v1';
 const VALID_MEMORY_IDS = new Set(MEMORY_NODE_IDS);
+const VALID_TROPHY_IDS = new Set(TROPHY_IDS);
+const VALID_ADAPTATION_IDS = new Set(ADAPTATIONS.map((card) => card.id));
 const ATLAS_TOPOLOGY = Object.freeze({ kind: 'icosphere', levels: 3, nodeCount: 642, edgeCount: 1920 });
 const OLD_PARENTS = Object.freeze([
   [],[0],[0],[1],[1,2],[2],[3,4],[4,5],[6],[6,7],[7],[8,9,10],[8],[9],[10],[11,12,13,14],[15],[16],
@@ -15,9 +19,10 @@ export const LEGACY_MEMORY_MAP = Object.freeze({
 });
 
 export function defaultMeta() {
-  return { schema: 5, memoryGraphVersion: MEMORY_GRAPH_VERSION,
+  return { schema: 6, memoryGraphVersion: MEMORY_GRAPH_VERSION, trophyVersion: TROPHY_CATALOG_VERSION,
     bestScore: 0, totalEchoes: 0, echoBalance: 0, runs: 0, worldSeedIndex: 0,
-    memoryNodes: [], quarantinedMemoryNodes: [], imprints: [], migrationNotice: null };
+    memoryNodes: [], quarantinedMemoryNodes: [], imprints: [], trophyIds: [], trophyBackfillVersion: 0,
+    trophyProgress: { adaptationIds: [], geographyMask: 0, crisisMask: 0, adaptationCategoryMask: 0 }, migrationNotice: null };
 }
 
 /** Schema 4 ownership is checked against graph 1 before graph 3 is stamped. */
@@ -34,7 +39,12 @@ export function validateMeta(raw) {
   out.memoryNodes = MEMORY_NODE_IDS.filter((id) => ownership.valid.includes(id));
   out.quarantinedMemoryNodes = mergeQuarantine([...ownership.quarantine], raw.quarantinedMemoryNodes);
   if (Array.isArray(raw.imprints)) out.imprints = raw.imprints.map((value) => validateImprint(value, sourceSchema)).filter(Boolean).slice(-8);
-  if (sourceSchema !== 5) out.migrationNotice = Object.freeze({ kind: 'memory-atlas-v5', pending: true });
+  if (sourceSchema >= 6) {
+    const ownedTrophies = new Set(Array.isArray(raw.trophyIds) ? raw.trophyIds.filter((id) => VALID_TROPHY_IDS.has(id)) : []);
+    out.trophyIds = TROPHY_IDS.filter((id) => ownedTrophies.has(id)); out.trophyBackfillVersion = raw.trophyBackfillVersion === 1 ? 1 : 0;
+    out.trophyProgress = validateTrophyProgress(raw.trophyProgress);
+  }
+  if (sourceSchema < 5) out.migrationNotice = Object.freeze({ kind: 'memory-atlas-v5', pending: true });
   else if (validMigrationNotice(raw.migrationNotice)) out.migrationNotice =
     Object.freeze({ kind: 'memory-atlas-v5', pending: raw.migrationNotice.pending });
   return out;
@@ -117,6 +127,10 @@ function shortestPath(topo, start, target) {
 }
 function uniqueCells(values, limit) { return values.filter((value, index, all) =>
   Number.isInteger(value) && value >= 0 && value < limit && all.indexOf(value) === index); }
+function validateTrophyProgress(raw) { const value = raw && typeof raw === 'object' ? raw : {}; const adaptationIds = [];
+  if (Array.isArray(value.adaptationIds)) for (const id of value.adaptationIds) if (VALID_ADAPTATION_IDS.has(id) && !adaptationIds.includes(id)) adaptationIds.push(id);
+  return { adaptationIds, geographyMask: Math.min(63, boundedInteger(value.geographyMask, 0)),
+    crisisMask: Math.min(127, boundedInteger(value.crisisMask, 0)), adaptationCategoryMask: Math.min(63, boundedInteger(value.adaptationCategoryMask, 0)) }; }
 function boundedInteger(value, fallback) { return Number.isFinite(value) && value >= 0 ? Math.floor(value) : fallback; }
 function mergeQuarantine(found, raw) { const ids = [...new Set(found)]; if (Array.isArray(raw)) for (const id of raw)
   if (typeof id === 'string' && /^[a-z][a-z-]{0,63}$/.test(id) && !ids.includes(id)) ids.push(id); return ids.slice(0, 32); }
