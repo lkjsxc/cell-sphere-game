@@ -34,34 +34,39 @@ export function createAdaptationSurface(options) {
   const pending = byId('adaptations-pending'); const meta = byId('adaptations-offer-meta');
   const owned = byId('adaptations-owned'); const auto = byId('adaptation-auto');
   const manual = byId('adaptation-manual'); const help = byId('adaptation-mode-help');
-  let model = { offers: [], cards: [], mode: 'random', tick: 0 };
+  let model = { offers: [], cards: [], mode: 'random', tick: 0 }; let selection = null; let modeCommand = null; let notice = '';
   byId('adaptations-close').addEventListener('click', options.onClose);
-  auto.addEventListener('click', () => options.onMode('random'));
-  manual.addEventListener('click', () => options.onMode('manual'));
+  auto.addEventListener('click', () => requestMode('random')); manual.addEventListener('click', () => requestMode('manual'));
+  cards.addEventListener('click', (event) => { const button = event.target.closest?.('button[data-card-id]');
+    const offer = model.offers.find((item) => item.resolvedTick == null); if (!button || !offer || selection || modeCommand || model.mode !== 'manual') return;
+    const command = options.onChoose(offer, button.dataset.cardId); if (!command) return;
+    selection = { ...command, offerId: offer.id, cardId: button.dataset.cardId }; notice = 'Applying this Adaptation…'; render(); });
+  function requestMode(mode) { if (modeCommand) return; const command = options.onMode(mode); if (!command) return;
+    modeCommand = { ...command, mode }; notice = `Changing to ${mode === 'manual' ? 'Manual' : 'Auto Random'}…`; render(); }
   function render() {
-    const automatic = model.mode === 'random'; auto.setAttribute('aria-pressed', String(automatic));
-    manual.setAttribute('aria-pressed', String(!automatic));
-    help.textContent = automatic ? 'Randomly chooses one of the three options. The result is deterministic for this world.'
-      : 'Offers wait here while the world continues.';
+    const automatic = model.mode === 'random'; auto.setAttribute('aria-pressed', String(automatic)); manual.setAttribute('aria-pressed', String(!automatic));
+    auto.disabled = Boolean(modeCommand); manual.disabled = Boolean(modeCommand);
+    help.textContent = notice || (automatic ? 'Randomly chooses one of the three options. The result is deterministic for this world.' : 'Offers wait here while the world continues.');
     const queue = model.offers.filter((offer) => offer.resolvedTick == null); const offer = queue[0];
     pending.textContent = queue.length ? `${queue.length} pending ${queue.length === 1 ? 'offer' : 'offers'}` : 'No pending offers';
-    meta.textContent = offer ? `Offered at ${gameTime(offer.offerTick)} · ${offer.reason} · world ${gameTime(model.tick)}`
-      : `All offers resolved · world ${gameTime(model.tick)}`;
-    cards.replaceChildren(...(offer?.options ?? []).map((id) => adaptationCard(id, () => options.onChoose(offer.id, id))));
-    owned.replaceChildren(...model.cards.map((id) => { const li = document.createElement('li');
-      li.textContent = ADAPTATION_COPY[id]?.[0] ?? humanize(id); return li; }));
+    meta.textContent = offer ? `Offered at ${gameTime(offer.offerTick)} · ${offer.reason} · world ${gameTime(model.tick)}` : `All offers resolved · world ${gameTime(model.tick)}`;
+    cards.setAttribute('aria-busy', String(Boolean(selection))); cards.replaceChildren(...(offer?.options ?? []).map((id) => adaptationCard(id,
+      { disabled: automatic || Boolean(selection) || Boolean(modeCommand), selected: selection?.cardId === id })));
+    owned.replaceChildren(...model.cards.map((id) => { const li = document.createElement('li'); li.textContent = ADAPTATION_COPY[id]?.[0] ?? humanize(id); return li; }));
   }
-  return { surface, update(next) { model = next; if (!surface.hidden) render(); },
+  return { surface, update(next) { model = next; if (!surface.hidden) render(); }, pendingMode(mode, command) { modeCommand = { ...command, mode }; notice = 'Waiting for world authority…'; if (!surface.hidden) render(); },
+    acknowledge(message) { if (selection?.commandId !== message.commandId) return; selection = null; notice = `${ADAPTATION_COPY[message.cardId]?.[0] ?? humanize(message.cardId)} selected.`; if (!surface.hidden) render(); },
+    reject(message) { if (selection?.commandId !== message.commandId) return; selection = null; notice = `Selection not applied: ${humanize(message.reason)}.`; if (!surface.hidden) render(); },
+    acknowledgeMode(message) { if (modeCommand?.commandId !== message.commandId) return; modeCommand = null; notice = `${message.mode === 'manual' ? 'Manual' : 'Auto Random'} confirmed.`; if (!surface.hidden) render(); },
+    rejectMode(message) { if (modeCommand?.commandId !== message.commandId) return; modeCommand = null; notice = `Mode not changed: ${humanize(message.reason)}.`; if (!surface.hidden) render(); },
     open(next) { model = next; render(); surface.hidden = false; }, close() { surface.hidden = true; } };
 }
 
-function adaptationCard(id, choose) {
-  const card = cardById(id); const copy = ADAPTATION_COPY[id]
-    ?? [humanize(id), 'A new behavior enters the network.', 'Its tradeoff is preserved in the run.'];
-  const button = document.createElement('button'); button.type = 'button'; button.className = 'card'; button.dataset.action = 'available';
-  button.append(line('card-category', `⬡ ${card.cats.join(' · ')}`), line('card-name', copy[0]),
-    line('card-effect', copy[1]), line('card-cost', copy[2]));
-  button.addEventListener('click', choose, { once: true }); return button;
+function adaptationCard(id, state) {
+  const card = cardById(id); const copy = ADAPTATION_COPY[id] ?? [humanize(id), 'A new behavior enters the network.', 'Its tradeoff is preserved in the run.'];
+  const button = document.createElement('button'); button.type = 'button'; button.className = 'card'; button.dataset.action = 'available'; button.dataset.cardId = id;
+  button.disabled = state.disabled; button.dataset.state = state.selected ? 'pending' : 'ready'; button.setAttribute('aria-pressed', String(state.selected));
+  button.append(line('card-category', `⬡ ${card.cats.join(' · ')}`), line('card-name', copy[0]), line('card-effect', copy[1]), line('card-cost', copy[2])); return button;
 }
 
 export function createMemorySurface(options) {

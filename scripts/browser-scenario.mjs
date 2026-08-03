@@ -57,9 +57,8 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
   await setViewport(1440,900); await evaluate('window.__IN_APP__.camera.dist=4.1'); await wait(180); await screenshot('browser-adaptations-desktop.png');
   await setViewport(390,844); await evaluate('window.__IN_APP__.camera.dist=6'); await wait(150); await evaluate("document.getElementById('adaptations-close').click()");
   ok(await evaluate("window.__IN_APP__.offers.some(offer=>offer.id===0&&offer.resolvedTick==null)"), 'closing Adaptations discarded the offer');
-  await evaluate(`(() => { document.getElementById('adaptations-button').click(); document.querySelector('#adaptation-cards .card').click();
-    document.getElementById('adaptations-close').click(); })()`);
-  ok(await poll(() => evaluate('window.__IN_APP__.adaptationEffects.queueLength'), (value) => value === 1, 2000), 'Adaptation wave did not start');
+  await evaluate("document.getElementById('adaptations-button').click(); document.querySelector('#adaptation-cards .card').scrollIntoView({block:'center'})"); await wait(80); const firstCardPoint = await evaluate(`(()=>{const r=document.querySelector('#adaptation-cards .card').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()`); await click(...firstCardPoint); ok(await evaluate("document.getElementById('adaptation-cards').getAttribute('aria-busy')==='true' || window.__IN_APP__.adaptationEffects.queueLength===1"), 'Adaptation pointer did not enter an acknowledged pending state');
+  ok(await poll(() => evaluate('window.__IN_APP__.adaptationEffects.queueLength'), (value) => value === 1, 2000), 'Adaptation wave did not start'); await evaluate("document.getElementById('adaptations-close').click()");
   await evaluate("document.getElementById('pause-button').click()"); effectPauseStart = performance.now();
   const waveStart = await evaluate(`(() => { const app=window.__IN_APP__, wave=app.adaptationEffects.frame(performance.now());
     return {caption:document.getElementById('adaptation-caption').textContent,hidden:document.getElementById('adaptation-caption').hidden,
@@ -79,10 +78,10 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
   ok(await evaluate('window.__IN_APP__.adaptationEffects.frame(performance.now()) === null'), 'Adaptation wave timeout did not clear');
   await evaluate("document.getElementById('pause-button').click()"); presentationPause += performance.now() - effectPauseStart;
   ok(await poll(() => evaluate('window.__IN_APP__.pendingCount()'), (value) => value >= 1, 4000), 'second manual offer never queued');
-  await evaluate(`(() => { document.querySelector('#run-screen .settings-open').click(); const motion=document.querySelector('[name=motion]');
-    motion.value='reduced'; motion.dispatchEvent(new Event('change',{bubbles:true})); document.getElementById('settings-close').click();
-    document.getElementById('adaptations-button').click(); document.querySelector('#adaptation-cards .card').click(); document.getElementById('adaptations-close').click();
-    document.getElementById('pause-button').click(); })()`); effectPauseStart = performance.now();
+  await evaluate(`(() => { document.querySelector('#run-screen .settings-open').click(); const motion=document.querySelector('[name=motion]'); motion.value='reduced'; motion.dispatchEvent(new Event('change',{bubbles:true})); document.getElementById('settings-close').click(); document.getElementById('adaptations-button').click(); const offer=window.__IN_APP__.offers.find(x=>x.resolvedTick==null); offer.offerVersion=99; document.querySelector('#adaptation-cards .card').scrollIntoView({block:'center'}); })()`);
+  await wait(80); let reducedCardPoint = await evaluate(`(()=>{const r=document.querySelector('#adaptation-cards .card').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()`); await click(...reducedCardPoint); ok(await poll(() => evaluate("document.getElementById('adaptation-mode-help').textContent"), (text) => text.includes('not applied'), 2000), 'stale Adaptation rejection was not visible');
+  ok(await evaluate("document.getElementById('adaptation-cards').getAttribute('aria-busy')==='false' && !document.querySelector('#adaptation-cards .card').disabled"), 'rejected Adaptation did not recover'); reducedCardPoint = await evaluate(`(()=>{const r=document.querySelector('#adaptation-cards .card').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()`); await click(...reducedCardPoint);
+  await evaluate("document.getElementById('adaptations-close').click(); document.getElementById('pause-button').click()"); effectPauseStart = performance.now();
   const reduced = await evaluate(`new Promise(resolve => { const end=performance.now()+2000; function read() {
     const effects=window.__IN_APP__.adaptationEffects, wave=effects.frame(performance.now());
     if(wave) return resolve({reduced:wave.reduced,origin:wave.arrivals[wave.originCell],queue:effects.queueLength});

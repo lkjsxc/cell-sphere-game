@@ -23,7 +23,7 @@ export function createSettingsSurface(options) {
   return {
     surface,
     open(worldContinues) { settings = options.read(); render(form, settings); if (note) note.hidden = !worldContinues; surface.hidden = false; },
-    close() { surface.hidden = true; },
+    sync() { settings = options.read(); render(form, settings); }, close() { surface.hidden = true; },
   };
 }
 

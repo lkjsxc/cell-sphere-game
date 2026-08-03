@@ -19,7 +19,7 @@ and `node:test`.
 | `result.js` | Plain result including offers, history, and inoculation. |
 | `replay.js` | Versioned decisions, bounded history, authority hash. |
 | `simulator.js` | Non-blocking `RunController`, inspection, and observational recorder ownership. |
-| `worker-entry.js` | Fixed-step Worker protocol with transferable visual-History requests. |
+| `protocol/` | Versioned Worker entry and acknowledged Adaptation commands. |
 
 ## Tick order (10 Hz)
 

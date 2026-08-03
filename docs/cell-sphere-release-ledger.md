@@ -26,7 +26,7 @@ Vocabulary is evidence-scoped: **implemented**, **tested**, **measured**, **obse
 | 4. Canonical rename | target `cell-sphere-game` | package, product, globals, storage, docs, GitHub | exact-name audit and Pages inspection |
 | 5. Stable composition | implemented viewport-only policy; measured Settings delta `0 px` at 1440×900 | `layout-policy.js`, camera resize | unit test and real-Chrome paired capture |
 | 6. Outside dismissal | implemented scoped target classification; tested Settings→Adaptations and Settings→cell with native CDP pointers | `surface-coordinator.js`, browser scenario | mouse passes; touch/cancel matrix pending |
-| 7. Manual Adaptation | observed intermittent real-pointer no-op and unacknowledged authority | UI, protocol, Worker/fallback | success/rejection/double-click scenarios |
+| 7. Manual Adaptation | implemented protocol v2 command IDs, reusable delegated cards, pending UI, explicit success/rejection and mode acknowledgement | Worker/fallback protocol, surface, authority | real-pointer success plus stale-version rejection/recovery pass |
 | 8. Time dial | implemented one frame-loop phase; measured both hands moving and frozen visibly on pause | `time-dial.js`, pause semantics, CSS | unit and real-Chrome transform tests pass |
 | 9. 642 Skill Cells | observed 642 rendered cells but 108 definitions | canonical skill content/scene/storage | mapping validator and full legal unlock |
 | 10. Skill migration | target lossless old ownership migration | progression adapter/export/import | old-save and corrupt-field fixtures |
@@ -37,7 +37,7 @@ Vocabulary is evidence-scoped: **implemented**, **tested**, **measured**, **obse
 | 15. Graph effects | target terrain/family propagation | shared graph field, events, renderer | determinism, permeability, screenshots |
 | 16. Major rivers | target explicit trunks/tributaries | hydrology, fields, renderer, audit | 500–1,000 seed distributions |
 | 17. Shared graph primitives | target reusable pure traversal | core/world graph modules | focused unit use across systems |
-| 18. Protocol contracts | target versioned acknowledged messages | driver, Worker, simulator | stale and duplicate command tests |
+| 18. Protocol contracts | implemented v2 Adaptation envelopes with run/command/offer identity and bounded rejection reasons | driver, Worker/fallback, authority | accepted, invalid option, duplicate, stale version, mode tests |
 | 19. Responsive quality | tested baseline viewport matrix | CSS, semantics, browser evidence | required geometry matrix and 200% text |
 | 20. Performance | measured four baseline draws and 9.25 s 32× | bounded fields/uploads/evaluation | benchmark, browser timing, draw counts |
 | 21. Persistence/export | target validated current schema | platform stores and migrations | idempotent localStorage/IndexedDB/import |

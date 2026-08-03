@@ -139,7 +139,7 @@ export function offerAdaptation(state, emit, forcedReason = null) {
   }, B.ADAPTATION_OPTIONS).slice());
   const offerIndex = state.nextOfferIndex++;
   const offer = {
-    id: offerIndex, offerIndex, offerTick: state.tick, options,
+    id: offerIndex, offerVersion: 1, offerIndex, offerTick: state.tick, options,
     reason: forcedReason ?? (crisisCats.length ? 'crisis' : 'milestone'),
     resolvedTick: null, selectedCardId: null, selectionMode: null,
   };

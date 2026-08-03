@@ -9,6 +9,7 @@ import { BALANCE as B } from '../../src/game/balance.js';
 import { createRng } from '../../src/core/prng.js';
 import { LIFE_STATE } from '../../src/core/life-state.js';
 import { snapshotTransfers } from '../../src/simulation/snapshot.js';
+import { executeAdaptationSelection } from '../../src/simulation/protocol/adaptation-command.js';
 
 function run(seed = 4242, mode = 'random', emit = () => {}) {
   const controller = new RunController({ seed, adaptationMode: mode }, emit);
@@ -100,6 +101,13 @@ test('manual selection validates offer/card and applies exactly once', () => {
   assert.equal(offer.resolvedTick, 450);
   assert.throws(() => controller.chooseAdaptation(offer.id, offer.options[1]), /already resolved/);
   assert.equal(controller.state.ownedCards.length, 1);
+});
+
+test('stale Manual intent is rejected with the current authoritative offer', () => {
+  const controller = run(10, 'manual'); controller.advance(450); const offer = controller.state.adaptationOffers[0]; controller.state.adaptationMode = 'random';
+  const rejected = executeAdaptationSelection(controller, { t: 'choose-adaptation', protocolVersion: 2, runId: 1, commandId: 9,
+    offerId: offer.id, offerVersion: offer.offerVersion, cardId: offer.options[0] }, 1);
+  assert.equal(rejected.reason, 'mode-not-manual'); assert.equal(rejected.currentOffer.id, offer.id);
 });
 
 test('mode toggles drain pending FIFO at no more than one per tick', () => {

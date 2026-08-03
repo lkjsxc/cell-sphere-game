@@ -102,27 +102,27 @@ export class RunController {
   }
 
   /** Resolve one fixed offer manually at the current authoritative tick. */
-  chooseAdaptation(offerId, cardId) {
+  chooseAdaptation(offerId, cardId, context = {}) {
     const s = this.state;
     if (s.status !== 'running') throw new Error(`cannot choose adaptation while ${s.status}`);
     const offer = s.adaptationOffers.find((item) => item.id === offerId);
     if (!offer) throw new Error(`unknown adaptation offer: ${offerId}`);
     if (offer.resolvedTick != null) throw new Error(`adaptation offer already resolved: ${offerId}`);
     if (!offer.options.includes(cardId)) throw new Error(`card not in adaptation offer: ${cardId}`);
-    this.resolveOffer(offer, cardId, 'manual');
+    this.resolveOffer(offer, cardId, 'manual', context);
     return true;
   }
 
   /** Change passive decision policy without touching simulation/content RNG. */
-  setAdaptationMode(mode) {
+  setAdaptationMode(mode, context = {}) {
     if (mode !== 'random' && mode !== 'manual') throw new Error(`invalid adaptation mode: ${mode}`);
     const s = this.state;
     if (s.status === 'extinct') throw new Error('cannot change adaptation mode after extinction');
-    if (s.adaptationMode === mode) return false;
+    if (s.adaptationMode === mode) { this.emit({ t: 'adaptation-mode', mode, tick: s.tick, ...context }); return false; }
     s.adaptationMode = mode;
     logReplay(s, REPLAY.ADAPTATION_MODE, modeIndex(mode));
     recordHistory(s, 'adaptation-mode', { id: mode });
-    this.emit({ t: 'adaptation-mode', mode, tick: s.tick });
+    this.emit({ t: 'adaptation-mode', mode, tick: s.tick, ...context });
     this.emit({ t: 'history-batch', events: [{ ...s.history.at(-1) }] });
     this.historyRecorder.observe(s, true);
     if (mode === 'random' && s.status === 'running') this.resolveNextRandomOffer();
@@ -140,7 +140,7 @@ export class RunController {
     return true;
   }
 
-  resolveOffer(offer, cardId, selectionMode) {
+  resolveOffer(offer, cardId, selectionMode, context = {}) {
     const s = this.state;
     const origin = chooseAdaptationOrigin(s);
     const category = adaptationPresentationCategory(cardId);
@@ -155,7 +155,7 @@ export class RunController {
     s.lastAdaptationResolutionTick = s.tick;
     logReplay(s, REPLAY.ADAPTATION_SELECT, offer.id, cardIndex(cardId), s.tick, modeIndex(selectionMode));
     recordHistory(s, 'adaptation-selected', { id: offer.id, card: cardIndex(cardId), mode: selectionMode });
-    this.emit({ t: 'adaptation-selected', offerId: offer.id, cardId, tick: s.tick, selectionMode,
+    this.emit({ t: 'adaptation-selected', offerId: offer.id, offerVersion: offer.offerVersion, cardId, tick: s.tick, selectionMode, ...context,
       originCell: origin.cell, category, affectedComponentId: origin.componentId,
       arrivalVersion: propagation.version, arrivals: propagation.arrivals,
       affectedCount: propagation.affectedCount, minArrival: propagation.minArrival,

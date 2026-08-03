@@ -17,8 +17,7 @@ import { handleRunMessage } from './app-message.js'; import { createAdaptationEf
 import { createPauseControl, pauseLabel } from './pause-control.js';
 import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from './camera-policy.js';
 import { createSurfaceCoordinator } from './policies/surface-coordinator.js';
-import { applySafeLayout, safeLayout } from './policies/layout-policy.js';
-import { createTimeDial } from './policies/time-dial.js';
+import { applySafeLayout, safeLayout } from './policies/layout-policy.js'; import { createTimeDial } from './policies/time-dial.js';
 import { advanceContinuation, cancelContinuation, completeContinuation, continuationLabel, createContinuation, setContinuationPause, startContinuation } from './policies/continuation.js';
 import { finishAbandoned, finishRun, startRun } from './policies/run-session.js';
 import { createNewWorldSurface } from './policies/new-world-surface.js';
@@ -114,7 +113,7 @@ class GameApp {
     for (const event of normalizeHistoryEvents(events)) bySeq.set(event.seq, event); this.currentHistory = [...bySeq.values()].sort((a, b) => a.seq - b.seq); }
   adaptationModel() { return { offers: this.offers, cards: this.cards, mode: this.settings.adaptationMode, tick: this.snapshot?.tick ?? 0 }; }
   pendingCount() { return this.offers.filter((offer) => offer.resolvedTick == null).length; }
-  choose(offerId, cardId) { this.driver.message({ t: 'choose-adaptation', offerId, cardId }); }
+  choose(offer, cardId) { return this.driver.chooseAdaptation(offer, cardId); }
   setSpeed(value) { this.speed = value; this.settings = { ...this.settings, speed: value }; saveSettings(this.settings); this.driver.setSpeed(value); }
   applyPause(paused, reasons = this.pause.values()) { if (paused !== this.effectivePaused) { this.effectivePaused = paused; this.driver.setPaused(paused); } this.timeDial.reset(performance.now());
     this.el.pause.setAttribute('aria-pressed', String(reasons.has('manual'))); this.el.pause.classList.toggle('is-paused', paused);
@@ -160,10 +159,11 @@ class GameApp {
     if (name === 'inspector' || name === 'memory-node') this.selectedNode = null;
     if (name === 'memory-node' && this.state === 'memory') this.memorySnapshot = buildMemorySnapshot(this.topo, this.meta); this.resize(true);
   }
-  applyAdaptationMode(mode) { this.applySettings({ ...this.settings, adaptationMode: mode }); }
-  applySettings(value) { const before = this.settings; this.settings = value; saveSettings(value); applySettingsToDocument(value); ui.updateAdaptationMode(this.el, value.adaptationMode);
+  applyAdaptationMode(mode) { if (this.state === 'running') return this.driver.setAdaptationMode(mode); this.applySettings({ ...this.settings, adaptationMode: mode }); return null; }
+  applySettings(value) { const before = this.settings; const modeChange = this.state === 'running' && value.adaptationMode !== before.adaptationMode;
+    this.settings = modeChange ? { ...value, adaptationMode: before.adaptationMode } : value; saveSettings(this.settings); applySettingsToDocument(this.settings); ui.updateAdaptationMode(this.el, this.settings.adaptationMode);
     if (value.speed !== this.speed) { this.speed = value.speed; this.el.speed.value = String(value.speed); this.driver.setSpeed(value.speed); }
-    if (value.adaptationMode !== before.adaptationMode && this.state === 'running') this.driver.message({ t: 'set-adaptation-mode', mode: value.adaptationMode });
+    if (modeChange) this.adapt.pendingMode(value.adaptationMode, this.driver.setAdaptationMode(value.adaptationMode));
     if (this.overlay && value.pauseOnPanels !== before.pauseOnPanels) this.pause.set('panel', this.state === 'running' && value.pauseOnPanels);
     if (this.state === 'result' && value.autoContinue !== before.autoContinue) { if (value.autoContinue) { const r = this.lastResult; startContinuation(this.continuation, performance.now(), { runId: this.activeRunId, resultKey: r && `${r.runId}:${r.seed}:${r.hash}:${r.tick}` }); }
       else { cancelContinuation(this.continuation); this.el.countdown.textContent = ''; } }

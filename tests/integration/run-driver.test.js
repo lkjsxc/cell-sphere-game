@@ -35,6 +35,22 @@ test('fallback abort is authoritative, reward-free data, and exactly once', () =
   assert.equal(aborts[0].summary.history.at(-1).type, 'run-abandoned');
 });
 
+test('Adaptation commands acknowledge success and reject duplicates in fallback authority', async () => {
+  const messages = []; const driver = createRunDriver({ worker: false }, (message) => messages.push(message));
+  const runId = driver.start({ seed: 77, adaptationMode: 'manual' }, 32);
+  driver.frame(1500, performance.now()); const offer = messages.find((message) => message.t === 'adaptation-offered')?.offer;
+  assert.ok(offer); const invalid = driver.chooseAdaptation(offer, 'not-offered'); await Promise.resolve();
+  assert.equal(messages.find((message) => message.commandId === invalid.commandId)?.reason, 'option-not-present');
+  const accepted = driver.chooseAdaptation(offer, offer.options[1]); await Promise.resolve();
+  const selected = messages.find((message) => message.t === 'adaptation-selected' && message.commandId === accepted.commandId);
+  assert.equal(selected.runId, runId); assert.equal(selected.offerVersion, offer.offerVersion); assert.equal(selected.protocolVersion, 2);
+  const duplicate = driver.chooseAdaptation(offer, offer.options[1]); await Promise.resolve();
+  assert.equal(messages.find((message) => message.commandId === duplicate.commandId)?.reason, 'already-resolved');
+  assert.equal(messages.filter((message) => message.t === 'adaptation-selected').length, 1);
+  const mode = driver.setAdaptationMode('manual'); await Promise.resolve();
+  assert.equal(messages.find((message) => message.t === 'adaptation-mode' && message.commandId === mode.commandId)?.mode, 'manual');
+});
+
 test('new generations reject stale messages from prior workers', () => withWorkers(() => {
   const messages = []; const driver = createRunDriver({ worker: true }, (message) => messages.push(message));
   const first = driver.start({ seed: 1 }, 1); const oldWorker = FakeWorker.instances.at(-1);

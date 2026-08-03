@@ -1,13 +1,15 @@
 /** Run-ID-aware Worker protocol around the shared authoritative controller. */
-import { RunController } from './simulator.js';
-import { snapshotTransfers } from './snapshot.js';
-import { BALANCE as B } from '../game/balance.js';
+import { RunController } from '../simulator.js';
+import { snapshotTransfers } from '../snapshot.js';
+import { BALANCE as B } from '../../game/balance.js';
+import { RUN_PROTOCOL_VERSION } from '../../core/run-protocol.js';
+import { executeAdaptationMode, executeAdaptationSelection } from './adaptation-command.js';
 
 let controller = null; let runId = 0; let speed = 1; let paused = false;
 let snapshotEvery = B.SNAPSHOT_EVERY; let ticksSinceSnapshot = 0; let tickDebt = 0; let lastHeartbeat = 0;
 
 function post(message, transfers) {
-  const envelope = { ...message, runId };
+  const envelope = { protocolVersion: RUN_PROTOCOL_VERSION, ...message, runId };
   if (transfers?.length) self.postMessage(envelope, transfers); else self.postMessage(envelope);
 }
 function heartbeat(force = false) {
@@ -40,12 +42,15 @@ self.onmessage = (event) => {
       runId = message.runId; controller = new RunController({ ...message.cfg, runId }, post);
       paused = false; tickDebt = 0; post({ t: 'ready' }); heartbeat(true); return;
     }
-    if (!controller || message.runId !== runId) return;
+    if (!controller) return;
+    if (message.t === 'choose-adaptation' || message.t === 'set-adaptation-mode') {
+      const rejected = message.t === 'choose-adaptation' ? executeAdaptationSelection(controller, message, runId)
+        : executeAdaptationMode(controller, message, runId); if (rejected) post(rejected); else maybeSnapshot(true); return;
+    }
+    if (message.runId !== runId) return;
     switch (message.t) {
       case 'start': controller.start(); maybeSnapshot(true); break;
       case 'abort': if (!controller.abort()) post({ t: 'abort-rejected', status: controller.state.status }); break;
-      case 'set-adaptation-mode': controller.setAdaptationMode(message.mode); maybeSnapshot(true); break;
-      case 'choose-adaptation': controller.chooseAdaptation(message.offerId, message.cardId); maybeSnapshot(true); break;
       case 'inspect-cell': post({ t: 'cell-inspection', requestId: message.requestId,
         cell: controller.inspectCell(message.node) }); break;
       case 'history-preview': {

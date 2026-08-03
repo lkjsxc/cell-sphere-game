@@ -124,3 +124,8 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   states only that shipped effect. New-save/default-run balance and golden hash
   are unchanged because bonuses apply only after purchase. Full-atlas campaign
   pacing still needs deep calibration.
+- **2026-08-03 — Acknowledged Adaptation protocol.** Added command/run/offer
+  identity and explicit rejection without changing simulation equations, RNG,
+  decision order, or the `c55ddab5` benchmark golden. The production title
+  showcase source metadata was regenerated; its 89 frames and data hash
+  `58b20fb2…` are unchanged.
