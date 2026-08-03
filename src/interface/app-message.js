@@ -10,7 +10,7 @@ export function handleRunMessage(app, message) {
     focusCamera(app.camera, app.topo.positions.subarray(message.inoculationCell * 3, message.inoculationCell * 3 + 3));
     ui.announce(app.el, `Life inoculated cell ${message.inoculationCell}.`); return; }
   if (message.t === 'snapshot') { app.snapshot = message; app.driver.snapshot = message; app.adaptationEffects.onSnapshot(message);
-    ui.updateHud(app.el, message); app.adapt.update(app.adaptationModel()); return; }
+    ui.updateHud(app.el, message); app.adapt.update(app.adaptationModel()); app.reachUi.update(message.reach); return; }
   if (message.t === 'history-batch') return app.mergeHistory(message.events);
   if (message.t === 'cell-inspection') { if (message.requestId === app.requestId && message.cell.node === app.selectedNode) {
     app.inspector.updateDynamic(message.cell, app.currentHistory.filter((event) => event.primaryCells.includes(app.selectedNode))); } return; }

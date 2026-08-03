@@ -3,7 +3,9 @@
  * deactivation, detritus decay and reclamation, local sacrifice, dormant
  * cysts, and the terminal collapse cascade.
  */
-import { BALANCE as B } from '../game/balance.js';
+import { BALANCE as B } from '../../game/balance.js';
+import { killCell } from './cell-lifecycle.js';
+import { REACH_CAUSE } from './reach-ledger.js';
 
 /** @param {object} state */
 export function runDeath(state) {
@@ -34,7 +36,7 @@ export function runDeath(state) {
     }
 
     // Cysts slow damage but never own sub-epsilon living authority.
-    if (biomass[i] <= B.BIOMASS_EPS) killNode(state, i);
+    if (biomass[i] <= B.BIOMASS_EPS) { const cause = state.reachDamageCause[i] || reachCause(state, i); killCell(state, i, cause); state.reachDamageCause[i] = 0; }
   }
 
   reclaimDetritus(state);
@@ -71,19 +73,9 @@ function dominantCause(state, i) {
   return 'starvation';
 }
 
-function killNode(state, i) {
-  state.alive[i] = 0;
-  state.aliveCount--;
-  // Leave a thin detritus trace for reclamation visuals.
-  if (state.biomass[i] < 0.02) state.biomass[i] = Math.fround(0.02);
-  const { nodeStart, nodeEdges } = state.topo;
-  const { edgeActive, flux } = state;
-  for (let o = nodeStart[i]; o < nodeStart[i + 1]; o++) {
-    const e = nodeEdges[o];
-    edgeActive[e] = 0;
-    flux[e] = 0;
-  }
-}
+function reachCause(state, cell) { const cause = dominantCause(state, cell);
+  return cause === 'heat' ? REACH_CAUSE.HEAT : cause === 'cold' ? REACH_CAUSE.COLD
+    : cause === 'drought' ? REACH_CAUSE.DROUGHT : cause === 'toxin' ? REACH_CAUSE.TOXIN : REACH_CAUSE.STARVATION; }
 
 /** Dead biomass decays; cannibal strains feed nearby living tissue. */
 function reclaimDetritus(state) {
@@ -118,6 +110,6 @@ function terminalCascade(state) {
     const loss = biomass[i] / remaining;
     biomass[i] = Math.fround(Math.max(0, biomass[i] - loss));
     state.causes.collapse += loss;
-    if (state.tick >= state.terminalDeadline || biomass[i] <= B.BIOMASS_EPS) killNode(state, i);
+    if (state.tick >= state.terminalDeadline || biomass[i] <= B.BIOMASS_EPS) killCell(state, i, REACH_CAUSE.COLLAPSE);
   }
 }

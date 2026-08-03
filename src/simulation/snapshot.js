@@ -2,6 +2,7 @@
 import { liveScore } from '../game/scoring.js';
 import { writeLifeStates } from '../core/life-state.js';
 import { buildEventCellState } from './events.js';
+import { buildReachSummary } from './lifecycle/reach-ledger.js';
 
 export function buildSnapshot(state) {
   const lifeState = writeLifeStates(state.topo, state.alive, state.biomass, state.stress,
@@ -18,6 +19,7 @@ export function buildSnapshot(state) {
     lifeState,
     eventStrength: eventCells.strength,
     eventFamily: eventCells.family,
+    reach: buildReachSummary(state),
     metrics: {
       coverage: state.coverage,
       peakCoverage: state.peakCoverage,

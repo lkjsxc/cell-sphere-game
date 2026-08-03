@@ -68,6 +68,9 @@ button[data-action]:disabled { opacity: .38; filter: saturate(.4); box-shadow: n
   text-shadow: 0 1px 10px var(--bg-deep);
 }
 
+.metric-button { min-height: var(--touch-min); padding: var(--sp-1) var(--sp-3) var(--sp-1) var(--sp-2); color: inherit; background: transparent; border: 1px solid transparent; text-align: left; }
+.metric-button:hover, .metric-button[aria-expanded="true"] { border-color: var(--border-faint); background: rgba(15,20,20,.46); border-radius: var(--radius-s); }
+
 .metric-label {
   font-size: var(--fs-caption);
   color: var(--text-faint);

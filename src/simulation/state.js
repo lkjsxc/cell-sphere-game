@@ -10,6 +10,8 @@ import { createFields } from '../world/fields.js';
 import { buildEntropyLut, buildSeasonLut, buildNodeSeasonOffsets } from './environment.js';
 import { scheduleEvents } from './events.js';
 import { recordHistory } from './replay.js';
+import { birthCell, killCell } from './lifecycle/cell-lifecycle.js';
+import { createReachLedger, REACH_CAUSE } from './lifecycle/reach-ledger.js';
 
 const STREAM = Object.freeze({
   world: 0x51ab3d71,
@@ -52,7 +54,7 @@ export function createRunState(cfg) {
     biomass: new Float32Array(N), energy: new Float32Array(N),
     nutrient: fields.baseNutrient.slice(), moisture: fields.baseMoisture.slice(),
     temperature: fields.baseTemp.slice(), toxicity: new Float32Array(N),
-    stress: new Float32Array(N), membrane: new Float32Array(N), alive: new Uint8Array(N),
+    stress: new Float32Array(N), membrane: new Float32Array(N), alive: new Uint8Array(N), reachDamageCause: new Uint8Array(N),
 
     conductance: new Float32Array(E), edgePeak: new Float32Array(E),
     flux: new Float32Array(E), edgeAge: new Uint16Array(E), edgeActive: new Uint8Array(E),
@@ -75,7 +77,7 @@ export function createRunState(cfg) {
     sustainedSamples: 0, connectedShare: 0, peakConnectedShare: 0,
     minConnectedWhileMajority: 1, largestComponent: 0,
     totalUptake: 0, totalMaintenance: 0, phenotypes: [],
-    causes: { starvation: 0, heat: 0, cold: 0, drought: 0, toxin: 0, event: 0, collapse: 0 },
+    causes: { starvation: 0, heat: 0, cold: 0, drought: 0, toxin: 0, event: 0, collapse: 0 }, reach: createReachLedger(),
 
     phaseIndex: -1, coverageMilestoneIndex: 0, loopMilestone: false, geographySeen: 0,
     wasFragmented: false, reconnectedUntil: -1,
@@ -85,10 +87,9 @@ export function createRunState(cfg) {
   const start = cfg.inoculate ?? selectInoculation(fields, inoculationRng);
   if (!Number.isInteger(start) || start < 0 || start >= N) throw new Error(`invalid inoculation cell: ${start}`);
   state.inoculationCell = start;
-  state.alive[start] = 1;
+  birthCell(state, start, REACH_CAUSE.INOCULATION);
   state.biomass[start] = Math.fround(1.2);
   state.energy[start] = Math.fround(3.0);
-  state.aliveCount = 1;
   state.coverage = 1 / N;
   recordHistory(state, 'run-created');
   recordHistory(state, 'inoculation', { cell: start });
@@ -135,7 +136,7 @@ export function reconcileLiveness(state) {
     if (!Number.isFinite(energy[i])) { invalid++; energy[i] = 0; }
     if (!Number.isFinite(stress[i])) { invalid++; stress[i] = 0; }
     if (alive[i] !== 1) continue;
-    if (biomass[i] <= B.BIOMASS_EPS) { alive[i] = 0; invalid++; continue; }
+    if (biomass[i] <= B.BIOMASS_EPS) { killCell(state, i, REACH_CAUSE.REPAIR); invalid++; continue; }
     count++; total += biomass[i]; if (biomass[i] > max) max = biomass[i];
     if (energy[i] > 0) viable++;
     let hasDeadNeighbor = false;

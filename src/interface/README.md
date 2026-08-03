@@ -12,7 +12,7 @@ it never mutates simulation arrays or consumes authoritative randomness.
 | `camera-policy.js` | Optional idle rotation, interruption, and reduced-motion gate. |
 | `pause-control.js` | Independent manual/hidden/panel pause reasons. |
 | `surfaces.js` | Core HUD, result, notices, and screen visibility. |
-| `inspector-surface.js` | Read-only static geography and low-cadence living detail. |
+| `inspection/` | Read-only cell detail and authoritative Reach Balance surfaces. |
 | `panel-surfaces.js` | Explicit Adaptation and Memory-node/list interactions. |
 | `policies/adaptation-effects.js` | Two-event visual queue, reduced-motion gate, bottom caption lifetime. |
 | `policies/continuation.js` | Nine-second result countdown with independent suspension reasons. |

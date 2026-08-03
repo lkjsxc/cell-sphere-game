@@ -10,8 +10,7 @@ and `node:test`.
 | `environment.js` | Entropy/season LUTs, renewal, toxins, event effects. |
 | `metabolism.js` | Uptake, conversion, maintenance, stress. |
 | `transport.js` | Flow, reinforcement, decay, pruning, reconnection. |
-| `growth.js` | Seeded frontier expansion from habitat and resources. |
-| `death.js` | Death, reclamation, sacrifice, terminal cascade. |
+| `lifecycle/` | Seeded birth/death authority and fixed-size Reach cause accounting. |
 | `connectivity.js` | Largest-component BFS. |
 | `events.js` | Seeded event schedule and footprints. |
 | `summary.js` | Metrics, semantic milestones, events, passive offers. |
@@ -41,7 +40,7 @@ extinction check`
   Owned conditional Memory is compiled once and rebuilt into a tiny effective
   trait block once per tick rather than iterated per cell.
 - Presentation snapshots are cell-only (`biomass`, `stress`, `alive`,
-  `lifeState`). Visual History quantizes those semantics independently; neither
+  `lifeState`) plus exact event bytes and a compact rolling Reach summary. Visual History quantizes those semantics independently; neither
   snapshots nor recorder buffers enter replay, result hashes, or RNG.
 - Replay schema 2 records offer, selection, and mode IDs/ticks/card indices;
   final hashes fold replay and owned decisions.

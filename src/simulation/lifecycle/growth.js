@@ -4,8 +4,10 @@
  * then expand probabilistically using the simulation RNG (fixed iteration
  * order keeps draws deterministic).
  */
-import { BALANCE as B } from '../game/balance.js';
-import { clamp01, tolerance } from '../core/math.js';
+import { BALANCE as B } from '../../game/balance.js';
+import { clamp01, tolerance } from '../../core/math.js';
+import { birthCell } from './cell-lifecycle.js';
+import { REACH_CAUSE } from './reach-ledger.js';
 
 const MOIST_CENTER = 0.55;
 const TEMP_CENTER = 0.6;
@@ -61,11 +63,10 @@ export function runGrowth(state) {
         conductance[e] = Math.fround(startCond);
         if (conductance[e] > edgePeak[e]) edgePeak[e] = conductance[e];
         edgeAge[e] = 0;
-        alive[nb] = 1;
-        biomass[nb] = Math.fround(B.NEW_BIOMASS);
+        const reachCause = biomass[nb] > .01 ? REACH_CAUSE.REGROWTH : REACH_CAUSE.EXPANSION;
+        birthCell(state, nb, reachCause); biomass[nb] = Math.fround(B.NEW_BIOMASS);
         energy[nb] = Math.fround(0.1);
         state.stress[nb] = 0;
-        state.aliveCount++;
         expansions[i]++;
       }
     }

@@ -20,9 +20,8 @@ import { createSurfaceCoordinator } from './policies/surface-coordinator.js';
 import { applySafeLayout, safeLayout } from './policies/layout-policy.js'; import { createTimeDial } from './policies/time-dial.js';
 import { advanceContinuation, cancelContinuation, completeContinuation, continuationLabel, createContinuation, setContinuationPause, startContinuation } from './policies/continuation.js';
 import { finishAbandoned, finishRun, startRun } from './policies/run-session.js';
-import { createNewWorldSurface } from './policies/new-world-surface.js';
-import { createHistorySurface } from './history-surface.js'; import { createHistoryPlayback } from './history-playback.js';
-import { createInspectorSurface } from './inspector-surface.js';
+import { createNewWorldSurface } from './policies/new-world-surface.js'; import { createHistorySurface } from './history-surface.js'; import { createHistoryPlayback } from './history-playback.js';
+import { createInspectorSurface } from './inspection/inspector-surface.js'; import { createReachBalanceSurface } from './inspection/reach-surface.js';
 import { createAdaptationSurface, createMemorySurface } from './panel-surfaces.js';
 import { createSettingsSurface } from './settings-surface.js';
 import { downloadData, parseImportedData, qualityDpr } from './app-data.js';
@@ -54,7 +53,7 @@ class GameApp {
     requestAnimationFrame((now) => this.frame(now)); console.info(`boot ok: ${this.renderer.backend}; passive world ready`);
   } makeSurfaces() {
     this.adapt = createAdaptationSurface({ onClose: () => this.panelClosed('adaptations'), onChoose: (offer, card) => this.choose(offer, card), onMode: (mode) => this.applyAdaptationMode(mode) });
-    this.inspector = createInspectorSurface({ onClose: () => this.closeInspector(), onHistory: () => this.openHistory('current') });
+    this.inspector = createInspectorSurface({ onClose: () => this.closeInspector(), onHistory: () => this.openHistory('current') }); this.reachUi = createReachBalanceSurface({ onClose: () => this.panelClosed('reach-balance'), onSelect: (cells) => { this.historyHighlights = cells; ui.announce(this.el, `${cells.length} recent Reach cells highlighted.`); } });
     this.historyUi = createHistorySurface({ onClose: () => this.panelClosed('history'),
       onWorld: (world) => this.historyPlayback.selectWorld(world), onSeek: (tick, event, world) => this.historyPlayback.seek(tick, event, world),
       onLive: () => this.historyPlayback.live() });
@@ -79,7 +78,7 @@ class GameApp {
     document.getElementById('evolution-focus-available')?.addEventListener('click', () => this.focusAvailableSkill());
     document.querySelectorAll('.settings-open').forEach((button) => button.addEventListener('click', () => this.openSettings()));
     document.querySelectorAll('.history-open').forEach((button) => button.addEventListener('click', () => this.openHistory()));
-    this.el.resultHistory.addEventListener('click', () => this.openHistory('current')); this.el.resultDetails.addEventListener('click', () => this.openResultDetails());
+    this.el.resultHistory.addEventListener('click', () => this.openHistory('current')); this.el.resultDetails.addEventListener('click', () => this.openResultDetails()); this.el.reachButton.addEventListener('click', () => this.openReachBalance()); this.el.resultReach.addEventListener('click', () => this.openReachBalance());
     document.getElementById('result-details-close')?.addEventListener('click', () => this.panelClosed('result-details'));
     document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key === ',') { event.preventDefault(); this.openSettings(); }
       else if (event.key === 'Home' && this.state === 'memory') { event.preventDefault(); this.focusAvailableSkill(); } });
@@ -143,6 +142,7 @@ class GameApp {
   openSettings() { if (this.surfaces.toggle('settings')) return; this.openFull('settings'); this.settingsUi.open(this.state === 'running'); this.activateSurface('settings', this.settingsUi.surface, 'settings-heading'); }
   openResultDetails() { if (this.state !== 'result' || this.surfaces.toggle('result-details')) return; this.openFull('result-details');
     this.activateSurface('result-details', document.getElementById('result-details'), 'result-details-heading'); }
+  openReachBalance() { if (!['running', 'result'].includes(this.state) || this.surfaces.toggle('reach-balance')) return; const result = this.state === 'result'; const data = result ? this.lastResult?.reach : this.snapshot?.reach; if (!data) return; this.openFull('reach-balance'); this.reachUi.open(data, result); this.activateSurface('reach-balance', this.reachUi.surface, 'reach-balance-heading'); }
   openNewWorld() { if (this.state !== 'running' || this.surfaces.toggle('new-world')) return; this.openFull('new-world');
     this.pause.set('new-world', true); this.newWorld.open(this.snapshot); this.activateSurface('new-world', this.newWorld.surface, 'new-world-heading'); }
   confirmNewWorld() { this.newWorld.pending(); if (!this.driver.abort()) this.panelClosed('new-world'); }
@@ -154,7 +154,7 @@ class GameApp {
   closeActiveOverlay() { const name = this.overlay; if (!name) return;
     if (name === 'inspector') this.inspector.close(); else if (name === 'memory-node') this.memoryUi.closeNode();
     else if (name === 'adaptations') this.adapt.close(); else if (name === 'history') { this.historyPlayback.close(); this.historyUi.close(); }
-    else if (name === 'settings') this.settingsUi.close(); else if (name === 'new-world') this.newWorld.close();
+    else if (name === 'settings') this.settingsUi.close(); else if (name === 'new-world') this.newWorld.close(); else if (name === 'reach-balance') { this.reachUi.close(); this.historyHighlights = []; }
     this.surfaces.close(name); this.overlay = null; this.pause.set('panel', false); this.pause.set('new-world', false); this.pauseContinuation('surface', false);
     if (name === 'inspector' || name === 'memory-node') this.selectedNode = null;
     if (name === 'memory-node' && this.state === 'memory') this.memorySnapshot = buildMemorySnapshot(this.topo, this.meta); this.resize(true);

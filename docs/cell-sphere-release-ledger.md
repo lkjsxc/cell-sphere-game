@@ -31,7 +31,7 @@ Vocabulary is evidence-scoped: **implemented**, **tested**, **measured**, **obse
 | 9. 642 Skill Cells | observed 642 rendered cells but 108 definitions | canonical skill content/scene/storage | mapping validator and full legal unlock |
 | 10. Skill migration | target lossless old ownership migration | progression adapter/export/import | old-save and corrupt-field fixtures |
 | 11. Auto continuation | implemented explicit six-state machine with result/run identity and temporary leases; measured drag resumed with 8.47 s | continuation policy, result lifecycle | unit, 100-cycle soak, real-CDP drag→next run pass |
-| 12. Reach Balance | target authoritative direct and condition evidence | lifecycle ledger, snapshots, result UI | exact reconciliation and parity |
+| 12. Reach Balance | implemented centralized birth/death causes, 15-second typed ring, bounded samples, conditions and full-run turning point UI | lifecycle, snapshot/result, stable surface | exact unit reconciliation, speed parity and real-browser run/result evidence |
 | 13. Result globe | tested direct CDP rotation with unchanged score/result key and resumed countdown | globe input and gesture lease | before/after screenshots and browser scenario pass |
 | 14. Trophy Sphere | target 96 implemented achievements on 162 cells | definitions, evaluator, persistence, scene/UI | schema, idempotency, browser/fallback |
 | 15. Graph effects | implemented weighted arrival/influence/predecessor fields and exact renderer bytes; measured 0 ocean violations and 100% irregular fields in 1,386 events | graph core, events, WebGL/Canvas | unit, 200-world audit, browser pass |

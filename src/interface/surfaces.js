@@ -21,6 +21,7 @@ export function elements() {
     adaptationButton: /** @type {HTMLButtonElement} */ (byId('adaptations-button')),
     adaptationBadge: byId('adaptation-badge'), adaptationModeLabel: byId('adaptation-mode-label'),
     boot: byId('boot-status'), score: byId('hud-score'), pressure: byId('hud-pressure'), reach: byId('hud-reach'), trace: byId('hud-trace'),
+    reachButton: byId('reach-balance-button'), resultReach: byId('result-reach-button'),
     event: byId('hud-event-text'), resultRank: byId('result-rank'), resultScore: byId('result-score'),
     resultCause: byId('result-cause'), breakdown: byId('result-breakdown'), resultAdaptations: byId('result-adaptations'),
     echoes: byId('result-echoes'), resultImprint: byId('result-imprint'), memoryBalance: byId('memory-balance'),

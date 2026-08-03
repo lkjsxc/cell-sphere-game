@@ -1,5 +1,5 @@
 /** Read-only cell observatory. Static geography and dynamic life never mutate authority. */
-import { BIOME, LANDMARK, WATER } from '../world/fields.js';
+import { BIOME, LANDMARK, WATER } from '../../world/fields.js';
 
 const BIOME_NAME = Object.freeze({
   [BIOME.DEEP_OCEAN]: 'Deep ocean', [BIOME.SHALLOW_OCEAN]: 'Shallow sea', [BIOME.COAST]: 'Coast',

@@ -9,6 +9,7 @@
 import { BALANCE as B } from '../game/balance.js';
 import { clamp01, smootherstep } from '../core/math.js';
 import { eventEnvelopeAt } from './events.js';
+import { REACH_CAUSE } from './lifecycle/reach-ledger.js';
 
 /** Global deterioration curve, indexed by tick. 0 until rise start, 1 at end. */
 export function buildEntropyLut() {
@@ -123,7 +124,7 @@ function applyEventEffects(state) {
         case 'bloom': state.nutrient[i] = Math.fround(clamp01(state.nutrient[i] + w)); break;
         case 'blight':
           if (state.alive[i] === 1) {
-            state.biomass[i] = Math.fround(Math.max(0, state.biomass[i] - w * 0.25));
+            state.reachDamageCause[i] = REACH_CAUSE.BLIGHT; state.biomass[i] = Math.fround(Math.max(0, state.biomass[i] - w * 0.25));
             state.stress[i] = Math.fround(clamp01(state.stress[i] + w * 0.5));
           }
           break;

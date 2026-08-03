@@ -57,7 +57,7 @@ function semanticResult(result) {
   return {
     hash: result.hash, tick: result.tick, cause: result.cause,
     inoculationCell: result.inoculationCell, ownedCards: result.ownedCards,
-    offers: result.offers, replay: result.replay,
+    offers: result.offers, replay: result.replay, reach: result.reach,
   };
 }
 

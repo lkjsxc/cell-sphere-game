@@ -43,7 +43,7 @@
         <div class="hud-metrics" aria-label="Current world state">
           <div class="metric"><span class="metric-label">NETWORK SCORE</span><strong id="hud-score" class="metric-value">0</strong></div>
           <div class="metric"><span class="metric-label">ENTROPY</span><strong id="hud-pressure" class="metric-value">0%</strong></div>
-          <div class="metric"><span class="metric-label">REACH</span><strong id="hud-reach" class="metric-value">0%</strong><small id="hud-trace" class="metric-trace" hidden>FINAL TRACE</small></div>
+          <button id="reach-balance-button" class="metric metric-button" data-surface-trigger="reach-balance" type="button" aria-expanded="false"><span class="metric-label">REACH</span><strong id="hud-reach" class="metric-value">0%</strong><small id="hud-trace" class="metric-trace" hidden>FINAL TRACE</small></button>
         </div>
       </div>
       <div class="hud-bottom">
@@ -64,7 +64,7 @@
     <section id="result-screen" class="screen" hidden aria-labelledby="result-heading">
       <div class="result-strip material-clear sheet-enter">
         <div class="result-primary"><p id="result-rank" class="result-rank"></p><strong id="result-score" class="result-score score-reveal">0</strong></div>
-        <div class="result-summary"><h2 id="result-heading">Extinction</h2><p id="result-cause" class="result-copy"></p><p id="result-echoes" class="result-echoes"></p><p id="result-countdown" class="result-countdown" role="status"></p></div>
+        <div class="result-summary"><h2 id="result-heading">Extinction</h2><p id="result-cause" class="result-copy"></p><p id="result-echoes" class="result-echoes"></p><button id="result-reach-button" class="reach-link" data-surface-trigger="reach-balance" type="button">Reach Balance</button><p id="result-countdown" class="result-countdown" role="status"></p></div>
         <div class="result-actions"><button id="result-next-button" class="btn btn-primary" data-action="recommended" type="button"><span>Next World</span></button><button id="memory-button" class="btn btn-secondary" data-action="available" type="button"><span>Evolution Globe</span></button><button id="result-history-button" class="btn btn-secondary" data-surface-trigger="history" data-action="normal" type="button" aria-label="History"><span>History</span></button><button id="result-details-button" class="btn btn-secondary" data-surface-trigger="result-details" data-action="quiet" type="button" aria-label="Result details"><span>Details</span></button><button class="btn btn-secondary settings-open" data-surface-trigger="settings" data-action="quiet" type="button" aria-label="Settings"><span>Settings</span></button></div>
       </div>
     </section>
@@ -111,6 +111,8 @@
       <p id="history-selected" class="history-selected">Choose a time to inspect.</p><p id="history-visual-note" class="history-note">Loading device-local visual detail…</p>
       <details class="history-expanded"><summary>Event list</summary><div class="panel-toolbar"><select id="history-filter" aria-label="History category"><option value="all">All events</option><option value="world">World</option><option value="life">Life</option><option value="adaptation">Adaptations</option><option value="crisis">Crises</option></select></div><ol id="history-list" class="history-list"></ol></details>
     </section>
+
+    <section id="reach-balance-dialog" class="context-surface context-reach material-regular" hidden aria-labelledby="reach-balance-heading"><header><div><p class="eyebrow">WORLD DYNAMICS</p><h2 id="reach-balance-heading" tabindex="-1">Reach Balance</h2></div><button id="reach-balance-close" class="close-btn" type="button">Close</button></header><p id="reach-balance-summary" class="panel-copy"></p><div id="reach-balance-counts" class="reach-counts"></div><section><h3>Direct gains</h3><div id="reach-gains" class="reach-factors"></div></section><section><h3>Direct losses</h3><div id="reach-losses" class="reach-factors"></div></section><section class="reach-condition-group"><h3>Supporting conditions</h3><div id="reach-supports" class="reach-factors"></div></section><section class="reach-condition-group"><h3>Limiting conditions</h3><div id="reach-limits" class="reach-factors"></div></section><p id="reach-turning-point" class="time-note" hidden></p></section>
 
     <section id="settings-dialog" class="context-surface context-settings material-regular" hidden aria-labelledby="settings-heading">
       <header><div><p class="eyebrow">SETTINGS</p><h2 id="settings-heading" tabindex="-1">Preferences</h2></div><button id="settings-close" class="close-btn" type="button">Close</button></header>

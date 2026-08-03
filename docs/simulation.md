@@ -58,6 +58,17 @@ cell relative to its own arrival. Snapshots transfer the exact current family
 and strength bytes consumed by WebGL2 and Canvas; neither renderer reconstructs
 a center/radius cap. Ended fields release their retained traversal arrays.
 
+## Reach authority
+
+`birthCell` and `killCell` are the only production writes to living state. Each
+transition records one fixed cause into a 15-second ring of typed buckets and
+full-run totals; eight recent representative cells per cause are retained.
+Rolling gain minus loss exactly reconciles current living cells against the
+window boundary, and full-run gain minus loss reconciles final liveness.
+Snapshots carry top direct causes plus bounded supporting/limiting condition
+scores. Results preserve complete cause totals and the strongest one-second
+turning point. Inspection and highlighting are observational only.
+
 ## Observation
 
 `inspectCell(node)` returns one compact dynamic record (life, biomass, energy,

@@ -9,8 +9,8 @@ import { beginTerminalCollapse, createRunState, reconcileLiveness, terminalColla
 import { updateEnvironment } from './environment.js';
 import { runMetabolism } from './metabolism.js';
 import { runTransport } from './transport.js';
-import { runGrowth } from './growth.js';
-import { runDeath } from './death.js';
+import { runGrowth } from './lifecycle/growth.js';
+import { runDeath } from './lifecycle/death.js';
 import { analyzeConnectivity } from './connectivity.js';
 import { runSummary } from './summary.js';
 import { logReplay, recordHistory, REPLAY } from './replay.js';

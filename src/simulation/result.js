@@ -3,6 +3,7 @@ import { BALANCE as B } from '../game/balance.js';
 import { finalStateHash, serializeHistory, serializeReplay } from './replay.js';
 import { deriveImprint } from './imprint.js';
 import { liveScore } from '../game/scoring.js';
+import { buildReachResult } from './lifecycle/reach-ledger.js';
 
 export function buildRunResult(s) {
   return {
@@ -35,6 +36,7 @@ export function buildRunResult(s) {
     phenotypes: s.phenotypes.slice(),
     imprint: deriveImprint(s),
     causes: { ...s.causes },
+    reach: buildReachResult(s),
     hash: finalStateHash(s),
     replayVersion: s.replayVersion,
     replay: serializeReplay(s),
@@ -47,7 +49,7 @@ export function buildAbandonedRun(s) {
     coverage: s.coverage, score: liveScore(s), archetype: s.fields.archetypeName,
     inoculationCell: s.inoculationCell, adaptationMode: s.adaptationMode,
     offers: s.adaptationOffers.map((offer) => ({ ...offer, options: offer.options.slice() })),
-    history: serializeHistory(s), cause: 'abandoned' };
+    history: serializeHistory(s), reach: buildReachResult(s), cause: 'abandoned' };
 }
 
 export function dominantCause(s) {

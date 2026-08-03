@@ -1,15 +1,15 @@
 /** Authoritative state, passive evolution, observation, and history invariants. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { RunController } from '../../src/simulation/simulator.js';
-import { selectInoculation } from '../../src/simulation/state.js';
-import { offerAdaptation } from '../../src/simulation/summary.js';
-import { finalStateHash, recordHistory } from '../../src/simulation/replay.js';
-import { BALANCE as B } from '../../src/game/balance.js';
-import { createRng } from '../../src/core/prng.js';
-import { LIFE_STATE } from '../../src/core/life-state.js';
-import { snapshotTransfers } from '../../src/simulation/snapshot.js';
-import { executeAdaptationSelection } from '../../src/simulation/protocol/adaptation-command.js';
+import { RunController } from '../../../src/simulation/simulator.js';
+import { selectInoculation } from '../../../src/simulation/state.js';
+import { offerAdaptation } from '../../../src/simulation/summary.js';
+import { finalStateHash, recordHistory } from '../../../src/simulation/replay.js';
+import { BALANCE as B } from '../../../src/game/balance.js';
+import { createRng } from '../../../src/core/prng.js';
+import { LIFE_STATE } from '../../../src/core/life-state.js';
+import { snapshotTransfers } from '../../../src/simulation/snapshot.js';
+import { executeAdaptationSelection } from '../../../src/simulation/protocol/adaptation-command.js';
 
 function run(seed = 4242, mode = 'random', emit = () => {}) {
   const controller = new RunController({ seed, adaptationMode: mode }, emit);
