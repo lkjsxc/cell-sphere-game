@@ -2,21 +2,25 @@
 import { decodeVisualHistory } from '../history/codec.js';
 import { createPreviewBuffers, nearestFrame, projectPreview } from '../history/preview.js';
 import { createRecentRuns } from '../platform/recent-runs.js';
+import { identityFields, sameWorldIdentity } from '../core/world-session.js';
 
 export function createHistoryPlayback(app) {
   const recent = createRecentRuns(); const loads = createHistoryLoadGuard(); const requests = new Map();
   let requestId = 0; let decoded = null; let buffers = null; let seedBefore = null; let progressionBefore = null;
   function request(kind, record = null) {
-    const id = ++requestId; requests.set(id, { kind, record, generation: app.driver.generation });
-    app.driver.message({ t: 'history-buffer', requestId: id }); return id;
+    const id = ++requestId; const identity = app.worldIdentity; if (!identity) return null;
+    requests.set(id, { kind, record, generation: app.driver.generation, identity });
+    app.driver.message({ t: 'history-buffer', requestId: id, ...identityFields(identity) }); return id;
   }
   function handle(message) {
     if (message.t !== 'history-buffer') return false; const pending = requests.get(message.requestId);
-    requests.delete(message.requestId); if (!pending || pending.generation !== app.driver.generation) return true;
+    requests.delete(message.requestId); if (!pending || pending.generation !== app.driver.generation
+      || !sameWorldIdentity(pending.identity, message) || !sameWorldIdentity(message, app.worldIdentity)) return true;
     let value; try { value = decodeVisualHistory(message.buffer); } catch { return true; }
     if (pending.kind === 'save') { recent.put({ ...pending.record, buffer: message.buffer }); return true; }
-    if (app.overlay !== 'history' || app.historyUi.worldId !== 'current' || value.seed !== app.runSeed) return true;
-    useDecoded(value); app.historyUi.setAvailability(true); return true;
+    if (app.historyUi.surface.hidden || app.historyUi.worldId !== 'current' || value.seed !== app.runSeed) return true;
+    useDecoded(value); app.historyUi.setAvailability(true);
+    if (app.historyUi.selectedWorld) seek(app.historyUi.tick, null, app.historyUi.selectedWorld); return true;
   }
   function save(record) { if (record) request('save', record); }
   function open(scope = null) {
@@ -33,13 +37,15 @@ export function createHistoryPlayback(app) {
     app.activateSurface('history', app.historyUi.surface, 'history-heading');
   }
   function selectWorld(world) {
-    const token = loads.next(); app.historySnapshot = null; app.historyHighlights = []; decoded = null; buffers = null;
+    const token = loads.next(); const presentationGeneration = app.presentationGeneration;
+    app.historySnapshot = null; app.historyHighlights = []; decoded = null; buffers = null;
     if (world.current) { restoreFields(); request('view'); app.historyUi.setAvailability(null); return; }
-    app.makeRenderer(world.seed); app.resize(true);
+    app.makeRenderer(world.seed, 'history'); app.resize(true);
     if (world.id === 'empty') { app.historyUi.setAvailability(false, 'No completed semantic or visual History exists yet.'); return; }
     app.historyUi.setAvailability(null);
     recent.get(world.id).then((record) => {
-      if (!loads.isCurrent(token) || app.overlay !== 'history' || app.historyUi.worldId !== world.id) return;
+      if (!loads.isCurrent(token) || presentationGeneration !== app.presentationGeneration
+        || app.historyUi.surface.hidden || app.historyUi.worldId !== world.id) return;
       if (!record) { app.historyUi.setAvailability(false); return; }
       try { const value = decodeVisualHistory(record.buffer); if (value.seed !== world.seed) throw new Error('seed mismatch');
         useDecoded(value); app.historyUi.setAvailability(true); seek(world.tick, world.events.at(-1), world); }
@@ -49,7 +55,8 @@ export function createHistoryPlayback(app) {
   function seek(tick, event, world) {
     app.historyHighlights = event?.primaryCells?.slice(0, 8) ?? [];
     if (!decoded || decoded.seed !== world.seed) { app.historyUi.updateFrame(tick, app.snapshot?.tick ?? world.tick); return; }
-    const frame = nearestFrame(decoded.frames, tick); app.historySnapshot = projectPreview(frame, buffers);
+    const frame = nearestFrame(decoded.frames, tick); const preview = projectPreview(frame, buffers);
+    app.historySnapshot = world.current && app.worldIdentity ? { ...preview, ...identityFields(app.worldIdentity) } : preview;
     app.historyUi.updateFrame(frame.tick, app.snapshot?.tick ?? world.tick);
   }
   function live() {
@@ -58,12 +65,15 @@ export function createHistoryPlayback(app) {
   }
   function close() { loads.invalidate(); requests.forEach((value, key) => { if (value.kind === 'view') requests.delete(key); });
     app.historySnapshot = null; app.historyHighlights = []; restoreFields(); decoded = null; buffers = null; }
+  function retire() { loads.invalidate(); requests.clear(); app.historySnapshot = null; app.historyHighlights = [];
+    decoded = null; buffers = null; seedBefore = null; progressionBefore = null; }
   function restoreFields() {
     if (progressionBefore && app.topo !== (progressionBefore === 'memory' ? app.topo3 : app.topo2)) { app.makeRenderer(0, progressionBefore); app.resize(true); return; }
     if (!progressionBefore && seedBefore != null && (app.visualSeed !== seedBefore || app.topo !== app.topo4)) { app.makeRenderer(seedBefore); app.resize(true); }
   }
   function useDecoded(value) { decoded = value; buffers = createPreviewBuffers(value.cellCount); }
-  return { open, close, handle, save, selectWorld, seek, live, clear: () => recent.clear(), get recentRuns() { return recent; } };
+  return { open, close, retire, handle, save, selectWorld, seek, live, clear: () => recent.clear(),
+    get pendingRequests() { return requests.size; }, get recentRuns() { return recent; } };
 }
 
 export function createHistoryLoadGuard() {

@@ -1,0 +1,71 @@
+/** Production atomic replacement coordinator exercised without browser presentation. */
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { defaultMeta } from '../../src/platform/storage.js';
+import { createWorldIdentity, sameWorldIdentity } from '../../src/core/world-session.js';
+import { createContinuation } from '../../src/interface/policies/continuation.js';
+import { createWorldReplacementState, markWorldStarted, requestWorldReplacement } from '../../src/interface/policies/run-session.js';
+
+function node() { return { textContent: '', hidden: false, dataset: {}, classList: { toggle() {} },
+  setAttribute() {}, replaceChildren() {} }; }
+function elements() { const value = {}; for (const name of ['title','run','result','memory','trophies','countdown','event','live',
+  'resultRank','resultScore','resultCause','echoes','resultTrophies','resultImprint','resultAdaptations','breakdown','score',
+  'pressure','reach','trace','adaptationBadge','adaptationButton']) value[name] = node();
+  value.adaptationButton.dataset.mode = 'random'; return value; }
+function harness() {
+  const counts = new Map(); const hit = (name) => counts.set(name, (counts.get(name) ?? 0) + 1); let runId = 0;
+  const renderer = { backend: 'test', lastFrameAudit: null, bindWorldSession() { hit('bind'); }, resetDynamicState() { hit('renderer-reset'); },
+    render(scene) { hit('render'); const snap = scene.snapshot; this.lastFrameAudit = { lifeCells: snap.alive.reduce((a,b)=>a+b,0),
+      eventCells: snap.eventStrength.reduce((a,b)=>a+(b>0),0), highlights: scene.highlightedCells.length, adaptation: Boolean(scene.adaptation) }; return true; } };
+  const app = { state: 'title', meta: defaultMeta(), settings: { adaptationMode: 'random', historyRetention: 24 }, speed: 32,
+    el: elements(), topo4: { nodeCount: 32 }, worldIdentity: null, retiredWorldIdentity: null, activeRunId: 0,
+    worldSessionSequence: 0, presentationGeneration: 0, worldReplacement: createWorldReplacementState(),
+    requestId: 0, requestGeneration: 0, continuation: createContinuation(), countdownLabel: '', renderer,
+    presentationAudit: { blankFrames: 0, lastBlank: null }, offers: [{ id: 1 }], cards: ['x'], currentHistory: [{ seq: 1 }],
+    lastResult: { old: true }, lastResultIdentity: null, historySnapshot: { old: true }, historyHighlights: [4],
+    snapshot: { old: true }, worldFields: { old: true }, fields: { old: true }, selectedNode: 4, overlay: 'history',
+    lastInspect: 9, lastRender: 9,
+    driver: { outcome: null, starts: [], stop() { hit('driver-stop'); this.snapshot = null; }, installSnapshot(value) { this.snapshot = value; },
+      reserveIdentity(value) { const identity = createWorldIdentity({ ...value, runId: ++runId }); this.identity = identity; return identity; },
+      start(config, speed, identity) { this.starts.push({ config, speed, identity }); return identity.runId; } },
+    flow: { send(event) { hit(`flow-${event}`); app.state = 'starting'; } }, pause: { clear() { hit('pause-clear'); } },
+    adaptationEffects: { clear() { hit('effects-clear'); } }, historyPlayback: { retire() { hit('history-retire'); } },
+    surfaces: { reset() { hit('surfaces-reset'); } }, inspector: { close() { hit('inspector-close'); } },
+    historyUi: { reset() { hit('history-reset'); } }, reachUi: { reset() { hit('reach-reset'); } }, adapt: { reset() { hit('adapt-reset'); } },
+    newWorld: { close() { hit('new-world-close'); } }, settingsUi: { close() { hit('settings-close'); } },
+    memoryUi: { closeNode() { hit('memory-close'); } }, trophyUi: { close() { hit('trophy-close'); } },
+    timeDial: { reset() { hit('time-reset'); } }, makeRenderer() { hit('make-renderer'); this.renderer = renderer; }, resize() { hit('resize'); },
+  };
+  return { app, counts };
+}
+
+test('replacement teardown clears every current-world field before one static blank and authority', () => {
+  const oldLocation = globalThis.location; globalThis.location = { search: '' }; const { app, counts } = harness();
+  try { assert.equal(requestWorldReplacement(app, 'title-grow'), true); } finally {
+    if (oldLocation) globalThis.location = oldLocation; else delete globalThis.location;
+  }
+  assert.equal(app.worldReplacement.status, 'starting'); assert.equal(app.driver.starts.length, 1);
+  assert.equal(app.meta.worldSeedIndex, 1); assert.equal(app.presentationAudit.blankFrames, 1);
+  assert.deepEqual(app.renderer.lastFrameAudit, { lifeCells: 0, eventCells: 0, highlights: 0, adaptation: false });
+  assert.equal(sameWorldIdentity(app.snapshot, app.worldIdentity), true); assert.equal(app.snapshot.status, 'starting');
+  assert.equal(counts.get('renderer-reset'), 2, 'old and new renderer dynamic state');
+  for (const name of ['driver-stop','pause-clear','effects-clear','history-retire','surfaces-reset','inspector-close',
+    'history-reset','reach-reset','adapt-reset','new-world-close','settings-close','memory-close','trophy-close','time-reset']) assert.equal(counts.get(name), 1, name);
+  assert.deepEqual(app.offers, []); assert.deepEqual(app.cards, []); assert.deepEqual(app.currentHistory, []);
+  assert.equal(app.selectedNode, null); assert.equal(app.overlay, null); assert.equal(app.historySnapshot, null); assert.deepEqual(app.historyHighlights, []);
+  assert.equal(app.lastResult, null); assert.equal(app.worldFields, null); assert.equal(app.driver.snapshot, app.snapshot);
+});
+
+test('100 replacement cycles are first-wins with unique seed, authority, identity, and blank frame', () => {
+  const oldLocation = globalThis.location; globalThis.location = { search: '' }; const { app } = harness(); const keys = new Set(); const seeds = new Set();
+  try { for (let cycle = 0; cycle < 100; cycle++) {
+    assert.equal(requestWorldReplacement(app, 'soak'), true); assert.equal(requestWorldReplacement(app, 'same-frame-race'), false);
+    const identity = app.worldIdentity; keys.add(identity.resultTransactionKey); seeds.add(identity.seed);
+    assert.equal(markWorldStarted(app, identity), true); app.state = 'running';
+  } } finally { if (oldLocation) globalThis.location = oldLocation; else delete globalThis.location; }
+  assert.equal(app.driver.starts.length, 100); assert.equal(app.presentationAudit.blankFrames, 100);
+  assert.equal(app.worldReplacement.accepted, 100); assert.equal(app.worldReplacement.rejected, 100);
+  assert.equal(keys.size, 100); assert.equal(seeds.size, 100); assert.equal(app.meta.worldSeedIndex, 100);
+  assert.equal(new Set(app.driver.starts.map((item) => item.identity.runId)).size, 100);
+  assert.equal(new Set(app.driver.starts.map((item) => item.identity.presentationGeneration)).size, 100);
+});

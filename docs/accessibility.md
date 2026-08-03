@@ -38,7 +38,9 @@ Pause is reachable before opening panels. Manual, hidden-document, and panel
 reasons are independent; closing Settings cannot resume a manual pause.
 Pending manual Adaptations remain indefinitely. Hidden documents stop rendering
 through browser scheduling, pause authority through the lifecycle adapter, and
-suspend rather than consume the unattended result countdown.
+pause rather than consume the unattended result countdown. Any trusted focus,
+keyboard, pointer, touch, wheel, or control interaction at a result permanently
+cancels Auto Next for that result; the quiet cancellation status remains visible.
 
 ## Known limitations / unmeasured
 

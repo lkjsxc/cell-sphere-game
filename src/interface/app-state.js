@@ -6,7 +6,7 @@ export function createAppState() {
     initial: 'title',
     transitions: {
       title: { begin: 'starting', trophies: 'trophies' },
-      starting: { ready: 'running', fail: 'title' },
+      starting: { ready: 'running', replace: 'starting', fail: 'title' },
       running: { extinct: 'result', abort: 'starting' },
       result: { memory: 'memory', trophies: 'trophies', restart: 'starting' },
       memory: { trophies: 'trophies', restart: 'starting' },

@@ -1,61 +1,63 @@
-/** WebGL2 composition: quiet field, dual-cell world, atmosphere, and life. */
+/** WebGL2 four-draw composition with explicit world-session binding. */
 import { createProgram, uniformMap } from './gl-utils.js';
 import * as SHELL from './shaders-shell.js';
 import { viewProjection, cameraEye } from './camera.js';
+import { sameWorldIdentity } from '../core/world-session.js';
 import { WorldPass } from './world-pass.js';
 
 export class GLRenderer {
   constructor(canvas, topo, fields, opts = {}) {
-    this.canvas = canvas;
-    this.topo = topo;
+    this.canvas = canvas; this.topo = topo; this.disposed = false; this.boundIdentity = null;
+    this.acceptedFrames = 0; this.rejectedFrames = 0; this.lastFrameAudit = null;
     const gl = canvas.getContext('webgl2', { antialias: true, alpha: false });
     if (!gl) throw new Error('WebGL2 unavailable');
-    this.gl = gl;
-    this.backend = 'webgl2';
-    this.drawCalls = 4;
+    this.gl = gl; this.backend = 'webgl2'; this.drawCalls = 4;
     this.background = this.make(SHELL.VS_BACKGROUND, SHELL.FS_BACKGROUND);
-    this.world = new WorldPass(gl, topo, fields);
-    this.onContextLoss = opts.onContextLoss ?? (() => {});
-    canvas.addEventListener('webglcontextlost', (event) => {
-      event.preventDefault(); this.onContextLoss();
-    });
+    this.world = new WorldPass(gl, topo, fields); this.onContextLoss = opts.onContextLoss ?? (() => {});
+    this.contextLossListener = (event) => { event.preventDefault(); if (!this.disposed) this.onContextLoss(); };
+    canvas.addEventListener('webglcontextlost', this.contextLossListener);
   }
-
   make(vertex, fragment) {
     const program = createProgram(this.gl, vertex, fragment);
     return { program, u: uniformMap(this.gl, program) };
   }
-
+  bindWorldSession(identity) { if (this.disposed) return false; this.boundIdentity = identity ?? null;
+    this.world.bindWorldSession(this.boundIdentity); return true; }
+  resetDynamicState() {
+    if (this.disposed) return false; this.world.resetDynamicState(); const gl = this.gl;
+    gl.viewport(0, 0, this.canvas.width, this.canvas.height); gl.clearColor(0.012, 0.016, 0.022, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); this.lastFrameAudit = null; return true;
+  }
   resize(cssWidth, cssHeight, dpr) {
-    const width = Math.max(1, Math.round(cssWidth * dpr));
+    if (this.disposed) return; const width = Math.max(1, Math.round(cssWidth * dpr));
     const height = Math.max(1, Math.round(cssHeight * dpr));
-    if (this.canvas.width !== width || this.canvas.height !== height) {
-      this.canvas.width = width; this.canvas.height = height;
-    }
+    if (this.canvas.width !== width || this.canvas.height !== height) { this.canvas.width = width; this.canvas.height = height; }
   }
-
+  accepts(scene) { return !this.boundIdentity || (sameWorldIdentity(scene.worldIdentity, this.boundIdentity)
+    && sameWorldIdentity(scene.snapshot, this.boundIdentity)); }
   render(scene) {
-    const gl = this.gl;
-    const aspect = this.canvas.width / Math.max(1, this.canvas.height);
-    const vp = viewProjection(scene.camera, aspect);
-    const eye = cameraEye(scene.camera);
-    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    gl.clearColor(0.012, 0.016, 0.022, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.enable(gl.DEPTH_TEST); gl.disable(gl.BLEND);
-
-    gl.depthMask(false);
-    gl.useProgram(this.background.program);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-    gl.depthMask(true);
-
-    this.world.draw(vp, eye, scene.snapshot, scene.selectedNode, scene.adaptation, scene.highlightedCells ?? []);
-    gl.bindVertexArray(null);
+    if (this.disposed || !this.accepts(scene)) { this.rejectedFrames++; return false; }
+    const gl = this.gl; const aspect = this.canvas.width / Math.max(1, this.canvas.height);
+    const vp = viewProjection(scene.camera, aspect); const eye = cameraEye(scene.camera);
+    gl.viewport(0, 0, this.canvas.width, this.canvas.height); gl.clearColor(0.012, 0.016, 0.022, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); gl.enable(gl.DEPTH_TEST); gl.disable(gl.BLEND);
+    gl.depthMask(false); gl.useProgram(this.background.program); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.depthMask(true);
+    if (!this.world.draw(vp, eye, scene.snapshot, scene.selectedNode, scene.adaptation, scene.highlightedCells ?? [])) {
+      this.rejectedFrames++; return false;
+    }
+    gl.bindVertexArray(null); this.acceptedFrames++;
+    this.lastFrameAudit = frameAudit(scene, this.world.dynamicState()); return true;
   }
-
   dispose() {
-    const gl = this.gl;
-    this.world.dispose();
-    gl.deleteProgram(this.background.program);
+    if (this.disposed) return; this.disposed = true;
+    this.canvas.removeEventListener('webglcontextlost', this.contextLossListener);
+    this.world.dispose(); this.gl.deleteProgram(this.background.program); this.boundIdentity = null;
   }
 }
+function frameAudit(scene, dynamic) {
+  const snapshot = scene.snapshot; return Object.freeze({ worldSessionId: snapshot?.worldSessionId ?? null,
+    presentationGeneration: snapshot?.presentationGeneration ?? null, lifeCells: count(snapshot?.alive),
+    eventCells: count(snapshot?.eventStrength), highlights: scene.highlightedCells?.length ?? 0,
+    adaptation: Boolean(scene.adaptation), dynamic });
+}
+function count(values) { let result = 0; if (values) for (const value of values) if (value) result++; return result; }

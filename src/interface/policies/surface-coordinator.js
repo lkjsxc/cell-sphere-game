@@ -9,9 +9,9 @@ export function classifySurfaceTarget(path, surface, currentTriggers) {
   return 'empty';
 }
 
-export function createSurfaceCoordinator(onDismiss) {
+export function createSurfaceCoordinator(onDismiss, runProgrammaticFocus = (callback) => callback()) {
   let active = null; let opener = null; let element = null; let triggers = [];
-  let restoreFocus = true; const sequences = new Map(); const emptyClicks = new Map();
+  let restoreFocus = true; let focusGeneration = 0; const sequences = new Map(); const emptyClicks = new Map();
   const scrim = document.getElementById('surface-scrim');
   const pathOf = (event) => event.composedPath?.() ?? [event.target];
   const dismiss = (preserveTarget) => { restoreFocus = !preserveTarget; onDismiss(active); };
@@ -51,16 +51,22 @@ export function createSurfaceCoordinator(onDismiss) {
       const focused = document.activeElement;
       opener = focused instanceof HTMLElement && !nextElement.contains(focused) ? focused : triggers[0] ?? null;
       for (const trigger of triggers) trigger.setAttribute('aria-expanded', 'true');
-      element.hidden = false; if (scrim) scrim.hidden = false;
-      requestAnimationFrame(() => focusTarget?.focus?.({ preventScroll: true }));
+      element.hidden = false; if (scrim) scrim.hidden = false; const token = ++focusGeneration;
+      requestAnimationFrame(() => { if (token !== focusGeneration || active !== name) return;
+        runProgrammaticFocus(() => focusTarget?.focus?.({ preventScroll: true })); });
     },
     close(name) {
       if (name !== active) return;
       if (element) element.hidden = true; for (const trigger of triggers) trigger.setAttribute('aria-expanded', 'false');
       if (scrim) scrim.hidden = true; const restore = restoreFocus ? opener : null;
       active = null; opener = null; element = null; triggers = []; restoreFocus = true; sequences.clear();
-      if (restore?.isConnected) requestAnimationFrame(() => restore.focus({ preventScroll: true }));
+      const token = ++focusGeneration; if (restore?.isConnected) requestAnimationFrame(() => {
+        if (token !== focusGeneration || active) return;
+        runProgrammaticFocus(() => restore.focus({ preventScroll: true })); });
     },
+    reset() { focusGeneration++; restoreFocus = false; if (element) element.hidden = true;
+      for (const trigger of triggers) trigger.setAttribute('aria-expanded', 'false'); if (scrim) scrim.hidden = true;
+      active = null; opener = null; element = null; triggers = []; restoreFocus = true; sequences.clear(); emptyClicks.clear(); },
     toggle(name) { if (active !== name) return false; dismiss(false); return true; },
     get active() { return active; },
     dispose() { document.removeEventListener('keydown', keydown); document.removeEventListener('pointerdown', pointerdown, true);

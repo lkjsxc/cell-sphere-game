@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRunDriver } from '../../src/interface/run-driver.js';
 import { seedForRun } from '../../src/interface/app-data.js';
+import { identityFields } from '../../src/core/world-session.js';
 
 class FakeWorker {
   static instances = [];
@@ -15,6 +16,7 @@ function withWorkers(run) {
   const prior = globalThis.Worker; globalThis.Worker = FakeWorker; FakeWorker.instances = [];
   try { return run(); } finally { if (prior) globalThis.Worker = prior; else delete globalThis.Worker; }
 }
+function deliver(worker, driver, message) { worker.deliver({ ...message, ...identityFields(driver.identity) }); }
 
 test('world seed sequence advances unless an explicit seed is present', () => {
   assert.equal(seedForRun(0, '?demo=1'), 20260731);
@@ -57,7 +59,7 @@ test('new generations reject stale messages from prior workers', () => withWorke
   const second = driver.start({ seed: 2 }, 1); const current = FakeWorker.instances.at(-1);
   assert.ok(second > first && oldWorker.terminated);
   oldWorker.deliver({ t: 'extinct', runId: first, summary: { runId: first } });
-  current.deliver({ t: 'ready', runId: second });
+  deliver(current, driver, { t: 'ready', runId: second });
   assert.equal(messages.some((message) => message.runId === first), false);
   assert.equal(messages.filter((message) => message.t === 'ready').length, 1);
 }));
@@ -67,21 +69,48 @@ test('abort and extinction races settle on the first delivered authority outcome
     if (message.t === 'aborted' || message.t === 'extinct') outcomes.push(message.t);
   });
   const first = driver.start({ seed: 3 }, 1); const a = FakeWorker.instances.at(-1);
-  a.deliver({ t: 'ready', runId: first }); driver.ready(); driver.abort();
-  a.deliver({ t: 'extinct', runId: first, summary: { runId: first } });
-  a.deliver({ t: 'aborted', runId: first, summary: { runId: first } });
+  deliver(a, driver, { t: 'ready', runId: first }); driver.ready(); driver.abort();
+  deliver(a, driver, { t: 'extinct', runId: first, summary: { runId: first } });
+  deliver(a, driver, { t: 'aborted', runId: first, summary: { runId: first } });
   assert.deepEqual(outcomes, ['extinct']);
   const second = driver.start({ seed: 4 }, 1); const b = FakeWorker.instances.at(-1);
-  b.deliver({ t: 'ready', runId: second }); driver.ready(); driver.abort();
-  b.deliver({ t: 'aborted', runId: second, summary: { runId: second } });
-  b.deliver({ t: 'extinct', runId: second, summary: { runId: second } });
+  deliver(b, driver, { t: 'ready', runId: second }); driver.ready(); driver.abort();
+  deliver(b, driver, { t: 'aborted', runId: second, summary: { runId: second } });
+  deliver(b, driver, { t: 'extinct', runId: second, summary: { runId: second } });
   assert.deepEqual(outcomes, ['extinct', 'aborted']);
+}));
+
+test('fallback synchronous emissions occur only after the complete identity is published', () => {
+  const messages = []; let published = null; const driver = createRunDriver({ worker: false }, (message) => {
+    assert.deepEqual(identityFields(message), identityFields(published)); messages.push(message);
+  });
+  published = driver.reserveIdentity({ worldSessionId: 91, seed: 123, presentationGeneration: 17 });
+  const runId = driver.start({ seed: 123, adaptationMode: 'random' }, 1, published);
+  assert.equal(runId, published.runId); assert.equal(messages.some((message) => message.t === 'started'), true);
+  assert.equal(messages.some((message) => message.t === 'snapshot'), true);
+  driver.stop(); assert.equal(driver.identity, null); assert.equal(driver.snapshot, null); assert.equal(driver.runId, 0);
+});
+
+test('retirement invalidates queued fallback commands', async () => {
+  const messages = []; const driver = createRunDriver({ worker: false }, (message) => messages.push(message));
+  const first = driver.reserveIdentity({ worldSessionId: 1, seed: 44, presentationGeneration: 1 });
+  driver.start({ seed: 44, adaptationMode: 'manual' }, 1, first); const command = driver.setAdaptationMode('random');
+  const before = messages.length; const second = driver.reserveIdentity({ worldSessionId: 2, seed: 45, presentationGeneration: 2 });
+  driver.start({ seed: 45, adaptationMode: 'manual' }, 1, second); await Promise.resolve();
+  assert.equal(messages.slice(before).some((message) => message.commandId === command.commandId), false);
+});
+
+test('worker callbacks require the full session/run/generation tuple', () => withWorkers(() => {
+  const messages = []; const driver = createRunDriver({ worker: true }, (message) => messages.push(message));
+  const runId = driver.start({ seed: 9 }, 1); const worker = FakeWorker.instances.at(-1); const current = driver.identity;
+  worker.deliver({ t: 'ready', ...identityFields(current), presentationGeneration: current.presentationGeneration + 1 });
+  assert.equal(messages.length, 0); deliver(worker, driver, { t: 'ready', runId }); assert.equal(messages.length, 1);
 }));
 
 test('worker silence requests status then exposes an explicit recoverable failure', () => withWorkers(() => {
   const messages = []; const driver = createRunDriver({ worker: true }, (message) => messages.push(message));
   const runId = driver.start({ seed: 5 }, 1); const worker = FakeWorker.instances.at(-1);
-  worker.deliver({ t: 'ready', runId }); driver.ready(); const base = performance.now();
+  deliver(worker, driver, { t: 'ready', runId }); driver.ready(); const base = performance.now();
   driver.frame(0, base + 2600);
   assert.equal(worker.sent.some((message) => message.t === 'status' && message.runId === runId), true);
   driver.frame(0, base + 5100);

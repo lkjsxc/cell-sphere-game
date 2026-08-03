@@ -12,7 +12,9 @@ import { createTopology } from '../../src/world/icosphere.js';
 import { createCamera, viewProjection } from '../../src/rendering/camera.js';
 import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from '../../src/interface/camera-policy.js';
 import { createPauseControl } from '../../src/interface/pause-control.js';
-import { advanceContinuation, completeContinuation, createContinuation, setContinuationPause, startContinuation } from '../../src/interface/policies/continuation.js';
+import { advanceContinuation, cancelContinuation, completeContinuation, continuationInteractionType, continuationLabel,
+  createContinuation, createContinuationInteractionGuard, disableContinuation, setContinuationHidden,
+  startContinuation } from '../../src/interface/policies/continuation.js';
 
 const LEGACY_IDS = Object.keys(LEGACY_MEMORY_MAP);
 
@@ -167,17 +169,53 @@ test('idle globe rotation is opt-in, interruptible, reduced-motion safe, and fin
   for (const value of viewProjection(camera, 1)) assert.ok(Number.isFinite(value));
 });
 
-test('result continuation fires once and releases temporary suspension reasons', () => {
+test('untouched continuation fires once, while hidden time is excluded', () => {
   const state = createContinuation(9000); let now = 0;
   for (let run = 0; run < 100; run++) {
-    const generation = startContinuation(state, now, { resultKey: `result-${run}`, runId: run }); now += 4000;
-    assert.equal(advanceContinuation(state, now), false); setContinuationPause(state, 'hidden', true, now); now += 20_000; assert.equal(advanceContinuation(state, now), false); setContinuationPause(state, 'hidden', false, now); now += 5000;
-    assert.equal(advanceContinuation(state, now), true); assert.equal(state.status, 'firing');
+    const generation = startContinuation(state, now, { resultTransactionKey: `result-${run}`, runId: run, presentationGeneration: run + 1 });
+    now += 4000; assert.equal(advanceContinuation(state, now), false);
+    setContinuationHidden(state, true, now); now += 20_000; assert.equal(advanceContinuation(state, now), false);
+    setContinuationHidden(state, false, now); now += 5000; assert.equal(advanceContinuation(state, now), true);
     assert.equal(completeContinuation(state, generation), true); assert.equal(advanceContinuation(state, now + 1000), false);
   }
-  startContinuation(state, now); setContinuationPause(state, 'gesture', true, now); now += 90_000; assert.equal(advanceContinuation(state, now), false); assert.equal(state.remainingMs, 9000);
-  setContinuationPause(state, 'gesture', false, now, 350); now += 349; assert.equal(advanceContinuation(state, now), false);
-  now += 1; assert.equal(advanceContinuation(state, now), false); assert.equal(state.status, 'counting');
+});
+
+test('every trusted interaction class cancels permanently; untrusted and movement do not', () => {
+  const cases = [
+    [{ type: 'pointerdown', pointerType: 'mouse', isTrusted: true }, 'pointer'],
+    [{ type: 'pointerdown', pointerType: 'touch', isTrusted: true }, 'touch'],
+    [{ type: 'touchstart', isTrusted: true }, 'touch'], [{ type: 'wheel', isTrusted: true }, 'wheel'],
+    [{ type: 'keydown', key: 'Tab', isTrusted: true }, 'keyboard'], [{ type: 'click', isTrusted: true }, 'control'],
+    [{ type: 'focusin', isTrusted: true }, 'focus'], [{ type: 'input', isTrusted: true }, 'control'],
+    [{ type: 'change', isTrusted: true }, 'control'],
+  ];
+  for (const [event, kind] of cases) { assert.equal(continuationInteractionType(event), kind); const state = createContinuation();
+    const generation = startContinuation(state, 0, { resultTransactionKey: kind });
+    assert.equal(cancelContinuation(state, kind), true); assert.equal(continuationLabel(state), 'Auto next cancelled for this result');
+    assert.equal(advanceContinuation(state, 99_000), false); assert.equal(state.generation, generation); }
+  for (const event of [{ type: 'pointermove', isTrusted: true }, { type: 'mousemove', isTrusted: true },
+    { type: 'visibilitychange', isTrusted: true }, { type: 'click', isTrusted: false }, { type: 'keydown', key: 'x', isTrusted: false }]) {
+    assert.equal(continuationInteractionType(event), null);
+  }
+});
+
+test('interaction listener registry is bounded and suppresses only the exact programmatic focus call', () => {
+  const listeners = new Map(); const target = { addEventListener(type, fn) { listeners.set(type, fn); },
+    removeEventListener(type) { listeners.delete(type); } }; const seen = [];
+  const guard = createContinuationInteractionGuard(target, (type) => seen.push(type));
+  assert.equal(guard.listenerCount, 8); listeners.get('focusin')({ type: 'focusin', isTrusted: true });
+  guard.runProgrammaticFocus(() => listeners.get('focusin')({ type: 'focusin', isTrusted: true }));
+  listeners.get('pointerdown')({ type: 'pointerdown', pointerType: 'mouse', isTrusted: true });
+  assert.deepEqual(seen, ['focus', 'pointer']); guard.dispose(); guard.dispose();
+  assert.equal(guard.listenerCount, 0); assert.equal(listeners.size, 0);
+});
+
+test('setting toggles never rearm a cancelled result and a new result gets a fresh generation', () => {
+  const state = createContinuation(); const first = startContinuation(state, 0, { resultTransactionKey: 'first' });
+  cancelContinuation(state, 'control'); disableContinuation(state, { resultTransactionKey: 'first' });
+  assert.equal(state.status, 'disabled'); assert.equal(advanceContinuation(state, 90_000), false);
+  const second = startContinuation(state, 100_000, { resultTransactionKey: 'second' });
+  assert.ok(second > first); assert.equal(state.status, 'counting'); assert.equal(state.resultKey, 'second');
 });
 
 test('pause reasons release only their own ownership', () => {

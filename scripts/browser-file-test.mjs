@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runScenario } from './browser/scenario.mjs';
+import { assertBlankReplacement, installFirstReplacementCapture, runScenario } from './browser/scenario.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROFILE = `/tmp/incremental-network-game-browser-${process.pid}`;
@@ -82,7 +82,15 @@ async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait
   await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-canvas-history-desktop.png');
   await evaluate("document.getElementById('history-close').click(); document.getElementById('memory-button').click()"); await wait(180); await screenshot('browser-canvas-memory-desktop.png');
   const atlas = await evaluate('window.__IN_APP__.memorySnapshot.memoryStatus.length'); await evaluate("document.querySelector('#memory-screen .trophy-open').click()"); await wait(180); await screenshot('browser-canvas-trophy-desktop.png');
-  const trophies = await evaluate(`({cells:window.__IN_APP__.trophySnapshot.memoryStatus.length,nodes:window.__IN_APP__.trophySnapshot.nodeStates.length})`); if (score <= 0 || atlas !== 642 || trophies.cells !== 162 || trophies.nodes !== 96 || errors.length) throw new Error('Canvas fallback state failed'); return { score };
+  const trophies = await evaluate(`({cells:window.__IN_APP__.trophySnapshot.memoryStatus.length,nodes:window.__IN_APP__.trophySnapshot.nodeStates.length})`);
+  await installFirstReplacementCapture(evaluate); const oldRun = await evaluate('window.__IN_APP__.activeRunId');
+  await evaluate("document.getElementById('trophy-next-button').click()");
+  if (!await poll(() => evaluate('window.__IN_APP__.activeRunId'), (runId) => runId > oldRun, 5000)) throw new Error('Canvas replacement did not start');
+  assertBlankReplacement(await evaluate('window.__IN_APP__.__firstReplacementFrame'), 'Canvas 2D');
+  const bounded = await evaluate(`(() => { const a=window.__IN_APP__; return {...a.worldResourceAudit(),raf:a.frameAudit}; })()`);
+  if (bounded.interactionListeners !== 8 || bounded.historyRequests || bounded.adaptationEffects || bounded.adaptationBytes || bounded.adaptationTimers
+    || bounded.raf.errors || bounded.raf.scheduled < bounded.raf.frames - 1) throw new Error(`Canvas replacement resources/RAF leaked: ${JSON.stringify(bounded)}`);
+  if (score <= 0 || atlas !== 642 || trophies.cells !== 162 || trophies.nodes !== 96 || errors.length) throw new Error('Canvas fallback state failed'); return { score };
 }
 
 function protocol(child) {
@@ -134,9 +142,9 @@ async function screenshot(cdp, session, name) {
   return { hash: createHash('sha256').update(data).digest('hex') };
 }
 
-async function poll(read, done, timeout) {
+async function poll(read, done, timeout, interval = 400) {
   const end = performance.now() + timeout;
-  while (performance.now() < end) { const value = await read(); if (done(value)) return true; await wait(400); }
+  while (performance.now() < end) { const value = await read(); if (done(value)) return true; await wait(interval); }
   return false;
 }
 

@@ -114,9 +114,10 @@ codec/fuzz/bounds/stale-load tests and real-Chrome scrub/reload.
 
 Ambient play should not stop at an opaque result card, but progression must
 never be spent implicitly. Keep the terminal world behind a compact strip and
-start a nine-second next-world countdown. Interaction cancels it; hidden state
-and detail surfaces suspend remaining time; only explicit Memory input spends
-Echoes. Result awards are idempotent. Evidence: policy tests, 100-world soak,
+start a nine-second next-world countdown. Hidden time pauses it; the first
+trusted interaction—including opening or closing a detail surface—cancels it
+permanently for that result. Settings toggles never rearm it. Only explicit
+Memory input spends Echoes. Result awards are idempotent. Evidence: policy tests, 100-world soak,
 and a no-input real-Chrome second-result → third-world transition.
 
 ## D16 — Every Evolution Globe cell is a Skill Cell

@@ -3,13 +3,14 @@ import { RunController } from '../simulator.js';
 import { snapshotTransfers } from '../snapshot.js';
 import { BALANCE as B } from '../../game/balance.js';
 import { RUN_PROTOCOL_VERSION } from '../../core/run-protocol.js';
+import { createWorldIdentity, identityFields, sameWorldIdentity } from '../../core/world-session.js';
 import { executeAdaptationMode, executeAdaptationSelection } from './adaptation-command.js';
 
-let controller = null; let runId = 0; let speed = 1; let paused = false;
+let controller = null; let identity = null; let runId = 0; let speed = 1; let paused = false;
 let snapshotEvery = B.SNAPSHOT_EVERY; let ticksSinceSnapshot = 0; let tickDebt = 0; let lastHeartbeat = 0;
 
 function post(message, transfers) {
-  const envelope = { protocolVersion: RUN_PROTOCOL_VERSION, ...message, runId };
+  const envelope = { protocolVersion: RUN_PROTOCOL_VERSION, ...message, ...identityFields(identity) };
   if (transfers?.length) self.postMessage(envelope, transfers); else self.postMessage(envelope);
 }
 function heartbeat(force = false) {
@@ -39,15 +40,15 @@ self.onmessage = (event) => {
   const message = event.data;
   try {
     if (message.t === 'init') {
-      runId = message.runId; controller = new RunController({ ...message.cfg, runId }, post);
+      identity = createWorldIdentity(message); runId = identity.runId;
+      controller = new RunController({ ...message.cfg, ...identityFields(identity) }, post);
       paused = false; tickDebt = 0; post({ t: 'ready' }); heartbeat(true); return;
     }
-    if (!controller) return;
+    if (!controller || !sameWorldIdentity(message, identity)) return;
     if (message.t === 'choose-adaptation' || message.t === 'set-adaptation-mode') {
       const rejected = message.t === 'choose-adaptation' ? executeAdaptationSelection(controller, message, runId)
         : executeAdaptationMode(controller, message, runId); if (rejected) post(rejected); else maybeSnapshot(true); return;
     }
-    if (message.runId !== runId) return;
     switch (message.t) {
       case 'start': controller.start(); maybeSnapshot(true); break;
       case 'abort': if (!controller.abort()) post({ t: 'abort-rejected', status: controller.state.status }); break;

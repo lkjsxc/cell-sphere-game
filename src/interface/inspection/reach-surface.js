@@ -24,7 +24,9 @@ export function createReachBalanceSurface(options) {
   function conditions(root, values = []) { root.replaceChildren(...values.map((item) => { const row = document.createElement('div'); row.className = 'reach-factor';
       row.append(label(item.label), bar(item.score), label(`${Math.round(item.score * 100)}%`)); return row; })); }
   return { surface, open(next, isResult = false) { model = next; result = isResult; render(); surface.hidden = false; },
-    update(next) { if (!next || result) return; model = next; if (!surface.hidden) render(); }, close() { surface.hidden = true; } };
+    update(next) { if (!next || result) return; model = next; if (!surface.hidden) render(); }, close() { surface.hidden = true; },
+    reset() { surface.hidden = true; model = null; result = false; summary.textContent = ''; counts.replaceChildren();
+      gains.replaceChildren(); losses.replaceChildren(); supports.replaceChildren(); limits.replaceChildren(); turning.textContent = ''; turning.hidden = true; } };
 }
 function metric(name, value, kind) { const node = document.createElement('div'); node.className = `reach-count reach-${kind}`;
   node.append(label(name), strong(String(value))); return node; }

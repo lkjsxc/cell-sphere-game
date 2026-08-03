@@ -15,7 +15,8 @@ it never mutates simulation arrays or consumes authoritative randomness.
 | `inspection/` | Read-only cell detail and authoritative Reach Balance surfaces. |
 | `panel-surfaces.js` | Explicit Adaptation and Memory-node/list interactions. |
 | `policies/adaptation-effects.js` | Two-event visual queue, reduced-motion gate, bottom caption lifetime. |
-| `policies/continuation.js` | Nine-second result countdown with independent suspension reasons. |
+| `policies/continuation.js` | Untouched-only nine-second result countdown; hidden-time pause and trusted-interaction cancellation. |
+| `policies/run-session.js` | First-wins atomic teardown, typed blank frame, and authority replacement transaction. |
 | `policies/run-result.js` | Idempotent Echo/Imprint/History completion transaction. |
 | `policies/surface-coordinator.js` | One nonmodal context surface, Escape, and focus restoration. |
 | `history-surface.js` | Nonmodal scrubber, world/event navigation, and expanded semantic list. |

@@ -13,10 +13,12 @@ here is environment-independent and runs under Node and the browser.
 | `state-machine.js` | Explicit FSM with declared legal transitions; illegal sends throw. |
 | `assert.js` | Boundary assertions for messages, saves, and configuration. |
 | `adaptation-arrival.js` | Pure deterministic weighted graph arrival field for bounded presentation. |
+| `world-session.js` | Immutable authority/presentation identity tuple and exact matching. |
 
 Invariants:
 
 - Integer-only PRNG and hashing (Math.imul + unsigned shifts): sequences and
   hashes are identical on every JavaScript engine.
 - No transcendentals in `math.js` curves used by the simulation tick.
-- Nothing here knows about worlds, organisms, or the DOM.
+- Session identity names the world transaction but contains no world model,
+  organism behavior, platform API, or DOM dependency.

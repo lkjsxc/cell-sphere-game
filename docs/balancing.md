@@ -154,3 +154,9 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   its terminal segment at the last ≥75%-peak production tick (`2732`), keeping
   the 22-second title story legibly pressure → fragmentation → extinction
   without synthesizing state.
+- **2026-08-03 — Atomic world-session presentation metadata.** Added the
+  immutable world-session envelope and typed blank renderer frame without
+  changing simulation equations, seeded decisions, or showcase bytes. The
+  generated 89-frame payload remains byte-identical with data hash
+  `22ac0d97…`; only its production-source hash changed from `3f3e9227…` to
+  `e15a13fd…`. The benchmark golden remains `813c4f49`.

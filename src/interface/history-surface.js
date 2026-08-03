@@ -81,8 +81,11 @@ export function createHistorySurface(options) {
   return { surface, open(nextModel, defaultId) { model = nextModel; worldSelect.replaceChildren(...model.worlds.map((item) => {
       const option = document.createElement('option'); option.value = item.id; option.textContent = item.label; return option; }));
       surface.hidden = false; chooseWorld(model.worlds.some((item) => item.id === defaultId) ? defaultId : model.worlds[0]?.id); },
-    close() { cancelAnimationFrame(raf); surface.hidden = true; }, setAvailability, updateFrame,
-    get worldId() { return world?.id ?? null; } };
+    close() { cancelAnimationFrame(raf); raf = 0; surface.hidden = true; },
+    reset() { cancelAnimationFrame(raf); raf = 0; surface.hidden = true; model = null; world = null; events = []; eventIndex = -1;
+      list.replaceChildren(); selected.textContent = ''; range.value = '0'; range.max = '0'; },
+    setAvailability, updateFrame, get worldId() { return world?.id ?? null; },
+    get selectedWorld() { return world; }, get tick() { return Number(range.value); } };
 }
 function nearestEvent(events, tick) { let best = -1; let distance = Infinity;
   events.forEach((event, index) => { const d = Math.abs(event.tick - tick); if (d < distance) { best = index; distance = d; } }); return best; }

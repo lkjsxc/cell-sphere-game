@@ -31,7 +31,7 @@ Four compatible attention modes:
    terminal world; details, History, and the Evolution Globe remain optional.
 8. Enter Evolution Globe, select an adjacent Skill Cell, read it, then explicitly
    Unlock; or use the semantic list.
-9. Choose the next world or let the nine-second unattended countdown continue.
+9. Choose the next world or leave the result untouched for the nine-second Auto Next; any genuine interaction cancels it for that result.
 
 ## Geography
 

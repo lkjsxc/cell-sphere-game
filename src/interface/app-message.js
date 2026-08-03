@@ -1,15 +1,18 @@
 /** Route versioned run-driver messages without growing the composition root. */
 import { saveSettings } from '../platform/settings.js';
 import { focusCamera } from '../rendering/camera.js';
+import { identityFields, sameWorldIdentity } from '../core/world-session.js';
+import { markWorldStarted, recoverPreAuthorityFailure } from './policies/run-session.js';
 import * as ui from './surfaces.js';
 
 export function handleRunMessage(app, message) {
-  if (message.t === 'heartbeat') return;
-  if (message.t === 'ready') return app.driver.ready();
-  if (message.t === 'started') { if (app.state === 'starting') app.flow.send('ready');
-    focusCamera(app.camera, app.topo.positions.subarray(message.inoculationCell * 3, message.inoculationCell * 3 + 3));
-    ui.announce(app.el, `Life inoculated cell ${message.inoculationCell}.`); return; }
-  if (message.t === 'snapshot') { app.snapshot = message; app.driver.snapshot = message; app.adaptationEffects.onSnapshot(message);
+  if (!sameWorldIdentity(message, app.worldIdentity)) return false;
+  if (message.t === 'heartbeat') return true;
+  if (message.t === 'ready') return app.driver.ready(message);
+  if (message.t === 'started') { if (app.state !== 'starting' || !markWorldStarted(app, message)) return false;
+    app.flow.send('ready'); focusCamera(app.camera, app.topo.positions.subarray(message.inoculationCell * 3, message.inoculationCell * 3 + 3));
+    ui.announce(app.el, `Life inoculated cell ${message.inoculationCell}.`); return true; }
+  if (message.t === 'snapshot') { app.snapshot = message; app.adaptationEffects.onSnapshot(message);
     ui.updateHud(app.el, message); app.adapt.update(app.adaptationModel()); app.reachUi.update(message.reach); return; }
   if (message.t === 'history-batch') return app.mergeHistory(message.events);
   if (message.t === 'cell-inspection') { if (message.requestId === app.requestId && message.cell.node === app.selectedNode) {
@@ -27,8 +30,9 @@ export function handleRunMessage(app, message) {
     ui.updateAdaptationMode(app.el, app.settings.adaptationMode); app.settingsUi.sync(); ui.announce(app.el, `Adaptation mode not changed: ${humanize(message.reason)}.`); return; }
   if (message.t === 'event') return ui.announce(app.el, `${humanize(message.family)} · ${message.phase}`);
   if (message.t === 'terminal-collapse') return ui.announce(app.el, 'Final trace — the remaining tissue is releasing.');
-  if (message.t === 'extinct') return app.finishRun(message.summary);
-  if (message.t === 'aborted') return app.finishAbandoned(message.summary);
+  if (message.t === 'extinct') return app.finishRun({ ...message.summary, ...identityFields(message) });
+  if (message.t === 'aborted') return app.finishAbandoned({ ...message.summary, ...identityFields(message) });
+  if (message.t === 'worker-failed' && message.recoverable && message.phase === 'pre-authority') return recoverPreAuthorityFailure(app, message);
   if (message.t === 'worker-failed') return app.failRun(message.message);
   if (message.t === 'error') ui.announce(app.el, `The world reported a recoverable error: ${message.message}`);
 }

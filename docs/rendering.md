@@ -35,6 +35,11 @@ prerequisite-path draw. The deleted passes no longer receive edge, conductance, 
 snapshot payloads. Presentation snapshots contain four cell arrays totaling
 25,620 bytes at level 4, down from 102,426 bytes before the redesign. Static
 topology/geography buffers build once; only bounded cell attributes update.
+Each world renderer binds the immutable world-session tuple. Replacement first
+rejects the retired tuple, zeros life/event/Adaptation buffers, clears selection
+and History highlights, clears the full Canvas/WebGL framebuffer, and accepts one
+typed `starting` snapshot with zero life before authority startup. Both backends
+reject a snapshot whose session or presentation generation does not match.
 
 ## Title showcase
 
@@ -71,11 +76,16 @@ after four seconds of true idle, and is effectively disabled by reduced motion.
 
 Canvas 2D draws the same cellular semantics as polygons. Lakes, shores, and
 wetlands are full-cell terrain fills; only existing shared cell boundaries
-emphasize water edges. Organism and skill paths do not exist. The forced-fallback real-Chrome scenario completes a run,
+emphasize water edges. Its world-session reset performs a full-canvas clear;
+WebGL2 resets and uploads all three dynamic attribute buffers. WebGL context-loss
+teardown removes the exact registered listener and disposal is idempotent.
+Organism and skill paths do not exist. The forced-fallback real-Chrome scenario completes a run,
 opens visual History, renders the 642-cell Evolution Globe, captures mobile and
 desktop evidence, and reports no browser errors.
 
 Current WebGL2 evidence covers 390×844, 430×932, 768×1024, 1024×768,
-1440×900, and 1920×1080. It reports four draws and JavaScript render submission
-mean 0.07 ms / p95 0.20 ms. These are not GPU timings. Physical-mobile thermal
-behavior and actual GPU frame time remain unmeasured.
+1440×900, and 1920×1080. The atomic-session run reported four draws and
+JavaScript render submission mean 1.17 ms / p95 1.50 ms. It also intercepted
+and validated the first zero-life replacement frame; forced Canvas validated the
+same contract. These are not GPU timings. Physical-mobile thermal behavior and
+actual GPU frame time remain unmeasured.

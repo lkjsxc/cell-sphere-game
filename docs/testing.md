@@ -24,9 +24,11 @@ guards, and an observed run matching a quiet run in hash, score, extinction,
 decisions, semantic History, and Imprint. Trophy integration proves schema-5 load grants nothing, explicit
 legacy reconciliation without converting old drainage evidence into lake proof,
 bounded schema-3 proof, idempotent result awards, and
-reward-free abandonment. A 100-world integration soak also
-checks automatic result transitions, duplicate-award rejection, hidden countdown
-pause ownership, unresolved Manual offers, persistence caps, and heap bounds.
+reward-free abandonment. A 100-world simulation/result soak checks automatic
+result transitions, duplicate-award rejection, hidden countdown pause ownership,
+unresolved Manual offers, persistence caps, and heap bounds. A separate 100-cycle
+production-coordinator soak checks first-wins races, unique seeds/authorities/
+identities, one typed blank frame per cycle, and complete current-world teardown.
 
 ## Real Chrome scenario
 
@@ -38,9 +40,10 @@ primary cells and continuing authority; 32× result; compact result History;
 IndexedDB visual-detail reload when available; 642-cell/642-skill Evolution
 Globe; select-before-Unlock; 162-cell/96-achievement Trophy Sphere with pointer
 and semantic selection; fixed-flow mobile skill detail; semantic offscreen
-tree; Evolution restoration after History; a second unattended result counting
-down into the third world; New World cancel/accept with no reward; reload; and
-no obsolete guidance or console/runtime errors.
+tree; Evolution restoration after History; trusted result interaction cancellation;
+a second truly untouched result continuing once into the third world; intercepted
+zero-life first replacement frames; New World cancel/accept with no reward;
+reload; and no obsolete guidance or console/runtime errors.
 
 Generated WebGL2 evidence includes six fixed title lifecycle phases plus title layouts at 390×844, 430×932,
 768×1024, 1024×768, 1440×900, and 1920×1080; mobile/tablet/desktop inspector;

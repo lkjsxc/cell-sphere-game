@@ -30,8 +30,8 @@ Evidence words are scoped: **implemented**, **tested**, **measured**, **observed
 |---|---|---|---|
 | A | replacement contract, exact baseline, protective tag | complete | pushed commit/tag plus this ledger |
 | B | cell-only visible world and connected whole-cell lakes | target | source visual-grammar gate, lake audit, WebGL2/Canvas captures |
-| C | atomic first-wins world replacement and blank new frame | baseline leak reproduced | state-machine tests, stale rejection, 100-cycle soak, first-frame captures |
-| D | untouched-only Auto Next; trusted input cancels permanently | rejected temporary-suspension behavior present | fake-timer/unit matrix and trusted CDP scenarios |
+| C | atomic first-wins world replacement and blank new frame | implemented and locally tested from `6811336`; not deployed | state-machine tests, stale rejection, 100-cycle soak, first-frame captures |
+| D | untouched-only Auto Next; trusted input cancels permanently | implemented and locally tested from `6811336`; not deployed | timer/unit interaction matrix and trusted CDP scenarios |
 | E1 | clickable stable SCORE/ENTROPY/REACH details | only REACH interactive | semantics plus stable-rectangle measurements |
 | E2 | shared Result/History/Event Log/Menu context shell | separate bottom/replacement surfaces present | desktop/mobile Chrome scenarios and gesture persistence |
 | E3 | compact dock/Adaptations, visible mobile event, fixed scene selector | contradicted by baseline | responsive matrix, 200% text, long labels |
@@ -40,3 +40,35 @@ Evidence words are scoped: **implemented**, **tested**, **measured**, **observed
 | G | `cell-sphere-game` package/storage/repository/Pages identity | legacy identity deployed; GitHub ADMIN observed | namespace migration tests, renamed origin, Actions and exact Pages bytes |
 | H | deterministic Worker/fallback, 32×, bounded performance | baseline fast gates pass | final parity, balance, benchmark, Canvas, lake/event/Trophy audits and soaks |
 | I | coherent push and exact public deployment | target | clean tree, successful workflow, cache-busted public inspection |
+
+## Atomic world-session / untouched Auto Next evidence
+
+- **implemented** one `requestWorldReplacement(reason, expectedIdentity)` entry
+  for title Grow, manual/automatic Next, confirmed abandonment, Evolution/Trophy
+  restart, and recoverable pre-authority failure. The guarded transaction is
+  first-wins and moves through requested/awaiting-authority, replacing,
+  preparing, and starting before returning idle on matching `started`.
+- **implemented** immutable
+  `{worldSessionId, runId, seed, presentationGeneration, resultTransactionKey}`
+  envelopes. Identity is reserved and published before synchronous fallback or
+  Worker startup; Worker, driver, app, History, Inspector, commands, and delayed
+  callbacks reject retired tuples.
+- **implemented** ordered presentation retirement and typed zero-life `starting`
+  snapshots. WebGL2 zeroes and uploads life/event/Adaptation buffers; Canvas 2D
+  clears its full framebuffer. Both bind the new session and reject old snapshots.
+- **tested** 100 production-coordinator replacements in 7.4 ms: 100 accepted and
+  100 same-cycle races rejected, with 100 unique seeds, run IDs, presentation
+  generations, result keys, authorities, and static blank frames. The separate
+  100-world authority/result soak passed in 15.6 s with exactly 100 rewards,
+  duplicate rejection, 24-world/8-Imprint bounds, and heap under its 160 MiB gate.
+- **observed locally** real Chrome/WebGL2 intercepted the first automatic
+  replacement frame as `starting`, zero life/events/highlights/Adaptation, with
+  zero CPU mirrors for all uploaded dynamic buffers; Canvas 2D observed the same
+  contract after a Trophy restart and a full-canvas reset. The final WebGL2
+  pass completed at 32× in 8.90 s with four draws and no browser errors; Canvas completed its run.
+- **tested** untouched Auto Next fires once; trusted pointer/touch/wheel/keyboard/
+  control/focus interaction classes cancel permanently; hidden time pauses;
+  movement, visibility, and untrusted/programmatic events do not cancel; setting
+  toggles do not rearm; and each new result increments continuation generation.
+- **not deployed**: these are isolated-worktree local results. No push, CI, Pages,
+  public URL, Docker, physical-mobile, GPU-time, or thermal claim is made.

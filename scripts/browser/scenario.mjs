@@ -86,7 +86,8 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
     const effects=window.__IN_APP__.adaptationEffects, wave=effects.frame(performance.now());
     if(wave) return resolve({reduced:wave.reduced,origin:wave.arrivals[wave.originCell],queue:effects.queueLength});
     if(performance.now()>=end) return resolve(null); setTimeout(read,20); } read(); })`);
-  ok(reduced?.reduced && reduced.origin === 0 && reduced.queue <= 2, 'reduced motion did not use static origin emphasis');
+  ok(reduced?.reduced && reduced.origin === 0 && reduced.queue <= 2,
+    `reduced motion did not use static origin emphasis: ${JSON.stringify(reduced)}`);
   await screenshot('browser-adaptation-reduced.png'); await wait(430);
   ok(await evaluate('window.__IN_APP__.adaptationEffects.queueLength') === 0, 'reduced emphasis exceeded its timeout');
   await evaluate(`(() => { document.getElementById('pause-button').click(); document.getElementById('adaptations-button').click();
@@ -94,14 +95,21 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
   presentationPause += performance.now() - effectPauseStart;
   ok(await poll(() => evaluate('window.__IN_APP__.settings.adaptationMode'), (mode) => mode === 'random', 2000), 'direct Auto Random switch did not synchronize');
 
-  await setViewport(1440,900); await wait(150); const reachPoint = await evaluate(`(()=>{const r=document.getElementById('reach-balance-button').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()`); await click(...reachPoint); ok(await evaluate("!document.getElementById('reach-balance-dialog').hidden && document.querySelectorAll('#reach-supports .reach-factor').length>=3 && document.querySelectorAll('#reach-limits .reach-factor').length>=3"), 'Reach Balance did not expose authoritative conditions'); await screenshot('browser-reach-balance-desktop.png'); const reachHistoryPoint = await evaluate(`(()=>{const r=document.querySelector('#run-screen .history-open').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()`); await click(...reachHistoryPoint); ok(await evaluate("document.getElementById('reach-balance-dialog').hidden && !document.getElementById('history-dialog').hidden"), 'Reach Balance to History pointer replacement failed'); await setViewport(390,844); await wait(180); const historyTick = await evaluate('window.__IN_APP__.snapshot.tick');
-  await wait(500); ok(await evaluate('window.__IN_APP__.snapshot.tick') > historyTick, 'History stopped world time');
+  await setViewport(1440,900); await wait(150); const reachPoint = await evaluate(`(()=>{const r=document.getElementById('reach-balance-button').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()`); await click(...reachPoint); ok(await evaluate("!document.getElementById('reach-balance-dialog').hidden && document.querySelectorAll('#reach-supports .reach-factor').length>=3 && document.querySelectorAll('#reach-limits .reach-factor').length>=3"), 'Reach Balance did not expose authoritative conditions'); await screenshot('browser-reach-balance-desktop.png'); const reachHistoryPoint = await evaluate(`(()=>{const r=document.querySelector('#run-screen .history-open').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()`); await click(...reachHistoryPoint); ok(await evaluate("document.getElementById('reach-balance-dialog').hidden && !document.getElementById('history-dialog').hidden"), 'Reach Balance to History pointer replacement failed'); await setViewport(390,844); await wait(80); const historyTick = await evaluate('window.__IN_APP__.snapshot.tick');
+  ok(await poll(() => evaluate('window.__IN_APP__.snapshot.tick'), (tick) => tick > historyTick, 1000, 20), 'History stopped world time');
   await evaluate("document.getElementById('pause-button').click()"); effectPauseStart = performance.now();
   const historySize = await evaluate(`(() => { const r=document.getElementById('history-dialog').getBoundingClientRect();
     return {height:r.height,viewport:innerHeight,backdrop:Boolean(document.querySelector('.modal-backdrop,[role=dialog]'))}; })()`);
   ok(historySize.height <= historySize.viewport * .42 + 1 && !historySize.backdrop, 'History is blocking or exceeds mobile sheet bound');
   await evaluate(`(() => { const range=document.getElementById('history-range'); range.value=String(Math.floor(Number(range.max)/2));
-    range.dispatchEvent(new Event('input',{bubbles:true})); })()`); await wait(120);
+    range.dispatchEvent(new Event('input',{bubbles:true})); })()`);
+  const projected = await poll(() => evaluate(`(() => { const a=window.__IN_APP__,s=a.historySnapshot,i=a.worldIdentity;
+    return Boolean(s?.approximate&&s.presentationGeneration===i?.presentationGeneration&&s.worldSessionId===i?.worldSessionId); })()`), Boolean, 3000);
+  if (!projected) { const state = await evaluate(`(() => { const a=window.__IN_APP__,s=a.historySnapshot,i=a.worldIdentity; return {
+    snapshot:s&&{approximate:s.approximate,tick:s.tick,worldSessionId:s.worldSessionId,presentationGeneration:s.presentationGeneration},
+    identity:i,requests:a.historyPlayback.pendingRequests,world:a.historyUi.worldId,tick:a.historyUi.tick,overlay:a.overlay,
+    hidden:a.historyUi.surface.hidden,state:a.state,driverGeneration:a.driver.generation}; })()`);
+    throw new Error(`History projection identity did not become current: ${JSON.stringify(state)}`); }
   const scrubState = await evaluate(`(() => { const app=window.__IN_APP__,s=app.historySnapshot; return {valid:Boolean(s?.approximate&&s.lifeState.length===2562
     && !('edgeActive' in s)&&!('conductance' in s)&&!('flux' in s)),has:Boolean(s),overlay:app.overlay,world:app.historyUi.worldId,
     recent:app.currentHistory.length,tick:app.snapshot?.tick,errors:window.__IN_ERRORS__??[]}; })()`);
@@ -123,9 +131,9 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
   ok(await evaluate(`window.__IN_APP__.adaptationEffects.queueLength===0
     && window.__IN_APP__.adaptationEffects.retainedBytes===0
     && document.getElementById('adaptation-caption').hidden`), 'result retained Adaptation presentation state');
-  await screenshot('browser-result-mobile.png'); const resultReachPoint = await evaluate(`(()=>{const r=document.getElementById('result-reach-button').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()`); await click(...resultReachPoint); await wait(120); ok(await evaluate("!document.getElementById('reach-balance-dialog').hidden && document.getElementById('reach-balance-summary').textContent.includes('Full run') && document.querySelectorAll('#reach-gains .reach-factor').length>0 && document.querySelectorAll('#reach-losses .reach-factor').length>0"), 'result Reach totals were incomplete'); await screenshot('browser-reach-result-mobile.png'); await evaluate("document.getElementById('reach-balance-close').click()"); const resultDirection = await evaluate('window.__IN_APP__.camera.direction.slice()'); await drag([170,300],[245,350]); await wait(500); ok(distance(resultDirection, await evaluate('window.__IN_APP__.camera.direction.slice()')) > .03 && await evaluate("window.__IN_APP__.continuation.status==='counting'"), 'result drag did not rotate and resume continuation'); await screenshot('browser-result-rotated-mobile.png'); await setViewport(1440,900); await evaluate('window.__IN_APP__.camera.dist=4.1'); await wait(180); await screenshot('browser-result-desktop.png');
+  await screenshot('browser-result-mobile.png'); const resultReachPoint = await evaluate(`(()=>{const r=document.getElementById('result-reach-button').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()`); await click(...resultReachPoint); await wait(120); ok(await evaluate("!document.getElementById('reach-balance-dialog').hidden && document.getElementById('reach-balance-summary').textContent.includes('Full run') && document.querySelectorAll('#reach-gains .reach-factor').length>0 && document.querySelectorAll('#reach-losses .reach-factor').length>0"), 'result Reach totals were incomplete'); await screenshot('browser-reach-result-mobile.png'); await evaluate("document.getElementById('reach-balance-close').click()"); const resultDirection = await evaluate('window.__IN_APP__.camera.direction.slice()'); await drag([170,300],[245,350]); await wait(500); ok(distance(resultDirection, await evaluate('window.__IN_APP__.camera.direction.slice()')) > .03 && await evaluate("window.__IN_APP__.continuation.status==='cancelled' && document.getElementById('result-countdown').textContent==='Auto next cancelled for this result'"), 'trusted result interaction did not permanently cancel Auto Next'); await screenshot('browser-result-rotated-mobile.png'); await setViewport(1440,900); await evaluate('window.__IN_APP__.camera.dist=4.1'); await wait(180); await screenshot('browser-result-desktop.png');
   await setViewport(390,844); await evaluate('window.__IN_APP__.camera.dist=6'); await wait(150); await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-result-history-mobile.png');
-  await evaluate("document.getElementById('history-close').click()"); ok(await evaluate("window.__IN_APP__.continuation.status==='counting'"), 'closing result History did not resume countdown'); await evaluate("document.getElementById('memory-button').click()"); await wait(300);
+  await evaluate("document.getElementById('history-close').click()"); ok(await evaluate("window.__IN_APP__.continuation.status==='cancelled'"), 'result surface close rearmed cancelled Auto Next'); await evaluate("document.getElementById('memory-button').click()"); await wait(300);
   const atlas = await evaluate(`(() => { const app=window.__IN_APP__, snap=app.memorySnapshot; return {
     nodes:snap.nodeStates.length,cells:snap.memoryStatus.length,level:app.topo.levels,frontier:snap.nodeStates.filter(n=>n.reachable).length,
     paths:'links' in snap.memoryScene,draws:app.renderer.drawCalls}; })()`);
@@ -164,8 +172,14 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
   await evaluate("document.getElementById('memory-node-close').click(); document.querySelector('#memory-screen .history-open').click()"); await wait(250);
   await evaluate("document.getElementById('history-close').click()"); ok(await evaluate('window.__IN_APP__.topo.levels===3 && window.__IN_APP__.memorySnapshot.memoryStatus.length===642'), 'History did not restore the Memory atlas');
   const ownedBeforeAuto = await evaluate('window.__IN_APP__.meta.memoryNodes.length'); await evaluate("document.getElementById('restart-button').click()");
-  ok(await poll(() => evaluate("document.getElementById('result-screen').hidden"), (hidden) => hidden === false, 40000), 'second unattended run did not finish'); const autoDirection = await evaluate('window.__IN_APP__.camera.direction.slice()'); await drag([900,400],[1030,470]); await wait(500); ok(distance(autoDirection, await evaluate('window.__IN_APP__.camera.direction.slice()')) > .03, 'second result did not rotate');
-  ok(await poll(() => evaluate('window.__IN_APP__.state'), (state) => state === 'running', 14000), 'result countdown did not resume after interaction');
+  ok(await poll(() => evaluate("document.getElementById('result-screen').hidden"), (hidden) => hidden === false, 40000), 'second unattended run did not finish');
+  await installFirstReplacementCapture(evaluate);
+  ok(await poll(() => evaluate('window.__IN_APP__.state'), (state) => state === 'running', 14000), 'untouched result did not continue exactly once');
+  const firstFrame = await evaluate('window.__IN_APP__.__firstReplacementFrame'); assertBlankReplacement(firstFrame, 'WebGL2');
+  const bounded = await evaluate(`(() => { const a=window.__IN_APP__; return {...a.worldResourceAudit(),raf:a.frameAudit}; })()`);
+  ok(bounded.interactionListeners===8 && bounded.historyRequests===0 && bounded.adaptationEffects===0 && bounded.adaptationBytes===0 && bounded.adaptationTimers===0
+    && bounded.raf.errors===0 && bounded.raf.scheduled>=bounded.raf.frames-1,
+    `replacement resources or RAF were not bounded: ${JSON.stringify(bounded)}`);
   ok(await evaluate(`window.__IN_APP__.meta.runs>=2 && window.__IN_APP__.meta.memoryNodes.length===${ownedBeforeAuto}`), 'automatic continuation duplicated or spent progression');
   await screenshot('browser-auto-next-desktop.png'); await evaluate('location.reload()'); await wait(3000);
   const persisted = await evaluate(`(() => { const meta=JSON.parse(localStorage.getItem('incremental-network-game:meta:v1'));
@@ -175,8 +189,8 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
   if (idb) { await evaluate("document.querySelector('#title-screen .history-open').click()");
     ok(await poll(() => evaluate("document.getElementById('history-visual-note').hidden"), Boolean, 4000), 'IndexedDB visual History did not reload');
     await evaluate(`(() => { const range=document.getElementById('history-range'); range.value=String(Math.floor(Number(range.max)/2));
-      range.dispatchEvent(new Event('input',{bubbles:true})); })()`); await wait(120);
-    ok(await evaluate('window.__IN_APP__.historySnapshot?.approximate===true'), 'reloaded visual History did not scrub');
+      range.dispatchEvent(new Event('input',{bubbles:true})); })()`);
+    ok(await poll(() => evaluate('window.__IN_APP__.historySnapshot?.approximate===true'), Boolean, 3000), 'reloaded visual History did not scrub');
     await evaluate("document.getElementById('history-close').click()"); }
   await screenshot('browser-title-desktop.png');
   await setViewport(390,844); await evaluate("document.getElementById('begin-button').click()");
@@ -193,6 +207,26 @@ import { assertDockGeometry, assertSkillGeometry, captureTitleEvidence } from '.
     && afterAbort.cause === 'abandoned' && afterAbort.abandoned, `abort transaction failed: ${JSON.stringify({beforeAbort,afterAbort})}`);
   await screenshot('browser-new-world-accepted-mobile.png'); ok(errors.length === 0, `browser reported ${errors.length} errors`);
   return { backend: boot.renderer, score: result.score, elapsed, nodeId, render, idb };
+}
+export async function installFirstReplacementCapture(evaluate) {
+  await evaluate(`(() => { const app=window.__IN_APP__,oldSession=app.worldIdentity.worldSessionId,originalMake=app.makeRenderer.bind(app);
+    app.__firstReplacementFrame=null; app.makeRenderer=(...args)=>{ originalMake(...args); const renderer=app.renderer,originalRender=renderer.render.bind(renderer);
+      renderer.render=(scene)=>{ const snap=scene.snapshot,target=snap?.worldSessionId!==oldSession;
+        if(!target) return originalRender(scene); const count=v=>v?[...v].reduce((n,x)=>n+(x!==0),0):0;
+        const before={blank:snap?.blank===true,status:snap?.status,worldSessionId:snap?.worldSessionId,
+          presentationGeneration:snap?.presentationGeneration,life:count(snap?.lifeState)+count(snap?.biomass),events:count(snap?.eventStrength),
+          highlights:scene.highlightedCells?.length??0,adaptation:Boolean(scene.adaptation)};
+        const accepted=originalRender(scene); app.__firstReplacementFrame={backend:renderer.backend,accepted,before,after:renderer.lastFrameAudit,
+          presentation:app.presentationAudit.lastBlank}; renderer.render=originalRender; app.makeRenderer=originalMake; return accepted; }; }; })()`);
+}
+export function assertBlankReplacement(frame, label) {
+  ok(frame?.accepted && frame.before.blank && frame.before.status==='starting', `${label} first replacement frame was not typed blank`);
+  ok(frame.before.life===0 && frame.before.events===0 && frame.before.highlights===0 && !frame.before.adaptation,
+    `${label} first replacement frame retained old state: ${JSON.stringify(frame)}`);
+  ok(frame.after?.lifeCells===0 && frame.after?.eventCells===0 && frame.after?.highlights===0 && !frame.after?.adaptation,
+    `${label} renderer accepted stale dynamic state: ${JSON.stringify(frame)}`);
+  if(frame.backend==='webgl2') ok(frame.after.dynamic?.life===0 && frame.after.dynamic?.events===0 && frame.after.dynamic?.adaptations===0,
+    `WebGL2 buffers were not zeroed: ${JSON.stringify(frame.after.dynamic)}`);
 }
 function distance(a, b) { return Math.hypot(...a.map((value, index) => value - b[index])); }
 function ok(value, message) { if (!value) throw new Error(message); }

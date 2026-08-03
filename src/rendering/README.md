@@ -18,7 +18,8 @@ Key modules:
 - `adaptation-propagation.js`: bounded weighted arrival fields and two-event queue.
 - `shaders*.js`: original GLSL for geography and cellular materials.
 - `fallback2d.js`: equivalent full-cell lake/ecology semantics without fine geography.
-- `renderer.js`: four-draw composition and context-loss callback.
+- `renderer.js`: four-draw composition, session binding, and exact context-loss teardown.
+- `blank-snapshot.js`: typed zero-life `starting` frame installed before authority startup.
 
 Memory reconfigures the same renderer for a dedicated 642-cell level-3 atlas.
 Status, branch, tier, kind, selection, and morphology fossils are cellular;

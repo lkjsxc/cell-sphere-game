@@ -13,7 +13,7 @@ Rendering consumes immutable world fields/snapshots and never mutates authority.
 ## Three independent state concerns
 
 ```text
-primary screen: title → starting → running → result → Evolution Globe → starting
+primary screen: title → replacing → preparing → starting → running → result → …
 simulation:     idle | running | terminal-collapse | extinct
 pause reasons:  manual, hidden, optional panel lease
 overlay:        none | inspector | adaptations | history | settings |
@@ -23,9 +23,10 @@ overlay:        none | inspector | adaptations | history | settings |
 An Adaptation offer is queued data, never a primary/simulation phase. One
 overlay is active at a time. Closing a panel releases only its own pause reason
 and cannot resume a manually paused world. The result countdown is a pure
-presentation policy: hidden documents and open detail surfaces suspend its
-remaining time, while interaction cancels it; starting the next world never
-spends Echoes or unlocks a Skill Cell.
+presentation policy: hidden documents pause elapsed time, while the first trusted
+pointer, touch, wheel, keyboard, control, focus, surface, metric, cell, globe, or
+scene interaction permanently cancels it for that result. Opening and closing a
+surface never rearms it. Starting the next world never spends Echoes or unlocks a Skill Cell.
 
 ## Execution topology
 
@@ -45,8 +46,11 @@ Main → Worker:
 - `history-preview {requestId, tick}` / `history-buffer {requestId}`
 - `snapshot-now` / `status` / `abort`
 
-Every command and response carries a monotonic session `runId`; stale messages
-from an earlier world are rejected before they reach interface transactions.
+Every command and response carries the exact immutable tuple
+`{worldSessionId, runId, seed, presentationGeneration, resultTransactionKey}`.
+The driver reserves it and the app publishes it before Worker or synchronous
+fallback startup. Driver, Worker, app routing, commands, observations, History,
+and Inspector callbacks reject any tuple mismatch.
 
 Worker → main:
 
@@ -104,6 +108,8 @@ skill effects/conditions, Adaptation mode changes, offers, and selections.
 World/events/growth/content/decision/inoculation streams are isolated xoshiro
 streams. Camera, selection, panel views, quality, motion, cellular Adaptation waves,
 and History viewing never enter authority or consume RNG. Tests compare
-no-observation runs against hundreds of inspection/snapshot queries. A separate
-100-world test drives result transactions, hidden countdown leases, automatic
-continuation, and unresolved Manual offers without input.
+no-observation runs against hundreds of inspection/snapshot queries. Separate
+100-cycle tests drive the production replacement coordinator and real result
+transactions: one seed/authority/blank frame/reward per generation, hidden
+countdown pause ownership, duplicate races, unresolved Manual offers, bounded
+registries, and persistence caps.

@@ -59,7 +59,9 @@ export function createAdaptationSurface(options) {
     reject(message) { if (selection?.commandId !== message.commandId) return; selection = null; notice = `Selection not applied: ${humanize(message.reason)}.`; if (!surface.hidden) render(); },
     acknowledgeMode(message) { if (modeCommand?.commandId !== message.commandId) return; modeCommand = null; notice = `${message.mode === 'manual' ? 'Manual' : 'Auto Random'} confirmed.`; if (!surface.hidden) render(); },
     rejectMode(message) { if (modeCommand?.commandId !== message.commandId) return; modeCommand = null; notice = `Mode not changed: ${humanize(message.reason)}.`; if (!surface.hidden) render(); },
-    open(next) { model = next; render(); surface.hidden = false; }, close() { surface.hidden = true; } };
+    open(next) { model = next; render(); surface.hidden = false; }, close() { surface.hidden = true; },
+    reset() { surface.hidden = true; model = { offers: [], cards: [], mode: 'random', tick: 0 };
+      selection = null; modeCommand = null; notice = ''; cards.replaceChildren(); owned.replaceChildren(); pending.textContent = 'No pending offers'; meta.textContent = ''; } };
 }
 
 function adaptationCard(id, state) {

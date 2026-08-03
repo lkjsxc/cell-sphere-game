@@ -21,6 +21,11 @@ import { createTopology } from '../../src/world/icosphere.js';
 import { createFields } from '../../src/world/fields.js';
 import { createRng } from '../../src/core/prng.js';
 import { applySafeLayout, safeLayout } from '../../src/interface/policies/layout-policy.js';
+import { createWorldIdentity } from '../../src/core/world-session.js';
+import { createBlankSnapshot } from '../../src/rendering/blank-snapshot.js';
+import { GLRenderer } from '../../src/rendering/renderer.js';
+import { Canvas2DRenderer } from '../../src/rendering/fallback2d.js';
+import { WorldPass } from '../../src/rendering/world-pass.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(here, p), 'utf8');
@@ -129,6 +134,33 @@ test('every declared uniform is uploaded by the renderer modules', () => {
     assert.ok(parseUniformNames(SH.FS_GLOBE).has(u), `globe missing ${u}`);
   }
   assert.ok(!parseUniformNames(SH.FS_GLOBE).has('uSignalCenter'));
+});
+
+test('renderers bind exact world identity and reject an old snapshot before drawing', () => {
+  const current = createWorldIdentity({ worldSessionId: 2, runId: 3, seed: 4, presentationGeneration: 5 });
+  const old = createWorldIdentity({ worldSessionId: 1, runId: 2, seed: 3, presentationGeneration: 4 });
+  const currentScene = { worldIdentity: current, snapshot: createBlankSnapshot(8, current) };
+  const oldScene = { worldIdentity: current, snapshot: createBlankSnapshot(8, old) };
+  for (const prototype of [GLRenderer.prototype, Canvas2DRenderer.prototype]) {
+    assert.equal(prototype.accepts.call({ boundIdentity: current }, currentScene), true);
+    assert.equal(prototype.accepts.call({ boundIdentity: current }, oldScene), false);
+  }
+  assert.equal(WorldPass.prototype.accepts.call({ boundIdentity: current }, currentScene.snapshot), true);
+  assert.equal(WorldPass.prototype.accepts.call({ boundIdentity: current }, oldScene.snapshot), false);
+});
+
+test('the app frame loop schedules its next RAF unconditionally', () => {
+  const app = read('../../src/interface/app-controller.js');
+  assert.match(app, /finally \{ this\.frameAudit\.scheduled\+\+; this\.rafId = requestAnimationFrame/);
+  assert.doesNotMatch(app, /requestWorldReplacement\('auto-next',[\s\S]{0,120}return;/);
+});
+
+test('renderer teardown zeroes dynamic buffers and removes the exact context listener idempotently', () => {
+  const renderer = read('../../src/rendering/renderer.js'); const world = read('../../src/rendering/world-pass.js');
+  assert.match(renderer, /this\.contextLossListener/); assert.match(renderer, /removeEventListener\('webglcontextlost', this\.contextLossListener\)/);
+  assert.match(renderer, /if \(this\.disposed\) return/); assert.match(world, /lifeData\.fill\(0\)/);
+  assert.match(world, /eventData\.fill\(0\)/); assert.match(world, /adaptationData\.fill\(0\)/);
+  assert.match(world, /bufferSubData/);
 });
 
 test('production renderer keeps four draws and has no fine waterway machinery', () => {

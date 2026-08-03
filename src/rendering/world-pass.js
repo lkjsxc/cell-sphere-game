@@ -4,6 +4,7 @@ import { createCellGeometry } from './cell-geometry.js';
 import * as SH from './shaders.js';
 import * as SHELL from './shaders-shell.js';
 import * as BOUNDARY from './shaders-boundary.js';
+import { sameWorldIdentity } from '../core/world-session.js';
 
 export class WorldPass {
   constructor(gl, topo, fields) {
@@ -17,7 +18,7 @@ export class WorldPass {
     };
     this.lifeData = new Float32Array(this.geometry.vertexCount * 3); this.eventData = new Uint8Array(this.geometry.vertexCount * 2);
     this.adaptationData = new Uint16Array(this.geometry.vertexCount * 2); this.adaptationToken = -1;
-    this.lastSnapshot = null;
+    this.lastSnapshot = null; this.boundIdentity = null; this.disposed = false;
     this.lastTick = -1;
     this.zero3 = new Float32Array(3);
     this.historyCenters = new Float32Array(24);
@@ -74,6 +75,20 @@ export class WorldPass {
     gl.enableVertexAttribArray(location);
     gl.vertexAttribPointer(location, size, type, false, 0, 0);
   }
+  bindWorldSession(identity) { this.boundIdentity = identity ?? null; this.resetDynamicState(); }
+  accepts(snapshot) { return !this.boundIdentity || sameWorldIdentity(snapshot, this.boundIdentity); }
+  resetDynamicState() {
+    if (this.disposed) return false;
+    this.lifeData.fill(0); this.eventData.fill(0); this.adaptationData.fill(0);
+    this.lastSnapshot = null; this.lastTick = -1; this.adaptationToken = -1; this.historyCenters.fill(0);
+    const gl = this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.lifeBuffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.lifeData);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.eventBuffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.eventData);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.adaptationBuffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.adaptationData);
+    return true;
+  }
+  dynamicState() { return Object.freeze({ life: nonZero(this.lifeData), events: nonZero(this.eventData),
+    adaptations: nonZero(this.adaptationData), tick: this.lastTick }); }
   uploadLife(snapshot) {
     if (snapshot === this.lastSnapshot && (snapshot?.tick ?? -1) === this.lastTick) return;
     this.lastSnapshot = snapshot;
@@ -104,14 +119,16 @@ export class WorldPass {
   uploadAdaptation(event) {
     const token = event?.token ?? 0; if (token === this.adaptationToken) return;
     this.adaptationToken = token; const cells = this.geometry.vertexCell;
-    for (let vertex = 0; vertex < cells.length; vertex++) {
-      this.adaptationData[vertex * 2] = event?.arrivals[cells[vertex]] ?? 0xffff;
-      this.adaptationData[vertex * 2 + 1] = event?.category ?? 0;
+    if (!event) this.adaptationData.fill(0);
+    else for (let vertex = 0; vertex < cells.length; vertex++) {
+      this.adaptationData[vertex * 2] = event.arrivals[cells[vertex]];
+      this.adaptationData[vertex * 2 + 1] = event.category;
     }
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.adaptationBuffer);
     this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.adaptationData);
   }
   draw(vp, eye, snapshot, selectedNode, adaptation, highlightedCells = []) {
+    if (this.disposed || !this.accepts(snapshot)) return false;
     const gl = this.gl; this.uploadLife(snapshot); this.uploadAdaptation(adaptation);
     const globe = this.programs.globe;
     gl.useProgram(globe.program);
@@ -152,11 +169,14 @@ export class WorldPass {
     gl.blendFunc(gl.ONE, gl.ONE); gl.cullFace(gl.FRONT); gl.enable(gl.CULL_FACE);
     gl.bindVertexArray(this.atmosphereVao);
     gl.drawElements(gl.TRIANGLES, this.topo.triangles.length, gl.UNSIGNED_SHORT, 0);
-    gl.disable(gl.CULL_FACE);
+    gl.disable(gl.CULL_FACE); return true;
   }
   dispose() {
+    if (this.disposed) return; this.disposed = true;
     for (const vao of this.vaos) this.gl.deleteVertexArray(vao);
     for (const buffer of this.buffers) this.gl.deleteBuffer(buffer);
     for (const value of Object.values(this.programs)) this.gl.deleteProgram(value.program);
+    this.vaos.length = 0; this.buffers.length = 0;
   }
 }
+function nonZero(values) { let count = 0; for (const value of values) if (value !== 0) count++; return count; }

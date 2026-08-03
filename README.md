@@ -24,9 +24,9 @@ Web Page category, ZEN University division. The published deadline is
    **Manual** in Settings to queue offers and open them when convenient.
 5. Adaptations, History, Settings, and the cell inspector do not pause world
    time by default. A panel-pause preference is available in Settings.
-6. At extinction, the world stays visible behind a compact result strip. Review
-   History or the **Evolution Globe**, choose **Next World**, or let the nine-second countdown
-   continue unattended.
+6. At extinction, the world stays visible behind a compact result strip. Choose
+   **Next World**, or leave the result completely untouched for the nine-second Auto Next.
+   The first genuine interaction cancels Auto Next for that result.
 7. In the Evolution Globe, select an adjacent Skill Cell, read its details, and explicitly
    press **Unlock**. Several small Echo purchases improve later worlds.
 

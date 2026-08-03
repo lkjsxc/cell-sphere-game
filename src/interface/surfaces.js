@@ -51,6 +51,14 @@ export function updateHud(el, snap) {
   updateAdaptationCount(el, metrics.pendingAdaptations ?? snap.pendingAdaptations ?? 0);
 }
 
+export function resetWorldPresentation(el, snapshot = null) {
+  updateHud(el, snapshot ?? { entropy: 0, status: 'starting', alive: { length: 2562 },
+    metrics: { score: 0, coverage: 0, aliveCount: 0 }, reach: null });
+  el.event.textContent = ''; el.live.textContent = ''; el.resultRank.textContent = ''; el.resultScore.textContent = '0';
+  el.resultCause.textContent = ''; el.echoes.textContent = ''; el.resultTrophies.textContent = '';
+  el.resultImprint.textContent = ''; el.resultAdaptations.textContent = ''; el.breakdown.replaceChildren();
+}
+
 export function updateAdaptationCount(el, count) {
   const n = Math.max(0, Math.floor(count));
   el.adaptationBadge.hidden = n === 0; el.adaptationBadge.textContent = String(n);

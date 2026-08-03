@@ -3,6 +3,7 @@ import { LIFE_STATE } from '../core/life-state.js';
 import { createDualMesh } from '../world/dual-mesh.js';
 import { cameraBasis } from './camera.js';
 import { EVENT_TINT_LIST } from './event-tints.js';
+import { sameWorldIdentity } from '../core/world-session.js';
 
 const BIOME_COLOR = Object.freeze([
   [8, 42, 62], [14, 76, 88], [145, 126, 76], [35, 91, 45], [22, 73, 42],
@@ -15,7 +16,8 @@ export class Canvas2DRenderer {
     this.canvas = canvas; this.topo = topo; this.fields = fields;
     this.ctx = canvas.getContext('2d');
     if (!this.ctx) throw new Error('Canvas 2D unavailable');
-    this.backend = 'canvas2d';
+    this.backend = 'canvas2d'; this.boundIdentity = null; this.disposed = false;
+    this.acceptedFrames = 0; this.rejectedFrames = 0; this.clearCount = 0; this.lastFrameAudit = null;
     this.dual = createDualMesh(topo);
     this.px = new Float32Array(topo.nodeCount); this.py = new Float32Array(topo.nodeCount);
     this.facing = new Float32Array(topo.nodeCount);
@@ -32,8 +34,15 @@ export class Canvas2DRenderer {
   }
 
   basis(camera) { return cameraBasis(camera); }
+  bindWorldSession(identity) { if (this.disposed) return false; this.boundIdentity = identity ?? null; this.resetDynamicState(); return true; }
+  resetDynamicState() { if (this.disposed) return false; this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = '#070b14'; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.clearCount++; this.lastFrameAudit = null; return true; }
+  accepts(scene) { return !this.boundIdentity || (sameWorldIdentity(scene.worldIdentity, this.boundIdentity)
+    && sameWorldIdentity(scene.snapshot, this.boundIdentity)); }
 
   render(scene) {
+    if (this.disposed || !this.accepts(scene)) { this.rejectedFrames++; return false; }
     const { ctx, canvas, topo, fields } = this; const { snapshot, camera } = scene;
     const w = canvas.width; const h = canvas.height;
     const cx = w * (0.5 + camera.offsetX * 0.5); const cy = h * (0.5 - camera.offsetY * 0.5);
@@ -67,6 +76,10 @@ export class Canvas2DRenderer {
     if (Number.isInteger(scene.selectedNode) && this.facing[scene.selectedNode] > 0) {
       this.cellPath(scene.selectedNode, 0.84); ctx.strokeStyle = 'rgba(202,238,219,.95)'; ctx.lineWidth = 2.2; ctx.stroke();
     }
+    this.acceptedFrames++; this.lastFrameAudit = Object.freeze({ worldSessionId: snapshot?.worldSessionId ?? null,
+      presentationGeneration: snapshot?.presentationGeneration ?? null, lifeCells: count(snapshot?.alive),
+      eventCells: count(snapshot?.eventStrength), highlights: scene.highlightedCells?.length ?? 0,
+      adaptation: Boolean(scene.adaptation), clearCount: this.clearCount }); return true;
   }
 
   project(points, outX, outY, outFacing, basis, cx, cy, radius) {
@@ -147,7 +160,7 @@ export class Canvas2DRenderer {
     ctx.lineWidth = emphasis ? .9 : .45; ctx.stroke();
   }
 
-  dispose() { /* no persistent GPU resources */ }
+  dispose() { if (this.disposed) return; this.disposed = true; this.boundIdentity = null; this.lastFrameAudit = null; }
 }
 
 function adaptationStyle(category, strength) {
@@ -172,6 +185,7 @@ function memoryStyles(status, kind, fossil, fade, branch) {
   return { fill: `rgba(111,91,66,${fossil * 0.48 * fade})` };
 }
 
+function count(values) { let result = 0; if (values) for (const value of values) if (value) result++; return result; }
 function lifeStyles(state, fade) {
   if (state === LIFE_STATE.FRONTIER) return { fill: `rgba(181,187,103,${0.30 * fade})`, inset: `rgba(229,224,157,${0.34 * fade})`, scale: 0.58 };
   if (state === LIFE_STATE.STRESSED) return { fill: `rgba(154,94,59,${0.38 * fade})`, inset: 'rgba(0,0,0,0)', stroke: `rgba(225,190,137,${0.55 * fade})`, width: 0.8, scale: 0.70 };

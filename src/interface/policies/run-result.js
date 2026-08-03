@@ -5,7 +5,7 @@ import { convertImprintToAtlas } from '../../platform/storage.js';
 import { reconcileTrophies } from '../../game/trophies/evaluator.js';
 
 export function applyRunResult(meta, archive, result, retention, lastKey = null) {
-  const key = `${result.runId ?? 0}:${result.seed}:${result.hash}:${result.tick}`;
+  const key = result.resultTransactionKey ?? `${result.runId ?? 0}:${result.seed}:${result.hash}:${result.tick}`;
   if (lastKey instanceof Set ? lastKey.has(key) : key === lastKey) return Object.freeze({ applied: false, key, meta, archive, score: null, trophyIds: [] });
   const score = scoreResult(result); const converted = result.imprint?.edges?.length
     ? convertImprintToAtlas(result.imprint) : null;
