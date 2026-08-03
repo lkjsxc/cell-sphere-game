@@ -60,17 +60,18 @@ Trophy calibration and the canonical rename remain release work.
   tests, structure, cell-visual audit, showcase, 500-seed lake audit, balance
   smoke, benchmark, and links.
 - Final verify benchmark (Node v22.22.3, Linux x64, 20 CPUs): 2,715 ticks in
-  176 ms, 15,408 ticks/s, hash `813c4f49`, 0.1093 peak coverage.
+  180 ms, 15,066 ticks/s, hash `813c4f49`, 0.1093 peak coverage.
 - `npm run test:browser:file` — PASS real Chrome/WebGL2: score 595,964; complete
-  32× interval 7.86 s; exactly four draws; title render mean 1.04 ms / p95
-  1.20 ms; visual IndexedDB available; adjacent Skill Cell
+  32× interval 7.92 s; exactly four draws; title render mean 1.02 ms / p95
+  1.60 ms; visual IndexedDB available; adjacent Skill Cell
   `reach-horizon-instinct` purchased; no browser errors.
 - SCORE, ENTROPY, and REACH each measured exactly
-  `left=16, top=144, right=476.796875, bottom=884, width=460.796875,
-  height=740` at 1440×900 through repeated authority updates.
+  `left=16, top=144, right=476.796875, bottom=796, width=460.796875,
+  height=652` at 1440×900 through repeated authority updates. The reserved
+  lower-left lane keeps the current-event control visible beside the shell.
 - Responsive trusted-CDP evidence passed 320×568, 390×844, 430×932, 768×1024,
-  844×390, and 1440×900: no horizontal overflow, event/dock overlap, or
-  out-of-bounds controls; selector controls were 44px and current event
+  844×390, and 1440×900: no horizontal overflow, event/dock or event/shell
+  overlap, or out-of-bounds controls; selector controls were 44px and current event
   67.09375px. 200% text, long labels, reduced motion, and authored high contrast
   also passed.
 - `npm run test:browser:canvas` — PASS real Chrome Canvas 2D fallback: score

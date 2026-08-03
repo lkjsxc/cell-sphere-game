@@ -60,7 +60,7 @@
   position: absolute;
   z-index: var(--z-sheet);
   top: max(9rem, calc(var(--sp-4) + var(--safe-top)));
-  bottom: calc(var(--sp-4) + var(--safe-bottom));
+  bottom: calc(6.5rem + var(--safe-bottom));
   left: calc(var(--sp-4) + var(--safe-left));
   width: clamp(22rem, 32vw, 32rem);
   overflow: hidden;
@@ -157,6 +157,7 @@
   .context-surface { padding: var(--sp-4) var(--sp-3) calc(var(--sp-3) + var(--safe-bottom)); }
   .context-surface header { padding-top: var(--sp-2); }
   .context-shell[data-surface="adaptations"] { height: min(36dvh, 22rem); }
+  #app:has(.context-shell:not([hidden])) .hud-event { bottom: calc(56dvh + var(--sp-2) + var(--safe-bottom)); }
   #app:has(.context-shell[data-surface="adaptations"]:not([hidden])) .hud-event { bottom: calc(36dvh + var(--sp-2) + var(--safe-bottom)); }
   .context-adaptations { padding-block: var(--sp-3); }
   .context-adaptations header { min-height: 3.4rem; }
@@ -171,7 +172,11 @@
   .context-shell { inset: calc(4rem + var(--safe-top)) auto calc(var(--sp-2) + var(--safe-bottom)) calc(var(--sp-2) + var(--safe-left)); width: min(25rem, 45vw); height: auto; border-radius: var(--radius-l); }
   .context-shell[data-surface="adaptations"] { width: min(25rem, 45vw); height: auto; }
   .context-shell::before { display: none; }
-  .hud-event { bottom: calc(var(--sp-2) + var(--safe-bottom)); width: min(18rem, 38vw); }
+  #app:has(.context-shell:not([hidden])) .hud-event,
+  #app:has(.context-shell[data-surface="adaptations"]:not([hidden])) .hud-event {
+    top: calc(4.5rem + var(--safe-top)); right: calc(var(--sp-2) + var(--safe-right));
+    bottom: auto; left: auto; width: min(18rem, 38vw);
+  }
 }
 @media (max-width: 420px) {
   .scene-selector button { padding-inline: 2px; font-size: .72rem; }
