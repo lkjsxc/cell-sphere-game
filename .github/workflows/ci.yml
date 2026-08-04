@@ -21,12 +21,18 @@ jobs:
         run: node scripts/check-structure.mjs
       - name: Canonical identity audit
         run: node scripts/audits/identity-audit.mjs
+      - name: Cell-only visual audit
+        run: node scripts/audits/cell-visual-audit.mjs
+      - name: Title lifecycle integrity
+        run: node scripts/generate-title-showcase.mjs --check
       - name: Unit tests
         run: node --test tests/unit/*.test.js tests/unit/simulation/*.test.js
       - name: Integration tests
         run: node --test tests/integration/*.test.js
       - name: Balance smoke
         run: node scripts/balance.mjs --smoke
+      - name: World audits
+        run: node scripts/audits/lake-audit.mjs && node scripts/audits/event-audit.mjs
       - name: Progression audits
         run: node scripts/audits/skill-audit.mjs && node scripts/audits/trophy-audit.mjs
       - name: Benchmark
