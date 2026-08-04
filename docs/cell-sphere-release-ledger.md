@@ -38,8 +38,9 @@ Implementation revision: `0774c2ac5d186e86337f5abd58e55d6d841da597`
 - title artifact SHA-256:
   `bc53b6d0f04dc9b2cd169034813a78f7e2c187ea94f1490fd0415afef0acd910`.
 
-Implementation, CI, and Pages revisions are recorded in `docs/status.md` after
-public deployment verification.
+Product build `9c73daec49b6ea59e836aa6d6efb6b1eff7a2040` passed GitHub Actions
+run `30906160228`; its Pages job succeeded and cache-busted public bytes matched
+local production files exactly. Full deployment evidence is in `status.md`.
 
 ## Historical releases
 

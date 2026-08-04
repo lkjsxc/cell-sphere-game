@@ -1,7 +1,7 @@
 # Status — progression compression release candidate
 
-> Snapshot: 2026-08-04. This file records evidence for the current working
-> release candidate. Deployment revision is filled only after Pages verification.
+> Snapshot: 2026-08-04. Public product bytes and deployment evidence are
+> verified for the progression-compression release.
 
 ## Product state
 
@@ -110,4 +110,11 @@ canonical claims live in source, tests, and this snapshot.
 - Protective tag: `pre-balance-compression-20260804`.
 - Superseding contract commit: `884909b9d3ca77ae380164fd84fc4f63039dbc36`.
 - Implementation commit: `0774c2ac5d186e86337f5abd58e55d6d841da597`.
-- Public Pages revision: pending deployment verification.
+- Public product-build revision: `9c73daec49b6ea59e836aa6d6efb6b1eff7a2040`.
+- GitHub Actions run: `30906160228`; verify and Pages jobs both succeeded.
+- Cache-busted public `index.html`, Evolution authority, migration manifest,
+  event scheduler, title data, and metric CSS were byte-identical to that
+  revision. Public title/tagline and zero retired control IDs were confirmed.
+- Public-network Chrome was unavailable on the audit host (Chrome rendered its
+  offline page); real CDP interaction evidence therefore uses the byte-identical
+  local build rather than claiming an unobserved public-browser run.
