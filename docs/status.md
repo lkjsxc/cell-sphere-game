@@ -89,9 +89,9 @@ tested, measured, observed, deployed, modeled, and target are not interchangeabl
   and desktop. Current product copy uses `Event Log`, not `Event History`.
 - The active dock contains time, speed, Adaptations, and Menu. Menu owns
   Preferences, History/Event Log/Result routes, and confirmed reward-free New
-  World. Both clock hands advance while world time runs, freeze while paused or
-  terminal, and use a slow functional sweep rather than stopping in reduced-
-  motion mode. Mobile Adaptations is capped at 36dvh; cards and the disclosure
+  World. The long and short hands advance on independent bounded phases and
+  both accelerate at every world-speed step. They freeze only while paused or
+  terminal; reduced motion uses a slower, still speed-aware sweep. Mobile Adaptations is capped at 36dvh; cards and the disclosure
   target remain at least 44px.
 - One fixed semantic `Home | World | Evolution | Trophies` selector owns scene
   navigation and camera restoration.

@@ -10,18 +10,31 @@ export async function runScenario(t) {
   const initialSelector = await selectorEvidence(evaluate); selectorContract(initialSelector);
   await screenshot('shell-home-mobile.png'); await trustedId(t, 'begin-button');
   ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'running', 5000), 'world did not start');
-  await evaluate(`document.getElementById('speed-select').value='1';document.getElementById('speed-select').dispatchEvent(new Event('change'))`);
-  const dial = () => evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,m=document.querySelector('.clock-minute'),h=document.querySelector('.clock-hour');return {phase:a.timeDial.state.phase,minute:m.style.transform,hour:h.style.transform}})()`);
+  const setDialSpeed = (speed) => evaluate(`(()=>{const s=document.getElementById('speed-select');s.value='${speed}';s.dispatchEvent(new Event('change'))})()`);
+  await setDialSpeed(1);
+  const dial = () => evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,m=document.querySelector('.clock-minute'),h=document.querySelector('.clock-hour');return {phase:a.timeDial.state.phase,hourPhase:a.timeDial.state.hourPhase,minute:m.style.transform,hour:h.style.transform}})()`);
   const fullDialBefore = await dial(); await wait(300); const fullDialAfter = await dial();
   const fullDialTurn = (fullDialAfter.phase - fullDialBefore.phase + 360) % 360;
-  ok(fullDialTurn > 0 && fullDialBefore.minute !== fullDialAfter.minute && fullDialBefore.hour !== fullDialAfter.hour,
+  const fullHourTurn = (fullDialAfter.hourPhase - fullDialBefore.hourPhase + 360) % 360;
+  ok(fullDialTurn > 0 && fullHourTurn > 0 && fullDialBefore.minute !== fullDialAfter.minute && fullDialBefore.hour !== fullDialAfter.hour,
     `clock hands did not move: ${JSON.stringify({ fullDialBefore, fullDialAfter })}`);
-  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'reduced'})})()`);
-  const reducedDialBefore = await dial(); await wait(1200); const reducedDialAfter = await dial();
+  await setDialSpeed(32); const fastDialBefore = await dial(); await wait(300); const fastDialAfter = await dial();
+  const fastDialTurn = (fastDialAfter.phase - fastDialBefore.phase + 360) % 360;
+  const fastHourTurn = (fastDialAfter.hourPhase - fastDialBefore.hourPhase + 360) % 360;
+  ok(fastDialTurn > fullDialTurn && fastHourTurn > fullHourTurn,
+    `clock did not follow world speed: ${JSON.stringify({ fullDialTurn, fullHourTurn, fastDialTurn, fastHourTurn })}`);
+  await setDialSpeed(1); await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'reduced'})})()`);
+  const reducedDialBefore = await dial(); await wait(600); const reducedDialAfter = await dial();
   const reducedDialTurn = (reducedDialAfter.phase - reducedDialBefore.phase + 360) % 360;
-  ok(reducedDialTurn > 0 && reducedDialTurn < fullDialTurn && reducedDialBefore.minute !== reducedDialAfter.minute
-    && reducedDialBefore.hour !== reducedDialAfter.hour, `reduced clock stopped or moved too quickly: ${JSON.stringify({ reducedDialBefore, reducedDialAfter })}`);
-  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'full'})})()`);
+  const reducedHourTurn = (reducedDialAfter.hourPhase - reducedDialBefore.hourPhase + 360) % 360;
+  ok(reducedDialTurn > 0 && reducedHourTurn > 0 && reducedDialBefore.minute !== reducedDialAfter.minute
+    && reducedDialBefore.hour !== reducedDialAfter.hour, `reduced clock stopped: ${JSON.stringify({ reducedDialBefore, reducedDialAfter })}`);
+  await setDialSpeed(32); const reducedFastBefore = await dial(); await wait(600); const reducedFastAfter = await dial();
+  const reducedFastTurn = (reducedFastAfter.phase - reducedFastBefore.phase + 360) % 360;
+  const reducedFastHourTurn = (reducedFastAfter.hourPhase - reducedFastBefore.hourPhase + 360) % 360;
+  ok(reducedFastTurn > reducedDialTurn && reducedFastHourTurn > reducedHourTurn,
+    `reduced clock did not follow world speed: ${JSON.stringify({ reducedDialTurn, reducedHourTurn, reducedFastTurn, reducedFastHourTurn })}`);
+  await setDialSpeed(1); await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'full'})})()`);
 
   const cameraBefore = await evaluate(`({camera:window.__CELL_SPHERE_APP__.camera.direction.slice(),tick:window.__CELL_SPHERE_APP__.snapshot.tick})`);
   await trustedId(t, 'scene-evolution'); await wait(300);

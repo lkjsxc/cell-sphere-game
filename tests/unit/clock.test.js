@@ -40,21 +40,29 @@ test('fractional accumulation is preserved across slices', () => {
   assert.equal(total, 33);
 });
 
-test('both visual dial hands move, freeze, and resume from one bounded phase', () => {
+test('both visual dial hands move independently, freeze, and follow world speed', () => {
   const state = createTimeDialState(60); const start = advanceTimeDial(state, 0, { running: true, speed: 1 });
   const moving = advanceTimeDial(state, 100, { running: true, speed: 1 });
   assert.ok(moving.minute > start.minute); assert.ok(moving.hour > start.hour);
   assert.ok(moving.minute - start.minute > moving.hour - start.hour);
   const frozen = advanceTimeDial(state, 1100, { running: true, paused: true, speed: 32 });
   assert.deepEqual(frozen, moving); const resumed = advanceTimeDial(state, 1200, { running: true, speed: 32 });
-  assert.ok(resumed.minute > frozen.minute); assert.ok(resumed.minute - frozen.minute < 50);
+  assert.ok(resumed.minute > frozen.minute); assert.ok(resumed.hour > frozen.hour);
+  assert.ok(resumed.minute - frozen.minute < 100);
   const reduced = advanceTimeDial(state, 1300, { running: true, reduced: true, speed: 32 });
   assert.ok(reduced.minute > resumed.minute); assert.ok(reduced.hour > resumed.hour);
   assert.ok(reduced.minute - resumed.minute < resumed.minute - frozen.minute);
-  assert.ok(visualDialRate(32) > visualDialRate(1));
+  const speeds = [1, 2, 4, 8, 16, 32];
+  for (const reducedMotion of [false, true]) {
+    const rates = speeds.map((speed) => visualDialRate(speed, reducedMotion));
+    assert.ok(rates.every((rate, index) => index === 0 || rate > rates[index - 1]));
+  }
   assert.ok(visualDialRate(1, true) < visualDialRate(1));
-  assert.equal(visualDialRate(32, true), visualDialRate(1, true), 'reduced motion depended on game speed');
-  assert.equal(visualDialRate(32), visualDialRate(16), '32x exceeded the visual cap');
+
+  const wrapping = createTimeDialState(350); const beforeWrap = advanceTimeDial(wrapping, 0, { running: true, speed: 32 });
+  const afterWrap = advanceTimeDial(wrapping, 100, { running: true, speed: 32 });
+  assert.ok(afterWrap.minute < beforeWrap.minute, 'long hand did not wrap');
+  assert.ok(afterWrap.hour > beforeWrap.hour, 'short hand reset with the long hand');
 });
 
 test('time dial labels explain the owner without releasing another lease', () => {

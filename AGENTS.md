@@ -66,9 +66,10 @@ returning.
   control remains visible at bottom-left on mobile and opens Event Log.
 - The active-run dock shows time, speed, Adaptations, and `Menu`. It does not
   permanently show History or New World.
-- Both time-dial hands visibly advance while world time is running. Reduced
-  motion slows the functional dial instead of freezing it; pause and terminal
-  states freeze it.
+- Both time-dial hands visibly advance independently while world time is
+  running, and both accelerate monotonically with the selected world speed.
+  Reduced motion uses a slower speed-aware sweep instead of freezing the dial;
+  pause and terminal states freeze it.
 - `Menu` contains preferences and a confirmed New World action. `Settings`
   remains the inner preferences concept, not the active-run button label.
 - Adaptations use a compact mobile surface and preserve 44px targets.

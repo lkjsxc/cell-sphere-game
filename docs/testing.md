@@ -13,7 +13,7 @@ reporting a false pass when Chrome cannot connect.
 Unit coverage includes topology/dual manifold, deterministic WorldModel hash,
 land bounds, climate/biomes/forest coherence, private drainage fields, connected
 and separated whole-cell lake IDs, frozen lake/shore/wetland records, bounded
-lake ecology, landmarks/sources, generation budget, renderer geometry and uniforms, tap/camera math, settings/pause/rotation, full/reduced-motion time-dial movement and pause freezing, simulation queue/RNG,
+lake ecology, landmarks/sources, generation budget, renderer geometry and uniforms, tap/camera math, settings/pause/rotation, independent full/reduced-motion time-dial hands, monotonic speed scaling, minute-wrap continuity, and pause freezing, simulation queue/RNG,
 pure inspection, History cap, the 642-node graph-4/schema-8 migration/economy,
 and the 96-criterion Trophy catalog/topology/rich-condition boundaries. Identity
 coverage verifies fresh canonical saves; exact legacy schema-8 Echoes, scores,
@@ -55,8 +55,9 @@ coexistence priority/no duplicate reward, then starts the ordinary scenario from
 a fresh canonical save. It uses trusted pointer and keyboard input for scene,
 surface, gesture, confirmation, Result, and purchase semantics. It
 checks one stable Home/World/Evolution/Trophies tablist, exact World camera return
-while authority advances off-scene, both clock hands moving in full and reduced
-motion, four renderer draws, and one shell rectangle
+while authority advances off-scene, both clock hands moving independently and
+accelerating from 1× to 32× in full and reduced motion, four renderer draws,
+and one shell rectangle
 across SCORE/ENTROPY/REACH and many snapshots. Globe drag retains metric scroll,
 Result, History, and Event Log. Blank/cell tap policy, Inspector focus, the exact
 zero-life terminal snapshot/HUD, Result close/reopen, disabled completed-world
