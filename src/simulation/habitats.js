@@ -33,15 +33,15 @@ export function requiredHabitatCapability(fields, cell, effectiveBiome = fields.
 
 export function habitatAccess(state, from, target) {
   const capability = requiredHabitatCapability(state.fields, target, state.effectiveBiome?.[target]);
-  if (!capability) return Object.freeze({ accessible: true, capability: null, skill: null });
+  if (!capability) return { accessible: true, capability: null, skill: null };
   const owned = state.habitatCapabilitySet;
   if (capability === 'SHALLOW_OCEAN_ACCESS') {
-    if (owned.has(capability)) return Object.freeze({ accessible: true, capability, skill: HABITAT_SKILLS[capability] });
+    if (owned.has(capability)) return { accessible: true, capability, skill: HABITAT_SKILLS[capability] };
     const edge = owned.has('SHALLOW_OCEAN_EDGE_ACCESS') && Number.isInteger(from) && shallowEdgeSource(state, from);
-    return Object.freeze({ accessible: edge, capability: edge ? 'SHALLOW_OCEAN_EDGE_ACCESS' : capability,
-      skill: HABITAT_SKILLS[edge ? 'SHALLOW_OCEAN_EDGE_ACCESS' : capability] });
+    return { accessible: edge, capability: edge ? 'SHALLOW_OCEAN_EDGE_ACCESS' : capability,
+      skill: HABITAT_SKILLS[edge ? 'SHALLOW_OCEAN_EDGE_ACCESS' : capability] };
   }
-  return Object.freeze({ accessible: owned.has(capability), capability, skill: HABITAT_SKILLS[capability] });
+  return { accessible: owned.has(capability), capability, skill: HABITAT_SKILLS[capability] };
 }
 
 export function habitatAccessForInspection(state, target) {

@@ -14,19 +14,25 @@ const HYSTERESIS = .018;
 
 export function createResourceAuthority(fields) {
   const initialAvailableNutrient = fields.baseNutrient.slice();
+  const staticFreshwaterSupport = new Float64Array(initialAvailableNutrient.length);
+  const resourceCapacity = new Float64Array(initialAvailableNutrient.length);
+  const resourceRenewalSuitability = new Float64Array(initialAvailableNutrient.length);
   const initialResourceReserve = new Float32Array(initialAvailableNutrient.length);
   for (let cell = 0; cell < initialResourceReserve.length; cell++) {
     const renewal = Math.max(.25, fields.resourceRenewal?.[cell] ?? 1);
-    const freshwater = freshwaterSupportForFields(fields, cell);
+    const freshwater = freshwaterSupportForFields(fields, cell); staticFreshwaterSupport[cell] = freshwater;
     initialResourceReserve[cell] = Math.fround(initialAvailableNutrient[cell]
       * B.RESOURCE_RESERVE_SCALE * renewal * (1 + freshwater * B.FRESHWATER_RESERVE_BONUS));
+    resourceCapacity[cell] = clamp01((initialAvailableNutrient[cell] + initialResourceReserve[cell]) / 1.55);
+    resourceRenewalSuitability[cell] = clamp01(((fields.resourceRenewal?.[cell] ?? .3) - .25) / 1.0);
   }
   const resourceReserve = initialResourceReserve.slice();
   const recyclableResource = new Float32Array(initialAvailableNutrient.length);
   const initialResourceRichness = new Float32Array(initialAvailableNutrient.length);
   for (let cell = 0; cell < initialResourceRichness.length; cell++) {
     initialResourceRichness[cell] = Math.fround(richnessFrom(fields, cell,
-      initialAvailableNutrient[cell], initialAvailableNutrient[cell], initialResourceReserve[cell], initialResourceReserve[cell]));
+      initialAvailableNutrient[cell], initialAvailableNutrient[cell], initialResourceReserve[cell], initialResourceReserve[cell],
+      undefined, undefined, 0, staticFreshwaterSupport[cell]));
   }
   const resourceQuintile = assignQuintiles(initialResourceRichness);
   const initialFreshwaterCatchmentReserve = Float32Array.from(fields.lakes ?? [], (lake) => {
@@ -35,7 +41,8 @@ export function createResourceAuthority(fields) {
   });
   const freshwaterCatchmentReserve = initialFreshwaterCatchmentReserve.slice();
   return {
-    initialAvailableNutrient, initialResourceReserve, resourceReserve, recyclableResource,
+    initialAvailableNutrient, initialResourceReserve, resourceReserve, recyclableResource, staticFreshwaterSupport,
+    resourceCapacity, resourceRenewalSuitability,
     initialFreshwaterCatchmentReserve, freshwaterCatchmentReserve,
     initialResourceRichness, resourceQuintile,
     initialStock: sum(initialAvailableNutrient) + sum(initialResourceReserve) + sum(initialFreshwaterCatchmentReserve),
@@ -68,7 +75,7 @@ export function installResourceState(state, authority) {
 export function resourceRichnessAt(state, cell) {
   return richnessFrom(state.fields, cell, state.nutrient[cell], state.initialAvailableNutrient[cell],
     state.resourceReserve[cell], state.initialResourceReserve[cell], state.moisture?.[cell], state.temperature?.[cell],
-    state.dynamicFreshwaterSupport?.[cell]);
+    state.dynamicFreshwaterSupport?.[cell], state.staticFreshwaterSupport?.[cell]);
 }
 
 export function reserveFractionAt(state, cell) {
@@ -77,7 +84,7 @@ export function reserveFractionAt(state, cell) {
 }
 
 export function freshwaterSupportAt(state, cell) {
-  let generated = freshwaterSupportForFields(state.fields, cell);
+  let generated = state.staticFreshwaterSupport?.[cell] ?? freshwaterSupportForFields(state.fields, cell);
   const lake = state.fields.freshwaterLakeId?.[cell] ?? -1;
   if (lake >= 0 && state.freshwaterCatchmentReserve && state.initialFreshwaterCatchmentReserve) {
     const initial = state.initialFreshwaterCatchmentReserve[lake]; const remaining = initial > 0 ? clamp01(state.freshwaterCatchmentReserve[lake] / initial) : 0;
@@ -87,16 +94,31 @@ export function freshwaterSupportAt(state, cell) {
 }
 
 export function updateResourceEcology(state, initialize = false) {
-  let depleted = 0;
+  let depleted = initialize ? 0 : state.resourceDepletedCells;
+  const fullRefresh = initialize || state.tick % B.ENV_EVERY === 0;
+  const nutrient = state.nutrient, reserve = state.resourceReserve, initialReserve = state.initialResourceReserve;
+  const capacity = state.resourceCapacity, renewal = state.resourceRenewalSuitability;
+  const staticFresh = state.staticFreshwaterSupport, dynamicFresh = state.dynamicFreshwaterSupport;
+  const moisture = state.moisture, temperature = state.temperature;
   for (let cell = 0; cell < state.topo.nodeCount; cell++) {
-    const richness = resourceRichnessAt(state, cell);
+    if (!fullRefresh && !state.alive[cell]) continue;
+    const available = clamp01(nutrient[cell] / .82);
+    const reserveFraction = initialReserve[cell] > 0 ? clamp01(reserve[cell] / initialReserve[cell]) : 0;
+    const moist = clamp01(1 - Math.abs(moisture[cell] - .55) / .55);
+    const temp = clamp01(1 - Math.abs(temperature[cell] - .6) / .6);
+    const climate = Math.sqrt(moist * temp);
+    const richness = clamp01(.40 * available + .32 * (reserveFraction * capacity[cell])
+      + .12 * renewal[cell] + .10 * Math.max(staticFresh[cell], dynamicFresh[cell]) + .06 * climate);
     state.resourceRichness[cell] = Math.fround(richness);
     let next = classifiedState(state, cell, richness);
     const previous = state.resourceState[cell];
     if (!initialize && stableNearBoundary(previous, next, richness)) next = previous;
     state.resourceState[cell] = next;
-    if (next === RESOURCE_STATE.DEPLETED || next === RESOURCE_STATE.EXHAUSTED) {
-      state.resourceWasDepleted[cell] = 1; depleted++;
+    const wasDepleted = previous === RESOURCE_STATE.DEPLETED || previous === RESOURCE_STATE.EXHAUSTED;
+    const isDepleted = next === RESOURCE_STATE.DEPLETED || next === RESOURCE_STATE.EXHAUSTED;
+    if (isDepleted !== wasDepleted) depleted += isDepleted ? 1 : -1;
+    if (isDepleted) {
+      state.resourceWasDepleted[cell] = 1;
       if (next === RESOURCE_STATE.EXHAUSTED && !state.firstResourceExhaustionTick && state.tick > 0)
         state.firstResourceExhaustionTick = state.tick;
     }
@@ -206,13 +228,14 @@ export function packResourcePresentation(state) {
 }
 
 function richnessFrom(fields, cell, currentAvailable, initialAvailable, currentReserve, initialReserve,
-  moisture = fields.baseMoisture[cell], temperature = fields.baseTemp[cell], dynamicFreshwater = 0) {
+  moisture = fields.baseMoisture[cell], temperature = fields.baseTemp[cell], dynamicFreshwater = 0,
+  staticFreshwater = null) {
   const available = clamp01(currentAvailable / .82);
   const reserveFraction = initialReserve > 0 ? clamp01(currentReserve / initialReserve) : 0;
   const capacity = clamp01((initialAvailable + initialReserve) / 1.55);
   const reserve = reserveFraction * capacity;
   const renewal = clamp01(((fields.resourceRenewal?.[cell] ?? .3) - .25) / 1.0);
-  const fresh = clamp01(Math.max(freshwaterSupportForFields(fields, cell), dynamicFreshwater ?? 0));
+  const fresh = clamp01(Math.max(staticFreshwater ?? freshwaterSupportForFields(fields, cell), dynamicFreshwater ?? 0));
   const climate = climateSuitability(moisture, temperature);
   return clamp01(.40 * available + .32 * reserve + .12 * renewal + .10 * fresh + .06 * climate);
 }
@@ -243,9 +266,12 @@ function classifiedState(state, cell, richness) {
 }
 
 function stableNearBoundary(previous, next, value) {
-  if (!previous || previous === next || previous === RESOURCE_STATE.RECOVERING || next === RESOURCE_STATE.RECOVERING) return false;
-  const boundaries = [.72, .56, .42, .28, .12];
-  return Math.abs(previous - next) === 1 && boundaries.some((boundary) => Math.abs(value - boundary) <= HYSTERESIS);
+  if (!previous || previous === next || previous === RESOURCE_STATE.RECOVERING || next === RESOURCE_STATE.RECOVERING
+      || Math.abs(previous - next) !== 1) return false;
+  const lower = Math.min(previous, next);
+  const boundary = lower === RESOURCE_STATE.ABUNDANT ? .72 : lower === RESOURCE_STATE.FERTILE ? .56
+    : lower === RESOURCE_STATE.STRAINED ? .42 : lower === RESOURCE_STATE.POOR ? .28 : .12;
+  return Math.abs(value - boundary) <= HYSTERESIS;
 }
 function reconcileRounding(state, stockDelta) {
   if (stockDelta > 0) state.resourceExternalAdditions += stockDelta;

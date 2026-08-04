@@ -16,14 +16,9 @@ export function ecologicalAccess(state, from, target) {
     FRESH_RESOURCE_FLOOR, { capability: habitat.capability, skill: habitat.skill });
 
   const freshwater = freshwaterSupportAt(state, target);
-  const scarcity = effect(effects, 'resourceFloorReduction', 'scarcityFloorReduction', 'poorCellAccess');
-  const reclamation = effect(effects, 'reclamationAccess', 'depletedCellAccess', 'wastelandReclamation')
-    || active.has('wasteland-reclaimer') || active.has('depletion-bloom') || active.has('circular-biosphere');
-  const gardener = active.has('world-gardener') || effect(effects, 'worldGardener', 'reachAccess');
-  const richRush = active.has('rich-rush') || effect(effects, 'richRush');
-  const freshwaterRoute = freshwater > .2 && (active.has('lake-garden') || active.has('lake-to-light-network')
-    || effect(effects, 'freshwaterAccess', 'freshwaterRenewal'));
-  const marineRoute = active.has('pelagic-colony') || active.has('brine-harvester') || active.has('polar-current');
+  const profile = state.ecologicalBuildProfile ??= buildProfile(effects, active);
+  const { scarcity, reclamation, gardener, richRush, marineRoute } = profile;
+  const freshwaterRoute = freshwater > .2 && profile.freshwaterRoute;
   let minimum = clamp01(FRESH_RESOURCE_FLOOR + (richRush ? .035 : 0)
     - Math.min(.28, numeric(scarcity)) - Math.min(.04, freshwater * .05)
     - (freshwaterRoute ? Math.min(.08, freshwater * .1) : 0)
@@ -50,7 +45,7 @@ export function ecologicalAccess(state, from, target) {
   const climate = tolerance(state.moisture[target], MOIST_CENTER, moistW)
     * tolerance(state.temperature[target], TEMP_CENTER, tempW)
     * clamp01(1 - (state.toxicity[target] / traits.toxinTol - .35) * 1.1);
-  const coldRoute = active.has('cold-dormancy') || active.has('polar-current') || effect(effects, 'coldAccess', 'coldDormancy');
+  const coldRoute = profile.coldRoute;
   if (climate < (gardener ? 0 : coldRoute ? .035 : .10) && state.tick >= 150) {
     return decision(false, 'climate-outside-current-tolerance', richness, minimum, { ...modifiers(), climate });
   }
@@ -61,8 +56,8 @@ export function ecologicalAccess(state, from, target) {
     : freshwaterRoute && richness < FRESH_RESOURCE_FLOOR ? 'reachable-through-freshwater-support'
       : habitat.capability ? 'transformed-habitat-access' : 'rich-niche-access', richness, minimum, modifiers());
 
-  function modifiers() { return Object.freeze({ freshwater, scarcityReduction: Math.min(.28, numeric(scarcity)),
-    reclamation: Boolean(reclamation), gardener: Boolean(gardener), richRush: Boolean(richRush) }); }
+  function modifiers() { return { freshwater, scarcityReduction: Math.min(.28, numeric(scarcity)),
+    reclamation: Boolean(reclamation), gardener: Boolean(gardener), richRush: Boolean(richRush) }; }
 }
 
 export function ecologicalAccessForInspection(state, target) {
@@ -86,7 +81,18 @@ export function hasEcologicalGrowthCandidate(state, from) {
 }
 
 function decision(accessible, reason, resourceRichness, minimumRequired, modifiers) {
-  return Object.freeze({ accessible, reason, resourceRichness, minimumRequired, modifiers: Object.freeze(modifiers) });
+  return { accessible, reason, resourceRichness, minimumRequired, modifiers };
+}
+function buildProfile(effects, active) {
+  return { scarcity: effect(effects, 'resourceFloorReduction', 'scarcityFloorReduction', 'poorCellAccess'),
+    reclamation: Boolean(effect(effects, 'reclamationAccess', 'depletedCellAccess', 'wastelandReclamation')
+      || active.has('wasteland-reclaimer') || active.has('depletion-bloom') || active.has('circular-biosphere')),
+    gardener: Boolean(active.has('world-gardener') || effect(effects, 'worldGardener', 'reachAccess')),
+    richRush: Boolean(active.has('rich-rush') || effect(effects, 'richRush')),
+    freshwaterRoute: Boolean(active.has('lake-garden') || active.has('lake-to-light-network')
+      || effect(effects, 'freshwaterAccess', 'freshwaterRenewal')),
+    marineRoute: active.has('pelagic-colony') || active.has('brine-harvester') || active.has('polar-current'),
+    coldRoute: Boolean(active.has('cold-dormancy') || active.has('polar-current') || effect(effects, 'coldAccess', 'coldDormancy')) };
 }
 function effect(effects, ...keys) { for (const key of keys) if (effects[key]) return effects[key]; return 0; }
 function numeric(value) { return value === true ? .12 : Number.isFinite(value) ? Math.max(0, value) : 0; }
