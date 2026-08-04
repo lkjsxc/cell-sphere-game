@@ -12,7 +12,8 @@ const lakeCoverage = []; const influenceCoverage = []; const moistureLift = []; 
 const depths = []; const catchments = []; const types = {}; const salinities = {};
 const integrity = { disconnectedIds: 0, idMismatches: 0, oceanOverlaps: 0, touchingIds: 0,
   missingShore: 0, invalidShore: 0, missingWetland: 0, invalidWetland: 0,
-  invalidRecords: 0, influenceBounds: 0, deterministicMismatches: 0, privateFieldLeaks: 0 };
+  invalidRecords: 0, influenceBounds: 0, deterministicMismatches: 0,
+  privateFieldLeaks: 0, publicDrainageLeaks: 0 };
 let aggregateHash = fnv1aBytes(new Uint8Array(0)); const started = performance.now();
 for (let index = 0; index < count; index++) {
   const seed = (0x51ab3d71 ^ Math.imul(index + 1, 0x9e3779b1)) >>> 0; const before = performance.now();
@@ -61,6 +62,8 @@ function auditLake(fields, lake) {
   if (!Object.isFrozen(lake) || !Object.isFrozen(lake.cells) || lake.area !== lake.cells.length
     || !['small', 'medium', 'large'].includes(lake.areaClass) || !['shallow', 'middle', 'deep'].includes(lake.depthClass)
     || !['open', 'seasonal', 'closed'].includes(lake.outletStatus)) integrity.invalidRecords++;
+  for (const key of ['outflowCell', 'drainTo', 'flow', 'flowAccumulation', 'filledElevation'])
+    if (key in lake) integrity.publicDrainageLeaks++;
   const allowed = new Set(lake.cells); const seen = new Set([lake.cells[0]]); const queue = [lake.cells[0]];
   for (let head = 0; head < queue.length; head++) for (const next of neighbors(queue[head])) if (allowed.has(next) && !seen.has(next)) {
     seen.add(next); queue.push(next);

@@ -6,8 +6,8 @@ const root = resolve(new URL('../..', import.meta.url).pathname);
 const renderingFiles = jsFiles('src/rendering'); const worldFiles = jsFiles('src/world');
 const sources = new Map([...renderingFiles, ...worldFiles].map((file) => [file, read(file)]));
 const violations = [];
-const obsolete = /\b(?:river(?:Down|Up|Meta|Strength|Class|Order|System|Upstream)?|majorRivers|tributary|GREAT_RIVER)\b/i;
-const finePatterns = /quadraticCurveTo|bezierCurveTo|drawRivers|riverBoundary|localChannel|centerToCenter|subcellWater|insetWater|\bchannels?\b/i;
+const obsolete = /\b(?:[av]?river(?:Down|Up|Meta|Strength|Class|Order|System|Upstream)?|majorRivers|tributary|GREAT_RIVER)\b/i;
+const finePatterns = /quadraticCurveTo|bezierCurveTo|drawRivers|riverBoundary|(?:down|up|local)Channel|centerToCenter|subcellWater|insetWater|\bchannels?\b/i;
 for (const file of renderingFiles) {
   const source = sources.get(file); reportMatches(file, source, obsolete, 'obsolete waterway identifier');
   reportMatches(file, source, finePatterns, 'fine-feature drawing pattern');

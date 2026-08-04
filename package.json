@@ -24,7 +24,6 @@
     "terminal:soak": "node scripts/audits/terminal-soak.mjs",
     "audit:cell-visuals": "node scripts/audits/cell-visual-audit.mjs",
     "audit:lakes": "node scripts/audits/lake-audit.mjs",
-    "audit:rivers": "node scripts/audits/lake-audit.mjs",
     "audit:events": "node scripts/audits/event-audit.mjs",
     "audit:skills": "node scripts/audits/skill-audit.mjs",
     "audit:trophies": "node scripts/audits/trophy-audit.mjs",

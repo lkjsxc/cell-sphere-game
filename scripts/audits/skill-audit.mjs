@@ -11,9 +11,9 @@ import { defaultMeta } from '../../src/platform/storage.js';
 
 const atlas = validateAtlasMapping(); const graph = validateMemoryGraph(); const errors = [];
 const expectedEconomyHash = '34b4e4a9'; const expectedEffectHash = '8444edfd';
-let adjacentAllowed = 0; let rootBootstrapAllowed = 0; let nonadjacentDenied = 0; let singleOwnerStates = 0;
+let adjacentAllowed = 0; let nonadjacentDenied = 0; let singleOwnerStates = 0;
 for (const node of MEMORY_NODES) {
-  const physical = new Set(MEMORY_PHYSICAL_ADJACENCY[node.id]); const root = MEMORY_ROOT_IDS.includes(node.id);
+  const physical = new Set(MEMORY_PHYSICAL_ADJACENCY[node.id]);
   for (const ownerId of MEMORY_NODE_IDS) {
     if (ownerId === node.id) continue; singleOwnerStates++;
     const adjacent = physical.has(ownerId); const actual = hasOwnedAdjacentCell({ memoryNodes: [ownerId] }, node.id);
@@ -22,14 +22,11 @@ for (const node of MEMORY_NODES) {
       requiredRuns: 1_000_000, runsRemaining: 1_000_000, experienceMet: false };
     const purchasable = canPurchaseMemory(meta, node.id);
     if (adjacent) { if (purchasable) adjacentAllowed++; else if (errors.length < 20) errors.push(`frontier denied: ${ownerId}->${node.id}`); }
-    else if (root) { if (purchasable) rootBootstrapAllowed++; else if (errors.length < 20) errors.push(`root denied: ${node.id}`); }
     else { nonadjacentDenied++; if (purchasable && errors.length < 20) errors.push(`nonadjacent authority accepted: ${ownerId}->${node.id}`); }
   }
   if (canPurchaseMemory({ ...defaultMeta(), echoBalance: node.cost - 1,
     memoryNodes: [MEMORY_PHYSICAL_ADJACENCY[node.id][0]] }, node.id)) errors.push(`insufficient funds accepted: ${node.id}`);
 }
-const rootBootstrapStates = MEMORY_ROOT_IDS.reduce((sum, id) =>
-  sum + MEMORY_NODE_IDS.length - 1 - MEMORY_PHYSICAL_ADJACENCY[id].length, 0);
 const fresh = { ...defaultMeta(), runs: 0, echoBalance: 1_000_000, requiredRuns: 1_000_000, experienceMet: false };
 const freshAccepted = MEMORY_NODE_IDS.filter((id) => canPurchaseMemory(fresh, id));
 if (freshAccepted.join('|') !== MEMORY_ROOT_IDS.join('|')) errors.push('fresh bootstrap is not exactly the six canonical roots');
@@ -55,7 +52,7 @@ const costDistribution = Object.fromEntries([...new Set(MEMORY_NODES.map((node) 
 const valid = atlas.valid && graph.valid && errors.length === 0 && obsoleteVocabularyFound.length === 0
   && parentAuthorityFields === 0 && obsoleteAuthorityFields === 0 && graph.economyHash === expectedEconomyHash
   && graph.effectHash === expectedEffectHash && adjacentAllowed === graph.frontierStates
-  && rootBootstrapAllowed === rootBootstrapStates && singleOwnerStates === 642 * 641
+  && freshAccepted.length === MEMORY_ROOT_IDS.length && singleOwnerStates === 642 * 641
   && meta.memoryNodes.length === 642 && meta.echoBalance === 0;
 const report = {
   topology: { cells: atlas.cells, unique: atlas.unique, layoutRelations: atlas.layoutRelations,
@@ -63,8 +60,8 @@ const report = {
     degree: { min: graph.minDegree, max: graph.maxDegree }, mappingHash: atlas.hash },
   graph: { version: MEMORY_GRAPH_VERSION, nodes: MEMORY_NODES.length, reachable: graph.reachable,
     roots: MEMORY_ROOT_IDS, branches: Object.fromEntries(MEMORY_BRANCHES.map((branch) => [branch, graph.branchCounts[branch]])) },
-  authority: { freshAccepted: freshAccepted.length, singleOwnerStates, adjacentAllowed,
-    rootBootstrapAllowed, rootBootstrapStates, nonadjacentDenied,
+  authority: { freshAccepted: freshAccepted.length, freshRootBootstrap: freshAccepted.length,
+    singleOwnerStates, adjacentAllowed, nonadjacentDenied,
     parentAuthorityFields, obsoleteAuthorityFields, obsoleteVocabularyFound },
   content: { exactEffects: MEMORY_NODES.filter((node) => node.effect && node.effectEn && node.description).length,
     effectTypes, compiledScalars: Object.keys(compiled.effects).length, compiledConditionals: compiled.conditionals.length,

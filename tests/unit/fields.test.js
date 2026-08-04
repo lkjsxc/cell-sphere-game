@@ -43,7 +43,7 @@ function componentSizes(predicate) {
 
 test('world hash, lake records, and typed fields are deterministic', () => {
   const a = fieldsFor(20260731); const b = fieldsFor(20260731);
-  assert.equal(worldHash(a), worldHash(b)); assert.equal(worldHash(a), '586696d6');
+  assert.equal(worldHash(a), worldHash(b)); assert.equal(worldHash(a), '3ba7c9b6');
   for (const key of [...floats, ...integers]) assert.deepEqual(a[key], b[key], key);
   assert.deepEqual(a.lakes, b.lakes); assert.deepEqual(a.landmarks, b.landmarks); assert.deepEqual(a.sources, b.sources);
   assert.notEqual(worldHash(a), worldHash(fieldsFor(20260730)));
@@ -88,6 +88,7 @@ test('lakes are connected separated whole-cell components with complete records'
       assert.ok(['open', 'seasonal', 'closed'].includes(lake.outletStatus));
       assert.ok(['fresh', 'brackish', 'saline'].includes(lake.salinity));
       assert.ok(Number.isFinite(lake.surfaceElevation) && lake.catchment >= lake.area);
+      assert.equal('outflowCell' in lake, false);
       assert.ok(lake.minDepth > 0 && lake.minDepth <= lake.meanDepth && lake.meanDepth <= lake.maxDepth);
       for (const cell of lake.cells) {
         assert.equal(fields.lakeId[cell], lake.id); assert.equal(fields.landMask[cell], 1);

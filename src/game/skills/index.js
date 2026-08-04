@@ -48,7 +48,8 @@ export function hasOwnedAdjacentCell(meta, id, ownedIds = recognizedOwnedIds(met
   return BY_ID.has(id) && firstOwnedAdjacentId(id, ownedIds) !== null;
 }
 function memoryFrontier(meta, id, ownedIds) {
-  const adjacencyMet = hasOwnedAdjacentCell(meta, id, ownedIds); const bootstrap = ROOT_IDS.has(id);
+  const adjacencyMet = hasOwnedAdjacentCell(meta, id, ownedIds);
+  const bootstrap = ownedIds.size === 0 && ROOT_IDS.has(id);
   return { adjacencyMet, adjacentOwnedId: firstOwnedAdjacentId(id, ownedIds),
     bootstrap, frontierMet: adjacencyMet || bootstrap };
 }

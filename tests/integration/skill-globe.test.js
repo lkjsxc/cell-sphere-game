@@ -68,7 +68,7 @@ test('validator reports unstable addresses, count, branch, effect, and economy f
   assert.match(validateMemoryGraph(economy).errors.join('\n'), /invalid cost/);
 });
 
-test('the six canonical roots remain bootstrap choices while other cells require adjacency', () => {
+test('the six canonical roots bootstrap only an empty save; all later cells require adjacency', () => {
   const fresh = { ...defaultMeta(), runs: 0, echoBalance: 100, requiredRuns: 999,
     runsRemaining: 999, experienceMet: false };
   assert.deepEqual(availableMemoryNodes(fresh).map((node) => node.id), MEMORY_ROOT_IDS);
@@ -76,8 +76,10 @@ test('the six canonical roots remain bootstrap choices while other cells require
   for (const id of MEMORY_NODE_IDS.filter((id) => !MEMORY_ROOT_IDS.includes(id)))
     assert.equal(canPurchaseMemory(fresh, id), false, id);
   const ownedRoot = MEMORY_ROOT_IDS[0]; const after = { ...fresh, memoryNodes: [ownedRoot] };
-  const expected = new Set([...MEMORY_ROOT_IDS.filter((id) => id !== ownedRoot), ...MEMORY_PHYSICAL_ADJACENCY[ownedRoot]]);
+  const expected = new Set(MEMORY_PHYSICAL_ADJACENCY[ownedRoot]);
   assert.deepEqual(new Set(availableMemoryNodes(after).map((node) => node.id)), expected);
+  for (const id of MEMORY_ROOT_IDS.filter((id) => id !== ownedRoot))
+    if (!expected.has(id)) assert.equal(canPurchaseMemory(after, id), false, id);
 });
 
 test('every affordable physical frontier works at runs zero with any one neighbor', () => {
@@ -91,7 +93,7 @@ test('every affordable physical frontier works at runs zero with any one neighbo
     const nonneighbor = MEMORY_NODE_IDS.find((id) => id !== node.id && !MEMORY_PHYSICAL_ADJACENCY[node.id].includes(id));
     const blocked = { ...defaultMeta(), runs: 0, echoBalance: node.cost, memoryNodes: [nonneighbor] };
     assert.equal(hasOwnedAdjacentCell(blocked, node.id), false, `${nonneighbor}!->${node.id}`);
-    assert.equal(canPurchaseMemory(blocked, node.id), MEMORY_ROOT_IDS.includes(node.id), `${nonneighbor}!->${node.id}`);
+    assert.equal(canPurchaseMemory(blocked, node.id), false, `${nonneighbor}!->${node.id}`);
   }
 });
 

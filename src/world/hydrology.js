@@ -167,7 +167,8 @@ function addShoreEcology(record, topo, terrain, rainfall, ids, shore, influence,
   const sourceStrength = record.salinity === 'fresh' ? 1 : record.salinity === 'brackish' ? .76 : .5;
   spreadInfluence(record.cells, sourceStrength, topo, influence);
   for (const cell of wetlandCells) influence[cell] = Math.fround(Math.max(influence[cell], sourceStrength * .82));
-  return Object.freeze({ ...record, cells: Object.freeze(record.cells.slice()),
+  const { outflowCell: _privateOutflowCell, ...publicRecord } = record;
+  return Object.freeze({ ...publicRecord, cells: Object.freeze(record.cells.slice()),
     shoreCells: Object.freeze(shoreCells), wetlandCells: Object.freeze(wetlandCells) });
   function meanRain() { return record.cells.reduce((sum, cell) => sum + rainfall[cell], 0) / record.area; }
   function wetlandScore(cell) { return rainfall[cell] * .65 + (1 - terrain.baseElevation[cell]) * .25
