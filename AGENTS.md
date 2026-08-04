@@ -1,156 +1,143 @@
-# AGENTS.md — current contract for coding agents
-> Revision: 2026-08-03. Replace the previous root contract; do not merge stale
-> rules back into this file. Applies repository-wide unless a narrower
-> `AGENTS.md` overrides one local implementation detail.
-## 1. Authority
-Follow, in order: platform/system/developer instructions; the user's current
-explicit task and corrections; this file; actual source/tests/schemas/deployment;
-focused docs; status reports and old commits as historical evidence only.
-A current user decision overrides stale repository prose and tests. Replace
-tests that protect rejected behavior. `docs/status.md` is a commit snapshot, not
-a constitution. Update this file whenever a task changes durable policy.
-At the start of substantial work, inspect Git state/remotes/HEAD, actual GitHub and Pages identity, relevant source/tests, current deployment, and intentional uncommitted work. Reproduce reported behavior before assuming its cause. Never
-reset or discard unrelated work merely to obtain a clean tree.
+# AGENTS.md — current superseding contract
+> Revision: 2026-08-04. Replace the repository-root `AGENTS.md` with this file.
+> Do not merge obsolete requirements back into it. It applies repository-wide
+> unless a narrower `AGENTS.md` overrides one local implementation detail.
+## 1. Authority and freshness
+Follow, in order: platform instructions; the user's current explicit task and
+corrections; this file; actual source/tests/schemas/deployment; focused docs;
+status reports and old commits as historical evidence only.
+A current user decision overrides stale tests, prose, status reports, and past
+architecture. Replace tests that protect rejected behavior. `docs/status.md` is
+a release snapshot, not a constitution. Update this file whenever durable
+product policy changes.
+At the start of substantial work, inspect Git state, remotes, HEAD, deployment,
+relevant source/tests, persisted schemas, and intentional uncommitted work.
+Reproduce reported behavior before assuming its cause. Never reset or discard
+unrelated work merely to obtain a clean tree.
 ## 2. Canonical identity
-The target identity is:
-- product/package: `cell-sphere-game`;
-- repository: `lkjsxc/cell-sphere-game`;
-- Pages: `https://lkjsxc.github.io/cell-sphere-game/`;
-- tagline: `Every extinction becomes memory.`
-`incremental-network-game` is transitional legacy, allowed only in isolated
-migration code, fixtures, or clearly historical evidence. Completing the
-repository/package/UI/storage/Pages rename is authorized and expected. Never
-preserve the old name because an older contract required it.
-## 3. Product north star
-This is a mobile-first passive-observation roguelite on a living spherical
-cellular ecology. The player watches autonomous growth, inspects without hidden
-steering, delegates or chooses Adaptations, understands change through metrics,
-Event Log, and History, then converts extinction into persistent Evolution and
-Trophy progression.
-Default targets unless a newer task changes them:
-- comprehension in roughly ten seconds;
-- ordinary world roughly 270–330 game seconds;
-- bounded terminal near 360 game seconds;
-- first four-world resolution roughly 18–24 minutes at 1x;
-- 32x executes every authoritative tick and normally finishes in roughly 8–12 seconds in the established browser environment;
-- full Evolution/Trophy mastery is deliberately long-term, not capped near four
-  hours.
-Optimize for the strongest final product, not the smallest diff or preservation
-of an intermediate architecture.
-## 4. Cell-only visual grammar
-A world cell is the smallest visible world-surface unit.
-- Terrain, lakes, forests, organism state, crises, propagation, History highlights, Evolution, and Trophies are expressed through whole-cell material/state changes and adjacency.
-- Do not draw sub-cell rivers, channels, paths, ribbons, center-to-center lines, inset waterways, within-cell geographic glyphs, or other world detail finer than one cell.
-- Visible freshwater is represented primarily by connected whole-cell lakes,
-  lake shores, and optional whole-cell wetlands.
-- Internal drainage/flow fields may exist for generation and ecology, but must
-  not appear as visible rivers or user-facing river systems.
-- Remove obsolete fine river geometry rather than lowering its opacity.
-- Anti-aliasing, lighting, atmosphere, selection outlines, and ordinary UI
-  typography are not world-surface geography and may use pixel-level rendering.
-Add source and browser gates that prevent finer-than-cell world geometry from
-returning.
-## 5. Current UX direction
-- On wide layouts the globe has a stable right-biased anchor. Opening a surface
-  never moves or resizes it.
-- SCORE, ENTROPY, and REACH are visibly interactive metric controls with detail
-  surfaces. Use `SCORE`, never `NETWORK SCORE`.
-- Metric surfaces use a stable-height body; conditional content must not make
-  them jump vertically.
-- Result and History use the same large left-side detail-surface language as
-  cell inspection. The globe and appropriate surrounding HUD remain visible.
-  Each has a persistent control that can reopen it.
-- Globe rotation must not close an open detail surface. Distinguish drag from
-  blank-space tap.
-- Event History is named and unified as `Event Log`. The compact current-event
-  control remains visible at bottom-left on mobile and opens Event Log.
-- The active-run dock shows time, speed, Adaptations, and `Menu`. It does not
-  permanently show History or New World.
-- Both time-dial hands visibly advance independently while world time is
-  running, and both accelerate monotonically with the selected world speed.
-  Reduced motion uses a slower speed-aware sweep instead of freezing the dial;
-  pause and terminal states freeze it.
-- `Menu` contains preferences and a confirmed New World action. `Settings`
-  remains the inner preferences concept, not the active-run button label.
-- Adaptations use a compact mobile surface and preserve 44px targets.
-- Home, World/Result, Evolution, and Trophies use one stable radio/tab-like scene
-  selector with the same order and position wherever it is shown.
-- Temporary captions/toasts use the current extended duration policy, approximately 1.5x the original durations, through shared constants rather than scattered timers.
-## 6. Result continuation and world replacement
-Automatic next-world behavior is inactivity-only:
-- each result begins eligible for one automatic continuation;
-- any genuine pointer, touch, wheel, keyboard, focus, navigation, panel, metric, globe, or control interaction permanently cancels auto-next for that result;
-- mouse movement alone and hidden-document lifecycle events are not interaction;
-- hidden documents pause timing without preserving stale presentation;
-- manual Next World remains available;
-- a result generation may start at most one new world.
-World replacement is an atomic transaction. Before the next authority starts:
-- invalidate the old run/presentation generation;
-- stop/terminate old authority;
-- cancel old commands, requests, timers, captions, and continuation;
-- clear snapshots, visual History, highlights, selection, offers, event state, Reach state, and all renderer dynamic buffers;
-- install new fields and a blank snapshot tagged with the new world identity;
-- visibly clear the old organism before accepting the first new snapshot;
-- reject every stale old-run callback.
-A previous world's cells or effects may never appear in the new world, including
-for a single retained frame in WebGL2 or Canvas 2D.
-## 7. Evolution and Trophies
-- All 642 Evolution cells remain meaningful and eventually unlockable.
-- Purchase eligibility is enough Echoes plus any one directly adjacent unlocked
-  cell. Do not reintroduce `Worlds observed`, run-count gates, or all-parent
-  requirements.
-- Existing valid ownership migrates exactly and remains owned.
-- Trophy criteria should represent real discovery/mastery, not trivial contact.
-  Calibrate difficulty against production distributions and make full
-  completion a long pursuit.
-- Trophy recognition is deterministic, idempotent, visible at acquisition, and
-  queued so simultaneous awards are readable.
-## 8. Architecture and determinism
-Default dependency direction:
-`interface → rendering → simulation → world → core`
-`game` supplies frozen content/pure progression. `platform` owns adapters.
-Simulation imports no DOM, WebGL, CSS, storage, UI, or presentation clock.
-Rendering never mutates authority. Interface uses explicit commands.
-Use isolated deterministic RNG streams; never `Math.random()` in authority or seeded content. Worker and fallback use the same production simulation.
-Reject stale run/session/request messages. Accepted commands are acknowledged;
-rejections are explicit. Rewards, purchases, Trophies, extinction, abandonment,
-continuation, and migration are idempotent exactly-once transactions.
-Camera, menus, metrics, Event Log, History, quality, and visual effects do not
-alter simulation or score.
-## 9. Interaction contract
-One natural gesture should dismiss/replace an old surface and execute the newly
-targeted action exactly once. Do not globally swallow clicks or synthesize a
-replacement click.
-Dragging the globe while a detail surface is open rotates the globe and keeps
-that surface open. A blank-space tap may dismiss according to the surface's
-documented policy. Same-trigger activation toggles; Escape and Close work; focus
-restoration never steals focus from a new target.
-Test visible controls with real pointer/touch/keyboard input, not only
-`HTMLElement.click()`. No dead control, decorative button, fake metric,
-placeholder Trophy, or silent transaction failure is acceptable.
-## 10. Persistence
-Validate every loaded field. Migrate old schemas and product namespaces
-idempotently. Verify canonical writes before ignoring legacy sources. Never
-duplicate or lose Echoes, Skills, Trophies, Imprints, History, scores, run
-counts, seed cursors, or rewards.
-Imports may accept old exports; new exports use the canonical identity.
-Corruption degrades field-by-field. Storage-unavailable sessions remain playable
-and honestly report temporary persistence.
-## 11. Development and structure
+- Product/package: `cell-sphere-game`.
+- Repository: `lkjsxc/cell-sphere-game`.
+- Pages: `https://lkjsxc.github.io/cell-sphere-game/`.
+- Tagline: `Every extinction becomes memory.`
+`incremental-network-game` is legacy identity allowed only in isolated migration
+code/tests or clearly historical evidence.
+## 3. Current product direction
+- The game is an autonomous deterministic spherical ecology. There is no current
+  mid-run Adaptations system.
+- Remove Adaptation offers, cards, mode settings, protocol commands, RNG,
+  renderer effects, current-run History, result summaries, and Trophy criteria.
+  Old archived Adaptation records may remain read-only legacy evidence.
+- The Evolution Globe contains exactly **252** meaningful Skill Cells on a
+  frequency-5 geodesic sphere: 12 pentagons, 240 hexagons, 750 boundaries.
+- Skill effects and costs are materially larger than the former 642-cell tree.
+  Every purchase must have a legible immediate before/after effect.
+- Skill eligibility is enough Echoes plus at least one directly adjacent owned
+  cell. No `Worlds observed`, run-count, all-parent, or hidden experience gate.
+- Fresh-world final SCORE targets roughly 8,000–15,000.
+- After roughly 12–18 minutes of normal-speed play, a typical progressing save
+  should reach roughly 80,000–130,000.
+- Strong late/full progression targets roughly 850,000–1,100,000, with
+  exceptional play allowed modestly above one million.
+- SCORE is a transparent product of run quality and permanent World Potential;
+  camera, quality, frame rate, and speed never affect it.
+- The first two ordinary worlds have no harmful planetary crises. They normally
+  end through finite local-resource exhaustion and maintenance.
+- The first mild environmental pressure should normally appear late in world 3,
+  after roughly 13–16 minutes of 1x-equivalent play. Later worlds introduce
+  environmental pressure gradually.
+- Evolution eventually unlocks cold and aquatic habitats, including tundra,
+  snow/ice, lakes, shallow ocean, and deep ocean. Locked habitats explain the
+  required Evolution capability.
+- Result uses the persistent primary-view selector for Evolution and Trophies.
+  Do not duplicate Evolution/Trophies navigation buttons inside Result.
+- SCORE, ENTROPY, and REACH are unmistakably interactive at rest, including a
+  persistent border/background/disclosure cue rather than hover-only feedback.
+- Whole cells remain the smallest visible world-surface unit. Lakes, habitats,
+  life, events, Skills, and Trophies use whole-cell state/material changes.
+  Sub-cell rivers, paths, ribbons, and terrain glyphs remain forbidden.
+## 4. Product north star
+Build a calm, distinctive, legible incremental roguelite whose progression feels
+material after each purchase. The first worlds should teach autonomous resource
+use before crises appear. Later progression should visibly expand survivable
+habitats, score potential, and strategic world variety without adding mandatory
+mid-run interaction.
+Ordinary worlds remain approximately 270–330 game seconds with a bounded
+terminal near 360 seconds. The first campaign resolution remains approximately
+18–24 minutes at 1x. Full Evolution/Trophy mastery remains a long-horizon
+pursuit without real-time gates or forced slow speed.
+## 5. Durable invariants
+- Same seed, world progression, and accepted start configuration produce the
+  same authority at every speed and in Worker/fallback execution.
+- Frame rate, rendering quality, camera, menus, metrics, History, and Trophies
+  never alter simulation or SCORE.
+- Simulation imports no DOM, WebGL, storage, or wall-clock presentation state;
+  rendering never mutates authority.
+- Commands are acknowledged or explicitly rejected.
+- Extinction, abandonment, continuation, rewards, Skill purchases, Trophies,
+  world replacement, and migration are idempotent exactly-once transactions.
+- Valid player data survives schema and topology migrations.
+- WebGL2 is primary; Canvas 2D remains usable and semantically equivalent.
+- Hidden documents suspend or reduce work appropriately.
+- Evidence distinguishes implemented, tested, measured, observed, modeled,
+  target, and deployed.
+## 6. Evolution and migration
+Use a stable 252-cell topology and mapping hash. Six connected territories of
+42 cells are preferred.
+Compress the former 642 cells into stronger current cells through an explicit
+versioned manifest. Preserve every recognized owned legacy Skill by mapping it
+to a current cell. If several old Skills collapse into one current cell, preserve
+ownership and refund any positive difference between recognized legacy spend and
+the canonical cost represented after migration. Never charge a migration.
+Disconnected migrated ownership remains valid and opens adjacent frontiers.
+Every Skill detail and purchase feedback should show:
+- gameplay effect before → after;
+- World Potential before → after;
+- cost and held Echoes;
+- habitat or rule unlocked;
+- newly available adjacent cells.
+## 7. Environment and habitats
+Early extinction should be driven by finite local resources, nutrient renewal,
+maintenance, and overextension—not hidden scripted death or early crises.
+Pass a stable world ordinal/era into simulation. Harmful event scheduling and
+entropy effects use that era, not wall-clock waiting. Fast game speed may
+compress wall time but cannot change authoritative sequencing.
+Habitat access is an explicit compiled Evolution capability. Growth rejects an
+inaccessible biome before RNG consumption and explains the lock in Inspector.
+Marine and cold access must remain costly, bounded, and ecologically distinct.
+## 8. Interaction and presentation
+- One gesture may replace one detail with another without being swallowed.
+- Globe drag/pinch/wheel preserves an open detail pane.
+- Same trigger toggles; another trigger replaces; Escape and Close work.
+- Opening a pane never moves or zooms the globe.
+- All visible controls work through real pointer/touch and keyboard input.
+- Metric controls retain visible affordance without hover.
+- Skill/Trophy notifications are queued, bounded, nonblocking, and accessible.
+- No dead control, fake metric, placeholder content, or silent transaction
+  failure is acceptable.
+## 9. Persistence
+Validate every field. Migrate old Adaptation settings/state, the 642-cell Skill
+schema, Trophy aliases, History, exports, and product namespaces idempotently.
+Never duplicate or lose Echoes, current Skill ownership, legacy Skill value,
+Trophies, Imprints, History, scores, runs, seed cursors, or rewards. Old
+Adaptation History remains readable but cannot affect current simulation.
+Corruption degrades field by field. Storage-unavailable sessions remain playable
+and report temporary persistence honestly.
+## 10. Development and structure
 Work autonomously through:
-`inspect → understand → decide → implement → test → measure → integrate →
-document → commit → verify → report`
-Do not stop at a plan, mockup, migration scaffold, narrow slice, or “foundation” commit. Prefer complete vertical slices. Delete dead code and obsolete tests in
-the same turn. After two materially similar failures, change approach.
-The old 200-line/16-child limits are maintainability heuristics, not product
-laws. Prefer focused modules, but change the structure checker and docs when an
-arbitrary threshold blocks a better architecture. Git history is the archive;
-do not create `old/new/legacy/temp/v2` graveyards.
-Production remains browser-native HTML/CSS/ES modules. Prefer JS/TS and Node for tooling. Avoid new shipped dependencies and verify contest constraints before
-adding one. No per-cell DOM, per-frame geometry rebuild, normal-path canvas
-readback, frame-loop shader compilation, or unbounded state.
-## 12. Verification
-Use focused tests during implementation and full relevant gates before release:
+`inspect → reproduce → model → implement → test → measure → integrate →
+document → commit → push → verify`
+Do not stop after a plan, mockup, migration scaffold, or foundation commit.
+Prefer complete vertical slices. Delete obsolete Adaptation and 642-tree code
+and tests in the same turn.
+The historic 200-line/16-child limits are maintainability heuristics, not product
+laws. Prefer focused modules, but revise the checker/docs when arbitrary numbers
+distort architecture. Git history is the archive; do not create graveyard
+directories.
+Production remains browser-native HTML/CSS/ES modules. Prefer JS/TS and Node
+tooling. Avoid new shipped dependencies. Use deterministic data-oriented
+per-cell systems and bounded queues/buffers/caches.
+## 11. Verification
+Use production modules, not copied simplified models.
 ```bash
 npm run test:unit
 npm run test:integration
@@ -162,35 +149,37 @@ npm run verify
 npm run test:browser:file
 npm run test:browser:canvas
 npm run balance
-npm run audit:events
+npm run audit:cell-visuals
 npm run audit:lakes
+npm run audit:events
 npm run audit:skills
 npm run audit:trophies
 npm run terminal:soak
 ```
-Replace obsolete `audit:rivers` with a lake/water audit; a temporary alias may
-exist only during migration and must not preserve river presentation.
-Do not weaken determinism, idempotency, migration, or integrity assertions.
-Browser interaction defects require real pointer/keyboard input. Test fresh and
-migrated saves, Worker/fallback, speed invariance, repeated auto-next cycles,
-WebGL2, Canvas 2D, responsive viewports, and bounded memory. A skipped test is
-not a pass. Physical-device claims require a physical device.
-## 13. Git, deployment, and documentation
-Make coherent commits; preserve history; never force-push unless explicitly ordered with understood consequences. Verify branch/upstream after push,
-Actions and Pages for the exact reviewed commit, cache-busted public bytes, and
-the public app where possible. Repository rename is authorized; update remotes,
-workflows, Pages paths, docs, links, and migration transactionally.
-Documentation follows implementation and does not freeze rejected behavior.
-Update README, focused docs, this file, and `docs/status.md`. Use evidence terms
-precisely: implemented, tested, measured, observed, deployed, modeled, target.
-## 14. Completion and handoff
-A task is complete only when requested behavior works in the real product;
-conflicting behavior/dead code are removed; authority, Worker/fallback,
-rendering, UI, persistence, and History agree; fresh/migrated states work;
-relevant gates pass; responsive/accessibility paths are checked; performance
-and memory remain bounded; docs are truthful; requested commits are pushed; and
-the exact build is deployed when in scope.
-Report starting/final commits, repository identity, root causes, product and
-architecture changes, migrations, exact test/audit/browser results, hashes and
-performance, responsive/accessibility evidence, push/CI/Pages revision, modeled
-versus measured progression, limitations, and highest-impact next actions.
+Add or update audits for:
+- 252-cell topology/economy/effects/migration;
+- SCORE progression at fresh, 3-world, first-cycle, mid, and full progression;
+- early extinction-cause and event-onboarding distributions;
+- cold/marine habitat locks and unlocks;
+- complete absence of active Adaptation code and UI.
+Browser interaction defects require real CDP pointer/keyboard input. Test fresh
+and migrated saves, Worker/fallback, speed invariance, WebGL2/Canvas, responsive
+viewports, repeated world replacement, and bounded memory.
+A skipped test is not a pass. Physical-device claims require a physical device.
+## 12. Git, deployment, and documentation
+Make coherent commits, preserve history, and never force-push unless explicitly
+ordered with understood consequences. Verify branch/upstream, Actions, Pages,
+cache-busted public bytes, and the exact reviewed revision.
+Update README, focused docs, this file, and `docs/status.md`. Remove current
+Adaptation and 642-cell claims rather than retaining contradictory prose.
+## 13. Definition of done
+A task is complete only when requested balance works in the real product;
+obsolete systems/dead code are removed; authority, Worker/fallback, rendering,
+UI, persistence, History, scoring, and progression agree; fresh and migrated
+states work; relevant gates and real-browser paths pass; performance and memory
+remain bounded; docs are truthful; requested commits are pushed; and the exact
+build is deployed when in scope.
+Report starting/final commits, root causes, score/economy models, measured
+distributions, migration results, exact tests/audits/browser evidence, hashes,
+performance, responsive/accessibility results, push/CI/Pages revision, modeled
+versus measured claims, limitations, and next actions.
