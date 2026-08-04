@@ -75,8 +75,10 @@ World Potential version 2 uses bounded monotone Evolution Power anchors:
 
 A paired 60-seed production check measured median SCORE 8,892 fresh and 10,676
 with one root. The first purchase therefore remains in the requested normal
-10,000–20,000 next-world range. A balanced fair-agent trace reached power 4
-after three worlds; this is 80,000 World Potential at roughly 15–16 game minutes.
+10,000–20,000 next-world range. The deep campaign audit's ten potential-policy
+cohorts reached median 105,000 potential after three worlds / 15.565 minutes.
+Their first four-world resolution was 20.197 minutes (18.252–22.500 range), with
+median world-3 SCORE 28,951 and best five-world SCORE 91,108.
 
 ### Full builds, transformations, and REACH 100
 
@@ -85,6 +87,11 @@ cohort produced median 106 transformed cells, 17 reclaimed cells, 24 bounded
 cryolakes, 5 maritime forests, and 105 ever-powered cells. Fresh controls
 produced no transformations or powered cells. Full SCORE is bounded at about
 1.099 million.
+
+The deep production progression checkpoints measured median SCORE 518,404 at 63
+Skills / 580,000 potential, 776,768 at 126 / 848,000, and 1,099,200 at full
+252 / 1,200,000. Full median duration was 347.2 seconds and median peak Reach
+98.6%; exact coverage remains rare because it must persist for the full interval.
 
 A deterministic 300-seed full-build cohort achieved exact all-2,562-cell living
 coverage for the required 25 consecutive ticks in 8 seeds (2.67%). Every

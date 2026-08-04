@@ -109,7 +109,12 @@ async function trustedControl(evaluate, click, selector) {
 async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait, errors }) {
   const boot = await evaluate('window.__CELL_SPHERE_BOOT__'); if (boot?.renderer !== 'canvas2d') throw new Error('Canvas fallback did not boot');
   await screenshot('browser-canvas-title-mobile.png'); await setViewport(1440, 900); await wait(180); await screenshot('browser-canvas-title-desktop.png');
-  await evaluate(`(()=>{document.getElementById('begin-button').click();const speed=document.getElementById('speed-select');speed.value='256';speed.dispatchEvent(new Event('change'))})()`);
+  await evaluate(`document.getElementById('begin-button').click()`);
+  if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'running', 5000)) throw new Error('Canvas run did not start');
+  const developed = await evaluate(`(async()=>{const [{RunController},{compileMemory,MEMORY_NODE_IDS}]=await Promise.all([import('./src/simulation/simulator.js'),import('./src/game/skills/index.js')]);const m=compileMemory({memoryNodes:MEMORY_NODE_IDS}),c=new RunController({seed:9099,worldOrdinal:20,worldPotential:m.worldPotential,evolutionPower:m.evolutionPower,potentialVersion:m.potentialVersion,memoryEffects:m.effects,memoryConditionals:m.conditionals,memoryUnlocks:m.unlocks,habitatCapabilities:m.habitatCapabilities,activeBuilds:m.activeBuilds,buildEffects:m.buildEffects});c.start();c.advance(300);const s=c.snapshot();window.__CELL_SPHERE_APP__.historySnapshot=s;return {transformed:[...s.transformationState].filter(Boolean).length,powered:[...s.electricityQ].filter(Boolean).length}})()`);
+  if (developed.transformed <= 50 || developed.powered <= 50) throw new Error(`Canvas ecology fixture failed: ${JSON.stringify(developed)}`);
+  await wait(120); await screenshot('browser-canvas-transformations.png');
+  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.historySnapshot=null;const speed=document.getElementById('speed-select');speed.value='256';speed.dispatchEvent(new Event('change'))})()`);
   if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 50000)) throw new Error('Canvas run did not finish');
   const terminal = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),status:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
   const score = terminal.score; if (terminal.status !== 'extinct' || terminal.alive !== 0 || terminal.reach !== '0%') throw new Error(`Canvas terminal snapshot stale: ${JSON.stringify(terminal)}`);

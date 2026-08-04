@@ -107,8 +107,27 @@ Current production-module evidence:
   Marine activated Pelagic Colony; Luminous energized 311 cells; Terraforming
   activated reclamation and transformed 14 cells. Best SCORE ranged 151k–247k.
 
-Full `npm run verify`, balance, browser WebGL2/Canvas, soak, deep audits, CI, and
-Pages/public-byte verification are required again for the final candidate.
+Final local release gates:
+
+- `npm run verify`: all 22 gates PASS; benchmark 4,231 ticks/s, 11 MB heap;
+- deep campaign: 200 fresh median SCORE 9,061 / 18 Echoes / 312.4 seconds;
+  potential-policy median 105,000 after 15.565 minutes and first resolution
+  20.197 minutes; full median SCORE 1,099,200;
+- deep habitat: 60 seeds/configuration, fresh locks exact, deep-only unlock median
+  13 visited cells, full marine share 49.2% and peak Reach 98.8%; PASS;
+- full balance: six 30-run policies; PASS;
+- terminal soak: 1,000 worlds, zero invalid states, duplicate terminal messages,
+  or liveness repairs; median 3,169 ticks, maximum 3,620;
+- WebGL2 real-CDP: PASS, 4 draws, SCORE 10,774, 8× completion 37.91 seconds,
+  DEV 256× 1.70 seconds, title mean 1.13 ms / p95 1.50 ms;
+- Canvas real-CDP: PASS with SCORE 10,774;
+- production full-build fixtures rendered and manually inspected in both backends:
+  local resource variation, recovering/reclaimed soil, cryolakes, maritime
+  succession, and energized whole cells were visible; no wire geometry;
+- title showcase replay v4: 89 frames, SHA-256
+  `b19a8ccf45fd583b8ddcbb924aa190d006c7710f2a2f59dbf8bc8af802e2ae5b`.
+
+CI, Pages, public-byte comparison, and deployed-browser verification remain.
 
 ## Revision state
 

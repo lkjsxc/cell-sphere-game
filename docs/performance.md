@@ -16,20 +16,20 @@
 Latest `npm run verify` benchmark:
 
 ```text
-2772 ticks in 228 ms = 12,157 ticks/s
+3176 ticks in 751 ms = 4,231 ticks/s; 11 MB heap used
 ```
 
 Real Chrome/WebGL2 vertical slice:
 
-- public 8× fresh world: 32.58 seconds wall time;
-- explicit `?dev=1` 256× fresh world: 1.67 seconds wall time;
+- public 8× fresh world: 37.91 seconds wall time;
+- explicit `?dev=1` 256× fresh world: 1.70 seconds wall time;
 - draw calls: 4;
-- title render mean: 0.89 ms;
-- title render p95: 1.30 ms;
+- title render mean: 1.13 ms;
+- title render p95: 1.50 ms;
 - no browser errors;
 - context-loss fallback accepted Canvas frames.
 
-Canvas 2D completed the same authority with terminal SCORE 10,822. These are
+Canvas 2D completed the same authority with terminal SCORE 10,774. These are
 measured on the audit host, not physical-device claims.
 
 ## Data layout
@@ -44,4 +44,6 @@ cell count. No active offer/card propagation buffers remain.
 `terminal:soak` checks repeated world termination and replacement for bounded
 listeners, timers, requests, snapshots, renderer state, and exactly-once rewards.
 Browser replacement evidence checks old life/event/highlight buffers are empty in
-the first accepted frame of the new world.
+the first accepted frame of the new world. The final 1,000-world soak ended with
+zero invalid states, duplicate terminal messages, or liveness repairs; median
+lifetime was 3,169 ticks and the maximum remained 3,620.
