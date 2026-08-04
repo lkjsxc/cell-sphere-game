@@ -43,7 +43,7 @@ console.log(`audit:identity — OK (canonical product/repo/Pages/browser/storage
 
 function files(dir, out = []) {
   for (const name of readdirSync(dir)) {
-    if (['.git', 'reports', 'node_modules'].includes(name)) continue;
+    if (['.git', 'reports', 'node_modules', 'tmp'].includes(name)) continue;
     const file = join(dir, name); const info = statSync(file);
     if (info.isDirectory()) files(file, out); else if (TEXT.has(file.slice(file.lastIndexOf('.')))) out.push(file);
   }

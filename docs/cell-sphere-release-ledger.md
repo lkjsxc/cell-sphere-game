@@ -1,190 +1,156 @@
 # cell-sphere-game release ledger
 
-Evidence words are scoped: **implemented**, **tested**, **measured**, **observed**, **deployed**, **modeled**, and **target** are not interchangeable.
+Evidence words are scoped: **implemented**, **tested**, **measured**,
+**observed**, **deployed**, **modeled**, and **target** are not interchangeable.
 
-## Verified start
+## Verified start and protection
 
-- **observed** start `440a565b5ae952c4bc389bf91081db462ea2c6dd`, branch `main`, upstream `origin/main`, clean except for the supplied replacement `AGENTS.md`.
-- **observed** GitHub repository `lkjsxc/incremental-network-game`, viewer permission `ADMIN`, workflow Pages at `https://lkjsxc.github.io/incremental-network-game/`, and successful workflow `30808633485` for the start commit.
-- **implemented / pushed** replacement contract commit `1ab584486a793d9104a6a64c8d262f55a5480bf9`.
-- **deployed** protective tag `pre-cell-lakes-unified-shell-20260803` at the verified start.
-- **tested** `npm run check:structure` and `npm run verify`: 103 unit and 61 integration tests, balance smoke, benchmark, showcase, links, and structure passed; benchmark `15,547 ticks/s`, hash `637b2473`.
-- **observed failure** `npm run test:browser:file`: History scrub raced terminal state at tick 2,592 and did not produce an approximate checkpoint.
-- **observed** 18 real-Chrome baseline captures and a state dump under ignored `reports/cell-lakes-shell-baseline-440a565/`.
+- **observed** start:
+  `440a565b5ae952c4bc389bf91081db462ea2c6dd`, `main`, upstream
+  `origin/main`, legacy repository/Pages identity, and the user-reported
+  contradictions reproduced in real Chrome.
+- **implemented / pushed** replacement contract:
+  `1ab584486a793d9104a6a64c8d262f55a5480bf9`.
+- **pushed** protective tag `pre-cell-lakes-unified-shell-20260803` at the
+  verified start.
+- **observed baseline** under ignored
+  `reports/cell-lakes-shell-baseline-440a565/`: visible sub-cell channels,
+  mobile-hidden current event, only REACH as a button, oversized active dock,
+  replacement Result strip, globe-drag dismissal, run-gated Evolution copy, and
+  previous-world state in the first automatic continuation frame.
 
-## Baseline contradictions
+## Implementation commits
 
-- **observed** obsolete sub-cell teal channels crossed cell interiors in the close-up baseline capture.
-- **observed** mobile current-event copy exists but has `display:none` in `03-run-mobile-event-hud.png`.
-- **observed** SCORE and ENTROPY are `DIV`; only REACH is a `BUTTON`.
-- **observed** the active dock exposes Adaptations, History, New World, and Settings.
-- **measured** Reach used the mobile sheet rectangle `0,489.53,390,354.47` at ticks 480 and 896; its globe drag changed the surface from open to hidden.
-- **observed** terminal composition is a replacement `result-screen` with a bottom result strip and no context surface.
-- **observed** automatic continuation advanced run ID `1 → 2`, but `13-auto-next-first-observed-frame.png` retained the previous terminal globe, SCORE `613,052`, ENTROPY `100%`, and last-cell state while the app already reported new run state `starting`.
-- **observed** Evolution copy includes `Locked, observe … more worlds`; Trophy evidence includes automatic one-cell geography awards.
-- **observed** Home/World/Evolution/Trophies expose different navigation clusters and ordering.
+1. `68113369217e4e510ecd1768f8428675a2ca4000` — replace visible rivers with
+   connected whole-cell lakes and whole-cell ecology.
+2. `ce554ef30584943e1f351b602c94b25de19b0f52` — atomic world replacement,
+   immutable session identity, typed blank frame, renderer reset, and
+   untouched-only continuation.
+3. `2c95c2491d94486ab479fcc98acf2bafcfb83206` — Evolution purchase authority
+   based on cost and physical adjacency.
+4. `0217656ee2897552aaa5362318a41e3c5447c00b` — unified scene selector,
+   metrics, Result/History/Event Log/Menu shell, compact dock/Adaptations.
+5. `25edde742df955a2dae51ddf932ac42074d9816c` — keep the current event visible
+   beside responsive surfaces.
+6. `7b80e7dbb42f48dd7cbcf2a43f4587a0290b28f4` — harder 96-Trophy mastery,
+   Legacy migration, queued feedback, and centralized durations.
+7. `bcd9b1d81e58b78a4100983c6fa388d7c9ff2a3c` — canonical package/UI/storage/
+   export/browser identity and transactional legacy namespace adoption.
+8. `411a0eca73b3c212959d6a2d7a7bf41795d4a0a7` — fresh-save-only Evolution
+   roots, private lake outflow, stronger cell-visual audit, and removal of the
+   old river-audit alias.
+9. `6bb6960d40c5daaf1d8f3f13a842a7050e1a4672` — authoritative terminal
+   snapshot, same-session Worker handover isolation, hidden-result timing,
+   context-loss Canvas replacement, UI reset semantics, and browser coverage.
 
 ## Requirement-to-evidence map
 
-| Gate | Production requirement | Current state | Required release evidence |
+| Gate | Requirement | Release state | Evidence |
 |---|---|---|---|
-| A | replacement contract, exact baseline, protective tag | complete | pushed commit/tag plus this ledger |
-| B | cell-only visible world and connected whole-cell lakes | target | source visual-grammar gate, lake audit, WebGL2/Canvas captures |
-| C | atomic first-wins world replacement and blank new frame | implemented and locally tested from `6811336`; not deployed | state-machine tests, stale rejection, 100-cycle soak, first-frame captures |
-| D | untouched-only Auto Next; trusted input cancels permanently | implemented and locally tested from `6811336`; not deployed | timer/unit interaction matrix and trusted CDP scenarios |
-| E1 | clickable stable SCORE/ENTROPY/REACH details | implemented and locally observed; not deployed | semantics plus stable-rectangle measurements |
-| E2 | shared Result/History/Event Log/Menu context shell | implemented and locally observed; not deployed | desktop/mobile Chrome scenarios and gesture persistence |
-| E3 | compact dock/Adaptations, visible mobile event, fixed scene selector | implemented and locally observed; not deployed | responsive matrix, 200% text, long labels |
-| F1 | Evolution cost plus one owned adjacent cell only | implemented/tested locally from `ce554ef`; not deployed | schema/audit/migration and run-zero purchase proof complete |
-| F2 | harder lake-centric Trophies and queued feedback | implemented/tested in isolated worktree from `25edde7`; not deployed | production/model horizon audit, Legacy migration, fake-clock queue tests; final browser evidence pending |
-| G | `cell-sphere-game` package/storage/repository/Pages identity | implemented/tested in isolated worktree; external rename/deploy not executed | parent repository rename/push, successful Actions, and exact canonical Pages bytes |
-| H | deterministic Worker/fallback, 32×, bounded performance | baseline fast gates pass | final parity, balance, benchmark, Canvas, lake/event/Trophy audits and soaks |
-| I | coherent push and exact public deployment | target | clean tree, successful workflow, cache-busted public inspection |
+| A | current root contract, baseline, protection | **complete** | contract commit, pushed tag, 18 baseline captures/state |
+| B | cell-only geography and whole-cell lakes | **implemented / tested / observed** | source gate; 500-seed lake audit; WebGL2/Canvas captures |
+| C | atomic first-wins replacement and blank frame | **implemented / tested / observed** | immutable identity; 100-cycle integration; both renderer paths |
+| D | untouched-only Auto Next | **implemented / tested / observed** | trusted interaction matrix; hidden-result test; real countdown expiry |
+| E | interactive metrics and stable unified shell | **implemented / tested / measured** | exact metric rectangles; Result/History/Event Log/Menu/Adaptations CDP |
+| F | adjacency-only Evolution and long Trophy mastery | **implemented / tested / modeled** | exhaustive 642-cell audit; 96-cell horizon audit; migration tests |
+| G | canonical product/repository/Pages identity | **implemented / renamed / pushed** | in-place GitHub rename, canonical origin, identity audit |
+| H | determinism, parity, pacing, performance | **tested / measured** | unit/integration, full balance, benchmark, audits, terminal soak |
+| I | exact public deployment | **pending final status push at ledger authoring** | final handoff records exact Actions run and cache-busted public hash |
 
-## Unified shell / stable surface evidence
+## Cell-only water evidence
 
-- **implemented locally** orthogonal `idle | starting | running | result`
-  authority and `home | world | evolution | trophies` scene state. One renderer
-  draws only the selected scene; active authority advances off-scene and World
-  restores its saved camera. One fixed semantic tablist owns scene navigation.
-- **implemented locally** one physical context shell owns desktop-left/mobile-
-  bottom geometry, focus, scrim, and replacement for Result, History, Event Log,
-  Menu, all three metrics, Adaptations, Inspector, and progression details.
-  Canvas pointerdown never dismisses it; cumulative tap/drag classification owns
-  blank dismissal and cell replacement.
-- **implemented locally** the active dock contains only time/pause, speed,
-  Adaptations, and Menu. The current-event button remains 44px or taller across
-  portrait/landscape viewports and opens an 80-row-bounded semantic Event Log.
-  Menu owns preferences, scene/data routes, and the existing reward-free
-  confirmed New World transaction.
-- **implemented locally** terminal World retains the final snapshot, renderer,
-  camera, HUD metrics, event, Menu, selector, and globe input while Result opens
-  in the shared shell. Result can close/reopen, cell inspection can replace it,
-  and drag does not dismiss it. Completed time, speed, and Adaptations expose
-  disabled terminal semantics.
-- **tested locally** unit projections cover actual Score axes/weights/ranks,
-  snapshot-derived Entropy rate/context, authoritative Reach ledger values, and
-  current/archive Event Log bounds. The trusted-CDP scenario samples metric
-  geometry through updates, scene keyboard semantics, drag/scroll persistence,
-  Menu confirmation, compact Adaptations, Result, History, Event Log, 200% text,
-  reduced motion, high contrast, long labels, and atomic replacement.
-- **measured locally** in real headless Chrome/WebGL2 at 1440×900, SCORE,
-  ENTROPY, and REACH each retained the exact shell rectangle
-  `left=16, top=144, right=476.796875, bottom=884, width=460.796875,
-  height=740` through multiple authority updates. The 320×568, 390×844,
-  430×932, 768×1024, 844×390, and 1440×900 matrix retained 44px selector
-  controls, a 67.09375px current-event control, bounded dock/event rectangles,
-  no overlap, and no horizontal overflow.
-- **not deployed**: no push, CI, Pages, public URL, Docker, physical-mobile, or
-  assistive-technology claim belongs to this isolated shell slice.
+- **removed** top-level geometry arrays `riverDown`, `riverUp`, and `riverMeta`;
+  shader inputs `aRiverDown`, `aRiverUp`, and `aRiverMeta`; local channel
+  calculations; and Canvas river curves/helpers.
+- **implemented** deterministic private priority-flood drainage used only for
+  lake selection and ecology. Public lake records contain no outflow route.
+- **measured** 500 worlds: 6–8 lakes/world (mean 6.6), 3–18 cells/lake,
+  deterministic hash `d8ee64b9`, zero disconnected/overlap/touching/shore/
+  wetland/privacy failures, mean 2.73ms generation.
+- **measured** current static geometry arrays are 1,838,196 bytes versus
+  2,411,700 at the start (`−23.78%`); shader attributes are 7 versus 10; draw
+  count remains four.
+- **tested** `audit:cell-visuals` scans 25 rendering/world modules and rejects
+  the old identifiers plus prefixed attribute/varying and known curve/channel
+  patterns. Current result: zero violations.
 
-## Canonical identity / namespace evidence
+## World-session and Auto Next evidence
 
-- **implemented locally** one platform-neutral identity module owns the exact
-  product/tagline/version, target repository/Pages URLs, canonical storage and
-  IndexedDB names, export identity/filename, and `__CELL_SPHERE_*` diagnostics.
-- **implemented locally** schema-8 progression now persists bounded result
-  transaction keys as well as scores, Echoes, run/seed cursors, all 642 Skill
-  ownership, Imprints, current/Legacy Trophies, queue, and cumulative proof.
-  Settings and semantic History migrate in the same staged, verified namespace
-  transaction; canonical values win coexistence and legacy sources remain intact.
-- **implemented locally** malformed-canonical fallback is allowed only when a
-  source/target receipt proves the legacy normalization equals the last verified
-  canonical checkpoint. Partial writes are repeatable; import is all-or-rollback;
-  storage-unavailable play remains explicit and session-safe.
-- **implemented locally** visual History adoption is asynchronous and startup-
-  nonblocking. At most ten valid decoded records merge by ID into the canonical
-  IndexedDB, canonical duplicates win, and the receipt is written only after
-  target verification. `INHV` v1 remains intentionally supported to avoid loss.
-- **tested locally** the identity audit rejects transitional active copy/config
-  and ambiguous browser globals. Unit/integration and real-browser migration
-  results belong in `docs/status.md` after final execution.
-- **not executed externally**: repository rename, remote change, push, Actions,
-  Pages deployment, and public canonical URL verification remain parent actions.
+- **implemented** ordered retire → clear → prepare → bind blank → start authority
+  transaction. Every async world-owned message/request uses the full immutable
+  identity; every renderer accepts only its bound identity.
+- **implemented** terminal snapshot-before-result ordering, complete event/HUD
+  reset, transport-generation invalidation during Worker fallback, bounded
+  pre-authority recovery, and canvas replacement after WebGL context loss.
+- **tested** 100 first-wins coordinator cycles: 100 unique seeds, run IDs,
+  presentation generations, result keys, and blank frames; 100 same-frame races
+  rejected.
+- **observed** real WebGL2 and Canvas first replacement frames have zero life,
+  events, highlights, and Adaptation state. WebGL mirrors also report zero dynamic
+  uploads.
+- **observed** real Chrome untouched countdown expiry starts exactly one later
+  world. Trusted Result interaction cancels permanently. A context-loss event
+  replaces the canvas, rebinds input, and continues in Canvas 2D.
 
-## Trophy mastery / presentation timing evidence
+## Shell evidence
 
-- **implemented locally** exactly 96 current cells remain in six 16-cell
-  families. One onboarding completion is automatic; 24 fresh production
-  Automatic worlds each earned exactly one Trophy. Rich whitelisted conditions
-  combine high-percentile world outcomes, sustained morphology/ecology,
-  Manual/Automatic practice, adjacent Evolution ownership, cumulative diversity,
-  and whole-cell lake mastery.
-- **implemented locally** bounded facts v3 records lake cells/shores/distinct and
-  complete basins, five type/three salinity masks, lake-wetland-forest-highland
-  combinations, sustained large-lake regions/loops, and lake-adjacent
-  drought/freeze survival. First-birth markers and the existing one-second
-  summary cadence add no per-tick unbounded scan; proof intentionally joins the
-  deterministic final hash and consumes no RNG.
-- **implemented locally** progression schema 8 maps old
-  `reach-river-touch` ownership to a separate Legacy list and introduces current
-  `reach-lake-network`. Facts-v1 bit 2 is masked. Every other old current ID is
-  grandfathered; validation/import is idempotent and grants nothing on load.
-- **modeled/measured by production authority** the deterministic campaign earns
-  2 / 6 / 9 / 20 / 63 total current Trophies after 1+purchase / 4 / 12 / 48 /
-  240 worlds. The 24-world fresh cohort is `1:24`; audit hash `40aa0e55`, 52.110 s,
-  63/96 at twenty-hour-equivalent, zero impossible/duplicate/trivial-majority
-  criteria. This is modeled 1×-equivalent progression, not observed player time.
-- **implemented/tested locally** award commit adds ownership, one semantic
-  History/Event Log entry, and one persisted unique FIFO ID exactly once. A
-  global 4.2 s actionable reveal shows name/reason/family/progress, holds for
-  hover/focus, uses a static reduced-motion state, updates the Trophy tab badge,
-  routes click to exact detail, and survives world replacement without old world
-  cell highlights. Result lists exact new names.
-- **implemented/tested locally** centralized UI timing is toast 2.7 s,
-  Adaptation caption 3.75 s, Trophy 4.2 s. Important copy queues rather than
-  replacing; generation tokens retire stale run captions. Simulation events,
-  Auto Next, camera, preview reload, and Worker watchdog timing are unchanged.
-- **not deployed** and no physical-device/screen-reader claim. Final WebGL2 and
-  Canvas browser commands are recorded in status only after execution.
+- **implemented** one fixed `Home | World | Evolution | Trophies` semantic
+  selector and orthogonal authority/scene state.
+- **implemented** one shared context shell for Inspector, SCORE, ENTROPY, REACH,
+  Result, History, Event Log, Menu, Adaptations, and progression details.
+- **measured** every metric at 1440×900 retained the same 460.796875×652 shell
+  rectangle at left 16/top 144 through live updates and kind switching.
+- **observed** globe drag retains metric scroll, Result, History, and Event Log;
+  a cell tap can replace Result with Inspector; Result then reopens persistently.
+- **observed** mobile current event is 67.09375px high and remains separate from
+  the dock/shell in the tested responsive matrix. Mobile Adaptations stays at or
+  below 36dvh with all tested choices/disclosure controls at least 44px.
+- **implemented** dock is time, speed, Adaptations, Menu. Menu owns preferences,
+  History/Event Log/Result routes, and confirmed reward-free New World.
 
-## Evolution physical-frontier evidence
+## Progression, Trophy, and migration evidence
 
-- **implemented locally** graph 4 precomputes stable ID-to-cell addresses and all
-  1,920 physical level-3 boundaries. A recognized unowned Skill Cell is
-  purchasable exactly with enough Echoes and any one adjacent owned cell.
-- **implemented locally** exactly six canonical roots remain bootstrap choices
-  under the initial-save rule. Every non-root uses ordinary physical adjacency;
-  no run count or authored layout parent participates.
-- **implemented locally** progression schema 8 preserves every recognized owned
-  ID, including disconnected graph-1/graph-3 migration islands. Unknown IDs
-  remain quarantined; migration never refunds, charges, closes, or auto-purchases.
-- **tested** 3,840 directed adjacent frontiers and 3,810 canonical root-bootstrap
-  states accept at run zero; 403,872 nonadjacent non-root states reject. All 642
-  cells acquire legally for exactly 2,462 Echoes with zero remainder. The audit
-  checks all 411,522 possible single-owner/target states, economy hash `34b4e4a9`, effect
-  hash `8444edfd`, six roots, and zero obsolete authority fields/copy.
-- **not deployed**: no push, CI, Pages, public URL, Docker, physical-mobile, or
-  assistive-technology claim belongs to this isolated migration slice.
+- **tested** exactly six roots are purchasable only on an empty save. Across all
+  411,522 single-owner/target states, 3,840 physical frontiers accept and
+  407,682 nonadjacent states reject. All 642 cells purchase for exactly 2,462
+  Echoes. No run/experience/parent authority or copy remains.
+- **modeled** Trophy totals are 2 / 6 / 8 / 18 / 62 after 1 / 4 / 12 / 48 / 240
+  worlds in the current production audit. The 24-world fresh cohort earned one
+  onboarding Trophy each; 34 remain after the twenty-hour-equivalent horizon.
+- **tested** Trophy acquisition is exactly once, persisted, queued, announced,
+  shown in Result and Event Log/History, and routed to detail. Old river
+  ownership is explicit Legacy evidence and never awards current lake mastery.
+- **implemented / tested** canonical writes for Meta, Settings, History, and
+  recent visual runs are validator-verified and idempotent. Old namespaces and
+  old semantic exports migrate without deleting sources or duplicating rewards.
+  Canonical values win coexistence. Storage failure remains playable and visible.
 
-## Atomic world-session / untouched Auto Next evidence
+## Verification ledger
 
-- **implemented** one `requestWorldReplacement(reason, expectedIdentity)` entry
-  for title Grow, manual/automatic Next, confirmed abandonment, Evolution/Trophy
-  restart, and recoverable pre-authority failure. The guarded transaction is
-  first-wins and moves through requested/awaiting-authority, replacing,
-  preparing, and starting before returning idle on matching `started`.
-- **implemented** immutable
-  `{worldSessionId, runId, seed, presentationGeneration, resultTransactionKey}`
-  envelopes. Identity is reserved and published before synchronous fallback or
-  Worker startup; Worker, driver, app, History, Inspector, commands, and delayed
-  callbacks reject retired tuples.
-- **implemented** ordered presentation retirement and typed zero-life `starting`
-  snapshots. WebGL2 zeroes and uploads life/event/Adaptation buffers; Canvas 2D
-  clears its full framebuffer. Both bind the new session and reject old snapshots.
-- **tested** 100 production-coordinator replacements in 7.4 ms: 100 accepted and
-  100 same-cycle races rejected, with 100 unique seeds, run IDs, presentation
-  generations, result keys, authorities, and static blank frames. The separate
-  100-world authority/result soak passed in 15.6 s with exactly 100 rewards,
-  duplicate rejection, 24-world/8-Imprint bounds, and heap under its 160 MiB gate.
-- **observed locally** real Chrome/WebGL2 intercepted the first automatic
-  replacement frame as `starting`, zero life/events/highlights/Adaptation, with
-  zero CPU mirrors for all uploaded dynamic buffers; Canvas 2D observed the same
-  contract after a Trophy restart and a full-canvas reset. The final WebGL2
-  pass completed at 32× in 8.90 s with four draws and no browser errors; Canvas completed its run.
-- **tested** untouched Auto Next fires once; trusted pointer/touch/wheel/keyboard/
-  control/focus interaction classes cancel permanently; hidden time pauses;
-  movement, visibility, and untrusted/programmatic events do not cancel; setting
-  toggles do not rearm; and each new result increments continuation generation.
-- **not deployed**: these are isolated-worktree local results. No push, CI, Pages,
-  public URL, Docker, physical-mobile, GPU-time, or thermal claim is made.
+- **passed** unit 145/145 and integration 76/76.
+- **passed** structure (warnings only), links (129 modules / 11 HTML refs),
+  identity audit, cell-visual audit, showcase check, 500-seed lake audit,
+  full/smoke balance, benchmark, event/skill/Trophy audits, and 1,000-world
+  terminal soak.
+- **measured** full balance medians: balanced 272.2s, random 291.5s, expansion
+  277.2s, resilience 334.9s, efficiency 279.7s.
+- **measured** benchmark: 2,715 ticks / 187ms / 14,484 ticks/s / hash
+  `256388b9` / 9MB heap used.
+- **observed** WebGL2 Chrome: SCORE 595,964, 32× 7.85s, four draws, title mean
+  0.89ms/p95 1.10ms, actual untouched continuation, context-loss fallback, no
+  recorded browser errors.
+- **observed** forced Canvas 2D Chrome: SCORE 614,507; terminal snapshot,
+  History, Evolution, Trophies, and blank replacement passed.
+- **tested** responsive CDP matrix includes 320×568, 390×844, 430×932,
+  768×1024, 844×390, and 1440×900 plus 200% text, reduced motion, high contrast,
+  and synthetic long selector copy.
+
+## Honest limitations
+
+- **not measured on physical hardware**: touch-device behavior, thermal limits,
+  screen reader, Japanese localization, browser zoom controls, and GPU timing.
+- **not claimed**: forced-GC browser heap profiling. Queue/listener/request bounds,
+  deterministic replacement cycles, and terminal soaks are automated evidence,
+  not a physical browser heap trace.
+- Final public Pages behavior is inspected over cache-busted HTTP after the
+  release-status commit; that external run/hash belongs in the final handoff.

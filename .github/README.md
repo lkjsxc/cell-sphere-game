@@ -10,9 +10,8 @@ into permanent Skill Cells on the spherical Evolution Globe.
 
 **Play:** https://lkjsxc.github.io/cell-sphere-game/
 
-The source is prepared for the canonical repository and Pages path. External
-repository rename, push, workflow execution, and deployment are intentionally
-not claimed by this worktree.
+The original repository was renamed in place to the canonical identity, with
+history preserved. Releases deploy from canonical `main` through GitHub Pages.
 
 Submitted to the [ZEN Study Programming Contest 2026 Summer](https://progedu.github.io/webappcontest/2026/summer/index.html),
 Web Page category, ZEN University division. The published deadline is

@@ -57,22 +57,24 @@ surface, gesture, confirmation, Result, and purchase semantics. It
 checks one stable Home/World/Evolution/Trophies tablist, exact World camera return
 while authority advances off-scene, four renderer draws, and one shell rectangle
 across SCORE/ENTROPY/REACH and many snapshots. Globe drag retains metric scroll,
-Result, History, and Event Log. Blank/cell tap policy, Inspector focus, terminal
-HUD/input retention, Result close/reopen, disabled completed-world time controls,
-Menu grouping and reward-free New World confirmation, bounded Event Log rows,
-and History final/live restoration are exercised.
+Result, History, and Event Log. Blank/cell tap policy, Inspector focus, the exact
+zero-life terminal snapshot/HUD, Result close/reopen, disabled completed-world
+time controls, Menu grouping and reward-free New World confirmation, bounded
+Event Log rows, and History preview/live restoration are exercised.
 
 The responsive matrix covers 320×568, 390×844, 430×932, 768×1024, 844×390,
 and 1440×900 with no horizontal overflow or event/dock overlap. It also emulates
 200% text, long selector labels, reduced motion, and authored high contrast.
-Mobile Adaptations is bounded to 36dvh with three 44px choices and a visible
-current-event control. The run completes at 32×, purchases one physically
-adjacent Skill Cell, verifies two sequential persisted Trophy names and badge,
-a static reduced-motion reveal, Result names, survival through the automatic
-replacement coordinator, and click routing to Trophy detail. It visits all 642
-Evolution and 96 Trophy records, intercepts the next world's zero-life first
-frame, and checks bounded resources and browser errors. Dedicated Canvas 2D evidence completes a run and repeats terminal
-History, Evolution, Trophies, and atomic replacement.
+Mobile Adaptations is bounded to 36dvh with three 44px choices, a 44px disclosure,
+and a visible current-event control. The run completes at 32×, purchases one
+physically adjacent Skill Cell, verifies two sequential persisted Trophy names
+and badge, a static reduced-motion reveal, Result names, survival through the
+automatic replacement coordinator, and click routing to Trophy detail. It visits
+all 642 Evolution and 96 Trophy records, lets a genuinely untouched countdown
+expire, intercepts that next world's zero-life first frame, then forces WebGL
+context loss and proves a replaced canvas continues in Canvas 2D with rebound
+input. Dedicated forced-Canvas evidence completes a run and repeats the terminal
+snapshot, History, Evolution, Trophies, and atomic replacement.
 
 ## Honest limitations
 

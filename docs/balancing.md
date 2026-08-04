@@ -197,13 +197,13 @@ Golden fixture updates require an entry here — never blind snapshot resets.
   bounded whole-cell reach marker per cell and one existing-cadence summary scan;
   those deterministic proof values intentionally join the terminal hash but
   never simulation equations or RNG. The production/model audit measured
-  `1 / 2 / 6 / 9 / 20 / 63` acquisitions for fresh / one-plus-purchase /
-  4 / 12 / 48 / 240 horizons, hash `40aa0e55`, with zero impossible or trivial
+  `1 / 2 / 6 / 8 / 18 / 62` acquisitions for fresh / one-plus-purchase /
+  4 / 12 / 48 / 240 horizons, hash `4f67241f`, with zero impossible or trivial
   majority-rate criteria. The intentional proof-hash expansion changes the
-  production benchmark hash from `813c4f49` to `256388b9` (2,715 ticks,
-  15,296 ticks/s in the final verify environment). Showcase frames remain
-  byte-identical (`22ac0d97…`, 89 frames, 228,754 bytes); source metadata is
-  `3c1a1717…`.
+  production benchmark hash from `813c4f49` to `256388b9` (2,715 ticks;
+  14,484 ticks/s in the final verify environment). Showcase frames remain
+  byte-identical (`22ac0d97…`, 89 frames, 228,754 bytes); terminal snapshot
+  transport updates source metadata to `53b97a33…`.
 - **2026-08-04 — Transparent live SCORE projection.** Snapshot metrics now retain
   the already-computed six authoritative axis contributions and declared
   weights so the shared SCORE surface can explain the live/final point model.

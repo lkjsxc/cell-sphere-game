@@ -73,6 +73,9 @@ export async function runScenario(t) {
   const history = await shellRect(evaluate); ok(history.surface === 'history' && history.left < 30 && history.width <= 520, 'History is not the desktop left shell');
   const historyTracks = await evaluate(`(()=>{const panel=document.getElementById('history-dialog'),body=panel.querySelector('.surface-body'),p=panel.getBoundingClientRect(),b=body.getBoundingClientRect(),f=panel.querySelector('footer').getBoundingClientRect();return {bodyBeforeFooter:b.bottom<=f.top+1,footerBounded:f.bottom<=p.bottom+1&&p.bottom-f.bottom<40,bodyOverflow:getComputedStyle(body).overflowY,tracks:getComputedStyle(panel).gridTemplateRows.split(' ').length}})()`);
   ok(historyTracks.bodyBeforeFooter && historyTracks.footerBounded && historyTracks.bodyOverflow === 'auto' && historyTracks.tracks === 3, `History shell tracks failed: ${JSON.stringify(historyTracks)}`);
+  ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.historyPlayback.pendingRequests'), (count) => count === 0, 2500), 'History visual request did not settle');
+  await trustedId(t, 'history-prev'); ok(await poll(() => evaluate('Boolean(window.__CELL_SPHERE_APP__.historySnapshot)'), Boolean, 1200), 'History previous event did not show a visual preview');
+  await trustedId(t, 'history-live'); ok(await evaluate('window.__CELL_SPHERE_APP__.historySnapshot===null'), 'History Live did not restore the authoritative snapshot');
   const historyCamera = await evaluate('window.__CELL_SPHERE_APP__.camera.direction.slice()'); await drag([960, 360], [1080, 410]);
   ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='history'`), 'globe drag dismissed History');
   await trustedId(t, 'history-event-log'); ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='event-log'`), 'History did not route to Event Log');
