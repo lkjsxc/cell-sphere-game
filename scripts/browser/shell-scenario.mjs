@@ -11,6 +11,17 @@ export async function runScenario(t) {
   await screenshot('shell-home-mobile.png'); await trustedId(t, 'begin-button');
   ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'running', 5000), 'world did not start');
   await evaluate(`document.getElementById('speed-select').value='1';document.getElementById('speed-select').dispatchEvent(new Event('change'))`);
+  const dial = () => evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,m=document.querySelector('.clock-minute'),h=document.querySelector('.clock-hour');return {phase:a.timeDial.state.phase,minute:m.style.transform,hour:h.style.transform}})()`);
+  const fullDialBefore = await dial(); await wait(300); const fullDialAfter = await dial();
+  const fullDialTurn = (fullDialAfter.phase - fullDialBefore.phase + 360) % 360;
+  ok(fullDialTurn > 0 && fullDialBefore.minute !== fullDialAfter.minute && fullDialBefore.hour !== fullDialAfter.hour,
+    `clock hands did not move: ${JSON.stringify({ fullDialBefore, fullDialAfter })}`);
+  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'reduced'})})()`);
+  const reducedDialBefore = await dial(); await wait(1200); const reducedDialAfter = await dial();
+  const reducedDialTurn = (reducedDialAfter.phase - reducedDialBefore.phase + 360) % 360;
+  ok(reducedDialTurn > 0 && reducedDialTurn < fullDialTurn && reducedDialBefore.minute !== reducedDialAfter.minute
+    && reducedDialBefore.hour !== reducedDialAfter.hour, `reduced clock stopped or moved too quickly: ${JSON.stringify({ reducedDialBefore, reducedDialAfter })}`);
+  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'full'})})()`);
 
   const cameraBefore = await evaluate(`({camera:window.__CELL_SPHERE_APP__.camera.direction.slice(),tick:window.__CELL_SPHERE_APP__.snapshot.tick})`);
   await trustedId(t, 'scene-evolution'); await wait(300);

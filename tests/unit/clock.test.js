@@ -49,7 +49,11 @@ test('both visual dial hands move, freeze, and resume from one bounded phase', (
   assert.deepEqual(frozen, moving); const resumed = advanceTimeDial(state, 1200, { running: true, speed: 32 });
   assert.ok(resumed.minute > frozen.minute); assert.ok(resumed.minute - frozen.minute < 50);
   const reduced = advanceTimeDial(state, 1300, { running: true, reduced: true, speed: 32 });
-  assert.deepEqual(reduced, resumed); assert.ok(visualDialRate(32) > visualDialRate(1));
+  assert.ok(reduced.minute > resumed.minute); assert.ok(reduced.hour > resumed.hour);
+  assert.ok(reduced.minute - resumed.minute < resumed.minute - frozen.minute);
+  assert.ok(visualDialRate(32) > visualDialRate(1));
+  assert.ok(visualDialRate(1, true) < visualDialRate(1));
+  assert.equal(visualDialRate(32, true), visualDialRate(1, true), 'reduced motion depended on game speed');
   assert.equal(visualDialRate(32), visualDialRate(16), '32x exceeded the visual cap');
 });
 
