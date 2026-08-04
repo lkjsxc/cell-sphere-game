@@ -37,7 +37,9 @@ try {
   await cdp.send('Emulation.setDeviceMetricsOverride', {
     width: 390, height: 844, deviceScaleFactor: 1, mobile: true,
   }, session);
-  const publicUrl = `file://${ROOT}/index.html?demo=1&browser-file-test=1`;
+  const configuredUrl = process.env.BROWSER_TEST_URL?.trim();
+  const publicUrl = configuredUrl ? `${configuredUrl}${configuredUrl.includes('?') ? '&' : '?'}demo=1&browser-file-test=1`
+    : `file://${ROOT}/index.html?demo=1&browser-file-test=1`;
   await cdp.send('Page.navigate', { url: forceCanvas ? `${publicUrl}&dev=1` : publicUrl }, session);
   await wait(4500);
 

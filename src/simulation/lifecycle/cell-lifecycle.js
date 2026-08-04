@@ -2,7 +2,6 @@
 import { recordReachTransition } from './reach-ledger.js';
 import { recordTrophyReach } from '../trophy-proof.js';
 import { recordScoreExploration } from '../../game/scoring.js';
-import { reclaimDetritusResource } from '../resource-ecology.js';
 import { BIOME } from '../../world/fields.js';
 export function birthCell(state, cell, cause) {
   if (state.alive[cell] === 1) return false;
@@ -24,8 +23,6 @@ export function birthCell(state, cell, cause) {
 export function killCell(state, cell, cause) {
   if (state.alive[cell] !== 1) return false;
   state.alive[cell] = 0; state.aliveCount--; recordReachTransition(state, cell, cause);
-  if (state.activeBuildIdSet?.has('circular-biosphere') || state.activeBuildIdSet?.has('wasteland-reclaimer')
-      || state.activeBuildIdSet?.has('depletion-bloom')) reclaimDetritusResource(state, cell, .02);
   if (state.biomass[cell] < .02) state.biomass[cell] = Math.fround(.02);
   for (let offset = state.topo.nodeStart[cell]; offset < state.topo.nodeStart[cell + 1]; offset++) {
     const edge = state.topo.nodeEdges[offset]; state.edgeActive[edge] = 0; state.flux[edge] = 0;

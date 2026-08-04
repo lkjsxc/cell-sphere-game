@@ -83,8 +83,8 @@ median world-3 SCORE 28,951 and best five-world SCORE 91,108.
 ### Full builds, transformations, and REACH 100
 
 The compiler exposes sixteen mechanically distinct recipes. A 24-seed full-build
-cohort produced median 106 transformed cells, 17 reclaimed cells, 24 bounded
-cryolakes, 5 maritime forests, and 105 ever-powered cells. Fresh controls
+cohort produced median 107 transformed cells, 20 reclaimed cells, 24 bounded
+cryolakes, 5 maritime forests, and 100 ever-powered cells. Fresh controls
 produced no transformations or powered cells. Full SCORE is bounded at about
 1.099 million.
 

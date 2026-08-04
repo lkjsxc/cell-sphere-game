@@ -49,7 +49,9 @@ therefore spread primarily through the richest ecological niches. Overextension
 can strand network regions even when distant stock remains.
 
 Whole-cell resource presentation uses eight hysteretic states from untouched
-rich through strained/depleted to recovering/reclaimed. Freshwater influence
+rich through strained/depleted to recovering/reclaimed. Recyclable stock comes
+only from measured dying biomass loss and is transferred conservatively; death
+never grants a fixed refill. Freshwater influence
 buffers local moisture and draws from finite, conservation-accounted catchment
 and founder stock; it improves matched survival without creating energy.
 

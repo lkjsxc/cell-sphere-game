@@ -62,8 +62,8 @@ Current production-module evidence:
   5.5-second median resource-exhaustion delay; controls sometimes win;
 - paired first-root 60 seeds: 16,000 → 19,000 potential and median SCORE
   8,892 → 10,676;
-- full-build 24 seeds: median 106 transformed, 17 reclaimed, 24 glacial-lake,
-  5 maritime-forest, and 105 ever-powered cells; fresh controls had zero;
+- full-build 24 seeds: median 107 transformed, 20 reclaimed, 24 glacial-lake,
+  5 maritime-forest, and 100 ever-powered cells; fresh controls had zero;
 - full-build 300 seeds: exact sustained REACH 100 in 8 (2.67%); all achieved
   worlds later became extinct; 100 fresh controls achieved zero;
 - full SCORE median/max: 1,099,200.

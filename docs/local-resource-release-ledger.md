@@ -20,7 +20,7 @@ and Canvas tests passed before implementation.
 | 8 | Fresh/mid/full curve | Component caps and revised potential curve | fresh median 8,692; first root 10,676; full cap ~1.099m; deep policy rerun pending | Versioned PB separation | measured |
 | 9 | Six affinities | Fertility, Freshwater, Scarcity, Cryogenic, Marine, Luminous metadata over stable IDs | 252 complete nodes; 42 each; hashes `9e0063bd` / `938f6e87` | Stable 252 and 642 manifest | tested |
 | 10 | Visible combinable builds | Sixteen recipes, effects, tradeoffs, habitats, preview progress | Skill audit: 16 distinct signatures, all active at full | Derived, never charged/stored as authority | tested |
-| 11 | Whole-cell transformations/power | Reclamation, cryolakes, littoral succession/forests, electric glow | 24 full seeds: median 106 transformed/17 reclaimed/105 ever powered; fresh zero | Run-local defaults | measured |
+| 11 | Whole-cell transformations/power | Reclamation, cryolakes, littoral succession/forests, electric glow | 24 full seeds: median 107 transformed/20 reclaimed/100 ever powered; fresh zero | Run-local defaults | measured |
 | 12 | Exact late REACH 100% | All 2,562 alive for 25 consecutive ticks; exactly-once History/Trophy proof | 300 full seeds: 8 (2.67%); 100 fresh: zero; all later extinct | New proof fields validate | measured |
 | 13 | RESULT after REACH | Persistent metric sequence reordered; terminal recommendation state | Real-CDP terminal order/recommendation at mobile/desktop PASS | None | tested |
 | 14 | Remove redundant Result routes | SCORE/entropy/reach duplicate buttons deleted | Unit policy and real DOM absence/handler checks PASS | None | tested |

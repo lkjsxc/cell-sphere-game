@@ -23,6 +23,8 @@ export function runDeath(state) {
       const shrink = biomass[i]
         * (B.STARVE_SHRINK + 0.05 * Math.max(0, stress[i] - 0.8) * 5);
       biomass[i] = Math.fround(Math.max(0, biomass[i] - shrink));
+      if (state.activeBuildIdSet.has('circular-biosphere') || state.activeBuildIdSet.has('wasteland-reclaimer')
+          || state.activeBuildIdSet.has('depletion-bloom')) reclaimDetritusResource(state, i, shrink * .08);
       state.causes[dominantCause(state, i)] += shrink;
     }
 

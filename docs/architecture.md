@@ -83,7 +83,7 @@ build progress, tradeoffs, and newly reachable neighbors.
 
 Trophy Sphere uses its own 162-cell topology. Exactly 96 current Trophy cells
 occupy six connected constellations; the remaining cells are inert substrate.
-Trophies consume completed facts-v4 proof and never feed simulation or SCORE.
+Trophies consume completed facts-v5 proof and never feed simulation or SCORE.
 
 ## SCORE
 

@@ -82,7 +82,13 @@ History, Result, Skill purchase, Trophy queueing, atomic replacement, unattended
 context-loss fallback, fresh/migrated saves, and browser errors.
 
 `test:browser:canvas` forces Canvas 2D and verifies terminal authority, History,
-252-cell Evolution, 96-cell Trophy state, and atomic replacement.
+252-cell Evolution, 96-cell Trophy state, atomic replacement, and a production
+full-build transformation/power fixture. To exercise deployed bytes with the
+same trusted-CDP path, set `BROWSER_TEST_URL`, for example:
+
+```bash
+BROWSER_TEST_URL=https://lkjsxc.github.io/cell-sphere-game/ npm run test:browser:file
+```
 
 ### Balance and audits
 
