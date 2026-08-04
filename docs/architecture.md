@@ -44,8 +44,13 @@ Result, reward, replacement, and abandonment keys make retries idempotent.
 
 - `state.js`: typed-array authority and bounded counters.
 - `environment.js`: terrain and world-era environmental inputs.
+- `resource-ecology.js`: immutable local baselines, finite stocks, quantized
+  depletion/recovery state, freshwater catchments, and conservation proofs.
 - `metabolism.js`: local finite reserve consumption, uptake, and maintenance.
-- `lifecycle/`: deterministic birth, death, growth, and Reach ledger.
+- `lifecycle/`: pre-RNG ecological access, deterministic birth/death/growth,
+  Reach ledger, and sustained exact-coverage proof.
+- `worldmaking.js`: whole-cell reclamation, cryolakes, littoral succession, and
+  bounded bioelectric illumination compiled from active builds.
 - `habitats.js`: capability requirements and biome access decisions.
 - `events.js`: world-ordinal event-era scheduling and graph fields.
 - `snapshot.js` / `result.js`: plain immutable projections.
@@ -66,12 +71,15 @@ Evolution uses a separate frequency-5 topology:
 - 252 cells;
 - 750 direct boundaries;
 - 12 degree-5 cells and 240 degree-6 cells;
-- six connected 42-cell territories.
+- six connected 42-cell environmental affinities: Fertility, Freshwater,
+  Scarcity, Cryogenic, Marine, and Luminous.
 
 Purchase eligibility is held Echoes plus one directly adjacent owned cell. Roots
 are the only fresh exception. Compiled output contains smooth bounded scalar
-effects, conditional rules, capability unlocks, World Potential, and stable
-hashes. Purchase preview compares compiled before/after values.
+effects, conditional rules, capability unlocks, Evolution Power, version-2
+World Potential, sixteen visible build recipes, and stable hashes. Purchase
+preview compares gameplay and potential before/after and reports affinity,
+build progress, tradeoffs, and newly reachable neighbors.
 
 Trophy Sphere uses its own 162-cell topology. Exactly 96 current Trophy cells
 occupy six connected constellations; the remaining cells are inert substrate.
@@ -79,16 +87,20 @@ Trophies consume completed facts-v4 proof and never feed simulation or SCORE.
 
 ## SCORE
 
-Terminal SCORE is pure:
+SCORE model v3 is pure and monotone during a run:
 
 ```text
-quality = weighted six-axis Run Quality
+cumulative merit = Survival + Exploration + Presence + Coherence
+                 + Stewardship + Worldmaking
+quality = bounded weighted cumulative merit
 score = round(quality × World Potential × Challenge)
 ```
 
-World Potential is compiled before world start and included in state, snapshot,
-result, History, and metric explanations. Legacy SCORE is stored separately and
-never competes with current-model best SCORE.
+Each authoritative event only increases its cumulative ledger. The live HUD,
+terminal Result, audits, and agent environment call this same model; Result adds
+no hidden terminal correction. World Potential is compiled before world start
+and included in state, snapshots, results, History, and metric explanations.
+Legacy SCORE versions remain readable and never compete with model-v3 bests.
 
 ## Rendering
 
@@ -134,5 +146,10 @@ The following may not change authority or SCORE:
 - open menus, metrics, Inspector, History, or Trophies;
 - document visibility presentation policy.
 
-Unit and integration tests compare Worker/fallback, speed lanes, replay hashes,
-result transactions, migration idempotence, and repeated replacement.
+The development-only `src/agent/` boundary projects a strict fair allowlist over
+the same production simulation, Skill compiler, SCORE, Trophy, History, and
+migration transactions. It exposes no future seed/event state or raw arrays.
+
+Unit and integration tests compare Worker/fallback, 1× through developer 256×
+speed lanes, replay hashes, result transactions, migration idempotence, exact
+REACH 100, transformations, and repeated replacement.

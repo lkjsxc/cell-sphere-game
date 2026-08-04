@@ -1,120 +1,122 @@
-# Status — progression compression release candidate
+# Status — local-resource ecology release candidate
 
-> Snapshot: 2026-08-04. Public product bytes and deployment evidence are
-> verified for the progression-compression release.
+> Snapshot: 2026-08-04. This describes the current candidate. Public deployment
+> evidence is recorded only after the exact revision is pushed and Pages succeeds.
 
 ## Product state
 
 - Canonical product: `cell-sphere-game` — **Every extinction becomes memory.**
 - Production URL: https://lkjsxc.github.io/cell-sphere-game/
-- Active loop: autonomous world → finite-resource extinction → SCORE/Echo reward
-  → permanent Evolution purchase → next world.
-- Active mid-run Adaptations have been removed from authority, protocol,
-  rendering, settings, current History, Result, and Trophy criteria. Old archived
-  records remain readable and inert.
-- World surfaces remain whole-cell only. Lakes, habitat, life, events, Skills,
-  and Trophies are cell state/material changes rather than sub-cell decoration.
+- Loop: autonomous deterministic ecology → finite-resource extinction → monotone
+  SCORE/Echo reward → adjacent Evolution purchase → next world.
+- Active mid-run Adaptations remain removed. Archived records are readable/inert.
+- World surfaces are whole-cell only. No rivers, routes, ribbons, terrain glyphs,
+  or electricity wires are rendered.
 
-## Evolution and migration
+## Local ecology and worldmaking
 
-- Evolution is a frequency-5 geodesic sphere with exactly 252 cells, 750
-  boundaries, 12 pentagons, and 240 hexagons.
-- Six connected 42-cell territories cover Reach, Flow, Reserve, Ecology,
-  Perception, and Continuity.
-- Composition: 6 roots, 30 majors, 12 conditionals, 12 unlocks, 6 keystones,
-  6 capstones, and 180 named Resonance cells.
-- Total cost: 17,820 Echoes. Fresh/full World Potential: 16,000 / 1,196,800.
-- Atlas hash: `0e47f1a1`; economy hash: `1f3de716`; authored effect hash:
-  `76898d4d`.
-- Schema 9 uses an explicit 642-entry graph-v4 migration manifest. Every former
-  ID maps to one of all 252 current targets. Source hash: `34b4e4a9`; mapping
-  hash: `85f93318`.
-- Migration preserves recognized legacy IDs, current ownership, disconnected
-  valid ownership, Echo balances, and idempotence. Positive represented-spend
-  differences are refunded; migration never charges.
+- Immutable per-cell resource baselines combine nutrient, reserve, climate,
+  toxicity, biome, altitude, renewal, and freshwater context.
+- Available resource, reserve, recyclable stock, finite lake catchments, and
+  founder freshwater stock have an explicit conservation ledger.
+- Growth rejects poor/inaccessible cells before RNG. Fresh living-cell time is
+  concentrated in the top two richness quintiles; rich, strained, depleted,
+  exhausted, recovering, and reclaimed cells have distinct snapshot materials.
+- WebGL2 and Canvas use local resource/transformation bytes. ENTROPY no longer
+  dims or desaturates the whole terrain.
+- Finite freshwater improves matched survival but is not mandatory or immortal.
+- Sixteen Skill builds drive bounded whole-cell reclamation, glacial lakes,
+  littoral wetlands/maritime forests, and bioelectric illumination.
+- `REACH 100%` requires every one of 2,562 authoritative world cells alive for
+  25 consecutive ticks. It is late-build-only and does not prevent extinction.
 
-## Ecology, events, and habitats
+## Evolution, builds, and migration
 
-- Per-cell finite reserve, bounded renewal, uptake, transfer, and maintenance are
-  authoritative simulation state.
-- Fresh 200-seed causes: 126 resource exhaustion and 74 maintenance starvation;
-  no scripted early crisis death.
-- Worlds 1–2 schedule no harmful events. World 3 schedules one mild event at
-  tick 2400–2520. Later world ordinals ramp count and intensity gradually.
-- Lake, tundra, snow/ice, shallow-ocean edge, general shallow ocean, and deep
-  ocean are compiled Evolution capabilities checked before growth RNG.
-- Inspector reports the missing capability. Full-Evolution habitat evidence has
-  median 37.6% marine lifetime visited share and 69.2% peak Reach.
+- Evolution remains a frequency-5 sphere: 252 cells, 750 boundaries, 12
+  pentagons, and 240 hexagons.
+- The six 42-cell affinities are Fertility, Freshwater, Scarcity, Cryogenic,
+  Marine, and Luminous. Affinity hash: `9e0063bd`; content hash: `938f6e87`.
+- Eligibility is enough Echoes plus one directly adjacent owned cell. No hidden
+  run, experience, or all-parent gate exists.
+- World Potential v2 is compiled from bounded Evolution Power: 16,000 fresh,
+  19,000 after the first root, 80,000 at power 4, and 1,200,000 at power 384.
+- Sixteen recipes have distinct mechanical signatures; full ownership activates
+  all sixteen and fifteen capability contributions.
+- Schema-9 migration preserves recognized 642/252 ownership, Echoes, scores,
+  History, Trophies, seed cursors, and inert Adaptation History idempotently.
 
-## SCORE and measured progression
+## SCORE v3 and measured balance
 
-SCORE model v2 is `Run Quality × World Potential × Challenge`. Run Quality has
-six visible axes: Survival, Peak Reach, Sustained Reach, Unity, Resource
-Efficiency, and Stability.
+SCORE v3 is monotone cumulative merit across Survival, Exploration, Presence,
+Coherence, Stewardship, and Worldmaking, multiplied by versioned World Potential
+and challenge. HUD, Result, audits, and agent play share this model; Result adds
+no correction.
 
-Deep production-authority audit:
+Current production-module evidence:
 
-- fresh 200 seeds: median SCORE 10,762, median 14 Echoes, median 273.1 seconds;
-- progressing world 3: median SCORE 104,048, seven Skills, 13.09 campaign minutes;
-- first pressure: median 13.23 campaign minutes;
-- first five-world cycle: median 20.73 minutes;
-- 63 Skills: median SCORE 267,653;
-- 126 Skills: median SCORE 451,443;
-- full 252 Skills: median SCORE 959,558, p90 981,893.
+- fresh 150 seeds: median SCORE 8,692, median duration 323.5 seconds, median peak
+  land occupancy 26.5%, p90 42.8%, and conservation error zero at 1e-6;
+- SCORE trace 150 seeds: zero decreases, zero Result mismatch, median 8.5% of
+  final visible at 15 seconds and 100% before terminal Result;
+- matched freshwater 60 seeds: median duration ratio 1.154 and 5.4-second median
+  resource-exhaustion delay; controls sometimes win;
+- paired first-root 60 seeds: 16,000 → 19,000 potential and median SCORE
+  8,892 → 10,676;
+- full-build 24 seeds: median 106 transformed, 17 reclaimed, 24 glacial-lake,
+  5 maritime-forest, and 105 ever-powered cells; fresh controls had zero;
+- full-build 100 seeds: exact sustained REACH 100 in 4%; all achieved worlds
+  later became extinct; 100 fresh controls achieved zero;
+- full SCORE is bounded near 1.099 million.
 
-At full progression, median duration is 330.3 seconds and the hard bound occurs
-in 20% of the mature-era cohort, not a majority. No speed or presentation input
-enters scoring.
+## Interface, speed, and accessibility
 
-## Interface and accessibility
+- Persistent metric order is `SCORE | ENTROPY | REACH | RESULT`; RESULT becomes
+  the recommended terminal action and avoids redundant navigation buttons.
+- SCORE, ENTROPY, REACH, and terminal RESULT look interactive at rest.
+- Globe drag, pinch, and wheel preserve an open detail pane; opening a pane does
+  not move or zoom the globe.
+- Normal speeds are 1×, 2×, 4×, and 8×. Explicit `?dev=1` visibly enables
+  session-only DEV 16×–256×. Every authoritative tick executes; only snapshots
+  and rendering may be decimated.
+- Evolution's semantic tree exposes affinity/pattern labels, gameplay and
+  potential before/after, build progress, tradeoffs, cost, and neighbors.
 
-- One persistent `Home | World | Evolution | Trophies` selector owns primary
-  views, including from Result; Result does not duplicate Evolution/Trophy nav.
-- The compact world rail is Time, Speed, and Menu.
-- SCORE, ENTROPY, and REACH are semantic 44px buttons with persistent border,
-  background, and disclosure cues at rest.
-- The shared context shell supports same-trigger toggle, replacement by another
-  detail, Escape, Close, and globe drag without dismissal or camera movement on
-  open.
-- Evolution has a synchronized 252-node semantic tree; Trophies expose all 96
-  criteria in a semantic grid. Notifications are FIFO, bounded, persisted,
-  nonblocking, and announced accessibly.
-- WebGL2 and Canvas 2D passed real CDP pointer/keyboard vertical slices at mobile
-  and desktop viewports. Current measured browser result SCORE: 10,822.
+## Fair agent play
 
-## Verification evidence
+- `src/agent/` projects an allowlisted fair observation over production
+  simulation, SCORE, Skills/builds, Trophies, History, and migration.
+- Actions: observe, set goal, buy a legal Skill, run the next world, inspect the
+  last result/builds, export/reset a validated agent save.
+- Deterministic policies cover balanced, sustainability, freshwater, scarcity,
+  cryogenic, marine, luminous, terraforming, REACH 100, and random-legal play.
+- CLI campaign output includes bounded fair observation/action traces, rationales,
+  state hashes, progression, active builds, resources, transformations, and
+  exact-REACH evidence. Hidden future events, future seeds, RNG state, and raw
+  typed arrays are excluded.
 
-Current local candidate evidence:
+## Candidate verification
 
-- unit: 125 / 125;
-- integration: 67 / 67;
-- browser WebGL2: PASS, 4 draws, 32× completion 7.65 seconds, title render mean
-  0.71 ms and p95 0.90 ms;
-- browser Canvas 2D: PASS with SCORE 10,822;
-- benchmark: 12,157 ticks/s in the final verify run (minimum 3,000);
-- whole-cell lake audit: 500 worlds, no topology/integrity violations;
-- cell visual, active-system removal, Skill, event, habitat, Trophy, link, and
-  structure audits: PASS;
-- 1,000-world terminal soak: zero invalid states, duplicate terminal messages,
-  or liveness repairs; median 2,702 ticks and 10 hard-bound worlds;
-- deterministic title artifact SHA-256:
-  `bc53b6d0f04dc9b2cd169034813a78f7e2c187ea94f1490fd0415afef0acd910`.
+- unit: 142 / 142;
+- integration: 73 / 73 after production worldmaking/REACH and Trophy-proof tests;
+- agent smoke: 5 / 5;
+- Skill topology/content/build audit: PASS (252 cells, 16 recipes);
+- resource 150, SCORE trace 150, transformation 24: PASS;
+- freshwater 60 measured within target after finite-support tuning;
+- exact REACH cohort 100: 4 achievements, zero fresh, terminal bounded;
+- deep 1,000-world pre-final resource and SCORE cohorts established monotonicity,
+  conservation, and fresh score bounds before the final access-floor retune.
 
-The final deep campaign report passed with 200 fresh seeds and production-backed
-campaign/progression cohorts in 163.7 seconds. Reports are ignored local evidence;
-canonical claims live in source, tests, and this snapshot.
+Full `npm run verify`, balance, browser WebGL2/Canvas, soak, deep audits, CI, and
+Pages/public-byte verification are required again for the final candidate.
 
-## Release state
+## Revision state
 
-- Starting code revision: `a3fa43131261a0cdf207d63e25c448646857914c`.
-- Protective tag: `pre-balance-compression-20260804`.
-- Superseding contract commit: `884909b9d3ca77ae380164fd84fc4f63039dbc36`.
-- Implementation commit: `0774c2ac5d186e86337f5abd58e55d6d841da597`.
-- Public product-build revision: `9c73daec49b6ea59e836aa6d6efb6b1eff7a2040`.
-- GitHub Actions run: `30906160228`; verify and Pages jobs both succeeded.
-- Cache-busted public `index.html`, Evolution authority, migration manifest,
-  event scheduler, title data, and metric CSS were byte-identical to that
-  revision. Public title/tagline and zero retired control IDs were confirmed.
-- Public-network Chrome was unavailable on the audit host (Chrome rendered its
-  offline page); real CDP interaction evidence therefore uses the byte-identical
-  local build rather than claiming an unobserved public-browser run.
+- Starting revision: `aff524595b491226ee4c337430f6a1600b7ed722`.
+- Protective tag: `pre-local-resource-ecology-20260804`.
+- Superseding contract: `6ffd46a09bcbd278d4ca1e06d0bd4b1e7ce4543e`.
+- Local ecology/SCORE base: `a466ef0`.
+- Evolution/build compiler: `32cedd6`.
+- RESULT/developer speed: `2fc6bc6`.
+- Fair agent environment: `745c78d`.
+- Exact final product build, push, Actions run, Pages revision, and cache-busted
+  public browser evidence: pending final verification.

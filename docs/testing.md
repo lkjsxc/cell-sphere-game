@@ -7,9 +7,10 @@ npm run verify
 ```
 
 `verify` runs structure and identity checks; whole-cell visual audit; active
-system removal audit; Skill, event, habitat, Trophy, and campaign-smoke audits;
-title artifact check; unit and integration suites; 500-world lake audit; balance
-smoke; benchmark; and link checks.
+system removal audit; Skill, event, habitat, Trophy, campaign, local-resource,
+freshwater, SCORE-trace, transformation, exact-REACH-100, and fair-agent smoke
+audits; title artifact check; unit/integration suites; 500-world lake audit;
+balance smoke; benchmark; and link checks.
 
 ## Required release matrix
 
@@ -25,6 +26,11 @@ npm run test:browser:file
 npm run test:browser:canvas
 npm run balance
 npm run audit:cell-visuals
+npm run audit:resources
+npm run audit:freshwater
+npm run audit:score-trace
+npm run audit:transformations
+npm run audit:reach100
 npm run audit:lakes
 npm run audit:events
 npm run audit:habitats
@@ -33,6 +39,8 @@ npm run audit:trophies
 npm run audit:adaptations
 npm run audit:campaign
 npm run terminal:soak
+npm run agent:smoke
+npm run agent:campaign
 ```
 
 A skipped test is not reported as a pass. Physical-device claims require a real
@@ -44,8 +52,9 @@ labeled accordingly.
 ### Unit
 
 - arbitrary-frequency geodesic topology and exact 252-cell Evolution counts;
-- finite resource authority, extinction causes, and habitat lock ordering;
-- SCORE v2 bounds, axes, Echo curve, and legacy separation;
+- finite local resource/conservation authority, freshwater, extinction causes,
+  ecological-access ordering, transformations, and habitat locks;
+- monotone cumulative SCORE v3 bounds/axes, Echo curve, and legacy separation;
 - event-era scheduling and no-event worlds 1–2;
 - settings, storage, History, migration, rendering, and UI state machines.
 
@@ -57,7 +66,11 @@ labeled accordingly.
 - all 252 Skills legally purchasable by physical adjacency;
 - 642-entry migration coverage, ownership/value preservation, refund and
   idempotence;
-- 96 current Trophy criteria and legacy Trophy isolation.
+- 96 current Trophy criteria and legacy Trophy isolation;
+- full-build whole-cell transformations/electricity, exact sustained REACH 100,
+  and eventual post-goal extinction;
+- fair agent observation allowlist, production transactions, deterministic
+  policy actions, save validation, and replay hashes.
 
 ### Browser
 
@@ -78,6 +91,14 @@ context-loss fallback, fresh/migrated saves, and browser errors.
   fresh/quarter/half/full Evolution checkpoints using production modules.
 - `audit:skills`: topology, 17,820-Echo economy, before/after effects, World
   Potential, and migration hashes.
+- `audit:resources`: local richness, niche occupancy, quintiles, depletion,
+  recovery, conservation, duration, and fresh SCORE.
+- `audit:freshwater`: matched near/far finite survival/resource advantage.
+- `audit:score-trace`: every-tick monotonicity, pacing, jumps, and Result parity.
+- `audit:transformations`: build-gated reclamation, cryolakes, forests,
+  electricity, deterministic replay, and fresh-control absence.
+- `audit:reach100`: hundreds of full/fresh production seeds, exact sustained
+  proof, rarity, terminal bound, and post-goal extinction.
 - `audit:events`: deterministic graph fields and world-era ramp.
 - `audit:habitats`: fresh locks, each unlock path, whole-cell occupancy, and
   marine bounds.

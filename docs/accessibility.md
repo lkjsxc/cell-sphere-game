@@ -5,8 +5,10 @@
 - One persistent `role="tablist"` exposes Home, World, Evolution, and Trophies.
   Arrow keys, Home, and End move among tabs.
 - Touch targets are at least 44 CSS px and respect safe areas.
-- SCORE, ENTROPY, and REACH are native buttons with persistent borders,
-  backgrounds, and disclosure marks; their affordance is not hover-only.
+- SCORE, ENTROPY, REACH, and terminal RESULT are native buttons with persistent
+  borders, backgrounds, and disclosure marks; affordance is not hover-only.
+  RESULT follows REACH in reading/visual order and gains a recommended-action
+  cue at extinction.
 - Evolution exposes a synchronized offscreen `role="tree"` with all 252 Skill
   Cells, owned/reachable/affordable state, and roving keyboard focus.
 - Trophy Sphere exposes all 96 criteria in a semantic grid.
@@ -28,8 +30,9 @@ Interaction contract:
 - drag, pinch, and wheel preserve the open detail;
 - focus moves to the new heading and returns to a sensible trigger on close.
 
-Result relies on the persistent primary selector for Evolution and Trophies. It
-does not duplicate those navigation buttons.
+Result relies on the persistent primary selector and metric controls for SCORE,
+ENTROPY, REACH, Evolution, and Trophies. It does not duplicate those navigation
+or summary buttons.
 
 ## Notifications
 

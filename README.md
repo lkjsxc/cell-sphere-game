@@ -20,9 +20,11 @@ every future world.
 4. Extinction awards Echoes from current-model SCORE.
 5. Spend Echoes on the **252-cell Evolution Globe**. A cell needs enough Echoes
    and at least one directly adjacent owned cell—nothing else.
-6. Evolution eventually opens whole-cell lakes, tundra, snow/ice, shallow ocean,
-   and deep ocean. Locked cells explain the required capability in Inspector.
-7. The separate Trophy Sphere preserves 96 evidence-based achievements.
+6. Evolution's Fertility, Freshwater, Scarcity, Cryogenic, Marine, and Luminous
+   affinities combine into visible builds. These unlock whole-cell habitats,
+   reclamation, cryolakes, maritime forests, and energized cells.
+7. A full late build can pursue sustained exact **REACH 100%**; the world still
+   becomes extinct afterward. The separate Trophy Sphere preserves 96 achievements.
 
 There is no active mid-run Adaptations system. Archived records from older saves
 remain readable legacy evidence but cannot affect current worlds or SCORE.
@@ -37,18 +39,20 @@ becomes `SCORE | ENTROPY | REACH | RESULT`, with RESULT as the recommended actio
 
 - Evolution topology: frequency-5 geodesic sphere, exactly **252 Skill Cells**,
   12 pentagons, 240 hexagons, and 750 direct boundaries.
-- Six connected 42-cell territories: Reach, Flow, Reserve, Ecology, Perception,
-  and Continuity.
-- Economy: **17,820 Echoes** total; every purchase shows gameplay before → after,
-  World Potential before → after, cost, held Echoes, and newly available cells.
-- World Potential: 16,000 fresh and 1,196,800 at full Evolution.
-- SCORE: `Run Quality × World Potential × Challenge`, where Run Quality visibly
-  reports Survival, Peak Reach, Sustained Reach, Unity, Resource Efficiency, and
-  Stability.
-- Measured fresh 200-seed median: SCORE 10,762, 14 Echoes, 273.1 seconds.
-- Measured three-world progressing median: SCORE 104,048 after 13.09 minutes at
-  1× with seven Skills owned.
-- Measured full-Evolution median: SCORE 959,558.
+- Six environmental affinities, 42 cells each: Fertility, Freshwater, Scarcity,
+  Cryogenic, Marine, and Luminous. Pattern, text, and habitat meaning accompany color.
+- Economy: **17,820 Echoes** total; every purchase shows gameplay and World
+  Potential before → after, affinity, cost, build progress, and new neighbors.
+- Versioned World Potential: 16,000 fresh, 19,000 after a first root, and
+  1,200,000 at full Evolution. Sixteen visible build recipes compile from Skills.
+- SCORE model v3 is monotone during a world and reports cumulative Survival,
+  Exploration, Presence, Coherence, Stewardship, and Worldmaking.
+- Measured fresh 150-seed medians: SCORE 8,692, duration 323.5 seconds, and 26.5%
+  peak land occupancy; 75.0% of living-cell time was in the richest quintile.
+- A paired 60-seed first-root check moved World Potential 16,000 → 19,000 and
+  median next-world SCORE 8,892 → 10,676, not an order-of-magnitude jump.
+- Full-Evolution SCORE is capped near 1.10 million; a 100-seed full-build audit
+  produced exact sustained REACH 100% in 4% of deterministic seeds.
 
 ## Technical guarantees
 
@@ -88,6 +92,11 @@ npm run test:browser:file
 npm run test:browser:canvas
 npm run balance
 npm run audit:cell-visuals
+npm run audit:resources
+npm run audit:freshwater
+npm run audit:score-trace
+npm run audit:transformations
+npm run audit:reach100
 npm run audit:lakes
 npm run audit:events
 npm run audit:habitats
@@ -96,6 +105,8 @@ npm run audit:trophies
 npm run audit:adaptations
 npm run audit:campaign
 npm run terminal:soak
+npm run agent:smoke
+npm run agent:campaign
 ```
 
 `audit:campaign` runs the deep production-authority progression audit, including

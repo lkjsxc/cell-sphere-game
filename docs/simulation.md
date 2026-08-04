@@ -8,15 +8,18 @@ does not alter tick content. Worker and fallback transports consume the same
 configuration and command sequence.
 
 RNG streams are subsystem-specific. Presentation has no RNG stream in authority.
-Habitat rejection happens before growth RNG consumption, so unlocking a habitat
-changes only intended future choices.
+Habitat and local-resource rejection happen before growth RNG consumption, so a
+locked or depleted destination cannot perturb unrelated random choices.
 
 ## State
 
 Authoritative state includes typed arrays for life, biomass, energy, stress,
-network structure, event strength, per-cell resource reserve, depletion,
-habitat-block reasons, and lifetime unique habitat occupancy. Bounded ledgers
-track Reach, connectedness, resource transfer, crises, and diagnostics.
+network structure, event strength, immutable per-cell resource baselines,
+available nutrient, reserve, recyclable stock, catchment reserve, quantized
+resource/recovery state, habitat-block reasons, whole-cell transformations,
+electric charge, and lifetime unique habitat occupancy. Bounded ledgers track
+Reach, exact-coverage streaks, connectedness, resource conservation, SCORE merit,
+crises, and diagnostics.
 
 State excludes DOM, storage, WebGL, camera, frame cadence, wall-clock time,
 History playback, menu state, and notification state.
@@ -30,8 +33,9 @@ A fixed tick updates, in deterministic order:
 3. metabolism, uptake, transfer, and maintenance;
 4. growth attempts and habitat checks;
 5. death and structural transitions;
-6. Reach/resource/crisis ledgers;
-7. terminal detection and bounded history capture.
+6. bounded reclamation, cryolake/littoral succession, and electricity;
+7. Reach, exact-coverage, resource, SCORE, and crisis ledgers;
+8. terminal detection, snapshots, and bounded History capture.
 
 Commands are applied only at protocol boundaries and are acknowledged or
 explicitly rejected.
@@ -39,9 +43,15 @@ explicitly rejected.
 ## Finite resources and extinction
 
 Every cell begins with generated local stock and bounded renewal. Uptake removes
-stock before crediting life energy. Growth has an explicit resource cost;
-maintenance continues while cells live. Overextension can therefore strand
-network regions even when distant stock remains.
+stock before crediting life energy. Growth has an explicit resource cost and a
+pre-RNG richness floor; maintenance continues while cells live. Fresh worlds
+therefore spread primarily through the richest ecological niches. Overextension
+can strand network regions even when distant stock remains.
+
+Whole-cell resource presentation uses eight hysteretic states from untouched
+rich through strained/depleted to recovering/reclaimed. Freshwater influence
+buffers local moisture and draws from finite, conservation-accounted catchment
+and founder stock; it improves matched survival without creating energy.
 
 Terminal causes derive from actual authority. Early worlds normally report
 `resource-exhaustion` or `maintenance-starvation`; there is no hidden scripted
@@ -72,7 +82,13 @@ they do not bypass ecological cost.
 
 ## Result projection
 
-The terminal result is plain immutable evidence: duration, causes, Reach,
-resource use, unique habitat occupancy, crises, six SCORE inputs, World
-Potential, History, replay data, and final hash. Pure SCORE and Trophy fact
-builders consume this result outside simulation. Rendering never contributes.
+Snapshots contain compact local resource richness/state, freshwater support,
+transformation, and electricity bytes. WebGL2 and Canvas map those values per
+whole cell; global entropy never recolors the terrain.
+
+The terminal result is plain immutable evidence: duration, causes, Reach and
+exact REACH-100 proof, local resource use/conservation/quintiles, transformations,
+power, unique habitat occupancy, crises, cumulative SCORE-v3 merit, World
+Potential, History, replay data, and final hash. The live HUD and Result use the
+same SCORE authority. Trophy and agent projections consume this evidence;
+rendering never contributes.

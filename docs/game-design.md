@@ -30,15 +30,18 @@ challenging without using wall-clock waits.
 
 Ordinary worlds aim for 270–330 game seconds with a near-360-second bound. The
 first meaningful campaign resolution should emerge after roughly 18–24 minutes
-at 1×; an advancing save reaches roughly 80k–130k SCORE after 12–18 minutes.
+at 1×; a strongly learning save reaches roughly 80k–130k World Potential after
+12–18 minutes without a first-purchase SCORE explosion.
 
 ## Finite ecology
 
-Each whole cell has reserve, renewal, terrain suitability, uptake, maintenance,
-and route cost. Birth and continued life spend local resources. Networks may
-move support, but cannot create infinite stock. Extinction reports resource
-exhaustion, maintenance starvation, or a later ecological cause from actual
-terminal evidence.
+Each whole cell has an immutable resource baseline plus available nutrient,
+reserve, renewal, recyclable stock, terrain/climate suitability, uptake,
+maintenance, and route cost. Birth and continued life spend local resources;
+poor cells reject fresh colonization before RNG. Networks may move support but
+cannot create stock. Whole-cell colors distinguish rich, strained, depleted,
+exhausted, recovering, and reclaimed state. Freshwater offers a finite local
+advantage through conservation-accounted catchments, not magic energy.
 
 ## Habitats
 
@@ -58,7 +61,8 @@ without turning ocean into free coverage.
 ## Evolution
 
 The Evolution Globe has exactly 252 meaningful Skill Cells in six connected
-territories. A purchase requires enough Echoes and one adjacent owned cell.
+environmental affinities: Fertility, Freshwater, Scarcity, Cryogenic, Marine,
+and Luminous. A purchase requires enough Echoes and one adjacent owned cell.
 There is no run count, observed-world count, all-parent, or hidden experience
 gate.
 
@@ -69,16 +73,17 @@ Details and purchase feedback show:
 
 - gameplay before → after;
 - World Potential before → after;
-- cost and held Echoes;
-- capability or rule unlocked;
+- affinity, text/pattern identity, cost, and held Echoes;
+- capability/rule unlock and visible build progress/tradeoffs;
 - newly reachable adjacent cells.
 
 ## SCORE and Echoes
 
-SCORE is `Run Quality × World Potential × Challenge`. Six visible quality axes
-reward surviving, reaching, sustaining that Reach, staying connected, using
-finite resources efficiently, and remaining stable. Permanent Evolution raises
-World Potential, so even similar run quality produces visibly stronger SCORE.
+SCORE v3 is `Run Quality × World Potential × Challenge`. Its six visible,
+monotone cumulative axes are Survival, Exploration, Presence, Coherence,
+Stewardship, and Worldmaking. Final SCORE is already visible before extinction;
+Result performs no correction. Permanent Evolution raises World Potential, so
+even similar run quality produces stronger—but bounded—SCORE.
 
 Echo rewards use a bounded square-root curve. The fresh median earns 14 Echoes,
 enough for one ordinary root purchase. Progression grows materially without
@@ -102,5 +107,8 @@ globe. Another detail replaces the current one; the same trigger toggles; Close
 and Escape always work. Result uses the persistent primary selector rather than
 adding duplicate progression navigation.
 
-SCORE, ENTROPY, and REACH look clickable at rest. Notifications are bounded,
-queued, nonblocking, and accessible.
+SCORE, ENTROPY, REACH, and terminal RESULT look clickable at rest; RESULT sits
+immediately after REACH and is the recommended extinction action. A full late
+build may earn REACH 100 by keeping every authoritative cell alive for 25 ticks,
+but the world still ends. Notifications are bounded, queued, nonblocking, and
+accessible.

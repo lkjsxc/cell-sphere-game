@@ -1,36 +1,49 @@
 # Local-resource ecology release ledger
 
-Status vocabulary: **not started**, **implemented**, **tested**, **measured**, **deployed**. A later status includes the earlier implementation stages only when its evidence columns are complete.
+Status vocabulary: **implemented**, **tested**, **measured**, **deployed**. A
+later status includes earlier stages only when its evidence is complete.
 
-Baseline: `aff524595b491226ee4c337430f6a1600b7ed722`; protective tag: `pre-local-resource-ecology-20260804`; replacement contract: `6ffd46a`. The baseline `npm run verify`, campaign/Skill/lake/event/Trophy audits, 1,000-world terminal soak, WebGL browser-file test, and Canvas browser-file test passed on 2026-08-04. Raw local evidence is ignored under `reports/baseline-local-resource-aff5245/`.
+Baseline: `aff524595b491226ee4c337430f6a1600b7ed722`; protective tag:
+`pre-local-resource-ecology-20260804`; replacement contract: `6ffd46a`. Baseline
+verify, deep campaign/Skill/lake/event/Trophy audits, 1,000-world soak, WebGL2,
+and Canvas tests passed before implementation.
 
-| # | Requirement | Baseline evidence | Implementation | Test / measured evidence | Migration | Status |
-|---:|---|---|---|---|---|---|
-| 1 | Locally distinct rich, strained, exhausted, and recovering cells | Authority has local nutrient/reserve, but snapshots have no local resource presentation bytes. | Pending | Pending local pixel fixtures. | Final snapshots must retain fields. | not started |
-| 2 | Terrain color follows local ecology, not global time | WebGL mixes terrain with entropy grayscale; Canvas applies global entropy dim. | Pending | Pending entropy-only image-difference audit. | No persisted change. | not started |
-| 3 | Fresh colonization favors rich niches | Baseline campaign median peak REACH is high and growth retains positive poor-cell probability. | Pending | Pending 500+ seed resource-quintile audit. | No persisted change. | not started |
-| 4 | Finite measurable freshwater advantage | Lakes indirectly change fields; no matched-pair survival contract. | Pending | Pending 300+ matched pairs. | No persisted change. | not started |
-| 5 | First Skill avoids ~10k to ~100k jump | Fresh potential 16,000; branch root gain is 125,000. | Pending | First-purchase cap and campaign distribution pending. | Preserve owned cells without charge. | not started |
-| 6 | Versioned smooth World Potential | Absolute node gains; baseline full audit reports 1,196,800 potential. | Pending | Anchor/order/branch-neutrality tests pending. | Legacy potential records remain readable. | not started |
-| 7 | Monotone cumulative live SCORE | Model v2 projects snapshot ratios. | Pending | Tick-trace/speed/backend evidence pending. | Preserve old score/model. | not started |
-| 8 | Fresh/mid/full SCORE curve | Baseline campaign target labels exist; root discontinuity remains. | Pending | Fresh through full policy cohorts pending. | New-model PB tracked separately. | not started |
-| 9 | Six environmental affinities | Existing generic territories do not match requested ecology. | Pending | Atlas/schema/hash audit pending. | Stable 252-cell ownership map pending. | not started |
-| 10 | Visible combinable builds | No canonical visible 12-recipe compiler. | Pending | Mechanical-signature audit pending. | Deterministic derivation from owned Skills. | not started |
-| 11 | Whole-cell late transformations | No released glacial lake/littoral/reclamation/electricity authority. | Pending | Eligibility/parity/render tests pending. | Per-world state only. | not started |
-| 12 | Exact late-game REACH 100% | No sustained exact all-cell milestone. | Pending | 500+ full-policy seeds pending. | Proof/Trophy fields validated. | not started |
-| 13 | RESULT directly after REACH | Baseline Result uses separate quiet control. | Pending | DOM order/Chrome responsive matrix pending. | No persisted change. | not started |
-| 14 | Remove redundant Result metric-summary buttons | Baseline Result contains three redundant routes. | Pending | DOM/handler absence tests pending. | No persisted change. | not started |
-| 15 | Metric controls visibly interactive at rest | Baseline controls are visually subtle. | Pending | Rest/focus/high-contrast screenshots pending. | No persisted change. | not started |
-| 16 | Normal speed maximum 8x | Baseline normal UI accepts 16x/32x. | Pending | Settings/UI tests pending. | Legacy 16x/32x normal saves clamp to 8x. | not started |
-| 17 | Explicit developer mode through 256x, no skipped ticks | Baseline has no explicit developer-speed contract. | Pending | 1x/8x/32x/256x Worker/fallback parity pending. | DEV excluded from normal import/export. | not started |
-| 18 | Fair production-backed agent environment | `scripts/pilot.mjs` runs worlds but has no observation/action progression loop. | Pending | Deterministic replay/privacy tests pending. | Separate agent-save schema. | not started |
-| 19 | Agent campaigns drive tuning | No fair-policy campaign evidence. | Pending | Four manual 12+ world campaigns and automated cohorts pending. | Development artifacts only. | not started |
-| 20 | Save/Skill/Trophy/History/idempotency safety | Existing gates pass at baseline. | Pending | Current + 642 migration and transaction tests pending. | Preserve every recognized value exactly once. | not started |
+| # | Requirement | Implementation | Current evidence | Migration | Status |
+|---:|---|---|---|---|---|
+| 1 | Local rich/strained/exhausted/recovering cells | Resource baselines, eight hysteretic states, compact snapshot bytes, Inspector details | Unit resource/renderer tests; visual/browser rerun pending | Run-local; snapshots validate defaults | tested |
+| 2 | Local ecology, no global terrain fade | Removed WebGL entropy grayscale and Canvas entropy dim; local resource material in both | Cell visual audit implemented; final image/browser matrix pending | None | implemented |
+| 3 | Resource-gated fresh growth | Pre-RNG ecological access and 0.565 fresh floor | 150 seeds: median land occupancy 26.5%, p90 42.8%; 75.0% living time richest quintile | None | measured |
+| 4 | Finite freshwater advantage | Conservation-accounted catchment/founder stock plus bounded local buffering | 60 matched pairs: median duration ratio 1.154, controls win 6.7%; final 300-pair run pending | New fields default safely | measured |
+| 5 | No first-Skill explosion | First root 16,000 → 19,000 | 60 paired seeds: median SCORE 8,892 → 10,676 | Owned roots recompile free | measured |
+| 6 | Versioned smooth World Potential | Evolution Power + monotone v2 anchors, full 1.2m | Skill audit/unit migration/order tests pass | Old models remain readable | tested |
+| 7 | Monotone cumulative SCORE | SCORE v3 six cumulative merit ledgers, shared live/final model | 150 traces: zero decreases/mismatches; backend/speed final rerun pending | v1/v2 records legacy-separated | measured |
+| 8 | Fresh/mid/full curve | Component caps and revised potential curve | fresh median 8,692; first root 10,676; full cap ~1.099m; deep policy rerun pending | Versioned PB separation | measured |
+| 9 | Six affinities | Fertility, Freshwater, Scarcity, Cryogenic, Marine, Luminous metadata over stable IDs | 252 complete nodes; 42 each; hashes `9e0063bd` / `938f6e87` | Stable 252 and 642 manifest | tested |
+| 10 | Visible combinable builds | Sixteen recipes, effects, tradeoffs, habitats, preview progress | Skill audit: 16 distinct signatures, all active at full | Derived, never charged/stored as authority | tested |
+| 11 | Whole-cell transformations/power | Reclamation, cryolakes, littoral succession/forests, electric glow | 24 full seeds: median 106 transformed/17 reclaimed/105 ever powered; fresh zero | Run-local defaults | measured |
+| 12 | Exact late REACH 100% | All 2,562 alive for 25 consecutive ticks; exactly-once History/Trophy proof | 100 full seeds: 4%; 100 fresh: zero; all later extinct | New proof fields validate | measured |
+| 13 | RESULT after REACH | Persistent metric sequence reordered; terminal recommendation state | Unit/DOM tests from UI slice; real responsive browser pending | None | tested |
+| 14 | Remove redundant Result routes | SCORE/entropy/reach duplicate buttons deleted | Unit Result policy assertions; browser pending | None | tested |
+| 15 | Visible metric affordance | Persistent border/background/disclosure treatment | Static/unit coverage; contrast/browser screenshots pending | None | implemented |
+| 16 | Normal max 8× | Settings/UI expose 1×, 2×, 4×, 8× only | Unit/settings tests; browser pending | Legacy normal values clamp | tested |
+| 17 | Explicit DEV through 256× | `?dev=1`, visible DEV, session-only high-speed scheduler with all ticks | Unit speed/protocol tests; Worker/fallback browser parity pending | Excluded from preferences/exports | tested |
+| 18 | Fair production agent | Allowlisted observation/actions over production simulation/progression | 5 agent tests pass; deterministic replay/hash/schema checks | Separate validated schema | tested |
+| 19 | Agent campaign tuning | Eleven deterministic policies plus bounded action/observation traces | Five-world all-policy run complete; 12-world multi-policy cohorts pending | Reports only | implemented |
+| 20 | Persistence/transactions | SCORE/build/reach/Trophy/History facts and migration validation updated | 142 unit + 72 integration currently pass; full gates pending | Exactly-once existing transaction retained | tested |
 
 ## Iteration log
 
-Parameter sets and measured reasons for rejection belong here; raw cohort output remains ignored under `reports/`.
+| Iteration | Candidate and evidence | Decision |
+|---|---|---|
+| Baseline | v2 global fade, ungated spread, 125k root gain | Replace rather than tune around discontinuities. |
+| Resource A | floor below 0.525: median land occupancy above desired niche range | Raise floor. |
+| Resource B | floor 0.565: median 26.5%, p90 42.8%, SCORE 8,692 | Accept for deep verification. |
+| Freshwater A | strong support/founder reserve: median benefit 16.6%, hard-bound rate 41.7% | Reduce non-resource support and reserve. |
+| Freshwater B | bounded support: median benefit 15.4%, controls sometimes win | Accept; repeat 300 matched pairs. |
+| REACH A | full build peaked near 99% but never sustained all cells | Add late World Gardener cross-habitat synergy. |
+| REACH B | low final route cost achieved 37%, too common | Reject and restore meaningful cost. |
+| REACH C | route cost 0.72: exact sustained rate 4/100; all later extinct | Accept for 300-seed verification. |
+| SCORE cap | full cohort saturated at 1.106m | Tighten component caps to ~1.099m. |
 
-| Iteration | Candidate | Evidence | Decision |
-|---|---|---|---|
-| Baseline | Existing v2 ecology/progression | Verify and all requested baseline checks pass; architecture still exhibits the reported discontinuities. | Replace rather than tune around root potential/global fade. |
+Final deploy/browser/CI evidence will change relevant rows to **deployed** only after
+public bytes are verified against the reviewed revision.

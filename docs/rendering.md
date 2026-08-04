@@ -26,9 +26,13 @@ life, environmental events, selected state, Skill ownership, and Trophy state
 change complete cell material. Production rendering has no sub-cell rivers,
 paths, ribbons, stripes, arrows, dots, or glyph overlays.
 
-Event fields are weighted graph arrivals rendered per affected cell. Cold and
-marine biomes have distinct full-cell materials. A locked habitat is explained in
-Inspector rather than decorated with a fake simulation state.
+Event fields are weighted graph arrivals rendered per affected cell. Local
+resource richness/state, recovery, cryolakes, littoral succession, and electric
+charge alter each complete cell in both WebGL2 and Canvas. Resource-poor cells
+remain legibly poor; recovering cells do not look untouched-rich. ENTROPY may
+change atmosphere/life presentation but never globally fades, grays, or recolors
+terrain. Electricity is whole-cell illumination, never wire geometry. A locked
+habitat is explained in Inspector rather than decorated with fake authority.
 
 ## Globe scenes
 
@@ -51,6 +55,7 @@ changes.
 
 Typed arrays, reusable buffers, four WebGL draws, bounded event/history queues,
 and cached static fields keep frame work bounded. Hidden documents stop drawing.
-The benchmark minimum is 3,000 simulation ticks/s; current release-candidate
-verification measured 12,157 ticks/s. Real Chrome measured title rendering mean
-0.71 ms and p95 0.90 ms on the audit host.
+The benchmark minimum is 3,000 simulation ticks/s. High developer speeds execute
+every tick while coalescing bounded snapshots/render requests. Final benchmark
+and Chrome frame measurements are recorded in `docs/status.md` after the exact
+release revision is verified.
