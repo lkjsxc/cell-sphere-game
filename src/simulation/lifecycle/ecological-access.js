@@ -2,6 +2,7 @@
 import { clamp01, tolerance } from '../../core/math.js';
 import { RESOURCE_STATE, freshwaterSupportAt, resourceRichnessAt } from '../resource-ecology.js';
 import { habitatAccess } from '../habitats.js';
+import { BIOME } from '../../world/constants.js';
 
 export const FRESH_RESOURCE_FLOOR = .565;
 const MOIST_CENTER = .55; const TEMP_CENTER = .6;
@@ -23,10 +24,16 @@ export function ecologicalAccess(state, from, target) {
   const freshwaterRoute = freshwater > .2 && (active.has('lake-garden') || active.has('lake-to-light-network')
     || effect(effects, 'freshwaterAccess', 'freshwaterRenewal'));
   const marineRoute = active.has('pelagic-colony') || active.has('brine-harvester') || active.has('polar-current');
-  const minimum = clamp01(FRESH_RESOURCE_FLOOR + (richRush ? .035 : 0)
+  let minimum = clamp01(FRESH_RESOURCE_FLOOR + (richRush ? .035 : 0)
     - Math.min(.28, numeric(scarcity)) - Math.min(.04, freshwater * .05)
     - (freshwaterRoute ? Math.min(.08, freshwater * .1) : 0)
     - (gardener ? .18 : 0) - (marineRoute && habitat.capability ? .08 : 0));
+  if (habitat.capability) {
+    const biome = state.effectiveBiome?.[target] ?? state.fields.biomeId[target];
+    const habitatFloor = biome === BIOME.DEEP_OCEAN ? .14 : biome === BIOME.SHALLOW_OCEAN ? .32
+      : biome === BIOME.SNOW_ICE ? .28 : biome === BIOME.TUNDRA ? .36 : biome === BIOME.LAKE ? .45 : 1;
+    minimum = Math.min(minimum, habitatFloor);
+  }
 
   const stateCode = state.resourceState?.[target] ?? RESOURCE_STATE.UNKNOWN;
   if (stateCode === RESOURCE_STATE.EXHAUSTED && !reclamation && !gardener) {
