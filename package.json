@@ -32,6 +32,9 @@
     "audit:campaign": "node scripts/audits/campaign-audit.mjs",
     "audit:score": "node scripts/audits/campaign-audit.mjs",
     "audit:identity": "node scripts/audits/identity-audit.mjs",
+    "agent:play": "node scripts/agent-play.mjs",
+    "agent:smoke": "node --test tests/unit/agent.test.js tests/integration/agent-environment.test.js",
+    "agent:campaign": "node scripts/agent-play.mjs campaign --worlds 2",
     "benchmark": "node scripts/benchmark.mjs",
     "verify": "node scripts/verify.mjs"
   },

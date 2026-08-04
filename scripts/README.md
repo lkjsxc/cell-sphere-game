@@ -11,6 +11,7 @@ ES modules using Node built-ins only (Node >= 22).
 | `verify.mjs` | `npm run verify` | Runs all fast gates in order and prints a summary. |
 | `benchmark.mjs` | `npm run benchmark` | 3000-tick headless benchmark with checksum and JSON output. |
 | `balance.mjs` | `npm run balance` / `balance:smoke` | Monte-Carlo balance harness using production simulation modules. |
+| `agent-play.mjs` | `npm run agent:play` / `agent:smoke` / `agent:campaign` | Fair JSON campaign environment, deterministic policies, and atomic agent saves. |
 | `generate-title-showcase.mjs` | `npm run showcase:generate` / `showcase:check` | Generates and verifies the bounded production-simulation title lifecycle. |
 | `audits/terminal-soak.mjs` | `npm run terminal:soak` | Runs 1,000 production worlds through the hard terminal contract. |
 | `audits/cell-visual-audit.mjs` | `npm run audit:cell-visuals` | Rejects old waterway identifiers and fine production geography. |

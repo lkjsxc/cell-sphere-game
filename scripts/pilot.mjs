@@ -1,6 +1,10 @@
 /** Deterministic unattended production-authority runner. */
+import { choosePolicyAction, normalizePolicy } from '../src/agent/policies.js';
+
 export function makePilot(policy = 'autonomous') {
-  return Object.freeze({ policy, onMessage() {} });
+  const campaignPolicy = normalizePolicy(policy);
+  return Object.freeze({ policy: campaignPolicy, onMessage() {},
+    decide(observation) { return choosePolicyAction(observation, campaignPolicy); } });
 }
 
 export function runHeadless({ RunController }, cfg, policy = 'autonomous') {
