@@ -16,7 +16,8 @@
 Latest `npm run verify` benchmark:
 
 ```text
-3176 ticks in 447 ms = 7,103 ticks/s; 13 MB heap used
+median of 3 deterministic samples: 3176 ticks in 434 ms = 7,319 ticks/s;
+samples 423/462/434 ms; 11 MB heap used
 ```
 
 Real Chrome/WebGL2 vertical slice:

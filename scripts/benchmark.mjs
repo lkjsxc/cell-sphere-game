@@ -12,12 +12,14 @@ import { cpus } from 'node:os';
 
 const SEED = 20260731;
 
-const { result, ticks, ms } = runHeadless(
+const samples = Array.from({ length: 3 }, () => runHeadless(
   { RunController },
   { seed: SEED, strainId: 'pioneer' },
   'balanced',
-);
-
+));
+if (!samples.every((sample) => sample.result.hash === samples[0].result.hash && sample.ticks === samples[0].ticks))
+  throw new Error('benchmark samples diverged');
+const ordered = samples.slice().sort((a, b) => a.ms - b.ms); const { result, ticks, ms } = ordered[1];
 const ticksPerSecond = Math.round(ticks / (ms / 1000));
 const checkpoint = {
   date: new Date().toISOString().slice(0, 10),
@@ -28,6 +30,7 @@ const checkpoint = {
   seed: SEED,
   ticks,
   elapsedMs: Math.round(ms),
+  samplesMs: samples.map((sample) => Math.round(sample.ms)),
   ticksPerSecond,
   extinctionTick: result.tick,
   cause: result.cause,
@@ -36,8 +39,8 @@ const checkpoint = {
   heapUsedMB: Math.round(process.memoryUsage().heapUsed / 1e6),
 };
 
-// Regression gate: a healthy desktop should sustain >= 3000 ticks/s headless.
-// (Mobile targets are documented separately; CI runs on GitHub runners.)
+// Regression gate: median of three deterministic samples limits runner jitter.
+// A healthy desktop/CI runner should sustain >= 3000 ticks/s headless.
 const MIN_TICKS_PER_SECOND = 3000;
 const ok = ticksPerSecond >= MIN_TICKS_PER_SECOND;
 

@@ -109,7 +109,8 @@ Current production-module evidence:
 
 Final local release gates:
 
-- `npm run verify`: all 22 gates PASS; benchmark 7,103 ticks/s, 13 MB heap;
+- `npm run verify`: all 22 gates PASS; three-sample median benchmark 7,319
+  ticks/s, 11 MB heap;
 - deep campaign: 200 fresh median SCORE 9,061 / 18 Echoes / 312.4 seconds;
   potential-policy median 105,000 after 15.565 minutes and first resolution
   20.197 minutes; full median SCORE 1,099,200;
