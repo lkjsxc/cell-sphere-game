@@ -27,10 +27,10 @@ test('Evolution is exactly 252 meaningful cells on a valid six-territory frequen
   assert.deepEqual([topo.nodeCount, topo.edgeCount, topo.triCount], [252, 750, 500]);
   assert.equal([...topo.degree].filter((degree) => degree === 5).length, 12);
   assert.equal(graph.valid, true, graph.errors.join('\n')); assert.equal(atlas.valid, true, atlas.errors.join('\n'));
-  assert.equal(graph.totalCost, 17820); assert.equal(graph.worldPotential, 1196800);
+  assert.equal(graph.totalCost, 17820); assert.equal(graph.totalPower, 384); assert.equal(graph.worldPotential, 1200000);
   assert.deepEqual(graph.composition, { root: 6, resonance: 180, major: 30, conditional: 12, unlock: 12, keystone: 6, capstone: 6 });
   assert.deepEqual(Object.values(graph.branchCounts), [42, 42, 42, 42, 42, 42]);
-  assert.ok(MEMORY_NODES.every((node) => node.potentialGain > 0 && node.cost >= 8));
+  assert.ok(MEMORY_NODES.every((node) => node.evolutionPower > 0 && !('potentialGain' in node) && node.cost >= 8));
 });
 
 test('graph-v4 manifest covers all 642 recognized IDs and all 252 targets', () => {
@@ -58,7 +58,8 @@ test('scattered and unknown graph-v4 IDs preserve mapped islands and quarantine 
 
 test('compiled full progression is bounded and exposes every habitat capability', () => {
   const compiled = compileMemory({ memoryNodes: MEMORY_NODE_IDS });
-  assert.equal(compiled.worldPotential, 1196800); assert.equal(compiled.habitatCapabilities.length, 6);
+  assert.equal(compiled.evolutionPower, 384); assert.equal(compiled.worldPotential, 1200000); assert.equal(compiled.habitatCapabilities.length, 6);
+  assert.equal(compiled.activeBuilds.length, 16); assert.ok(compiled.buildCapabilities.length >= 12);
   for (const value of Object.values(compiled.effects)) assert.ok(Number.isFinite(value) && value > 0 && value < 10);
   for (const curve of compiled.resonanceCurves) assert.ok(curve.value > .69 && curve.value < 1.41);
 });

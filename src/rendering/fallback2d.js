@@ -156,7 +156,7 @@ function memoryStyles(status, kind, fossil, fade, branch) {
   if (!status && !fossil) return null;
   const selected = status >= 5; const plain = selected ? status - 4 : status;
   const special = kind >= 4; const stroke = selected ? 'rgba(225,244,232,.98)' : plain === 2 ? 'rgba(171,185,168,.65)' : null;
-  const tint = ['55,58,59', '82,106,72', '61,99,112', '111,88,53', '62,99,66', '91,75,108', '105,77,69'][branch] ?? '55,58,59';
+  const tint = ['55,58,59', '49,93,168', '85,191,209', '194,139,66', '105,173,104', '215,237,245', '216,173,76'][branch] ?? '55,58,59';
   if (plain === 1) return { fill: `rgba(${tint},${0.76 * fade})`, stroke, width: 1.2 };
   if (plain === 2) return { fill: `rgba(104,119,105,${0.52 * fade})`, inset: 'rgba(38,43,41,.62)', scale: 0.62, stroke, width: 1.0 };
   if (plain === 3) return { fill: `rgba(177,202,137,${0.90 * fade})`, inset: 'rgba(230,235,184,.75)', scale: 0.54, stroke, width: 1.5 };

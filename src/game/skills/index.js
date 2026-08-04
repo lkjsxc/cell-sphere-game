@@ -7,27 +7,38 @@ import { REACH_MEMORY } from './reach.js';
 import { RESERVE_MEMORY } from './reserve.js';
 import { renderMemorySnapshot } from './scene.js';
 import { MEMORY_ATLAS_HASH } from './atlas.js';
+import { AFFINITY_METADATA_HASH, EVOLUTION_AFFINITIES, EVOLUTION_AFFINITY_IDS,
+  EVOLUTION_CONTENT_VERSION } from './affinities.js';
+import { BUILD_RECIPES, compileBuilds } from './builds.js';
+import { BASE_WORLD_POTENTIAL, FULL_EVOLUTION_POWER, WORLD_POTENTIAL_VERSION,
+  worldPotentialForPower } from './potential.js';
 import { hashStringU32, hexU32 } from '../../core/hash.js';
 import { createGeodesicTopology } from '../../world/icosphere.js';
 export { createMemoryFields } from './scene.js';
 export { MEMORY_ATLAS_REVERSE } from './atlas.js';
 export { applyMemoryConditionals } from './node.js';
+export { AFFINITY_METADATA_HASH, EVOLUTION_AFFINITIES, EVOLUTION_AFFINITY_IDS, EVOLUTION_CONTENT_VERSION } from './affinities.js';
+export { BUILD_RECIPES, compileBuilds } from './builds.js';
+export { BASE_WORLD_POTENTIAL, EVOLUTION_POWER_BY_KIND, FULL_EVOLUTION_POWER, WORLD_POTENTIAL_ANCHORS,
+  WORLD_POTENTIAL_VERSION, modeledScoreRange, worldPotentialForPower } from './potential.js';
 
 export const MEMORY_GRAPH_VERSION = 5;
-export const WORLD_POTENTIAL_VERSION = 1;
-export const BASE_WORLD_POTENTIAL = 16000;
 export const HABITAT_CAPABILITIES = Object.freeze([
   'LAKE_ACCESS', 'TUNDRA_ACCESS', 'SNOW_ICE_ACCESS',
   'SHALLOW_OCEAN_EDGE_ACCESS', 'SHALLOW_OCEAN_ACCESS', 'DEEP_OCEAN_ACCESS',
 ]);
-export const MEMORY_BRANCHES = Object.freeze(['Reach', 'Flow', 'Reserve', 'Ecology', 'Perception', 'Continuity']);
+export const MEMORY_BRANCHES = EVOLUTION_AFFINITY_IDS;
+const LEGACY_TERRITORIES = Object.freeze(['Reach', 'Flow', 'Reserve', 'Ecology', 'Perception', 'Continuity']);
 export const MEMORY_NODES = Object.freeze([
   ...REACH_MEMORY, ...FLOW_MEMORY, ...RESERVE_MEMORY,
   ...ECOLOGY_MEMORY, ...PERCEPTION_MEMORY, ...CONTINUITY_MEMORY,
 ]);
 export const MEMORY_NODE_IDS = Object.freeze(MEMORY_NODES.map((node) => node.id));
 export const MEMORY_LANDMARK_IDS = Object.freeze(MEMORY_NODES.filter((node) => node.authored).map((node) => node.id));
-export const MEMORY_ROOT_IDS = Object.freeze(MEMORY_BRANCHES.map((branch) => MEMORY_NODES.find((node) => node.branch === branch).id));
+export const MEMORY_ROOT_IDS = Object.freeze(LEGACY_TERRITORIES.map((branch) => MEMORY_NODES.find((node) => node.branch === branch).id));
+export const EVOLUTION_CONTENT_HASH = hexU32(hashStringU32(MEMORY_NODES.map((node) => JSON.stringify({ id:node.id, cell:node.cell,
+  affinity:node.affinity, tags:node.secondaryTags, power:node.evolutionPower, tradeoff:node.tradeoff,
+  habitats:node.habitatContributions, transformations:node.transformationContributions, builds:node.buildContributions })).join('|')));
 const ROOT_IDS = new Set(MEMORY_ROOT_IDS); const BY_ID = new Map(MEMORY_NODES.map((node) => [node.id, node]));
 const TOPOLOGY = createGeodesicTopology(5); const BY_CELL = new Map(MEMORY_NODES.map((node) => [node.cell, node]));
 export const MEMORY_CELL_BY_ID = Object.freeze(Object.fromEntries(MEMORY_NODES.map((node) => [node.id, node.cell])));
@@ -39,7 +50,7 @@ const ADDITIVE = new Set(['growthCap', 'anastomosis', 'redundantLoops',
 const EFFECT_KEYS = new Set(['reach', 'uptake', 'maintenance', 'conductance', 'reinforce',
   'stressResist', 'heatTol', 'droughtTol', 'toxinTol',
   'energyCap', 'regrow', 'growCost', ...ADDITIVE]);
-const COMPILED = new Map();
+const COMPILED = new Map(); const COMPILED_LIMIT = 512;
 
 export function getMemoryNode(id) { return BY_ID.get(id) ?? null; }
 export function getMemoryAdjacentIds(id) { return MEMORY_PHYSICAL_ADJACENCY[id] ?? Object.freeze([]); }
@@ -80,8 +91,8 @@ export function memoryNodeState(meta, node, selectedId = null, ownedIds = recogn
 export function groupAccessibleMemory(meta, selectedId = null) {
   const ownedIds = recognizedOwnedIds(meta);
   const nodes = MEMORY_NODES.map((node) => memoryNodeState(meta, node, selectedId, ownedIds));
-  return Object.freeze(MEMORY_BRANCHES.map((branch) => Object.freeze({ branch,
-    nodes: Object.freeze(nodes.filter((node) => node.branch === branch)) })));
+  return Object.freeze(MEMORY_BRANCHES.map((affinity) => Object.freeze({ branch: affinity, affinity,
+    nodes: Object.freeze(nodes.filter((node) => node.affinity === affinity)) })));
 }
 export function availableMemoryNodes(meta) {
   return Object.freeze(MEMORY_NODES.filter((node) => canPurchaseMemory(meta, node.id)));
@@ -105,11 +116,11 @@ export const transactMemoryPurchase = purchaseMemory;
 export function compileMemory(meta) {
   const owned = recognizedOwnedIds(meta); const key = MEMORY_NODE_IDS.filter((id) => owned.has(id)).join('|');
   if (COMPILED.has(key)) return COMPILED.get(key);
-  const effects = {}; const conditionals = []; const unlocks = []; const resonance = new Map();
-  let worldPotential = BASE_WORLD_POTENTIAL;
+  const effects = {}; const conditionals = []; const unlocks = []; const resonance = new Map(); const ownedNodes = [];
+  let evolutionPower = 0;
   for (const node of MEMORY_NODES) {
-    if (!owned.has(node.id)) continue; const effect = node.effect;
-    worldPotential += node.potentialGain;
+    if (!owned.has(node.id)) continue; const effect = node.effect; ownedNodes.push(node);
+    evolutionPower += node.evolutionPower;
     if (effect.type === 'scalar') mergeEffect(effects, effect);
     else if (effect.type === 'conditional') conditionals.push(Object.freeze({ nodeId: node.id, ...effect }));
     else if (effect.type === 'resonance') {
@@ -127,12 +138,17 @@ export function compileMemory(meta) {
   }
   boundCompiledEffects(effects);
   const capabilitySet = new Set(unlocks.filter((entry) => entry.mode === 'habitat').map((entry) => entry.key));
+  const builds = compileBuilds(ownedNodes); const worldPotential = worldPotentialForPower(evolutionPower);
   const compiled = Object.freeze({ effects: Object.freeze(effects),
     conditionals: Object.freeze(conditionals), unlocks: Object.freeze(unlocks),
-    resonanceCurves: Object.freeze(resonanceCurves), worldPotential,
-    potentialVersion: WORLD_POTENTIAL_VERSION,
-    habitatCapabilities: Object.freeze(HABITAT_CAPABILITIES.filter((keyName) => capabilitySet.has(keyName))) });
-  COMPILED.set(key, compiled); return compiled;
+    resonanceCurves: Object.freeze(resonanceCurves), evolutionPower, worldPotential,
+    potentialVersion: WORLD_POTENTIAL_VERSION, contentVersion: EVOLUTION_CONTENT_VERSION,
+    habitatCapabilities: Object.freeze(HABITAT_CAPABILITIES.filter((keyName) => capabilitySet.has(keyName))),
+    activeBuilds: builds.activeBuilds, nearBuilds: builds.nearBuilds, buildEffects: builds.buildEffects,
+    buildCapabilities: builds.capabilities, transformations: builds.transformations });
+  COMPILED.set(key, compiled);
+  if (COMPILED.size > COMPILED_LIMIT) COMPILED.delete(COMPILED.keys().next().value);
+  return compiled;
 }
 
 export function worldPotential(meta) { return compileMemory(meta).worldPotential; }
@@ -146,8 +162,15 @@ export function memoryPurchasePreview(meta, id) {
   const changes = [...keys].filter((keyName) => (before.effects[keyName] ?? 1) !== (after.effects[keyName] ?? 1))
     .map((keyName) => Object.freeze({ key: keyName, before: before.effects[keyName] ?? 1, after: after.effects[keyName] ?? 1 }));
   const unlocked = after.unlocks.filter((entry) => !before.unlocks.some((old) => old.key === entry.key));
-  return Object.freeze({ nodeId: id, potentialBefore: before.worldPotential, potentialAfter: after.worldPotential,
-    potentialGain: after.worldPotential - before.worldPotential, changes: Object.freeze(changes), unlocked: Object.freeze(unlocked) });
+  const beforeBuilds = new Map([...before.activeBuilds, ...before.nearBuilds].map((build) => [build.id, build]));
+  const buildProgress = [...after.activeBuilds, ...after.nearBuilds].filter((build) => node.buildContributions.includes(build.id)).map((build) => Object.freeze({
+    id: build.id, name: build.name, before: beforeBuilds.get(build.id)?.progress ?? 0, after: build.progress,
+    active: build.active, missing: build.missing,
+  }));
+  return Object.freeze({ nodeId: id, powerBefore: before.evolutionPower, powerAfter: after.evolutionPower,
+    powerGain: after.evolutionPower - before.evolutionPower, potentialBefore: before.worldPotential, potentialAfter: after.worldPotential,
+    potentialDelta: after.worldPotential - before.worldPotential, changes: Object.freeze(changes), unlocked: Object.freeze(unlocked),
+    buildProgress: Object.freeze(buildProgress) });
 }
 function mergeEffect(target, effect) {
   if (effect.operation === 'add' || ADDITIVE.has(effect.key)) target[effect.key] = (target[effect.key] ?? 0) + effect.value;
@@ -173,15 +196,18 @@ export function buildMemorySnapshot(topo, meta, selectedId = null, emphasizedIds
 
 export function validateMemoryGraph(nodes = MEMORY_NODES) {
   const errors = []; const ids = new Set(); const cells = new Set(); const unlockKeys = new Set();
-  const byId = new Map(); const byCell = new Map(); const composition = {}; const branchCounts = {}; let totalCost = 0;
+  const byId = new Map(); const byCell = new Map(); const composition = {}; const branchCounts = {}; let totalCost = 0; let totalPower = 0;
   for (const node of nodes) {
     if (!/^[a-z][a-z-]+$/.test(node.id) || ids.has(node.id)) errors.push(`invalid id: ${node.id}`); ids.add(node.id); byId.set(node.id, node);
     if (!Number.isInteger(node.cell) || node.cell < 0 || node.cell >= TOPOLOGY.nodeCount || cells.has(node.cell)) errors.push(`invalid cell: ${node.id}`);
     else { cells.add(node.cell); byCell.set(node.cell, node); }
     if (MEMORY_CELL_BY_ID[node.id] !== undefined && MEMORY_CELL_BY_ID[node.id] !== node.cell) errors.push(`unstable cell: ${node.id}`);
     if (!Number.isFinite(node.cost) || node.cost <= 0) errors.push(`invalid cost: ${node.id}`); else totalCost += node.cost;
-    if (!Number.isFinite(node.potentialGain) || node.potentialGain <= 0) errors.push(`invalid potential: ${node.id}`);
-    composition[node.kind] = (composition[node.kind] ?? 0) + 1; branchCounts[node.branch] = (branchCounts[node.branch] ?? 0) + 1;
+    if (!Number.isInteger(node.evolutionPower) || node.evolutionPower <= 0) errors.push(`invalid power: ${node.id}`); else totalPower += node.evolutionPower;
+    if (!EVOLUTION_AFFINITY_IDS.includes(node.affinity) || !node.secondaryTags?.length || !node.tradeoff
+      || !Array.isArray(node.habitatContributions) || !Array.isArray(node.transformationContributions)
+      || !node.buildContributions?.length) errors.push(`invalid content: ${node.id}`);
+    composition[node.kind] = (composition[node.kind] ?? 0) + 1; branchCounts[node.affinity] = (branchCounts[node.affinity] ?? 0) + 1;
     const effects = node.effect?.bonus ? [node.effect, node.effect.bonus] : [node.effect];
     for (const effect of effects) {
       if (!effect || !['scalar', 'conditional', 'unlock', 'resonance'].includes(effect.type)) { errors.push(`invalid effect: ${node.id}`); continue; }
@@ -197,6 +223,7 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
   if (nodes.length !== 252) errors.push(`node count: ${nodes.length}`);
   for (const [kind, count] of Object.entries(expectedKinds)) if (composition[kind] !== count) errors.push(`kind count: ${kind}`);
   for (const branch of MEMORY_BRANCHES) if (branchCounts[branch] !== 42) errors.push(`branch count: ${branch}`);
+  if (totalPower !== FULL_EVOLUTION_POWER) errors.push(`full power: ${totalPower}`);
   const adjacency = new Map(); let frontierStates = 0;
   for (const node of nodes) {
     const neighbors = [];
@@ -206,7 +233,7 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
     adjacency.set(node.id, neighbors); frontierStates += neighbors.length;
   }
   for (const branch of MEMORY_BRANCHES) {
-    const territory = nodes.filter((node) => node.branch === branch); const allowed = new Set(territory.map((node) => node.cell));
+    const territory = nodes.filter((node) => node.affinity === branch); const allowed = new Set(territory.map((node) => node.cell));
     if (territory.length && connectedCells(TOPOLOGY, territory[0].cell, allowed) !== allowed.size) errors.push(`disconnected branch: ${branch}`);
   }
   const roots = MEMORY_ROOT_IDS.filter((id) => byId.has(id)); const reachable = new Set(roots); const queue = [...roots];
@@ -216,8 +243,9 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
   const degrees = [...adjacency.values()].map((neighbors) => neighbors.length);
   const economyHash = hexU32(hashStringU32(nodes.map((node) => `${node.id}:${node.cost}`).join('|')));
   const effectHash = hexU32(hashStringU32(nodes.map((node) => `${node.id}:${JSON.stringify(node.effect)}`).join('|')));
-  return Object.freeze({ valid: errors.length === 0, errors: Object.freeze(errors), totalCost,
-    economyHash, effectHash, composition: Object.freeze(composition), branchCounts: Object.freeze(branchCounts),
+  return Object.freeze({ valid: errors.length === 0, errors: Object.freeze(errors), totalCost, totalPower,
+    economyHash, effectHash, affinityHash: AFFINITY_METADATA_HASH, contentHash: EVOLUTION_CONTENT_HASH,
+    contentVersion: EVOLUTION_CONTENT_VERSION, composition: Object.freeze(composition), branchCounts: Object.freeze(branchCounts),
     roots: Object.freeze(roots), reachable: reachable.size, physicalRelations: frontierStates / 2, frontierStates,
     minDegree: Math.min(...degrees), maxDegree: Math.max(...degrees), topologyFrequency: TOPOLOGY.frequency,
     worldPotential: compileMemory({ memoryNodes: nodes.map((node) => node.id) }).worldPotential,

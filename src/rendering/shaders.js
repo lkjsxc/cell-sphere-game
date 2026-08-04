@@ -132,12 +132,12 @@ void main() {
   float affordableCell = step(2.5, plainStatus) * (1.0 - step(3.5, plainStatus));
   float ownedCell = step(3.5, plainStatus);
   vec3 branchColor = vec3(0.48, 0.58, 0.47);
-  if (atlasBranch < 1.5) branchColor = vec3(0.56, 0.72, 0.48);
-  else if (atlasBranch < 2.5) branchColor = vec3(0.40, 0.68, 0.76);
-  else if (atlasBranch < 3.5) branchColor = vec3(0.76, 0.62, 0.36);
-  else if (atlasBranch < 4.5) branchColor = vec3(0.42, 0.68, 0.45);
-  else if (atlasBranch < 5.5) branchColor = vec3(0.62, 0.52, 0.73);
-  else branchColor = vec3(0.72, 0.54, 0.48);
+  if (atlasBranch < 1.5) branchColor = vec3(0.192, 0.365, 0.659); // Marine
+  else if (atlasBranch < 2.5) branchColor = vec3(0.333, 0.749, 0.820); // Freshwater
+  else if (atlasBranch < 3.5) branchColor = vec3(0.761, 0.545, 0.259); // Scarcity
+  else if (atlasBranch < 4.5) branchColor = vec3(0.412, 0.678, 0.408); // Fertility
+  else if (atlasBranch < 5.5) branchColor = vec3(0.843, 0.929, 0.961); // Cryogenic
+  else branchColor = vec3(0.847, 0.678, 0.298); // Luminous
   float fossil = fract(vLife.z); float emphasis = step(31.0, vLife.z);
   float broadGlyph = smoothstep(0.38, 0.60, abs(sin(dot(vPos, vec3(11.0, 7.0, 5.0)) * (1.0 + atlasKind * 0.12))));
   vec3 atlasBase = mix(vec3(0.13, 0.14, 0.145), vec3(0.30, 0.27, 0.22), fossil * 0.48);

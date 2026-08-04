@@ -2,8 +2,10 @@
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import { createGeodesicTopology } from '../../src/world/icosphere.js';
 import { MEMORY_ATLAS_HASH, MEMORY_ATLAS_REVERSE, MEMORY_BRANCH_SIZE, generateMemoryAtlas, validateAtlasMapping } from '../../src/game/skills/atlas.js';
-import { BASE_WORLD_POTENTIAL, MEMORY_NODES, MEMORY_NODE_IDS, MEMORY_PHYSICAL_ADJACENCY, availableMemoryNodes,
-  buildMemorySnapshot, campaignResolved, compileMemory, getMemoryAdjacentIds, getMemoryNode, memoryNodeState, memoryPurchasePreview, newlyAvailableAdjacentIds, purchaseMemory, validateMemoryGraph } from '../../src/game/skills/index.js';
+import { AFFINITY_METADATA_HASH, BASE_WORLD_POTENTIAL, EVOLUTION_AFFINITIES, EVOLUTION_CONTENT_HASH,
+  FULL_EVOLUTION_POWER, MEMORY_NODES, MEMORY_NODE_IDS, MEMORY_PHYSICAL_ADJACENCY, WORLD_POTENTIAL_VERSION,
+  availableMemoryNodes, buildMemorySnapshot, campaignResolved, compileMemory, getMemoryAdjacentIds, getMemoryNode,
+  memoryNodeState, memoryPurchasePreview, newlyAvailableAdjacentIds, purchaseMemory, validateMemoryGraph } from '../../src/game/skills/index.js';
 import { createMemoryFields } from '../../src/game/skills/scene.js';
 import { defaultMeta } from '../../src/platform/storage.js';
 import { createCamera } from '../../src/rendering/camera.js'; import { pickNode } from '../../src/rendering/picking.js';
@@ -24,8 +26,10 @@ test('all 252 frequency-5 addresses and physical neighbors are deterministic', (
 test('graph has exact territories, composition, economy, effects, and potential', () => {
   const report = validateMemoryGraph(); assert.equal(report.valid, true, report.errors.join('\n'));
   assert.equal(report.topologyFrequency, 5); assert.equal(report.reachable, 252); assert.equal(report.physicalRelations, 750);
-  assert.equal(report.totalCost, 17820); assert.equal(report.worldPotential, 1196800);
-  assert.deepEqual(report.branchCounts, { Reach:42, Flow:42, Reserve:42, Ecology:42, Perception:42, Continuity:42 });
+  assert.equal(report.totalCost, 17820); assert.equal(report.totalPower, FULL_EVOLUTION_POWER); assert.equal(report.worldPotential, 1200000);
+  assert.deepEqual(report.branchCounts, { Marine:42, Freshwater:42, Scarcity:42, Fertility:42, Cryogenic:42, Luminous:42 });
+  assert.equal(report.affinityHash, AFFINITY_METADATA_HASH); assert.equal(report.contentHash, EVOLUTION_CONTENT_HASH);
+  assert.equal(AFFINITY_METADATA_HASH, '9e0063bd'); assert.equal(EVOLUTION_CONTENT_HASH, '938f6e87');
   assert.deepEqual(report.composition, { root:6, resonance:180, major:30, conditional:12, unlock:12, keystone:6, capstone:6 });
   assert.equal(new Set(MEMORY_NODE_IDS).size, 252); assert.equal(new Set(MEMORY_NODES.map((node) => node.cell)).size, 252);
 });
@@ -53,8 +57,10 @@ test('purchase authority is exact-once, adjacent, and previews visible deltas', 
   const opened = newlyAvailableAdjacentIds(meta, root.id); assert.ok(opened.length > 0);
   const tx = purchaseMemory(meta, root.id); assert.equal(tx.ok, true); assert.equal(tx.meta.echoBalance, 92);
   assert.deepEqual(newlyAvailableAdjacentIds(tx.meta, root.id), opened);
-  assert.equal(tx.preview.potentialBefore, BASE_WORLD_POTENTIAL); assert.equal(tx.preview.potentialAfter, BASE_WORLD_POTENTIAL + 125000);
-  assert.equal(memoryPurchasePreview(tx.meta, root.id).potentialAfter, BASE_WORLD_POTENTIAL + 125000);
+  assert.equal(tx.preview.powerBefore, 0); assert.equal(tx.preview.powerAfter, 1);
+  assert.equal(tx.preview.potentialBefore, BASE_WORLD_POTENTIAL); assert.equal(tx.preview.potentialAfter, 19000);
+  assert.ok(tx.preview.potentialAfter / tx.preview.potentialBefore <= 1.25);
+  assert.equal(memoryPurchasePreview(tx.meta, root.id).potentialAfter, 19000);
   assert.equal(purchaseMemory(tx.meta, root.id).ok, false);
   const nonadjacent = MEMORY_NODES.find((node) => !getMemoryAdjacentIds(root.id).includes(node.id) && node.id !== root.id);
   assert.equal(purchaseMemory(tx.meta, nonadjacent.id).ok, false);
@@ -67,11 +73,16 @@ test('all 252 cells can be acquired through one legal traversal at exact total c
   assert.equal(meta.memoryNodes.length, 252); assert.equal(spent, 17820);
 });
 
-test('compiled Resonance curves are bounded and every habitat unlock is real', () => {
+test('compiled Resonance, affinity content, builds, and every habitat unlock are bounded', () => {
   const empty = compileMemory({ memoryNodes: [] }); const full = compileMemory({ memoryNodes: MEMORY_NODE_IDS });
-  assert.equal(empty.worldPotential, 16000); assert.equal(full.worldPotential, 1196800); assert.equal(full.resonanceCurves.length, 18);
+  assert.deepEqual({ power:empty.evolutionPower, potential:empty.worldPotential, version:empty.potentialVersion },
+    { power:0, potential:16000, version:WORLD_POTENTIAL_VERSION });
+  assert.equal(full.evolutionPower, 384); assert.equal(full.worldPotential, 1200000); assert.equal(full.resonanceCurves.length, 18);
   assert.deepEqual(full.habitatCapabilities, ['LAKE_ACCESS','TUNDRA_ACCESS','SNOW_ICE_ACCESS','SHALLOW_OCEAN_EDGE_ACCESS','SHALLOW_OCEAN_ACCESS','DEEP_OCEAN_ACCESS']);
-  assert.ok(MEMORY_NODES.every((node) => node.effect && node.potentialGain > 0));
+  assert.equal(full.activeBuilds.length, 16); assert.ok(full.buildCapabilities.length >= 12); assert.ok(full.transformations.length >= 5);
+  assert.equal(EVOLUTION_AFFINITIES.length, 6);
+  assert.ok(MEMORY_NODES.every((node) => node.effect && node.evolutionPower > 0 && node.affinity && node.secondaryTags.length
+    && node.tradeoff && node.habitatContributions.length && node.buildContributions.length));
 });
 
 test('frequency-5 scene projects one semantic state per whole Skill Cell', () => {

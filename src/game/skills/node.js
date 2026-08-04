@@ -1,5 +1,9 @@
 /** Shared immutable schema for all 252 Evolution Globe Skill Cells. */
 import { MEMORY_BRANCH_SIZE, memoryAtlasCell } from './atlas.js';
+import { affinityForTerritory, habitatContributionsFor, secondaryTagsFor,
+  tradeoffForAffinity, transformationContributionsFor } from './affinities.js';
+import { buildContributionsFor } from './builds.js';
+import { evolutionPowerForKind } from './potential.js';
 
 const LANDMARK_SLOTS = Object.freeze([0, 3, 7, 11, 15, 19, 23, 27, 31, 35, 38, 41]);
 const LANDMARK_ROWS = Object.freeze([0, 1, 2, 3, 4, 5, 8, 9, 12, 13, 15, 17]);
@@ -8,7 +12,6 @@ const LANDMARK_KINDS = Object.freeze([
   ...Array(2).fill('unlock'), 'keystone', 'capstone',
 ]);
 const LANDMARK_COSTS = Object.freeze([8, 18, 24, 32, 42, 55, 60, 90, 75, 140, 350, 800]);
-const LANDMARK_POTENTIAL = Object.freeze([125000, 1000, 1000, 1000, 1000, 1000, 2000, 2000, 2000, 2000, 5000, 9000]);
 const WORDS = Object.freeze({
   reach: [['Fine', 'Patient', 'Sunward', 'Tender', 'Distant', 'Frugal', 'Open', 'Rooted', 'Branching'], ['Runner', 'Front', 'Bud', 'Thread', 'Tip', 'Path', 'Stem', 'Trace', 'Horizon', 'Foothold']],
   flow: [['Clear', 'Pulsed', 'Steady', 'Braided', 'Quiet', 'Swift', 'Open', 'Elastic', 'Deep'], ['Current', 'Channel', 'Junction', 'Pulse', 'Vessel', 'Exchange', 'Stream', 'Conduit', 'Circuit', 'Flow']],
@@ -50,23 +53,29 @@ export function defineBranch(branch, rows) {
 function landmarkDraft(branch, row, landmark, index) {
   const kind = LANDMARK_KINDS[landmark];
   const completion = completeUnlock(branch, kind, strengthenEffect(row[5], kind)); const effect = completion.effect;
-  return { id: `${branch}-${row[0]}`, nameEn: row[1], effectEn: completion.summary ?? effectSummary(effect, row[2]),
-    description: completion.description ?? row[3], cost: LANDMARK_COSTS[landmark], potentialGain: LANDMARK_POTENTIAL[landmark],
+  return decorateNode({ id: `${branch}-${row[0]}`, nameEn: row[1], effectEn: completion.summary ?? effectSummary(effect, row[2]),
+    description: completion.description ?? row[3], cost: LANDMARK_COSTS[landmark],
     branch: title(branch), tier: tier(index), kind, authored: true, cell: memoryAtlasCell(branch, index),
-    effect, effects: Object.freeze(effect.type === 'scalar' ? { [effect.key]: effect.value } : {}) };
+    effect, effects: Object.freeze(effect.type === 'scalar' ? { [effect.key]: effect.value } : {}) }, index);
 }
 function resonanceDraft(branch, filler, index) {
   const words = WORDS[branch]; const name = `${words[0][Math.floor(filler / 10)]} ${words[1][filler % 10]}`;
   const [key, direction, cap] = RESONANCE_EFFECTS[branch][filler % RESONANCE_EFFECTS[branch].length];
   const effect = resonance(branch, key, direction, cap);
-  return { id: `${branch}-resonance-${name.toLowerCase().replace(' ', '-')}`, nameEn: `${name} Resonance`,
+  return decorateNode({ id: `${branch}-resonance-${name.toLowerCase().replace(' ', '-')}`, nameEn: `${name} Resonance`,
     effectEn: `${TRAIT_LABELS[key]} follows a bounded diminishing ${title(branch)} curve.`,
     description: `This permanent Resonance point makes an immediate visible change without unbounded multiplication.`,
-    cost: resonanceCost(filler), potentialGain: resonancePotential(filler), branch: title(branch), tier: tier(index),
-    kind: 'resonance', authored: false, cell: memoryAtlasCell(branch, index), effect, effects: Object.freeze({}) };
+    cost: resonanceCost(filler), branch: title(branch), tier: tier(index),
+    kind: 'resonance', authored: false, cell: memoryAtlasCell(branch, index), effect, effects: Object.freeze({}) }, index);
+}
+function decorateNode(node, index) {
+  const affinity = affinityForTerritory(node.branch); const secondaryTags = secondaryTagsFor(affinity, index, node.effect);
+  return { ...node, affinity, secondaryTags, evolutionPower: evolutionPowerForKind(node.kind),
+    tradeoff: tradeoffForAffinity(affinity), habitatContributions: habitatContributionsFor(affinity, node.effect),
+    transformationContributions: transformationContributionsFor(secondaryTags),
+    buildContributions: buildContributionsFor(affinity, secondaryTags) };
 }
 function resonanceCost(ordinal) { return 10 + Math.round(90 * (ordinal / 29) ** 1.8); }
-function resonancePotential(ordinal) { return Math.round((6000 * Math.exp(-ordinal / 5) + 400) / 100) * 100; }
 function tier(index) { return Math.min(8, 1 + Math.floor(index * 8 / MEMORY_BRANCH_SIZE)); }
 function title(value) { return `${value[0].toUpperCase()}${value.slice(1)}`; }
 function effectSummary(effect, fallback) {

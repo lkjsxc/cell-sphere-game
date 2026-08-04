@@ -4,7 +4,7 @@ export const MEMORY_STATUS = Object.freeze({
   SELECTED_LOCKED: 5, SELECTED_UNAFFORDABLE: 6, SELECTED_AFFORDABLE: 7, SELECTED_OWNED: 8,
 });
 const KINDS = Object.freeze({ resonance: 1, conditional: 2, unlock: 3, keystone: 4, major: 5, capstone: 6, root: 7 });
-const BRANCHES = Object.freeze({ Reach: 1, Flow: 2, Reserve: 3, Ecology: 4, Perception: 5, Continuity: 6 });
+const BRANCHES = Object.freeze({ Marine: 1, Freshwater: 2, Scarcity: 3, Fertility: 4, Cryogenic: 5, Luminous: 6 });
 
 export function createMemoryFields(topo) {
   const floats = () => new Float32Array(topo.nodeCount);
@@ -25,7 +25,7 @@ export function renderMemorySnapshot(topo, meta, scene, emphasizedIds = []) {
   const emphasized = new Set(emphasizedIds); const focusCells = [];
   scene.nodes.forEach((node, index) => {
     const selected = node.id === scene.selectedId;
-    status[node.cell] = statusFor(node, selected); branch[node.cell] = BRANCHES[node.branch];
+    status[node.cell] = statusFor(node, selected); branch[node.cell] = BRANCHES[node.affinity];
     tier[node.cell] = node.tier; kind[node.cell] = KINDS[node.kind]; nodeIndex[node.cell] = index;
     if (emphasized.has(node.id)) emphasis[node.cell] = 1;
     if (node.owned || (node.reachable && node.affordable)) focusCells.push(node.cell);

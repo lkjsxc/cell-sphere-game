@@ -1,5 +1,6 @@
 /** Evolution Globe semantic tree, Skill detail, and acquisition feedback. */
-import { MEMORY_NODES, getMemoryNode, memoryNodeState, memoryPurchasePreview, newlyAvailableAdjacentIds } from '../game/skills/index.js';
+import { EVOLUTION_AFFINITIES, MEMORY_NODES, compileMemory, getMemoryNode, memoryNodeState, memoryPurchasePreview,
+  modeledScoreRange, newlyAvailableAdjacentIds, worldPotentialForPower } from '../game/skills/index.js';
 
 export function createMemorySurface(options) {
   const panel = byId('memory-node-panel'); const unlock = /** @type {HTMLButtonElement} */ (byId('memory-unlock'));
@@ -11,7 +12,7 @@ export function createMemorySurface(options) {
   function renderNode() {
     const state = memoryNodeState(meta, selected, selected?.id); selected = state;
     const preview = memoryPurchasePreview(meta, state.id);
-    byId('memory-node-branch').textContent = `${state.branch.toUpperCase()} · TIER ${state.tier}`;
+    byId('memory-node-branch').textContent = `${state.affinity.toUpperCase()} AFFINITY · TIER ${state.tier}`;
     byId('memory-node-heading').textContent = state.nameEn;
     byId('memory-node-summary').textContent = state.effectEn;
     byId('memory-node-detail').textContent = state.description;
@@ -22,26 +23,38 @@ export function createMemorySurface(options) {
     const gameplayParts = [...(preview?.changes?.map(formatChange) ?? []),
       ...(preview?.unlocked?.map((entry) => `${humanize(entry.key)} unlocked`) ?? [])];
     const gameplay = gameplayParts.length ? gameplayParts.join(' · ') : 'Rule change shown above';
-    const potential = preview ? `${number(preview.potentialBefore)} → ${number(preview.potentialAfter)} (+${number(preview.potentialGain)})`
-      : `${number(metaWorldPotential(meta))} current`;
+    const potential = preview ? `${number(preview.potentialBefore)} → ${number(preview.potentialAfter)} (+${number(preview.potentialDelta)})`
+      : `${number(compileMemory(meta).worldPotential)} current`;
+    const power = preview ? `${preview.powerBefore} → ${preview.powerAfter} (+${preview.powerGain})` : `${compileMemory(meta).evolutionPower} current`;
+    const scoreRange = modeledScoreRange(preview?.potentialAfter ?? compileMemory(meta).worldPotential);
+    const affinity = EVOLUTION_AFFINITIES.find((entry) => entry.id === state.affinity);
+    const buildProgress = preview?.buildProgress?.length ? preview.buildProgress.map(formatBuildProgress).join(' · ')
+      : state.buildContributions.map(humanize).join(', ');
     const newlyAvailable = newlyAvailableAdjacentIds(meta, state.id).map((id) => getMemoryNode(id)?.nameEn ?? id);
     byId('memory-node-meta').replaceChildren(...definitionRows([
-      ['Status', status], ['Cost', `${state.cost} Echoes · ${meta.echoBalance} held`],
-      ['Gameplay', gameplay], ['World Potential', potential], ['Adjacent owned cell', neighbor],
-      ['Newly available', newlyAvailable.length ? newlyAvailable.join(', ') : 'No additional adjacent cells'],
+      ['Status', status], ['Affinity', `${state.affinity} · ${affinity?.pattern ?? 'whole-cell'} pattern · ${affinity?.color ?? 'material palette'} · ${state.secondaryTags.join(', ')}`],
+      ['Cost', `${state.cost} Echoes · ${meta.echoBalance} held`], ['Gameplay before → after', gameplay],
+      ['Tradeoff', state.tradeoff], ['Evolution Power', power], ['World Potential', potential],
+      ['Modeled SCORE range', `${number(scoreRange.low)}–${number(scoreRange.high)} · modeled, not promised`],
+      ['Build progress', buildProgress || 'No recipe contribution'],
+      ['Habitats / transformations', [...state.habitatContributions, ...state.transformationContributions].join(', ') || 'No direct unlock'],
+      ['Adjacent owned cell', neighbor], ['Newly available neighbors', newlyAvailable.length ? newlyAvailable.join(', ') : 'No additional adjacent cells'],
     ]));
     unlock.hidden = state.owned; unlock.disabled = !state.selectedReady;
     unlock.textContent = `Unlock for ${state.cost} Echoes`; unlock.dataset.action = state.selectedReady ? 'recommended' : 'normal';
   }
 
   function renderTree() {
+    const compiled = compileMemory(meta);
     tree.replaceChildren(...MEMORY_NODES.map((node) => {
       const state = memoryNodeState(meta, node); const button = document.createElement('button'); button.type = 'button';
       button.setAttribute('role', 'treeitem'); button.setAttribute('aria-level', String(state.tier + 1));
       button.setAttribute('aria-selected', String(state.id === selected?.id));
       const status = state.owned ? 'Owned' : state.reachable ? state.affordable ? 'Available' : 'Available, more Echoes required'
         : 'Locked, adjacent owned cell required';
-      button.textContent = `${state.nameEn}. ${status}. ${state.cost} Echoes. World Potential plus ${number(state.potentialGain)}.`;
+      const potentialBefore = state.owned ? worldPotentialForPower(compiled.evolutionPower - state.evolutionPower) : compiled.worldPotential;
+      const potentialAfter = state.owned ? compiled.worldPotential : worldPotentialForPower(compiled.evolutionPower + state.evolutionPower);
+      button.textContent = `${state.nameEn}. ${state.affinity} affinity. ${status}. ${state.cost} Echoes. Evolution Power plus ${state.evolutionPower}. World Potential ${number(potentialBefore)} to ${number(potentialAfter)}.`;
       button.addEventListener('click', () => options.onSelect(node.id)); return button;
     }));
   }
@@ -66,10 +79,10 @@ export function createMemorySurface(options) {
   };
 }
 
-function metaWorldPotential(meta) {
-  let value = 16000; const owned = new Set(meta?.memoryNodes ?? []);
-  for (const node of MEMORY_NODES) if (owned.has(node.id)) value += node.potentialGain;
-  return value;
+function formatBuildProgress(build) {
+  const progress = `${Math.round(build.before * 100)}% → ${Math.round(build.after * 100)}%`;
+  const missing = build.active ? 'active' : build.missing.map((part) => `${part.remaining} ${humanize(part.id)}`).join(', ');
+  return `${build.name}: ${progress} · ${missing}`;
 }
 function formatChange(change) { return `${humanize(change.key)} ${decimal(change.before)} → ${decimal(change.after)}`; }
 function decimal(value) { return `${Math.round(value * 1000) / 1000}×`; }
