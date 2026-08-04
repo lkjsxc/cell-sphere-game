@@ -1,9 +1,10 @@
 /** Atomic first-wins world replacement and exactly-once result transactions. */
-import { buildMemorySnapshot, compileMemory } from '../../game/skills/index.js';
+import { compileMemory } from '../../game/skills/index.js';
 import { identityFields, sameWorldIdentity } from '../../core/world-session.js';
 import { createBlankSnapshot } from '../../rendering/blank-snapshot.js';
 import { normalizeHistoryEvents, appendAbandonedWorld, saveHistory } from '../../platform/history.js';
 import { saveMeta } from '../../platform/storage.js';
+import { saveRunTransaction } from '../../platform/run-transaction-store.js';
 import { seedForRun } from '../app-data.js';
 import { applyRunResult } from './run-result.js';
 import { disableContinuation, resetContinuation, setContinuationHidden, startContinuation } from './continuation.js';
@@ -44,23 +45,24 @@ export function performWorldReplacement(app) {
   app.sceneSelector?.update?.('world'); ui.show(app.el, 'world'); ui.resetWorldPresentation(app.el, blank); app.updateSceneActions?.(); app.resize(false);
   app.renderer.bindWorldSession(identity); app.renderer.resetDynamicState();
   const rendered = app.renderer.render({ snapshot: blank, worldIdentity: identity, camera: app.camera,
-    selectedNode: null, adaptation: null, highlightedCells: [], time: performance.now() / 1000, pulse: false });
+    selectedNode: null, highlightedCells: [], time: performance.now() / 1000, pulse: false });
   app.presentationAudit.blankFrames++; app.presentationAudit.lastBlank = Object.freeze({ ...identityFields(identity), rendered,
     renderer: app.renderer.backend, audit: app.renderer.lastFrameAudit });
   ui.announce(app.el, 'The seeded world is choosing a suitable place to begin.');
   const memory = compileMemory(app.meta); replacement.status = 'starting';
-  app.driver.start({ seed, strainId: 'pioneer', memoryEffects: memory.effects,
-    memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks,
-    adaptationMode: app.settings.adaptationMode }, app.speed, identity);
+  app.driver.start({ seed, strainId: 'pioneer', worldOrdinal: app.meta.runs + 1,
+    memoryEffects: memory.effects, memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks,
+    habitatCapabilities: memory.habitatCapabilities, worldPotential: memory.worldPotential,
+    potentialVersion: memory.potentialVersion }, app.speed, identity);
   return true;
 }
 export function retireWorldPresentation(app) {
   const retired = app.worldIdentity; app.retiredWorldIdentity = retired; app.worldIdentity = null; app.activeRunId = 0;
   app.driver.stop(); app.renderer?.resetDynamicState(); app.requestId++; app.requestGeneration++; resetContinuation(app.continuation);
-  app.countdownLabel = ''; app.el.countdown.textContent = ''; app.pause.clear(); app.adaptationEffects.clear();
+  app.countdownLabel = ''; app.el.countdown.textContent = ''; app.pause.clear();
   app.historyPlayback.retire(); app.surfaces.reset?.(); app.inspector.close(); app.historyUi.reset?.(); app.metricUi?.reset?.(); app.eventLogUi?.reset?.();
-  app.adapt.reset?.(); app.newWorld.close(); app.settingsUi.close(); app.memoryUi.closeNode(); app.trophyUi.close();
-  app.overlay = null; app.selectedNode = null; app.offers = []; app.cards = []; app.currentHistory = [];
+  app.newWorld.close(); app.settingsUi.close(); app.memoryUi.closeNode(); app.trophyUi.close();
+  app.overlay = null; app.selectedNode = null; app.currentHistory = [];
   app.lastResult = null; app.lastScore = null; app.lastResultIdentity = null; app.historySnapshot = null; app.historyHighlights = [];
   app.snapshot = null; app.driver.installSnapshot(null); app.worldFields = null; app.fields = null;
   app.lastInspect = 0; app.lastRender = 0; app.timeDial.reset(performance.now()); ui.resetWorldPresentation(app.el, null);
@@ -90,18 +92,17 @@ export function finishRun(app, result) {
   const transaction = applyRunResult(app.meta, app.archive, identified,
     app.settings.historyRetention, app.resultKeys); if (!transaction.applied) return false;
   app.resultKeys = new Set(transaction.meta.resultKeys);
-  app.closeActiveOverlay(); app.adaptationEffects.clear(); app.selectedNode = null; app.flow.send('extinct');
+  app.closeActiveOverlay(); app.selectedNode = null; app.flow.send('extinct');
   app.lastResult = identified; app.lastScore = transaction.score; app.lastResultIdentity = app.worldIdentity;
   app.meta = transaction.meta; app.archive = transaction.archive;
   app.currentHistory = app.archive.worlds.at(-1)?.events?.slice(-80) ?? normalizeHistoryEvents(result.history).slice(-80);
   ui.updateCurrentEvent(app.el, app.currentHistory.at(-1), true); app.eventLogUi.update(app.eventLogModel()); app.trophyNotifications.sync(app.meta);
-  const skills = buildMemorySnapshot(app.topo3, app.meta).nodeStates;
-  app.el.evolutionButton.dataset.action = skills.some((node) => node.reachable && node.affordable && !node.owned) ? 'available' : 'quiet';
-  if (!saveMeta(app.meta)) ui.announce(app.el, 'Progress is temporary because browser storage is unavailable.');
-  saveHistory(app.archive, app.settings.historyRetention); const record = app.archive.worlds.at(-1);
+  if (!saveRunTransaction(app.meta,app.archive,app.settings.historyRetention))
+    ui.announce(app.el, 'Progress is temporary because browser storage is unavailable.');
+  const record = app.archive.worlds.at(-1);
   app.historyPlayback.save(record && { id: record.id, seed: record.seed, completedAt: app.meta.runs });
-  ui.showResult(app.el, transaction.score, { ...result, adaptationOffers: result.offers,
-    trophyIds: transaction.trophyIds, campaignResolvedNow: transaction.meta.runs === 4 });
+  ui.showResult(app.el, transaction.score, { ...result,
+    trophyIds: transaction.trophyIds, campaignResolvedNow: transaction.meta.runs === 5 });
   if (app.worldReplacement.status === 'awaiting-authority') return performWorldReplacement(app);
   app.selectScene('world');
   if (app.settings.autoContinue) {

@@ -77,7 +77,7 @@ test('hard ceiling enters a visible bounded collapse and emits one result', () =
 
 test('sampled automatic and manual worlds finish under the authority maximum', { timeout: 30_000 }, () => {
   for (let seed = 0; seed < 64; seed++) {
-    const { run, messages } = controller(80_000 + seed, { adaptationMode: seed % 5 ? 'random' : 'manual' });
+    const { run, messages } = controller(80_000 + seed);
     while (run.state.status !== 'extinct') run.advance(64);
     assert.ok(run.state.tick <= B.RUN_HARD_MAX_TICKS, `seed ${seed}`);
     assert.equal(run.state.aliveCount, 0);

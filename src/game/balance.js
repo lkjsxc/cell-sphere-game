@@ -21,12 +21,13 @@ export const BALANCE = Object.freeze({
   SNAPSHOT_EVERY: 2,         // visual snapshot period at 1x
 
   // --- entropy curve ---------------------------------------------------------
-  ENTROPY_RISE_START: 600,   // tick where global deterioration ramps (60 s)
-  ENTROPY_RISE_END: 3000,    // tick where entropy reaches 1.0 (300 s)
+  ENTROPY_RISE_START: 1200,  // scarcity pressure becomes visible after two minutes
+  ENTROPY_RISE_END: 3100,    // terminal scarcity reaches full pressure near five minutes
   ENTROPY_POWER: 1.35,       // curve shape: gentle open, steep close
 
   // --- environment -----------------------------------------------------------
-  NUTRIENT_REGEN: 0.012,     // per env step, scaled by (1-entropy)
+  NUTRIENT_REGEN: 0.018,     // reserve-to-available transfer per environment step
+  RESOURCE_RESERVE_SCALE: 1.10, // finite long-term stock relative to local fertility
   SEASON_AMPLITUDE: 0.16,    // moisture/temp seasonal swing
   SEASON_PERIOD_TICKS: 900,  // 90 game s per season cycle
   TOXIN_ACCUMULATION: 0.004, // per env step at entropy 1, scaled by toxVuln
@@ -34,8 +35,8 @@ export const BALANCE = Object.freeze({
 
   // --- metabolism ------------------------------------------------------------
   UPTAKE_RATE: 0.09,         // nutrient/biomass/tick at full suitability
-  CONVERSION: 1.0,           // nutrient -> energy conversion
-  MAINTENANCE_RATE: 0.009,   // energy/biomass/tick
+  CONVERSION: 1.65,          // nutrient -> energy conversion
+  MAINTENANCE_RATE: 0.0024,  // energy/biomass/tick
   MAINTENANCE_ENTROPY: 0.8,  // extra maintenance multiplier at entropy 1
   ENERGY_CAP: 6.0,           // per-node stored energy cap
   BIOMASS_MAX: 2.5,          // maturity cap per node
@@ -62,21 +63,15 @@ export const BALANCE = Object.freeze({
   NEW_BIOMASS: 0.3,          // biomass seeded into a new node
   CROWDING_PENALTY: 0.14,    // per alive neighbor beyond 2
 
-  // --- passive adaptation offers ----------------------------------------------
-  ADAPTATION_OFFER_TICKS: Object.freeze([450, 900, 1350, 1800, 2400]),
-  ADAPTATION_OPTIONS: 3,
-  ADAPTATION_QUEUE_CAP: 8,
-
   // --- scoring -----------------------------------------------------------------
   SCORE_WEIGHTS: Object.freeze({
-    survival: 0.24,
-    peakCoverage: 0.24,
+    survival: 0.22,
+    peakCoverage: 0.22,
     sustainedCoverage: 0.18,
     connectivity: 0.14,
-    efficiency: 0.12,
-    crisis: 0.08,
+    efficiency: 0.14,
+    stability: 0.10,
   }),
-  SCORE_SCALE: 1_000_000,
-  ECHO_BASE: 2,
-  ECHO_DIVISOR: 1500,
+  ECHO_BASE: 4,
+  ECHO_DIVISOR: 100,
 });

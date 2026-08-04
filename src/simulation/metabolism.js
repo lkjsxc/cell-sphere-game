@@ -32,28 +32,13 @@ export function runMetabolism(state) {
     const germinating = state.tick < 150;
     if (germinating && suit < 0.35) suit = 0.35;
 
-    // Adaptive membrane: accumulated exposure raises effective suitability.
-    if (traits.adaptiveMembrane) {
-      const m = state.membrane[i];
-      state.membrane[i] = Math.fround(Math.min(0.35, m + (1 - suit) * 0.0008));
-      suit = clamp01(suit + state.membrane[i]);
-    }
-
-    // Uptake: opportunistic strains exploit temporary blooms.
-    let rate = B.UPTAKE_RATE * state.biomass[i] * (0.15 + 0.85 * suit) * traits.uptake
+    // Uptake remains an innate ecology rule plus permanent Evolution effects.
+    const rate = B.UPTAKE_RATE * state.biomass[i] * (0.15 + 0.85 * suit) * traits.uptake
       * (fields.uptakeMultiplier?.[i] ?? 1);
-    if (traits.opportunisticUptake
-      && state.nutrient[i] > fields.baseNutrient[i] + 0.05) {
-      rate *= 1.5;
-    }
     const uptake = Math.min(state.nutrient[i], rate);
     state.nutrient[i] = Math.fround(state.nutrient[i] - uptake);
 
-    let gain = uptake * B.CONVERSION;
-    if (traits.toxinCatalysis && state.toxicity[i] > 0.05) {
-      gain += state.toxicity[i] * 0.012 * state.biomass[i];
-      state.toxicity[i] = Math.fround(Math.max(0, state.toxicity[i] - 0.006));
-    }
+    const gain = uptake * B.CONVERSION;
     state.energy[i] = Math.fround(Math.min(energyCap, state.energy[i] + gain));
 
     const maint = B.MAINTENANCE_RATE * state.biomass[i]
@@ -64,7 +49,7 @@ export function runMetabolism(state) {
     state.totalUptake += uptake;
     state.totalMaintenance += maint;
 
-    const resist = traits.stressResist * (1 + (traits.adaptiveMembrane ? state.membrane[i] : 0));
+    const resist = traits.stressResist;
     const gainRate = germinating ? B.STRESS_GAIN * 0.3 : B.STRESS_GAIN;
     const next = state.stress[i]
       + (gainRate * (1 - suit)) / resist

@@ -8,12 +8,18 @@ import { RESERVE_MEMORY } from './reserve.js';
 import { renderMemorySnapshot } from './scene.js';
 import { MEMORY_ATLAS_HASH } from './atlas.js';
 import { hashStringU32, hexU32 } from '../../core/hash.js';
-import { createTopology } from '../../world/icosphere.js';
+import { createGeodesicTopology } from '../../world/icosphere.js';
 export { createMemoryFields } from './scene.js';
 export { MEMORY_ATLAS_REVERSE } from './atlas.js';
 export { applyMemoryConditionals } from './node.js';
 
-export const MEMORY_GRAPH_VERSION = 4;
+export const MEMORY_GRAPH_VERSION = 5;
+export const WORLD_POTENTIAL_VERSION = 1;
+export const BASE_WORLD_POTENTIAL = 16000;
+export const HABITAT_CAPABILITIES = Object.freeze([
+  'LAKE_ACCESS', 'TUNDRA_ACCESS', 'SNOW_ICE_ACCESS',
+  'SHALLOW_OCEAN_EDGE_ACCESS', 'SHALLOW_OCEAN_ACCESS', 'DEEP_OCEAN_ACCESS',
+]);
 export const MEMORY_BRANCHES = Object.freeze(['Reach', 'Flow', 'Reserve', 'Ecology', 'Perception', 'Continuity']);
 export const MEMORY_NODES = Object.freeze([
   ...REACH_MEMORY, ...FLOW_MEMORY, ...RESERVE_MEMORY,
@@ -23,7 +29,7 @@ export const MEMORY_NODE_IDS = Object.freeze(MEMORY_NODES.map((node) => node.id)
 export const MEMORY_LANDMARK_IDS = Object.freeze(MEMORY_NODES.filter((node) => node.authored).map((node) => node.id));
 export const MEMORY_ROOT_IDS = Object.freeze(MEMORY_BRANCHES.map((branch) => MEMORY_NODES.find((node) => node.branch === branch).id));
 const ROOT_IDS = new Set(MEMORY_ROOT_IDS); const BY_ID = new Map(MEMORY_NODES.map((node) => [node.id, node]));
-const TOPOLOGY = createTopology(3); const BY_CELL = new Map(MEMORY_NODES.map((node) => [node.cell, node]));
+const TOPOLOGY = createGeodesicTopology(5); const BY_CELL = new Map(MEMORY_NODES.map((node) => [node.cell, node]));
 export const MEMORY_CELL_BY_ID = Object.freeze(Object.fromEntries(MEMORY_NODES.map((node) => [node.id, node.cell])));
 export const MEMORY_PHYSICAL_ADJACENCY = Object.freeze(Object.fromEntries(MEMORY_NODES.map((node) => [node.id,
   Object.freeze(Array.from(TOPOLOGY.nodeNeighbors.slice(TOPOLOGY.nodeStart[node.cell], TOPOLOGY.nodeStart[node.cell + 1]),
@@ -37,6 +43,13 @@ const COMPILED = new Map();
 
 export function getMemoryNode(id) { return BY_ID.get(id) ?? null; }
 export function getMemoryAdjacentIds(id) { return MEMORY_PHYSICAL_ADJACENCY[id] ?? Object.freeze([]); }
+export function newlyAvailableAdjacentIds(meta, id) {
+  const owned = recognizedOwnedIds(meta); const baseline = owned.has(id)
+    ? { ...meta, memoryNodes: (meta?.memoryNodes ?? []).filter((ownedId) => ownedId !== id) } : meta;
+  return Object.freeze(getMemoryAdjacentIds(id).filter((neighborId) => {
+    const state = memoryNodeState(baseline, BY_ID.get(neighborId)); return state && !state.owned && !state.reachable;
+  }));
+}
 function recognizedOwnedIds(meta) {
   return new Set(Array.isArray(meta?.memoryNodes) ? meta.memoryNodes.filter((id) => BY_ID.has(id)) : []);
 }
@@ -84,7 +97,7 @@ export function purchaseMemory(meta, id) {
   const node = BY_ID.get(id); const balance = meta.echoBalance - node.cost;
   if (balance < 0) return Object.freeze({ ok: false, meta });
   const next = { ...meta, echoBalance: balance, memoryNodes: [...meta.memoryNodes, id] };
-  return Object.freeze({ ok: true, node, spent: node.cost, meta: next });
+  return Object.freeze({ ok: true, node, spent: node.cost, preview: memoryPurchasePreview(meta, id), meta: next });
 }
 export const transactMemoryPurchase = purchaseMemory;
 
@@ -92,24 +105,64 @@ export const transactMemoryPurchase = purchaseMemory;
 export function compileMemory(meta) {
   const owned = recognizedOwnedIds(meta); const key = MEMORY_NODE_IDS.filter((id) => owned.has(id)).join('|');
   if (COMPILED.has(key)) return COMPILED.get(key);
-  const effects = {}; const conditionals = []; const unlocks = [];
+  const effects = {}; const conditionals = []; const unlocks = []; const resonance = new Map();
+  let worldPotential = BASE_WORLD_POTENTIAL;
   for (const node of MEMORY_NODES) {
     if (!owned.has(node.id)) continue; const effect = node.effect;
+    worldPotential += node.potentialGain;
     if (effect.type === 'scalar') mergeEffect(effects, effect);
     else if (effect.type === 'conditional') conditionals.push(Object.freeze({ nodeId: node.id, ...effect }));
-    else unlocks.push(Object.freeze({ nodeId: node.id, key: effect.key, mode: effect.mode }));
+    else if (effect.type === 'resonance') {
+      const resonanceKey = `${effect.branch}:${effect.key}:${effect.direction}:${effect.cap}:${effect.scale}`;
+      resonance.set(resonanceKey, { ...effect, points: (resonance.get(resonanceKey)?.points ?? 0) + 1 });
+    } else unlocks.push(Object.freeze({ nodeId: node.id, key: effect.key, mode: effect.mode }));
     if (effect.bonus) mergeEffect(effects, effect.bonus);
   }
+  const resonanceCurves = [];
+  for (const curve of resonance.values()) {
+    const benefit = curve.cap * (1 - Math.exp(-curve.points / curve.scale));
+    const value = curve.direction === 'down' ? 1 - benefit : 1 + benefit;
+    mergeEffect(effects, { key: curve.key, value, operation: 'multiply' });
+    resonanceCurves.push(Object.freeze({ ...curve, value }));
+  }
+  boundCompiledEffects(effects);
+  const capabilitySet = new Set(unlocks.filter((entry) => entry.mode === 'habitat').map((entry) => entry.key));
   const compiled = Object.freeze({ effects: Object.freeze(effects),
-    conditionals: Object.freeze(conditionals), unlocks: Object.freeze(unlocks) });
+    conditionals: Object.freeze(conditionals), unlocks: Object.freeze(unlocks),
+    resonanceCurves: Object.freeze(resonanceCurves), worldPotential,
+    potentialVersion: WORLD_POTENTIAL_VERSION,
+    habitatCapabilities: Object.freeze(HABITAT_CAPABILITIES.filter((keyName) => capabilitySet.has(keyName))) });
   COMPILED.set(key, compiled); return compiled;
+}
+
+export function worldPotential(meta) { return compileMemory(meta).worldPotential; }
+export function memoryPurchasePreview(meta, id) {
+  const node = BY_ID.get(id); if (!node) return null; const owned = recognizedOwnedIds(meta).has(id);
+  const without = owned ? { ...meta, memoryNodes: (meta?.memoryNodes ?? []).filter((ownedId) => ownedId !== id) } : meta;
+  const withNode = owned ? meta : { ...meta, memoryNodes: [...(meta?.memoryNodes ?? []), id] };
+  const before = compileMemory(without);
+  const after = compileMemory(withNode);
+  const keys = new Set([...Object.keys(before.effects), ...Object.keys(after.effects)]);
+  const changes = [...keys].filter((keyName) => (before.effects[keyName] ?? 1) !== (after.effects[keyName] ?? 1))
+    .map((keyName) => Object.freeze({ key: keyName, before: before.effects[keyName] ?? 1, after: after.effects[keyName] ?? 1 }));
+  const unlocked = after.unlocks.filter((entry) => !before.unlocks.some((old) => old.key === entry.key));
+  return Object.freeze({ nodeId: id, potentialBefore: before.worldPotential, potentialAfter: after.worldPotential,
+    potentialGain: after.worldPotential - before.worldPotential, changes: Object.freeze(changes), unlocked: Object.freeze(unlocked) });
 }
 function mergeEffect(target, effect) {
   if (effect.operation === 'add' || ADDITIVE.has(effect.key)) target[effect.key] = (target[effect.key] ?? 0) + effect.value;
   else target[effect.key] = (target[effect.key] ?? 1) * effect.value;
 }
+const EFFECT_CAPS = Object.freeze({ reach:.9, uptake:.9, maintenance:.5, conductance:1, reinforce:.8,
+  stressResist:.9, heatTol:.5, droughtTol:.5, toxinTol:.5, energyCap:.9, regrow:.9, growCost:.35 });
+function boundCompiledEffects(effects) {
+  for (const [key, cap] of Object.entries(EFFECT_CAPS)) if (key in effects) {
+    const raw = effects[key]; const delta = Math.abs(raw - 1);
+    effects[key] = raw < 1 ? 1 - cap * (1 - Math.exp(-delta / cap)) : 1 + cap * (1 - Math.exp(-delta / cap));
+  }
+}
 export function memoryEffects(meta) { return compileMemory(meta).effects; }
-export function campaignResolved(meta) { return Number.isFinite(meta?.runs) && meta.runs >= 4; }
+export function campaignResolved(meta) { return Number.isFinite(meta?.runs) && meta.runs >= 5; }
 export function buildMemoryScene(meta, selectedId = null) {
   const groups = groupAccessibleMemory(meta, selectedId); const nodes = Object.freeze(groups.flatMap((group) => group.nodes));
   return Object.freeze({ version: MEMORY_GRAPH_VERSION, selectedId, nodes, groups });
@@ -127,21 +180,23 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
     else { cells.add(node.cell); byCell.set(node.cell, node); }
     if (MEMORY_CELL_BY_ID[node.id] !== undefined && MEMORY_CELL_BY_ID[node.id] !== node.cell) errors.push(`unstable cell: ${node.id}`);
     if (!Number.isFinite(node.cost) || node.cost <= 0) errors.push(`invalid cost: ${node.id}`); else totalCost += node.cost;
+    if (!Number.isFinite(node.potentialGain) || node.potentialGain <= 0) errors.push(`invalid potential: ${node.id}`);
     composition[node.kind] = (composition[node.kind] ?? 0) + 1; branchCounts[node.branch] = (branchCounts[node.branch] ?? 0) + 1;
     const effects = node.effect?.bonus ? [node.effect, node.effect.bonus] : [node.effect];
     for (const effect of effects) {
-      if (!effect || !['scalar', 'conditional', 'unlock'].includes(effect.type)) { errors.push(`invalid effect: ${node.id}`); continue; }
-      if ((effect.type === 'scalar' || effect.type === 'conditional') && !EFFECT_KEYS.has(effect.key)) errors.push(`unknown effect: ${node.id}`);
-      if (!['multiply', 'add'].includes(effect.operation) && effect.type !== 'unlock') errors.push(`invalid operation: ${node.id}`);
+      if (!effect || !['scalar', 'conditional', 'unlock', 'resonance'].includes(effect.type)) { errors.push(`invalid effect: ${node.id}`); continue; }
+      if (['scalar', 'conditional', 'resonance'].includes(effect.type) && !EFFECT_KEYS.has(effect.key)) errors.push(`unknown effect: ${node.id}`);
+      if (!['multiply', 'add'].includes(effect.operation) && !['unlock', 'resonance'].includes(effect.type)) errors.push(`invalid operation: ${node.id}`);
       if (effect.type === 'conditional' && !effect.trigger) errors.push(`invalid trigger: ${node.id}`);
+      if (effect.type === 'resonance' && (!Number.isFinite(effect.cap) || effect.cap <= 0 || effect.cap > 0.5)) errors.push(`invalid resonance: ${node.id}`);
       if (effect.type === 'unlock' && (!effect.key || !effect.mode || unlockKeys.has(effect.key))) errors.push(`invalid unlock: ${node.id}`);
       if (effect.type === 'unlock') unlockKeys.add(effect.key);
     }
   }
-  const expectedKinds = { micro: 582, conditional: 24, unlock: 18, keystone: 6, connector: 6, capstone: 6 };
-  if (nodes.length !== 642) errors.push(`node count: ${nodes.length}`);
+  const expectedKinds = { root: 6, major: 30, resonance: 180, conditional: 12, unlock: 12, keystone: 6, capstone: 6 };
+  if (nodes.length !== 252) errors.push(`node count: ${nodes.length}`);
   for (const [kind, count] of Object.entries(expectedKinds)) if (composition[kind] !== count) errors.push(`kind count: ${kind}`);
-  for (const branch of MEMORY_BRANCHES) if (branchCounts[branch] !== 107) errors.push(`branch count: ${branch}`);
+  for (const branch of MEMORY_BRANCHES) if (branchCounts[branch] !== 42) errors.push(`branch count: ${branch}`);
   const adjacency = new Map(); let frontierStates = 0;
   for (const node of nodes) {
     const neighbors = [];
@@ -164,7 +219,9 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
   return Object.freeze({ valid: errors.length === 0, errors: Object.freeze(errors), totalCost,
     economyHash, effectHash, composition: Object.freeze(composition), branchCounts: Object.freeze(branchCounts),
     roots: Object.freeze(roots), reachable: reachable.size, physicalRelations: frontierStates / 2, frontierStates,
-    minDegree: Math.min(...degrees), maxDegree: Math.max(...degrees), topologyLevel: TOPOLOGY.levels, mappingHash: MEMORY_ATLAS_HASH });
+    minDegree: Math.min(...degrees), maxDegree: Math.max(...degrees), topologyFrequency: TOPOLOGY.frequency,
+    worldPotential: compileMemory({ memoryNodes: nodes.map((node) => node.id) }).worldPotential,
+    mappingHash: MEMORY_ATLAS_HASH });
 }
 function connectedCells(topo, root, allowed) {
   const seen = new Set([root]); const queue = [root];

@@ -1,87 +1,100 @@
 # Testing and evidence
 
-`npm run verify` runs structure, canonical identity and cell-visual source audits,
-unit, integration, the 500-seed lake audit, balance smoke, benchmark, showcase,
-and deployment-path/link gates. `npm run test:browser:file` uses real headless
-Chrome/WebGL2 through a CDP pipe when local HTTP sockets are sandbox-blocked.
-`npm run test:browser:canvas` starts the same browser with WebGL disabled and
-verifies the Canvas 2D path. The same-origin harness exits 77 rather than
-reporting a false pass when Chrome cannot connect.
+## Fast authoritative gate
 
-## Automated contracts
+```bash
+npm run verify
+```
 
-Unit coverage includes topology/dual manifold, deterministic WorldModel hash,
-land bounds, climate/biomes/forest coherence, private drainage fields, connected
-and separated whole-cell lake IDs, frozen lake/shore/wetland records, bounded
-lake ecology, landmarks/sources, generation budget, renderer geometry and uniforms, tap/camera math, settings/pause/rotation, independent full/reduced-motion time-dial hands, monotonic speed scaling, minute-wrap continuity, and pause freezing, simulation queue/RNG,
-pure inspection, History cap, the 642-node graph-4/schema-8 migration/economy,
-and the 96-criterion Trophy catalog/topology/rich-condition boundaries. Identity
-coverage verifies fresh canonical saves; exact legacy schema-8 Echoes, scores,
-runs, seed cursor, 642 ownership, Imprints, current/Legacy Trophies, queue/proof,
-result keys, Settings, and History; canonical coexistence priority; field-level
-corruption; safe malformed recovery; partial/exception/repeated migration;
-transactional import rollback; canonical export; and nonblocking visual-History
-unavailable/corrupt/duplicate/retention behavior. Evolution tests
-cover exactly six empty-save roots, run-zero acquisition, each of 3,840 directed
-physical frontiers, nonadjacent rejection, one-neighbor sufficiency, repeat and
-insufficient-fund transactions, preserved disconnected islands, and a legal
-642-cell purchase sequence spending exactly 2,462 Echoes.
+`verify` runs structure and identity checks; whole-cell visual audit; active
+system removal audit; Skill, event, habitat, Trophy, and campaign-smoke audits;
+title artifact check; unit and integration suites; 500-world lake audit; balance
+smoke; benchmark; and link checks.
 
-Integration coverage includes seed/chunk/speed invariance, zero-input Random
-completion, exact manual resolution ticks, stream isolation, replay schema,
-conditional skills, concrete effects for all 642 Skill Cell purchases, no
-current experience/layout-parent authority or copy, strict
-visual-History codec bounds/malformed input, primary-cell migration, stale load
-guards, and an observed run matching a quiet run in hash, score, extinction,
-decisions, semantic History, Imprint, and bounded lake proof. Trophy integration
-proves schema-5 load grants nothing, schema-7 river ownership becomes separate
-Legacy ownership, facts-v1 bit 2 never becomes lake proof, all other old IDs are
-grandfathered, facts-v3 and schema-8 imports are idempotent, result/skill/History
-recognition is exactly once, queues survive progression transactions, and
-abandonment is reward-free. Fake-clock tests cover 2.7 s toast, 3.75 s
-Adaptation, 4.2 s Trophy FIFO order, duplicate suppression, stale-generation
-no-op, hover/focus holds, reduced motion, and selected-route acknowledgement. A 100-world simulation/result soak checks automatic
-result transitions, duplicate-award rejection, hidden countdown pause ownership,
-unresolved Manual offers, persistence caps, and heap bounds. A separate 100-cycle
-production-coordinator soak checks first-wins races, unique seeds/authorities/
-identities, one typed blank frame per cycle, and complete current-world teardown.
+## Required release matrix
 
-## Real Chrome scenario
+```bash
+npm run test:unit
+npm run test:integration
+npm run balance:smoke
+npm run benchmark
+npm run check:links
+npm run check:structure
+npm run verify
+npm run test:browser:file
+npm run test:browser:canvas
+npm run balance
+npm run audit:cell-visuals
+npm run audit:lakes
+npm run audit:events
+npm run audit:habitats
+npm run audit:skills
+npm run audit:trophies
+npm run audit:adaptations
+npm run audit:campaign
+npm run terminal:soak
+```
 
-The disposable-profile file/CDP scenario first seeds all three old localStorage
-namespaces and an old-product semantic export, reloads, proves exact canonical
-adoption and source retention, changes the old copy, reloads to prove canonical
-coexistence priority/no duplicate reward, then starts the ordinary scenario from
-a fresh canonical save. It uses trusted pointer and keyboard input for scene,
-surface, gesture, confirmation, Result, and purchase semantics. It
-checks one stable Home/World/Evolution/Trophies tablist, exact World camera return
-while authority advances off-scene, both clock hands moving independently and
-accelerating from 1× to 32× in full and reduced motion, four renderer draws,
-and one shell rectangle
-across SCORE/ENTROPY/REACH and many snapshots. Globe drag retains metric scroll,
-Result, History, and Event Log. Blank/cell tap policy, Inspector focus, the exact
-zero-life terminal snapshot/HUD, Result close/reopen, disabled completed-world
-time controls, Menu grouping and reward-free New World confirmation, bounded
-Event Log rows, and History preview/live restoration are exercised.
+A skipped test is not reported as a pass. Physical-device claims require a real
+physical device; the current release evidence is desktop Chrome emulation and is
+labeled accordingly.
 
-The responsive matrix covers 320×568, 390×844, 430×932, 768×1024, 844×390,
-and 1440×900 with no horizontal overflow or event/dock overlap. It also emulates
-200% text, long selector labels, reduced motion, and authored high contrast.
-Mobile Adaptations is bounded to 36dvh with three 44px choices, a 44px disclosure,
-and a visible current-event control. The run completes at 32×, purchases one
-physically adjacent Skill Cell, verifies two sequential persisted Trophy names
-and badge, a static reduced-motion reveal, Result names, survival through the
-automatic replacement coordinator, and click routing to Trophy detail. It visits
-all 642 Evolution and 96 Trophy records, lets a genuinely untouched countdown
-expire, intercepts that next world's zero-life first frame, then forces WebGL
-context loss and proves a replaced canvas continues in Canvas 2D with rebound
-input. Dedicated forced-Canvas evidence completes a run and repeats the terminal
-snapshot, History, Evolution, Trophies, and atomic replacement.
+## What the suites prove
 
-## Honest limitations
+### Unit
 
-The CDP file path is real Chrome/WebGL2 but bypasses same-origin HTTP security
-to accommodate this container. Physical Android, thermal, screen-reader,
-Japanese localization, browser zoom, forced-colors review, browser heap trend,
-actual GPU frame timing, and unrestricted public-URL visual observation remain
-unmeasured unless status records newer specific evidence.
+- arbitrary-frequency geodesic topology and exact 252-cell Evolution counts;
+- finite resource authority, extinction causes, and habitat lock ordering;
+- SCORE v2 bounds, axes, Echo curve, and legacy separation;
+- event-era scheduling and no-event worlds 1–2;
+- settings, storage, History, migration, rendering, and UI state machines.
+
+### Integration
+
+- same-seed exact authority across 1×/2×/4×/8×/16×/32×;
+- Worker/fallback protocol equivalence and command acknowledgement;
+- replacement/abandonment/result exactly-once transactions;
+- all 252 Skills legally purchasable by physical adjacency;
+- 642-entry migration coverage, ownership/value preservation, refund and
+  idempotence;
+- 96 current Trophy criteria and legacy Trophy isolation.
+
+### Browser
+
+`test:browser:file` uses Chrome DevTools Protocol with real pointer and keyboard
+input. It verifies WebGL2 four-draw rendering, scene selection, stable details,
+metric affordances, responsive layouts, camera preservation, History, Result,
+Skill purchase, Trophy queueing, atomic replacement, unattended continuation,
+context-loss fallback, fresh/migrated saves, and browser errors.
+
+`test:browser:canvas` forces Canvas 2D and verifies terminal authority, History,
+252-cell Evolution, 96-cell Trophy state, and atomic replacement.
+
+### Balance and audits
+
+- `balance`: fresh policy distributions.
+- `audit:campaign`: at least 200 fresh seeds, seven campaign policies, and
+  fresh/quarter/half/full Evolution checkpoints using production modules.
+- `audit:skills`: topology, 17,820-Echo economy, before/after effects, World
+  Potential, and migration hashes.
+- `audit:events`: deterministic graph fields and world-era ramp.
+- `audit:habitats`: fresh locks, each unlock path, whole-cell occupancy, and
+  marine bounds.
+- `audit:trophies`: 24 fresh worlds, 240-world campaign, uniqueness,
+  possibility, pacing, migration, and one-time rewards.
+- `terminal:soak`: repeated terminal/replacement lifecycle and bounded resources.
+
+Machine-readable evidence is written to ignored `reports/`. Release docs must
+state whether a number is implemented, tested, measured, observed, modeled, or
+deployed.
+
+## Deployment verification
+
+After push:
+
+1. record the exact local and remote commit;
+2. wait for CI and Pages workflow success;
+3. fetch the public page with cache bypass;
+4. verify canonical title/tagline and a revision-specific changed module;
+5. compare public bytes with local bytes;
+6. rerun a real-browser smoke against the deployed revision when practical.

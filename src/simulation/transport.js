@@ -3,8 +3,8 @@
  * then conductance reinforcement, decay, pruning, and reconnection.
  *
  * This is a stylized local transport model, not a biological claim: useful
- * flux thickens veins, idle veins decay, and (with adaptations) severed
- * routes can regrow between living tissue.
+ * flux thickens veins, idle veins decay, and evolved severed routes can
+ * regrow between living tissue.
  */
 import { BALANCE as B } from '../game/balance.js';
 import { clamp } from '../core/math.js';
@@ -22,9 +22,7 @@ export function runTransport(state) {
   nextEnergy.set(energy);
 
   const k = B.TRANSPORT_K * traits.conductance;
-  // Pulsed transport: alternating surge/quiet phases reinforce harder.
-  const pulse = traits.pulsedTransport ? ((state.tick % 50) < 12 ? 1.7 : 0.85) : 1;
-  const regrow = traits.anastomosis + traits.migratoryCore + Math.max(0, traits.regrow - 1) * 10;
+  const regrow = traits.anastomosis + Math.max(0, traits.regrow - 1) * 10;
 
   for (let e = 0; e < edgeCount; e++) {
     if (edgeActive[e] !== 1) {
@@ -45,7 +43,7 @@ export function runTransport(state) {
     const a = edgeA[e];
     const b = edgeB[e];
     const terrainFlow = 2 / ((fields.routeCost?.[a] ?? 1) + (fields.routeCost?.[b] ?? 1));
-    const f = conductance[e] * (pressure[a] - pressure[b]) * k * pulse * terrainFlow;
+    const f = conductance[e] * (pressure[a] - pressure[b]) * k * terrainFlow;
     flux[e] = Math.fround(f);
     nextEnergy[a] -= f;
     nextEnergy[b] += f;

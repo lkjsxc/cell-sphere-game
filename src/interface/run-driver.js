@@ -1,13 +1,12 @@
 /** Session/run/generation-aware Worker-first deterministic simulation adapter. */
 import { BALANCE as B } from '../game/balance.js';
 import { RunController } from '../simulation/simulator.js';
-import { RUN_PROTOCOL_VERSION, runCommand } from '../core/run-protocol.js';
+import { RUN_PROTOCOL_VERSION } from '../core/run-protocol.js';
 import { createWorldIdentity, identityFields, sameWorldIdentity } from '../core/world-session.js';
-import { executeAdaptationMode, executeAdaptationSelection } from '../simulation/protocol/adaptation-command.js';
 
 export function createRunDriver(caps, onMessage) {
   let worker = null; let fallback = null; let generation = 0; let transportGeneration = 0;
-  let runSequence = 0; let presentationSequence = 0; let commandSequence = 0;
+  let runSequence = 0; let presentationSequence = 0;
   let activeIdentity = null; let speed = 1; let paused = false; let debt = 0;
   let lastSnapshot = null; let cfg = null; let authorityStarted = false;
   let settled = null; let abortPending = false; let lastWorkerMessageAt = 0; let statusRequestedAt = 0;
@@ -42,7 +41,7 @@ export function createRunDriver(caps, onMessage) {
   function start(config, initialSpeed, identity = null) {
     const session = identity ?? reserveIdentity({ seed: config.seed });
     if (!sameWorldIdentity(session, activeIdentity)) throw new Error('world identity was not reserved');
-    commandSequence = 0; cfg = { ...config, ...identityFields(session) }; speed = initialSpeed;
+    cfg = { ...config, ...identityFields(session) }; speed = initialSpeed;
     paused = false; debt = 0; lastSnapshot = null; settled = null; abortPending = false; authorityStarted = false;
     lastWorkerMessageAt = now(); statusRequestedAt = 0; const token = generation;
     if (caps.worker) try {
@@ -86,12 +85,10 @@ export function createRunDriver(caps, onMessage) {
   function message(value) {
     const session = activeIdentity; if (!session || !accepts({ ...identityFields(session), ...value }, session)) return false;
     if (settled && !['history-buffer', 'history-preview', 'inspect-cell'].includes(value.t)) return false;
-    const envelope = { ...value, ...identityFields(session) };
+    const envelope = { protocolVersion:RUN_PROTOCOL_VERSION,...value, ...identityFields(session) };
     if (worker) worker.postMessage(envelope);
     else if (fallback) try {
-      if (value.t === 'choose-adaptation') { const rejected = executeAdaptationSelection(fallback, envelope, session.runId); if (rejected) emit(rejected, session); }
-      else if (value.t === 'set-adaptation-mode') { const rejected = executeAdaptationMode(fallback, envelope, session.runId); if (rejected) emit(rejected, session); }
-      else if (value.t === 'inspect-cell') emit({ t: 'cell-inspection', runId: session.runId, requestId: value.requestId, cell: fallback.inspectCell(value.node) }, session);
+      if (value.t === 'inspect-cell') emit({ t: 'cell-inspection', runId: session.runId, requestId: value.requestId, cell: fallback.inspectCell(value.node) }, session);
       else if (value.t === 'snapshot-now') emit({ t: 'snapshot', runId: session.runId, ...fallback.snapshot() }, session);
       else if (value.t === 'history-preview') { const frame = fallback.historyPreview(value.tick); emit({ t: 'history-preview', runId: session.runId,
         requestId: value.requestId, tick: frame.tick, entropyQ: frame.entropyQ, flags: frame.flags,
@@ -102,26 +99,15 @@ export function createRunDriver(caps, onMessage) {
     return true;
   }
 
-  function sendCommand(type, payload) {
-    const session = activeIdentity; if (!session || settled) return null;
-    const token = generation; const commandId = ++commandSequence;
-    const command = { ...runCommand(type, session.runId, commandId, payload), ...identityFields(session) };
-    if (worker) message(command); else queueMicrotask(() => {
-      if (token === generation && sameWorldIdentity(session, activeIdentity)) message(command);
-    });
-    return Object.freeze({ protocolVersion: RUN_PROTOCOL_VERSION, ...identityFields(session), commandId });
-  }
-  const chooseAdaptation = (offer, cardId) => sendCommand('choose-adaptation', { offerId: offer.id, offerVersion: offer.offerVersion, cardId });
-  const setAdaptationMode = (mode) => sendCommand('set-adaptation-mode', { mode });
   function abort(expected = activeIdentity) {
     if (!sameWorldIdentity(expected, activeIdentity) || settled || abortPending) return false; abortPending = true;
-    if (worker) { worker.postMessage({ t: 'abort', ...identityFields(activeIdentity) }); return true; }
+    if (worker) { worker.postMessage({ t: 'abort',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity) }); return true; }
     if (!fallback) { abortPending = false; return false; }
     const accepted = fallback.abort(); if (!accepted && sameWorldIdentity(expected, activeIdentity)) abortPending = false; return accepted;
   }
   function frame(dt, time) {
     if (worker && !paused && !settled) { const silent = time - lastWorkerMessageAt;
-      if (silent > 2500 && !statusRequestedAt) { statusRequestedAt = time; worker.postMessage({ t: 'status', ...identityFields(activeIdentity) }); }
+      if (silent > 2500 && !statusRequestedAt) { statusRequestedAt = time; worker.postMessage({ t: 'status',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity) }); }
       else if (silent > 5000 || (statusRequestedAt && time - statusRequestedAt > 2000)) failWorker('World time stopped responding.'); }
     if (!fallback || paused || !['running', 'terminal-collapse'].includes(fallback.state.status)) return;
     debt += (dt / 1000) * speed * B.TICKS_PER_SECOND; const ticks = Math.floor(debt); debt -= ticks; if (ticks) fallback.advance(ticks);
@@ -131,13 +117,13 @@ export function createRunDriver(caps, onMessage) {
   }
   let lastSnapshotTime = 0;
   function ready(expected = activeIdentity) { if (!worker || settled || !sameWorldIdentity(expected, activeIdentity)) return false;
-    authorityStarted = true; worker.postMessage({ t: 'speed', ...identityFields(activeIdentity), value: speed });
-    worker.postMessage({ t: 'start', ...identityFields(activeIdentity) }); return true; }
-  function setSpeed(value) { speed = value; if (worker && activeIdentity) worker.postMessage({ t: 'speed', ...identityFields(activeIdentity), value }); }
-  function setPaused(value) { paused = value; if (worker && activeIdentity) worker.postMessage({ t: value ? 'pause' : 'resume', ...identityFields(activeIdentity) }); }
-  function stop() { generation++; commandSequence++; retireWorker(); fallback = null; cfg = null;
+    authorityStarted = true; worker.postMessage({ t: 'speed',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity), value: speed });
+    worker.postMessage({ t: 'start',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity) }); return true; }
+  function setSpeed(value) { speed = value; if (worker && activeIdentity) worker.postMessage({ t: 'speed',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity), value }); }
+  function setPaused(value) { paused = value; if (worker && activeIdentity) worker.postMessage({ t: value ? 'pause' : 'resume',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity) }); }
+  function stop() { generation++; retireWorker(); fallback = null; cfg = null;
     lastSnapshot = null; activeIdentity = null; authorityStarted = false; settled = null; abortPending = false; debt = 0; statusRequestedAt = 0; }
-  return { reserveIdentity, start, stop, abort, ready, message, chooseAdaptation, setAdaptationMode, frame, setSpeed, setPaused,
+  return { reserveIdentity, start, stop, abort, ready, message, frame, setSpeed, setPaused,
     installSnapshot(value) { lastSnapshot = value; }, get snapshot() { return lastSnapshot; },
     get hasFallback() { return Boolean(fallback); }, get generation() { return generation; },
     get identity() { return activeIdentity; }, get runId() { return activeIdentity?.runId ?? 0; }, get outcome() { return settled; } };

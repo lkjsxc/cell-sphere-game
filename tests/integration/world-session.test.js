@@ -9,20 +9,20 @@ import { createWorldReplacementState, markWorldStarted, requestWorldReplacement 
 function node() { return { textContent: '', hidden: false, disabled: false, dataset: {}, classList: { toggle() {}, remove() {} },
   setAttribute() {}, replaceChildren() {} }; }
 function elements() { const value = {}; for (const name of ['title','run','memory','trophies','countdown','event','live',
-  'resultRank','resultScore','resultCause','echoes','resultTrophies','resultImprint','resultAdaptations','resultFirstCycle','breakdown','score',
-  'pressure','reach','trace','adaptationBadge','adaptationButton','adaptationModeLabel','resultControl','pause','speed',
+  'resultRank','resultScore','resultCause','echoes','resultTrophies','resultImprint','resultFirstCycle','breakdown','score',
+  'pressure','reach','trace','resultControl','pause','speed',
   'eventTime','eventButton']) value[name] = node();
-  value.adaptationButton.dataset.mode = 'random'; return value; }
+  return value; }
 function harness() {
   const counts = new Map(); const hit = (name) => counts.set(name, (counts.get(name) ?? 0) + 1); let runId = 0;
   const renderer = { backend: 'test', lastFrameAudit: null, bindWorldSession() { hit('bind'); }, resetDynamicState() { hit('renderer-reset'); },
     render(scene) { hit('render'); const snap = scene.snapshot; this.lastFrameAudit = { lifeCells: snap.alive.reduce((a,b)=>a+b,0),
-      eventCells: snap.eventStrength.reduce((a,b)=>a+(b>0),0), highlights: scene.highlightedCells.length, adaptation: Boolean(scene.adaptation) }; return true; } };
-  const app = { phase: 'idle', scene: 'home', meta: defaultMeta(), settings: { adaptationMode: 'random', historyRetention: 24 }, speed: 32,
+      eventCells: snap.eventStrength.reduce((a,b)=>a+(b>0),0), highlights: scene.highlightedCells.length }; return true; } };
+  const app = { phase: 'idle', scene: 'home', meta: defaultMeta(), settings: { historyRetention: 24 }, speed: 32,
     el: elements(), topo4: { nodeCount: 32 }, worldIdentity: null, retiredWorldIdentity: null, activeRunId: 0,
     worldSessionSequence: 0, presentationGeneration: 0, worldReplacement: createWorldReplacementState(),
     requestId: 0, requestGeneration: 0, continuation: createContinuation(), countdownLabel: '', renderer,
-    presentationAudit: { blankFrames: 0, lastBlank: null }, offers: [{ id: 1 }], cards: ['x'], currentHistory: [{ seq: 1 }],
+    presentationAudit: { blankFrames: 0, lastBlank: null }, currentHistory: [{ seq: 1 }],
     lastResult: { old: true }, lastResultIdentity: null, historySnapshot: { old: true }, historyHighlights: [4],
     snapshot: { old: true }, worldFields: { old: true }, fields: { old: true }, selectedNode: 4, overlay: 'history',
     lastInspect: 9, lastRender: 9,
@@ -31,9 +31,9 @@ function harness() {
       reserveIdentity(value) { const identity = createWorldIdentity({ ...value, runId: ++runId }); this.identity = identity; return identity; },
       start(config, speed, identity) { this.starts.push({ config, speed, identity }); return identity.runId; } },
     flow: { send(event) { hit(`flow-${event}`); app.phase = 'starting'; }, select(scene) { app.scene = scene; } }, sceneSelector: { update() {} }, pause: { clear() { hit('pause-clear'); } },
-    adaptationEffects: { clear() { hit('effects-clear'); } }, historyPlayback: { retire() { hit('history-retire'); } },
+    historyPlayback: { retire() { hit('history-retire'); } },
     surfaces: { reset() { hit('surfaces-reset'); } }, inspector: { close() { hit('inspector-close'); } },
-    historyUi: { reset() { hit('history-reset'); } }, metricUi: { reset() { hit('metric-reset'); } }, eventLogUi: { reset() { hit('event-log-reset'); } }, adapt: { reset() { hit('adapt-reset'); } },
+    historyUi: { reset() { hit('history-reset'); } }, metricUi: { reset() { hit('metric-reset'); } }, eventLogUi: { reset() { hit('event-log-reset'); } },
     newWorld: { close() { hit('new-world-close'); } }, settingsUi: { close() { hit('settings-close'); } },
     memoryUi: { closeNode() { hit('memory-close'); } }, trophyUi: { close() { hit('trophy-close'); } },
     timeDial: { reset() { hit('time-reset'); } }, makeRenderer() { hit('make-renderer'); this.renderer = renderer; }, updateSceneActions() {}, resize() { hit('resize'); },
@@ -48,12 +48,12 @@ test('replacement teardown clears every current-world field before one static bl
   }
   assert.equal(app.worldReplacement.status, 'starting'); assert.equal(app.driver.starts.length, 1);
   assert.equal(app.meta.worldSeedIndex, 1); assert.equal(app.presentationAudit.blankFrames, 1);
-  assert.deepEqual(app.renderer.lastFrameAudit, { lifeCells: 0, eventCells: 0, highlights: 0, adaptation: false });
+  assert.deepEqual(app.renderer.lastFrameAudit, { lifeCells: 0, eventCells: 0, highlights: 0 });
   assert.equal(sameWorldIdentity(app.snapshot, app.worldIdentity), true); assert.equal(app.snapshot.status, 'starting');
   assert.equal(counts.get('renderer-reset'), 2, 'old and new renderer dynamic state');
-  for (const name of ['driver-stop','pause-clear','effects-clear','history-retire','surfaces-reset','inspector-close',
-    'history-reset','metric-reset','event-log-reset','adapt-reset','new-world-close','settings-close','memory-close','trophy-close','time-reset']) assert.equal(counts.get(name), 1, name);
-  assert.deepEqual(app.offers, []); assert.deepEqual(app.cards, []); assert.deepEqual(app.currentHistory, []);
+  for (const name of ['driver-stop','pause-clear','history-retire','surfaces-reset','inspector-close',
+    'history-reset','metric-reset','event-log-reset','new-world-close','settings-close','memory-close','trophy-close','time-reset']) assert.equal(counts.get(name), 1, name);
+  assert.deepEqual(app.currentHistory, []);
   assert.equal(app.selectedNode, null); assert.equal(app.overlay, null); assert.equal(app.historySnapshot, null); assert.deepEqual(app.historyHighlights, []);
   assert.equal(app.lastResult, null); assert.equal(app.worldFields, null); assert.equal(app.driver.snapshot, app.snapshot);
   assert.equal(app.el.eventTime.textContent, '00:00 · STARTING'); assert.equal(app.el.eventButton.dataset.read, 'true');

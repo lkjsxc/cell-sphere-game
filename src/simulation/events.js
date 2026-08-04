@@ -5,24 +5,36 @@ import { GRAPH_UNREACHABLE, weightedGraphField } from '../core/graph-field.js';
 import { smootherstep } from '../core/math.js';
 export const EVENT_FIELD_VERSION = 2; export const EVENT_UNREACHABLE = 0xffff;
 const LAND_BOUND = new Set(['drought', 'bloom', 'blight']); const MAX_ARRIVAL_TICKS = 15;
-export function scheduleEvents(rng, topo, fields, challenge) {
-  const volatile = challenge?.id === 'volatile'; const count = 6 + rng.intBelow(3) + (volatile ? 3 : 0);
-  const intensityMod = (volatile ? 1.35 : 1) * (challenge?.eventIntensity ?? 1);
+export function scheduleEvents(rng, topo, fields, challenge, worldOrdinal = 1) {
+  const ordinal = Math.max(1, Math.floor(worldOrdinal));
+  if (ordinal <= 2) return [];
+  const volatile = challenge?.id === 'volatile';
+  let count; let windowStart; let intensityRange;
+  if (ordinal === 3) { count = 1; windowStart = 2400; intensityRange = [.50, .70]; }
+  else if (ordinal <= 5) { count = 1 + rng.intBelow(2); windowStart = 1800; intensityRange = [.58, .82]; }
+  else if (ordinal <= 10) { count = 2 + rng.intBelow(3); windowStart = 1400; intensityRange = [.66, .98]; }
+  else { count = 3 + rng.intBelow(4); windowStart = 1100; intensityRange = [.72, 1.15]; }
+  if (volatile) count += ordinal >= 4 ? 1 : 0;
+  const intensityMod = (volatile ? 1.15 : 1) * (challenge?.eventIntensity ?? 1);
   const byVuln = Array.from({ length: topo.nodeCount }, (_, cell) => cell)
     .sort((a, b) => fields.eventVuln[b] - fields.eventVuln[a] || a - b).slice(0, 180);
-  const events = []; let lastFamily = ''; const windowStart = 700; const windowEnd = 2850;
-  const step = (windowEnd - windowStart) / count;
+  const events = []; let lastFamily = ''; const windowEnd = 2920;
+  const step = count > 1 ? (windowEnd - windowStart) / count : 0;
+  const familyPool = ordinal === 3
+    ? EVENT_FAMILIES.filter((family) => family.crisis && ['drought', 'heat', 'freeze'].includes(family.id))
+    : EVENT_FAMILIES;
   for (let index = 0; index < count; index++) {
-    const family = drawFamily(rng, lastFamily); lastFamily = family.id;
-    const startTick = Math.round(windowStart + index * step + rng.range(-.35, .35) * step);
-    const peakTick = startTick + 60; const releaseEndTick = peakTick + 60 + rng.intBelow(90) + 90;
+    const family = drawFamily(rng, lastFamily, familyPool); lastFamily = family.id;
+    const jitter = count > 1 ? rng.range(-.18, .18) * step : rng.range(0, 120);
+    const startTick = Math.max(windowStart, Math.round(windowStart + index * step + jitter));
+    const peakTick = startTick + 60; const releaseEndTick = peakTick + 120 + rng.intBelow(90);
     const center = chooseCenter(byVuln, fields, family.id, rng); const travelBudget = 720 + rng.intBelow(241);
     const field = computeEventField(topo, fields, family.id, center, travelBudget, index);
     const maxArrival = field.arrivalTicks.length ? Math.max(...field.arrivalTicks) : 0;
     events.push({ id: index, family: family.id, nameJa: family.nameJa, descJa: family.descJa,
       kind: family.kind, amount: family.amount, crisis: family.crisis, startTick, peakTick,
       releaseEndTick, endTick: releaseEndTick + maxArrival, center, travelBudget,
-      intensity: Math.fround(rng.range(.7, 1.15) * intensityMod), ...field, announced: 0 });
+      intensity: Math.fround(rng.range(...intensityRange) * intensityMod), ...field, announced: 0 });
   }
   events.sort((a, b) => a.startTick - b.startTick || a.id - b.id); return events;
 }
@@ -53,7 +65,7 @@ export function buildEventCellState(state) {
   return { strength, family };
 }
 export function telegraphLead(traits) { return traits.distributedSensing ? 200 : 100; }
-function drawFamily(rng, lastFamily) { const candidates = EVENT_FAMILIES.filter((family) => family.id !== lastFamily);
+function drawFamily(rng, lastFamily, pool = EVENT_FAMILIES) { const candidates = pool.filter((family) => family.id !== lastFamily);
   let total = candidates.reduce((sum, family) => sum + family.weight, 0); let roll = rng.float() * total;
   for (const family of candidates) { roll -= family.weight; if (roll <= 0) return family; } return candidates.at(-1); }
 function chooseCenter(candidates, fields, family, rng) { let valid = candidates;

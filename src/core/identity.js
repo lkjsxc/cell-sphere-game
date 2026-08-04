@@ -14,6 +14,7 @@ export const STORAGE_KEYS = Object.freeze({
   meta: `${PRODUCT}:meta:v1`,
   settings: `${PRODUCT}:settings:v3`,
   history: `${PRODUCT}:history:v2`,
+  resultTransaction: `${PRODUCT}:result-transaction:v1`,
   migration: `${PRODUCT}:namespace-migration:v1`,
 });
 export const LEGACY_STORAGE_KEYS = Object.freeze({

@@ -4,7 +4,7 @@ import { createTopology } from '../../world/icosphere.js';
 
 export const TROPHY_ATLAS_LEVEL = 2;
 export const TROPHY_FAMILY_SIZE = 16;
-export const TROPHY_FAMILIES = Object.freeze(['reach', 'form', 'endurance', 'adaptation', 'evolution', 'mastery']);
+export const TROPHY_FAMILIES = Object.freeze(['reach', 'form', 'endurance', 'habitat', 'evolution', 'mastery']);
 const AXES = Object.freeze([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]].map(Object.freeze));
 
 function build(topo) {

@@ -1,9 +1,5 @@
 /** Authoritative deterministic run controller shared by Worker and fallback. */
 import { BALANCE as B } from '../game/balance.js';
-import { chooseAdaptationOrigin } from '../core/adaptation-origin.js';
-import { computeAdaptationArrivals } from '../core/adaptation-arrival.js';
-import { hashStringU32 } from '../core/hash.js';
-import { ADAPTATIONS, adaptationPresentationCategory, applyCardEffects, selectRandomOption } from '../game/adaptations.js';
 import { applyMemoryConditionals } from '../game/skills/index.js';
 import { beginTerminalCollapse, createRunState, reconcileLiveness, terminalCollapseReason } from './state.js';
 import { updateEnvironment } from './environment.js';
@@ -17,11 +13,12 @@ import { logReplay, recordHistory, REPLAY } from './replay.js';
 import { buildSnapshot, snapshotTransfers } from './snapshot.js';
 import { buildAbandonedRun, buildRunResult, dominantCause } from './result.js';
 import { HistoryRecorder } from '../history/recorder.js';
+import { habitatAccessForInspection, habitatLabel } from './habitats.js';
 
 export class RunController {
   constructor(cfg, emit = () => {}) {
     this.emit = emit;
-    this.cfg = { ...cfg, adaptationMode: cfg.adaptationMode ?? 'random' };
+    this.cfg = { ...cfg };
     this.state = createRunState(this.cfg);
     this.historyRecorder = new HistoryRecorder(this.state);
   }
@@ -32,7 +29,6 @@ export class RunController {
     s.status = 'running';
     logReplay(s, REPLAY.STRAIN, strainIndex(this.cfg.strainId));
     logReplay(s, REPLAY.INOCULATE, s.inoculationCell);
-    logReplay(s, REPLAY.ADAPTATION_MODE, modeIndex(s.adaptationMode));
     recordHistory(s, 'run-start');
     this.historyRecorder.observe(s, true);
     this.emit({ t: 'started', tick: 0, inoculationCell: s.inoculationCell });
@@ -62,7 +58,6 @@ export class RunController {
     if (!collapsing) {
       if (s.tick % B.CONNECTIVITY_EVERY === 0) analyzeConnectivity(s);
       if (s.tick % B.SUMMARY_EVERY === 0) runSummary(s, (message) => this.emit(message));
-      this.resolveNextRandomOffer();
       const reason = terminalCollapseReason(s);
       if (reason && beginTerminalCollapse(s, reason)) {
         this.emit({ t: 'terminal-collapse', tick: s.tick, cause: reason,
@@ -80,9 +75,6 @@ export class RunController {
     s.status = 'extinct'; s.aliveCount = 0; s.coverage = 0;
     s.connectedShare = 0; s.largestComponent = 0;
     s.extinction = { tick: s.tick, cause: dominantCause(s), terminalCause: s.terminalCause ?? 'natural' };
-    for (const offer of s.adaptationOffers) if (offer.resolvedTick == null) {
-      recordHistory(s, 'adaptation-unresolved', { id: offer.id });
-    }
     recordHistory(s, 'run-extinct', { cause: s.extinction.cause });
     this.historyRecorder.observe(s, true, true);
     const terminalSnapshot = this.snapshot();
@@ -103,70 +95,6 @@ export class RunController {
     return true;
   }
 
-  /** Resolve one fixed offer manually at the current authoritative tick. */
-  chooseAdaptation(offerId, cardId, context = {}) {
-    const s = this.state;
-    if (s.status !== 'running') throw new Error(`cannot choose adaptation while ${s.status}`);
-    const offer = s.adaptationOffers.find((item) => item.id === offerId);
-    if (!offer) throw new Error(`unknown adaptation offer: ${offerId}`);
-    if (offer.resolvedTick != null) throw new Error(`adaptation offer already resolved: ${offerId}`);
-    if (!offer.options.includes(cardId)) throw new Error(`card not in adaptation offer: ${cardId}`);
-    this.resolveOffer(offer, cardId, 'manual', context);
-    return true;
-  }
-
-  /** Change passive decision policy without touching simulation/content RNG. */
-  setAdaptationMode(mode, context = {}) {
-    if (mode !== 'random' && mode !== 'manual') throw new Error(`invalid adaptation mode: ${mode}`);
-    const s = this.state;
-    if (s.status === 'extinct') throw new Error('cannot change adaptation mode after extinction');
-    if (s.adaptationMode === mode) { this.emit({ t: 'adaptation-mode', mode, tick: s.tick, ...context }); return false; }
-    s.adaptationMode = mode;
-    logReplay(s, REPLAY.ADAPTATION_MODE, modeIndex(mode));
-    recordHistory(s, 'adaptation-mode', { id: mode });
-    this.emit({ t: 'adaptation-mode', mode, tick: s.tick, ...context });
-    this.emit({ t: 'history-batch', events: [{ ...s.history.at(-1) }] });
-    this.historyRecorder.observe(s, true);
-    if (mode === 'random' && s.status === 'running') this.resolveNextRandomOffer();
-    return true;
-  }
-
-  /** Resolve at most one pending FIFO offer in this authoritative tick. */
-  resolveNextRandomOffer() {
-    const s = this.state;
-    if (s.status !== 'running' || s.adaptationMode !== 'random') return false;
-    if (s.lastAdaptationResolutionTick === s.tick) return false;
-    const offer = s.adaptationOffers.find((item) => item.resolvedTick == null);
-    if (!offer) return false;
-    this.resolveOffer(offer, selectRandomOption(s.decisionRng, offer.options), 'random');
-    return true;
-  }
-
-  resolveOffer(offer, cardId, selectionMode, context = {}) {
-    const s = this.state;
-    const origin = chooseAdaptationOrigin(s);
-    const category = adaptationPresentationCategory(cardId);
-    const propagation = computeAdaptationArrivals({ topo: s.topo, fields: s.fields,
-      originCell: origin.cell, alive: s.alive, biomass: s.biomass, stress: s.stress,
-      energy: s.energy, category, salt: hashStringU32(`${cardId}:${origin.cell}`) });
-    applyCardEffects(s.traits, cardId);
-    s.ownedCards.push(cardId);
-    offer.resolvedTick = s.tick;
-    offer.selectedCardId = cardId;
-    offer.selectionMode = selectionMode;
-    s.lastAdaptationResolutionTick = s.tick;
-    logReplay(s, REPLAY.ADAPTATION_SELECT, offer.id, cardIndex(cardId), s.tick, modeIndex(selectionMode));
-    recordHistory(s, 'adaptation-selected', { id: offer.id, card: cardIndex(cardId), mode: selectionMode });
-    this.emit({ t: 'adaptation-selected', offerId: offer.id, offerVersion: offer.offerVersion, cardId, tick: s.tick, selectionMode, ...context,
-      originCell: origin.cell, category, affectedComponentId: origin.componentId,
-      arrivalVersion: propagation.version, arrivals: propagation.arrivals,
-      affectedCount: propagation.affectedCount, minArrival: propagation.minArrival,
-      medianArrival: propagation.medianArrival, maxArrival: propagation.maxArrival },
-    [propagation.arrivals.buffer]);
-    this.emit({ t: 'history-batch', events: [{ ...s.history.at(-1) }] });
-    this.historyRecorder.observe(s, true);
-  }
-
   /** Pure compact dynamic projection for pointer inspection. */
   inspectCell(node) {
     const s = this.state;
@@ -182,10 +110,20 @@ export class RunController {
         conductance += s.conductance[edge];
       }
     }
+    const access = habitatAccessForInspection(s, node);
+    let adjacentLife = false;
+    for (let offset = s.topo.nodeStart[node]; offset < s.topo.nodeStart[node + 1]; offset++)
+      if (s.alive[s.topo.nodeNeighbors[offset]]) { adjacentLife = true; break; }
     return {
       tick: s.tick, node, alive: s.alive[node], biomass: s.biomass[node], energy: s.energy[node],
-      nutrient: s.nutrient[node], moisture: s.moisture[node], temperature: s.temperature[node],
+      nutrient: s.nutrient[node], resourceReserve: s.resourceReserve[node],
+      moisture: s.moisture[node], temperature: s.temperature[node],
       toxicity: s.toxicity[node], stress: s.stress[node], activeEdges,
+      habitat: habitatLabel(s.fields, node), habitatAccessible: access.accessible,
+      requiredCapability: access.accessible ? null : access.capability,
+      requiredSkill: access.accessible ? null : access.skill, adjacentLife,
+      suitabilityIfAccessible: s.fields.growthSuitability?.[node] ?? 1,
+      habitatBlocked: s.habitatBlocked[node],
       meanConductance: activeEdges ? conductance / activeEdges : 0,
     };
   }
@@ -197,5 +135,3 @@ export class RunController {
 }
 
 function strainIndex(id) { return ['pioneer', 'conservator', 'weaver'].indexOf(id ?? 'pioneer'); }
-function cardIndex(id) { return ADAPTATIONS.findIndex((card) => card.id === id); }
-function modeIndex(mode) { return mode === 'random' ? 0 : 1; }

@@ -13,7 +13,7 @@ export const FLOW_MEMORY = defineBranch('flow', [
   ['floodplain-network', 'Floodplain Network', 'Transport rises during nutrient blooms.', 'Temporary abundance spreads through spare channels before a single route can monopolize it.', 6, c('nutrient-bloom-active', 'conductance', 1.10)],
   ['pressure-release', 'Pressure Release', 'Upkeep falls while energy is below 20%.', 'A starving network relaxes low-value channels without abandoning its living backbone.', 7, c('energy-below-20', 'maintenance', 0.90)],
   ['crisis-pulse', 'Crisis Pulse', 'Reinforcement rises during an active crisis.', 'A coherent pulse marks escape routes while the disturbance is still unfolding.', 8, c('crisis-active', 'reinforce', 1.12)],
-  ['weir-control', 'Weir Control', 'Unlock manual transport priorities.', 'The player may designate one corridor class to receive reinforcement before its peers.', 5, u('weirControl', 'mechanic')],
+  ['lacustrine-film', 'Lacustrine Film', 'Permit lake colonization.', 'A moisture-stable film opens whole-cell lakes with bounded maintenance and ordinary resource limits.', 5, u('LAKE_ACCESS', 'habitat')],
   ['flux-reading', 'Flux Reading', 'Reveal route throughput bands.', 'The atlas separates idle, useful, and overloaded corridors without inventing precision.', 7, u('fluxReading', 'information')],
   ['pulse-keeper', 'Pulse Keeper', 'Unlock threshold-based flow tending.', 'A saved rule may tend overloaded channels when visible pressure crosses its threshold.', 9, u('pulseKeeper', 'automation')],
   ['river-crown', 'Current Crown', 'Unlock Flow mastery for campaign rules.', 'Transport, reinforcement, and pruning become one remembered circulation discipline.', 14, u('flowMastery', 'keystone')],

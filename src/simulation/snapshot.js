@@ -12,8 +12,7 @@ export function buildSnapshot(state) {
     tick: state.tick,
     entropy: state.entropy,
     status: state.status,
-    adaptationMode: state.adaptationMode,
-    pendingAdaptations: state.adaptationOffers.filter((offer) => offer.resolvedTick == null).length,
+    worldOrdinal: state.worldOrdinal, worldEra: state.worldEra,
     biomass: state.biomass.slice(),
     stress: state.stress.slice(),
     alive: state.alive.slice(),
@@ -30,6 +29,8 @@ export function buildSnapshot(state) {
       viableEnergyCells: state.liveness.viableEnergyCount,
       activeFrontierCells: state.liveness.activeFrontierCount,
       terminalCause: state.terminalCause,
+      resourceReserveFraction: state.initialResourceReserve > 0 ? remainingReserve(state) / state.initialResourceReserve : 0,
+      resourceDepletedCells: state.resourceDepletedCells,
       score: scoreProjection.total,
       scoreProjection,
       vitality: vitality(state),
@@ -40,6 +41,8 @@ export function buildSnapshot(state) {
         fieldVersion: event.fieldVersion, kind: event.kind, intensity: event.intensity })),
   };
 }
+
+function remainingReserve(state) { let total = 0; for (const value of state.resourceReserve) total += value; return total; }
 
 function vitality(state) {
   if (state.aliveCount === 0) return 0;

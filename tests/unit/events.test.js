@@ -7,13 +7,18 @@ import { createTopology } from '../../src/world/icosphere.js';
 import { createFields } from '../../src/world/fields.js';
 import { computeEventField, EVENT_UNREACHABLE, scheduleEvents, telegraphLead } from '../../src/simulation/events.js';
 import { baseTraits } from '../../src/game/strains.js';
+import { environmentPressureForEra } from '../../src/simulation/environment.js';
 
 const topo = createTopology(4);
 
-function scheduleFor(seed) {
+function scheduleFor(seed, worldOrdinal = 12) {
   const fields = createFields(createRng(seed ^ 0x51ab3d71), topo);
-  return scheduleEvents(createRng(seed ^ 0x9e3779b9), topo, fields, null);
+  return scheduleEvents(createRng(seed ^ 0x0e7e17a1), topo, fields, null, worldOrdinal);
 }
+
+test('environment pressure maps every reachable era directly',()=>{
+  assert.deepEqual([1,2,3,4,5].map(environmentPressureForEra),[0,.35,.55,.8,1]);
+});
 
 test('schedule is deterministic per seed', () => {
   const a = scheduleFor(999);
@@ -37,7 +42,7 @@ test('different seeds differ', () => {
 test('no immediate family repeats; sorted; well-formed', () => {
   for (const seed of [1, 2, 3, 100, 777]) {
     const events = scheduleFor(seed);
-    assert.ok(events.length >= 6 && events.length <= 8, `count ${events.length}`);
+    assert.ok(events.length >= 3 && events.length <= 6, `count ${events.length}`);
     for (let i = 0; i < events.length; i++) {
       const ev = events[i];
       if (i > 0) assert.notEqual(ev.family, events[i - 1].family, `streak at ${i}`);
@@ -70,7 +75,10 @@ test('land-bound graph fields stop at ocean and terrain breaks radial symmetry',
   }
 });
 
-test('positive events are present sometimes but not dominant', () => {
+test('campaign eras suppress early events and allow bounded mature positive events', () => {
+  assert.equal(scheduleFor(1, 1).length, 0); assert.equal(scheduleFor(2, 2).length, 0);
+  const third = scheduleFor(3, 3); assert.equal(third.length, 1); assert.ok(third[0].startTick >= 2100); assert.ok(third[0].crisis);
+
   let blooms = 0;
   let total = 0;
   for (let seed = 1; seed <= 40; seed++) {

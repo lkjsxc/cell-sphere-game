@@ -26,7 +26,8 @@ test('typed blank snapshot has zero life, stress, events, HUD, and Reach state',
     assert.equal(blank[name].some((value) => value !== 0), false, name);
   }
   assert.deepEqual(blank.metrics, { coverage: 0, peakCoverage: 0, connectedShare: 0, aliveCount: 0,
-    totalLivingBiomass: 0, viableEnergyCells: 0, activeFrontierCells: 0, terminalCause: null, score: 0, vitality: 0 });
+    totalLivingBiomass: 0, viableEnergyCells: 0, activeFrontierCells: 0, terminalCause: null,
+    resourceReserveFraction: 1, resourceDepletedCells: 0, score: 0, vitality: 0 });
   assert.equal(blank.reach.current, 0); assert.equal(blank.reach.gained, 0); assert.equal(blank.reach.lost, 0);
   assert.deepEqual(blank.events, []); assert.throws(() => createBlankSnapshot(0, session), /node count/);
 });

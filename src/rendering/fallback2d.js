@@ -67,7 +67,6 @@ export class Canvas2DRenderer {
       this.cellPath(cell); ctx.fillStyle = `rgba(${red},${green},${blue},${(.58 + this.facing[cell] * .34) * dim})`; ctx.fill();
     }
     if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1);
-    if (scene.adaptation) this.drawAdaptation(scene.adaptation);
     this.drawBoundaries(false); this.drawBoundaries(true);
     for (const cell of (scene.highlightedCells ?? []).slice(0, 8)) {
       if (this.facing[cell] <= 0) continue; this.cellPath(cell, 0.82);
@@ -79,7 +78,7 @@ export class Canvas2DRenderer {
     this.acceptedFrames++; this.lastFrameAudit = Object.freeze({ worldSessionId: snapshot?.worldSessionId ?? null,
       presentationGeneration: snapshot?.presentationGeneration ?? null, lifeCells: count(snapshot?.alive),
       eventCells: count(snapshot?.eventStrength), highlights: scene.highlightedCells?.length ?? 0,
-      adaptation: Boolean(scene.adaptation), clearCount: this.clearCount }); return true;
+      clearCount: this.clearCount }); return true;
   }
 
   project(points, outX, outY, outFacing, basis, cx, cy, radius) {
@@ -127,23 +126,6 @@ export class Canvas2DRenderer {
     }
   }
 
-  drawAdaptation(event) {
-    for (let cell = 0; cell < this.topo.nodeCount; cell++) {
-      const arrival = event.arrivals[cell]; if (arrival === 0xffff || this.facing[cell] <= 0.02) continue;
-      const age = event.timeMs - arrival;
-      const front = Math.max(0, 1 - Math.abs(age) / 175);
-      const trail = age < 0 ? 0 : Math.max(0, 1 - age / event.trailMs) * 0.48;
-      let strength = event.reduced ? (arrival <= event.reducedThreshold ? (arrival ? 0.5 : 1) : 0)
-        : Math.max(front, trail);
-      if (event.category === 4) strength *= 0.65 + 0.35 * Math.sin(arrival * .031 - event.timeMs * .018);
-      if (event.category === 5) strength *= 0.55 + (this.fields.forestDensity?.[cell] ?? 0) * 0.45;
-      if (strength <= 0) continue;
-      const style = adaptationStyle(event.category, strength); this.cellPath(cell, style.scale);
-      this.ctx.fillStyle = style.fill; this.ctx.fill();
-      if (style.stroke) { this.ctx.strokeStyle = style.stroke; this.ctx.lineWidth = 1; this.ctx.stroke(); }
-    }
-  }
-
   drawBoundaries(emphasis) {
     const { ctx, topo, dual } = this; ctx.beginPath();
     for (let edge = 0; edge < topo.edgeCount; edge++) {
@@ -161,16 +143,6 @@ export class Canvas2DRenderer {
   }
 
   dispose() { if (this.disposed) return; this.disposed = true; this.boundIdentity = null; this.lastFrameAudit = null; }
-}
-
-function adaptationStyle(category, strength) {
-  const alpha = Math.max(0, Math.min(0.46, strength * 0.46));
-  if (category === 2) return { fill: `rgba(229,142,74,${alpha})`, scale: 0.58 };
-  if (category === 3) return { fill: `rgba(172,205,163,${alpha * 0.35})`, stroke: `rgba(202,231,190,${alpha})`, scale: 0.76 };
-  if (category === 4) return { fill: `rgba(159,197,148,${alpha})`, scale: 0.70 };
-  if (category === 5) return { fill: `rgba(116,190,104,${alpha})`, scale: 0.82 };
-  if (category === 6) return { fill: `rgba(190,209,191,${alpha * 0.72})`, scale: 0.48 };
-  return { fill: `rgba(205,214,119,${alpha})`, scale: 1 };
 }
 
 function memoryStyles(status, kind, fossil, fade, branch) {

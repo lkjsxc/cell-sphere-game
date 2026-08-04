@@ -20,7 +20,7 @@ export function buildTrophySnapshot(topo, meta, selectedId = null, emphasizedIds
     memoryStatus: status, memoryBranch: branch, memoryTier: tier, memoryKind: kind,
     memoryImprintWeight: imprint, memoryNodeIndex: nodeIndex, memoryEmphasis: emphasis,
     trophyScene: Object.freeze({ selectedId, nodes: Object.freeze(nodes) }), nodeStates: Object.freeze(nodes),
-    metrics: Object.freeze({ coverage: earnedIds.size / 96, score: 0, pendingAdaptations: 0 }),
+    metrics: Object.freeze({ coverage: earnedIds.size / 96, score: 0 }),
     focus: focusDirection(topo, nodes.filter((node) => node.earned).map((node) => node.cell)),
   });
 }

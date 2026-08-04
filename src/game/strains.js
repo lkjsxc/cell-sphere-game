@@ -2,7 +2,7 @@
  * Strain archetypes and the trait model.
  *
  * A `Traits` object is the single mutable parameter surface the simulation
- * reads. Strains, adaptations, and Memory Globe effects all merge into it.
+ * reads. Base strains and permanent Evolution effects are the only layers.
  * Multipliers center on 1.0; flags default to 0/false.
  */
 
@@ -21,26 +21,14 @@ export function baseTraits() {
     toxinTol: 1.0,       // toxin resistance
     energyCap: 1.0,
     regrow: 1.0,         // regrowth into dead material
-    scoreRate: 1.0,      // explicit score-rate modifier (Quiet Metabolism)
     growCost: 1.0,       // expansion energy cost multiplier
     growthCap: 0,        // extra expansions per node per tick
     // flags / additive
     anastomosis: 0,      // reconnect fragmented branches
-    dormantCysts: 0,     // preserve pockets under terminal stress
-    cannibal: 0,         // reclaim energy from dead biomass
     symbioticFilm: 0,    // improve renewal in occupied cells
-    adaptiveMembrane: 0, // stress resistance rises after exposure
-    migratoryCore: 0,    // biomass center may relocate
-    pulsedTransport: 0,  // periodic high-flux reinforcement
-    feverGrowth: 0,      // growth burst after crisis begins
     coldReserve: 0,      // store energy during abundance
-    toxinCatalysis: 0,   // convert toxin pressure to energy
-    fractalFrontier: 0,  // more tips, weaker branches
     redundantLoops: 0,   // improved connectivity survival
-    localSacrifice: 0,   // prune damaged tips to protect core
     distributedSensing: 0, // event telegraphs arrive earlier
-    opportunisticUptake: 0, // bonus uptake during temporary blooms
-    sporeMemory: 0,      // encode one trait for the next run
   };
 }
 
@@ -83,11 +71,8 @@ export function traitsFor(strainId, memoryEffects = {}) {
     traits[key] = value;
   }
   // Memory effects multiply multipliers and add to additive fields/flags.
-  const ADDITIVE = new Set(['anastomosis', 'dormantCysts', 'cannibal',
-    'symbioticFilm', 'adaptiveMembrane', 'migratoryCore', 'pulsedTransport',
-    'feverGrowth', 'coldReserve', 'toxinCatalysis', 'fractalFrontier',
-    'redundantLoops', 'localSacrifice', 'growthCap', 'distributedSensing',
-    'opportunisticUptake', 'sporeMemory']);
+  const ADDITIVE = new Set(['anastomosis', 'symbioticFilm', 'coldReserve',
+    'redundantLoops', 'growthCap', 'distributedSensing']);
   for (const [key, value] of Object.entries(memoryEffects)) {
     if (!(key in traits)) throw new Error(`unknown trait: ${key}`);
     traits[key] = ADDITIVE.has(key) ? traits[key] + value : traits[key] * value;

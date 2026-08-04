@@ -25,8 +25,12 @@
     "audit:cell-visuals": "node scripts/audits/cell-visual-audit.mjs",
     "audit:lakes": "node scripts/audits/lake-audit.mjs",
     "audit:events": "node scripts/audits/event-audit.mjs",
+    "audit:habitats": "node scripts/audits/habitat-audit.mjs",
     "audit:skills": "node scripts/audits/skill-audit.mjs",
     "audit:trophies": "node scripts/audits/trophy-audit.mjs",
+    "audit:adaptations": "node scripts/audits/adaptation-removal-audit.mjs",
+    "audit:campaign": "node scripts/audits/campaign-audit.mjs",
+    "audit:score": "node scripts/audits/campaign-audit.mjs",
     "audit:identity": "node scripts/audits/identity-audit.mjs",
     "benchmark": "node scripts/benchmark.mjs",
     "verify": "node scripts/verify.mjs"

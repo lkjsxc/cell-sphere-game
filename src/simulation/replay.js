@@ -1,16 +1,7 @@
 /** Compact replay, semantic history, and terminal authority hash. */
 import { hashF32, hashU8, hexU32 } from '../core/hash.js';
-import { ADAPTATIONS } from '../game/adaptations.js';
-
-export const REPLAY_VERSION = 2;
-export const REPLAY = Object.freeze({
-  STRAIN: 0,
-  INOCULATE: 1,
-  ADAPTATION_OFFER: 2,
-  ADAPTATION_SELECT: 3,
-  ADAPTATION_MODE: 4,
-  SPEED: 5,
-});
+export const REPLAY_VERSION = 3;
+export const REPLAY = Object.freeze({ STRAIN: 0, INOCULATE: 1, SPEED: 2 });
 
 /** @param {object} state @param {number} type @param {...number} args */
 export function logReplay(state, type, ...args) {
@@ -64,14 +55,15 @@ export function serializeHistory(state) {
 }
 
 /**
- * Final deterministic hash over dynamic arrays, replay decisions, and owned
- * cards. Quantization hides irrelevant float noise, not semantic divergence.
+ * Final deterministic hash over dynamic arrays, finite reserves, and replay.
+ * Quantization hides irrelevant float noise, not semantic divergence.
  */
 export function finalStateHash(state) {
   let h = 0x811c9dc5;
   h = hashF32(h, state.biomass, 1000);
   h = hashF32(h, state.energy, 1000);
   h = hashF32(h, state.nutrient, 1000);
+  h = hashF32(h, state.resourceReserve, 1000);
   h = hashF32(h, state.stress, 1000);
   h = hashF32(h, state.toxicity, 1000);
   h = hashF32(h, state.conductance, 1000);
@@ -82,7 +74,8 @@ export function finalStateHash(state) {
   h = hashF32(h, new Float32Array([
     state.tick, state.totalUptake, state.totalMaintenance,
     state.peakCoverage, state.peakConnectedShare, state.inoculationCell,
-    state.adaptationMode === 'random' ? 1 : 0, state.replayVersion,
+    state.replayVersion, state.worldOrdinal, state.worldEra, state.worldPotential,
+    state.resourceTransferred, state.initialResourceReserve,
     proof.lakeCellsReached, proof.shoreCellsReached, proof.distinctLakesReached, proof.completeShores,
     proof.ecologyMask, proof.lakeTypeMask, proof.lakeSalinityMask, proof.lakeLivingSamples,
     proof.largeLakeLivingSamples, proof.lakeRegionPeak, proof.droughtLakeSurvivals,
@@ -91,7 +84,6 @@ export function finalStateHash(state) {
   const replayValues = [];
   for (const entry of state.replay) replayValues.push(entry.length, ...entry);
   h = hashF32(h, Float32Array.from(replayValues), 1);
-  const cards = state.ownedCards.map((id) => ADAPTATIONS.findIndex((card) => card.id === id));
-  h = hashF32(h, Float32Array.from(cards), 1);
+  h = hashF32(h, Float32Array.from(state.habitatOccupancy), 1);
   return hexU32(h);
 }

@@ -37,8 +37,8 @@ export const BIOME = Object.freeze({
 
 /** Bounded static factors consumed by simulation hot loops. */
 export const BIOME_EFFECTS = Object.freeze([
-  effect(0.04, 1.80, 0.18, 0.35, 1.80), // deep ocean
-  effect(0.24, 1.32, 0.48, 0.62, 1.35), // shallow ocean
+  effect(0.015, 3.00, 0.12, 0.20, 2.60), // deep ocean
+  effect(0.16, 1.90, 0.38, 0.48, 1.80), // shallow ocean
   effect(0.90, 1.04, 0.94, 1.02, 1.05), // coast
   effect(0.84, 0.96, 1.08, 1.12, 1.10), // forest
   effect(0.76, 0.98, 1.12, 1.18, 1.14), // wet forest

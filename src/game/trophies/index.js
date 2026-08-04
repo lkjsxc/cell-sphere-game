@@ -1,5 +1,5 @@
 /** Canonical 96-achievement Trophy Sphere catalog plus separate legacy ownership. */
-import { ADAPTATION_TROPHIES } from './adaptation.js';
+import { HABITAT_TROPHIES } from './habitat.js';
 import { ENDURANCE_TROPHIES } from './endurance.js';
 import { EVOLUTION_TROPHIES } from './evolution.js';
 import { FORM_TROPHIES } from './form.js';
@@ -9,12 +9,20 @@ import { TROPHY_CONDITION_KEYS } from './keys.js';
 import { TROPHY_ATLAS_CELLS, TROPHY_ATLAS_HASH, TROPHY_FAMILIES, validateTrophyAtlas } from './atlas.js';
 export { TROPHY_ATLAS_REVERSE } from './atlas.js';
 
-export const TROPHY_CATALOG_VERSION = 2;
-export const LEGACY_TROPHIES = Object.freeze([Object.freeze({ id: 'reach-river-touch', nameEn: 'Archived River Listener',
-  criteriaEn: 'Legacy ownership earned from retired river-era evidence; it grants no current lake proof.', family: 'Legacy' })]);
+export const TROPHY_CATALOG_VERSION = 3;
+const RETIRED_CHOICE_TROPHY_IDS = Object.freeze(['adaptation-first-choice','adaptation-manual-choice','adaptation-automatic-choice',
+  'adaptation-three-choices','adaptation-five-choices','adaptation-nothing-pending','adaptation-three-manual','adaptation-five-random',
+  'adaptation-reach-category','adaptation-metabolism-category','adaptation-resilience-category','adaptation-transport-category',
+  'adaptation-symbiosis-category','adaptation-memory-category','adaptation-all-categories-world','adaptation-all-cards']);
+export const LEGACY_TROPHIES = Object.freeze([
+  Object.freeze({ id: 'reach-river-touch', nameEn: 'Archived River Listener',
+    criteriaEn: 'Legacy ownership earned from retired river-era evidence; it grants no current lake proof.', family: 'Legacy' }),
+  ...RETIRED_CHOICE_TROPHY_IDS.map((id) => Object.freeze({ id, nameEn: 'Legacy Adaptation',
+    criteriaEn: 'Read-only ownership preserved from the retired mid-run choice system.', family: 'Legacy' })),
+]);
 export const LEGACY_TROPHY_IDS = Object.freeze(LEGACY_TROPHIES.map((entry) => entry.id));
 const GROUPS = Object.freeze([REACH_TROPHIES, FORM_TROPHIES, ENDURANCE_TROPHIES,
-  ADAPTATION_TROPHIES, EVOLUTION_TROPHIES, MASTERY_TROPHIES]);
+  HABITAT_TROPHIES, EVOLUTION_TROPHIES, MASTERY_TROPHIES]);
 export const TROPHIES = Object.freeze(GROUPS.flat().map((trophy, index) =>
   Object.freeze({ ...trophy, cell: TROPHY_ATLAS_CELLS[index], rewardEn: 'Trophy Cell preserved' })));
 export const TROPHY_IDS = Object.freeze(TROPHIES.map((trophy) => trophy.id));
@@ -35,7 +43,7 @@ export function validateTrophyCatalog(trophies = TROPHIES) {
     families[trophy.family] = (families[trophy.family] ?? 0) + 1;
   }
   if (trophies.length !== 96) errors.push(`trophy count: ${trophies.length}`);
-  for (const name of ['Reach', 'Form', 'Endurance', 'Adaptation', 'Evolution', 'Mastery']) if (families[name] !== 16) errors.push(`trophy family count: ${name}`);
+  for (const name of ['Reach', 'Form', 'Endurance', 'Habitat', 'Evolution', 'Mastery']) if (families[name] !== 16) errors.push(`trophy family count: ${name}`);
   const atlas = validateTrophyAtlas(trophies.map((trophy) => trophy.cell)); errors.push(...atlas.errors);
   return Object.freeze({ valid: !errors.length, errors: Object.freeze(errors), count: trophies.length,
     uniqueIds: ids.size, uniqueCells: cells.size, families: Object.freeze(families), atlasHash: TROPHY_ATLAS_HASH });

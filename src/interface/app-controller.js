@@ -10,9 +10,10 @@ import { bindGlobeInput } from './globe-input.js';
 import { loadMeta, saveMeta, defaultMeta } from '../platform/storage.js';
 import { clearHistory, loadHistory, normalizeHistoryEvents, parseHistory, saveHistory, serializeHistory } from '../platform/history.js';
 import { applySettingsToDocument, saveSettings } from '../platform/settings.js';
+import { recoverRunTransaction } from '../platform/run-transaction-store.js';
 import { createAppState } from './app-state.js';
 import { createRunDriver } from './run-driver.js';
-import { handleRunMessage } from './app-message.js'; import { createAdaptationEffects } from './policies/adaptation-effects.js';
+import { handleRunMessage } from './app-message.js';
 import { createPauseControl, pauseLabel } from './pause-control.js';
 import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from './camera-policy.js';
 import { createSurfaceCoordinator } from './policies/surface-coordinator.js';
@@ -23,7 +24,7 @@ import { sameWorldIdentity } from '../core/world-session.js';
 import { createWorldReplacementState, finishAbandoned, finishRun, requestWorldReplacement, startRun } from './policies/run-session.js';
 import { createNewWorldSurface } from './policies/new-world-surface.js'; import { createHistorySurface } from './history-surface.js'; import { createHistoryPlayback } from './history-playback.js';
 import { createInspectorSurface } from './inspection/inspector-surface.js';
-import { createAdaptationSurface, createMemorySurface } from './panel-surfaces.js';
+import { createMemorySurface } from './panel-surfaces.js';
 import { createMetricSurface } from './inspection/metric-surface.js'; import { createEventLogSurface, eventLogWorlds } from './inspection/event-log-surface.js';
 import { createSceneSelector } from './policies/scene-selector.js';
 import { createTrophySurface } from './policies/trophy-surface.js';
@@ -41,10 +42,11 @@ export function startGameApp(options) { const app = new GameApp(options); app.bo
 class GameApp {
   constructor({ canvas, caps, settings, storageMigration = null }) {
     Object.assign(this, { canvas, caps, settings, storageMigration }); this.el = ui.elements(); this.topo4 = createTopology(4); this.topo = this.topo4; initializeProgression(this);
-    this.adaptationEffects = createAdaptationEffects(this.topo4, this.el.adaptationCaption); this.camera = createCamera(); this.meta = loadMeta(); this.archive = loadHistory(settings.historyRetention);
+    this.camera = createCamera(); this.runTransactionRecovery = recoverRunTransaction(settings.historyRetention);
+    this.meta = this.runTransactionRecovery?.meta ?? loadMeta(); this.archive = this.runTransactionRecovery?.history ?? loadHistory(settings.historyRetention);
     this.resultKeys = new Set(this.meta.resultKeys); this.flow = createAppState(); this.speed = settings.speed; this.snapshot = null; this.selectedNode = null;
     this.renderer = null; this.fields = null; this.worldFields = null; this.showcase = null; this.overlay = null; this.cameraByScene = new Map();
-    this.offers = []; this.cards = []; this.currentHistory = []; this.lastResult = null; this.lastScore = null; this.lastResultIdentity = null; this.requestId = 0; this.requestGeneration = 0;
+    this.currentHistory = []; this.lastResult = null; this.lastScore = null; this.lastResultIdentity = null; this.requestId = 0; this.requestGeneration = 0;
     this.runSeed = null; this.activeRunId = 0; this.worldIdentity = null; this.retiredWorldIdentity = null;
     this.worldSessionSequence = 0; this.presentationGeneration = 0; this.worldReplacement = createWorldReplacementState();
     this.visualSeed = null; this.historySnapshot = null; this.historyHighlights = [];
@@ -62,9 +64,10 @@ class GameApp {
       this.topo.positions.subarray(TITLE_SHOWCASE.focusCell * 3, TITLE_SHOWCASE.focusCell * 3 + 3)); this.resize(false);
     this.showcase = new TitleShowcase(this.topo);
     this.makeSurfaces(); this.bindUi(); this.bindCanvas(); this.bindLifecycle(); this.el.speed.value = String(this.speed);
-    const temporary = this.storageMigration && (!this.storageMigration.available || !this.storageMigration.complete);
+    const temporary = (this.storageMigration && (!this.storageMigration.available || !this.storageMigration.complete))
+      || (this.runTransactionRecovery && !this.runTransactionRecovery.persisted);
     this.el.boot.textContent = `Cells ready — ${this.renderer.backend === 'webgl2' ? 'WebGL2' : 'Canvas 2D'}${temporary ? ' · progress is temporary' : ''}`;
-    ui.show(this.el, 'home'); this.sceneSelector.update('home'); ui.updateAdaptationMode(this.el, this.settings.adaptationMode);
+    ui.show(this.el, 'home'); this.sceneSelector.update('home');
     if (this.meta.migrationNotice?.pending) { ui.toast(this.el, 'Your earlier skills and Imprints were moved into the Evolution Globe.');
       this.meta = { ...this.meta, migrationNotice: { ...this.meta.migrationNotice, pending: false } }; saveMeta(this.meta); }
     if (temporary) ui.announce(this.el, 'Browser storage is unavailable or recovery is incomplete; this session remains playable but changes may be temporary.');
@@ -74,7 +77,6 @@ class GameApp {
     requestAnimationFrame((now) => this.frame(now)); console.info(`boot ok: ${this.renderer.backend}; passive world ready`);
   } makeSurfaces() {
     this.sceneSelector = createSceneSelector({ onSelect: (scene) => this.selectScene(scene) });
-    this.adapt = createAdaptationSurface({ onClose: () => this.panelClosed('adaptations'), onChoose: (offer, card) => this.choose(offer, card), onMode: (mode) => this.applyAdaptationMode(mode) });
     this.inspector = createInspectorSurface({ onClose: () => this.closeInspector(), onHistory: () => this.openHistory('current') });
     this.metricUi = createMetricSurface({ onClose: () => this.panelClosed('metric'), onSelect: (cells) => this.focusEventCells(cells) });
     this.eventLogUi = createEventLogSurface({ onClose: () => this.panelClosed('event-log'), onFocus: (cells) => this.focusEventCells(cells),
@@ -127,12 +129,10 @@ class GameApp {
     this.el.begin.addEventListener('click', () => this.phase === 'idle' ? this.requestWorldReplacement('title-grow') : this.selectScene('world'));
     this.el.restart.addEventListener('click', () => ['idle', 'result'].includes(this.phase) ? this.requestWorldReplacement('evolution-restart', this.phase === 'result' ? this.lastResultIdentity : null) : this.selectScene('world'));
     this.el.resultNext.addEventListener('click', () => this.requestWorldReplacement('manual-next', this.lastResultIdentity));
-    this.el.memoryButton.addEventListener('click', () => this.enterMemory());
-    document.getElementById('result-trophies-button')?.addEventListener('click', () => this.enterTrophies());
     document.getElementById('trophy-next-button')?.addEventListener('click', () => ['idle', 'result'].includes(this.phase) ? this.requestWorldReplacement('trophy-restart', this.phase === 'result' ? this.lastResultIdentity : null) : this.selectScene('world'));
     document.getElementById('trophy-focus')?.addEventListener('click', () => this.focusTrophy());
     this.el.pause.addEventListener('click', () => { if (this.phase === 'running') this.pause.set('manual', !this.pause.has('manual')); });
-    this.el.speed.addEventListener('change', () => this.setSpeed(Number(this.el.speed.value))); this.el.adaptationButton.addEventListener('click', () => this.openAdaptations());
+    this.el.speed.addEventListener('change', () => this.setSpeed(Number(this.el.speed.value)));
     document.getElementById('evolution-focus-available')?.addEventListener('click', () => this.focusAvailableSkill());
     document.querySelectorAll('.menu-open').forEach((button) => button.addEventListener('click', () => this.openMenu()));
     document.querySelectorAll('.history-open').forEach((button) => button.addEventListener('click', () => this.openHistory()));
@@ -177,8 +177,6 @@ class GameApp {
     const trophyNext = document.getElementById('trophy-next-button'); if (trophyNext) trophyNext.textContent = active ? 'Return to World' : 'Next World';
     const evolutionLine = document.getElementById('evolution-line'); if (evolutionLine) evolutionLine.textContent = active
       ? 'Current world unchanged; unlocked Skills begin next world.' : 'Shape what every future world inherits.';
-    const note = document.getElementById('adaptation-world-note'); if (note) note.textContent = this.phase === 'result'
-      ? 'This world is complete; Adaptations apply when a new world begins.' : 'The world continues while you review.';
   }
   selectCell(node, context = null) {
     this.closeActiveOverlay(); this.selectedNode = node; interruptCameraPolicy(this.cameraPolicy, performance.now(), 60_000);
@@ -206,9 +204,6 @@ class GameApp {
     const node = this.historyHighlights[0]; if (Number.isInteger(node) && node >= 0 && node < this.topo4.nodeCount) focusCamera(this.camera, this.topo4.positions.subarray(node * 3, node * 3 + 3));
     ui.announce(this.el, `${this.historyHighlights.length} event ${this.historyHighlights.length === 1 ? 'cell' : 'cells'} highlighted.`); }
   gameTime(tick = 0) { const seconds = Math.floor(tick / 10); return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
-  adaptationModel() { return { offers: this.offers, cards: this.cards, mode: this.settings.adaptationMode, tick: this.snapshot?.tick ?? 0 }; }
-  pendingCount() { return this.offers.filter((offer) => offer.resolvedTick == null).length; }
-  choose(offer, cardId) { return this.driver.chooseAdaptation(offer, cardId); }
   setSpeed(value) { this.speed = value; this.settings = { ...this.settings, speed: value }; saveSettings(this.settings); this.driver.setSpeed(value); }
   applyPause(paused, reasons = this.pause.values()) { if (paused !== this.effectivePaused) { this.effectivePaused = paused; this.driver.setPaused(paused); } this.timeDial.reset(performance.now());
     this.el.pause.setAttribute('aria-pressed', String(reasons.has('manual'))); this.el.pause.classList.toggle('is-paused', paused);
@@ -219,8 +214,6 @@ class GameApp {
   enterMemory() { enterEvolution(this); } enterTrophies() { enterTrophies(this); }
   selectMemoryNode(id) { selectSkill(this, id); } closeMemoryNode() { closeSkill(this); } buyMemory(id) { buySkill(this, id); }
   selectTrophy(id) { selectTrophy(this, id); } closeTrophy() { closeTrophy(this); } focusTrophy() { focusTrophy(this); }
-  openAdaptations() { if (this.phase !== 'running' || this.surfaces.toggle('adaptations')) return; this.openFull('adaptations'); this.adapt.open(this.adaptationModel());
-    this.activateSurface('adaptations', this.adapt.surface, 'adaptations-heading'); }
   openHistory(scope = null) { if (this.surfaces.toggle('history')) return;
     this.historyPlayback.open(scope ?? (this.scene === 'world' ? 'current' : 'past')); }
   openHistoryEvent(world, event) { this.openHistory(world?.id ?? (world?.current ? 'current' : 'past'));
@@ -247,18 +240,16 @@ class GameApp {
   closeActiveOverlay() { const name = this.overlay; if (!name) return;
     if (name === 'memory-node') return closeSkill(this); if (name === 'trophy-detail') return closeTrophy(this);
     if (name === 'inspector') this.inspector.close();
-    else if (name === 'adaptations') this.adapt.close(); else if (name === 'history') { this.historyPlayback.close(); this.historyUi.close(); }
+    else if (name === 'history') { this.historyPlayback.close(); this.historyUi.close(); }
     else if (name === 'menu') this.settingsUi.close(); else if (name === 'new-world') this.newWorld.close();
     else if (name === 'metric') this.metricUi.close(); else if (name === 'event-log') this.eventLogUi.close();
     else if (name === 'result') document.getElementById('result-dialog').hidden = true;
     this.surfaces.close(name); this.overlay = null; this.pause.set('panel', false); this.pause.set('new-world', false);
     if (name === 'inspector') this.selectedNode = null; this.resize(true);
   }
-  applyAdaptationMode(mode) { if (this.phase === 'running') return this.driver.setAdaptationMode(mode); this.applySettings({ ...this.settings, adaptationMode: mode }); return null; }
-  applySettings(value) { const before = this.settings; const modeChange = this.phase === 'running' && value.adaptationMode !== before.adaptationMode;
-    this.settings = modeChange ? { ...value, adaptationMode: before.adaptationMode } : value; saveSettings(this.settings); applySettingsToDocument(this.settings); ui.updateAdaptationMode(this.el, this.settings.adaptationMode);
+  applySettings(value) { const before = this.settings;
+    this.settings = value; saveSettings(this.settings); applySettingsToDocument(this.settings);
     if (value.speed !== this.speed) { this.speed = value.speed; this.el.speed.value = String(value.speed); this.driver.setSpeed(value.speed); }
-    if (modeChange) this.adapt.pendingMode(value.adaptationMode, this.driver.setAdaptationMode(value.adaptationMode));
     if (this.overlay && value.pauseOnPanels !== before.pauseOnPanels) this.pause.set('panel', this.phase === 'running' && value.pauseOnPanels);
     if (this.phase === 'result' && value.autoContinue !== before.autoContinue && !value.autoContinue) {
       cancelContinuation(this.continuation, 'setting-disabled'); this.updateContinuation(); }
@@ -279,8 +270,7 @@ class GameApp {
   } catch { ui.announce(this.el, 'That local-data action could not be completed.'); } }
   availableMemory() { return availableSkills(this); }
   worldResourceAudit() { return Object.freeze({ interactionListeners: this.interactionGuard.listenerCount,
-    historyRequests: this.historyPlayback.pendingRequests, adaptationEffects: this.adaptationEffects.queueLength,
-    adaptationBytes: this.adaptationEffects.retainedBytes, adaptationTimers: this.adaptationEffects.pendingCount }); }
+    historyRequests: this.historyPlayback.pendingRequests }); }
   cancelAutoNext(reason) { if (this.phase !== 'result') return false;
     const cancelled = cancelContinuation(this.continuation, reason); if (cancelled) this.updateContinuation(); return cancelled; }
   updateContinuation() { const label = continuationLabel(this.continuation); if (label === this.countdownLabel) return; this.countdownLabel = label; this.el.countdown.textContent = label; }
@@ -307,7 +297,7 @@ class GameApp {
     const snap = this.historySnapshot ?? (this.scene === 'home' ? this.showcase?.snapshot : this.scene === 'evolution' ? this.memorySnapshot : this.scene === 'trophies' ? this.trophySnapshot : this.snapshot);
     const cadence = this.scene === 'world' && this.speed >= 16 ? 66 : 0;
     if (!cadence || now - this.lastRender >= cadence) { this.renderer.render({ snapshot: snap ?? null, worldIdentity: this.scene === 'world' ? this.worldIdentity : null,
-      camera: this.camera, selectedNode: this.selectedNode, adaptation: this.scene === 'world' ? this.adaptationEffects.frame(now) : null,
+      camera: this.camera, selectedNode: this.selectedNode,
       highlightedCells: this.historyHighlights, time: now / 1000, pulse: this.settings.motion !== 'reduced' }); this.lastRender = now; }
   }
 }

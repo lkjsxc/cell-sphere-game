@@ -9,15 +9,15 @@ import { applyRunResult } from '../../src/interface/policies/run-result.js';
 import { advanceContinuation, completeContinuation, createContinuation, setContinuationHidden,
   startContinuation } from '../../src/interface/policies/continuation.js';
 
-function complete(seed, manual) {
-  const run = new RunController({ seed, adaptationMode: manual ? 'manual' : 'random' }); run.start();
+function complete(seed, worldOrdinal = 1) {
+  const run = new RunController({ seed, worldOrdinal, worldPotential:16000 }); run.start();
   let guard = 0; while (run.state.status !== 'extinct' && guard++ < 500) run.advance(50);
   assert.equal(run.state.status, 'extinct'); return run.buildResult();
 }
 
 test('bounded transaction keys reject delayed results after a newer world', () => {
   let meta = defaultMeta(); let archive = clearHistory(); const keys = new Set();
-  const first = { ...complete(101, false), runId: 1 }; const second = { ...complete(102, false), runId: 2 };
+  const first = { ...complete(101, 1), runId: 1 }; const second = { ...complete(102, 2), runId: 2 };
   for (const result of [first, second]) { const transaction = applyRunResult(meta, archive, result, 24, keys);
     assert.equal(transaction.applied, true); keys.add(transaction.key); meta = transaction.meta; archive = transaction.archive; }
   assert.equal(applyRunResult(meta, archive, first, 24, keys).applied, false);
@@ -28,7 +28,7 @@ test('100 unattended result transitions award once and remain bounded', { timeou
   let meta = defaultMeta(); let archive = clearHistory(); let lastKey = null; let echoes = 0; let now = 0;
   const flow = createAppState(); const countdown = createContinuation(9000); const heapStart = process.memoryUsage().heapUsed;
   for (let world = 0; world < 100; world++) {
-    flow.send(world ? 'restart' : 'begin'); flow.send('ready'); const result = complete(5_000_000 + world, world % 5 === 0);
+    flow.send(world ? 'restart' : 'begin'); flow.send('ready'); const result = complete(5_000_000 + world, world + 1);
     flow.send('extinct'); const transaction = applyRunResult(meta, archive, result, 24, lastKey);
     assert.equal(transaction.applied, true); meta = transaction.meta; archive = transaction.archive;
     lastKey = transaction.key; echoes += transaction.score.echoes;

@@ -54,7 +54,12 @@ export function createInspectorSurface(options) {
     const stateName = d.alive ? (d.stress > 0.75 ? 'Alive · critical stress' : 'Alive')
       : d.biomass > 0.02 ? 'Dead tissue / scar' : 'Unoccupied';
     const role = d.activeEdges >= 4 ? 'Connected center' : d.activeEdges === 1 ? 'Frontier cell' : d.activeEdges > 1 ? 'Connected tissue' : 'Isolated';
-    dl.append(...definitionRows([['State', stateName], ['Role', role], ['Biomass', band(Math.min(1, d.biomass / 2.5), ['Trace', 'Thin', 'Established', 'Dense'])],
+    const access = d.habitatAccessible ? 'Accessible' : `Evolution access required · ${d.requiredSkill} (${d.requiredCapability})`;
+    dl.append(...definitionRows([['State', stateName], ['Role', role], ['Habitat access', access],
+      ['Reachable from adjacent life', d.adjacentLife ? 'Yes' : 'No'],
+      ['Suitability if accessible', `${Math.round((d.suitabilityIfAccessible ?? 0) * 100)}%`],
+      ['Long-term local stock', band(Math.min(1, (d.resourceReserve ?? 0) / 0.5), ['Exhausted', 'Low', 'Stored', 'Deep'])],
+      ['Biomass', band(Math.min(1, d.biomass / 2.5), ['Trace', 'Thin', 'Established', 'Dense'])],
       ['Energy reserve', band(Math.min(1, Math.max(0, d.energy) / 6), ['Empty', 'Low', 'Stable', 'Full'])],
       ['Stress', band(d.stress, ['Calm', 'Watchful', 'Strained', 'Critical'])], ['Local nutrient', band(d.nutrient, ['Spent', 'Low', 'Rich', 'Abundant'])],
       ['Living neighbors', `${d.activeEdges} · ${band(Math.min(1, d.meanConductance / 2), ['Faint', 'Low exchange', 'Strong exchange', 'Core exchange'])}`],

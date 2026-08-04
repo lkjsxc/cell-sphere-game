@@ -32,7 +32,7 @@ export function startPreview(canvas) {
   let fade = 1;
   let selectedNode = null;
 
-  const rc = new RunController({ seed: SEED, strainId: 'pioneer', adaptationMode: 'random' }, (m) => {
+  const rc = new RunController({ seed: SEED, strainId: 'pioneer', worldOrdinal: 1, worldPotential: 16000 }, (m) => {
     if (m.t === 'extinct') {
       // Restart the world after a short fade — the preview never idles.
       fade = 0;

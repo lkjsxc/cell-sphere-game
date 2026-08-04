@@ -33,7 +33,7 @@ export class TitleShowcase {
     if (index === this.frameIndex) return false;
     const projected = projectPreview(this.frames[index], this.buffers);
     projected.status = 'attract'; projected.metrics = { aliveCount: this.frames[index].aliveCount,
-      coverage: this.frames[index].aliveCount / this.buffers.cellCount, score: 0, pendingAdaptations: 0 };
+      coverage: this.frames[index].aliveCount / this.buffers.cellCount, score: 0 };
     this.snapshot = projected; this.frameIndex = index; return true;
   }
 }

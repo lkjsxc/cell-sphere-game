@@ -8,6 +8,7 @@ import { BALANCE as B } from '../../game/balance.js';
 import { clamp01, tolerance } from '../../core/math.js';
 import { birthCell } from './cell-lifecycle.js';
 import { REACH_CAUSE } from './reach-ledger.js';
+import { habitatAccess } from '../habitats.js';
 
 const MOIST_CENTER = 0.55;
 const TEMP_CENTER = 0.6;
@@ -20,9 +21,9 @@ export function runGrowth(state) {
     conductance, edgePeak, edgeActive, edgeAge, expansions, simRng } = state;
 
   expansions.fill(0);
-  const cap = B.GROW_PER_NODE_CAP + traits.growthCap + (traits.fractalFrontier ? 1 : 0);
+  const cap = B.GROW_PER_NODE_CAP + traits.growthCap;
   const baseCost = B.GROW_COST * traits.growCost;
-  const startCond = B.START_CONDUCTANCE * (traits.fractalFrontier ? 0.75 : 1);
+  const startCond = B.START_CONDUCTANCE;
   const moistW = MOIST_CENTER * 0.92 * traits.droughtTol;
   const tempW = 0.42 * traits.heatTol;
 
@@ -42,6 +43,11 @@ export function runGrowth(state) {
       if (edgeActive[e] === 1) continue;
       const nb = nodeNeighbors[o];
       if (alive[nb] === 1) continue;
+      const access = habitatAccess(state, i, nb);
+      if (!access.accessible) {
+        state.habitatBlocked[nb] = Math.min(0xffff, state.habitatBlocked[nb] + 1);
+        continue;
+      }
 
       const suitNb = tolerance(moisture[nb], MOIST_CENTER, moistW)
         * tolerance(temperature[nb], TEMP_CENTER, tempW)
@@ -53,8 +59,6 @@ export function runGrowth(state) {
         * (0.25 + 0.75 * suitNb)
         * (0.3 + 0.7 * grad)
         * (1 - B.CROWDING_PENALTY * Math.max(0, crowd - 2));
-      // Migratory core favors reclaiming dead-but-rich ground.
-      if (traits.migratoryCore && biomass[nb] > 0.01) p *= 1.5;
       if (p <= 0) continue;
 
       if (simRng.chance(Math.min(p, 0.65)) && energy[i] >= cost) {

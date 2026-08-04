@@ -2,7 +2,7 @@ import { test } from 'node:test'; import assert from 'node:assert/strict';
 import { createTimedPresentationQueue, PRESENTATION_DURATION } from '../../../src/interface/policies/presentation-timing.js';
 
 test('central presentation policy is exactly the audited 1.5x timing slice', () => {
-  assert.deepEqual(PRESENTATION_DURATION, { toast: 2700, adaptationCaption: 3750, trophy: 4200, important: 4500 });
+  assert.deepEqual(PRESENTATION_DURATION, { toast: 2700, trophy: 4200, important: 4500 });
 });
 
 test('fake clock proves FIFO ordering, duplicate suppression, and deterministic acknowledgement', () => {

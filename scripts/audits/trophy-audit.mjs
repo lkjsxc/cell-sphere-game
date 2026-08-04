@@ -14,7 +14,7 @@ import { hashStringU32, hexU32 } from '../../src/core/hash.js';
 
 const started = performance.now(); const catalog = validateTrophyCatalog(); const atlas = validateTrophyAtlas();
 const firstWorldCohort = Array.from({ length: 24 }, (_, lane) => firstWorld(20260731 + lane * 104729));
-const campaign = modeledCampaign(240); const targets = { 1: [0, 2], 4: [3, 8], 12: [8, 18], 48: [15, 30], 240: [25, 70] };
+const campaign = modeledCampaign(240); const targets = { 1: [1, 2], 4: [3, 8], 12: [8, 18], 48: [20, 45], 240: [65, 92] };
 const targetResults = Object.fromEntries(Object.entries(targets).map(([horizon, range]) => { const acquired = campaign.horizons[horizon].total;
   return [horizon, { acquired, target: range, withinTarget: acquired >= range[0] && acquired <= range[1] }]; }));
 const trivial = TROPHY_IDS.filter((id) => id !== 'evolution-first-world'
@@ -59,16 +59,18 @@ function modeledCampaign(worlds) { let meta = defaultMeta(); let archive = defau
     firstHistoryEntries: awardEvents.length, firstQueueEntries: firstTx.tx.meta.trophyQueue.length,
     valid: !duplicate.applied && !duplicate.trophyIds.length && awardEvents.length === firstTx.tx.trophyIds.length } };
 }
-function automaticRun(seed, meta) { const memory = compileMemory(meta); const rc = new RunController({ seed, strainId: 'pioneer', adaptationMode: 'random',
-    memoryEffects: memory.effects, memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks }); rc.start();
+function automaticRun(seed, meta) { const memory = compileMemory(meta); const rc = new RunController({ seed, strainId: 'pioneer', worldOrdinal: meta.runs + 1,
+    worldPotential: memory.worldPotential, potentialVersion: memory.potentialVersion, memoryEffects: memory.effects,
+    memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks, habitatCapabilities: memory.habitatCapabilities }); rc.start();
   while (rc.state.status !== 'extinct') rc.advance(20); return rc.buildResult(); }
-function manualRun(seed, meta, policy) { const memory = compileMemory(meta); return runHeadless({ RunController }, { seed, strainId: 'pioneer',
-    memoryEffects: memory.effects, memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks }, policy).result; }
+function manualRun(seed, meta, policy) { const memory = compileMemory(meta); return runHeadless({ RunController }, { seed, strainId: 'pioneer', worldOrdinal: meta.runs + 1,
+    worldPotential: memory.worldPotential, potentialVersion: memory.potentialVersion, memoryEffects: memory.effects,
+    memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks, habitatCapabilities: memory.habitatCapabilities }, policy).result; }
 function buyOne(meta, run) { const preferred = MEMORY_BRANCHES[(run - 1) % MEMORY_BRANCHES.length]; const options = availableMemoryNodes(meta).slice()
     .sort((a, b) => (a.branch === preferred ? -1 : 0) - (b.branch === preferred ? -1 : 0) || a.tier - b.tier || a.cost - b.cost || a.id.localeCompare(b.id));
   return options.length ? purchaseMemory(meta, options[0].id) : { ok: false, meta }; }
 function impossibleCriteria() { const aggregate = Object.fromEntries([...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS].map((key) => [key, 10_000_000]));
-  Object.assign(aggregate, { runs: 10000, bestScore: 2_000_000, totalEchoes: 1_000_000, skillCount: 642, skillBranchCount: 6,
+  Object.assign(aggregate, { runs: 10000, bestScore: 2_000_000, totalEchoes: 1_000_000, skillCount: 252, skillBranchCount: 6,
     imprintCount: 8, geographyMask: 63, crisisMask: 127, adaptationCategoryMask: 63, adaptationCardCount: 24,
     lakeTypeMask: 31, lakeSalinityMask: 7, reachCardCount: 6, metabolismCardCount: 6, resilienceCardCount: 7,
     transportCardCount: 5, symbiosisCardCount: 4, memoryCardCount: 2 });
@@ -90,7 +92,7 @@ function allLeaves(condition) { if (condition.rule === 'any') return null; if (c
 function duplicateBy(project) { const groups = new Map(); for (const trophy of TROPHIES) { const key = project(trophy); groups.set(key, [...(groups.get(key) ?? []), trophy.id]); }
   return [...groups.values()].filter((ids) => ids.length > 1); }
 function frequencies(values) { const out = {}; for (const value of values) out[value] = (out[value] ?? 0) + 1; return out; }
-function familyTotals(ids) { const owned = new Set(ids); return Object.fromEntries(['Reach','Form','Endurance','Adaptation','Evolution','Mastery'].map((family) => [family,
+function familyTotals(ids) { const owned = new Set(ids); return Object.fromEntries(['Reach','Form','Endurance','Habitat','Evolution','Mastery'].map((family) => [family,
   TROPHIES.filter((trophy) => trophy.family === family && owned.has(trophy.id)).length])); }
 function ruleCounts() { const counts = {}; const visit = (condition) => { counts[condition.rule] = (counts[condition.rule] ?? 0) + 1; for (const child of condition.conditions ?? []) visit(child); };
   for (const trophy of TROPHIES) visit(trophy.condition); return counts; }

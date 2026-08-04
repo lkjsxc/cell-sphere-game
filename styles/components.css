@@ -68,8 +68,13 @@ button[data-action]:disabled { opacity: .38; filter: saturate(.4); box-shadow: n
   text-shadow: 0 1px 10px var(--bg-deep);
 }
 
-.metric-button { min-height: var(--touch-min); padding: var(--sp-1) var(--sp-3) var(--sp-1) var(--sp-2); color: inherit; background: transparent; border: 1px solid transparent; text-align: left; }
-.metric-button:hover, .metric-button[aria-expanded="true"] { border-color: var(--border-faint); background: rgba(15,20,20,.46); border-radius: var(--radius-s); }
+.metric-button { position: relative; min-height: var(--touch-min); padding: var(--sp-1) var(--sp-5) var(--sp-1) var(--sp-2); color: inherit;
+  background: rgba(15, 22, 22, .42); border: 1px solid var(--border-faint); border-radius: var(--radius-s); text-align: left;
+  box-shadow: inset 0 0 0 1px rgba(210, 235, 219, .025); }
+.metric-button::after { content: "›"; position: absolute; right: var(--sp-2); top: 50%; transform: translateY(-50%); color: var(--text-faint); font-size: 1rem; }
+.metric-button:hover, .metric-button[aria-expanded="true"] { border-color: var(--border-strong); background: rgba(25,35,33,.68); }
+.metric-button[aria-expanded="true"]::after { content: "⌄"; color: var(--text-primary); }
+.metric-button:focus-visible { outline: 2px solid var(--life-glow); outline-offset: 2px; }
 
 .metric-label {
   font-size: var(--fs-caption);

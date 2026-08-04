@@ -159,7 +159,7 @@ test('renderer teardown zeroes dynamic buffers and removes the exact context lis
   const renderer = read('../../src/rendering/renderer.js'); const world = read('../../src/rendering/world-pass.js');
   assert.match(renderer, /this\.contextLossListener/); assert.match(renderer, /removeEventListener\('webglcontextlost', this\.contextLossListener\)/);
   assert.match(renderer, /if \(this\.disposed\) return/); assert.match(world, /lifeData\.fill\(0\)/);
-  assert.match(world, /eventData\.fill\(0\)/); assert.match(world, /adaptationData\.fill\(0\)/);
+  assert.match(world, /eventData\.fill\(0\)/); assert.doesNotMatch(world, /adaptationData|aAdaptation|uAdaptation/);
   assert.match(world, /bufferSubData/);
 });
 

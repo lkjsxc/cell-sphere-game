@@ -3,6 +3,10 @@ export async function runScenario(t) {
   const { evaluate, wait, poll, errors, click, drag, screenshot, setViewport, key } = t;
   let boot = await evaluate('window.__CELL_SPHERE_BOOT__'); ok(boot?.playable, 'app did not boot');
   boot = await runIdentityMigrationScenario(t, boot);
+  const retired = await evaluate(`(()=>({controls:['adaptations-button','adaptations-dialog','adaptation-cards','result-adaptations'].every(id=>!document.getElementById(id)),setting:!('adaptationMode' in window.__CELL_SPHERE_APP__.settings),pending:typeof window.__CELL_SPHERE_APP__.pendingCount==='undefined'}))()`);
+  ok(retired.controls && retired.setting && retired.pending, `active Adaptations remain: ${JSON.stringify(retired)}`);
+  const affordance = await evaluate(`(()=>{const b=document.getElementById('score-button'),s=getComputedStyle(b),p=getComputedStyle(b,'::after');return {border:s.borderTopWidth,background:s.backgroundColor,disclosure:p.content,expanded:b.getAttribute('aria-expanded')}})()`);
+  ok(affordance.border !== '0px' && affordance.background !== 'rgba(0, 0, 0, 0)' && affordance.disclosure !== 'none' && affordance.expanded === 'false', `metric lacks resting affordance: ${JSON.stringify(affordance)}`);
   const render = await evaluate(`new Promise(resolve=>{const a=window.__CELL_SPHERE_APP__,r=a.renderer,base=r.render.bind(r),samples=[];
     r.render=s=>{const at=performance.now(),out=base(s);samples.push(performance.now()-at);return out};setTimeout(()=>{r.render=base;samples.sort((a,b)=>a-b);
     resolve({draws:r.drawCalls,p95:samples[Math.floor(samples.length*.95)]||0,mean:samples.reduce((a,b)=>a+b,0)/Math.max(1,samples.length)});},800)})`);
@@ -38,7 +42,7 @@ export async function runScenario(t) {
 
   const cameraBefore = await evaluate(`({camera:window.__CELL_SPHERE_APP__.camera.direction.slice(),tick:window.__CELL_SPHERE_APP__.snapshot.tick})`);
   await trustedId(t, 'scene-evolution'); await wait(300);
-  ok(await evaluate(`window.__CELL_SPHERE_APP__.scene==='evolution'&&window.__CELL_SPHERE_APP__.phase==='running'&&window.__CELL_SPHERE_APP__.memorySnapshot.nodeStates.length===642`), 'Evolution scene replaced authority');
+  ok(await evaluate(`window.__CELL_SPHERE_APP__.scene==='evolution'&&window.__CELL_SPHERE_APP__.phase==='running'&&window.__CELL_SPHERE_APP__.memorySnapshot.nodeStates.length===252`), 'Evolution scene replaced authority');
   await trustedId(t, 'scene-world'); await wait(120);
   const restored = await evaluate(`({camera:window.__CELL_SPHERE_APP__.camera.direction.slice(),tick:window.__CELL_SPHERE_APP__.snapshot.tick,scene:window.__CELL_SPHERE_APP__.scene})`);
   ok(restored.scene === 'world' && restored.tick > cameraBefore.tick && distance(restored.camera, cameraBefore.camera) < 1e-8,
@@ -74,13 +78,11 @@ export async function runScenario(t) {
       && !evidence.eventDockOverlap && !evidence.eventShellOverlap,
     `responsive shell failed ${width}x${height}: ${JSON.stringify(evidence)}`); await trustedId(t, 'metric-close');
   }
-  await setViewport(390, 844); const accessibilityMatrix = await evaluate(`(()=>{const root=document.documentElement,tabs=[...document.querySelectorAll('#scene-selector [role=tab]')],labels=tabs.map(x=>x.firstChild.nodeValue);root.style.fontSize='32px';root.dataset.motion='reduced';root.dataset.contrast='high';tabs[2].firstChild.nodeValue='Evolution inherited adaptations';const rects=tabs.map(x=>x.getBoundingClientRect()),values={noOverflow:document.documentElement.scrollWidth<=innerWidth,labelsContained:tabs.every(x=>getComputedStyle(x).overflow==='hidden')&&rects.every((r,i)=>!i||r.left>=rects[i-1].right-1),motion:getComputedStyle(root).getPropertyValue('--dur-base').trim(),border:getComputedStyle(document.getElementById('scene-selector')).borderTopWidth};tabs.forEach((x,i)=>x.firstChild.nodeValue=labels[i]);root.style.fontSize='';root.dataset.motion='full';root.dataset.contrast='normal';return values})()`);
+  await setViewport(390, 844); const accessibilityMatrix = await evaluate(`(()=>{const root=document.documentElement,tabs=[...document.querySelectorAll('#scene-selector [role=tab]')],labels=tabs.map(x=>x.firstChild.nodeValue);root.style.fontSize='32px';root.dataset.motion='reduced';root.dataset.contrast='high';tabs[2].firstChild.nodeValue='Evolution inherited ecological capabilities';const rects=tabs.map(x=>x.getBoundingClientRect()),values={noOverflow:document.documentElement.scrollWidth<=innerWidth,labelsContained:tabs.every(x=>getComputedStyle(x).overflow==='hidden')&&rects.every((r,i)=>!i||r.left>=rects[i-1].right-1),motion:getComputedStyle(root).getPropertyValue('--dur-base').trim(),border:getComputedStyle(document.getElementById('scene-selector')).borderTopWidth};tabs.forEach((x,i)=>x.firstChild.nodeValue=labels[i]);root.style.fontSize='';root.dataset.motion='full';root.dataset.contrast='normal';return values})()`);
   ok(accessibilityMatrix.noOverflow && accessibilityMatrix.labelsContained && accessibilityMatrix.motion === '0ms' && accessibilityMatrix.border !== '0px', `accessibility matrix failed: ${JSON.stringify(accessibilityMatrix)}`);
 
   await setViewport(390, 844); await wait(140); await trustedId(t, 'menu-button');
   ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='menu'&&document.getElementById('menu-world-heading').textContent==='World'&&document.getElementById('menu-new-world').offsetHeight>=44`), 'Menu groups/actions missing');
-  await evaluate(`(()=>{const s=document.querySelector('[name=adaptationMode]');s.value='manual';s.dispatchEvent(new Event('change',{bubbles:true}))})()`);
-  ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.settings.adaptationMode'), (mode) => mode === 'manual', 2000), 'manual mode was not authoritative');
   await trustedId(t, 'menu-new-world');
   ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='new-world'&&!document.getElementById('new-world-dialog').hidden`), 'New World confirmation did not replace Menu');
   await wait(80); const tickBeforeConfirm = await evaluate('window.__CELL_SPHERE_APP__.snapshot.tick'); await wait(220);
@@ -88,10 +90,6 @@ export async function runScenario(t) {
   await trustedId(t, 'new-world-keep'); ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.snapshot.tick'), (tick) => tick > tickBeforeConfirm, 1500), 'Keep watching did not resume');
 
   const run32StartedAt = performance.now(); await evaluate(`(()=>{const s=document.getElementById('speed-select');s.value='32';s.dispatchEvent(new Event('change'))})()`);
-  ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.pendingCount()'), (count) => count > 0, 5000), 'manual Adaptation offer did not queue');
-  await trustedId(t, 'adaptations-button'); await wait(120); const compact = await evaluate(`(()=>{const s=document.getElementById('context-shell').getBoundingClientRect(),e=document.getElementById('current-event-button').getBoundingClientRect(),summary=document.querySelector('#adaptations-dialog details summary')?.getBoundingClientRect();return {height:s.height,viewport:innerHeight,cards:[...document.querySelectorAll('#adaptation-cards .card')].map(x=>x.getBoundingClientRect().height),summary:summary?.height??0,eventVisible:e.width>0&&e.bottom<=s.top+1}})()`);
-  ok(compact.height <= compact.viewport * .37 && compact.cards.length === 3 && compact.cards.every((height) => height >= 44) && compact.summary >= 44 && compact.eventVisible,
-    `compact Adaptations failed: ${JSON.stringify(compact)}`); await screenshot('shell-adaptations-mobile.png'); await trustedId(t, 'adaptations-close');
 
   await setViewport(1440, 900); await wait(120); await trustedId(t, 'menu-button'); await trustedId(t, 'menu-history'); await wait(160);
   const history = await shellRect(evaluate); ok(history.surface === 'history' && history.left < 30 && history.width <= 520, 'History is not the desktop left shell');
@@ -108,10 +106,10 @@ export async function runScenario(t) {
   await trustedId(t, 'event-log-close'); ok(distance(historyCamera, await evaluate('window.__CELL_SPHERE_APP__.camera.direction.slice()')) > 0, 'globe drag did not rotate');
 
   ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 45000), '32x run did not finish');
-  const elapsed = (performance.now() - run32StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=document.getElementById('context-shell');return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!document.getElementById('result-control').hidden,event:document.getElementById('current-event-button').offsetHeight,pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,adapt:document.getElementById('adaptations-button').disabled,trophies:document.getElementById('result-trophies').textContent,snapshotStatus:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
+  const elapsed = (performance.now() - run32StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=document.getElementById('context-shell');return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!document.getElementById('result-control').hidden,event:document.getElementById('current-event-button').offsetHeight,pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,trophies:document.getElementById('result-trophies').textContent,noDuplicateProgressionNav:![...document.querySelectorAll('#result-dialog button')].some(b=>['Evolution','Trophies'].includes(b.textContent.trim())),snapshotStatus:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
   ok(result.score > 0 && result.scene === 'world' && result.phase === 'result' && result.overlay === 'result' && result.surface === 'result'
-    && result.runVisible && result.resultControl && result.event >= 44 && result.pause && result.speed && result.adapt
-    && result.snapshotStatus === 'extinct' && result.alive === 0 && result.reach === '0%'
+    && result.runVisible && result.resultControl && result.event >= 44 && result.pause && result.speed
+    && result.noDuplicateProgressionNav && result.snapshotStatus === 'extinct' && result.alive === 0 && result.reach === '0%'
     && result.trophies.includes('First Extinction'), `terminal world failed: ${JSON.stringify(result)}`);
   await evaluate(`window.__CELL_SPHERE_APP__.trophyNotifications.hold('browser-evidence',true)`); await screenshot('shell-result-desktop.png'); await trustedId(t, 'result-close'); ok(await evaluate(`document.getElementById('context-shell').hidden`), 'Result did not close');
   ok(await evaluate(`window.__CELL_SPHERE_APP__.continuation.status==='cancelled'`), 'trusted Result interaction did not permanently cancel Auto Next');
@@ -123,7 +121,9 @@ export async function runScenario(t) {
 
   const runIdentity = await evaluate('window.__CELL_SPHERE_APP__.worldIdentity.resultTransactionKey'); await trustedId(t, 'scene-evolution'); await wait(160);
   const nodeId = await evaluate(`window.__CELL_SPHERE_APP__.memorySnapshot.nodeStates.find(n=>n.reachable&&n.affordable&&!n.owned)?.id`); ok(nodeId, 'no adjacent affordable Skill Cell');
-  const ownedBefore = await evaluate('window.__CELL_SPHERE_APP__.meta.memoryNodes.length'); await evaluate(`window.__CELL_SPHERE_APP__.selectMemoryNode(${JSON.stringify(nodeId)})`); await trustedId(t, 'memory-unlock');
+  const ownedBefore = await evaluate('window.__CELL_SPHERE_APP__.meta.memoryNodes.length'); await evaluate(`window.__CELL_SPHERE_APP__.selectMemoryNode(${JSON.stringify(nodeId)})`);
+  const skillDetail = await evaluate(`document.getElementById('memory-node-panel').textContent`); ok(skillDetail.includes('Gameplay') && skillDetail.includes('World Potential') && skillDetail.includes('→') && skillDetail.includes('held'), `Skill detail lacks before/after evidence: ${skillDetail}`);
+  await trustedId(t, 'memory-unlock');
   ok(await evaluate(`window.__CELL_SPHERE_APP__.meta.memoryNodes.length`) === ownedBefore + 1, 'Skill unlock transaction failed');
   ok(await evaluate(`window.__CELL_SPHERE_APP__.phase==='result'&&window.__CELL_SPHERE_APP__.worldIdentity.resultTransactionKey===${JSON.stringify(runIdentity)}`), 'Evolution replaced terminal world authority');
   await trustedId(t, 'scene-trophies'); ok(await evaluate(`window.__CELL_SPHERE_APP__.trophySnapshot.nodeStates.length===96`), 'Trophy scene incomplete');
@@ -140,7 +140,7 @@ export async function runScenario(t) {
   await trustedId(t, 'trophy-notification-action'); ok(await evaluate(`window.__CELL_SPHERE_APP__.scene==='trophies'&&window.__CELL_SPHERE_APP__.trophyUi.selectedId!==null&&document.getElementById('trophy-tab-badge').hidden`), 'Trophy notification click did not route to detail and acknowledge');
   await evaluate(`window.__CELL_SPHERE_APP__.trophyNotifications.hold('browser-evidence',false)`);
   const bounded = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {...a.worldResourceAudit(),raf:a.frameAudit}})()`);
-  ok(!bounded.historyRequests && !bounded.adaptationEffects && !bounded.adaptationBytes && !bounded.adaptationTimers && !bounded.raf.errors, `replacement resources leaked: ${JSON.stringify(bounded)}`);
+  ok(!bounded.historyRequests && !bounded.raf.errors, `replacement resources leaked: ${JSON.stringify(bounded)}`);
 
   await installFirstReplacementCapture(evaluate);
   const unattended = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.continuation.durationMs=800;a.settings={...a.settings,autoContinue:true};return a.worldIdentity.worldSessionId})()`);
@@ -170,11 +170,11 @@ async function runIdentityMigrationScenario({ evaluate, wait, poll }, initialBoo
   await wait(1800); ok(await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000), 'legacy namespace reload failed');
   const migrated = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__,old=['incremental','network','game'].join('-');
     const canonical=Object.fromEntries(['meta','settings','history'].map(k=>[k,localStorage.getItem(b.storage[k])]));
-    return {score:a.meta.bestScore,total:a.meta.totalEchoes,balance:a.meta.echoBalance,runs:a.meta.runs,seed:a.meta.worldSeedIndex,
+    return {score:a.meta.bestScore,legacyScore:a.meta.legacyBestScore,total:a.meta.totalEchoes,balance:a.meta.echoBalance,runs:a.meta.runs,seed:a.meta.worldSeedIndex,
       keys:a.meta.resultKeys.slice(),owned:a.meta.memoryNodes.slice(),trophies:a.meta.trophyIds.slice(),legacy:a.meta.legacyTrophyIds.slice(),queue:a.meta.trophyQueue.slice(),
       history:a.archive.worlds.map(w=>w.id),motion:a.settings.motion,speed:a.settings.speed,canonical:Object.values(canonical).every(Boolean),
       old:Object.values({m:localStorage.getItem(old+':meta:v1'),s:localStorage.getItem(old+':settings:v3'),h:localStorage.getItem(old+':history:v2')}).every(Boolean)}})()`);
-  ok(migrated.score === 424242 && migrated.total === 321 && migrated.balance === 123 && migrated.runs === 7 && migrated.seed === 11
+  ok(migrated.score === 0 && migrated.legacyScore === 424242 && migrated.total === 321 && migrated.balance === 123 && migrated.runs === 7 && migrated.seed === 11
     && migrated.keys[0] === 'legacy-result-key' && migrated.owned[0] === 'reach-horizon-instinct'
     && migrated.trophies[0] === 'evolution-first-world' && migrated.legacy[0] === 'reach-river-touch'
     && migrated.queue[0] === 'evolution-first-world' && migrated.history[0] === 'legacy-world'
@@ -207,8 +207,8 @@ async function shellRect(evaluate) { return evaluate(`(()=>{const e=document.get
 async function layoutEvidence(evaluate) { return evaluate(`(()=>{const tabs=[...document.querySelectorAll('#scene-selector [role=tab]')],e=document.getElementById('current-event-button').getBoundingClientRect(),d=document.querySelector('.command-rail').getBoundingClientRect(),s=document.getElementById('context-shell').getBoundingClientRect(),overlap=(a,b)=>!(a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom),rect=r=>({left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height});return {noOverflow:document.documentElement.scrollWidth<=innerWidth,selectorMin:Math.min(...tabs.map(x=>x.getBoundingClientRect().height)),eventMin:e.height,controlsBounded:e.left>=0&&e.right<=innerWidth&&d.left>=0&&d.right<=innerWidth,eventDockOverlap:overlap(e,d),eventShellOverlap:overlap(e,s),event:rect(e),dock:rect(d),shell:rect(s)}})()`); }
 function sameRect(a, b, tolerance) { return ['left','top','right','bottom','width','height'].every((key) => Math.abs(a[key] - b[key]) <= tolerance); }
 export async function installFirstReplacementCapture(evaluate) {
-  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,old=a.worldIdentity.worldSessionId,make=a.makeRenderer.bind(a);a.__firstReplacementFrame=null;a.makeRenderer=(...args)=>{make(...args);const r=a.renderer,render=r.render.bind(r);r.render=s=>{const snap=s.snapshot,target=snap?.worldSessionId!==old;if(!target)return render(s);const count=v=>v?[...v].reduce((n,x)=>n+(x!==0),0):0,before={blank:snap?.blank===true,status:snap?.status,life:count(snap?.lifeState)+count(snap?.biomass),events:count(snap?.eventStrength),highlights:s.highlightedCells?.length??0,adaptation:Boolean(s.adaptation)};const accepted=render(s);a.__firstReplacementFrame={backend:r.backend,accepted,before,after:r.lastFrameAudit,presentation:a.presentationAudit.lastBlank};r.render=render;a.makeRenderer=make;return accepted}}})()`);
+  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,old=a.worldIdentity.worldSessionId,make=a.makeRenderer.bind(a);a.__firstReplacementFrame=null;a.makeRenderer=(...args)=>{make(...args);const r=a.renderer,render=r.render.bind(r);r.render=s=>{const snap=s.snapshot,target=snap?.worldSessionId!==old;if(!target)return render(s);const count=v=>v?[...v].reduce((n,x)=>n+(x!==0),0):0,before={blank:snap?.blank===true,status:snap?.status,life:count(snap?.lifeState)+count(snap?.biomass),events:count(snap?.eventStrength),highlights:s.highlightedCells?.length??0};const accepted=render(s);a.__firstReplacementFrame={backend:r.backend,accepted,before,after:r.lastFrameAudit,presentation:a.presentationAudit.lastBlank};r.render=render;a.makeRenderer=make;return accepted}}})()`);
 }
-export function assertBlankReplacement(frame, label) { ok(frame?.accepted && frame.before.blank && frame.before.status === 'starting', `${label} first replacement was not blank`); ok(frame.before.life === 0 && frame.before.events === 0 && frame.before.highlights === 0 && !frame.before.adaptation, `${label} retained presentation`); ok(frame.after?.lifeCells === 0 && frame.after?.eventCells === 0 && !frame.after?.adaptation, `${label} retained renderer buffers`); if (frame.backend === 'webgl2') ok(frame.after.dynamic?.life === 0 && frame.after.dynamic?.events === 0 && frame.after.dynamic?.adaptations === 0, 'WebGL2 dynamic buffers not clear'); }
+export function assertBlankReplacement(frame, label) { ok(frame?.accepted && frame.before.blank && frame.before.status === 'starting', `${label} first replacement was not blank`); ok(frame.before.life === 0 && frame.before.events === 0 && frame.before.highlights === 0, `${label} retained presentation`); ok(frame.after?.lifeCells === 0 && frame.after?.eventCells === 0, `${label} retained renderer buffers`); if (frame.backend === 'webgl2') ok(frame.after.dynamic?.life === 0 && frame.after.dynamic?.events === 0, 'WebGL2 dynamic buffers not clear'); }
 function distance(a, b) { return Math.hypot(...a.map((value, index) => value - b[index])); }
 function ok(value, message) { if (!value) throw new Error(message); }

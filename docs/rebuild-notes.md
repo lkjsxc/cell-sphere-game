@@ -1,6 +1,10 @@
 # Passive living-world rebuild notes
 
-The authoritative interaction contract changed on 2026-08-02:
+> Historical evidence only. This describes the superseded pre-2026-08-04
+> implementation. Active Adaptations and the former 642-cell Evolution model are
+> retired; see `status.md` for current behavior.
+
+The historical authoritative interaction contract changed on 2026-08-02:
 
 - ordinary globe taps select cells for inspection and cannot influence growth;
 - autonomous inoculation uses a dedicated seeded weighted stream;

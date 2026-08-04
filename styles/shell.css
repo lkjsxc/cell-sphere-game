@@ -51,7 +51,7 @@
 .hud-event strong { grid-column: 1 / -1; overflow: hidden; color: var(--text-primary); font-size: var(--fs-caption); line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
 .hud-event i { width: .5rem; height: .5rem; background: var(--state-info); border-radius: 50%; }
 .hud-event[data-read="true"] i { visibility: hidden; }
-.command-rail { grid-template-columns: auto auto auto; }
+.command-rail { grid-template-columns: auto auto; }
 #result-control { min-height: var(--touch-min); }
 .time-dial.is-complete .clock-hand { transform: rotate(360deg); opacity: .78; }
 .time-dial.is-complete .clock-face { box-shadow: inset 0 0 0 2px var(--life-core); }
@@ -86,7 +86,7 @@
   user-select: text;
 }
 .context-result, .context-history, .context-event-log, .context-metric,
-.context-menu, .context-adaptations, .skill-detail, .context-confirm {
+.context-menu, .skill-detail, .context-confirm {
   display: grid;
   grid-template-rows: auto minmax(0, auto) minmax(0, 1fr) auto;
   overflow: hidden;
@@ -144,8 +144,8 @@
   #run-screen { padding-top: calc(4rem + var(--safe-top)); }
   .hud-bottom { display: grid; width: 100%; }
   .hud-event { position: absolute; right: auto; bottom: calc(4.5rem + var(--safe-bottom)); left: calc(var(--sp-1) + var(--safe-left)); width: min(23rem, calc(100vw - var(--sp-2) - var(--safe-left) - var(--safe-right))); max-width: none; }
-  .command-rail { position: absolute; right: calc(var(--sp-1) + var(--safe-right)); bottom: calc(var(--sp-1) + var(--safe-bottom)); width: auto; grid-template-columns: 90px minmax(7.25rem, 1fr) 4.5rem; }
-  .rail-btn:not(.dock-primary) span { display: inline; }
+  .command-rail { position: absolute; right: calc(var(--sp-1) + var(--safe-right)); bottom: calc(var(--sp-1) + var(--safe-bottom)); width: auto; grid-template-columns: 90px 4.5rem; }
+  .rail-btn span { display: inline; }
   #menu-button::before { content: none; }
   .context-shell {
     inset: auto var(--safe-right) var(--safe-bottom) var(--safe-left);
@@ -156,25 +156,13 @@
   .context-shell::before { content: ""; position: absolute; z-index: 2; top: 7px; left: 50%; width: 2.5rem; height: 3px; background: var(--border-strong); border-radius: var(--radius-pill); transform: translateX(-50%); }
   .context-surface { padding: var(--sp-4) var(--sp-3) calc(var(--sp-3) + var(--safe-bottom)); }
   .context-surface header { padding-top: var(--sp-2); }
-  .context-shell[data-surface="adaptations"] { height: min(36dvh, 22rem); }
   #app:has(.context-shell:not([hidden])) .hud-event { bottom: calc(56dvh + var(--sp-2) + var(--safe-bottom)); }
-  #app:has(.context-shell[data-surface="adaptations"]:not([hidden])) .hud-event { bottom: calc(36dvh + var(--sp-2) + var(--safe-bottom)); }
-  .context-adaptations { padding-block: var(--sp-3); }
-  .context-adaptations header { min-height: 3.4rem; }
-  .context-adaptations h2 { font-size: 1.05rem; }
-  .adaptation-mode-control { margin: var(--sp-1) 0; }
-  .adaptation-body { padding-top: var(--sp-1); }
-  .adaptation-body .card { gap: var(--sp-1); padding: var(--sp-2); }
-  .adaptation-body .card-effect, .adaptation-body .card-cost { font-size: .72rem; }
-  .adaptation-body summary { display: flex; align-items: center; min-height: var(--touch-min); }
   .context-metric { grid-template-rows: auto 5.9rem 4.5rem minmax(0, 1fr) 3rem; }
 }
 @media (min-width: 700px) and (max-height: 520px) {
   .context-shell { inset: calc(4rem + var(--safe-top)) auto calc(var(--sp-2) + var(--safe-bottom)) calc(var(--sp-2) + var(--safe-left)); width: min(25rem, 45vw); height: auto; border-radius: var(--radius-l); }
-  .context-shell[data-surface="adaptations"] { width: min(25rem, 45vw); height: auto; }
   .context-shell::before { display: none; }
-  #app:has(.context-shell:not([hidden])) .hud-event,
-  #app:has(.context-shell[data-surface="adaptations"]:not([hidden])) .hud-event {
+  #app:has(.context-shell:not([hidden])) .hud-event {
     top: calc(4.5rem + var(--safe-top)); right: calc(var(--sp-2) + var(--safe-right));
     bottom: auto; left: auto; width: min(18rem, 38vw);
   }
@@ -184,9 +172,9 @@
   .hud-metrics { flex-wrap: nowrap; width: 100%; }
   .metric-button { flex: 1 1 0; min-width: 0; }
   .metric-value { font-size: 1rem; }
-  .command-rail { width: calc(100vw - var(--sp-2) - var(--safe-left) - var(--safe-right)); grid-template-columns: 90px minmax(0, 1fr) 4.25rem; }
+  .command-rail { width: auto; grid-template-columns: 90px 4.25rem; }
   .result-summaries, .menu-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (forced-colors: active) {
-  .scene-selector, .context-shell, .metric-count, .metric-row, .hud-event { border: 1px solid CanvasText; }
+  .scene-selector, .context-shell, .metric-button, .metric-count, .metric-row, .hud-event { border: 1px solid CanvasText; }
 }

@@ -1,9 +1,9 @@
-/** Direct cellular projection for the dedicated level-3 Memory atlas. */
+/** Direct cellular projection for the dedicated frequency-5 Evolution atlas. */
 export const MEMORY_STATUS = Object.freeze({
   EMPTY: 0, LOCKED: 1, UNAFFORDABLE: 2, AFFORDABLE: 3, OWNED: 4,
   SELECTED_LOCKED: 5, SELECTED_UNAFFORDABLE: 6, SELECTED_AFFORDABLE: 7, SELECTED_OWNED: 8,
 });
-const KINDS = Object.freeze({ micro: 1, conditional: 2, unlock: 3, keystone: 4, connector: 5, capstone: 6 });
+const KINDS = Object.freeze({ resonance: 1, conditional: 2, unlock: 3, keystone: 4, major: 5, capstone: 6, root: 7 });
 const BRANCHES = Object.freeze({ Reach: 1, Flow: 2, Reserve: 3, Ecology: 4, Perception: 5, Continuity: 6 });
 
 export function createMemoryFields(topo) {
@@ -18,7 +18,7 @@ export function createMemoryFields(topo) {
 }
 
 export function renderMemorySnapshot(topo, meta, scene, emphasizedIds = []) {
-  if (topo.levels !== 3 || topo.nodeCount !== 642) throw new Error('Memory requires the level-3 atlas topology');
+  if (topo.frequency !== 5 || topo.nodeCount !== 252) throw new Error('Evolution requires the frequency-5 atlas topology');
   const count = topo.nodeCount; const status = new Uint8Array(count); const branch = new Uint8Array(count);
   const tier = new Uint8Array(count); const kind = new Uint8Array(count); const imprintWeight = new Float32Array(count);
   const nodeIndex = new Int16Array(count).fill(-1); const emphasis = new Uint8Array(count);
@@ -41,7 +41,7 @@ export function renderMemorySnapshot(topo, meta, scene, emphasizedIds = []) {
     memoryTier: tier, memoryKind: kind, memoryImprintWeight: imprintWeight,
     memoryNodeIndex: nodeIndex, memoryEmphasis: emphasis, memoryScene: scene, nodeStates: scene.nodes,
     metrics: Object.freeze({ coverage: scene.nodes.filter((node) => node.owned).length / count,
-      score: 0, pendingAdaptations: 0 }), focus: focusDirection(topo, focusCells),
+      score: 0 }), focus: focusDirection(topo, focusCells.length ? focusCells : scene.nodes.filter((node) => node.kind === 'root').map((node) => node.cell)),
   });
   return snapshot;
 }
@@ -53,7 +53,7 @@ function statusFor(node, selected) {
   return selected ? MEMORY_STATUS.SELECTED_UNAFFORDABLE : MEMORY_STATUS.UNAFFORDABLE;
 }
 function focusDirection(topo, cells) {
-  const use = cells.length ? cells : [58, 16, 24, 152, 27, 18]; const focus = [0, 0, 0];
-  for (const cell of use) for (let axis = 0; axis < 3; axis++) focus[axis] += topo.positions[cell * 3 + axis];
+  const focus = [0, 0, 0];
+  for (const cell of cells.length ? cells : [0]) for (let axis = 0; axis < 3; axis++) focus[axis] += topo.positions[cell * 3 + axis];
   const length = Math.hypot(...focus); return length ? focus.map((value) => value / length) : [0, 0, 1];
 }

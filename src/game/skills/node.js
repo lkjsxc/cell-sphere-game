@@ -1,13 +1,14 @@
-/** Shared immutable schema for all 642 Evolution Globe Skill Cells. */
+/** Shared immutable schema for all 252 Evolution Globe Skill Cells. */
 import { MEMORY_BRANCH_SIZE, memoryAtlasCell } from './atlas.js';
 
-const LANDMARK_SLOTS = Object.freeze([0, 6, 12, 18, 24, 31, 37, 43, 49, 56, 62, 68, 74, 81, 87, 93, 99, 106]);
+const LANDMARK_SLOTS = Object.freeze([0, 3, 7, 11, 15, 19, 23, 27, 31, 35, 38, 41]);
+const LANDMARK_ROWS = Object.freeze([0, 1, 2, 3, 4, 5, 8, 9, 12, 13, 15, 17]);
 const LANDMARK_KINDS = Object.freeze([
-  ...Array(8).fill('micro'), ...Array(4).fill('conditional'),
-  ...Array(3).fill('unlock'), 'keystone', 'connector', 'capstone',
+  'root', ...Array(5).fill('major'), ...Array(2).fill('conditional'),
+  ...Array(2).fill('unlock'), 'keystone', 'capstone',
 ]);
-// Stable cell-position bands preserve the graph-3 economy without a run-count proxy.
-const MINOR_COST_STARTS = Object.freeze([21, 42, 63, 83, 104]);
+const LANDMARK_COSTS = Object.freeze([8, 18, 24, 32, 42, 55, 60, 90, 75, 140, 350, 800]);
+const LANDMARK_POTENTIAL = Object.freeze([125000, 1000, 1000, 1000, 1000, 1000, 2000, 2000, 2000, 2000, 5000, 9000]);
 const WORDS = Object.freeze({
   reach: [['Fine', 'Patient', 'Sunward', 'Tender', 'Distant', 'Frugal', 'Open', 'Rooted', 'Branching'], ['Runner', 'Front', 'Bud', 'Thread', 'Tip', 'Path', 'Stem', 'Trace', 'Horizon', 'Foothold']],
   flow: [['Clear', 'Pulsed', 'Steady', 'Braided', 'Quiet', 'Swift', 'Open', 'Elastic', 'Deep'], ['Current', 'Channel', 'Junction', 'Pulse', 'Vessel', 'Exchange', 'Stream', 'Conduit', 'Circuit', 'Flow']],
@@ -16,13 +17,13 @@ const WORDS = Object.freeze({
   perception: [['Early', 'Quiet', 'Wide', 'Attentive', 'Sensitive', 'Distant', 'Layered', 'Sharp', 'Measured'], ['Signal', 'Echo', 'Warning', 'Gradient', 'Sense', 'Forecast', 'Pulse', 'Marker', 'Reading', 'Watch']],
   continuity: [['Strong', 'Redundant', 'Remembered', 'Joined', 'Steady', 'Elastic', 'Lasting', 'Woven', 'Restored'], ['Cord', 'Loop', 'Bridge', 'Knot', 'Route', 'Bond', 'Lattice', 'Link', 'Path', 'Thread']],
 });
-const MICRO_EFFECTS = Object.freeze({
-  reach: [['reach', 1.0015], ['growCost', 0.9985], ['regrow', 1.0015]],
-  flow: [['conductance', 1.0015], ['uptake', 1.0012], ['maintenance', 0.9988]],
-  reserve: [['energyCap', 1.0015], ['maintenance', 0.9988], ['reinforce', 1.0012]],
-  ecology: [['uptake', 1.0015], ['stressResist', 1.0012], ['regrow', 1.0012]],
-  perception: [['stressResist', 1.0012], ['heatTol', 1.0012], ['droughtTol', 1.0012], ['toxinTol', 1.0012]],
-  continuity: [['reinforce', 1.0015], ['regrow', 1.0012], ['conductance', 1.0012]],
+const RESONANCE_EFFECTS = Object.freeze({
+  reach: [['reach', 'up', 0.40], ['growCost', 'down', 0.30], ['regrow', 'up', 0.40]],
+  flow: [['conductance', 'up', 0.40], ['uptake', 'up', 0.40], ['maintenance', 'down', 0.30]],
+  reserve: [['energyCap', 'up', 0.40], ['maintenance', 'down', 0.30], ['reinforce', 'up', 0.40]],
+  ecology: [['uptake', 'up', 0.40], ['stressResist', 'up', 0.40], ['regrow', 'up', 0.40]],
+  perception: [['stressResist', 'up', 0.40], ['heatTol', 'up', 0.40], ['droughtTol', 'up', 0.40]],
+  continuity: [['reinforce', 'up', 0.40], ['regrow', 'up', 0.40], ['conductance', 'up', 0.40]],
 });
 const TRAIT_LABELS = Object.freeze({ reach: 'Frontier readiness', growCost: 'Expansion cost', regrow: 'Scar regrowth',
   conductance: 'Neighbor conductance', uptake: 'Nutrient uptake', maintenance: 'Maintenance cost', energyCap: 'Energy capacity',
@@ -31,40 +32,55 @@ const TRAIT_LABELS = Object.freeze({ reach: 'Frontier readiness', growCost: 'Exp
 export const scalar = (key, value, operation = 'multiply') => Object.freeze({ type: 'scalar', key, value, operation });
 export const conditional = (trigger, key, value, operation = 'multiply') => Object.freeze({ type: 'conditional', trigger, key, value, operation });
 export const unlock = (key, mode, bonus = null) => Object.freeze({ type: 'unlock', key, mode, ...(bonus ? { bonus } : {}) });
+export const resonance = (branch, key, direction, cap, scale = 10) =>
+  Object.freeze({ type: 'resonance', branch, key, direction, cap, scale });
 
-/** Eighteen authored landmarks are interleaved with 89 exact minor skills. */
+/** Twelve authored landmarks are interleaved with 30 bounded Resonance Skills. */
 export function defineBranch(branch, rows) {
-  if (rows.length !== 18) throw new Error(`${branch} must define 18 authored landmarks`);
+  if (rows.length !== 18) throw new Error(`${branch} legacy source must define 18 authored rows`);
   const landmarkAt = new Map(LANDMARK_SLOTS.map((slot, index) => [slot, index])); let filler = 0;
   return Object.freeze(Array.from({ length: MEMORY_BRANCH_SIZE }, (_, index) => {
     const landmark = landmarkAt.get(index);
-    const node = landmark !== undefined ? landmarkDraft(branch, rows[landmark], landmark, index)
-      : minorDraft(branch, filler++, index);
+    const node = landmark !== undefined ? landmarkDraft(branch, rows[LANDMARK_ROWS[landmark]], landmark, index)
+      : resonanceDraft(branch, filler++, index);
     return Object.freeze(node);
   }));
 }
 
 function landmarkDraft(branch, row, landmark, index) {
-  const completion = completeUnlock(branch, LANDMARK_KINDS[landmark], row[5]); const effect = completion.effect;
-  return { id: `${branch}-${row[0]}`, nameEn: row[1], effectEn: completion.summary ?? row[2],
-    description: completion.description ?? row[3], cost: row[4],
-    branch: title(branch), tier: tier(index), kind: LANDMARK_KINDS[landmark], authored: true, cell: memoryAtlasCell(branch, index),
+  const kind = LANDMARK_KINDS[landmark];
+  const completion = completeUnlock(branch, kind, strengthenEffect(row[5], kind)); const effect = completion.effect;
+  return { id: `${branch}-${row[0]}`, nameEn: row[1], effectEn: completion.summary ?? effectSummary(effect, row[2]),
+    description: completion.description ?? row[3], cost: LANDMARK_COSTS[landmark], potentialGain: LANDMARK_POTENTIAL[landmark],
+    branch: title(branch), tier: tier(index), kind, authored: true, cell: memoryAtlasCell(branch, index),
     effect, effects: Object.freeze(effect.type === 'scalar' ? { [effect.key]: effect.value } : {}) };
 }
-function minorDraft(branch, filler, index) {
+function resonanceDraft(branch, filler, index) {
   const words = WORDS[branch]; const name = `${words[0][Math.floor(filler / 10)]} ${words[1][filler % 10]}`;
-  const [key, value] = MICRO_EFFECTS[branch][filler % MICRO_EFFECTS[branch].length]; const effect = scalar(key, value);
-  return { id: `${branch}-cell-${name.toLowerCase().replace(' ', '-')}`, nameEn: name, effectEn: scalarSummary(key, value),
-    description: `This permanent ${title(branch)} cell applies its stated change to every later world.`,
-    cost: minorCost(index), branch: title(branch), tier: tier(index), kind: 'micro', authored: false,
-    cell: memoryAtlasCell(branch, index), effect, effects: Object.freeze({ [key]: value }) };
+  const [key, direction, cap] = RESONANCE_EFFECTS[branch][filler % RESONANCE_EFFECTS[branch].length];
+  const effect = resonance(branch, key, direction, cap);
+  return { id: `${branch}-resonance-${name.toLowerCase().replace(' ', '-')}`, nameEn: `${name} Resonance`,
+    effectEn: `${TRAIT_LABELS[key]} follows a bounded diminishing ${title(branch)} curve.`,
+    description: `This permanent Resonance point makes an immediate visible change without unbounded multiplication.`,
+    cost: resonanceCost(filler), potentialGain: resonancePotential(filler), branch: title(branch), tier: tier(index),
+    kind: 'resonance', authored: false, cell: memoryAtlasCell(branch, index), effect, effects: Object.freeze({}) };
 }
-function minorCost(index) { return 1 + MINOR_COST_STARTS.filter((start) => index >= start).length; }
+function resonanceCost(ordinal) { return 10 + Math.round(90 * (ordinal / 29) ** 1.8); }
+function resonancePotential(ordinal) { return Math.round((6000 * Math.exp(-ordinal / 5) + 400) / 100) * 100; }
 function tier(index) { return Math.min(8, 1 + Math.floor(index * 8 / MEMORY_BRANCH_SIZE)); }
 function title(value) { return `${value[0].toUpperCase()}${value.slice(1)}`; }
-function scalarSummary(key, value) {
-  const amount = Math.round(Math.abs(value - 1) * 10000) / 100;
-  return `${TRAIT_LABELS[key]} ${value < 1 ? 'falls' : 'rises'} by ${amount}%.`;
+function effectSummary(effect, fallback) {
+  if (effect.type === 'conditional') return `${TRAIT_LABELS[effect.key] ?? effect.key} changes by ${Math.round(Math.abs(effect.value - 1) * 100)}% while ${effect.trigger.replaceAll('-', ' ')}.`;
+  if (effect.type !== 'scalar' || effect.operation === 'add') return fallback;
+  const amount = Math.round(Math.abs(effect.value - 1) * 1000) / 10;
+  return `${TRAIT_LABELS[effect.key]} ${effect.value < 1 ? 'falls' : 'rises'} by ${amount}%.`;
+}
+function strengthenEffect(effect, kind) {
+  if (effect.type === 'unlock') return effect;
+  if (effect.operation === 'add') return effect;
+  const floor = kind === 'root' ? 0.12 : kind === 'major' ? 0.08 : kind === 'conditional' ? 0.15 : 0.20;
+  const amount = Math.max(floor, Math.abs(effect.value - 1) * (kind === 'major' ? 2.5 : 2));
+  return Object.freeze({ ...effect, value: effect.value < 1 ? 1 - amount : 1 + amount });
 }
 
 const UNLOCK_TRAITS = Object.freeze({ reach: ['reach', 'Frontier readiness'], flow: ['conductance', 'Transport capacity'],
@@ -72,8 +88,10 @@ const UNLOCK_TRAITS = Object.freeze({ reach: ['reach', 'Frontier readiness'], fl
   ecology: ['uptake', 'Nutrient uptake'], perception: ['stressResist', 'Stress resistance'] });
 function completeUnlock(branch, kind, raw) {
   if (raw.type !== 'unlock') return { effect: raw };
-  const [key, label] = UNLOCK_TRAITS[branch]; const gain = kind === 'capstone' ? 0.04 : kind === 'unlock' ? 0.015 : 0.025;
-  const bonus = raw.bonus ?? scalar(key, 1 + gain); const effect = Object.freeze({ ...raw, bonus });
+  const [key, label] = UNLOCK_TRAITS[branch]; const gain = kind === 'capstone' ? 0.30 : kind === 'keystone' ? 0.22 : 0.10;
+  const supplied = raw.bonus;
+  const bonus = supplied ? strengthenEffect(supplied, kind) : scalar(key, 1 + gain);
+  const effect = Object.freeze({ ...raw, bonus });
   const role = kind === 'capstone' ? 'The branch’s final cell applies its strongest completed trait improvement.'
     : kind === 'connector' ? 'This late branch cell applies a durable integration improvement.'
       : kind === 'keystone' ? 'The completed branch lesson applies this deterministic improvement.'

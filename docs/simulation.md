@@ -1,98 +1,78 @@
-# Simulation
+# Simulation contract
 
-Deterministic 10 Hz typed-array network authority. No DOM, rendering, storage,
-or audio imports.
+## Determinism
 
-## Static inputs
+A world is determined by seed, world ordinal, strain/challenge, and compiled
+Evolution configuration. Speed controls how many fixed ticks are requested; it
+does not alter tick content. Worker and fallback transports consume the same
+configuration and command sequence.
 
-A stable level-4 geodesic graph supplies 2,562 cells and 7,680 edges. The
-immutable WorldModel adds land/ocean, elevation, connected whole-cell lakes,
-lake depth/shore/freshwater influence, frozen lake records, climate, nutrients,
-forest density, biome, region, hazards, features, landmarks, and central biome
-factors. Rainfall and priority-flood drainage analysis remain private generation
-details.
+RNG streams are subsystem-specific. Presentation has no RNG stream in authority.
+Habitat rejection happens before growth RNG consumption, so unlocking a habitat
+changes only intended future choices.
 
-A dedicated inoculation RNG performs weighted sampling among ecologically
-valid resource candidates above a plausibility floor; it does not always pick
-the numerical optimum. The selected cell is recorded in replay, History,
-inspector state, and result.
+## State
 
-## Tick order
+Authoritative state includes typed arrays for life, biomass, energy, stress,
+network structure, event strength, per-cell resource reserve, depletion,
+habitat-block reasons, and lifetime unique habitat occupancy. Bounded ledgers
+track Reach, connectedness, resource transfer, crises, and diagnostics.
 
-1. Rebuild the tiny effective trait block from compiled conditional skills.
-2. Environment every 5 ticks: entropy/season LUTs, moisture/temperature,
-   toxins, biome-scaled renewal, and per-cell graph-arrival event effects.
-3. Metabolism: biome-scaled uptake/upkeep, energy, stress, tissue maturity.
-4. Transport: terrain-cost-scaled flux, reinforcement, decay, pruning/rejoin.
-5. Growth: seeded frontier trials using habitat, climate, resources, crowding.
-6. Death/reclamation, then an exact liveness reconciliation over all 2,562 cells.
-7. Zero living cells finalize immediately; spent tissue or the 360 s ceiling enters
-   a bounded terminal collapse of at most 20 ticks.
-8. Connectivity every 20 ticks.
-9. Summary every 10 ticks: SCORE metrics, geography/morphology milestones,
-   bounded whole-cell Trophy living proof, crisis lifecycle, Adaptation offers,
-   History batches.
-10. Resolve at most one automatic FIFO Adaptation at the authoritative tick.
+State excludes DOM, storage, WebGL, camera, frame cadence, wall-clock time,
+History playback, menu state, and notification state.
 
-## Adaptations
+## Tick phases
 
-Canonical status is `idle`, `running`, `terminal-collapse`, or `extinct`.
-Offers never pause. Terminal state is monotonic and every run finalizes by tick
-3,620; natural zero-liveness finalizes in the same authoritative tick.
-Each record contains stable ID/index, offer tick/reason, three unique fixed
-options, resolution tick/card/mode. Queue cap is eight; ordinary runs create at
-most five. Manual commands validate offer and card IDs and apply once at the
-current tick. Switching to Random resolves pending FIFO offers at no more than
-one per tick. Random selection is exact-uniform through rejection sampling on
-a dedicated xoshiro stream. Each accepted choice records a deterministic living
-origin cell. The authority computes a versioned presentation-only `Uint16Array` arrival field
-at that exact tick. Deterministic weighted shortest-path costs read biomass,
-energy, stress, living degree, terrain, category, and a card/origin hash; dead
-cells block traversal and a category-specific 28–40% cap keeps large components
-local. The field never enters replay, result hash, card application, or RNG.
+A fixed tick updates, in deterministic order:
 
-## Spatial events
+1. environmental/event fields;
+2. finite resource renewal;
+3. metabolism, uptake, transfer, and maintenance;
+4. growth attempts and habitat checks;
+5. death and structural transitions;
+6. Reach/resource/crisis ledgers;
+7. terminal detection and bounded history capture.
 
-Every scheduled family owns a deterministic weighted graph field with quantized
-arrival time, influence, and predecessor. Drought, bloom, and blight traverse
-land only; freshwater influence, lakes, shores, forest, moisture, altitude,
-ridges, ocean inertia, and a stable directional wind alter family-specific travel. Authority applies each
-cell relative to its own arrival. Snapshots transfer the exact current family
-and strength bytes consumed by WebGL2 and Canvas; neither renderer reconstructs
-a center/radius cap. Ended fields release their retained traversal arrays.
+Commands are applied only at protocol boundaries and are acknowledged or
+explicitly rejected.
 
-## Reach authority
+## Finite resources and extinction
 
-`birthCell` and `killCell` are the only production writes to living state. Each
-transition records one fixed cause into a 15-second ring of typed buckets and
-full-run totals; eight recent representative cells per cause are retained.
-Rolling gain minus loss exactly reconciles current living cells against the
-window boundary, and full-run gain minus loss reconciles final liveness.
-Snapshots carry top direct causes plus bounded supporting/limiting condition
-scores. Results preserve complete cause totals and the strongest one-second
-turning point. Inspection and highlighting are observational only.
+Every cell begins with generated local stock and bounded renewal. Uptake removes
+stock before crediting life energy. Growth has an explicit resource cost;
+maintenance continues while cells live. Overextension can therefore strand
+network regions even when distant stock remains.
 
-## Observation
+Terminal causes derive from actual authority. Early worlds normally report
+`resource-exhaustion` or `maintenance-starvation`; there is no hidden scripted
+kill. The hard terminal remains near 360 seconds as a final bound.
 
-`inspectCell(node)` returns one compact dynamic record (life, biomass, energy,
-nutrient, moisture, temperature, toxicity, stress, and internal transport
-summary) and performs no writes. Presentation snapshots expose only biomass,
-stress, alive, and explicit life-state cell arrays—never transport edges.
-Snapshot/history/result serialization likewise consumes no RNG. Trophy proof
-marks each cell only on its first authoritative birth and scans bounded living
-lake regions only at the existing one-second summary cadence; no per-tick extra
-world scan or unbounded history is introduced.
-Observational-neutrality integration tests compare hash, score, cause,
-Adaptations, History, replay, and Imprint after hundreds of queries.
+## World eras
 
-## Replay and History
+The persisted world ordinal selects deterministic event policy:
 
-Replay schema 2 records strain, inoculation, mode changes, fixed offers, and
-selections with authoritative ticks/card indices. The terminal hash folds
-dynamic arrays, replay, inoculation, mode, version, and owned cards. History is
-capped at 80 semantic events with deterministic final-slot reservation and
-coalescing. Major events carry up to eight deterministic primary cells.
-Cell-only approximate checkpoints are thinned below 256 KiB/run, use strict
-`INHV` v1 decoding, and are retained for the newest ten worlds in IndexedDB.
-Main-thread persistence converts stable event types/arguments into localized
-presentation keys.
+- worlds 1–2: no harmful events;
+- world 3: one mild field beginning at tick 2400–2520;
+- worlds 4–5: one or two;
+- worlds 6–10: two to four;
+- later worlds: three to six.
+
+Challenge may modify deterministic count/intensity, but wall-clock waiting and
+speed do not.
+
+## Habitat access
+
+Compiled capabilities cover lakes, tundra, snow/ice, shallow-ocean edge, general
+shallow ocean, and deep ocean. A biome requirement function returns the missing
+capability and the lifecycle records the block. Inspector uses the same reason.
+
+Biome ecology remains distinct after unlock. Deep ocean has low suitability,
+high maintenance, low renewal, and high route cost. Unlocks enable possibility;
+they do not bypass ecological cost.
+
+## Result projection
+
+The terminal result is plain immutable evidence: duration, causes, Reach,
+resource use, unique habitat occupancy, crises, six SCORE inputs, World
+Potential, History, replay data, and final hash. Pure SCORE and Trophy fact
+builders consume this result outside simulation. Rendering never contributes.

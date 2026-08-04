@@ -7,7 +7,7 @@ import { BALANCE as B } from '../game/balance.js';
 import { createRng } from '../core/prng.js';
 import { createTopology } from '../world/icosphere.js';
 import { createFields } from '../world/fields.js';
-import { buildEntropyLut, buildSeasonLut, buildNodeSeasonOffsets } from './environment.js';
+import { buildEntropyLut, buildSeasonLut, buildNodeSeasonOffsets, environmentPressureForEra } from './environment.js';
 import { scheduleEvents } from './events.js';
 import { recordHistory } from './replay.js';
 import { birthCell, killCell } from './lifecycle/cell-lifecycle.js';
@@ -18,44 +18,47 @@ const STREAM = Object.freeze({
   world: 0x51ab3d71,
   growth: 0x9e3779b9,
   event: 0x0e7e17a1,
-  content: 0x2545f491,
-  decision: 0xd3c1510a,
   inoculation: 0x1a0c01a7,
 });
 
 /** @param {Object} cfg run configuration */
 export function createRunState(cfg) {
   const seed = cfg.seed >>> 0;
-  const adaptationMode = cfg.adaptationMode ?? 'random';
-  if (adaptationMode !== 'random' && adaptationMode !== 'manual') {
-    throw new Error(`invalid adaptation mode: ${adaptationMode}`);
-  }
+  const worldOrdinal = Number.isInteger(cfg.worldOrdinal) && cfg.worldOrdinal > 0 ? cfg.worldOrdinal : 1;
+  const worldEra = Number.isInteger(cfg.worldEra) && cfg.worldEra > 0 ? cfg.worldEra : eraForOrdinal(worldOrdinal);
   const topo = createTopology(4);
   const fields = createFields(createRng(seed ^ STREAM.world), topo);
   const simRng = createRng(seed ^ STREAM.growth);
   const eventRng = createRng(seed ^ STREAM.event);
-  const contentRng = createRng(seed ^ STREAM.content);
-  const decisionRng = createRng(seed ^ STREAM.decision);
   const inoculationRng = createRng(seed ^ STREAM.inoculation);
   const N = topo.nodeCount;
   const E = topo.edgeCount;
   const traits = traitsFor(cfg.strainId ?? 'pioneer', cfg.memoryEffects ?? {});
+  const habitatCapabilities = Array.isArray(cfg.habitatCapabilities) ? [...new Set(cfg.habitatCapabilities)] : [];
+  const resourceReserve = createResourceReserve(fields);
+  const initialResourceReserve = sumArray(resourceReserve);
 
   const state = {
     topo, fields, traits, activeTraits: { ...traits },
     memoryConditionals: Array.isArray(cfg.memoryConditionals) ? cfg.memoryConditionals : [],
     memoryUnlocks: Array.isArray(cfg.memoryUnlocks) ? cfg.memoryUnlocks : [],
+    habitatCapabilities, habitatCapabilitySet: new Set(habitatCapabilities),
+    worldPotential: Number.isFinite(cfg.worldPotential) && cfg.worldPotential >= 0 ? Math.round(cfg.worldPotential) : 16000,
+    potentialVersion: Number.isInteger(cfg.potentialVersion) ? cfg.potentialVersion : 1,
+    worldOrdinal, worldEra, environmentPressure: environmentPressureForEra(worldEra),
     challenge: cfg.challenge ?? null, seed, runId: Number.isInteger(cfg.runId) ? cfg.runId : 0,
-    simRng, eventRng, contentRng, decisionRng, inoculationRng,
+    simRng, eventRng, inoculationRng,
     tick: 0, entropy: 0, status: 'idle', extinction: null,
     terminalCollapseStart: -1, terminalDeadline: -1, terminalCause: null,
     strictInvariants: cfg.strictInvariants === true,
     diagnostics: { livenessRepairs: 0, nonFiniteRepairs: 0 },
 
     biomass: new Float32Array(N), energy: new Float32Array(N),
-    nutrient: fields.baseNutrient.slice(), moisture: fields.baseMoisture.slice(),
+    nutrient: fields.baseNutrient.slice(), resourceReserve, initialResourceReserve,
+    resourceTransferred: 0, resourceDepletedCells: 0,
+    moisture: fields.baseMoisture.slice(),
     temperature: fields.baseTemp.slice(), toxicity: new Float32Array(N),
-    stress: new Float32Array(N), membrane: new Float32Array(N), alive: new Uint8Array(N), reachDamageCause: new Uint8Array(N),
+    stress: new Float32Array(N), alive: new Uint8Array(N), reachDamageCause: new Uint8Array(N),
 
     conductance: new Float32Array(E), edgePeak: new Float32Array(E),
     flux: new Float32Array(E), edgeAge: new Uint16Array(E), edgeActive: new Uint8Array(E),
@@ -63,13 +66,12 @@ export function createRunState(cfg) {
     pressure: new Float32Array(N), nextEnergy: new Float32Array(N),
     expansions: new Uint8Array(N), bfsVisited: new Uint8Array(N), bfsQueue: new Uint32Array(N),
 
-    entropyLut: buildEntropyLut(), seasonLut: buildSeasonLut(),
+    entropyLut: buildEntropyLut(worldEra), seasonLut: buildSeasonLut(),
     nodeSeasonOffset: buildNodeSeasonOffsets(topo),
-    events: scheduleEvents(eventRng, topo, fields, cfg.challenge ?? null),
+    events: scheduleEvents(eventRng, topo, fields, cfg.challenge ?? null, worldOrdinal),
     crisesEndured: 0, crisesTotal: 0, trophyProof: createTrophyProof(topo, fields),
 
-    adaptationMode, adaptationOffers: [], nextOfferIndex: 0,
-    lastOffered: [], lastAdaptationResolutionTick: -1, ownedCards: [],
+    habitatBlocked: new Uint16Array(N), habitatVisited: new Uint8Array(N), habitatOccupancy: new Uint32Array(14),
 
     aliveCount: 0, coverage: 0, peakCoverage: 0, sustainedSum: 0,
     liveness: { livingCount: 1, totalBiomass: 1.2, maxBiomass: 1.2,
@@ -77,12 +79,13 @@ export function createRunState(cfg) {
       unchangedTicks: 0, previousLivingCount: 1, previousBiomass: 1.2 },
     sustainedSamples: 0, connectedShare: 0, peakConnectedShare: 0,
     minConnectedWhileMajority: 1, largestComponent: 0,
-    totalUptake: 0, totalMaintenance: 0, phenotypes: [],
-    causes: { starvation: 0, heat: 0, cold: 0, drought: 0, toxin: 0, event: 0, collapse: 0 }, reach: createReachLedger(),
+    totalUptake: 0, totalMaintenance: 0, stressBurdenSum: 0, stressBurdenSamples: 0, phenotypes: [],
+    causes: { 'resource-exhaustion': 0, 'maintenance-starvation': 0, fragmentation: 0,
+      heat: 0, cold: 0, drought: 0, toxin: 0, event: 0, collapse: 0 }, reach: createReachLedger(),
 
     phaseIndex: -1, coverageMilestoneIndex: 0, loopMilestone: false, geographySeen: 0,
     wasFragmented: false, reconnectedUntil: -1,
-    replayVersion: 2, replay: [], history: [],
+    replayVersion: 3, replay: [], history: [],
   };
 
   const start = cfg.inoculate ?? selectInoculation(fields, inoculationRng);
@@ -186,6 +189,15 @@ export function beginTerminalCollapse(state, reason) {
   recordHistory(state, 'terminal-collapse', { id: reason });
   return true;
 }
+
+function createResourceReserve(fields) {
+  const reserve = new Float32Array(fields.baseNutrient.length);
+  for (let i = 0; i < reserve.length; i++) reserve[i] = Math.fround(fields.baseNutrient[i] * B.RESOURCE_RESERVE_SCALE
+    * Math.max(.25, fields.resourceRenewal?.[i] ?? 1));
+  return reserve;
+}
+function sumArray(values) { let total = 0; for (const value of values) total += value; return total; }
+function eraForOrdinal(ordinal) { return ordinal <= 2 ? 1 : ordinal === 3 ? 2 : ordinal <= 5 ? 3 : ordinal <= 10 ? 4 : 5; }
 
 function isLand(fields, i) {
   if (fields.landMask != null) return Boolean(fields.landMask[i]);

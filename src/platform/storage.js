@@ -1,15 +1,14 @@
 /** Versioned, corruption-safe persistence for cross-run progression. */
-import { ADAPTATIONS } from '../game/adaptations.js';
-import { MEMORY_GRAPH_VERSION, MEMORY_NODE_IDS } from '../game/skills/index.js';
+import { MEMORY_GRAPH_VERSION, MEMORY_NODE_IDS, getMemoryNode } from '../game/skills/index.js';
+import { LEGACY_MEMORY_BY_ID, LEGACY_MEMORY_GRAPH_VERSION } from '../game/skills/legacy-v4-manifest.js';
 import { LEGACY_TROPHY_IDS, TROPHY_CATALOG_VERSION, TROPHY_IDS } from '../game/trophies/index.js';
 import { TROPHY_MAX_KEYS, TROPHY_SUM_KEYS } from '../game/trophies/keys.js';
-import { createTopology } from '../world/icosphere.js';
+import { createGeodesicTopology, createTopology } from '../world/icosphere.js';
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 const VALID_MEMORY_IDS = new Set(MEMORY_NODE_IDS);
 const VALID_TROPHY_IDS = new Set(TROPHY_IDS);
 const VALID_LEGACY_TROPHY_IDS = new Set(LEGACY_TROPHY_IDS);
-const VALID_ADAPTATION_IDS = new Set(ADAPTATIONS.map((card) => card.id));
-const ATLAS_TOPOLOGY = Object.freeze({ kind: 'icosphere', levels: 3, nodeCount: 642, edgeCount: 1920 });
+const ATLAS_TOPOLOGY = Object.freeze({ kind: 'geodesic', frequency: 5, nodeCount: 252, edgeCount: 750 });
 export const LEGACY_MEMORY_MAP = Object.freeze({
   'first-trace': 'perception-quiet-echo', 'deep-reserve': 'reserve-deep-vault',
   'remembered-reach': 'reach-horizon-instinct', 'flow-imprint': 'flow-channel-imprint',
@@ -17,60 +16,83 @@ export const LEGACY_MEMORY_MAP = Object.freeze({
 });
 
 export function defaultMeta() {
-  return { schema: 8, memoryGraphVersion: MEMORY_GRAPH_VERSION, trophyVersion: TROPHY_CATALOG_VERSION,
-    bestScore: 0, totalEchoes: 0, echoBalance: 0, runs: 0, worldSeedIndex: 0, resultKeys: [],
-    memoryNodes: [], quarantinedMemoryNodes: [], imprints: [], trophyIds: [], legacyTrophyIds: [], trophyQueue: [], trophyBackfillVersion: 0,
-    trophyProgress: { version: 3, adaptationIds: [], geographyMask: 0, geographyVersion: 3,
-      crisisMask: 0, adaptationCategoryMask: 0, lakeTypeMask: 0, lakeSalinityMask: 0, aggregate: {} }, migrationNotice: null };
+  return { schema: 9, memoryGraphVersion: MEMORY_GRAPH_VERSION, memoryMigrationVersion: MEMORY_GRAPH_VERSION,
+    trophyVersion: TROPHY_CATALOG_VERSION,
+    scoreModelVersion: 2, bestScore: 0, legacyBestScore: 0, totalEchoes: 0, echoBalance: 0, runs: 0, worldSeedIndex: 0, resultKeys: [],
+    memoryNodes: [], legacyMemoryNodes: [], quarantinedMemoryNodes: [], imprints: [], trophyIds: [], legacyTrophyIds: [], trophyQueue: [], trophyBackfillVersion: 0,
+    trophyProgress: { version: 4, geographyMask: 0, geographyVersion: 3,
+      crisisMask: 0, lakeTypeMask: 0, lakeSalinityMask: 0, aggregate: {} },
+    legacyAdaptationProgress: { ids: [], categoryMask: 0 }, migrationNotice: null };
 }
 
 /** Recognized ownership is monotonic across graph versions; topology never closes islands. */
 export function validateMeta(raw) {
   const base = defaultMeta(); if (raw === null || typeof raw !== 'object') return base;
   const sourceSchema = Number.isInteger(raw.schema) ? raw.schema : 1; const out = { ...base };
-  out.bestScore = boundedInteger(raw.bestScore, 0); out.totalEchoes = boundedInteger(raw.totalEchoes, 0);
+  const sourceScoreVersion = boundedInteger(raw.scoreModelVersion, 1);
+  out.bestScore = sourceScoreVersion >= 2 ? boundedInteger(raw.bestScore, 0) : 0;
+  out.legacyBestScore = Math.max(boundedInteger(raw.legacyBestScore, 0), sourceScoreVersion < 2 ? boundedInteger(raw.bestScore, 0) : 0);
+  out.totalEchoes = boundedInteger(raw.totalEchoes, 0);
   out.echoBalance = Number.isFinite(raw.echoBalance) && raw.echoBalance >= 0 ? Math.floor(raw.echoBalance)
     : sourceSchema === 1 ? out.totalEchoes : 0;
   out.runs = boundedInteger(raw.runs, 0);
   out.worldSeedIndex = Math.max(out.runs, boundedInteger(raw.worldSeedIndex, out.runs));
   if (Array.isArray(raw.resultKeys)) out.resultKeys = [...new Set(raw.resultKeys.filter((key) =>
     typeof key === 'string' && key.length > 0 && key.length <= 128))].slice(-16);
-  const ownership = migrateMemoryIds(raw.memoryNodes, sourceSchema);
+  const sourceGraphVersion = boundedInteger(raw.memoryGraphVersion, sourceSchema >= 4 ? LEGACY_MEMORY_GRAPH_VERSION : 3);
+  const ownership = migrateMemoryIds(raw.memoryNodes, sourceSchema, sourceGraphVersion);
   out.memoryNodes = MEMORY_NODE_IDS.filter((id) => ownership.valid.includes(id));
+  out.legacyMemoryNodes = sourceGraphVersion < MEMORY_GRAPH_VERSION
+    ? ownership.legacy : uniqueLegacyIds(raw.legacyMemoryNodes);
+  out.memoryMigrationVersion = MEMORY_GRAPH_VERSION;
+  if (sourceGraphVersion < MEMORY_GRAPH_VERSION) out.echoBalance += ownership.refund;
   out.quarantinedMemoryNodes = mergeQuarantine(ownership.quarantine, raw.quarantinedMemoryNodes);
   if (Array.isArray(raw.imprints)) out.imprints = raw.imprints.map((value) => validateImprint(value, sourceSchema)).filter(Boolean).slice(-8);
   if (sourceSchema >= 6) {
     const rawOwned = Array.isArray(raw.trophyIds) ? raw.trophyIds : []; const ownedTrophies = new Set(rawOwned.filter((id) => VALID_TROPHY_IDS.has(id)));
     const legacy = new Set([...(Array.isArray(raw.legacyTrophyIds) ? raw.legacyTrophyIds : []), ...rawOwned].filter((id) => VALID_LEGACY_TROPHY_IDS.has(id)));
     out.trophyIds = TROPHY_IDS.filter((id) => ownedTrophies.has(id)); out.legacyTrophyIds = LEGACY_TROPHY_IDS.filter((id) => legacy.has(id));
-    out.trophyBackfillVersion = raw.trophyBackfillVersion === 2 ? 2 : raw.trophyBackfillVersion === 1 ? 1 : 0;
+    out.trophyBackfillVersion = [1, 2, 3].includes(raw.trophyBackfillVersion) ? raw.trophyBackfillVersion : 0;
     const queued = new Set(Array.isArray(raw.trophyQueue) ? raw.trophyQueue.filter((id) => ownedTrophies.has(id)) : []);
     out.trophyQueue = TROPHY_IDS.filter((id) => queued.has(id)); out.trophyProgress = validateTrophyProgress(raw.trophyProgress);
+    out.legacyAdaptationProgress = validateLegacyAdaptationProgress(raw.legacyAdaptationProgress ?? raw.trophyProgress);
   }
-  if (sourceSchema < 5) out.migrationNotice = Object.freeze({ kind: 'memory-atlas-v5', pending: true });
-  else if (validMigrationNotice(raw.migrationNotice)) out.migrationNotice =
-    Object.freeze({ kind: 'memory-atlas-v5', pending: raw.migrationNotice.pending });
+  if (sourceGraphVersion < MEMORY_GRAPH_VERSION) out.migrationNotice = Object.freeze({
+    kind: 'evolution-frequency-5', pending: true, refund: ownership.refund,
+    legacyOwned: ownership.legacy.length, currentOwned: out.memoryNodes.length,
+  });
+  else if (validMigrationNotice(raw.migrationNotice)) out.migrationNotice = Object.freeze({ ...raw.migrationNotice });
   return out;
 }
 
 export function convertImprintToAtlas(imprint) { return validateImprint(imprint, 4); }
 
-function migrateMemoryIds(raw, sourceSchema) {
-  const valid = []; const quarantine = []; if (!Array.isArray(raw)) return { valid, quarantine };
+function migrateMemoryIds(raw, sourceSchema, sourceGraphVersion) {
+  const valid = []; const quarantine = []; const legacy = []; let legacySpend = 0;
+  if (!Array.isArray(raw)) return { valid, quarantine, legacy, refund: 0 };
   for (const candidate of raw) {
     if (typeof candidate !== 'string' || !/^[a-z][a-z-]{0,63}$/.test(candidate)) continue;
-    const id = sourceSchema < 4 ? (LEGACY_MEMORY_MAP[candidate] ?? candidate) : candidate;
-    if (VALID_MEMORY_IDS.has(id)) { if (!valid.includes(id)) valid.push(id); }
+    const oldId = sourceSchema < 4 ? (LEGACY_MEMORY_MAP[candidate] ?? candidate) : candidate;
+    if (sourceGraphVersion < MEMORY_GRAPH_VERSION) {
+      const row = LEGACY_MEMORY_BY_ID.get(oldId);
+      if (row) {
+        if (!legacy.includes(oldId)) { legacy.push(oldId); legacySpend += row.oldCost; }
+        if (!valid.includes(row.targetId)) valid.push(row.targetId);
+      } else if (!quarantine.includes(candidate)) quarantine.push(candidate);
+    } else if (VALID_MEMORY_IDS.has(oldId)) { if (!valid.includes(oldId)) valid.push(oldId); }
     else if (!quarantine.includes(candidate)) quarantine.push(candidate);
   }
-  return { valid, quarantine };
+  const representedCost = valid.reduce((sum, id) => sum + (getMemoryNode(id)?.cost ?? 0), 0);
+  return { valid, quarantine, legacy, refund: Math.max(0, legacySpend - representedCost) };
 }
 
 function validateImprint(raw, sourceSchema) {
   if (!raw || typeof raw !== 'object' || raw.kind !== 'strongest-corridor') return null;
   if (!Number.isInteger(raw.seed) || raw.seed < 0 || raw.seed >= 0x40000000) return null;
   if (Array.isArray(raw.cells)) {
-    const cells = morphologyCells(createTopology(3), uniqueCells(raw.cells, 642).slice(0, 64));
+    const atlas = createGeodesicTopology(5); const alreadyCurrent = raw.topology?.frequency === 5 || raw.topology?.nodeCount === 252;
+    const seeds = alreadyCurrent ? uniqueCells(raw.cells, 252).slice(0, 64) : projectOldAtlasCells(raw.cells);
+    const cells = morphologyCells(atlas, seeds);
     return cells.length >= 32 ? { kind: raw.kind, seed: raw.seed, cells, topology: { ...ATLAS_TOPOLOGY } } : null;
   }
   if (!Array.isArray(raw.edges) || sourceSchema >= 5) return null;
@@ -78,10 +100,23 @@ function validateImprint(raw, sourceSchema) {
 }
 
 function projectLegacyEdges(raw) {
-  const world = createTopology(4); const atlas = createTopology(3);
+  const world = createTopology(4); const atlas = createGeodesicTopology(5);
   const edges = uniqueCells(raw.edges, world.edgeCount).slice(0, 28); if (!edges.length) return null;
   const projected = edges.map((edge) => nearestMidpointCell(world, atlas, edge));
   return { kind: raw.kind, seed: raw.seed, cells: morphologyCells(atlas, projected), topology: { ...ATLAS_TOPOLOGY } };
+}
+
+function projectOldAtlasCells(values) {
+  const oldAtlas = createTopology(3); const atlas = createGeodesicTopology(5);
+  return uniqueCells(values, 642).slice(0, 64).map((oldCell) => {
+    const at = oldCell * 3; let best = 0; let score = -Infinity;
+    for (let cell = 0; cell < atlas.nodeCount; cell++) { const bt = cell * 3;
+      const dot = oldAtlas.positions[at] * atlas.positions[bt] + oldAtlas.positions[at + 1] * atlas.positions[bt + 1]
+        + oldAtlas.positions[at + 2] * atlas.positions[bt + 2];
+      if (dot > score) { score = dot; best = cell; }
+    }
+    return best;
+  });
 }
 
 function morphologyCells(atlas, seeds) {
@@ -116,17 +151,23 @@ function shortestPath(topo, start, target) {
 }
 function uniqueCells(values, limit) { return values.filter((value, index, all) =>
   Number.isInteger(value) && value >= 0 && value < limit && all.indexOf(value) === index); }
-function validateTrophyProgress(raw) { const value = raw && typeof raw === 'object' ? raw : {}; const adaptationIds = []; const aggregate = {};
-  if (Array.isArray(value.adaptationIds)) for (const id of value.adaptationIds) if (VALID_ADAPTATION_IDS.has(id) && !adaptationIds.includes(id)) adaptationIds.push(id);
+function validateTrophyProgress(raw) { const value = raw && typeof raw === 'object' ? raw : {}; const aggregate = {};
+  const sourceVersion=boundedInteger(value.version,1);const currentOnly=new Set(['autonomousWorlds','zeroEventWorlds','scarcityWorlds','resourceDepletedCells','habitatClassMask']);
   const geographyMask = Math.min(63, boundedInteger(value.geographyMask, 0)) & ([2, 3].includes(value.geographyVersion) ? 63 : 61);
-  for (const key of [...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS]) { const amount = boundedInteger(value.aggregate?.[key], 0); if (amount) aggregate[key] = Math.min(10_000_000, amount); }
-  return { version: 3, adaptationIds, geographyMask, geographyVersion: 3,
-    crisisMask: Math.min(127, boundedInteger(value.crisisMask, 0)), adaptationCategoryMask: Math.min(63, boundedInteger(value.adaptationCategoryMask, 0)),
+  for (const key of [...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS]) { const amount = sourceVersion<4&&currentOnly.has(key)?0:boundedInteger(value.aggregate?.[key], 0); if (amount) aggregate[key] = Math.min(10_000_000, amount); }
+  return { version: 4, geographyMask, geographyVersion: 3,
+    crisisMask: Math.min(127, boundedInteger(value.crisisMask, 0)),
     lakeTypeMask: Math.min(31, boundedInteger(value.lakeTypeMask, 0)), lakeSalinityMask: Math.min(7, boundedInteger(value.lakeSalinityMask, 0)), aggregate }; }
+function validateLegacyAdaptationProgress(raw) { const value = raw && typeof raw === 'object' ? raw : {};
+  const ids = Array.isArray(value.ids ?? value.adaptationIds) ? [...new Set((value.ids ?? value.adaptationIds)
+    .filter((id) => typeof id === 'string' && /^[a-z0-9-]{1,48}$/.test(id)))].slice(0, 24) : [];
+  return { ids, categoryMask: Math.min(63, boundedInteger(value.categoryMask ?? value.adaptationCategoryMask, 0)) }; }
 function boundedInteger(value, fallback) { return Number.isFinite(value) && value >= 0 ? Math.floor(value) : fallback; }
 function mergeQuarantine(found, raw) { const ids = [...new Set(found)]; if (Array.isArray(raw)) for (const id of raw)
   if (typeof id === 'string' && /^[a-z][a-z-]{0,63}$/.test(id) && !ids.includes(id)) ids.push(id); return ids.slice(0, 32); }
-function validMigrationNotice(value) { return value && typeof value === 'object' && value.kind === 'memory-atlas-v5' && typeof value.pending === 'boolean'; }
+function uniqueLegacyIds(raw) { return Array.isArray(raw) ? [...new Set(raw.filter((id) => typeof id === 'string' && LEGACY_MEMORY_BY_ID.has(id)))].slice(0, 642) : []; }
+function validMigrationNotice(value) { return value && typeof value === 'object' && value.kind === 'evolution-frequency-5'
+  && typeof value.pending === 'boolean'; }
 
 export function loadMeta() { return loadNamespacedDocument('meta', validateMeta, defaultMeta); }
 export function saveMeta(meta) { return saveNamespacedDocument('meta', meta, validateMeta); }

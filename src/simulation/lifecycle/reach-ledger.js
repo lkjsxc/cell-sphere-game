@@ -1,13 +1,14 @@
 /** Fixed cause vocabulary and bounded rolling/full-run Reach accounting. */
 export const REACH_WINDOW_SECONDS = 15; export const REACH_SAMPLE_CAP = 8;
 export const REACH_CAUSE = Object.freeze({ NONE: 0, INOCULATION: 1, EXPANSION: 2, REGROWTH: 3,
-  RECONNECTION: 4, BLOOM: 5, CRISIS_GROWTH: 6, ADAPTATION_GROWTH: 7, SKILL_RECOVERY: 8,
-  STARVATION: 9, HEAT: 10, COLD: 11, DROUGHT: 12, TOXIN: 13, BLIGHT: 14,
-  SACRIFICE: 15, FRAGMENTATION: 16, COLLAPSE: 17, REPAIR: 18 });
+  RECONNECTION: 4, BLOOM: 5, CRISIS_GROWTH: 6, SKILL_RECOVERY: 7,
+  RESOURCE_EXHAUSTION: 8, MAINTENANCE: 9, HEAT: 10, COLD: 11, DROUGHT: 12, TOXIN: 13, BLIGHT: 14,
+  FRAGMENTATION: 15, COLLAPSE: 16, REPAIR: 17 });
 const NAMES = Object.freeze(['none', 'inoculation', 'frontier expansion', 'regrowth', 'reconnection growth',
-  'nutrient bloom', 'crisis-triggered growth', 'Adaptation-enabled expansion', 'skill-enabled recovery',
-  'starvation', 'heat stress', 'cold stress', 'drought', 'toxicity', 'blight', 'local sacrifice',
+  'nutrient bloom', 'crisis-triggered growth', 'skill-enabled recovery', 'local resource exhaustion',
+  'maintenance starvation', 'heat stress', 'cold stress', 'drought', 'toxicity', 'blight',
   'fragmentation loss', 'terminal collapse', 'liveness repair']); const CAUSE_COUNT = NAMES.length;
+const LOSS_START = REACH_CAUSE.RESOURCE_EXHAUSTION;
 export function createReachLedger() {
   const stamps = new Int32Array(REACH_WINDOW_SECONDS); stamps.fill(-1);
   return { version: 1, stamps, buckets: new Uint16Array(REACH_WINDOW_SECONDS * CAUSE_COUNT),
@@ -28,16 +29,16 @@ export function buildReachSummary(state) {
   const ledger = state.reach; const second = Math.floor(state.tick / 10); const counts = new Uint32Array(CAUSE_COUNT);
   for (let slot = 0; slot < REACH_WINDOW_SECONDS; slot++) if (ledger.stamps[slot] >= second - REACH_WINDOW_SECONDS + 1) {
     const base = slot * CAUSE_COUNT; for (let cause = 1; cause < CAUSE_COUNT; cause++) counts[cause] += ledger.buckets[base + cause]; }
-  const gains = total(counts, 1, 9); const losses = total(counts, 9, CAUSE_COUNT); const conditions = reachConditions(state);
+  const gains = total(counts, 1, LOSS_START); const losses = total(counts, LOSS_START, CAUSE_COUNT); const conditions = reachConditions(state);
   return { version: 1, windowSeconds: REACH_WINDOW_SECONDS, current: state.aliveCount, gained: gains, lost: losses,
     net: gains - losses, windowStartLiving: state.aliveCount - gains + losses,
-    positive: factors(ledger, counts, 1, 9, second), negative: factors(ledger, counts, 9, CAUSE_COUNT, second), ...conditions };
+    positive: factors(ledger, counts, 1, LOSS_START, second), negative: factors(ledger, counts, LOSS_START, CAUSE_COUNT, second), ...conditions };
 }
 export function buildReachResult(state) {
   const ledger = state.reach; for (let slot = 0; slot < REACH_WINDOW_SECONDS; slot++) if (ledger.stamps[slot] >= 0) considerTurningPoint(ledger, slot);
-  const gains = total(ledger.totals, 1, 9); const losses = total(ledger.totals, 9, CAUSE_COUNT);
+  const gains = total(ledger.totals, 1, LOSS_START); const losses = total(ledger.totals, LOSS_START, CAUSE_COUNT);
   return { version: 1, gained: gains, lost: losses, net: gains - losses,
-    positive: fullFactors(ledger.totals, 1, 9), negative: fullFactors(ledger.totals, 9, CAUSE_COUNT),
+    positive: fullFactors(ledger.totals, 1, LOSS_START), negative: fullFactors(ledger.totals, LOSS_START, CAUSE_COUNT),
     turningPoint: { ...ledger.turningPoint } };
 }
 function reachConditions(state) {
@@ -48,10 +49,10 @@ function reachConditions(state) {
     freshwaterForest += Math.max(state.fields.freshwaterInfluence[cell], state.fields.forestDensity[cell]); heat += Math.max(0, state.temperature[cell] - .75) * 4;
     cold += Math.max(0, .25 - state.temperature[cell]) * 4; dry += Math.max(0, .25 - state.moisture[cell]) * 4; toxin += state.toxicity[cell]; }
   const divisor = Math.max(1, living); const activeCrisis = state.events.some((event) => state.tick >= event.startTick && state.tick <= event.endTick) ? 1 : 0;
-  const support = Math.min(1, (state.ownedCards.length + state.memoryConditionals.length) / 8);
+  const support = Math.min(1, (state.memoryConditionals.length + state.memoryUnlocks.length) / 8);
   const positiveConditions = conditionList([['energy-surplus', 'energy surplus', energy / divisor / 3], ['available-frontier', 'available frontier', state.liveness.activeFrontierCount / divisor],
     ['accessible-nutrients', 'accessible nutrients', nutrient / divisor], ['suitable-moisture', 'suitable moisture', moisture / divisor],
-    ['favorable-temperature', 'favorable temperature', suitableTemp / divisor], ['freshwater-ecology', 'lake, shore, and forest affinity', freshwaterForest / divisor], ['inherited-support', 'Adaptation and skill support', support]]);
+    ['favorable-temperature', 'favorable temperature', suitableTemp / divisor], ['freshwater-ecology', 'lake, shore, and forest affinity', freshwaterForest / divisor], ['inherited-support', 'Evolution support', support]]);
   const negativeConditions = conditionList([['entropy', 'entropy', state.entropy], ['maintenance-burden', 'maintenance burden', deficit / divisor],
     ['heat-stress', 'heat stress', heat / divisor], ['cold-stress', 'cold stress', cold / divisor], ['drought-stress', 'drought stress', dry / divisor],
     ['toxicity', 'toxicity', toxin / divisor], ['crisis-pressure', 'active crisis pressure', activeCrisis], ['fragmentation', 'fragmentation', 1 - state.connectedShare]]);
@@ -65,7 +66,7 @@ function recentSamples(ledger, cause, second) { const out = []; const base = cau
   for (let index = 0; index < REACH_SAMPLE_CAP; index++) if (ledger.sampleSeconds[base + index] >= second - REACH_WINDOW_SECONDS + 1) out.push(ledger.sampleCells[base + index]);
   return [...new Set(out)].slice(0, REACH_SAMPLE_CAP); }
 function conditionList(entries) { return entries.map(([id, label, score]) => ({ id, label, score: finite01(score) })).sort((a, b) => b.score - a.score || a.id.localeCompare(b.id)).slice(0, 5); }
-function considerTurningPoint(ledger, slot) { const base = slot * CAUSE_COUNT; const net = total(ledger.buckets, base + 1, base + 9) - total(ledger.buckets, base + 9, base + CAUSE_COUNT);
+function considerTurningPoint(ledger, slot) { const base = slot * CAUSE_COUNT; const net = total(ledger.buckets, base + 1, base + LOSS_START) - total(ledger.buckets, base + LOSS_START, base + CAUSE_COUNT);
   if (Math.abs(net) > Math.abs(ledger.turningPoint.net)) ledger.turningPoint = { second: ledger.stamps[slot], net }; }
 function total(values, start, end) { let sum = 0; for (let index = start; index < end; index++) sum += values[index]; return sum; }
 function finite01(value) { return Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0)); }

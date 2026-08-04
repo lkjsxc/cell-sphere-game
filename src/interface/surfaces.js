@@ -3,7 +3,9 @@ import { getTrophy } from '../game/trophies/index.js';
 import { createTimedPresentationQueue, PRESENTATION_DURATION } from './policies/presentation-timing.js';
 const TOAST_QUEUES = new WeakMap();
 const CAUSE = Object.freeze({
-  starvation: 'Local resources fell below the cost of the network.',
+  'resource-exhaustion': 'The reachable reserves were consumed faster than they could renew.',
+  'maintenance-starvation': 'Maintenance outpaced the energy remaining in reachable cells.',
+  fragmentation: 'Separated living regions could no longer exchange enough energy.',
   heat: 'Heat stress fractured the remaining transport routes.',
   cold: 'The cold stopped transport between surviving cells.',
   drought: 'Drying outpaced the network’s reserves.',
@@ -17,22 +19,18 @@ export function elements() {
   return {
     title: byId('title-screen'), run: byId('run-screen'), memory: byId('memory-screen'), trophies: byId('trophy-screen'),
     begin: /** @type {HTMLButtonElement} */ (byId('begin-button')),
-    memoryButton: /** @type {HTMLButtonElement} */ (byId('memory-button')),
     restart: /** @type {HTMLButtonElement} */ (byId('restart-button')),
     pause: /** @type {HTMLButtonElement} */ (byId('pause-button')),
     speed: /** @type {HTMLSelectElement} */ (byId('speed-select')),
-    adaptationButton: /** @type {HTMLButtonElement} */ (byId('adaptations-button')),
-    adaptationBadge: byId('adaptation-badge'), adaptationModeLabel: byId('adaptation-mode-label'),
     boot: byId('boot-status'), score: byId('hud-score'), pressure: byId('hud-pressure'), reach: byId('hud-reach'), trace: byId('hud-trace'),
     scoreButton: byId('score-button'), entropyButton: byId('entropy-button'), reachButton: byId('reach-button'), resultReach: byId('result-reach-button'),
     event: byId('hud-event-text'), resultRank: byId('result-rank'), resultScore: byId('result-score'),
-    resultCause: byId('result-cause'), breakdown: byId('result-breakdown'), resultAdaptations: byId('result-adaptations'),
+    resultCause: byId('result-cause'), breakdown: byId('result-breakdown'),
     echoes: byId('result-echoes'), resultImprint: byId('result-imprint'), resultTrophies: byId('result-trophies'), memoryBalance: byId('memory-balance'), trophyCount: byId('trophy-count'),
     trophyBadge: byId('trophy-tab-badge'), trophyLegacy: byId('trophy-legacy'),
     memoryAvailable: byId('memory-available'), countdown: byId('result-countdown'), resultFirstCycle: byId('result-first-cycle'),
     resultNext: /** @type {HTMLButtonElement} */ (byId('result-next-button')), resultControl: byId('result-control'),
-    evolutionButton: /** @type {HTMLButtonElement} */ (byId('memory-button')),
-    live: byId('live-region'), toast: byId('toast-root'), adaptationCaption: byId('adaptation-caption'), eventTime: byId('hud-event-time'), eventButton: byId('current-event-button'),
+    live: byId('live-region'), toast: byId('toast-root'), eventTime: byId('hud-event-time'), eventButton: byId('current-event-button'),
     resultHistory: byId('result-history-button'),
   };
 }
@@ -51,7 +49,6 @@ export function updateHud(el, snap) {
   el.reach.textContent = formatCoverage(metrics.coverage ?? 0, aliveCount, snap.alive?.length ?? 2562);
   el.trace.hidden = aliveCount === 0 || aliveCount > 3;
   el.trace.textContent = snap.status === 'terminal-collapse' ? 'FINAL TRACE' : `LAST ${aliveCount} ${aliveCount === 1 ? 'CELL' : 'CELLS'}`;
-  updateAdaptationCount(el, metrics.pendingAdaptations ?? snap.pendingAdaptations ?? 0);
 }
 
 export function resetWorldPresentation(el, snapshot = null) {
@@ -60,25 +57,10 @@ export function resetWorldPresentation(el, snapshot = null) {
   el.eventTime.textContent = '00:00 · STARTING'; el.event.textContent = 'Preparing a new world.'; el.eventButton.dataset.read = 'true';
   el.live.textContent = ''; el.resultRank.textContent = ''; el.resultScore.textContent = '0';
   el.resultCause.textContent = ''; el.echoes.textContent = ''; el.resultTrophies.textContent = '';
-  el.resultImprint.textContent = ''; el.resultAdaptations.textContent = ''; el.resultFirstCycle.textContent = ''; el.breakdown.replaceChildren();
+  el.resultImprint.textContent = ''; el.resultFirstCycle.textContent = ''; el.breakdown.replaceChildren();
   el.resultControl.hidden = true; el.pause.disabled = false; el.pause.classList.remove('is-complete');
   el.pause.setAttribute('aria-pressed', 'false'); el.pause.setAttribute('aria-label', 'Pause world time');
-  el.speed.disabled = false; el.speed.setAttribute('aria-label', 'Game speed'); el.adaptationButton.disabled = false;
-  updateAdaptationMode(el, el.adaptationButton.dataset.mode === 'manual' ? 'manual' : 'random');
-}
-
-export function updateAdaptationCount(el, count) {
-  const n = Math.max(0, Math.floor(count));
-  el.adaptationBadge.hidden = n === 0; el.adaptationBadge.textContent = String(n);
-  const manual = el.adaptationButton.dataset.mode === 'manual';
-  el.adaptationButton.dataset.action = manual && n >= 3 ? 'urgent' : manual && n ? 'recommended' : 'normal';
-  el.adaptationButton.setAttribute('aria-label', n ? `Adaptations, ${n} waiting, ${manual ? 'manual' : 'auto random'}` : `Adaptations, ${manual ? 'manual' : 'auto random'}`);
-}
-
-export function updateAdaptationMode(el, mode) {
-  const manual = mode === 'manual'; el.adaptationButton.dataset.mode = manual ? 'manual' : 'random';
-  el.adaptationModeLabel.textContent = manual ? 'MANUAL' : 'AUTO';
-  updateAdaptationCount(el, el.adaptationBadge.hidden ? 0 : Number(el.adaptationBadge.textContent));
+  el.speed.disabled = false; el.speed.setAttribute('aria-label', 'Game speed');
 }
 
 export function announce(el, text) { el.event.textContent = text; el.live.textContent = text; }
@@ -107,19 +89,13 @@ export function showResult(el, score, result) {
   el.resultImprint.textContent = result.imprint?.edges?.length ? 'Imprint preserved · strongest morphology retained.' : '';
   const names = (result.trophyIds ?? []).map((id) => getTrophy(id)?.nameEn).filter(Boolean);
   el.resultTrophies.textContent = names.length ? `New Trophies · ${names.join(' · ')}` : 'No new Trophy this world.';
-  const offers = result.adaptationOffers ?? result.offers ?? [];
-  const random = offers.filter((offer) => offer.selectionMode === 'random' && offer.selectedCardId).length;
-  const manual = offers.filter((offer) => offer.selectionMode === 'manual' && offer.selectedCardId).length;
-  const pending = offers.filter((offer) => !offer.selectedCardId).length;
-  el.resultAdaptations.textContent = `Adaptations · ${random} automatic · ${manual} manual${pending ? ` · ${pending} unchosen` : ''}`;
-  el.resultFirstCycle.textContent = result.campaignResolvedNow ? 'First cycle milestone · four worlds observed.' : '';
+  el.resultFirstCycle.textContent = result.campaignResolvedNow ? 'First cycle milestone · five worlds observed.' : '';
   el.breakdown.replaceChildren(...score.breakdown.map((part) => {
     const row = document.createElement('p'); row.className = 'breakdown-row';
     row.textContent = `${part.en}  ${number(part.points)}`; return row;
   }));
   el.resultControl.hidden = false; el.pause.disabled = true; el.pause.classList.add('is-complete'); el.pause.setAttribute('aria-label', 'World time complete');
   el.speed.disabled = true; el.speed.setAttribute('aria-label', 'Game speed, next-world preference');
-  el.adaptationButton.disabled = true; el.adaptationModeLabel.textContent = 'COMPLETE'; el.adaptationButton.setAttribute('aria-label', 'Adaptations, completed world');
 }
 
 export function formatCoverage(coverage, aliveCount, totalCells = 2562) {

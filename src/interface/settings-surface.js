@@ -40,9 +40,6 @@ function render(form, settings) {
     if (element instanceof HTMLInputElement && element.type === 'checkbox') element.checked = Boolean(settings[name]);
     else element.value = String(settings[name]);
   }
-  const help = byId('adaptation-choice-help'); if (help) help.textContent = settings.adaptationMode === 'random'
-    ? 'The world chooses one of the three options immediately. Best for relaxed and unattended play.'
-    : 'Offers wait in Adaptations until you choose. The world continues while they wait.';
 }
 
 function readForm(form, current) {

@@ -14,16 +14,17 @@ test('one selector, context shell, compact dock, and three metric buttons are se
     assert.match(html, new RegExp(`id="${id}"[\\s\\S]{0,260}>${label}<`));
   }
   const rail = html.match(/<div class="command-rail[\s\S]*?<\/div>\s*<\/div>\s*<\/section>/)?.[0] ?? '';
-  assert.match(rail, /pause-button/); assert.match(rail, /speed-select/); assert.match(rail, /adaptations-button/); assert.match(rail, /menu-button/);
+  assert.match(rail, /pause-button/); assert.match(rail, /speed-select/); assert.match(rail, /menu-button/);
+  assert.doesNotMatch(rail, /adaptation|card|offer/i);
   for (const absent of ['new-world-button', 'settings-open', 'history-open']) assert.equal(rail.includes(absent), false);
 });
 
 test('metric projections use actual score, entropy snapshots, and Reach ledger values', () => {
-  const score = { total: 120000, rank: { en: 'Conductor' }, rate: 1, mult: 1, breakdown: [
+  const score = { total: 120000, rank: { en: 'Cartographer' }, quality: .75, worldPotential: 160000, modelVersion: 2, mult: 1, breakdown: [
     { en: 'Reach', q: .5, weight: .2, points: 10000 },
   ] };
   const scoreView = metricProjection('score', { score, result: {}, history: [] });
-  assert.equal(scoreView.primary, '120,000'); assert.equal(scoreView.counts[0].value, 'Conductor');
+  assert.equal(scoreView.primary, '120,000'); assert.equal(scoreView.counts[0].value, 'Cartographer');
   assert.match(scoreView.direct[0].label, /50% axis · 20% weight/);
   const entropy = metricProjection('entropy', { snapshot: { tick: 400, entropy: .42, status: 'running', events: [
     { family: 'heat', intensity: .6, center: 4 },
@@ -35,10 +36,13 @@ test('metric projections use actual score, entropy snapshots, and Reach ledger v
   assert.deepEqual(reach.direct[0].cells, [2, 3]);
 });
 
-test('History and mobile Adaptations keep bounded shared-shell geometry', () => {
+test('History, visible metric affordances, and compact two-control dock keep bounded geometry', () => {
   const css = readFileSync(new URL('../../styles/shell.css', import.meta.url), 'utf8');
   assert.match(css, /\.context-result, \.context-history \{ grid-template-rows: auto minmax\(0, 1fr\) auto; \}/);
-  assert.match(css, /\.adaptation-body summary \{[^}]*min-height: var\(--touch-min\)/s);
+  assert.doesNotMatch(css, /adaptation|card-row/i);
+  const components = readFileSync(new URL('../../styles/components.css', import.meta.url), 'utf8');
+  assert.match(components, /\.metric-button \{[^}]*border: 1px solid var\(--border-faint\)/s);
+  assert.match(components, /\.metric-button::after/);
   const controller = readFileSync(new URL('../../src/interface/app-controller.js', import.meta.url), 'utf8');
   assert.match(controller, /replaceRenderCanvas\(\)/); assert.match(controller, /retired\.replaceWith\(replacement\)/);
   assert.match(controller, /storage could not save that acknowledgement/);

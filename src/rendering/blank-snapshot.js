@@ -7,9 +7,10 @@ export function createBlankSnapshot(nodeCount, identity) {
   const reach = Object.freeze({ current: 0, gained: 0, lost: 0, net: 0, windowSeconds: 15,
     positive: zeroFactors, negative: zeroFactors, positiveConditions: zeroFactors, negativeConditions: zeroFactors });
   const metrics = Object.freeze({ coverage: 0, peakCoverage: 0, connectedShare: 0, aliveCount: 0,
-    totalLivingBiomass: 0, viableEnergyCells: 0, activeFrontierCells: 0, terminalCause: null, score: 0, vitality: 0 });
-  return Object.freeze({ ...identityFields(session), tick: 0, entropy: 0, status: 'starting', adaptationMode: 'random',
-    pendingAdaptations: 0, biomass: new Float32Array(nodeCount), stress: new Float32Array(nodeCount),
+    totalLivingBiomass: 0, viableEnergyCells: 0, activeFrontierCells: 0, terminalCause: null,
+    resourceReserveFraction: 1, resourceDepletedCells: 0, score: 0, vitality: 0 });
+  return Object.freeze({ ...identityFields(session), tick: 0, entropy: 0, status: 'starting', worldOrdinal: 1, worldEra: 1,
+    biomass: new Float32Array(nodeCount), stress: new Float32Array(nodeCount),
     alive: new Uint8Array(nodeCount), lifeState: new Uint8Array(nodeCount), eventStrength: new Uint8Array(nodeCount),
     eventFamily: new Uint8Array(nodeCount), reach, metrics, events: Object.freeze([]), blank: true });
 }

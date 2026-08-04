@@ -42,7 +42,7 @@ export class GLRenderer {
     gl.viewport(0, 0, this.canvas.width, this.canvas.height); gl.clearColor(0.012, 0.016, 0.022, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); gl.enable(gl.DEPTH_TEST); gl.disable(gl.BLEND);
     gl.depthMask(false); gl.useProgram(this.background.program); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.depthMask(true);
-    if (!this.world.draw(vp, eye, scene.snapshot, scene.selectedNode, scene.adaptation, scene.highlightedCells ?? [])) {
+    if (!this.world.draw(vp, eye, scene.snapshot, scene.selectedNode, scene.highlightedCells ?? [])) {
       this.rejectedFrames++; return false;
     }
     gl.bindVertexArray(null); this.acceptedFrames++;
@@ -57,7 +57,6 @@ export class GLRenderer {
 function frameAudit(scene, dynamic) {
   const snapshot = scene.snapshot; return Object.freeze({ worldSessionId: snapshot?.worldSessionId ?? null,
     presentationGeneration: snapshot?.presentationGeneration ?? null, lifeCells: count(snapshot?.alive),
-    eventCells: count(snapshot?.eventStrength), highlights: scene.highlightedCells?.length ?? 0,
-    adaptation: Boolean(scene.adaptation), dynamic });
+    eventCells: count(snapshot?.eventStrength), highlights: scene.highlightedCells?.length ?? 0, dynamic });
 }
 function count(values) { let result = 0; if (values) for (const value of values) if (value) result++; return result; }

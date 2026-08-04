@@ -1,118 +1,80 @@
-/** Explicit Adaptation and Evolution Globe skill surfaces. */
-import { cardById } from '../game/adaptations.js';
-import { MEMORY_NODES, getMemoryNode, memoryNodeState } from '../game/skills/index.js';
-
-export const ADAPTATION_COPY = Object.freeze({
-  'long-filaments': ['Long Reach', 'Frontiers extend faster.', 'New living cells cost more to maintain.'],
-  'frugal-cytoplasm': ['Frugal Cytoplasm', 'Maintenance falls sharply.', 'Burst growth becomes slower.'],
-  anastomosis: ['Anastomosis', 'Separated regions reconnect.', 'Neighbor exchange costs slightly more.'],
-  'thermal-proteins': ['Thermal Proteins', 'Heat and cold stress weaken.', 'Nutrient uptake falls.'],
-  'dormant-cysts': ['Dormant Cysts', 'Calm tissue endures late pressure.', 'Normal metabolism costs more.'],
-  'salt-vesicles': ['Salt Vesicles', 'Drought and toxin tolerance rise.', 'Transport slows.'],
-  'exploratory-fans': ['Exploratory Fans', 'Cells open several frontiers.', 'Each route is thinner.'],
-  'pulsed-transport': ['Pulsed Transport', 'Neighbor exchange strengthens rhythmically.', 'Exchange weakens between pulses.'],
-  'cannibal-reclamation': ['Reclamation', 'Dead tissue returns energy.', 'Stress recovery slows.'],
-  'symbiotic-film': ['Symbiotic Film', 'Living regions renew nutrients.', 'Frontier speed falls slightly.'],
-  'adaptive-membrane': ['Adaptive Membrane', 'Exposure gradually builds resistance.', 'It begins with no bonus.'],
-  'hollow-veins': ['Light Tissue', 'New living cells cost less.', 'Their maximum capacity falls.'],
-  'dense-cords': ['Dense Tissue', 'Connected cells carry and reinforce more.', 'Expansion slows.'],
-  'migratory-core': ['Migratory Core', 'Life can reclaim rich dead regions.', 'Maintenance rises.'],
-  'spore-memory': ['Spore Memory', 'The run gains a memory score bonus.', 'Survival does not improve.'],
-  'distributed-sensing': ['Distributed Sensing', 'Crises are forecast sooner.', 'Uptake falls slightly.'],
-  'local-sacrifice': ['Local Sacrifice', 'Doomed branches cut themselves away.', 'The network loses their mass.'],
-  'redundant-loops': ['Redundant Loops', 'Connected cells decay slower after breaks.', 'Reinforcement is less efficient.'],
-  'opportunistic-uptake': ['Opportunistic Uptake', 'Nutrient blooms yield more.', 'Ordinary uptake is unchanged.'],
-  'quiet-metabolism': ['Quiet Metabolism', 'Low maintenance extends survival.', 'Score rate falls slightly.'],
-  'fever-growth': ['Fever Growth', 'Crises trigger a frontier burst.', 'Normal storage falls slightly.'],
-  'cold-reserve': ['Cold Reserve', 'Abundance raises energy storage.', 'The bonus fades late.'],
-  'toxin-catalysis': ['Toxin Catalysis', 'Toxic pressure becomes energy.', 'Toxin resistance does not rise.'],
-  'fractal-frontier': ['Fractal Frontier', 'More tips search at once.', 'Individual branches weaken.'],
-});
-
-export function createAdaptationSurface(options) {
-  const surface = byId('adaptations-dialog'); const cards = byId('adaptation-cards');
-  const pending = byId('adaptations-pending'); const meta = byId('adaptations-offer-meta');
-  const owned = byId('adaptations-owned'); const auto = byId('adaptation-auto');
-  const manual = byId('adaptation-manual'); const help = byId('adaptation-mode-help');
-  let model = { offers: [], cards: [], mode: 'random', tick: 0 }; let selection = null; let modeCommand = null; let notice = '';
-  byId('adaptations-close').addEventListener('click', options.onClose);
-  auto.addEventListener('click', () => requestMode('random')); manual.addEventListener('click', () => requestMode('manual'));
-  cards.addEventListener('click', (event) => { const button = event.target.closest?.('button[data-card-id]');
-    const offer = model.offers.find((item) => item.resolvedTick == null); if (!button || !offer || selection || modeCommand || model.mode !== 'manual') return;
-    const command = options.onChoose(offer, button.dataset.cardId); if (!command) return;
-    selection = { ...command, offerId: offer.id, cardId: button.dataset.cardId }; notice = 'Applying this Adaptation…'; render(); });
-  function requestMode(mode) { if (modeCommand) return; const command = options.onMode(mode); if (!command) return;
-    modeCommand = { ...command, mode }; notice = `Changing to ${mode === 'manual' ? 'Manual' : 'Auto Random'}…`; render(); }
-  function render() {
-    const automatic = model.mode === 'random'; auto.setAttribute('aria-pressed', String(automatic)); manual.setAttribute('aria-pressed', String(!automatic));
-    auto.disabled = Boolean(modeCommand); manual.disabled = Boolean(modeCommand);
-    help.textContent = notice || (automatic ? 'Randomly chooses one of the three options. The result is deterministic for this world.' : 'Offers wait here while the world continues.');
-    const queue = model.offers.filter((offer) => offer.resolvedTick == null); const offer = queue[0];
-    pending.textContent = queue.length ? `${queue.length} pending ${queue.length === 1 ? 'offer' : 'offers'}` : 'No pending offers';
-    meta.textContent = offer ? `Offered at ${gameTime(offer.offerTick)} · ${offer.reason} · world ${gameTime(model.tick)}` : `All offers resolved · world ${gameTime(model.tick)}`;
-    cards.setAttribute('aria-busy', String(Boolean(selection))); cards.replaceChildren(...(offer?.options ?? []).map((id) => adaptationCard(id,
-      { disabled: automatic || Boolean(selection) || Boolean(modeCommand), selected: selection?.cardId === id })));
-    owned.replaceChildren(...model.cards.map((id) => { const li = document.createElement('li'); li.textContent = ADAPTATION_COPY[id]?.[0] ?? humanize(id); return li; }));
-  }
-  return { surface, update(next) { model = next; if (!surface.hidden) render(); }, pendingMode(mode, command) { modeCommand = { ...command, mode }; notice = 'Waiting for world authority…'; if (!surface.hidden) render(); },
-    acknowledge(message) { if (selection?.commandId !== message.commandId) return; selection = null; notice = `${ADAPTATION_COPY[message.cardId]?.[0] ?? humanize(message.cardId)} selected.`; if (!surface.hidden) render(); },
-    reject(message) { if (selection?.commandId !== message.commandId) return; selection = null; notice = `Selection not applied: ${humanize(message.reason)}.`; if (!surface.hidden) render(); },
-    acknowledgeMode(message) { if (modeCommand?.commandId !== message.commandId) return; modeCommand = null; notice = `${message.mode === 'manual' ? 'Manual' : 'Auto Random'} confirmed.`; if (!surface.hidden) render(); },
-    rejectMode(message) { if (modeCommand?.commandId !== message.commandId) return; modeCommand = null; notice = `Mode not changed: ${humanize(message.reason)}.`; if (!surface.hidden) render(); },
-    open(next) { model = next; render(); surface.hidden = false; }, close() { surface.hidden = true; },
-    reset() { surface.hidden = true; model = { offers: [], cards: [], mode: 'random', tick: 0 };
-      selection = null; modeCommand = null; notice = ''; cards.replaceChildren(); owned.replaceChildren(); pending.textContent = 'No pending offers'; meta.textContent = ''; } };
-}
-
-function adaptationCard(id, state) {
-  const card = cardById(id); const copy = ADAPTATION_COPY[id] ?? [humanize(id), 'A new behavior enters the network.', 'Its tradeoff is preserved in the run.'];
-  const button = document.createElement('button'); button.type = 'button'; button.className = 'card'; button.dataset.action = 'available'; button.dataset.cardId = id;
-  button.disabled = state.disabled; button.dataset.state = state.selected ? 'pending' : 'ready'; button.setAttribute('aria-pressed', String(state.selected));
-  button.append(line('card-category', `⬡ ${card.cats.join(' · ')}`), line('card-name', copy[0]), line('card-effect', copy[1]), line('card-cost', copy[2])); return button;
-}
+/** Evolution Globe semantic tree, Skill detail, and acquisition feedback. */
+import { MEMORY_NODES, getMemoryNode, memoryNodeState, memoryPurchasePreview, newlyAvailableAdjacentIds } from '../game/skills/index.js';
 
 export function createMemorySurface(options) {
   const panel = byId('memory-node-panel'); const unlock = /** @type {HTMLButtonElement} */ (byId('memory-unlock'));
-  const tree = byId('evolution-tree'); const change = byId('memory-node-change'); let selected = null; let meta = null;
+  const tree = byId('evolution-tree'); const change = byId('memory-node-change');
+  let selected = null; let meta = null; let feedbackTimer = 0;
   byId('memory-node-close').addEventListener('click', options.onCloseNode);
   unlock.addEventListener('click', () => { if (selected) options.onUnlock(selected.id); });
+
   function renderNode() {
     const state = memoryNodeState(meta, selected, selected?.id); selected = state;
+    const preview = memoryPurchasePreview(meta, state.id);
     byId('memory-node-branch').textContent = `${state.branch.toUpperCase()} · TIER ${state.tier}`;
-    byId('memory-node-heading').textContent = state.nameEn; byId('memory-node-summary').textContent = state.effectEn;
+    byId('memory-node-heading').textContent = state.nameEn;
+    byId('memory-node-summary').textContent = state.effectEn;
     byId('memory-node-detail').textContent = state.description;
-    const status = state.owned ? 'Unlocked' : state.locked ? 'Locked · adjacent unlocked cell needed'
-      : state.affordable ? 'Available' : 'Available · more Echoes needed';
+    const status = state.owned ? 'Owned' : state.locked ? 'Locked · one directly adjacent owned cell required'
+      : state.affordable ? 'Available' : 'Available · more Echoes required';
     const neighbor = state.adjacentOwnedId ? getMemoryNode(state.adjacentOwnedId)?.nameEn ?? state.adjacentOwnedId
-      : state.bootstrap ? 'Fresh-save bootstrap root' : 'Adjacent unlocked cell';
+      : state.bootstrap ? 'Fresh-world root' : 'No adjacent owned cell';
+    const gameplayParts = [...(preview?.changes?.map(formatChange) ?? []),
+      ...(preview?.unlocked?.map((entry) => `${humanize(entry.key)} unlocked`) ?? [])];
+    const gameplay = gameplayParts.length ? gameplayParts.join(' · ') : 'Rule change shown above';
+    const potential = preview ? `${number(preview.potentialBefore)} → ${number(preview.potentialAfter)} (+${number(preview.potentialGain)})`
+      : `${number(metaWorldPotential(meta))} current`;
+    const newlyAvailable = newlyAvailableAdjacentIds(meta, state.id).map((id) => getMemoryNode(id)?.nameEn ?? id);
     byId('memory-node-meta').replaceChildren(...definitionRows([
       ['Status', status], ['Cost', `${state.cost} Echoes · ${meta.echoBalance} held`],
-      ['Adjacent unlocked cell', neighbor]]));
+      ['Gameplay', gameplay], ['World Potential', potential], ['Adjacent owned cell', neighbor],
+      ['Newly available', newlyAvailable.length ? newlyAvailable.join(', ') : 'No additional adjacent cells'],
+    ]));
     unlock.hidden = state.owned; unlock.disabled = !state.selectedReady;
     unlock.textContent = `Unlock for ${state.cost} Echoes`; unlock.dataset.action = state.selectedReady ? 'recommended' : 'normal';
   }
+
   function renderTree() {
-    tree.replaceChildren(...MEMORY_NODES.map((node) => { const state = memoryNodeState(meta, node);
-      const button = document.createElement('button'); button.type = 'button'; button.setAttribute('role', 'treeitem');
-      button.setAttribute('aria-level', String(state.tier + 1)); button.setAttribute('aria-selected', String(state.id === selected?.id));
-      const status = state.owned ? 'Unlocked' : state.reachable ? state.affordable ? 'Available' : 'Available, more Echoes needed'
-        : 'Locked, adjacent unlocked cell needed';
-      const neighbor = state.adjacentOwnedId ? ` Adjacent unlocked cell: ${getMemoryNode(state.adjacentOwnedId)?.nameEn ?? state.adjacentOwnedId}.`
-        : state.bootstrap ? ' Fresh-save bootstrap root.' : '';
-      button.textContent = `${state.nameEn}. ${status}.${neighbor} ${state.cost} Echoes.`; button.addEventListener('click', () => options.onSelect(node.id)); return button;
+    tree.replaceChildren(...MEMORY_NODES.map((node) => {
+      const state = memoryNodeState(meta, node); const button = document.createElement('button'); button.type = 'button';
+      button.setAttribute('role', 'treeitem'); button.setAttribute('aria-level', String(state.tier + 1));
+      button.setAttribute('aria-selected', String(state.id === selected?.id));
+      const status = state.owned ? 'Owned' : state.reachable ? state.affordable ? 'Available' : 'Available, more Echoes required'
+        : 'Locked, adjacent owned cell required';
+      button.textContent = `${state.nameEn}. ${status}. ${state.cost} Echoes. World Potential plus ${number(state.potentialGain)}.`;
+      button.addEventListener('click', () => options.onSelect(node.id)); return button;
     }));
   }
-  return { panel, openNode(node, nextMeta) { selected = node; meta = nextMeta; change.hidden = true;
-      panel.hidden = false; renderNode(); renderTree(); },
-    refresh(nextMeta, newly = []) { meta = nextMeta; if (selected) renderNode(); renderTree();
-      change.hidden = newly.length === 0; change.textContent = newly.length ? `${newly.length} adjacent ${newly.length === 1 ? 'skill is' : 'skills are'} now available.` : ''; },
-    syncTree(nextMeta) { meta = nextMeta; renderTree(); }, closeNode() { panel.hidden = true; selected = null; },
-    get selectedId() { return selected?.id ?? null; } };
+
+  function acquisition(preview, newly) {
+    clearTimeout(feedbackTimer); change.hidden = false; change.classList.remove('skill-acquired'); void change.offsetWidth;
+    change.classList.add('skill-acquired');
+    const effectParts = [...(preview?.changes?.map(formatChange) ?? []),
+      ...(preview?.unlocked?.map((entry) => `${humanize(entry.key)} unlocked`) ?? [])];
+    const effect = effectParts.join(' · ') || 'Permanent rule unlocked';
+    change.textContent = `${effect}. World Potential ${number(preview?.potentialBefore ?? 0)} → ${number(preview?.potentialAfter ?? 0)}. ${newly.length} adjacent ${newly.length === 1 ? 'cell is' : 'cells are'} now available.`;
+    feedbackTimer = setTimeout(() => { change.hidden = true; change.classList.remove('skill-acquired'); }, 5000);
+  }
+
+  return {
+    panel,
+    openNode(node, nextMeta) { selected = node; meta = nextMeta; change.hidden = true; panel.hidden = false; renderNode(); renderTree(); },
+    refresh(nextMeta, newly = [], preview = null) { meta = nextMeta; if (selected) renderNode(); renderTree(); if (preview) acquisition(preview, newly); },
+    syncTree(nextMeta) { meta = nextMeta; renderTree(); },
+    closeNode() { panel.hidden = true; selected = null; clearTimeout(feedbackTimer); feedbackTimer = 0; change.hidden = true; },
+    get selectedId() { return selected?.id ?? null; },
+  };
 }
 
+function metaWorldPotential(meta) {
+  let value = 16000; const owned = new Set(meta?.memoryNodes ?? []);
+  for (const node of MEMORY_NODES) if (owned.has(node.id)) value += node.potentialGain;
+  return value;
+}
+function formatChange(change) { return `${humanize(change.key)} ${decimal(change.before)} → ${decimal(change.after)}`; }
+function decimal(value) { return `${Math.round(value * 1000) / 1000}×`; }
+function number(value) { return new Intl.NumberFormat('en').format(Math.round(value)); }
 function byId(id) { return /** @type {HTMLElement} */ (document.getElementById(id)); }
-function line(className, text) { const node = document.createElement('span'); if (className) node.className = className; node.textContent = text; return node; }
 function definitionRows(rows) { return rows.flatMap(([term, value]) => { const dt = document.createElement('dt'); dt.textContent = term;
   const dd = document.createElement('dd'); dd.textContent = value; return [dt, dd]; }); }
-function humanize(value) { return String(value).replaceAll('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase()); }
-function gameTime(tick) { const seconds = Math.floor((tick ?? 0) / 10); return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
+function humanize(value) { return String(value).replaceAll('_', ' ').replaceAll('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase()); }

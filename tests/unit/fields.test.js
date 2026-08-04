@@ -43,7 +43,7 @@ function componentSizes(predicate) {
 
 test('world hash, lake records, and typed fields are deterministic', () => {
   const a = fieldsFor(20260731); const b = fieldsFor(20260731);
-  assert.equal(worldHash(a), worldHash(b)); assert.equal(worldHash(a), '3ba7c9b6');
+  assert.equal(worldHash(a), worldHash(b)); assert.equal(worldHash(a), '54d962c6');
   for (const key of [...floats, ...integers]) assert.deepEqual(a[key], b[key], key);
   assert.deepEqual(a.lakes, b.lakes); assert.deepEqual(a.landmarks, b.landmarks); assert.deepEqual(a.sources, b.sources);
   assert.notEqual(worldHash(a), worldHash(fieldsFor(20260730)));
@@ -128,7 +128,7 @@ test('biome factors are bounded and lakes remain ecology participants', () => {
   for (const key of floats) for (const value of fields[key]) {
     assert.ok(Number.isFinite(value) && value >= 0, `${key}: ${value}`);
     const factor = ['growthSuitability', 'maintenanceMultiplier', 'uptakeMultiplier', 'resourceRenewal', 'routeCost'].includes(key);
-    assert.ok(value <= (factor ? 2.001 : 1.001), `${key}: ${value}`);
+    assert.ok(value <= (factor ? 3.001 : 1.001), `${key}: ${value}`);
   }
   for (let cell = 0; cell < topo.nodeCount; cell++) {
     assert.ok(validBiomes.has(fields.biomeId[cell]));

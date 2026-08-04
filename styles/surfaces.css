@@ -1,52 +1,5 @@
-/* Content surfaces: adaptation cards, panels, dialogs, toasts, trophies. */
+/* Content surfaces: panels, dialogs, toasts, and trophies. */
 
-/* Adaptation cards. Category is encoded by symbol shape + hue + label. */
-.card-row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--sp-3);
-}
-
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-4);
-  min-height: var(--touch-min);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-l);
-  text-align: start;
-  transition: transform var(--dur-fast) var(--ease-out),
-    border-color var(--dur-fast) var(--ease-out);
-}
-
-.card:active { transform: scale(0.985); }
-.card[data-state="pending"] { transform: scale(.985); border-color: var(--action-available); box-shadow: 0 0 0 2px color-mix(in srgb, var(--action-available) 28%, transparent); }
-.card:disabled:not([data-state="pending"]) { opacity: .58; }
-
-.card-category {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-1);
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
-}
-
-.card-name {
-  font-size: var(--fs-lead);
-  font-weight: 700;
-}
-
-.card-effect {
-  font-size: var(--fs-body);
-  color: var(--text-secondary);
-}
-
-.card-cost {
-  font-size: var(--fs-caption);
-  color: var(--state-warn);
-}
 
 .reach-link { min-height: var(--touch-min); padding: 0; color: var(--state-info); background: transparent; text-align: left; font-size: var(--fs-caption); }
 .context-reach section { margin-top: var(--sp-4); }.context-reach h3 { color: var(--text-secondary); font-size: var(--fs-caption); letter-spacing: .06em; text-transform: uppercase; }
@@ -96,27 +49,6 @@
 .memory-node-name { font-weight: 700; }
 .memory-node-effect { color: var(--text-secondary); font-size: var(--fs-caption); }
 .memory-node-cost { color: var(--accent-gold); font-size: var(--fs-caption); }
-
-/* Adaptations use one nonblocking bottom caption below context-sheet stacking. */
-#adaptation-caption {
-  position: absolute;
-  left: 50%;
-  bottom: calc(7.5rem + var(--safe-bottom));
-  z-index: calc(var(--z-hud) + 1);
-  width: min(32rem, calc(100vw - 2 * var(--sp-4)));
-  transform: translateX(-50%);
-  display: grid;
-  gap: 2px;
-  padding: var(--sp-2) var(--sp-4);
-  color: var(--text-primary);
-  background: rgba(10, 15, 18, .82);
-  border-left: 3px solid var(--life-core);
-  border-radius: var(--radius-s);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, .38);
-  pointer-events: none;
-}
-#adaptation-caption[hidden] { display: none; }
-#adaptation-caption span { color: var(--text-secondary); font-size: var(--fs-caption); }
 
 /* Rare transient feedback stays near bottom context, never over the globe center. */
 #toast-root {

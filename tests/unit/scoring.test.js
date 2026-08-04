@@ -5,11 +5,11 @@ import { componentValues, echoesFor, evaluate, rankFor } from '../../src/game/sc
 
 const LOW = Object.freeze({
   survivalSeconds: 80, peakCoverage: 0.08, sustainedCoverage: 0.03,
-  peakConnectedShare: 0.3, totalUptake: 20, totalMaintenance: 40, crisisQ: 0,
+  peakConnectedShare: 0.3, totalUptake: 20, totalMaintenance: 40, stressBurden: .8, worldPotential: 16000,
 });
 const HIGH = Object.freeze({
   survivalSeconds: 300, peakCoverage: 0.7, sustainedCoverage: 0.5,
-  peakConnectedShare: 0.95, totalUptake: 500, totalMaintenance: 80, crisisQ: 1,
+  peakConnectedShare: 0.95, totalUptake: 500, totalMaintenance: 80, stressBurden: .1, worldPotential: 16000,
 });
 
 test('SCORE improves for stronger authoritative metrics', () => {
@@ -28,7 +28,8 @@ test('components stay normalized and no score input is presentation state', () =
 });
 
 test('Echoes are deterministic, nonnegative, and monotonic', () => {
-  assert.equal(echoesFor(0), 2);
+  assert.equal(echoesFor(0), 4);
+  assert.ok(echoesFor(100000) >= 28 && echoesFor(100000) <= 40);
   assert.ok(echoesFor(100000) > echoesFor(1000));
   assert.equal(echoesFor(100000), echoesFor(100000));
 });

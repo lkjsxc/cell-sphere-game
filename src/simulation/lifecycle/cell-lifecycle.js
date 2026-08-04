@@ -3,7 +3,11 @@ import { recordReachTransition } from './reach-ledger.js';
 import { recordTrophyReach } from '../trophy-proof.js';
 export function birthCell(state, cell, cause) {
   if (state.alive[cell] === 1) return false;
-  state.alive[cell] = 1; state.aliveCount++; recordReachTransition(state, cell, cause); recordTrophyReach(state, cell); return true;
+  state.alive[cell] = 1; state.aliveCount++;
+  if (state.habitatOccupancy && state.habitatVisited && state.fields?.biomeId && !state.habitatVisited[cell]) {
+    state.habitatVisited[cell] = 1; state.habitatOccupancy[state.fields.biomeId[cell]]++;
+  }
+  recordReachTransition(state, cell, cause); recordTrophyReach(state, cell); return true;
 }
 export function killCell(state, cell, cause) {
   if (state.alive[cell] !== 1) return false;

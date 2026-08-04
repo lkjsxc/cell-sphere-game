@@ -89,9 +89,8 @@ async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait
   if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.activeRunId'), (runId) => runId > oldRun, 5000)) throw new Error('Canvas replacement did not start');
   assertBlankReplacement(await evaluate('window.__CELL_SPHERE_APP__.__firstReplacementFrame'), 'Canvas 2D');
   const bounded = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {...a.worldResourceAudit(),raf:a.frameAudit}})()`);
-  if (bounded.interactionListeners !== 8 || bounded.historyRequests || bounded.adaptationEffects || bounded.adaptationBytes || bounded.adaptationTimers
-    || bounded.raf.errors || bounded.raf.scheduled < bounded.raf.frames - 1) throw new Error(`Canvas replacement resources/RAF leaked: ${JSON.stringify(bounded)}`);
-  if (score <= 0 || atlas !== 642 || trophies.cells !== 162 || trophies.nodes !== 96 || errors.length) throw new Error('Canvas fallback state failed'); return { score };
+  if (bounded.interactionListeners !== 8 || bounded.historyRequests || bounded.raf.errors || bounded.raf.scheduled < bounded.raf.frames - 1) throw new Error(`Canvas replacement resources/RAF leaked: ${JSON.stringify(bounded)}`);
+  if (score <= 0 || atlas !== 252 || trophies.cells !== 162 || trophies.nodes !== 96 || errors.length) throw new Error('Canvas fallback state failed'); return { score };
 }
 
 function protocol(child) {

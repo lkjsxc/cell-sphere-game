@@ -1,9 +1,9 @@
-/** Stable six-territory embedding across every level-3 Evolution Globe cell. */
+/** Stable six-territory embedding across every frequency-5 Evolution Globe cell. */
 import { hashStringU32, hexU32 } from '../../core/hash.js';
-import { createTopology } from '../../world/icosphere.js';
+import { createGeodesicTopology } from '../../world/icosphere.js';
 
-export const MEMORY_ATLAS_LEVEL = 3;
-export const MEMORY_BRANCH_SIZE = 107;
+export const MEMORY_ATLAS_FREQUENCY = 5;
+export const MEMORY_BRANCH_SIZE = 42;
 const BRANCH_KEYS = Object.freeze(['reach', 'flow', 'reserve', 'ecology', 'perception', 'continuity']);
 const AXES = Object.freeze([
   Object.freeze([1, 0, 0]), Object.freeze([-1, 0, 0]),
@@ -41,7 +41,7 @@ function buildAtlas(topo) {
   return { cells: Object.freeze(cells), parents: Object.freeze(parents) };
 }
 
-const BUILT = buildAtlas(createTopology(MEMORY_ATLAS_LEVEL));
+const BUILT = buildAtlas(createGeodesicTopology(MEMORY_ATLAS_FREQUENCY));
 export const MEMORY_ATLAS_CELLS = BUILT.cells;
 const MEMORY_LAYOUT_PARENT_INDEXES = BUILT.parents;
 export const MEMORY_ATLAS_HASH = hexU32(hashStringU32(MEMORY_ATLAS_CELLS.join(',')));
@@ -54,7 +54,7 @@ export function memoryAtlasCell(branch, index) {
 }
 
 export function createMemoryReverseMap(cells = MEMORY_ATLAS_CELLS) {
-  const reverse = new Int16Array(642).fill(-1);
+  const reverse = new Int16Array(252).fill(-1);
   cells.forEach((cell, index) => { if (cell >= 0 && cell < reverse.length && reverse[cell] < 0) reverse[cell] = index; });
   return reverse;
 }
@@ -69,9 +69,9 @@ function atlasLayoutRelations(cells = MEMORY_ATLAS_CELLS, parents = MEMORY_LAYOU
   return relations;
 }
 
-export function validateAtlasMapping(cells = MEMORY_ATLAS_CELLS, topo = createTopology(MEMORY_ATLAS_LEVEL)) {
+export function validateAtlasMapping(cells = MEMORY_ATLAS_CELLS, topo = createGeodesicTopology(MEMORY_ATLAS_FREQUENCY)) {
   const errors = []; const seen = new Set();
-  if (topo.levels !== 3 || topo.nodeCount !== 642) errors.push('Evolution Globe topology must have 642 level-3 cells');
+  if (topo.frequency !== 5 || topo.nodeCount !== 252) errors.push('Evolution Globe topology must have 252 frequency-5 cells');
   if (cells.length !== topo.nodeCount) errors.push(`mapping count: ${cells.length}`);
   cells.forEach((cell, index) => {
     if (!Number.isInteger(cell) || cell < 0 || cell >= topo.nodeCount) errors.push(`invalid mapped cell: ${index}`);
@@ -85,7 +85,7 @@ export function validateAtlasMapping(cells = MEMORY_ATLAS_CELLS, topo = createTo
 }
 
 /** Deterministic reconstruction diagnostic for saves, tests, and release evidence. */
-export function generateMemoryAtlas(topo = createTopology(MEMORY_ATLAS_LEVEL)) {
+export function generateMemoryAtlas(topo = createGeodesicTopology(MEMORY_ATLAS_FREQUENCY)) {
   const generated = buildAtlas(topo); const mapping = generated.cells;
   return Object.freeze({ solved: true, visits: topo.nodeCount, mapping, report: validateAtlasMapping(mapping, topo) });
 }

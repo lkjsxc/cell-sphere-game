@@ -26,7 +26,7 @@ test('world seed sequence advances unless an explicit seed is present', () => {
 
 test('fallback abort is authoritative, reward-free data, and exactly once', () => {
   const messages = []; const driver = createRunDriver({ worker: false }, (message) => messages.push(message));
-  const runId = driver.start({ seed: 42, adaptationMode: 'manual' }, 1);
+  const runId = driver.start({ seed: 42, worldOrdinal: 1, worldPotential: 16000 }, 1);
   assert.ok(messages.every((message) => message.runId === runId));
   driver.frame(1000, performance.now());
   assert.equal(driver.abort(), true); assert.equal(driver.outcome, 'aborted');
@@ -35,22 +35,6 @@ test('fallback abort is authoritative, reward-free data, and exactly once', () =
   assert.equal(aborts[0].summary.runId, runId); assert.equal(aborts[0].summary.cause, 'abandoned');
   assert.equal('echoes' in aborts[0].summary, false); assert.equal('imprint' in aborts[0].summary, false);
   assert.equal(aborts[0].summary.history.at(-1).type, 'run-abandoned');
-});
-
-test('Adaptation commands acknowledge success and reject duplicates in fallback authority', async () => {
-  const messages = []; const driver = createRunDriver({ worker: false }, (message) => messages.push(message));
-  const runId = driver.start({ seed: 77, adaptationMode: 'manual' }, 32);
-  driver.frame(1500, performance.now()); const offer = messages.find((message) => message.t === 'adaptation-offered')?.offer;
-  assert.ok(offer); const invalid = driver.chooseAdaptation(offer, 'not-offered'); await Promise.resolve();
-  assert.equal(messages.find((message) => message.commandId === invalid.commandId)?.reason, 'option-not-present');
-  const accepted = driver.chooseAdaptation(offer, offer.options[1]); await Promise.resolve();
-  const selected = messages.find((message) => message.t === 'adaptation-selected' && message.commandId === accepted.commandId);
-  assert.equal(selected.runId, runId); assert.equal(selected.offerVersion, offer.offerVersion); assert.equal(selected.protocolVersion, 2);
-  const duplicate = driver.chooseAdaptation(offer, offer.options[1]); await Promise.resolve();
-  assert.equal(messages.find((message) => message.commandId === duplicate.commandId)?.reason, 'already-resolved');
-  assert.equal(messages.filter((message) => message.t === 'adaptation-selected').length, 1);
-  const mode = driver.setAdaptationMode('manual'); await Promise.resolve();
-  assert.equal(messages.find((message) => message.t === 'adaptation-mode' && message.commandId === mode.commandId)?.mode, 'manual');
 });
 
 test('new generations reject stale messages from prior workers', () => withWorkers(() => {
@@ -85,19 +69,10 @@ test('fallback synchronous emissions occur only after the complete identity is p
     assert.deepEqual(identityFields(message), identityFields(published)); messages.push(message);
   });
   published = driver.reserveIdentity({ worldSessionId: 91, seed: 123, presentationGeneration: 17 });
-  const runId = driver.start({ seed: 123, adaptationMode: 'random' }, 1, published);
+  const runId = driver.start({ seed: 123, worldOrdinal: 1, worldPotential: 16000 }, 1, published);
   assert.equal(runId, published.runId); assert.equal(messages.some((message) => message.t === 'started'), true);
   assert.equal(messages.some((message) => message.t === 'snapshot'), true);
   driver.stop(); assert.equal(driver.identity, null); assert.equal(driver.snapshot, null); assert.equal(driver.runId, 0);
-});
-
-test('retirement invalidates queued fallback commands', async () => {
-  const messages = []; const driver = createRunDriver({ worker: false }, (message) => messages.push(message));
-  const first = driver.reserveIdentity({ worldSessionId: 1, seed: 44, presentationGeneration: 1 });
-  driver.start({ seed: 44, adaptationMode: 'manual' }, 1, first); const command = driver.setAdaptationMode('random');
-  const before = messages.length; const second = driver.reserveIdentity({ worldSessionId: 2, seed: 45, presentationGeneration: 2 });
-  driver.start({ seed: 45, adaptationMode: 'manual' }, 1, second); await Promise.resolve();
-  assert.equal(messages.slice(before).some((message) => message.commandId === command.commandId), false);
 });
 
 test('worker callbacks require the full session/run/generation tuple', () => withWorkers(() => {

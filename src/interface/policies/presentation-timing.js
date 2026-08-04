@@ -1,6 +1,6 @@
 /** Central UI-only timing policy. Simulation, Auto Next, camera, and watchdog clocks are excluded. */
 export const PRESENTATION_DURATION = Object.freeze({
-  toast: 2700, adaptationCaption: 3750, trophy: 4200, important: 4500,
+  toast: 2700, trophy: 4200, important: 4500,
 });
 
 /** Deterministic FIFO presentation queue with duplicate suppression and hold leases. */

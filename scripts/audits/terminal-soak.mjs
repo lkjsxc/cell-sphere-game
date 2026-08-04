@@ -9,9 +9,9 @@ if (!Number.isInteger(count) || count < 1 || count > 100_000) throw new Error('c
 const started = performance.now(); const causes = {}; const terminals = {}; const ticks = [];
 let duplicates = 0; let invalid = 0; let repairs = 0;
 for (let index = 0; index < count; index++) {
-  const events = []; const mode = index % 7 === 0 ? 'manual' : 'random';
+  const events = [];
   const run = new RunController({ seed: (0x5f3759df + index * 2654435761) >>> 0,
-    adaptationMode: mode }, (message) => { if (message.t === 'extinct') events.push(message); });
+    worldOrdinal: index % 12 + 1, worldPotential: 16000 }, (message) => { if (message.t === 'extinct') events.push(message); });
   run.start();
   while (run.state.status !== 'extinct') run.advance(64);
   const result = run.buildResult(); const exact = run.state.alive.reduce((sum, value) => sum + value, 0);

@@ -2,6 +2,13 @@
 
 Concise architecture/product records: context → decision → consequence → evidence.
 
+## D0 — 2026-08-04 progression compression supersedes older records
+
+Current authority removes active mid-run Adaptations, uses a 252-cell Evolution
+Globe, finite local resources, world-ordinal event eras, gated habitats, and
+SCORE model v2. Any older decision below that conflicts with this is retained
+only as historical evidence. Current evidence is in `status.md` and source/tests.
+
 ## D1 — Zero runtime dependencies
 
 Contest rules limit external libraries and authorship matters. Use native

@@ -73,13 +73,7 @@ function subdivide(levels) {
   return { positions, triangles };
 }
 
-/**
- * Build the full topology. Deterministic; safe to call on both worker and
- * main thread — results are identical.
- * @param {number} [levels=4]
- */
-export function createTopology(levels = 4) {
-  const { positions, triangles } = subdivide(levels);
+function finalizeTopology({ positions, triangles, frequency, levels = null }) {
   const nodeCount = positions.length / 3;
   const triCount = triangles.length / 3;
 
@@ -115,12 +109,13 @@ export function createTopology(levels = 4) {
     nodeEdges[o] = e; nodeNeighbors[o] = a;
   }
 
-  assert(nodeCount === 10 * 4 ** levels + 2, `node count ${nodeCount}`);
-  assert(triCount === 20 * 4 ** levels, `triangle count ${triCount}`);
-  assert(edgeCount === 30 * 4 ** levels, `edge count ${edgeCount}`);
+  assert(nodeCount === 10 * frequency ** 2 + 2, `node count ${nodeCount}`);
+  assert(triCount === 20 * frequency ** 2, `triangle count ${triCount}`);
+  assert(edgeCount === 30 * frequency ** 2, `edge count ${edgeCount}`);
 
   return Object.freeze({
     levels,
+    frequency,
     nodeCount,
     triCount,
     edgeCount,
@@ -140,6 +135,88 @@ export function createTopology(levels = 4) {
     /** Incident edge count per node. Uint8Array(nodeCount). */
     degree,
   });
+}
+
+/**
+ * Build the power-of-two topology used by the run world and Trophy Sphere.
+ * @param {number} [levels=4]
+ */
+export function createTopology(levels = 4) {
+  return finalizeTopology({ ...subdivide(levels), levels, frequency: 2 ** levels });
+}
+
+/**
+ * Build a class-I geodesic topology at an arbitrary integer frequency.
+ * Original icosahedron vertices keep IDs 0–11; seams use canonical edge keys.
+ * @param {number} frequency
+ */
+export function createGeodesicTopology(frequency) {
+  assert(Number.isInteger(frequency) && frequency >= 1 && frequency <= 20,
+    `geodesic frequency ${frequency}`);
+  const verts = BASE_VERTS.map(normalize3);
+  const faces = [];
+  const edgePoints = new Map();
+
+  const edgePoint = (a, b, weightB) => {
+    const lo = Math.min(a, b); const hi = Math.max(a, b);
+    const fromLo = a === lo ? weightB : frequency - weightB;
+    const key = `${lo}:${hi}:${fromLo}`;
+    const hit = edgePoints.get(key);
+    if (hit !== undefined) return hit;
+    const wa = frequency - weightB;
+    const va = BASE_VERTS[a]; const vb = BASE_VERTS[b];
+    const index = verts.length;
+    verts.push(normalize3([
+      (va[0] * wa + vb[0] * weightB) / frequency,
+      (va[1] * wa + vb[1] * weightB) / frequency,
+      (va[2] * wa + vb[2] * weightB) / frequency,
+    ]));
+    edgePoints.set(key, index);
+    return index;
+  };
+
+  BASE_FACES.forEach(([a, b, c]) => {
+    const grid = new Map();
+    const at = (i, j) => grid.get(`${i}:${j}`);
+    for (let i = 0; i <= frequency; i++) {
+      for (let j = 0; j <= frequency - i; j++) {
+        const k = frequency - i - j;
+        let index;
+        if (i === frequency) index = a;
+        else if (j === frequency) index = b;
+        else if (k === frequency) index = c;
+        else if (k === 0) index = edgePoint(a, b, j);
+        else if (i === 0) index = edgePoint(b, c, k);
+        else if (j === 0) index = edgePoint(c, a, i);
+        else {
+          const va = BASE_VERTS[a]; const vb = BASE_VERTS[b]; const vc = BASE_VERTS[c];
+          index = verts.length;
+          verts.push(normalize3([
+            (va[0] * i + vb[0] * j + vc[0] * k) / frequency,
+            (va[1] * i + vb[1] * j + vc[1] * k) / frequency,
+            (va[2] * i + vb[2] * j + vc[2] * k) / frequency,
+          ]));
+        }
+        grid.set(`${i}:${j}`, index);
+      }
+    }
+    for (let i = 0; i < frequency; i++) {
+      for (let j = 0; j < frequency - i; j++) {
+        const p = at(i, j); const q = at(i + 1, j); const r = at(i, j + 1);
+        faces.push([p, q, r]);
+        if (i + j < frequency - 1) faces.push([q, at(i + 1, j + 1), r]);
+      }
+    }
+  });
+
+  const positions = new Float32Array(verts.length * 3);
+  for (let i = 0; i < verts.length; i++) {
+    positions[i * 3] = Math.fround(verts[i][0]);
+    positions[i * 3 + 1] = Math.fround(verts[i][1]);
+    positions[i * 3 + 2] = Math.fround(verts[i][2]);
+  }
+  const triangles = new Uint16Array(faces.flat());
+  return finalizeTopology({ positions, triangles, frequency });
 }
 
 /** @typedef {ReturnType<typeof createTopology>} Topology */

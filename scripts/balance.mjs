@@ -2,7 +2,7 @@
 /**
  * Balance harness: Monte-Carlo headless runs through the production
  * simulation. Reports extinction-time distribution, coverage, crisis
- * survival, adaptation pick frequency, and determinism health.
+ * survival, finite-resource causes, SCORE, and determinism health.
  *
  * Modes:
  *   --smoke      bounded (12 runs), CI-safe, invalid-state gates only
@@ -15,6 +15,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolveRes } from './lib.mjs';
 import { RunController } from '../src/simulation/simulator.js';
 import { runHeadless } from './pilot.mjs';
+import { scoreResult } from '../src/game/scoring.js';
 
 const args = process.argv.slice(2);
 const smoke = args.includes('--smoke');
@@ -34,7 +35,7 @@ for (const policy of POLICIES) {
   const peaks = [];
   const sustained = [];
   const crisisRates = [];
-  const cardFreq = {};
+  const scores = [];
   const causes = {};
   let nanRuns = 0;
 
@@ -42,7 +43,7 @@ for (const policy of POLICIES) {
     const seed = seedCounter++;
     const strain = STRAINS[r % STRAINS.length];
     const { result, state } = runHeadless(
-      { RunController }, { seed, strainId: strain }, policy);
+      { RunController }, { seed, strainId: strain, worldOrdinal: 1, worldPotential: 16000 }, policy);
 
     // Invalid-state gate: always enforced.
     if (stateHasNaN(state)) nanRuns++;
@@ -54,11 +55,11 @@ for (const policy of POLICIES) {
     sustained.push(result.sustainedCoverage);
     crisisRates.push(result.crisesTotal ? result.crisesEndured / result.crisesTotal : 1);
     causes[result.cause] = (causes[result.cause] ?? 0) + 1;
-    for (const c of result.ownedCards) cardFreq[c] = (cardFreq[c] ?? 0) + 1;
+    scores.push(scoreResult(result).total);
   }
 
   times.sort((a, b) => a - b);
-  peaks.sort((a, b) => a - b);
+  peaks.sort((a, b) => a - b); scores.sort((a, b) => a - b);
   const q = (arr, p) => arr[Math.min(arr.length - 1, Math.floor(arr.length * p))];
   report.policies[policy] = {
     runs: runsPerPolicy,
@@ -66,9 +67,8 @@ for (const policy of POLICIES) {
     peakCoverage: { median: round3(q(peaks, 0.5)) },
     sustainedCoverage: { median: round3(q(sustained, 0.5)) },
     crisisSurvival: round3(crisisRates.reduce((a, b) => a + b, 0) / crisisRates.length),
-    causes,
-    cardFreq,
-    nanRuns,
+    score: { p25: q(scores, .25), median: q(scores, .5), p75: q(scores, .75) },
+    causes, nanRuns,
   };
   if (nanRuns > 0) violations.push(`${policy}: ${nanRuns} runs with NaN state`);
 }
@@ -95,7 +95,7 @@ if (violations.length > 0) {
 console.error(`\nbalance: ${smoke ? 'smoke' : 'full'} OK — report at reports/balance-${smoke ? 'smoke' : 'full'}.json`);
 
 function stateHasNaN(state) {
-  for (const arr of [state.biomass, state.energy, state.nutrient, state.stress, state.conductance]) {
+  for (const arr of [state.biomass, state.energy, state.nutrient, state.resourceReserve, state.stress, state.conductance]) {
     for (let i = 0; i < arr.length; i++) if (Number.isNaN(arr[i])) return true;
   }
   return false;

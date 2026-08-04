@@ -17,7 +17,6 @@ export class WorldPass {
       atmosphere: this.make(SHELL.VS_ATMOSPHERE, SHELL.FS_ATMOSPHERE),
     };
     this.lifeData = new Float32Array(this.geometry.vertexCount * 3); this.eventData = new Uint8Array(this.geometry.vertexCount * 2);
-    this.adaptationData = new Uint16Array(this.geometry.vertexCount * 2); this.adaptationToken = -1;
     this.lastSnapshot = null; this.boundIdentity = null; this.disposed = false;
     this.lastTick = -1;
     this.zero3 = new Float32Array(3);
@@ -46,8 +45,6 @@ export class WorldPass {
     this.attribute(this.programs.globe, 'aLife', this.lifeBuffer, 3);
     this.eventBuffer = this.buffer(gl.ARRAY_BUFFER, this.eventData, gl.DYNAMIC_DRAW);
     this.attribute(this.programs.globe, 'aEvent', this.eventBuffer, 2, gl.UNSIGNED_BYTE);
-    this.adaptationBuffer = this.buffer(gl.ARRAY_BUFFER, this.adaptationData, gl.DYNAMIC_DRAW);
-    this.attribute(this.programs.globe, 'aAdaptation', this.adaptationBuffer, 2, gl.UNSIGNED_SHORT);
     this.globeIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.indices);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.globeIndex);
 
@@ -79,16 +76,14 @@ export class WorldPass {
   accepts(snapshot) { return !this.boundIdentity || sameWorldIdentity(snapshot, this.boundIdentity); }
   resetDynamicState() {
     if (this.disposed) return false;
-    this.lifeData.fill(0); this.eventData.fill(0); this.adaptationData.fill(0);
-    this.lastSnapshot = null; this.lastTick = -1; this.adaptationToken = -1; this.historyCenters.fill(0);
+    this.lifeData.fill(0); this.eventData.fill(0);
+    this.lastSnapshot = null; this.lastTick = -1; this.historyCenters.fill(0);
     const gl = this.gl;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.lifeBuffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.lifeData);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.eventBuffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.eventData);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.adaptationBuffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.adaptationData);
     return true;
   }
-  dynamicState() { return Object.freeze({ life: nonZero(this.lifeData), events: nonZero(this.eventData),
-    adaptations: nonZero(this.adaptationData), tick: this.lastTick }); }
+  dynamicState() { return Object.freeze({ life: nonZero(this.lifeData), events: nonZero(this.eventData), tick: this.lastTick }); }
   uploadLife(snapshot) {
     if (snapshot === this.lastSnapshot && (snapshot?.tick ?? -1) === this.lastTick) return;
     this.lastSnapshot = snapshot;
@@ -116,20 +111,9 @@ export class WorldPass {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.lifeBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.lifeData);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.eventBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.eventData);
   }
-  uploadAdaptation(event) {
-    const token = event?.token ?? 0; if (token === this.adaptationToken) return;
-    this.adaptationToken = token; const cells = this.geometry.vertexCell;
-    if (!event) this.adaptationData.fill(0);
-    else for (let vertex = 0; vertex < cells.length; vertex++) {
-      this.adaptationData[vertex * 2] = event.arrivals[cells[vertex]];
-      this.adaptationData[vertex * 2 + 1] = event.category;
-    }
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.adaptationBuffer);
-    this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.adaptationData);
-  }
-  draw(vp, eye, snapshot, selectedNode, adaptation, highlightedCells = []) {
+  draw(vp, eye, snapshot, selectedNode, highlightedCells = []) {
     if (this.disposed || !this.accepts(snapshot)) return false;
-    const gl = this.gl; this.uploadLife(snapshot); this.uploadAdaptation(adaptation);
+    const gl = this.gl; this.uploadLife(snapshot);
     const globe = this.programs.globe;
     gl.useProgram(globe.program);
     gl.uniformMatrix4fv(globe.u.get('uViewProj'), false, vp);
@@ -140,11 +124,6 @@ export class WorldPass {
     gl.uniform1f(globe.u.get('uHasSelection'), selected >= 0 ? 1 : 0);
     gl.uniform3fv(globe.u.get('uSelectedCenter'), selected >= 0
       ? this.topo.positions.subarray(selected * 3, selected * 3 + 3) : this.zero3);
-    gl.uniform1f(globe.u.get('uAdaptationTimeMs'), adaptation?.timeMs ?? 0);
-    gl.uniform1f(globe.u.get('uAdaptationTrailMs'), adaptation?.trailMs ?? 420);
-    gl.uniform1f(globe.u.get('uAdaptationReducedThreshold'), adaptation?.reducedThreshold ?? 0);
-    gl.uniform1f(globe.u.get('uAdaptationReduced'), adaptation?.reduced ? 1 : 0);
-    gl.uniform1f(globe.u.get('uAdaptationActive'), adaptation ? 1 : 0);
     this.historyCenters.fill(0); const count = Math.min(8, highlightedCells.length);
     for (let i = 0; i < count; i++) this.historyCenters.set(this.topo.positions.subarray(highlightedCells[i] * 3, highlightedCells[i] * 3 + 3), i * 3);
     gl.uniform1i(globe.u.get('uHistoryCount'), count); gl.uniform3fv(globe.u.get('uHistoryCenter'), this.historyCenters);

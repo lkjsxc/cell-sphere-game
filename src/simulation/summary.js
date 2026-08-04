@@ -1,9 +1,7 @@
-/** Summary metrics, semantic milestones, events, and passive offers. */
-import { BALANCE as B } from '../game/balance.js';
-import { ADAPTATIONS, drawAdaptationOptions } from '../game/adaptations.js';
+/** Summary metrics, semantic milestones, events, and finite-resource evidence. */
 import { telegraphLead } from './events.js';
 import { BIOME, FEATURE } from '../world/fields.js';
-import { logReplay, recordHistory, REPLAY } from './replay.js';
+import { recordHistory } from './replay.js';
 import { recordTrophyCrisisSurvival, sampleTrophyLiving } from './trophy-proof.js';
 
 const PHASES = Object.freeze([
@@ -22,6 +20,9 @@ export function runSummary(state, emit) {
   if (coverage > state.peakCoverage) state.peakCoverage = coverage;
   state.sustainedSum += coverage;
   state.sustainedSamples++;
+  let stress = 0; for (let cell = 0; cell < state.topo.nodeCount; cell++) if (state.alive[cell]) stress += state.stress[cell];
+  state.stressBurdenSum += state.aliveCount ? stress / state.aliveCount : 1;
+  state.stressBurdenSamples++;
   if (state.connectedShare > state.peakConnectedShare) state.peakConnectedShare = state.connectedShare;
   if (coverage > 0.5 && state.connectedShare < state.minConnectedWhileMajority) {
     state.minConnectedWhileMajority = state.connectedShare;
@@ -31,7 +32,7 @@ export function runSummary(state, emit) {
   recordMilestones(state);
   recordGeography(state);
   recordMorphology(state);
-  checkAdaptationOffer(state, emit);
+  recordResourceState(state);
   if (state.history.length > historyStart) {
     emit({ t: 'history-batch', events: state.history.slice(historyStart).map((event) => ({ ...event })) });
   }
@@ -52,13 +53,6 @@ function announceEvents(state, emit) {
       emit({ t: 'event', phase: 'active', family: ev.family, nameJa: ev.nameJa,
         center: ev.center, fieldVersion: ev.fieldVersion, tick: state.tick });
       if (ev.crisis) state.crisesTotal++;
-      if (ev.crisis && state.traits.feverGrowth) {
-        for (let i = 0; i < state.topo.nodeCount; i++) {
-          if (state.alive[i] === 1 && state.energy[i] > 0) {
-            state.energy[i] = Math.fround(state.energy[i] + 0.35);
-          }
-        }
-      }
     }
     if (!(ev.announced & 4) && state.tick > ev.endTick) {
       ev.announced |= 4;
@@ -119,41 +113,15 @@ function recordMorphology(state) {
   }
 }
 
-function checkAdaptationOffer(state, emit) {
-  if (state.nextOfferIndex >= B.ADAPTATION_OFFER_TICKS.length) return;
-  if (state.tick < B.ADAPTATION_OFFER_TICKS[state.nextOfferIndex]) return;
-  offerAdaptation(state, emit);
-}
-
-/** Create one immutable offer, bounded to the authoritative queue cap. */
-export function offerAdaptation(state, emit, forcedReason = null) {
-  if (state.adaptationOffers.length >= B.ADAPTATION_QUEUE_CAP) return null;
-  const crisisCats = [];
-  for (const ev of state.events) {
-    if (ev.crisis && ev.startTick > state.tick && ev.startTick - state.tick < 400) {
-      crisisCats.push('resilience');
-      break;
-    }
+function recordResourceState(state) {
+  const thresholds = [.75, .5, .25, .1]; const index = state.resourceMilestoneIndex ?? 0;
+  let remaining = 0; let depleted = 0;
+  for (const value of state.resourceReserve) { remaining += value; if (value <= .0001) depleted++; }
+  state.resourceDepletedCells = depleted;
+  if (index >= thresholds.length) return;
+  const fraction = state.initialResourceReserve > 0 ? remaining / state.initialResourceReserve : 0;
+  if (fraction <= thresholds[index]) {
+    state.resourceMilestoneIndex = index + 1;
+    recordHistory(state, 'resource-reserve', { value: thresholds[index], cells: depleted });
   }
-  const options = Object.freeze(drawAdaptationOptions(state.contentRng, {
-    owned: state.ownedCards,
-    lastOffered: state.lastOffered,
-    crisisCats,
-  }, B.ADAPTATION_OPTIONS).slice());
-  const offerIndex = state.nextOfferIndex++;
-  const offer = {
-    id: offerIndex, offerVersion: 1, offerIndex, offerTick: state.tick, options,
-    reason: forcedReason ?? (crisisCats.length ? 'crisis' : 'milestone'),
-    resolvedTick: null, selectedCardId: null, selectionMode: null,
-  };
-  state.adaptationOffers.push(offer);
-  state.lastOffered = options.slice();
-  logReplay(state, REPLAY.ADAPTATION_OFFER, offer.id, ...options.map(adaptationIndex));
-  recordHistory(state, 'adaptation-offered', { id: offer.id, reason: offer.reason });
-  emit({ t: 'adaptation-offered', offer: { ...offer, options: options.slice() } });
-  return offer;
-}
-
-function adaptationIndex(id) {
-  return ADAPTATIONS.findIndex((card) => card.id === id);
 }

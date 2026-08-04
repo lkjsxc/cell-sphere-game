@@ -2,12 +2,12 @@
 import { buildMemorySnapshot, createMemoryFields, getMemoryNode, MEMORY_ATLAS_REVERSE, MEMORY_NODES, purchaseMemory } from '../../game/skills/index.js';
 import { TROPHIES, TROPHY_ATLAS_REVERSE, getTrophy } from '../../game/trophies/index.js';
 import { reconcileTrophies } from '../../game/trophies/evaluator.js'; import { buildTrophySnapshot, createTrophyFields } from '../../game/trophies/scene.js';
-import { createTopology } from '../../world/icosphere.js'; import { focusCamera } from '../../rendering/camera.js';
+import { createGeodesicTopology, createTopology } from '../../world/icosphere.js'; import { focusCamera } from '../../rendering/camera.js';
 import { interruptCameraPolicy } from '../camera-policy.js';
 import { appendMemoryEvent, appendTrophyEvents, saveHistory } from '../../platform/history.js'; import { saveMeta } from '../../platform/storage.js';
 import * as ui from '../surfaces.js';
 
-export function initializeProgression(app) { app.topo3 = createTopology(3); app.topo2 = createTopology(2);
+export function initializeProgression(app) { app.topo3 = createGeodesicTopology(5); app.topo2 = createTopology(2);
   app.atlasFields = createMemoryFields(app.topo3); app.trophyFields = createTrophyFields(app.topo2);
   app.memorySnapshot = null; app.trophySnapshot = null; }
 export function progressionTap(app, node) {
@@ -33,7 +33,7 @@ export function buySkill(app, id) { const before = new Set(app.memorySnapshot.no
   app.archive = appendTrophyEvents(app.archive, trophies.awardedIds); saveHistory(app.archive, app.settings.historyRetention); app.trophyNotifications.sync(app.meta);
   const next = buildMemorySnapshot(app.topo, app.meta, id);
   const newly = next.nodeStates.filter((node) => node.reachable && !before.has(node.id)).map((node) => node.id); app.memorySnapshot = buildMemorySnapshot(app.topo, app.meta, id, newly);
-  app.memoryUi.refresh(app.meta, newly); ui.showMemory(app.el, app.meta, availableSkills(app));
+  app.memoryUi.refresh(app.meta, newly, purchase.preview); ui.showMemory(app.el, app.meta, availableSkills(app));
   ui.announce(app.el, `${purchase.node.nameEn} unlocked. ${newly.length} adjacent skills are now available.${trophies.awardedIds.length ? ` ${trophies.awardedIds.length} trophies recognized.` : ''}`); }
 export function focusAvailableSkill(app) { const state = app.memorySnapshot?.nodeStates.find((node) => node.reachable && !node.owned && node.affordable)
     ?? app.memorySnapshot?.nodeStates.find((node) => node.reachable && !node.owned); if (state) selectSkill(app, state.id); }

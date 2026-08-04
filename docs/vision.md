@@ -4,8 +4,8 @@
 
 A mobile-first passive-observation roguelite on a rich spherical ecology. The
 player watches autonomous network life discover geography, rotates and inspects
-without steering it, chooses or delegates non-blocking evolution, understands
-its story through visual History, and gardens adjacent Skill Cells across the Evolution Globe.
+without steering it, understands its story through visual History, and gardens
+adjacent permanent Skill Cells across the Evolution Globe between worlds.
 
 ## Product thesis
 
@@ -13,8 +13,8 @@ its story through visual History, and gardens adjacent Skill Cells across the Ev
 > teaches the next world how to grow.
 
 The world must be beautiful and legible with zero input, rewarding to inspect,
-strategic when Adaptations are manual, and satisfying between runs through many
-small permanent purchases. It is a living interactive atlas, not a dashboard,
+causally legible as finite resources change, and satisfying between runs through
+meaningful permanent purchases. It is a living interactive atlas, not a dashboard,
 not a click-to-place game, and not a hidden-tab idle process.
 
 ## North stars
@@ -23,7 +23,7 @@ not a click-to-place game, and not a hidden-tab idle process.
 - median ordinary run 270–330 game seconds, ceiling about 360;
 - first campaign resolution target 18–24 minutes;
 - first trophy-scale recognition remains targeted around four hours; Evolution Globe mastery is a long-horizon modeled pursuit;
-- same seed + unlocked skills + decision log produces the same result at every speed;
+- same seed + world ordinal + unlocked skills produces the same result at every speed;
 - pointer-only completeness, semantic alternatives, reduced-motion safety;
 - desktop and smartphone Chrome, low allocation, restrained draw count;
 - exact evidence language: implemented, tested, measured, observed, deployed,
@@ -35,7 +35,7 @@ not a click-to-place game, and not a hidden-tab idle process.
 2. Original engine-less spherical topology, geography, hydrology, and simulation.
 3. Whole-cell lakes, shores, forests, terrain, and cellular life stages remain distinct at a glance.
 4. Extinction is inevitable, causal, narrated, and converted into permanent inheritance.
-5. Non-blocking Auto Random/Manual evolution supports ambient and strategic play.
+5. Autonomous worlds support ambient play while permanent Evolution creates strategy.
 6. History makes autonomous behavior understandable during and after a run.
 7. The globe-native Permanent Skill Tree rewards repeated extinction.
 8. Excellent deterministic source, tests, accessibility, deployment, and

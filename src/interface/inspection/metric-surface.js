@@ -54,17 +54,19 @@ function scoreProjection({ snapshot, result, score, history = [] }) {
   }));
   const conditions = [
     { label: final ? 'Final authority' : 'Live projection', value: final ? 'Final' : 'Updating' },
-    { label: 'Score-rate trait', value: `${Math.round((projection?.rate ?? 1) * 100)}%` },
+    { label: 'Run Quality', value: `${Math.round((projection?.quality ?? 0) * 100)}%` },
+    { label: 'World Potential', value: number(projection?.worldPotential ?? result?.worldPotential ?? 0) },
     { label: 'Challenge multiplier', value: `${(projection?.mult ?? 1).toFixed(2)}×` },
+    { label: 'SCORE model', value: `v${projection?.modelVersion ?? result?.scoreModelVersion ?? 2}` },
     ...milestones.map((event) => ({ label: eventTitle(event), value: gameTime(event.tick) })),
   ];
   return { eyebrow: final ? 'FINAL SCORE' : 'LIVE SCORE PROJECTION', heading: 'SCORE', primary: number(total),
     summary: final ? 'The final deterministic point model for this world.' : 'A live projection from the same deterministic model used at extinction.',
     counts: [{ label: 'Rank', value: rank.en }, { label: 'Next rank', value: next?.en ?? 'Highest' },
-      { label: 'Remaining', value: next ? number(remaining) : '—' }],
+      { label: 'Run Quality', value: `${Math.round((projection?.quality ?? 0) * 100)}%` }],
     directHeading: 'Axes and contributions', direct: nonempty(direct, 'No score contribution yet.'),
     conditionsHeading: 'Model and real milestones', conditions,
-    footer: 'Six authoritative axes, declared weights, score-rate trait, and challenge multiplier.',
+    footer: 'SCORE = Run Quality × permanent World Potential × explicit Challenge. Speed, camera, quality, and frame rate have no effect.',
   };
 }
 function entropyProjection({ snapshot, result, entropyRate = null, history = [] }) {
@@ -76,11 +78,11 @@ function entropyProjection({ snapshot, result, entropyRate = null, history = [] 
   const conditions = reachLimits.map((item) => ({ label: humanize(item.label), value: `${Math.round(item.score * 100)}%` }));
   return { eyebrow: result ? 'TERMINAL WORLD PRESSURE' : 'LIVE WORLD PRESSURE', heading: 'ENTROPY', primary: `${Math.round(entropy * 100)}%`,
     summary: result ? 'Terminal context from the final preserved world snapshot.' : 'Global collapse pressure, derived from authoritative snapshots and active events.',
-    counts: [{ label: 'Phase', value: phase }, { label: 'Recent rate', value: entropyRate == null ? 'Gathering' : `${entropyRate > 0 ? '+' : ''}${entropyRate} pp / 10s` },
+    counts: [{ label: 'Era', value: `World ${snapshot?.worldOrdinal ?? result?.worldOrdinal ?? 1}` }, { label: 'Recent rate', value: entropyRate == null ? 'Gathering' : `${entropyRate > 0 ? '+' : ''}${entropyRate} pp / 10s` },
       { label: 'Active events', value: String(active.length) }],
     directHeading: 'Active event contribution', direct: nonempty(direct, 'No active event contribution.'),
     conditionsHeading: 'Global effects and seasonal context', conditions: nonempty(conditions, result ? 'World pressure reached its terminal context.' : 'No strong limiting condition.'),
-    footer: `Snapshot tick ${snapshot?.tick ?? result?.tick ?? 0} · displayed as whole percentages to avoid fake precision.`,
+    footer: `Era ${snapshot?.worldEra ?? result?.worldEra ?? 1} · finite local reserves are separate from global Entropy · tick ${snapshot?.tick ?? result?.tick ?? 0}.`,
   };
 }
 function reachProjection({ snapshot, result }) {

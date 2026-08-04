@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { EXPORT_FILENAME, LEGACY_PRODUCT, LEGACY_STORAGE_KEYS, PAGES_URL, PRODUCT, REPOSITORY,
   STORAGE_KEYS, TAGLINE } from '../../src/core/identity.js';
 import { MEMORY_NODE_IDS } from '../../src/game/skills/index.js';
+import { LEGACY_MEMORY_MANIFEST } from '../../src/game/skills/legacy-v4-manifest.js';
 import { LEGACY_TROPHY_IDS, TROPHY_IDS } from '../../src/game/trophies/index.js';
 import { createExportData, parseImportedData, serializeExportData } from '../../src/interface/app-data.js';
 import { defaultHistory, loadHistory, validateHistory } from '../../src/platform/history.js';
@@ -20,8 +21,8 @@ const legacyHistory = { schema: 4, worlds: [{ id: '7-91-proof', seed: 91, tick: 
     subjectId: TROPHY_IDS[0], primaryCells: [], worldId: '7-91-proof', run: 7 }] };
 const legacySettings = { schema: 3, motion: 'reduced', contrast: 'high', quality: 'eco', cameraInertia: false,
   idleRotation: 'gentle', adaptationMode: 'manual', autoContinue: false, pauseOnPanels: true, speed: 16, historyRetention: 32 };
-const legacyMeta = { schema: 8, bestScore: 812345, totalEchoes: 987, echoBalance: 444, runs: 37,
-  worldSeedIndex: 52, resultKeys: ['result-a', 'result-b'], memoryNodes: MEMORY_NODE_IDS,
+const legacyMeta = { schema: 8, memoryGraphVersion: 4, bestScore: 812345, totalEchoes: 987, echoBalance: 444, runs: 37,
+  worldSeedIndex: 52, resultKeys: ['result-a', 'result-b'], memoryNodes: LEGACY_MEMORY_MANIFEST.map((row) => row.oldId),
   quarantinedMemoryNodes: ['foreign-memory'], imprints: [{ kind: 'strongest-corridor', seed: 91,
     cells: Array.from({ length: 64 }, (_, index) => index) }], trophyIds: TROPHY_IDS.slice(0, 11),
   legacyTrophyIds: LEGACY_TROPHY_IDS, trophyQueue: TROPHY_IDS.slice(4, 8), trophyBackfillVersion: 2,
@@ -44,9 +45,9 @@ test('full legacy namespace migration preserves every schema-8 progression and s
   const initial = legacyNamespace(); const storage = memoryStorage(initial); const report = migrateStorageNamespace(storage);
   assert.equal(report.complete, true); assert.deepEqual(Object.values(report.documents).map((item) => item.status), ['migrated', 'migrated', 'migrated']);
   const meta = JSON.parse(storage.getItem(STORAGE_KEYS.meta)); const expectedMeta = validateMeta(legacyMeta);
-  assert.equal(meta.bestScore, 812345); assert.equal(meta.totalEchoes, 987); assert.equal(meta.echoBalance, 444);
+  assert.equal(meta.bestScore, 0); assert.equal(meta.legacyBestScore, 812345); assert.equal(meta.totalEchoes, 987); assert.equal(meta.echoBalance, 444);
   assert.equal(meta.runs, 37); assert.equal(meta.worldSeedIndex, 52); assert.deepEqual(meta.resultKeys, ['result-a', 'result-b']);
-  assert.equal(meta.memoryNodes.length, 642); assert.deepEqual(meta.memoryNodes, expectedMeta.memoryNodes);
+  assert.equal(meta.memoryNodes.length, 252); assert.equal(meta.legacyMemoryNodes.length, 642); assert.deepEqual(meta.memoryNodes, expectedMeta.memoryNodes);
   assert.deepEqual(meta.imprints, expectedMeta.imprints); assert.deepEqual(meta.trophyIds, expectedMeta.trophyIds);
   assert.deepEqual(meta.legacyTrophyIds, expectedMeta.legacyTrophyIds); assert.deepEqual(meta.trophyQueue, expectedMeta.trophyQueue);
   assert.deepEqual(meta.trophyProgress, expectedMeta.trophyProgress);
@@ -59,7 +60,8 @@ test('full legacy namespace migration preserves every schema-8 progression and s
 });
 
 test('valid canonical wins coexistence and corrupt canonical degrades field-by-field without legacy rollback', () => {
-  const canonical = { ...legacyMeta, bestScore: 900001, totalEchoes: 700, echoBalance: 'broken', runs: 9,
+  const canonical = { ...legacyMeta, schema: 9, scoreModelVersion: 2, memoryGraphVersion: 5,
+    bestScore: 900001, totalEchoes: 700, echoBalance: 'broken', runs: 9,
     worldSeedIndex: 15, memoryNodes: [MEMORY_NODE_IDS[1]], resultKeys: ['new-result'] };
   const storage = memoryStorage({ ...legacyNamespace(), [STORAGE_KEYS.meta]: JSON.stringify(canonical) });
   migrateStorageNamespace(storage); const meta = validateMeta(JSON.parse(storage.getItem(STORAGE_KEYS.meta)));

@@ -35,12 +35,12 @@ test('every rich condition has passing evidence and a failing leaf boundary', ()
 });
 
 test('maximal persisted proof recognizes all 96 while empty load data recognizes none', () => {
-  const empty = reconcileTrophies({ ...defaultMeta(), trophyBackfillVersion: 2 }, { worlds: [] }); assert.deepEqual(empty.awardedIds, []);
+  const empty = reconcileTrophies({ ...defaultMeta(), trophyBackfillVersion: 3 }, { worlds: [] }); assert.deepEqual(empty.awardedIds, []);
   const aggregate = Object.fromEntries([...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS].map((key) => [key, 10_000_000]));
   const meta = { ...defaultMeta(), runs: 240, bestScore: 2_000_000, totalEchoes: 4000, memoryNodes: MEMORY_NODE_IDS,
-    imprints: Array.from({ length: 8 }, () => ({ kind: 'strongest-corridor' })), trophyBackfillVersion: 2,
-    trophyProgress: { ...defaultMeta().trophyProgress, geographyMask: 63, crisisMask: 127, adaptationCategoryMask: 63,
-      lakeTypeMask: 31, lakeSalinityMask: 7, adaptationIds: allAdaptations(), aggregate } };
+    imprints: Array.from({ length: 8 }, () => ({ kind: 'strongest-corridor' })), trophyBackfillVersion: 3,
+    trophyProgress: { ...defaultMeta().trophyProgress, geographyMask: 63, crisisMask: 127,
+      lakeTypeMask: 31, lakeSalinityMask: 7, aggregate } };
   const result = reconcileTrophies(meta, { worlds: [] }); assert.equal(result.awardedIds.length, 96); assert.deepEqual(result.meta.trophyIds, TROPHY_IDS);
   assert.deepEqual(result.meta.trophyQueue, TROPHY_IDS);
 });
@@ -54,6 +54,3 @@ test('Trophy projection is read-only, exact, and leaves neutral cells inert', ()
   assert.equal('alive' in snapshot, false); assert.equal('effects' in snapshot.trophyScene, false);
 });
 function leaves(condition) { return ['all','any'].includes(condition.rule) ? condition.conditions.flatMap(leaves) : [condition]; }
-function allAdaptations() { return ['long-filaments','frugal-cytoplasm','anastomosis','thermal-proteins','dormant-cysts','salt-vesicles',
-  'exploratory-fans','pulsed-transport','cannibal-reclamation','symbiotic-film','adaptive-membrane','hollow-veins','dense-cords','migratory-core',
-  'spore-memory','distributed-sensing','local-sacrifice','redundant-loops','opportunistic-uptake','quiet-metabolism','fever-growth','cold-reserve','toxin-catalysis','fractal-frontier']; }

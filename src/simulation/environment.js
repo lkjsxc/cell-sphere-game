@@ -12,16 +12,19 @@ import { eventEnvelopeAt } from './events.js';
 import { REACH_CAUSE } from './lifecycle/reach-ledger.js';
 
 /** Global deterioration curve, indexed by tick. 0 until rise start, 1 at end. */
-export function buildEntropyLut() {
-  const len = B.RUN_CEILING_TICKS + 600;
+export function buildEntropyLut(worldEra = 1) {
+  const len = B.RUN_CEILING_TICKS + 600; const pressure = environmentPressureForEra(worldEra);
+  const start = B.ENTROPY_RISE_START - Math.round(pressure * 250);
   const lut = new Float32Array(len);
   for (let t = 0; t < len; t++) {
-    const x = (t - B.ENTROPY_RISE_START) / (B.ENTROPY_RISE_END - B.ENTROPY_RISE_START);
+    const x = (t - start) / (B.ENTROPY_RISE_END - start);
     const e = smootherstep(x);
     lut[t] = Math.fround(Math.pow(e, B.ENTROPY_POWER));
   }
   return lut;
 }
+
+export function environmentPressureForEra(era) { return era <= 1 ? 0 : era === 2 ? .35 : era === 3 ? .55 : era === 4 ? .8 : 1; }
 
 /** Seasonal oscillation in [-1, 1], indexed by (tick + nodeOffset) % period. */
 export function buildSeasonLut() {
@@ -63,7 +66,8 @@ export function updateEnvironment(state) {
   state.entropy = e;
 
   const period = B.SEASON_PERIOD_TICKS;
-  const seasonAmp = B.SEASON_AMPLITUDE * (0.6 + 0.8 * e);
+  const pressure = state.environmentPressure;
+  const seasonAmp = B.SEASON_AMPLITUDE * (0.25 + 0.75 * pressure) * (0.6 + 0.8 * e);
   const symbiotic = traits.symbioticFilm > 0;
   const challengeNutrient = state.challenge?.nutrientRenewal ?? 1;
 
@@ -74,15 +78,15 @@ export function updateEnvironment(state) {
 
     // Moisture: seasonal swing widening with entropy, global drying.
     state.moisture[i] = Math.fround(clamp01(
-      fields.baseMoisture[i] + seasonAmp * season - e * 0.22));
+      fields.baseMoisture[i] + seasonAmp * season - e * 0.22 * pressure));
 
     // Temperature: seasonal + slow entropy heat drift.
     state.temperature[i] = Math.fround(clamp01(
-      fields.baseTemp[i] + seasonAmp * 0.7 * season2 + e * 0.08));
+      fields.baseTemp[i] + seasonAmp * 0.7 * season2 + e * 0.08 * pressure));
 
     // Toxins accumulate with entropy, decay slowly.
     const tox = state.toxicity[i]
-      + B.TOXIN_ACCUMULATION * e * fields.toxVuln[i]
+      + B.TOXIN_ACCUMULATION * e * pressure * fields.toxVuln[i]
       - B.TOXIN_DECAY * state.toxicity[i];
     state.toxicity[i] = Math.fround(clamp01(tox));
 
@@ -91,8 +95,11 @@ export function updateEnvironment(state) {
     const occupied = symbiotic && state.alive[i] === 1 ? 1.5 : 1;
     const regen = B.NUTRIENT_REGEN * (1 - e * 0.92) * occupied * challengeNutrient
       * (fields.resourceRenewal?.[i] ?? 1);
-    state.nutrient[i] = Math.fround(clamp01(
-      state.nutrient[i] + regen * (fields.baseNutrient[i] - state.nutrient[i])));
+    const requested = Math.max(0, regen * (fields.baseNutrient[i] - state.nutrient[i]));
+    const transfer = Math.min(state.resourceReserve[i], requested);
+    state.resourceReserve[i] = Math.fround(Math.max(0, state.resourceReserve[i] - transfer));
+    state.resourceTransferred += transfer;
+    state.nutrient[i] = Math.fround(clamp01(state.nutrient[i] + transfer));
   }
 
   applyEventEffects(state);
@@ -124,7 +131,8 @@ function applyEventEffects(state) {
         case 'bloom': state.nutrient[i] = Math.fround(clamp01(state.nutrient[i] + w)); break;
         case 'blight':
           if (state.alive[i] === 1) {
-            state.reachDamageCause[i] = REACH_CAUSE.BLIGHT; state.biomass[i] = Math.fround(Math.max(0, state.biomass[i] - w * 0.25));
+            const loss = Math.min(state.biomass[i], w * 0.25); state.causes.event += loss;
+            state.reachDamageCause[i] = REACH_CAUSE.BLIGHT; state.biomass[i] = Math.fround(Math.max(0, state.biomass[i] - loss));
             state.stress[i] = Math.fround(clamp01(state.stress[i] + w * 0.5));
           }
           break;

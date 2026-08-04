@@ -20,7 +20,7 @@ const SIM_EVENT = Object.freeze({
   'adaptation-selected': ['adaptation', 'adaptation.selected.manual'],
   'adaptation-unresolved': ['adaptation', 'adaptation.unresolved'],
   'adaptation-mode': ['adaptation', 'adaptation.mode.changed'], 'run-extinct': ['life', 'run.extinct'],
-  'run-abandoned': ['life', 'run.abandoned'],
+  'run-abandoned': ['life', 'run.abandoned'], 'resource-reserve': ['resource', 'resource.reserve.threshold'],
   coverage: ['world', 'geo.coverage.milestone'], phase: ['life', 'run.phase.abundance'],
   'geo-coast': ['world', 'geo.coast.reached'], 'geo-lake': ['world', 'geo.lake.reached'],
   'geo-river': ['world', 'geo.river.reached'],
@@ -69,8 +69,13 @@ function validateWorld(raw) {
     cause: typeof raw.cause === 'string' ? raw.cause.slice(0, 32) : 'unknown',
     archetype: typeof raw.archetype === 'string' ? raw.archetype.slice(0, 40) : 'Living World',
     echo: finiteInt(raw.echo) ?? 0, hash: typeof raw.hash === 'string' ? raw.hash.slice(0, 16) : '',
-    inoculationCell: Number.isInteger(raw.inoculationCell) ? raw.inoculationCell : null,
-    adaptations: Array.isArray(raw.adaptations) ? raw.adaptations.filter((id) => typeof id === 'string').slice(0, 24) : [], events };
+    scoreModelVersion: finiteInt(raw.scoreModelVersion) ?? 1,
+    worldPotential: finiteInt(raw.worldPotential) ?? 0, worldOrdinal: finiteInt(raw.worldOrdinal, 1) ?? 1,
+    resourceInitial: Number.isFinite(raw.resourceInitial) ? Math.max(0, raw.resourceInitial) : 0,
+    resourceFinal: Number.isFinite(raw.resourceFinal) ? Math.max(0, raw.resourceFinal) : 0,
+    inoculationCell: Number.isInteger(raw.inoculationCell) ? raw.inoculationCell : null, events };
+  const legacyAdaptations = Array.isArray(raw.adaptations) ? raw.adaptations.filter((id) => typeof id === 'string').slice(0, 24) : [];
+  if (legacyAdaptations.length) world.adaptations = legacyAdaptations;
   const trophyFacts = validateTrophyFacts(raw.trophyFacts); if (trophyFacts) world.trophyFacts = trophyFacts; return world;
 }
 
@@ -101,7 +106,8 @@ export function appendWorld(history, result, score, runIndex, retention = 24) {
   const events = normalizeHistoryEvents(result.history); const record = validateWorld({ id: `${runIndex}-${result.seed}-${result.hash}`,
     seed: result.seed, tick: result.tick, score: score.total, rank: score.rank.en, cause: result.cause, echo: score.echoes,
     hash: result.hash, archetype: result.archetype, inoculationCell: result.inoculationCell,
-    adaptations: (result.adaptationOffers ?? result.offers ?? []).filter((offer) => offer.selectedCardId).map((offer) => offer.selectedCardId),
+    scoreModelVersion: score.modelVersion, worldPotential: result.worldPotential, worldOrdinal: result.worldOrdinal,
+    resourceInitial: result.resourceInitial, resourceFinal: result.resourceFinal,
     trophyFacts: result.trophyFacts ?? buildTrophyFacts(result, score), events });
   return validateHistory({ ...history, worlds: [...history.worlds, record] }, retention);
 }
@@ -109,7 +115,7 @@ export function appendAbandonedWorld(history, result, retention = 24) {
   const record = validateWorld({ id: `abandoned-${result.runId}-${result.seed}-${result.tick}`,
     seed: result.seed, tick: result.tick, score: result.score, rank: 'Abandoned', cause: 'abandoned',
     echo: 0, hash: '', archetype: result.archetype, inoculationCell: result.inoculationCell,
-    adaptations: (result.offers ?? []).filter((offer) => offer.selectedCardId).map((offer) => offer.selectedCardId),
+    scoreModelVersion: result.scoreModelVersion, worldPotential: result.worldPotential, worldOrdinal: result.worldOrdinal,
     events: normalizeHistoryEvents(result.history) });
   return validateHistory({ ...history, worlds: [...history.worlds, record] }, retention);
 }
