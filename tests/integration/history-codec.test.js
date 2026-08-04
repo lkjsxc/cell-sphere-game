@@ -47,8 +47,8 @@ test('thinning preserves every major checkpoint before ordinary cadence', () => 
 test('a detailed five-minute run stays bounded and recorder is authority-neutral', () => {
   const cfg = { seed: 20260731 }; const quiet = new RunController(cfg); quiet.start();
   const observed = new RunController(cfg); observed.start();
-  while (quiet.state.status === 'running') quiet.advance(37);
-  while (observed.state.status === 'running') { observed.advance(11); observed.historyPreview(observed.state.tick - 23); observed.historyBuffer(); }
+  while (quiet.state.status !== 'extinct') quiet.advance(37);
+  while (observed.state.status !== 'extinct') { observed.advance(11); observed.historyPreview(observed.state.tick - 23); observed.historyBuffer(); }
   const a = quiet.buildResult(); const b = observed.buildResult();
   assert.deepEqual({ hash: b.hash, cause: b.cause, offers: b.offers, history: b.history, imprint: b.imprint },
     { hash: a.hash, cause: a.cause, offers: a.offers, history: a.history, imprint: a.imprint });
@@ -69,9 +69,9 @@ test('semantic schema 2 migrates cellId to bounded unique primaryCells', () => {
   assert.deepEqual(events[1].primaryCells, [4, 5, 6, 7, 8, 9, 10, 11]);
   const migrated = validateHistory({ schema: 1, worlds: [{ seed: 1, tick: 3, score: 0,
     events: [{ tick: 1, type: 'inoculation', cellId: 2 }] }], memory: [] });
-  assert.equal(migrated.schema, 4); assert.deepEqual(migrated.worlds[0].events[0].primaryCells, [2]);
+  assert.equal(migrated.schema, 5); assert.deepEqual(migrated.worlds[0].events[0].primaryCells, [2]);
   globalThis.localStorage = { getItem: (key) => key.endsWith(':v1') ? JSON.stringify(migrated) : null };
-  try { assert.equal(loadHistory().schema, 4); } finally { delete globalThis.localStorage; }
+  try { assert.equal(loadHistory().schema, 5); } finally { delete globalThis.localStorage; }
 });
 
 test('recent-runs validates buffers and gracefully degrades without IndexedDB', async () => {

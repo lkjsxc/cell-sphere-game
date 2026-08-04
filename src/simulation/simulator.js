@@ -14,6 +14,10 @@ import { buildSnapshot, snapshotTransfers } from './snapshot.js';
 import { buildAbandonedRun, buildRunResult, dominantCause } from './result.js';
 import { HistoryRecorder } from '../history/recorder.js';
 import { habitatAccessForInspection, habitatLabel } from './habitats.js';
+import { runWorldmaking } from './worldmaking.js';
+import { RESOURCE_STATE_LABELS, freshwaterSupportAt, reserveFractionAt, updateResourceEcology } from './resource-ecology.js';
+import { ecologicalAccessForInspection } from './lifecycle/ecological-access.js';
+import { updateReachGoal } from './lifecycle/reach-goal.js';
 
 export class RunController {
   constructor(cfg, emit = () => {}) {
@@ -50,11 +54,13 @@ export class RunController {
     if (!collapsing) {
       applyMemoryConditionals(s);
       if (s.tick % B.ENV_EVERY === 0) updateEnvironment(s);
-      runMetabolism(s); runTransport(s); runGrowth(s);
+      runMetabolism(s); runTransport(s); runWorldmaking(s); runGrowth(s);
     }
-    runDeath(s);
+    runDeath(s); updateResourceEcology(s);
     const living = reconcileLiveness(s);
     if (living.livingCount === 0) return this.finishExtinction();
+    if (updateReachGoal(s)) this.emit({ t: 'milestone', id: 'reach-100', tick: s.tick,
+      livingCount: s.aliveCount, requiredTicks: 25 });
     if (!collapsing) {
       if (s.tick % B.CONNECTIVITY_EVERY === 0) analyzeConnectivity(s);
       if (s.tick % B.SUMMARY_EVERY === 0) runSummary(s, (message) => this.emit(message));
@@ -111,19 +117,28 @@ export class RunController {
       }
     }
     const access = habitatAccessForInspection(s, node);
+    const ecological = ecologicalAccessForInspection(s, node);
     let adjacentLife = false;
     for (let offset = s.topo.nodeStart[node]; offset < s.topo.nodeStart[node + 1]; offset++)
       if (s.alive[s.topo.nodeNeighbors[offset]]) { adjacentLife = true; break; }
     return {
       tick: s.tick, node, alive: s.alive[node], biomass: s.biomass[node], energy: s.energy[node],
       nutrient: s.nutrient[node], resourceReserve: s.resourceReserve[node],
+      initialNutrient: s.initialAvailableNutrient[node], initialResourceReserve: s.initialResourceReserve[node],
+      resourceRichness: s.resourceRichness[node], initialResourceRichness: s.initialResourceRichness[node],
+      reserveFraction: reserveFractionAt(s, node), resourceState: s.resourceState[node],
+      resourceStateLabel: RESOURCE_STATE_LABELS[s.resourceState[node]], resourceQuintile: s.resourceQuintile[node],
+      freshwaterSupport: freshwaterSupportAt(s, node), freshwaterTier: s.fields.freshwaterTier?.[node] ?? 0,
       moisture: s.moisture[node], temperature: s.temperature[node],
       toxicity: s.toxicity[node], stress: s.stress[node], activeEdges,
-      habitat: habitatLabel(s.fields, node), habitatAccessible: access.accessible,
+      habitat: habitatLabel({ ...s.fields, biomeId: s.effectiveBiome }, node), habitatAccessible: access.accessible,
+      ecologicalAccessible: ecological.accessible, ecologicalReason: ecological.reason,
+      resourceFloor: ecological.minimumRequired,
       requiredCapability: access.accessible ? null : access.capability,
       requiredSkill: access.accessible ? null : access.skill, adjacentLife,
       suitabilityIfAccessible: s.fields.growthSuitability?.[node] ?? 1,
-      habitatBlocked: s.habitatBlocked[node],
+      habitatBlocked: s.habitatBlocked[node], resourceBlocked: s.resourceBlocked[node],
+      transformationState: s.transformationState[node], electricity: s.electricityQ[node] / 255,
       meanConductance: activeEdges ? conductance / activeEdges : 0,
     };
   }

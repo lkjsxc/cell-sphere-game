@@ -8,12 +8,14 @@ in vec4 aMaterial;
 in vec4 aTerrain;
 in vec3 aLife;
 in vec2 aEvent;
+in vec4 aEcology;
 out vec3 vPos;
 out vec3 vCenter;
 out vec4 vMaterial;
 out vec4 vTerrain;
 out vec3 vLife;
 out vec2 vEvent;
+out vec4 vEcology;
 void main() {
   float atlasRelief = step(0.5, aLife.x) * (0.002 + step(2.5, aLife.x) * 0.006)
     + step(3.5, fract(aLife.y) * 10.0) * 0.003;
@@ -26,6 +28,7 @@ void main() {
   vTerrain = aTerrain;
   vLife = aLife;
   vEvent = aEvent;
+  vEcology = aEcology;
   gl_Position = uViewProj * vec4(vPos, 1.0);
 }`;
 
@@ -37,6 +40,7 @@ in vec4 vMaterial;
 in vec4 vTerrain;
 in vec3 vLife;
 in vec2 vEvent;
+in vec4 vEcology;
 out vec4 outColor;
 uniform vec3 uEye;
 uniform float uEntropy;
@@ -75,6 +79,29 @@ void main() {
   base = mix(base, vec3(0.20, 0.39, 0.29), lakeShore * 0.30);
   base = mix(base, vec3(0.52, 0.50, 0.43), ridge * 0.20 * (1.0 - lakeCell));
   base *= 0.86 + nutrient * 0.20 + moisture * 0.05;
+  float localRichness = clamp(vEcology.x / 255.0, 0.0, 1.0);
+  float resourceState = floor(vEcology.y + 0.5);
+  float transformState = floor(vEcology.z + 0.5);
+  float powered = clamp(vEcology.w / 255.0, 0.0, 1.0);
+  if (transformState > 2.5 && transformState < 3.5) { base = vec3(0.09, 0.34, 0.48); lakeCell = 1.0; }
+  else if (transformState > 3.5 && transformState < 4.5) base = vec3(0.15, 0.43, 0.31);
+  else if (transformState > 4.5) base = vec3(0.06, 0.29, 0.18);
+  vec3 abundantTint = lakeCell > 0.5 ? vec3(0.04, 0.32, 0.43) : vec3(0.37, 0.48, 0.20);
+  vec3 poorTint = lakeCell > 0.5 ? vec3(0.13, 0.23, 0.25) : vec3(0.37, 0.31, 0.22);
+  vec3 depletedTint = lakeCell > 0.5 ? vec3(0.12, 0.19, 0.20) : vec3(0.34, 0.27, 0.17);
+  vec3 exhaustedTint = lakeCell > 0.5 ? vec3(0.08, 0.14, 0.16) : vec3(0.19, 0.19, 0.18);
+  float abundant = 1.0 - step(0.5, abs(resourceState - 1.0));
+  float strainedResource = 1.0 - step(0.5, abs(resourceState - 3.0));
+  float poorResource = 1.0 - step(0.5, abs(resourceState - 4.0));
+  float depletedResource = 1.0 - step(0.5, abs(resourceState - 5.0));
+  float exhaustedResource = 1.0 - step(0.5, abs(resourceState - 6.0));
+  float recoveringResource = 1.0 - step(0.5, abs(resourceState - 7.0));
+  base = mix(base, abundantTint, abundant * (0.20 + localRichness * 0.10));
+  base = mix(base, vec3(dot(base, vec3(0.299,0.587,0.114))) * vec3(0.83,0.90,0.96), strainedResource * 0.30);
+  base = mix(base, poorTint, poorResource * 0.55);
+  base = mix(base, depletedTint, depletedResource * 0.72);
+  base = mix(base, exhaustedTint, exhaustedResource * 0.82);
+  base = mix(base, lakeCell > 0.5 ? vec3(0.08,0.27,0.30) : vec3(0.25,0.35,0.23), recoveringResource * 0.52);
   base = mix(base, vec3(0.22, 0.23, 0.21) + nutrient * 0.05, uMemory * 0.82);
   float life = clamp(vLife.x, 0.0, 1.0);
   float stress = clamp(vLife.y, 0.0, 1.0);
@@ -121,8 +148,6 @@ void main() {
   atlasBase += selectedStatus * vec3(0.24, 0.30, 0.26) * (0.45 + inset * 0.35);
   atlasBase += emphasis * vec3(0.18, 0.22, 0.15) * inset;
   base = mix(base, atlasBase, uMemory);
-  float grey = dot(base, vec3(0.299, 0.587, 0.114));
-  base = mix(base, vec3(grey) * 0.56, uEntropy * 0.70);
   vec3 n = normalize(vPos);
   vec3 light = normalize(vec3(-0.52, 0.72, 0.44) + normalize(uEye) * 0.58);
   float diffuse = max(dot(n, light), 0.0);
@@ -132,6 +157,7 @@ void main() {
   float plate = smoothstep(0.996, 0.9998, dot(n, normalize(vCenter)));
   vec3 col = base * (0.22 + 0.90 * diffuse) + base * plate * 0.07;
   col += vec3(0.38, 0.39, 0.20) * alive * life * (0.08 + 0.12 * plate) * night;
+  col += powered * ordinary * vec3(0.36, 0.29, 0.11) * (0.14 + (1.0 - night) * 0.30 + plate * 0.12);
   col += rim * vec3(0.08, 0.13, 0.14) * (1.0 - uEntropy * 0.5);
   float eventFamily = floor(vEvent.x + 0.5); float eventAmount = clamp(vEvent.y / 255.0, 0.0, 1.0);
   vec3 eventTint = vec3(0.70); if (eventFamily < 1.5) eventTint = vec3(0.85, 0.62, 0.30);

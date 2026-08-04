@@ -11,7 +11,8 @@ const floats = ['altitude', 'baseElevation', 'oceanDepth', 'coastDistance', 'lak
   'freshwaterInfluence', 'baseMoisture', 'baseTemp', 'baseNutrient', 'forestDensity',
   'ridgeStrength', 'hazardSusceptibility', 'toxVuln', 'eventVuln', 'growthSuitability',
   'maintenanceMultiplier', 'uptakeMultiplier', 'resourceRenewal', 'routeCost'];
-const integers = ['landMask', 'waterClass', 'lakeId', 'lakeShore', 'biomeId', 'featureFlags', 'regionId'];
+const integers = ['landMask', 'waterClass', 'lakeId', 'lakeShore', 'freshwaterTier', 'freshwaterLakeId',
+  'biomeId', 'featureFlags', 'regionId'];
 
 function worldHash(fields) {
   let hash = fnv1aBytes(Uint8Array.of(fields.archetype, Math.round(fields.seaLevel * 255)));
@@ -43,7 +44,9 @@ function componentSizes(predicate) {
 
 test('world hash, lake records, and typed fields are deterministic', () => {
   const a = fieldsFor(20260731); const b = fieldsFor(20260731);
-  assert.equal(worldHash(a), worldHash(b)); assert.equal(worldHash(a), '54d962c6');
+  assert.equal(worldHash(a), worldHash(b));
+  // Changed intentionally with finite lake-capacity weighting and supporting-lake/tier fields.
+  assert.equal(worldHash(a), 'ce41cb69');
   for (const key of [...floats, ...integers]) assert.deepEqual(a[key], b[key], key);
   assert.deepEqual(a.lakes, b.lakes); assert.deepEqual(a.landmarks, b.landmarks); assert.deepEqual(a.sources, b.sources);
   assert.notEqual(worldHash(a), worldHash(fieldsFor(20260730)));
@@ -68,6 +71,7 @@ test('normal worlds retain coherent land and typed lake ecology', () => {
     assert.ok(fields.landMask instanceof Uint8Array && fields.waterClass instanceof Uint8Array);
     assert.ok(fields.lakeId instanceof Int16Array && fields.lakeDepth instanceof Float32Array);
     assert.ok(fields.lakeShore instanceof Uint8Array && fields.freshwaterInfluence instanceof Float32Array);
+    assert.ok(fields.freshwaterTier instanceof Uint8Array && fields.freshwaterLakeId instanceof Int16Array);
     assert.ok(fields.featureFlags instanceof Uint32Array && Object.isFrozen(fields.lakes));
   }
 });
@@ -94,7 +98,9 @@ test('lakes are connected separated whole-cell components with complete records'
         assert.equal(fields.lakeId[cell], lake.id); assert.equal(fields.landMask[cell], 1);
         assert.equal(fields.waterClass[cell], WATER.LAKE); assert.equal(fields.biomeId[cell], BIOME.LAKE);
         assert.ok(fields.featureFlags[cell] & FEATURE.LAKE); assert.ok(fields.lakeDepth[cell] > 0);
-        assert.ok(fields.freshwaterInfluence[cell] >= .49);
+        const minimum = lake.salinity === 'fresh' ? .6 : lake.salinity === 'brackish' ? .4 : .1;
+        assert.ok(fields.freshwaterInfluence[cell] >= minimum); assert.equal(fields.freshwaterTier[cell], 4);
+        assert.equal(fields.freshwaterLakeId[cell], lake.id);
         for (const next of neighbors(cell)) if (fields.lakeId[next] >= 0) assert.equal(fields.lakeId[next], lake.id);
       }
     }

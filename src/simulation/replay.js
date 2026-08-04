@@ -1,6 +1,6 @@
 /** Compact replay, semantic history, and terminal authority hash. */
 import { hashF32, hashU8, hexU32 } from '../core/hash.js';
-export const REPLAY_VERSION = 3;
+export const REPLAY_VERSION = 4;
 export const REPLAY = Object.freeze({ STRAIN: 0, INOCULATE: 1, SPEED: 2 });
 
 /** @param {object} state @param {number} type @param {...number} args */
@@ -64,18 +64,28 @@ export function finalStateHash(state) {
   h = hashF32(h, state.energy, 1000);
   h = hashF32(h, state.nutrient, 1000);
   h = hashF32(h, state.resourceReserve, 1000);
+  h = hashF32(h, state.recyclableResource, 1000);
+  h = hashF32(h, state.freshwaterCatchmentReserve, 1000);
+  h = hashF32(h, state.resourceRichness, 1000);
   h = hashF32(h, state.stress, 1000);
   h = hashF32(h, state.toxicity, 1000);
   h = hashF32(h, state.conductance, 1000);
   h = hashF32(h, state.edgePeak, 1000);
   h = hashU8(h, state.alive);
   h = hashU8(h, state.edgeActive);
+  h = hashU8(h, state.resourceState);
+  h = hashU8(h, state.transformationState);
+  h = hashU8(h, state.electricityQ);
   const proof = state.trophyProof;
   h = hashF32(h, new Float32Array([
     state.tick, state.totalUptake, state.totalMaintenance,
     state.peakCoverage, state.peakConnectedShare, state.inoculationCell,
     state.replayVersion, state.worldOrdinal, state.worldEra, state.worldPotential,
-    state.resourceTransferred, state.initialResourceReserve,
+    state.resourceTransferred, state.initialResourceStock, state.resourceExternalAdditions,
+    state.resourceReclaimed, state.resourceConsumed, state.resourceLost,
+    state.initialFounderFreshwaterReserve, state.founderFreshwaterReserve,
+    state.scoreMerit.total, ...Object.values(state.scoreMerit.raw),
+    state.transformedCells, state.electrifiedCells, state.reach100Tick,
     proof.lakeCellsReached, proof.shoreCellsReached, proof.distinctLakesReached, proof.completeShores,
     proof.ecologyMask, proof.lakeTypeMask, proof.lakeSalinityMask, proof.lakeLivingSamples,
     proof.largeLakeLivingSamples, proof.lakeRegionPeak, proof.droughtLakeSurvivals,

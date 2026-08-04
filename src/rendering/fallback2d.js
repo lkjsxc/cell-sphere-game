@@ -48,7 +48,7 @@ export class Canvas2DRenderer {
     const cx = w * (0.5 + camera.offsetX * 0.5); const cy = h * (0.5 - camera.offsetY * 0.5);
     const sizeScale = canvas.clientWidth < 600 ? 0.76 : 0.52;
     const radius = Math.min(w, h) * sizeScale * (3.1 / camera.dist);
-    const basis = this.basis(camera); const entropy = snapshot?.entropy ?? 0; const dim = 1 - entropy * 0.55;
+    const basis = this.basis(camera); const entropy = snapshot?.entropy ?? 0;
     const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#070b14'); bg.addColorStop(1, '#0d1421');
     ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
     const glow = ctx.createRadialGradient(cx, cy, radius * 0.9, cx, cy, radius * 1.25);
@@ -59,12 +59,17 @@ export class Canvas2DRenderer {
 
     for (let cell = 0; cell < topo.nodeCount; cell++) {
       if (this.facing[cell] <= .02) continue;
-      const color = BIOME_COLOR[fields.biomeId?.[cell] ?? 5]; const forest = fields.forestDensity?.[cell] ?? 0;
+      let color = BIOME_COLOR[fields.biomeId?.[cell] ?? 5]; const forest = fields.forestDensity?.[cell] ?? 0;
+      const transform = snapshot?.transformationState?.[cell] ?? 0;
+      if (transform === 3) color = [24, 91, 125]; else if (transform === 4) color = [38, 112, 78]; else if (transform === 5) color = [18, 83, 48];
       const shore = fields.lakeShore?.[cell] ? .28 : 0; const canopy = forest * .38;
-      const red = Math.round((color[0] * (1 - canopy) + 9 * canopy) * (1 - shore) + 45 * shore);
-      const green = Math.round((color[1] * (1 - canopy) + 54 * canopy) * (1 - shore) + 100 * shore);
-      const blue = Math.round((color[2] * (1 - canopy) + 30 * canopy) * (1 - shore) + 76 * shore);
-      this.cellPath(cell); ctx.fillStyle = `rgba(${red},${green},${blue},${(.58 + this.facing[cell] * .34) * dim})`; ctx.fill();
+      const base = [Math.round((color[0] * (1 - canopy) + 9 * canopy) * (1 - shore) + 45 * shore),
+        Math.round((color[1] * (1 - canopy) + 54 * canopy) * (1 - shore) + 100 * shore),
+        Math.round((color[2] * (1 - canopy) + 30 * canopy) * (1 - shore) + 76 * shore)];
+      const isWater = fields.biomeId?.[cell] <= 1 || fields.biomeId?.[cell] === 13 || transform === 3;
+      const local = resourceColor(base, snapshot?.resourceState?.[cell] ?? 0,
+        (snapshot?.resourceRichnessQ?.[cell] ?? 128) / 255, isWater);
+      this.cellPath(cell); ctx.fillStyle = `rgba(${local[0]},${local[1]},${local[2]},${.58 + this.facing[cell] * .34})`; ctx.fill();
     }
     if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1);
     this.drawBoundaries(false); this.drawBoundaries(true);
@@ -121,6 +126,8 @@ export class Canvas2DRenderer {
         if (styles.inset) { this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill();
           if (styles.stroke) { ctx.strokeStyle = styles.stroke; ctx.lineWidth = styles.width; ctx.stroke(); } }
       }
+      const powered = (snapshot.electricityQ?.[cell] ?? 0) / 255;
+      if (powered > 0) { this.cellPath(cell); ctx.fillStyle = `rgba(238,194,72,${powered * .28 * fade})`; ctx.fill(); }
       const eventAmount = (snapshot.eventStrength?.[cell] ?? 0) / 255; const tint = EVENT_TINT_LIST[(snapshot.eventFamily?.[cell] ?? 0) - 1];
       if (eventAmount > 0 && tint) { this.cellPath(cell); ctx.fillStyle = `rgba(${tint[0] * 255 | 0},${tint[1] * 255 | 0},${tint[2] * 255 | 0},${eventAmount * .20 * fade})`; ctx.fill(); }
     }
@@ -157,6 +164,18 @@ function memoryStyles(status, kind, fossil, fade, branch) {
   return { fill: `rgba(111,91,66,${fossil * 0.48 * fade})` };
 }
 
+function resourceColor(base, state, richness, water) {
+  const target = state === 1 ? (water ? [12, 91, 116] : [92, 126, 45])
+    : state === 3 ? [Math.round(mean(base) * .82), Math.round(mean(base) * .88), Math.round(mean(base) * .94)]
+      : state === 4 ? (water ? [38, 59, 64] : [94, 79, 56])
+        : state === 5 ? (water ? [29, 46, 49] : [88, 68, 43])
+          : state === 6 ? (water ? [20, 34, 38] : [49, 48, 45])
+            : state === 7 ? (water ? [22, 72, 77] : [65, 91, 58]) : base;
+  const amount = state === 1 ? .28 + richness * .10 : state === 3 ? .30 : state === 4 ? .55
+    : state === 5 ? .72 : state === 6 ? .82 : state === 7 ? .52 : 0;
+  return base.map((value, index) => Math.round(value * (1 - amount) + target[index] * amount));
+}
+function mean(values) { return values.reduce((sum, value) => sum + value, 0) / values.length; }
 function count(values) { let result = 0; if (values) for (const value of values) if (value) result++; return result; }
 function lifeStyles(state, fade) {
   if (state === LIFE_STATE.FRONTIER) return { fill: `rgba(181,187,103,${0.30 * fade})`, inset: `rgba(229,224,157,${0.34 * fade})`, scale: 0.58 };

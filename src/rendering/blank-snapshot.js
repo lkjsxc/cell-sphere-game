@@ -12,5 +12,8 @@ export function createBlankSnapshot(nodeCount, identity) {
   return Object.freeze({ ...identityFields(session), tick: 0, entropy: 0, status: 'starting', worldOrdinal: 1, worldEra: 1,
     biomass: new Float32Array(nodeCount), stress: new Float32Array(nodeCount),
     alive: new Uint8Array(nodeCount), lifeState: new Uint8Array(nodeCount), eventStrength: new Uint8Array(nodeCount),
-    eventFamily: new Uint8Array(nodeCount), reach, metrics, events: Object.freeze([]), blank: true });
+    eventFamily: new Uint8Array(nodeCount), resourceRichnessQ: new Uint8Array(nodeCount),
+    reserveFractionQ: new Uint8Array(nodeCount), resourceState: new Uint8Array(nodeCount),
+    transformationState: new Uint8Array(nodeCount), electricityQ: new Uint8Array(nodeCount),
+    reach, metrics, events: Object.freeze([]), blank: true });
 }

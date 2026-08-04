@@ -1,4 +1,4 @@
-/** Bounded semantic History schema 4. Visual detail is stored separately. */
+/** Bounded semantic History schema 5. Visual detail is stored separately. */
 import { buildTrophyFacts, validateTrophyFacts } from '../game/trophies/facts.js';
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 const MAX_BYTES = 700_000;
@@ -7,7 +7,7 @@ const MAX_MEMORY_EVENTS = 128;
 const MAX_TROPHY_EVENTS = 128;
 const CELL_COUNT = 2562;
 
-export function defaultHistory() { return { schema: 4, worlds: [], memory: [], trophies: [] }; }
+export function defaultHistory() { return { schema: 5, worlds: [], memory: [], trophies: [] }; }
 function finiteInt(value, min = 0) { return Number.isFinite(value) && value >= min ? Math.floor(value) : null; }
 
 const SIM_EVENT = Object.freeze({
@@ -21,6 +21,9 @@ const SIM_EVENT = Object.freeze({
   'adaptation-unresolved': ['adaptation', 'adaptation.unresolved'],
   'adaptation-mode': ['adaptation', 'adaptation.mode.changed'], 'run-extinct': ['life', 'run.extinct'],
   'run-abandoned': ['life', 'run.abandoned'], 'resource-reserve': ['resource', 'resource.reserve.threshold'],
+  'resource-recovered': ['resource', 'resource.cell.recovered'], 'glacial-lake': ['world', 'world.glacial_lake.formed'],
+  'wetland-succession': ['world', 'world.wetland_succession.formed'], 'maritime-forest': ['world', 'world.maritime_forest.formed'],
+  'powered-cell': ['life', 'life.cell.powered'], 'reach-100': ['world', 'world.reach_100.sustained'],
   coverage: ['world', 'geo.coverage.milestone'], phase: ['life', 'run.phase.abundance'],
   'geo-coast': ['world', 'geo.coast.reached'], 'geo-lake': ['world', 'geo.lake.reached'],
   'geo-river': ['world', 'geo.river.reached'],
@@ -53,8 +56,8 @@ function validateEvent(raw, index) {
   if (Number.isInteger(raw.regionId) && raw.regionId >= -1 && raw.regionId < 512) event.regionId = raw.regionId;
   const subject = raw.subjectId ?? raw.family ?? (raw.type !== 'phase' && typeof raw.id === 'string' ? raw.id : null);
   if (typeof subject === 'string' && /^[a-z0-9-]{1,48}$/.test(subject)) event.subjectId = subject;
-  if (Number.isFinite(raw.valueA)) event.valueA = raw.valueA;
-  if (Number.isFinite(raw.valueB)) event.valueB = raw.valueB;
+  if (Number.isFinite(raw.valueA ?? raw.value)) event.valueA = raw.valueA ?? raw.value;
+  if (Number.isFinite(raw.valueB ?? raw.cells)) event.valueB = raw.valueB ?? raw.cells;
   return event;
 }
 
@@ -70,9 +73,15 @@ function validateWorld(raw) {
     archetype: typeof raw.archetype === 'string' ? raw.archetype.slice(0, 40) : 'Living World',
     echo: finiteInt(raw.echo) ?? 0, hash: typeof raw.hash === 'string' ? raw.hash.slice(0, 16) : '',
     scoreModelVersion: finiteInt(raw.scoreModelVersion) ?? 1,
-    worldPotential: finiteInt(raw.worldPotential) ?? 0, worldOrdinal: finiteInt(raw.worldOrdinal, 1) ?? 1,
+    worldPotential: finiteInt(raw.worldPotential) ?? 0, potentialVersion: finiteInt(raw.potentialVersion) ?? 1,
+    evolutionPower: finiteInt(raw.evolutionPower) ?? 0, worldOrdinal: finiteInt(raw.worldOrdinal, 1) ?? 1,
     resourceInitial: Number.isFinite(raw.resourceInitial) ? Math.max(0, raw.resourceInitial) : 0,
     resourceFinal: Number.isFinite(raw.resourceFinal) ? Math.max(0, raw.resourceFinal) : 0,
+    resourceRecoveredCells: finiteInt(raw.resourceRecoveredCells) ?? 0,
+    freshwaterSupportedCellSeconds: finiteInt(raw.freshwaterSupportedCellSeconds) ?? 0,
+    transformedCells: finiteInt(raw.transformedCells) ?? 0, electrifiedCells: finiteInt(raw.electrifiedCells) ?? 0,
+    reach100: raw.reach100 === true, activeBuilds: Array.isArray(raw.activeBuilds)
+      ? [...new Set(raw.activeBuilds.filter((id) => typeof id === 'string' && /^[a-z][a-z0-9-]{1,47}$/.test(id)))].slice(0, 16) : [],
     inoculationCell: Number.isInteger(raw.inoculationCell) ? raw.inoculationCell : null, events };
   const legacyAdaptations = Array.isArray(raw.adaptations) ? raw.adaptations.filter((id) => typeof id === 'string').slice(0, 24) : [];
   if (legacyAdaptations.length) world.adaptations = legacyAdaptations;
@@ -106,8 +115,13 @@ export function appendWorld(history, result, score, runIndex, retention = 24) {
   const events = normalizeHistoryEvents(result.history); const record = validateWorld({ id: `${runIndex}-${result.seed}-${result.hash}`,
     seed: result.seed, tick: result.tick, score: score.total, rank: score.rank.en, cause: result.cause, echo: score.echoes,
     hash: result.hash, archetype: result.archetype, inoculationCell: result.inoculationCell,
-    scoreModelVersion: score.modelVersion, worldPotential: result.worldPotential, worldOrdinal: result.worldOrdinal,
+    scoreModelVersion: score.modelVersion, worldPotential: result.worldPotential, potentialVersion: result.potentialVersion,
+    evolutionPower: result.evolutionPower, worldOrdinal: result.worldOrdinal,
     resourceInitial: result.resourceInitial, resourceFinal: result.resourceFinal,
+    resourceRecoveredCells: result.resourceRecoveredCells,
+    freshwaterSupportedCellSeconds: result.freshwaterSupportedCellSeconds,
+    transformedCells: result.transformedCells, electrifiedCells: result.electrifiedCells,
+    reach100: result.reach100?.achieved === true, activeBuilds: result.activeBuilds,
     trophyFacts: result.trophyFacts ?? buildTrophyFacts(result, score), events });
   return validateHistory({ ...history, worlds: [...history.worlds, record] }, retention);
 }
@@ -115,7 +129,8 @@ export function appendAbandonedWorld(history, result, retention = 24) {
   const record = validateWorld({ id: `abandoned-${result.runId}-${result.seed}-${result.tick}`,
     seed: result.seed, tick: result.tick, score: result.score, rank: 'Abandoned', cause: 'abandoned',
     echo: 0, hash: '', archetype: result.archetype, inoculationCell: result.inoculationCell,
-    scoreModelVersion: result.scoreModelVersion, worldPotential: result.worldPotential, worldOrdinal: result.worldOrdinal,
+    scoreModelVersion: result.scoreModelVersion, worldPotential: result.worldPotential,
+    potentialVersion: result.potentialVersion, evolutionPower: result.evolutionPower, worldOrdinal: result.worldOrdinal,
     events: normalizeHistoryEvents(result.history) });
   return validateHistory({ ...history, worlds: [...history.worlds, record] }, retention);
 }

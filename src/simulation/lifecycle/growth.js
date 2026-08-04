@@ -8,7 +8,8 @@ import { BALANCE as B } from '../../game/balance.js';
 import { clamp01, tolerance } from '../../core/math.js';
 import { birthCell } from './cell-lifecycle.js';
 import { REACH_CAUSE } from './reach-ledger.js';
-import { habitatAccess } from '../habitats.js';
+import { BIOME_EFFECTS } from '../../world/fields.js';
+import { ecologicalAccess } from './ecological-access.js';
 
 const MOIST_CENTER = 0.55;
 const TEMP_CENTER = 0.6;
@@ -43,9 +44,10 @@ export function runGrowth(state) {
       if (edgeActive[e] === 1) continue;
       const nb = nodeNeighbors[o];
       if (alive[nb] === 1) continue;
-      const access = habitatAccess(state, i, nb);
+      const access = ecologicalAccess(state, i, nb);
       if (!access.accessible) {
-        state.habitatBlocked[nb] = Math.min(0xffff, state.habitatBlocked[nb] + 1);
+        const target = access.reason === 'habitat-capability-missing' ? state.habitatBlocked : state.resourceBlocked;
+        target[nb] = Math.min(0xffff, target[nb] + 1);
         continue;
       }
 
@@ -53,11 +55,20 @@ export function runGrowth(state) {
         * tolerance(temperature[nb], TEMP_CENTER, tempW)
         * clamp01(1 - (toxicity[nb] / traits.toxinTol - 0.35) * 1.1);
       const grad = clamp01(nutrient[nb] * 1.6);
-      const cost = baseCost * (fields.routeCost?.[nb] ?? 1);
+      const effectiveBiome = state.effectiveBiome[nb]; const transformed = effectiveBiome !== fields.biomeId[nb];
+      const route = transformed ? BIOME_EFFECTS[effectiveBiome].routeCost : (fields.routeCost?.[nb] ?? 1);
+      const growth = transformed ? BIOME_EFFECTS[effectiveBiome].growth : (fields.growthSuitability?.[nb] ?? 1);
+      const active = state.activeBuildIdSet; let buildGrowth = 1;
+      if (active.has('rich-rush') && access.resourceRichness >= .72) buildGrowth *= 1.20;
+      if (active.has('lake-garden') && access.modifiers.freshwater > .2) buildGrowth *= 1.12;
+      if (active.has('wasteland-reclaimer') && access.resourceRichness < .42) buildGrowth *= .72;
+      if (active.has('cold-dormancy')) buildGrowth *= .82;
+      if (active.has('pelagic-colony') && effectiveBiome <= 1) buildGrowth *= .72;
+      const cost = baseCost * route;
       let p = B.GROW_P_BASE * traits.reach
-        * (fields.growthSuitability?.[nb] ?? 1)
+        * growth * buildGrowth
         * (0.25 + 0.75 * suitNb)
-        * (0.3 + 0.7 * grad)
+        * (0.18 + 0.82 * grad)
         * (1 - B.CROWDING_PENALTY * Math.max(0, crowd - 2));
       if (p <= 0) continue;
 

@@ -28,6 +28,7 @@ export const BALANCE = Object.freeze({
   // --- environment -----------------------------------------------------------
   NUTRIENT_REGEN: 0.018,     // reserve-to-available transfer per environment step
   RESOURCE_RESERVE_SCALE: 1.10, // finite long-term stock relative to local fertility
+  FRESHWATER_RESERVE_BONUS: 2.20, // finite initial catchment stock assigned locally
   SEASON_AMPLITUDE: 0.16,    // moisture/temp seasonal swing
   SEASON_PERIOD_TICKS: 900,  // 90 game s per season cycle
   TOXIN_ACCUMULATION: 0.004, // per env step at entropy 1, scaled by toxVuln
@@ -65,13 +66,13 @@ export const BALANCE = Object.freeze({
 
   // --- scoring -----------------------------------------------------------------
   SCORE_WEIGHTS: Object.freeze({
-    survival: 0.22,
-    peakCoverage: 0.22,
-    sustainedCoverage: 0.18,
-    connectivity: 0.14,
-    efficiency: 0.14,
-    stability: 0.10,
+    survival: 0.18,
+    exploration: 0.22,
+    presence: 0.18,
+    coherence: 0.14,
+    stewardship: 0.18,
+    worldmaking: 0.10,
   }),
-  ECHO_BASE: 4,
-  ECHO_DIVISOR: 100,
+  ECHO_BASE: 8,
+  ECHO_DIVISOR: 80,
 });

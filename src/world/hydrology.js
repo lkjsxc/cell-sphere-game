@@ -42,7 +42,9 @@ function accumulateDrainage(topo, terrain, rainfall, filled, drainTo) {
 function buildLakes(topo, terrain, rainfall, filled, drainTo, drainage) {
   const n = topo.nodeCount; const lakeId = new Int16Array(n); lakeId.fill(-1);
   const lakeDepth = new Float32Array(n); const lakeShore = new Uint8Array(n);
-  const freshwaterInfluence = new Float32Array(n); const featureFlags = new Uint32Array(n);
+  const freshwaterInfluence = new Float32Array(n); const freshwaterTier = new Uint8Array(n);
+  const freshwaterLakeId = new Int16Array(n); freshwaterLakeId.fill(-1);
+  const featureFlags = new Uint32Array(n);
   const candidates = lakeCandidates(topo, terrain, rainfall, filled, drainage.flow);
   const landCount = terrain.landMask.reduce((sum, value) => sum + value, 0);
   const target = Math.max(5, Math.min(8, Math.round(landCount / 190)));
@@ -65,8 +67,8 @@ function buildLakes(topo, terrain, rainfall, filled, drainTo, drainage) {
     if (record.type === 'glacial') for (const cell of record.cells) featureFlags[cell] |= FEATURE.GLACIAL_LAKE;
   }
   const completed = records.map((record) => addShoreEcology(record, topo, terrain, rainfall,
-    lakeId, lakeShore, freshwaterInfluence, featureFlags));
-  return { lakeId, lakeDepth, lakeShore, freshwaterInfluence,
+    lakeId, lakeShore, freshwaterInfluence, freshwaterTier, freshwaterLakeId, featureFlags));
+  return { lakeId, lakeDepth, lakeShore, freshwaterInfluence, freshwaterTier, freshwaterLakeId,
     lakes: Object.freeze(completed), featureFlags };
 }
 
@@ -154,7 +156,7 @@ function describeLake(lake, topo, terrain, rainfall, filled, drainTo, drainage, 
     surfaceElevation: surface, catchment, outletCell, outflowCell, outletStatus, type, salinity };
 }
 
-function addShoreEcology(record, topo, terrain, rainfall, ids, shore, influence, flags) {
+function addShoreEcology(record, topo, terrain, rainfall, ids, shore, influence, tier, supportingLake, flags) {
   const shoreSet = new Set();
   for (const cell of record.cells) for (let offset = topo.nodeStart[cell]; offset < topo.nodeStart[cell + 1]; offset++) {
     const next = topo.nodeNeighbors[offset]; if (terrain.landMask[next] && ids[next] < 0) shoreSet.add(next);
@@ -164,8 +166,11 @@ function addShoreEcology(record, topo, terrain, rainfall, ids, shore, influence,
   const wetlandCells = shoreCells.slice().sort((a, b) => wetlandScore(b) - wetlandScore(a) || a - b)
     .slice(0, Math.max(1, Math.round(shoreCells.length * (.24 + meanRain() * .22)))).sort((a, b) => a - b);
   for (const cell of wetlandCells) flags[cell] |= FEATURE.WETLAND;
-  const sourceStrength = record.salinity === 'fresh' ? 1 : record.salinity === 'brackish' ? .76 : .5;
-  spreadInfluence(record.cells, sourceStrength, topo, influence);
+  const waterQuality = record.salinity === 'fresh' ? 1 : record.salinity === 'brackish' ? .64 : .18;
+  const capacity = Math.min(1.12, .82 + Math.sqrt(record.area) * .035
+    + Math.min(.16, record.catchment / 400) + Math.min(.08, record.meanDepth * .8));
+  const sourceStrength = Math.min(1, waterQuality * capacity);
+  spreadInfluence(record.id, record.cells, sourceStrength, topo, influence, tier, supportingLake);
   for (const cell of wetlandCells) influence[cell] = Math.fround(Math.max(influence[cell], sourceStrength * .82));
   const { outflowCell: _privateOutflowCell, ...publicRecord } = record;
   return Object.freeze({ ...publicRecord, cells: Object.freeze(record.cells.slice()),
@@ -175,10 +180,12 @@ function addShoreEcology(record, topo, terrain, rainfall, ids, shore, influence,
     + (cell === record.outflowCell ? .2 : 0) + (cellHash(record.id, cell) % 97) * 1e-6; }
 }
 
-function spreadInfluence(sources, strength, topo, influence) {
-  const falloff = [1, .78, .5, .28, .12]; const queue = sources.map((cell) => [cell, 0]); const seen = new Set(sources);
+function spreadInfluence(lake, sources, strength, topo, influence, tier, supportingLake) {
+  const falloff = [1, .78, .5, .28, .12]; const tiers = [4, 3, 2, 1, 1];
+  const queue = sources.map((cell) => [cell, 0]); const seen = new Set(sources);
   for (let head = 0; head < queue.length; head++) { const [cell, distance] = queue[head];
-    influence[cell] = Math.fround(Math.max(influence[cell], strength * falloff[distance]));
+    const candidate = strength * falloff[distance];
+    if (candidate > influence[cell]) { influence[cell] = Math.fround(candidate); tier[cell] = tiers[distance]; supportingLake[cell] = lake; }
     if (distance === falloff.length - 1) continue;
     for (let offset = topo.nodeStart[cell]; offset < topo.nodeStart[cell + 1]; offset++) {
       const next = topo.nodeNeighbors[offset]; if (!seen.has(next)) { seen.add(next); queue.push([next, distance + 1]); }

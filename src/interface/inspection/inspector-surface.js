@@ -55,10 +55,18 @@ export function createInspectorSurface(options) {
       : d.biomass > 0.02 ? 'Dead tissue / scar' : 'Unoccupied';
     const role = d.activeEdges >= 4 ? 'Connected center' : d.activeEdges === 1 ? 'Frontier cell' : d.activeEdges > 1 ? 'Connected tissue' : 'Isolated';
     const access = d.habitatAccessible ? 'Accessible' : `Evolution access required · ${d.requiredSkill} (${d.requiredCapability})`;
+    const ecology = d.ecologicalAccessible ? label(d.ecologicalReason) : `Blocked · ${label(d.ecologicalReason)}`;
     dl.append(...definitionRows([['State', stateName], ['Role', role], ['Habitat access', access],
+      ['Ecological access', ecology], ['Resource floor', `${Math.round((d.resourceFloor ?? 0) * 100)}%`],
       ['Reachable from adjacent life', d.adjacentLife ? 'Yes' : 'No'],
       ['Suitability if accessible', `${Math.round((d.suitabilityIfAccessible ?? 0) * 100)}%`],
-      ['Long-term local stock', band(Math.min(1, (d.resourceReserve ?? 0) / 0.5), ['Exhausted', 'Low', 'Stored', 'Deep'])],
+      ['Initial resource class', resourceClass(d.initialResourceRichness)],
+      ['Current resource state', `${d.resourceStateLabel} · ${Math.round((d.resourceRichness ?? 0) * 100)}% richness`],
+      ['Available nutrient', `${Math.round((d.nutrient ?? 0) * 100)}%`],
+      ['Reserve fraction', `${Math.round((d.reserveFraction ?? 0) * 100)}%`],
+      ['Freshwater support', `${Math.round((d.freshwaterSupport ?? 0) * 100)}% · tier ${d.freshwaterTier ?? 0}`],
+      ['Blocked attempts', `${d.resourceBlocked ?? 0} resource · ${d.habitatBlocked ?? 0} habitat`],
+      ['Transformation', transformationLabel(d.transformationState)], ['Bioelectric charge', `${Math.round((d.electricity ?? 0) * 100)}%`],
       ['Biomass', band(Math.min(1, d.biomass / 2.5), ['Trace', 'Thin', 'Established', 'Dense'])],
       ['Energy reserve', band(Math.min(1, Math.max(0, d.energy) / 6), ['Empty', 'Low', 'Stable', 'Full'])],
       ['Stress', band(d.stress, ['Calm', 'Watchful', 'Strained', 'Critical'])], ['Local nutrient', band(d.nutrient, ['Spent', 'Low', 'Rich', 'Abundant'])],
@@ -95,3 +103,6 @@ function elevationBand(value, seaLevel) { const height = (value - seaLevel) / Ma
 function lakeRecord(world, node) { const id = world.lakeId[node]; if (id >= 0) return world.lakes[id];
   return world.lakes.find((lake) => lake.shoreCells.includes(node) || lake.wetlandCells.includes(node)) ?? null; }
 function label(value) { return String(value ?? 'unknown').replaceAll('-', ' ').replace(/^./, (character) => character.toUpperCase()); }
+function resourceClass(value) { return value >= .72 ? 'Abundant' : value >= .56 ? 'Fertile' : value >= .42 ? 'Strained'
+  : value >= .28 ? 'Poor' : value >= .12 ? 'Depleted' : 'Exhausted'; }
+function transformationLabel(value) { return ['None', 'Recovering', 'Reclaimed soil', 'Glacial lake', 'Wetland succession', 'Maritime forest'][value] ?? 'None'; }

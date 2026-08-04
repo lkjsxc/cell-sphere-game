@@ -1,4 +1,6 @@
 /** Fixed cause vocabulary and bounded rolling/full-run Reach accounting. */
+import { requiredHabitatCapability } from '../habitats.js';
+import { FRESH_RESOURCE_FLOOR } from './ecological-access.js';
 export const REACH_WINDOW_SECONDS = 15; export const REACH_SAMPLE_CAP = 8;
 export const REACH_CAUSE = Object.freeze({ NONE: 0, INOCULATION: 1, EXPANSION: 2, REGROWTH: 3,
   RECONNECTION: 4, BLOOM: 5, CRISIS_GROWTH: 6, SKILL_RECOVERY: 7,
@@ -44,6 +46,15 @@ export function buildReachResult(state) {
 function reachConditions(state) {
   let living = 0; let energy = 0; let deficit = 0; let nutrient = 0; let moisture = 0; let suitableTemp = 0;
   let freshwaterForest = 0; let heat = 0; let cold = 0; let dry = 0; let toxin = 0;
+  let capabilityAccessible = 0; let capabilityLiving = 0; let resourceBlockedCells = 0; let habitatBlockedCells = 0;
+  for (let cell = 0; cell < state.topo.nodeCount; cell++) {
+    const capability = state.fields?.biomeId ? requiredHabitatCapability(state.fields, cell, state.effectiveBiome?.[cell]) : null;
+    const capabilities = state.habitatCapabilitySet ?? EMPTY_SET;
+    const habitatOk = !capability || capabilities.has(capability)
+      || capability === 'SHALLOW_OCEAN_ACCESS' && capabilities.has('SHALLOW_OCEAN_EDGE_ACCESS');
+    if (habitatOk) { capabilityAccessible++; if (state.alive[cell]) capabilityLiving++; } else habitatBlockedCells++;
+    if ((state.resourceRichness?.[cell] ?? 0) < FRESH_RESOURCE_FLOOR) resourceBlockedCells++;
+  }
   for (let cell = 0; cell < state.topo.nodeCount; cell++) if (state.alive[cell]) { living++; const e = state.energy[cell]; energy += Math.max(0, e); deficit += Math.max(0, -e);
     nutrient += state.nutrient[cell]; moisture += state.moisture[cell]; suitableTemp += 1 - Math.min(1, Math.abs(state.temperature[cell] - .6) * 2);
     freshwaterForest += Math.max(state.fields.freshwaterInfluence[cell], state.fields.forestDensity[cell]); heat += Math.max(0, state.temperature[cell] - .75) * 4;
@@ -51,12 +62,19 @@ function reachConditions(state) {
   const divisor = Math.max(1, living); const activeCrisis = state.events.some((event) => state.tick >= event.startTick && state.tick <= event.endTick) ? 1 : 0;
   const support = Math.min(1, (state.memoryConditionals.length + state.memoryUnlocks.length) / 8);
   const positiveConditions = conditionList([['energy-surplus', 'energy surplus', energy / divisor / 3], ['available-frontier', 'available frontier', state.liveness.activeFrontierCount / divisor],
+    ['rich-niche-access', 'Rich niche access', nutrient / divisor], ['resource-floor', 'Resource floor', 1 - resourceBlockedCells / state.topo.nodeCount],
+    ['reclamation-access', 'Reclamation access', state.activeBuildIdSet?.has('wasteland-reclaimer') ? 1 : 0],
+    ['freshwater-frontier', 'Freshwater-supported frontier', freshwaterForest / divisor],
     ['accessible-nutrients', 'accessible nutrients', nutrient / divisor], ['suitable-moisture', 'suitable moisture', moisture / divisor],
     ['favorable-temperature', 'favorable temperature', suitableTemp / divisor], ['freshwater-ecology', 'lake, shore, and forest affinity', freshwaterForest / divisor], ['inherited-support', 'Evolution support', support]]);
   const negativeConditions = conditionList([['entropy', 'entropy', state.entropy], ['maintenance-burden', 'maintenance burden', deficit / divisor],
     ['heat-stress', 'heat stress', heat / divisor], ['cold-stress', 'cold stress', cold / divisor], ['drought-stress', 'drought stress', dry / divisor],
     ['toxicity', 'toxicity', toxin / divisor], ['crisis-pressure', 'active crisis pressure', activeCrisis], ['fragmentation', 'fragmentation', 1 - state.connectedShare]]);
-  return { positiveConditions, negativeConditions };
+  return { positiveConditions, negativeConditions,
+    exactLivingCount: state.aliveCount, totalWorldCells: state.topo.nodeCount,
+    accessibleHabitatReach: capabilityAccessible ? capabilityLiving / capabilityAccessible : 0,
+    blockedCells: Object.freeze({ habitatCapability: habitatBlockedCells, resourceFloor: resourceBlockedCells,
+      depleted: state.resourceDepletedCells ?? 0 }) };
 }
 function factors(ledger, counts, start, end, second) { return fullFactors(counts, start, end).slice(0, 5).map((factor) => ({ ...factor,
   samples: recentSamples(ledger, factor.cause, second) })); }
@@ -70,3 +88,4 @@ function considerTurningPoint(ledger, slot) { const base = slot * CAUSE_COUNT; c
   if (Math.abs(net) > Math.abs(ledger.turningPoint.net)) ledger.turningPoint = { second: ledger.stamps[slot], net }; }
 function total(values, start, end) { let sum = 0; for (let index = start; index < end; index++) sum += values[index]; return sum; }
 function finite01(value) { return Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0)); }
+const EMPTY_SET = new Set();

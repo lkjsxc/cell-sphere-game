@@ -65,7 +65,8 @@ test('valid canonical wins coexistence and corrupt canonical degrades field-by-f
     worldSeedIndex: 15, memoryNodes: [MEMORY_NODE_IDS[1]], resultKeys: ['new-result'] };
   const storage = memoryStorage({ ...legacyNamespace(), [STORAGE_KEYS.meta]: JSON.stringify(canonical) });
   migrateStorageNamespace(storage); const meta = validateMeta(JSON.parse(storage.getItem(STORAGE_KEYS.meta)));
-  assert.equal(meta.bestScore, 900001); assert.equal(meta.totalEchoes, 700); assert.equal(meta.echoBalance, 0);
+  assert.equal(meta.bestScore, 0); assert.equal(meta.legacyBestScores[2], 900001);
+  assert.equal(meta.legacyBestScore, 900001); assert.equal(meta.totalEchoes, 700); assert.equal(meta.echoBalance, 0);
   assert.equal(meta.runs, 9); assert.equal(meta.worldSeedIndex, 15); assert.deepEqual(meta.memoryNodes, [MEMORY_NODE_IDS[1]]);
   assert.deepEqual(meta.resultKeys, ['new-result']);
 

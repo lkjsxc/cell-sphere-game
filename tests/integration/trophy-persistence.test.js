@@ -11,7 +11,7 @@ import { applyRunResult } from '../../src/interface/policies/run-result.js';
 test('schema-5 migration preserves progression and grants no trophies on load', () => {
   const loaded = validateMeta({ schema: 5, runs: 12, bestScore: 90000, totalEchoes: 70, echoBalance: 17,
     worldSeedIndex: 12, memoryNodes: ['reach-horizon-instinct'], imprints: [] });
-  assert.equal(loaded.schema, 9); assert.equal(loaded.runs, 12); assert.equal(loaded.bestScore, 0); assert.equal(loaded.legacyBestScore, 90000);
+  assert.equal(loaded.schema, 10); assert.equal(loaded.runs, 12); assert.equal(loaded.bestScore, 0); assert.equal(loaded.legacyBestScore, 90000);
   assert.deepEqual(loaded.trophyIds, []); assert.deepEqual(loaded.trophyQueue, []); assert.equal(loaded.trophyBackfillVersion, 0);
 });
 
@@ -71,18 +71,18 @@ test('SCORE mastery requires its score and quality evidence in the same world', 
 
 test('v1 river bit and ownership never create current lake proof or award', () => {
   const migrated = validateTrophyFacts({ version: 1, geographyMask: 2 });
-  assert.equal(migrated.version, 4); assert.equal(migrated.geographyMask & 2, 0); assert.deepEqual(migrated.lake, Array(11).fill(0));
+  assert.equal(migrated.version, 5); assert.equal(migrated.geographyMask & 2, 0); assert.deepEqual(migrated.lake, Array(11).fill(0));
   const legacy = deriveLegacyTrophyFacts({ tick: 20, events: [{ key: 'geo.river.reached' }] }); assert.equal(legacy.geographyMask & 2, 0);
   const current = buildTrophyFacts({ history: [{ type: 'geo-lake' }], offers: [], reach: {}, lakeProof: {
     lakeCellsReached: 1, shoreCellsReached: 1, distinctLakesReached: 1 } }, { breakdown: [] });
-  assert.equal(current.geographyMask & 2, 2); assert.equal(current.version, 4);
+  assert.equal(current.geographyMask & 2, 2); assert.equal(current.version, 5);
   const outcome = reconcileTrophies(defaultMeta(), { worlds: [{ seed: 1, tick: 20, score: 0, trophyFacts: legacy }] });
   assert.equal(outcome.awardedIds.includes('reach-lake-network'), false);
 });
 
 test('accepted terminal result stores facts, semantic award, and persistent queue exactly once', () => {
   const result = completedResult(); const keys = new Set();
-  const first = applyRunResult(defaultMeta(), { schema: 4, worlds: [], memory: [] }, result, 24, keys);
+  const first = applyRunResult(defaultMeta(), { schema: 5, worlds: [], memory: [], trophies: [] }, result, 24, keys);
   assert.equal(first.applied, true); assert.deepEqual(first.trophyIds, ['evolution-first-world']);
   assert.deepEqual(first.meta.trophyQueue, ['evolution-first-world']); assert.ok(first.archive.worlds[0].trophyFacts);
   assert.equal(first.archive.worlds[0].events.filter((event) => event.key === 'trophy.earned').length, 1);

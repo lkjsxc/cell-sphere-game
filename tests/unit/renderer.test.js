@@ -107,6 +107,7 @@ test('parseUniformNames strips array brackets', () => {
   const names = parseUniformNames(SH.FS_GLOBE);
   assert.equal(names.has('uEventCenter'), false, 'renderer still reconstructs spherical caps');
   assert.ok(names.has('uEntropy')); assert.match(SH.VS_GLOBE, /in vec2 aEvent/);
+  assert.match(SH.VS_GLOBE, /in vec4 aEcology/);
 });
 
 test('every declared uniform is uploaded by the renderer modules', () => {
@@ -159,7 +160,8 @@ test('renderer teardown zeroes dynamic buffers and removes the exact context lis
   const renderer = read('../../src/rendering/renderer.js'); const world = read('../../src/rendering/world-pass.js');
   assert.match(renderer, /this\.contextLossListener/); assert.match(renderer, /removeEventListener\('webglcontextlost', this\.contextLossListener\)/);
   assert.match(renderer, /if \(this\.disposed\) return/); assert.match(world, /lifeData\.fill\(0\)/);
-  assert.match(world, /eventData\.fill\(0\)/); assert.doesNotMatch(world, /adaptationData|aAdaptation|uAdaptation/);
+  assert.match(world, /eventData\.fill\(0\)/); assert.match(world, /ecologyData\.fill\(0\)/);
+  assert.doesNotMatch(world, /adaptationData|aAdaptation|uAdaptation/);
   assert.match(world, /bufferSubData/);
 });
 
@@ -174,6 +176,9 @@ test('production renderer keeps four draws and has no fine waterway machinery', 
   assert.doesNotMatch(shaders, /orbit|uTwinkle|uTime/);
   assert.doesNotMatch(production, /riverDown|riverUp|riverMeta|aRiver|vRiver|drawRivers|riverBoundary|quadraticCurveTo|localChannel/i);
   assert.match(shaders, /float lakeCell/); assert.match(geometry, /const lakeEdge/);
+  assert.match(shaders, /resourceState/); assert.match(shaders, /recoveringResource/); assert.match(shaders, /powered/);
+  assert.doesNotMatch(shaders, /mix\(base, vec3\(grey\)[^;]*uEntropy/);
+  assert.doesNotMatch(fallback, /const dim = 1 - entropy/);
   assert.equal(existsSync(resolve(here, '../../src/rendering/network-pass.js')), false);
   assert.equal(existsSync(resolve(here, '../../src/rendering/shaders-network.js')), false);
 });

@@ -3,10 +3,13 @@ import { evaluate, metricsFromState } from '../game/scoring.js';
 import { writeLifeStates } from '../core/life-state.js';
 import { buildEventCellState } from './events.js';
 import { buildReachSummary } from './lifecycle/reach-ledger.js';
+import { packResourcePresentation, resourceConservation } from './resource-ecology.js';
+import { reachGoalSummary } from './lifecycle/reach-goal.js';
 
 export function buildSnapshot(state) {
   const lifeState = writeLifeStates(state.topo, state.alive, state.biomass, state.stress,
     new Uint8Array(state.topo.nodeCount)); const eventCells = buildEventCellState(state);
+  const resource = packResourcePresentation(state);
   const scoreProjection = evaluate(metricsFromState(state));
   return {
     tick: state.tick,
@@ -19,19 +22,25 @@ export function buildSnapshot(state) {
     lifeState,
     eventStrength: eventCells.strength,
     eventFamily: eventCells.family,
-    reach: buildReachSummary(state),
+    ...resource,
+    transformationState: state.transformationState.slice(),
+    electricityQ: state.electricityQ.slice(),
+    reach: { ...buildReachSummary(state), goal: reachGoalSummary(state) },
     metrics: {
       coverage: state.coverage,
-      peakCoverage: state.peakCoverage,
+      peakCoverage: state.peakCoverage, peakLandOccupancy: state.peakLandOccupancy,
       connectedShare: state.connectedShare,
       aliveCount: state.aliveCount,
       totalLivingBiomass: state.liveness.totalBiomass,
       viableEnergyCells: state.liveness.viableEnergyCount,
       activeFrontierCells: state.liveness.activeFrontierCount,
       terminalCause: state.terminalCause,
-      resourceReserveFraction: state.initialResourceReserve > 0 ? remainingReserve(state) / state.initialResourceReserve : 0,
-      resourceDepletedCells: state.resourceDepletedCells,
-      score: scoreProjection.total,
+      resourceReserveFraction: initialReserve(state) > 0 ? remainingReserve(state) / initialReserve(state) : 0,
+      resourceDepletedCells: state.resourceDepletedCells, resourceRecoveredCells: state.resourceRecoveredCells,
+      freshwaterSupportedCellSeconds: state.freshwaterSupportedCellTicks / 10,
+      transformedCells: state.transformedCells, electrifiedCells: state.electrifiedCells,
+      conservationError: resourceConservation(state).error,
+      score: state.scoreMerit.total,
       scoreProjection,
       vitality: vitality(state),
     },
@@ -43,6 +52,7 @@ export function buildSnapshot(state) {
 }
 
 function remainingReserve(state) { let total = 0; for (const value of state.resourceReserve) total += value; return total; }
+function initialReserve(state) { let total = 0; for (const value of state.initialResourceReserve) total += value; return total; }
 
 function vitality(state) {
   if (state.aliveCount === 0) return 0;
@@ -59,5 +69,7 @@ function vitality(state) {
 
 export function snapshotTransfers(snapshot) {
   return [snapshot.biomass.buffer, snapshot.stress.buffer, snapshot.alive.buffer,
-    snapshot.lifeState.buffer, snapshot.eventStrength.buffer, snapshot.eventFamily.buffer];
+    snapshot.lifeState.buffer, snapshot.eventStrength.buffer, snapshot.eventFamily.buffer,
+    snapshot.resourceRichnessQ.buffer, snapshot.reserveFractionQ.buffer, snapshot.resourceState.buffer,
+    snapshot.transformationState.buffer, snapshot.electricityQ.buffer];
 }

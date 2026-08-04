@@ -53,7 +53,8 @@ export function performWorldReplacement(app) {
   app.driver.start({ seed, strainId: 'pioneer', worldOrdinal: app.meta.runs + 1,
     memoryEffects: memory.effects, memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks,
     habitatCapabilities: memory.habitatCapabilities, worldPotential: memory.worldPotential,
-    potentialVersion: memory.potentialVersion }, app.speed, identity);
+    evolutionPower: memory.evolutionPower ?? 0, potentialVersion: memory.potentialVersion,
+    activeBuilds: memory.activeBuilds ?? [], buildEffects: memory.buildEffects ?? {} }, app.speed, identity);
   return true;
 }
 export function retireWorldPresentation(app) {

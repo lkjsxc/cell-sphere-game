@@ -5,6 +5,7 @@
 import { BALANCE as B } from '../../game/balance.js';
 import { killCell } from './cell-lifecycle.js';
 import { REACH_CAUSE } from './reach-ledger.js';
+import { reclaimDetritusResource } from '../resource-ecology.js';
 
 /** @param {object} state */
 export function runDeath(state) {
@@ -54,7 +55,11 @@ function reclaimDetritus(state) {
   for (let i = 0; i < state.topo.nodeCount; i++) {
     if (alive[i] === 1 || biomass[i] <= 0.02) continue;
     const decay = (biomass[i] - 0.02) * 0.01;
-    if (decay > 0) biomass[i] = Math.fround(biomass[i] - decay);
+    if (decay > 0) {
+      biomass[i] = Math.fround(biomass[i] - decay);
+      if (state.activeBuildIdSet.has('circular-biosphere') || state.activeBuildIdSet.has('wasteland-reclaimer')
+          || state.activeBuildIdSet.has('depletion-bloom')) reclaimDetritusResource(state, i, decay * .16);
+    }
   }
 }
 

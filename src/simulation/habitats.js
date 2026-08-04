@@ -20,8 +20,8 @@ const LABELS = Object.freeze({
 
 export function habitatLabel(fields, cell) { return LABELS[fields.biomeId[cell]] ?? 'Unknown habitat'; }
 
-export function requiredHabitatCapability(fields, cell) {
-  switch (fields.biomeId[cell]) {
+export function requiredHabitatCapability(fields, cell, effectiveBiome = fields.biomeId[cell]) {
+  switch (effectiveBiome) {
     case BIOME.LAKE: return 'LAKE_ACCESS';
     case BIOME.TUNDRA: return 'TUNDRA_ACCESS';
     case BIOME.SNOW_ICE: return 'SNOW_ICE_ACCESS';
@@ -32,12 +32,12 @@ export function requiredHabitatCapability(fields, cell) {
 }
 
 export function habitatAccess(state, from, target) {
-  const capability = requiredHabitatCapability(state.fields, target);
+  const capability = requiredHabitatCapability(state.fields, target, state.effectiveBiome?.[target]);
   if (!capability) return Object.freeze({ accessible: true, capability: null, skill: null });
   const owned = state.habitatCapabilitySet;
   if (capability === 'SHALLOW_OCEAN_ACCESS') {
     if (owned.has(capability)) return Object.freeze({ accessible: true, capability, skill: HABITAT_SKILLS[capability] });
-    const edge = owned.has('SHALLOW_OCEAN_EDGE_ACCESS') && Number.isInteger(from) && shallowEdgeSource(state.fields, from);
+    const edge = owned.has('SHALLOW_OCEAN_EDGE_ACCESS') && Number.isInteger(from) && shallowEdgeSource(state, from);
     return Object.freeze({ accessible: edge, capability: edge ? 'SHALLOW_OCEAN_EDGE_ACCESS' : capability,
       skill: HABITAT_SKILLS[edge ? 'SHALLOW_OCEAN_EDGE_ACCESS' : capability] });
   }
@@ -50,12 +50,13 @@ export function habitatAccessForInspection(state, target) {
   if (!state.habitatCapabilitySet.has('SHALLOW_OCEAN_EDGE_ACCESS')) return direct;
   for (let offset = state.topo.nodeStart[target]; offset < state.topo.nodeStart[target + 1]; offset++) {
     const from = state.topo.nodeNeighbors[offset];
-    if (state.alive[from] && shallowEdgeSource(state.fields, from)) return habitatAccess(state, from, target);
+    if (state.alive[from] && shallowEdgeSource(state, from)) return habitatAccess(state, from, target);
   }
   return direct;
 }
 
-function shallowEdgeSource(fields, cell) {
-  return fields.biomeId[cell] === BIOME.COAST || fields.biomeId[cell] === BIOME.LAKE
-    || Boolean(fields.featureFlags[cell] & FEATURE.LAKE_OUTLET);
+function shallowEdgeSource(state, cell) {
+  const biome = state.effectiveBiome?.[cell] ?? state.fields.biomeId[cell];
+  return biome === BIOME.COAST || biome === BIOME.LAKE
+    || Boolean(state.fields.featureFlags[cell] & FEATURE.LAKE_OUTLET);
 }

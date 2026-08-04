@@ -3,6 +3,7 @@ import { telegraphLead } from './events.js';
 import { BIOME, FEATURE } from '../world/fields.js';
 import { recordHistory } from './replay.js';
 import { recordTrophyCrisisSurvival, sampleTrophyLiving } from './trophy-proof.js';
+import { recordScoreSummary } from '../game/scoring.js';
 
 const PHASES = Object.freeze([
   Object.freeze({ tick: 0, id: 'abundance' }),
@@ -18,6 +19,10 @@ export function runSummary(state, emit) {
   const coverage = state.aliveCount / state.topo.nodeCount;
   state.coverage = coverage;
   if (coverage > state.peakCoverage) state.peakCoverage = coverage;
+  let livingLand = 0; for (let cell = 0; cell < state.topo.nodeCount; cell++)
+    if (state.alive[cell] && state.fields.landMask[cell]) livingLand++;
+  const landOccupancy = state.landCellCount ? livingLand / state.landCellCount : 0;
+  if (landOccupancy > state.peakLandOccupancy) state.peakLandOccupancy = landOccupancy;
   state.sustainedSum += coverage;
   state.sustainedSamples++;
   let stress = 0; for (let cell = 0; cell < state.topo.nodeCount; cell++) if (state.alive[cell]) stress += state.stress[cell];
@@ -33,6 +38,7 @@ export function runSummary(state, emit) {
   recordGeography(state);
   recordMorphology(state);
   recordResourceState(state);
+  recordScoreSummary(state);
   if (state.history.length > historyStart) {
     emit({ t: 'history-batch', events: state.history.slice(historyStart).map((event) => ({ ...event })) });
   }
@@ -119,7 +125,8 @@ function recordResourceState(state) {
   for (const value of state.resourceReserve) { remaining += value; if (value <= .0001) depleted++; }
   state.resourceDepletedCells = depleted;
   if (index >= thresholds.length) return;
-  const fraction = state.initialResourceReserve > 0 ? remaining / state.initialResourceReserve : 0;
+  let initial = 0; for (const value of state.initialResourceReserve) initial += value;
+  const fraction = initial > 0 ? remaining / initial : 0;
   if (fraction <= thresholds[index]) {
     state.resourceMilestoneIndex = index + 1;
     recordHistory(state, 'resource-reserve', { value: thresholds[index], cells: depleted });

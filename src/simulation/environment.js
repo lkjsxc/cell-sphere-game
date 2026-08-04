@@ -10,6 +10,7 @@ import { BALANCE as B } from '../game/balance.js';
 import { clamp01, smootherstep } from '../core/math.js';
 import { eventEnvelopeAt } from './events.js';
 import { REACH_CAUSE } from './lifecycle/reach-ledger.js';
+import { addExternalNutrient, freshwaterSupportAt, loseNutrient, transferReserve } from './resource-ecology.js';
 
 /** Global deterioration curve, indexed by tick. 0 until rise start, 1 at end. */
 export function buildEntropyLut(worldEra = 1) {
@@ -76,9 +77,11 @@ export function updateEnvironment(state) {
     const season = state.seasonLut[phase];
     const season2 = state.seasonLut[(phase + (period / 3 | 0)) % period];
 
-    // Moisture: seasonal swing widening with entropy, global drying.
+    // Moisture: freshwater locally buffers, but does not cancel, global drying.
+    const freshwater = freshwaterSupportAt(state, i);
     state.moisture[i] = Math.fround(clamp01(
-      fields.baseMoisture[i] + seasonAmp * season - e * 0.22 * pressure));
+      fields.baseMoisture[i] + state.dynamicFreshwaterSupport[i] * .12
+        + seasonAmp * season - e * 0.22 * pressure * (1 - freshwater * .75)));
 
     // Temperature: seasonal + slow entropy heat drift.
     state.temperature[i] = Math.fround(clamp01(
@@ -94,12 +97,10 @@ export function updateEnvironment(state) {
     // symbiotic film renew better.
     const occupied = symbiotic && state.alive[i] === 1 ? 1.5 : 1;
     const regen = B.NUTRIENT_REGEN * (1 - e * 0.92) * occupied * challengeNutrient
-      * (fields.resourceRenewal?.[i] ?? 1);
-    const requested = Math.max(0, regen * (fields.baseNutrient[i] - state.nutrient[i]));
-    const transfer = Math.min(state.resourceReserve[i], requested);
-    state.resourceReserve[i] = Math.fround(Math.max(0, state.resourceReserve[i] - transfer));
-    state.resourceTransferred += transfer;
-    state.nutrient[i] = Math.fround(clamp01(state.nutrient[i] + transfer));
+      * (fields.resourceRenewal?.[i] ?? 1) * (1 + freshwater * .35);
+    const localTarget = Math.min(1, fields.baseNutrient[i] * (1 + freshwater * .08));
+    const requested = Math.max(0, regen * (localTarget - state.nutrient[i]));
+    transferReserve(state, i, requested);
   }
 
   applyEventEffects(state);
@@ -125,10 +126,10 @@ function applyEventEffects(state) {
           }
           break;
         case 'ash':
-          state.nutrient[i] = Math.fround(clamp01(state.nutrient[i] - w));
+          loseNutrient(state, i, w);
           state.temperature[i] = Math.fround(clamp01(state.temperature[i] - w * 0.4));
           break;
-        case 'bloom': state.nutrient[i] = Math.fround(clamp01(state.nutrient[i] + w)); break;
+        case 'bloom': addExternalNutrient(state, i, w); break;
         case 'blight':
           if (state.alive[i] === 1) {
             const loss = Math.min(state.biomass[i], w * 0.25); state.causes.event += loss;

@@ -4,6 +4,7 @@ import { LEGACY_MEMORY_BY_ID, LEGACY_MEMORY_GRAPH_VERSION } from '../game/skills
 import { LEGACY_TROPHY_IDS, TROPHY_CATALOG_VERSION, TROPHY_IDS } from '../game/trophies/index.js';
 import { TROPHY_MAX_KEYS, TROPHY_SUM_KEYS } from '../game/trophies/keys.js';
 import { createGeodesicTopology, createTopology } from '../world/icosphere.js';
+import { SCORE_MODEL_VERSION } from '../game/scoring.js';
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 const VALID_MEMORY_IDS = new Set(MEMORY_NODE_IDS);
 const VALID_TROPHY_IDS = new Set(TROPHY_IDS);
@@ -16,9 +17,10 @@ export const LEGACY_MEMORY_MAP = Object.freeze({
 });
 
 export function defaultMeta() {
-  return { schema: 9, memoryGraphVersion: MEMORY_GRAPH_VERSION, memoryMigrationVersion: MEMORY_GRAPH_VERSION,
+  return { schema: 10, memoryGraphVersion: MEMORY_GRAPH_VERSION, memoryMigrationVersion: MEMORY_GRAPH_VERSION,
     trophyVersion: TROPHY_CATALOG_VERSION,
-    scoreModelVersion: 2, bestScore: 0, legacyBestScore: 0, totalEchoes: 0, echoBalance: 0, runs: 0, worldSeedIndex: 0, resultKeys: [],
+    scoreModelVersion: SCORE_MODEL_VERSION, bestScore: 0, legacyBestScore: 0, legacyBestScores: {},
+    totalEchoes: 0, echoBalance: 0, runs: 0, worldSeedIndex: 0, resultKeys: [],
     memoryNodes: [], legacyMemoryNodes: [], quarantinedMemoryNodes: [], imprints: [], trophyIds: [], legacyTrophyIds: [], trophyQueue: [], trophyBackfillVersion: 0,
     trophyProgress: { version: 4, geographyMask: 0, geographyVersion: 3,
       crisisMask: 0, lakeTypeMask: 0, lakeSalinityMask: 0, aggregate: {} },
@@ -30,8 +32,17 @@ export function validateMeta(raw) {
   const base = defaultMeta(); if (raw === null || typeof raw !== 'object') return base;
   const sourceSchema = Number.isInteger(raw.schema) ? raw.schema : 1; const out = { ...base };
   const sourceScoreVersion = boundedInteger(raw.scoreModelVersion, 1);
-  out.bestScore = sourceScoreVersion >= 2 ? boundedInteger(raw.bestScore, 0) : 0;
-  out.legacyBestScore = Math.max(boundedInteger(raw.legacyBestScore, 0), sourceScoreVersion < 2 ? boundedInteger(raw.bestScore, 0) : 0);
+  const sourceBest = boundedInteger(raw.bestScore, 0); const legacyBestScores = {};
+  if (raw.legacyBestScores && typeof raw.legacyBestScores === 'object') for (const version of [1, 2]) {
+    const value = boundedInteger(raw.legacyBestScores[version], 0); if (value) legacyBestScores[version] = value;
+  }
+  const undifferentiatedLegacy = boundedInteger(raw.legacyBestScore, 0);
+  if (undifferentiatedLegacy) legacyBestScores[1] = Math.max(legacyBestScores[1] ?? 0, undifferentiatedLegacy);
+  if (sourceScoreVersion === SCORE_MODEL_VERSION) out.bestScore = sourceBest;
+  else if (sourceBest) legacyBestScores[Math.min(2, Math.max(1, sourceScoreVersion))] = Math.max(
+    legacyBestScores[Math.min(2, Math.max(1, sourceScoreVersion))] ?? 0, sourceBest);
+  out.legacyBestScores = legacyBestScores;
+  out.legacyBestScore = Math.max(0, ...Object.values(legacyBestScores));
   out.totalEchoes = boundedInteger(raw.totalEchoes, 0);
   out.echoBalance = Number.isFinite(raw.echoBalance) && raw.echoBalance >= 0 ? Math.floor(raw.echoBalance)
     : sourceSchema === 1 ? out.totalEchoes : 0;

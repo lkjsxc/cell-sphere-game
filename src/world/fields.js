@@ -33,6 +33,8 @@ export function createFields(rng, topo) {
     lakeDepth: hydro.lakeDepth,
     lakeShore: hydro.lakeShore,
     freshwaterInfluence: hydro.freshwaterInfluence,
+    freshwaterTier: hydro.freshwaterTier,
+    freshwaterLakeId: hydro.freshwaterLakeId,
     lakes: hydro.lakes,
     baseMoisture: ecology.baseMoisture,
     baseTemp: ecology.baseTemp,

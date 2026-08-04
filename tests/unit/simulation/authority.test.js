@@ -32,8 +32,10 @@ test('presentation snapshot remains observational and compact', () => {
   for (const key of Object.keys(snapshot)) assert.doesNotMatch(key, /edgeActive|conductance|flux|nutrient|resourceReserve/);
   assert.equal(snapshot.lifeState[state.inoculationCell], LIFE_STATE.FRONTIER);
   const transfers = snapshotTransfers(snapshot); assert.deepEqual(transfers, [snapshot.biomass.buffer, snapshot.stress.buffer,
-    snapshot.alive.buffer, snapshot.lifeState.buffer, snapshot.eventStrength.buffer, snapshot.eventFamily.buffer]);
-  assert.equal(transfers.reduce((sum, buffer) => sum + buffer.byteLength, 0), state.topo.nodeCount * 12);
+    snapshot.alive.buffer, snapshot.lifeState.buffer, snapshot.eventStrength.buffer, snapshot.eventFamily.buffer,
+    snapshot.resourceRichnessQ.buffer, snapshot.reserveFractionQ.buffer, snapshot.resourceState.buffer,
+    snapshot.transformationState.buffer, snapshot.electricityQ.buffer]);
+  assert.equal(transfers.reduce((sum, buffer) => sum + buffer.byteLength, 0), state.topo.nodeCount * 17);
 });
 
 test('fresh worlds have no harmful events and world three schedules one late mild pressure', () => {
@@ -48,7 +50,8 @@ test('locked habitat rejection happens before growth RNG consumption', () => {
   const controller = run(99); const state = controller.state; const source = state.inoculationCell;
   state.energy[source] = 20;
   for (let offset = state.topo.nodeStart[source]; offset < state.topo.nodeStart[source + 1]; offset++) {
-    const target = state.topo.nodeNeighbors[offset]; state.fields.biomeId[target] = BIOME.DEEP_OCEAN; state.nutrient[target] = 1;
+    const target = state.topo.nodeNeighbors[offset]; state.fields.biomeId[target] = BIOME.DEEP_OCEAN;
+    state.effectiveBiome[target] = BIOME.DEEP_OCEAN; state.nutrient[target] = 1;
   }
   const before = state.simRng.state(); runGrowth(state); assert.deepEqual(state.simRng.state(), before);
   assert.ok(state.habitatBlocked.some((value) => value > 0));
