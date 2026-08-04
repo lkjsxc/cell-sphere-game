@@ -43,9 +43,11 @@ export function createAgentEnvironment(raw = defaultAgentSave()) {
     const seed = (seedForRun(seedIndex, '') + state.campaignSeed) % SEED_LIMIT;
     const worldOrdinal = meta.runs + 1; const run = new RunController({ seed,
       runId: worldOrdinal, strainId: 'pioneer', worldOrdinal,
-      worldPotential: memory.worldPotential, potentialVersion: memory.potentialVersion,
+      worldPotential: memory.worldPotential, evolutionPower: memory.evolutionPower,
+      potentialVersion: memory.potentialVersion,
       memoryEffects: memory.effects, memoryConditionals: memory.conditionals,
-      memoryUnlocks: memory.unlocks, habitatCapabilities: memory.habitatCapabilities });
+      memoryUnlocks: memory.unlocks, habitatCapabilities: memory.habitatCapabilities,
+      activeBuilds: memory.activeBuilds, buildEffects: memory.buildEffects });
     run.start(); let ticks = 0;
     while (run.state.status !== 'extinct' && ticks < MAX_RUN_TICKS) ticks += run.advance(100);
     if (run.state.status !== 'extinct') return respond(false, 'world-did-not-terminate');
@@ -93,10 +95,17 @@ function curateResult(result, transaction) {
     sustainedReach: result.sustainedCoverage, peakConnectedShare: result.peakConnectedShare,
     crises: Object.freeze({ endured: result.crisesEndured, total: result.crisesTotal }),
     resources: Object.freeze({ initial: result.resourceInitial, final: result.resourceFinal,
-      depletedCells: result.resourceDepletedCells }),
-    habitats: Object.freeze({ lake: habitats[0] ?? 0, tundra: habitats[1] ?? 0,
-      snowIce: habitats[2] ?? 0, shallowOcean: habitats[3] ?? 0, deepOcean: habitats[4] ?? 0 }),
-    reach: Object.freeze({ gained: result.reach?.gained ?? 0, lost: result.reach?.lost ?? 0 }),
+      depletedCells: result.resourceDepletedCells, recoveredCells: result.resourceRecoveredCells,
+      freshwaterSupportedCellSeconds: result.freshwaterSupportedCellSeconds,
+      livingTicksByQuintile: Object.freeze([...(result.resourceLivingTicksByQuintile ?? [])]) }),
+    habitats: Object.freeze({ lake: habitats[13] ?? 0, tundra: habitats[11] ?? 0,
+      snowIce: habitats[12] ?? 0, shallowOcean: habitats[1] ?? 0, deepOcean: habitats[0] ?? 0 }),
+    builds: Object.freeze([...(result.activeBuilds ?? [])]),
+    worldmaking: Object.freeze({ transformedCells: result.transformedCells ?? 0,
+      glacialLakeCells: result.glacialLakeCells ?? 0, maritimeForestCells: result.maritimeForestCells ?? 0,
+      electrifiedCells: result.electrifiedCells ?? 0, poweredCellSeconds: result.poweredCellSeconds ?? 0 }),
+    reach: Object.freeze({ gained: result.reach?.gained ?? 0, lost: result.reach?.lost ?? 0,
+      peakLandOccupancy: result.peakLandOccupancy ?? 0, reach100: result.reach100?.achieved === true }),
     stateHash: result.hash, trophiesAwarded: Object.freeze([...transaction.trophyIds]),
   });
 }

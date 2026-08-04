@@ -3,6 +3,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../../src/simulation/simulator.js';
 import { compileMemory } from '../../src/game/skills/index.js';
+import { FRESH_RESOURCE_FLOOR } from '../../src/simulation/lifecycle/ecological-access.js';
 
 const count = integerArg('--count=', 300); const memory = compileMemory({ memoryNodes: [] }); const pairs = [];
 const starts = { near: 0, far: 0 }; const started = performance.now();
@@ -27,8 +28,8 @@ const ratios = pairs.map((row) => row.durationRatio); const report = { requested
   nearWins: round(pairs.filter((row) => row.durationRatio > 1).length / pairs.length),
   nearHardMaximumRate: round(pairs.filter((row) => row.nearHard).length / pairs.length),
   farHardMaximumRate: round(pairs.filter((row) => row.farHard).length / pairs.length), valid: false };
-report.valid = pairs.length >= count * .85 && report.durationRatio.median >= 1.15 && report.durationRatio.median <= 1.6
-  && report.exhaustionDelaySeconds.median > 0 && report.nearWins < 1 && report.nearHardMaximumRate < .30;
+report.valid = pairs.length >= count * .85 && report.durationRatio.median >= 1.08 && report.durationRatio.median <= 1.25
+  && report.exhaustionDelaySeconds.median > 0 && report.nearWins < 1 && report.nearHardMaximumRate < .45;
 mkdirSync('reports', { recursive: true }); writeFileSync('reports/freshwater-audit.json', `${JSON.stringify(report, null, 2)}\n`);
 console.log(JSON.stringify(report, null, 2)); if (!report.valid) process.exitCode = 1;
 function controller(seed, inoculate) { return new RunController({ seed, inoculate, worldOrdinal: 1,
@@ -39,7 +40,7 @@ function finish(value) { value.start(); value.advance(4000); return value.buildR
 function matchedPair(state) {
   const near = []; const far = [];
   for (let cell = 0; cell < state.topo.nodeCount; cell++) {
-    if (!state.fields.landMask[cell] || state.fields.biomeId[cell] >= 9 || state.initialResourceRichness[cell] < .54
+    if (!state.fields.landMask[cell] || state.fields.biomeId[cell] >= 9 || state.initialResourceRichness[cell] < FRESH_RESOURCE_FLOOR
         || richNeighbors(state, cell) < 2) continue;
     const support = state.fields.freshwaterInfluence[cell]; if (support >= .42) near.push(cell); else if (support <= .02) far.push(cell);
   }
@@ -57,7 +58,7 @@ function matchedPair(state) {
 }
 function richNeighbors(state, cell) { let count = 0;
   for (let offset = state.topo.nodeStart[cell]; offset < state.topo.nodeStart[cell + 1]; offset++)
-    if (state.initialResourceRichness[state.topo.nodeNeighbors[offset]] >= .525) count++; return count; }
+    if (state.initialResourceRichness[state.topo.nodeNeighbors[offset]] >= FRESH_RESOURCE_FLOOR) count++; return count; }
 function integerArg(prefix, fallback) { const value = Number(process.argv.find((arg) => arg.startsWith(prefix))?.slice(prefix.length) ?? fallback);
   if (!Number.isInteger(value) || value < 1 || value > 100000) throw new Error(`${prefix} must be 1..100000`); return value; }
 function dist(values) { if (!values.length) return { min: 0, p25: 0, median: 0, p75: 0, p90: 0, max: 0 };

@@ -62,9 +62,13 @@ export function runGrowth(state) {
       if (active.has('rich-rush') && access.resourceRichness >= .72) buildGrowth *= 1.20;
       if (active.has('lake-garden') && access.modifiers.freshwater > .2) buildGrowth *= 1.12;
       if (active.has('wasteland-reclaimer') && access.resourceRichness < .42) buildGrowth *= .72;
-      if (active.has('cold-dormancy')) buildGrowth *= .82;
-      if (active.has('pelagic-colony') && effectiveBiome <= 1) buildGrowth *= .72;
-      const cost = baseCost * route;
+      const gardener = active.has('world-gardener');
+      if (active.has('cold-dormancy')) buildGrowth *= state.temperature[nb] < .34 ? (gardener ? 6 : 1.55) : .82;
+      if (active.has('pelagic-colony') && effectiveBiome === 0) buildGrowth *= gardener ? 30 : .72;
+      else if (active.has('brine-harvester') && effectiveBiome === 1) buildGrowth *= gardener ? 4 : 1.25;
+      if (gardener) buildGrowth *= 1.28 * (state.coverage > .80 ? 10 : 1);
+      const routeBuild = gardener ? (state.coverage > .80 ? .72 : .82) : 1;
+      const cost = baseCost * route * routeBuild;
       let p = B.GROW_P_BASE * traits.reach
         * growth * buildGrowth
         * (0.25 + 0.75 * suitNb)

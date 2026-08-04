@@ -18,7 +18,7 @@ export function createWorldmakingState(fields) {
     electricCharge: new Float32Array(fields.biomeId.length),
     electricityQ: new Uint8Array(fields.biomeId.length),
     everPowered: new Uint8Array(fields.biomeId.length),
-    transformedCells: 0, electrifiedCells: 0, poweredCellTicks: 0,
+    transformedCells: 0, electrifiedCells: 0, peakElectrifiedCells: 0, poweredCellTicks: 0,
     glacialLakeCells: 0, maritimeForestCells: 0, reclaimedCells: 0,
   };
 }
@@ -36,20 +36,22 @@ export function runWorldmaking(state) {
     if (state.electricityQ[cell]) { electrified++; state.poweredCellTicks++; }
   }
   state.electrifiedCells = electrified;
+  if (electrified > state.peakElectrifiedCells) state.peakElectrifiedCells = electrified;
 }
 
 function runReclamation(state, cell, active) {
   if (!(active.has('wasteland-reclaimer') || active.has('circular-biosphere') || active.has('depletion-bloom'))) return;
-  const poor = state.resourceState[cell] >= 5 || state.transformationState[cell] === TRANSFORMATION.RECOVERING;
+  const poor = state.resourceState[cell] >= 5 || state.resourceRichness[cell] < .60
+    || state.transformationState[cell] === TRANSFORMATION.RECOVERING;
   if (!poor) return;
   const powered = state.electricityQ[cell] / 255;
-  const rate = .00055 * (1 + powered * (active.has('depletion-bloom') ? 2 : .5))
+  const rate = .003 * (1 + powered * (active.has('depletion-bloom') ? 2 : .5))
     * (1 + freshwaterSupportAt(state, cell) * .5);
   const restored = transferRecyclable(state, cell, rate);
   if (!(restored > 0)) return;
   if (state.transformationState[cell] === TRANSFORMATION.NONE) state.transformationState[cell] = TRANSFORMATION.RECOVERING;
   state.transformationProgress[cell] = Math.min(0xffff, state.transformationProgress[cell] + 1);
-  if (state.transformationProgress[cell] >= 180 && state.resourceRichness[cell] >= .42
+  if (state.transformationProgress[cell] >= 12 && state.resourceRichness[cell] >= .32
       && state.transformationState[cell] !== TRANSFORMATION.RECLAIMED_SOIL) {
     state.transformationState[cell] = TRANSFORMATION.RECLAIMED_SOIL;
     state.reclaimedCells++; state.transformedCells++;
@@ -58,14 +60,15 @@ function runReclamation(state, cell, active) {
 }
 
 function runCryolake(state, cell, active) {
-  if (!active.has('cryolake-engineer') || state.transformationState[cell] === TRANSFORMATION.GLACIAL_LAKE) return;
+  if (!active.has('cryolake-engineer') || state.glacialLakeCells >= 24
+      || state.transformationState[cell] === TRANSFORMATION.GLACIAL_LAKE) return;
   const base = state.fields.biomeId[cell];
   if (base !== BIOME.SNOW_ICE && base !== BIOME.TUNDRA) return;
   if (!hasLowerNeighbor(state, cell) || state.energy[cell] < .16 || state.nutrient[cell] < .015) return;
   consumeNutrient(state, cell, .00018); state.energy[cell] = Math.fround(state.energy[cell] - .00025);
   const power = state.electricityQ[cell] / 255;
   state.transformationProgress[cell] = Math.min(0xffff, state.transformationProgress[cell] + 1 + (power > .3 ? 1 : 0));
-  if (state.transformationProgress[cell] < 320) return;
+  if (state.transformationProgress[cell] < 180) return;
   state.transformationState[cell] = TRANSFORMATION.GLACIAL_LAKE; state.effectiveBiome[cell] = BIOME.LAKE;
   state.dynamicFreshwaterSupport[cell] = .9; state.glacialLakeCells++; state.transformedCells++;
   for (let offset = state.topo.nodeStart[cell]; offset < state.topo.nodeStart[cell + 1]; offset++) {
@@ -80,11 +83,12 @@ function runLittoral(state, cell, active) {
   consumeNutrient(state, cell, .00022); state.energy[cell] = Math.fround(state.energy[cell] - .00028);
   const step = state.electricityQ[cell] > 90 ? 2 : 1;
   state.transformationProgress[cell] = Math.min(0xffff, state.transformationProgress[cell] + step);
-  if (state.transformationProgress[cell] >= 220 && state.transformationState[cell] < TRANSFORMATION.WETLAND_SUCCESSION) {
+  if (state.transformationProgress[cell] >= 25 && state.transformationState[cell] < TRANSFORMATION.WETLAND_SUCCESSION) {
     state.transformationState[cell] = TRANSFORMATION.WETLAND_SUCCESSION; state.effectiveBiome[cell] = BIOME.WETLAND;
     state.transformedCells++; recordHistory(state, 'wetland-succession', { cell });
   }
-  if (state.transformationProgress[cell] >= 520 && state.transformationState[cell] < TRANSFORMATION.MARITIME_FOREST) {
+  if (state.transformationProgress[cell] >= 32 && state.maritimeForestCells < 24
+      && state.transformationState[cell] < TRANSFORMATION.MARITIME_FOREST) {
     state.transformationState[cell] = TRANSFORMATION.MARITIME_FOREST; state.effectiveBiome[cell] = BIOME.WET_FOREST;
     state.maritimeForestCells++; recordHistory(state, 'maritime-forest', { cell });
   }

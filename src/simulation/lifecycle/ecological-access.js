@@ -3,7 +3,7 @@ import { clamp01, tolerance } from '../../core/math.js';
 import { RESOURCE_STATE, freshwaterSupportAt, resourceRichnessAt } from '../resource-ecology.js';
 import { habitatAccess } from '../habitats.js';
 
-export const FRESH_RESOURCE_FLOOR = .525;
+export const FRESH_RESOURCE_FLOOR = .565;
 const MOIST_CENTER = .55; const TEMP_CENTER = .6;
 
 export function ecologicalAccess(state, from, target) {
@@ -32,7 +32,8 @@ export function ecologicalAccess(state, from, target) {
   if (stateCode === RESOURCE_STATE.EXHAUSTED && !reclamation && !gardener) {
     return decision(false, 'cell-exhausted', richness, minimum, modifiers());
   }
-  if (richness < minimum && !(reclamation && richness >= Math.max(.10, minimum - .20))) {
+  const reclamationFloor = gardener ? .04 : Math.max(.10, minimum - .20);
+  if (richness < minimum && !(reclamation && richness >= reclamationFloor)) {
     return decision(false, 'resource-richness-below-niche-floor', richness, minimum, modifiers());
   }
 
@@ -43,7 +44,7 @@ export function ecologicalAccess(state, from, target) {
     * tolerance(state.temperature[target], TEMP_CENTER, tempW)
     * clamp01(1 - (state.toxicity[target] / traits.toxinTol - .35) * 1.1);
   const coldRoute = active.has('cold-dormancy') || active.has('polar-current') || effect(effects, 'coldAccess', 'coldDormancy');
-  if (climate < (coldRoute ? .035 : .10) && state.tick >= 150) {
+  if (climate < (gardener ? 0 : coldRoute ? .035 : .10) && state.tick >= 150) {
     return decision(false, 'climate-outside-current-tolerance', richness, minimum, { ...modifiers(), climate });
   }
   if (Number.isInteger(from) && from >= 0 && state.energy[from] <= 0) {

@@ -12,8 +12,8 @@ export const HABITAT_TROPHIES = family('habitat', [
   ['pelagic-province', 'Pelagic Province', 'Colonize fifty shallow-ocean cells in one world.', n('shallowOceanCells', 50)],
   ['abyssal-province', 'Abyssal Province', 'Colonize twenty deep-ocean cells in one world.', n('deepOceanCells', 20)],
   ['scarcity-witness', 'Scarcity Witness', 'Complete three worlds with finite local reserve exhaustion.', n('scarcityWorlds', 3)],
-  ['spent-landscape', 'Spent Landscape', 'Exhaust long-term stock in at least five thousand whole cells across completed worlds.', n('resourceDepletedCells', 5000)],
+  ['spent-landscape', 'Wasteland Reclaimed', 'Restore at least fifty depleted whole cells in one world.', n('resourceRecoveredCells', 50)],
   ['autonomous-patience', 'Autonomous Patience', 'Complete twelve worlds without any mid-run decision authority.', n('autonomousWorlds', 12)],
   ['quiet-onboarding', 'Quiet Onboarding', 'Complete both scarcity-era worlds with zero harmful events.', n('zeroEventWorlds', 2)],
-  ['living-world-habitats', 'Living World Habitats', 'Reach one million SCORE after occupying all five gated habitat classes.', all(n('bestScore', 1000000), n('habitatClassCount', 5))],
+  ['living-world-habitats', 'Illuminated Biosphere', 'Reach one million SCORE after all five habitat classes and whole-cell power.', all(n('bestScore', 1000000), n('habitatClassCount', 5), n('electrifiedCells', 50))],
 ]);

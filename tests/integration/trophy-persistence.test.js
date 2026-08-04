@@ -53,14 +53,23 @@ test('legacy choice-era worlds cannot satisfy current autonomous or quiet-world 
   assert.ok(!result.meta.trophyIds.includes('habitat-autonomous-patience'));assert.ok(!result.meta.trophyIds.includes('habitat-quiet-onboarding'));
 });
 
-test('habitat classes union and depleted cells sum across current completed worlds', () => {
-  let meta={...defaultMeta(),trophyBackfillVersion:3};const facts=(mask,depleted)=>validateTrophyFacts({version:4,autonomous:1,habitatMask:mask,habitatClassCount:1,habitat:Array(5).fill(0),resourceDepletedCells:depleted,reach:[],morph:[],scoreAxesBp:[],lake:[]});
-  meta=reconcileTrophies(meta,defaultHistory(),facts(1,800)).meta;const second=reconcileTrophies(meta,defaultHistory(),facts(2,800));
+test('habitat classes union, depleted cells sum, and reclamation uses one-world proof', () => {
+  let meta={...defaultMeta(),trophyBackfillVersion:3};const facts=(mask,depleted,recovered=0)=>validateTrophyFacts({version:5,autonomous:1,habitatMask:mask,habitatClassCount:1,habitat:Array(5).fill(0),resourceDepletedCells:depleted,resourceRecoveredCells:recovered,reach:[],morph:[],scoreAxesBp:[],lake:[]});
+  meta=reconcileTrophies(meta,defaultHistory(),facts(1,800,20)).meta;const second=reconcileTrophies(meta,defaultHistory(),facts(2,800,30));
   assert.equal(second.aggregate.habitatClassCount,2);assert.equal(second.aggregate.resourceDepletedCells,1600);
   assert.ok(!second.meta.trophyIds.includes('habitat-spent-landscape'));assert.ok(!second.meta.trophyIds.includes('habitat-three-habitats'));
-  const third=reconcileTrophies(second.meta,defaultHistory(),facts(4,2562));assert.equal(third.aggregate.habitatClassCount,3);
+  const third=reconcileTrophies(second.meta,defaultHistory(),facts(4,2562,49));assert.equal(third.aggregate.habitatClassCount,3);
   assert.ok(third.meta.trophyIds.includes('habitat-three-habitats'));assert.ok(!third.meta.trophyIds.includes('habitat-spent-landscape'));
-  const fourth=reconcileTrophies(third.meta,defaultHistory(),facts(4,838));assert.ok(fourth.meta.trophyIds.includes('habitat-spent-landscape'));
+  const fourth=reconcileTrophies(third.meta,defaultHistory(),facts(4,838,50));assert.ok(fourth.meta.trophyIds.includes('habitat-spent-landscape'));
+});
+
+test('exact REACH 100 and whole-cell worldmaking award current mastery criteria', () => {
+  const meta={...defaultMeta(),trophyBackfillVersion:3};
+  const facts=validateTrophyFacts({version:5,autonomous:1,reach100:1,transformedCells:50,electrifiedCells:50,
+    reach:[],morph:[],scoreAxesBp:[],lake:[],habitat:[]});
+  const result=reconcileTrophies(meta,defaultHistory(),facts);
+  assert.ok(result.meta.trophyIds.includes('mastery-reach-form-vector'));
+  assert.ok(result.meta.trophyIds.includes('mastery-efficient-resolve'));
 });
 
 test('SCORE mastery requires its score and quality evidence in the same world', () => {

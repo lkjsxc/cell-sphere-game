@@ -19,9 +19,9 @@ export const PUBLIC_SKILL_KEYS = Object.freeze([
 ]);
 const POWER = Object.freeze({ root: 1, resonance: 1, major: 2, conditional: 2,
   unlock: 3, capability: 3, keystone: 5, capstone: 8 });
-const BRANCH_PUBLIC = Object.freeze({ Reach: ['Fertility', ['rich-terrain', 'frontier']],
+const BRANCH_PUBLIC = Object.freeze({ Reach: ['Marine', ['marine', 'frontier']],
   Flow: ['Freshwater', ['freshwater', 'transport']], Reserve: ['Scarcity', ['scarcity', 'storage']],
-  Ecology: ['Cryogenic', ['cryogenic', 'resilience']], Perception: ['Marine', ['marine', 'sensing']],
+  Ecology: ['Fertility', ['rich-terrain', 'resilience']], Perception: ['Cryogenic', ['cryogenic', 'sensing']],
   Continuity: ['Luminous', ['luminous', 'continuity']] });
 
 export function buildAgentObservation(state) {
@@ -71,8 +71,8 @@ function publicSkill(meta, node, compiled) {
       delta: node.owned ? 0 : skillPower(node) }),
     worldPotential: Object.freeze({ before: preview?.potentialBefore ?? compiled.worldPotential,
       after: preview?.potentialAfter ?? compiled.worldPotential,
-      delta: preview?.potentialGain ?? 0 }),
-    buildProgress: Object.freeze(publicBuildProgress(compiled, node)),
+      delta: preview?.potentialDelta ?? preview?.potentialGain ?? 0 }),
+    buildProgress: Object.freeze((preview?.buildProgress ?? []).map(publicBuild).slice(0, 12)),
     neighbors: Object.freeze([...getMemoryAdjacentIds(node.id)]),
   });
 }
@@ -89,13 +89,10 @@ function publicBuilds(compiled) {
 }
 function publicBuild(build) { return Object.freeze({ id: build.id, name: build.name ?? build.nameEn ?? build.id,
   progress: Number.isFinite(build.progress) ? build.progress : build.active ? 1 : 0,
-  active: Boolean(build.active), missing: Object.freeze((build.missing ?? []).filter((item) => typeof item === 'string').slice(0, 12)),
-  effect: build.effectEn ?? build.effect ?? build.summary ?? '' }); }
-function publicBuildProgress(compiled, node) {
-  const builds = [...(compiled.builds ?? []), ...(compiled.nearBuilds ?? [])];
-  return builds.filter((build) => (build.skillIds ?? build.contributors ?? []).includes(node.id))
-    .map(publicBuild).slice(0, 12);
-}
+  active: Boolean(build.active), missing: Object.freeze((build.missing ?? []).map((item) => typeof item === 'string'
+    ? item : Object.freeze({ type: item.type, id: item.id, remaining: item.remaining })).slice(0, 12)),
+  effects: Object.freeze(Object.entries(build.mechanicalEffects ?? build.effect ?? {}).map(([key, value]) => Object.freeze({ key, value }))),
+  tradeoffs: Object.freeze([...(build.tradeoffs ?? [])]), habitats: Object.freeze([...(build.habitats ?? [])]) }); }
 function trophySummary(meta) {
   const owned = new Set(meta.trophyIds ?? []); return Object.freeze({ earned: owned.size,
     total: TROPHIES.length, queued: Object.freeze([...(meta.trophyQueue ?? [])]),

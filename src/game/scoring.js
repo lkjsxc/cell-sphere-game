@@ -6,6 +6,8 @@ export const SCORE_MODEL_VERSION = 3;
 const W = B.SCORE_WEIGHTS;
 const TARGET = Object.freeze({ survival: 300, exploration: 800, presence: 44,
   coherence: 40, stewardship: 780, worldmaking: 220 });
+const COMPONENT_CAP = Object.freeze({ survival: 1, exploration: .90, presence: .90,
+  coherence: .90, stewardship: .90, worldmaking: .88 });
 
 export const COMPONENTS = Object.freeze([
   Object.freeze({ key: 'survival', en: 'Survival', ja: '生存' }),
@@ -71,7 +73,7 @@ export function componentValues(metrics) {
   const raw = metrics.scoreMerit?.raw ?? metrics.raw ?? legacyRaw(metrics);
   const maturity = clamp01((raw.survival ?? 0) / 180);
   return Object.freeze(Object.fromEntries(COMPONENTS.map(({ key }) => {
-    let value = clamp01((raw[key] ?? 0) / TARGET[key]);
+    let value = Math.min(COMPONENT_CAP[key], clamp01((raw[key] ?? 0) / TARGET[key]));
     if (key === 'exploration' || key === 'stewardship') value = Math.min(value, maturity);
     return [key, value];
   })));

@@ -46,35 +46,48 @@ function campaign() {
   const started = performance.now(); const summaries = [];
   for (let index = 0; index < selected.length; index++) {
     const policy = selected[index]; const env = createAgentEnvironment(defaultAgentSave((seed + index * 7919) % 0x40000000));
-    env.act({ type: 'set-goal', goal: policy }); const scores = []; const reasons = []; let purchases = 0;
+    env.act({ type: 'set-goal', goal: policy }); const scores = []; const reasons = []; const trace = []; let purchases = 0;
     let latest = null;
     for (let world = 0; world < worlds; world++) {
       let completed = false;
       for (let decisionCount = 0; decisionCount < 5 && !completed; decisionCount++) {
-        const decision = choosePolicyAction(env.observe(), policy); reasons.push(decision.rationale);
+        const before = env.observe(); const decision = choosePolicyAction(before, policy); reasons.push(decision.rationale);
         if (decision.action.type === 'buy-skill') {
-          const bought = env.act(decision.action); if (!bought.accepted) break; purchases++;
-          if (decisionCount < 4) continue;
+          const bought = env.act(decision.action); trace.push(traceEntry(before, decision, bought));
+          if (!bought.accepted) break; purchases++;
+          continue;
         }
-        latest = env.act({ type: 'run-world' }); completed = latest.accepted;
+        const runDecision = { action: { type: 'run-world' }, rationale: decision.rationale };
+        latest = env.act(runDecision.action); trace.push(traceEntry(before, runDecision, latest)); completed = latest.accepted;
       }
-      if (!completed) { latest = env.act({ type: 'run-world' }); completed = latest.accepted; }
+      if (!completed) { const before = env.observe(); const decision = { action: { type: 'run-world' }, rationale: 'Decision budget reached.' };
+        latest = env.act(decision.action); trace.push(traceEntry(before, decision, latest)); completed = latest.accepted; }
       if (!completed) throw new Error(`${policy} world ${world + 1}: ${latest.reason}`);
       scores.push(latest.result.score);
     }
     const observation = env.observe(); summaries.push({ policy, worlds, purchases,
       finalSkillCount: observation.ownedSkills.length, finalEchoBalance: observation.echoBalance,
+      evolutionPower: observation.evolutionPower, worldPotential: observation.worldPotential,
       bestScore: observation.bestScore, scores, activeBuilds: observation.activeBuilds.map((build) => build.id),
       trophies: observation.trophySummary.earned,
       lastResult: { score: observation.lastResult.score, cause: observation.lastResult.cause,
         survivalSeconds: observation.lastResult.survivalSeconds, peakReach: observation.lastResult.peakReach,
-        stateHash: observation.lastResult.stateHash },
-      rationales: reasons.slice(-4), stateHash: env.exportSave().stateHash });
+        reach100: observation.lastResult.reach.reach100, resources: observation.lastResult.resources,
+        worldmaking: observation.lastResult.worldmaking, stateHash: observation.lastResult.stateHash },
+      rationales: reasons.slice(-4), trace: trace.slice(-12), stateHash: env.exportSave().stateHash });
     if (savePath && selected.length === 1) atomicWrite(savePath, env.exportSave());
   }
   process.stdout.write(`${JSON.stringify({ schema: 1, seed, worldsPerPolicy: worlds,
     policies: summaries, elapsedMs: Math.round(performance.now() - started) })}\n`);
 }
+
+function traceEntry(observation, decision, response) { return Object.freeze({ observation: Object.freeze({
+  worldOrdinal: observation.worldOrdinal, echoBalance: observation.echoBalance,
+  evolutionPower: observation.evolutionPower, worldPotential: observation.worldPotential,
+  availableSkills: Object.freeze(observation.availableSkills.map((skill) => skill.id)),
+  activeBuilds: Object.freeze(observation.activeBuilds.map((build) => build.id)) }),
+  action: decision.action, rationale: decision.rationale, accepted: response.accepted,
+  reason: response.reason, responseHash: response.hash }); }
 
 function loadEnvironment(path) {
   if (!path || !existsSync(resolve(path))) return createAgentEnvironment(defaultAgentSave());

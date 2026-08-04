@@ -4,9 +4,9 @@ import assert from 'node:assert/strict';
 import { createAgentEnvironment } from '../../src/agent/environment.js';
 import { defaultAgentSave } from '../../src/agent/schema.js';
 
-const RESULT_KEYS = ['archetype', 'cause', 'crises', 'echoes', 'habitats', 'peakConnectedShare',
+const RESULT_KEYS = ['archetype', 'builds', 'cause', 'crises', 'echoes', 'habitats', 'peakConnectedShare',
   'peakReach', 'rank', 'reach', 'resources', 'score', 'scoreModelVersion', 'seed', 'stateHash',
-  'survivalSeconds', 'sustainedReach', 'terminalCause', 'trophiesAwarded', 'worldOrdinal', 'worldPotential'];
+  'survivalSeconds', 'sustainedReach', 'terminalCause', 'trophiesAwarded', 'worldOrdinal', 'worldPotential', 'worldmaking'];
 
 test('all action shapes use production transactions and completed result applies once', { timeout: 30_000 }, () => {
   const env = createAgentEnvironment(defaultAgentSave(77));

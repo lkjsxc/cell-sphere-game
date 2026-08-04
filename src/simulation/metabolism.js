@@ -51,13 +51,15 @@ export function runMetabolism(state) {
 
     const biomeMaintenance = transformed ? BIOME_EFFECTS[biome].maintenance : (fields.maintenanceMultiplier?.[i] ?? 1);
     const freshwater = freshwaterSupportAt(state, i);
-    let domainMaintenance = 1 - freshwater * .60;
+    let domainMaintenance = 1 - freshwater * .25;
     if (active.has('circular-biosphere')) domainMaintenance *= .94;
     if (active.has('wasteland-reclaimer')) domainMaintenance *= .96;
     if (active.has('cold-dormancy') && state.temperature[i] < .32) domainMaintenance *= .68;
     if (active.has('polar-current') && state.temperature[i] < .36 && biome <= BIOME.SHALLOW_OCEAN) domainMaintenance *= .72;
     if (state.electricityQ[i] > 32) domainMaintenance *= 1 - Math.min(.12, state.electricityQ[i] / 255 * .12);
     if (active.has('rich-rush')) domainMaintenance *= 1.07;
+    const gardenerStability = active.has('world-gardener') && state.coverage > .8 ? .40 : 1;
+    if (gardenerStability < 1) domainMaintenance *= .74;
     const maintDemand = B.MAINTENANCE_RATE * state.biomass[i]
       * (1 + e * B.MAINTENANCE_ENTROPY) * traits.maintenance * biomeMaintenance * domainMaintenance;
     const catchmentEnergy = consumeFreshwaterCatchment(state, i, maintDemand * freshwater * .62);
@@ -75,7 +77,7 @@ export function runMetabolism(state) {
     const founderWater = state.initialFounderFreshwaterReserve > 0
       ? state.inoculationFreshwaterSupport * Math.min(1, state.founderFreshwaterReserve / state.initialFounderFreshwaterReserve) : 0;
     const next = state.stress[i]
-      + (gainRate * (1 - suit) * (1 - freshwater * .65) * (1 - founderWater * .72)) / resist
+      + (gainRate * (1 - suit) * (1 - freshwater * .40) * (1 - founderWater * .72) * gardenerStability) / resist
       - B.STRESS_RECOVER * suit * (1 + freshwater * .25 + founderWater * .12);
     state.stress[i] = Math.fround(clamp01(next));
 

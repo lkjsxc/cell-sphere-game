@@ -81,7 +81,7 @@ export function updateEnvironment(state) {
     const freshwater = freshwaterSupportAt(state, i);
     state.moisture[i] = Math.fround(clamp01(
       fields.baseMoisture[i] + state.dynamicFreshwaterSupport[i] * .12
-        + seasonAmp * season - e * 0.22 * pressure * (1 - freshwater * .75)));
+        + seasonAmp * season - e * 0.22 * pressure * (1 - freshwater * .50)));
 
     // Temperature: seasonal + slow entropy heat drift.
     state.temperature[i] = Math.fround(clamp01(

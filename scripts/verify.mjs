@@ -10,10 +10,12 @@
  *   4. showcase:check      generated title data matches production sources
  *   5. test:unit           node:test unit suites
  *   6. test:integration    deterministic golden + speed-invariance suites
- *   7. audit:lakes         500-seed whole-cell lake distribution
- *   8. balance:smoke       bounded headless balance simulation
- *   9. benchmark           performance checkpoint
- *  10. check:links         static asset/import/deployment path checks
+ *   7. ecology audits      resource, freshwater, SCORE, transformations, REACH 100
+ *   8. audit:lakes         500-seed whole-cell lake distribution
+ *   9. agent:campaign      fair production-backed campaign smoke
+ *  10. balance:smoke       bounded headless balance simulation
+ *  11. benchmark           performance checkpoint
+ *  12. check:links         static asset/import/deployment path checks
  *
  * Browser tests (scripts/browser-test.mjs) need Chrome and are run
  * separately via `npm run test:browser`.
@@ -30,6 +32,12 @@ const gates = [
   ['audit:habitats', 'node scripts/audits/habitat-audit.mjs --count=12'],
   ['audit:trophies', 'node scripts/audits/trophy-audit.mjs'],
   ['audit:campaign:smoke', 'node scripts/audits/campaign-audit.mjs --smoke'],
+  ['audit:resources:smoke', 'node scripts/audits/resource-audit.mjs --count=24'],
+  ['audit:freshwater:smoke', 'node scripts/audits/freshwater-audit.mjs --count=24'],
+  ['audit:score-trace:smoke', 'node scripts/audits/score-trace-audit.mjs --count=24'],
+  ['audit:transformations:smoke', 'node scripts/audits/transformation-audit.mjs --count=12'],
+  ['audit:reach100', 'node scripts/audits/reach100-audit.mjs --count=100'],
+  ['agent:campaign:smoke', 'node scripts/agent-play.mjs campaign --worlds 2 > /dev/null'],
   ['showcase:check', 'node scripts/generate-title-showcase.mjs --check'],
   ['test:unit', 'node --test tests/unit/*.test.js tests/unit/simulation/*.test.js'],
   ['test:integration', 'node --test tests/integration/*.test.js'],

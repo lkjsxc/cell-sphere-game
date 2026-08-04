@@ -61,7 +61,12 @@ export function mergeFacts(a, f) {
     lakeHabitatCells: f.habitat[0], tundraHabitatCells: f.habitat[1], snowHabitatCells: f.habitat[2], shallowOceanCells: f.habitat[3],
     deepOceanCells: f.habitat[4], habitatClassCount: f.habitatClassCount,
     scoreReachWorld:f.masteryFlags&1?1:0,scoreBalancedWorld:f.masteryFlags&2?1:0,scoreCrisisWorld:f.masteryFlags&4?1:0,
-    scoreHabitatWorld:f.masteryFlags&8?1:0,scoreSixAxisWorld:f.masteryFlags&16?1:0,resourceRemainingBp: f.resourceRemainingBp, worldThreePressure: f.worldOrdinal === 3 && f.eventCount > 0 ? 1 : 0 };
+    scoreHabitatWorld:f.masteryFlags&8?1:0,scoreSixAxisWorld:f.masteryFlags&16?1:0,
+    resourceRemainingBp: f.resourceRemainingBp, resourceRecoveredCells: f.resourceRecoveredCells,
+    freshwaterSupportedSeconds: f.freshwaterSupportedSeconds, transformedCells: f.transformedCells,
+    electrifiedCells: f.electrifiedCells, glacialLakeCells: f.glacialLakeCells,
+    maritimeForestCells: f.maritimeForestCells, reach100: f.reach100,
+    worldThreePressure: f.worldOrdinal === 3 && f.eventCount > 0 ? 1 : 0 };
   for (const [key, value] of Object.entries(maxima)) a[key] = Math.max(a[key] ?? 0, value ?? 0);
   a.habitatClassMask=(a.habitatClassMask??0)|f.habitatMask;a.habitatClassCount=bitCount(a.habitatClassMask);
   const axes = ['survivalAxisBp','reachAxisBp','spreadAxisBp','unityAxisBp','efficiencyAxisBp','stabilityAxisBp'];

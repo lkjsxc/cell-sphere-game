@@ -105,7 +105,7 @@ export function createRunState(cfg) {
   if (!Number.isInteger(start) || start < 0 || start >= N) throw new Error(`invalid inoculation cell: ${start}`);
   state.inoculationCell = start;
   state.inoculationFreshwaterSupport = freshwaterSupportAt(state, start);
-  state.initialFounderFreshwaterReserve = state.inoculationFreshwaterSupport * 950;
+  state.initialFounderFreshwaterReserve = state.inoculationFreshwaterSupport * 800;
   state.founderFreshwaterReserve = state.initialFounderFreshwaterReserve;
   state.initialResourceStock += state.initialFounderFreshwaterReserve;
   birthCell(state, start, REACH_CAUSE.INOCULATION);

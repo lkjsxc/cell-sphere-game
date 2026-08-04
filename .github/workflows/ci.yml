@@ -37,6 +37,12 @@ jobs:
         run: node scripts/audits/skill-audit.mjs && node scripts/audits/trophy-audit.mjs
       - name: Habitat and campaign smoke audits
         run: node scripts/audits/habitat-audit.mjs --count=12 && node scripts/audits/campaign-audit.mjs --smoke
+      - name: Local ecology and SCORE smoke audits
+        run: node scripts/audits/resource-audit.mjs --count=24 && node scripts/audits/freshwater-audit.mjs --count=24 && node scripts/audits/score-trace-audit.mjs --count=24
+      - name: Build transformation and exact REACH 100 audits
+        run: node scripts/audits/transformation-audit.mjs --count=12 && node scripts/audits/reach100-audit.mjs --count=100
+      - name: Fair agent campaign smoke
+        run: node scripts/agent-play.mjs campaign --worlds 2 > /dev/null
       - name: Benchmark
         run: node scripts/benchmark.mjs
       - name: Link / deployment path checks

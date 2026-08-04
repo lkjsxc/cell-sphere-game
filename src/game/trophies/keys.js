@@ -7,7 +7,9 @@ export const TROPHY_MAX_KEYS = Object.freeze([
   'lakeCellsReached','lakeShoreCellsReached','distinctLakesReached','completeLakeShores','lakeLivingSeconds','largeLakeLivingSeconds','lakeRegionPeak',
   'droughtLakeSurvivals','freezeLakeSurvivals','lakeLoopSeconds','loopSurplusPeak',
   'lakeHabitatCells','tundraHabitatCells','snowHabitatCells','shallowOceanCells','deepOceanCells','habitatClassCount','habitatClassMask',
-  'resourceRemainingBp','worldThreePressure','scoreReachWorld','scoreBalancedWorld','scoreCrisisWorld','scoreHabitatWorld','scoreSixAxisWorld',
+  'resourceRemainingBp','resourceRecoveredCells','freshwaterSupportedSeconds','transformedCells','electrifiedCells',
+  'glacialLakeCells','maritimeForestCells','reach100','worldThreePressure','scoreReachWorld','scoreBalancedWorld',
+  'scoreCrisisWorld','scoreHabitatWorld','scoreSixAxisWorld',
 ]);
 export const TROPHY_SUM_KEYS = Object.freeze([
   'worldsWithLake','totalCrisesEndured','totalReachGains','totalRegrowth','totalLakeLivingSeconds','totalLakeCrisisSurvivals','balancedWorlds',

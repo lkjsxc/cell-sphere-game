@@ -13,7 +13,7 @@ export const MASTERY_TROPHIES = family('mastery', [
   ['efficiency-axis', 'Mastered Efficiency', 'Raise Resource Efficiency to 55% with substantial Evolution.', all(n('efficiencyAxisBp', 5500), n('skillCount', 84))],
   ['resolve-axis', 'Complete Stability', 'Raise Stability to 75% after forty lake-region crisis survivals.', all(n('stabilityAxisBp', 7500), n('totalLakeCrisisSurvivals', 40))],
   ['balanced-six', 'Balanced Six', 'Meet demanding baselines on all six SCORE axes in one world.', n('balancedAxesWorld', 1)],
-  ['reach-form-vector', 'Reach Form Vector', 'Master Peak Reach, Sustained Reach, and Unity together.', n('reachFormWorld', 1)],
-  ['efficient-resolve', 'Efficient Stability', 'Master Resource Efficiency and Stability together.', n('efficientResolveWorld', 1)],
+  ['reach-form-vector', 'Whole Living Sphere', 'Keep every authoritative world cell alive for the full REACH 100 interval.', n('reach100', 1)],
+  ['efficient-resolve', 'Worldmaker Circuit', 'Transform at least fifty cells and energize at least fifty in one world.', all(n('transformedCells', 50), n('electrifiedCells', 50))],
   ['all-six', 'Sixfold Mastery', 'Meet all six final Run Quality thresholds in one world.', n('allAxesWorld', 1)],
 ]);

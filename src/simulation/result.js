@@ -55,7 +55,8 @@ export function buildRunResult(s) {
     habitatOccupancy: Array.from(s.habitatOccupancy), habitatCapabilities: s.habitatCapabilities.slice(),
     activeBuilds: s.activeBuilds.slice(), transformedCells: s.transformedCells,
     glacialLakeCells: s.glacialLakeCells, maritimeForestCells: s.maritimeForestCells,
-    reclaimedCells: s.reclaimedCells, electrifiedCells: s.electrifiedCells,
+    reclaimedCells: s.reclaimedCells, electrifiedCells: s.peakElectrifiedCells,
+    finalElectrifiedCells: s.electrifiedCells, everPoweredCells: countMask(s.everPowered),
     poweredCellSeconds: s.poweredCellTicks / B.TICKS_PER_SECOND, reach100: reachGoalSummary(s),
     imprint: deriveImprint(s),
     causes: { ...s.causes },
@@ -87,5 +88,6 @@ export function dominantCause(s) {
 }
 function sumArray(values) { let total = 0; for (const value of values) total += value; return total; }
 function countStates(values) { const counts = Array(8).fill(0); for (const value of values) counts[value]++; return counts; }
+function countMask(values) { let count = 0; for (const value of values) if (value) count++; return count; }
 function copyMerit(value) { return { modelVersion: value.modelVersion, raw: { ...value.raw }, normalized: { ...value.normalized },
   total: value.total, quality: value.quality, lastUpdateTick: value.lastUpdateTick }; }
