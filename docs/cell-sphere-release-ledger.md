@@ -8,6 +8,8 @@ Protective tag: `pre-balance-compression-20260804`
 
 Contract revision: `884909b9d3ca77ae380164fd84fc4f63039dbc36`
 
+Implementation revision: `0774c2ac5d186e86337f5abd58e55d6d841da597`
+
 ### Implemented
 
 - removed active mid-run Adaptations from simulation, protocol, rendering,

@@ -109,5 +109,5 @@ canonical claims live in source, tests, and this snapshot.
 - Starting code revision: `a3fa43131261a0cdf207d63e25c448646857914c`.
 - Protective tag: `pre-balance-compression-20260804`.
 - Superseding contract commit: `884909b9d3ca77ae380164fd84fc4f63039dbc36`.
-- Implementation commit: pending.
+- Implementation commit: `0774c2ac5d186e86337f5abd58e55d6d841da597`.
 - Public Pages revision: pending deployment verification.
