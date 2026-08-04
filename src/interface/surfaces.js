@@ -23,7 +23,7 @@ export function elements() {
     pause: /** @type {HTMLButtonElement} */ (byId('pause-button')),
     speed: /** @type {HTMLSelectElement} */ (byId('speed-select')),
     boot: byId('boot-status'), score: byId('hud-score'), pressure: byId('hud-pressure'), reach: byId('hud-reach'), trace: byId('hud-trace'),
-    scoreButton: byId('score-button'), entropyButton: byId('entropy-button'), reachButton: byId('reach-button'), resultReach: byId('result-reach-button'),
+    scoreButton: byId('score-button'), entropyButton: byId('entropy-button'), reachButton: byId('reach-button'),
     event: byId('hud-event-text'), resultRank: byId('result-rank'), resultScore: byId('result-score'),
     resultCause: byId('result-cause'), breakdown: byId('result-breakdown'),
     echoes: byId('result-echoes'), resultImprint: byId('result-imprint'), resultTrophies: byId('result-trophies'), memoryBalance: byId('memory-balance'), trophyCount: byId('trophy-count'),
@@ -58,7 +58,9 @@ export function resetWorldPresentation(el, snapshot = null) {
   el.live.textContent = ''; el.resultRank.textContent = ''; el.resultScore.textContent = '0';
   el.resultCause.textContent = ''; el.echoes.textContent = ''; el.resultTrophies.textContent = '';
   el.resultImprint.textContent = ''; el.resultFirstCycle.textContent = ''; el.breakdown.replaceChildren();
-  el.resultControl.hidden = true; el.pause.disabled = false; el.pause.classList.remove('is-complete');
+  el.resultControl.hidden = true; el.resultControl.classList.remove('is-recommended', 'result-enter');
+  el.resultControl.removeAttribute('data-action'); el.resultControl.setAttribute('aria-expanded', 'false');
+  el.pause.disabled = false; el.pause.classList.remove('is-complete');
   el.pause.setAttribute('aria-pressed', 'false'); el.pause.setAttribute('aria-label', 'Pause world time');
   el.speed.disabled = false; el.speed.setAttribute('aria-label', 'Game speed');
 }
@@ -94,7 +96,9 @@ export function showResult(el, score, result) {
     const row = document.createElement('p'); row.className = 'breakdown-row';
     row.textContent = `${part.en}  ${number(part.points)}`; return row;
   }));
-  el.resultControl.hidden = false; el.pause.disabled = true; el.pause.classList.add('is-complete'); el.pause.setAttribute('aria-label', 'World time complete');
+  el.resultControl.hidden = false; el.resultControl.classList.add('is-recommended', 'result-enter');
+  el.resultControl.dataset.action = 'recommended';
+  el.pause.disabled = true; el.pause.classList.add('is-complete'); el.pause.setAttribute('aria-label', 'World time complete');
   el.speed.disabled = true; el.speed.setAttribute('aria-label', 'Game speed, next-world preference');
 }
 

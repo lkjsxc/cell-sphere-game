@@ -94,6 +94,20 @@ test('retired Worker callbacks cannot kill or mutate same-session fallback autho
   assert.equal(messages.length, before); assert.equal(messages.some((message) => message.t === 'worker-failed'), false);
 }));
 
+test('normal drivers clamp high speed while explicit developer drivers transport 256x', () => withWorkers(() => {
+  const normal = createRunDriver({ worker: true }, () => {}); normal.start({ seed: 20 }, 256);
+  const normalWorker = FakeWorker.instances.at(-1); deliver(normalWorker, normal, { t: 'ready' }); normal.ready();
+  assert.equal(normalWorker.sent.find((message) => message.t === 'init').developerMode, false);
+  assert.equal(normalWorker.sent.find((message) => message.t === 'speed').value, 8);
+  assert.equal(normal.setSpeed(32), 8); assert.equal(normalWorker.sent.at(-1).value, 8);
+
+  const developer = createRunDriver({ worker: true }, () => {}, { developerMode: true }); developer.start({ seed: 21 }, 256);
+  const devWorker = FakeWorker.instances.at(-1); deliver(devWorker, developer, { t: 'ready' }); developer.ready();
+  assert.equal(devWorker.sent.find((message) => message.t === 'init').developerMode, true);
+  assert.equal(devWorker.sent.find((message) => message.t === 'speed').value, 256);
+  assert.equal(developer.setSpeed(128), 128); assert.equal(devWorker.sent.at(-1).value, 128);
+}));
+
 test('worker silence requests status then exposes an explicit recoverable failure', () => withWorkers(() => {
   const messages = []; const driver = createRunDriver({ worker: true }, (message) => messages.push(message));
   const runId = driver.start({ seed: 5 }, 1); const worker = FakeWorker.instances.at(-1);

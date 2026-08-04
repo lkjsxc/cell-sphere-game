@@ -1,11 +1,13 @@
 /** One frame-loop visual clock; it never owns simulation time or pause leases. */
 const FULL_TURN = 360; const BASE_DURATION_MS = 2800; const MIN_DURATION_MS = 450;
 const REDUCED_DURATION_MS = 60_000;
+// Above 32x the visual dial intentionally saturates; the selected multiplier remains visible beside it.
+export const VISUAL_DIAL_SPEED_CEILING = 32;
 export function createTimeDialState(phase = 60) {
   return { phase: finiteAngle(phase), hourPhase: finiteAngle(phase / 12), lastNow: null };
 }
 export function visualDialRate(speed, reduced = false) {
-  const bounded = Math.max(1, Math.min(32, Number(speed) || 1));
+  const bounded = Math.max(1, Math.min(VISUAL_DIAL_SPEED_CEILING, Number(speed) || 1));
   const duration = (reduced ? REDUCED_DURATION_MS : BASE_DURATION_MS) / Math.sqrt(bounded);
   return FULL_TURN / Math.max(reduced ? 1 : MIN_DURATION_MS, duration);
 }

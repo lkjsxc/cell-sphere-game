@@ -4,6 +4,8 @@ import { applySettingsToDocument, loadSettings } from './platform/settings.js';
 import { startGameApp } from './interface/app-controller.js';
 import { migrateStorageNamespace } from './platform/namespace-migration.js';
 import { DIAGNOSTIC_GLOBALS } from './core/identity.js';
+import { developerModeFromSearch } from './core/runtime-speed.js';
+import { configureRuntimeSpeedControls } from './interface/runtime-speed-controls.js';
 
 const diagnosticErrors = [];
 globalThis[DIAGNOSTIC_GLOBALS.errors] = diagnosticErrors;
@@ -14,8 +16,12 @@ function boot() {
   const canvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('gl-canvas'));
   if (!canvas) throw new Error('missing game canvas');
   const storageMigration = migrateStorageNamespace(); const settings = loadSettings();
-  applySettingsToDocument(settings);
-  startGameApp({ canvas, caps: detectCapabilities(), settings, storageMigration });
+  const developerMode = developerModeFromSearch(globalThis.location?.search ?? '');
+  configureRuntimeSpeedControls(document, developerMode); applySettingsToDocument(settings);
+  if (developerMode) Object.defineProperty(globalThis, '__CSG_AGENT__', {
+    value: null, writable: true, configurable: true, enumerable: false,
+  });
+  startGameApp({ canvas, caps: detectCapabilities(), settings, storageMigration, developerMode });
 }
 
 try { boot(); }

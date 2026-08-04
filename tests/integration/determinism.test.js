@@ -31,9 +31,9 @@ test('different seeds and world eras produce distinct intentional authority', ()
   assert.notEqual(scarcity.hash, mature.hash); assert.equal(scarcity.crisesTotal, 0); assert.ok(mature.crisesTotal > 0);
 });
 
-test('chunk and 32x-equivalent execution are exactly invariant', () => {
+test('bounded 1x through 256x-equivalent execution chunks are exactly invariant', () => {
   const config = { seed: 987654, strainId: 'conservator', worldOrdinal: 8, worldPotential: 240000 };
-  const reference = runFull(config, 1); for (const chunk of [7, 32, 50, 320]) assert.deepEqual(semantic(runFull(config, chunk)), semantic(reference));
+  const reference = runFull(config, 1); for (const chunk of [7, 32, 50, 64, 256]) assert.deepEqual(semantic(runFull(config, chunk)), semantic(reference));
 });
 
 test('hundreds of inspections and snapshots remain observationally neutral', () => {

@@ -3,6 +3,9 @@ export async function runScenario(t) {
   const { evaluate, wait, poll, errors, click, drag, screenshot, setViewport, key } = t;
   let boot = await evaluate('window.__CELL_SPHERE_BOOT__'); ok(boot?.playable, 'app did not boot');
   boot = await runIdentityMigrationScenario(t, boot);
+  const publicSpeeds = await evaluate(`(()=>({runtime:[...document.getElementById('speed-select').options].map(o=>Number(o.value)),defaults:[...document.getElementById('settings-speed').options].map(o=>Number(o.value)),dev:window.__CELL_SPHERE_BOOT__.developerMode,marker:document.getElementById('dev-mode-marker').hidden,agent:Object.hasOwn(window,'__CSG_AGENT__')}))()`);
+  ok(publicSpeeds.runtime.join(',') === '1,2,4,8' && publicSpeeds.defaults.join(',') === '1,2,4,8'
+    && !publicSpeeds.dev && publicSpeeds.marker && !publicSpeeds.agent, `public speed isolation failed: ${JSON.stringify(publicSpeeds)}`);
   const retired = await evaluate(`(()=>({controls:['adaptations-button','adaptations-dialog','adaptation-cards','result-adaptations'].every(id=>!document.getElementById(id)),setting:!('adaptationMode' in window.__CELL_SPHERE_APP__.settings),pending:typeof window.__CELL_SPHERE_APP__.pendingCount==='undefined'}))()`);
   ok(retired.controls && retired.setting && retired.pending, `active Adaptations remain: ${JSON.stringify(retired)}`);
   const affordance = await evaluate(`(()=>{const b=document.getElementById('score-button'),s=getComputedStyle(b),p=getComputedStyle(b,'::after');return {border:s.borderTopWidth,background:s.backgroundColor,disclosure:p.content,expanded:b.getAttribute('aria-expanded')}})()`);
@@ -22,7 +25,7 @@ export async function runScenario(t) {
   const fullHourTurn = (fullDialAfter.hourPhase - fullDialBefore.hourPhase + 360) % 360;
   ok(fullDialTurn > 0 && fullHourTurn > 0 && fullDialBefore.minute !== fullDialAfter.minute && fullDialBefore.hour !== fullDialAfter.hour,
     `clock hands did not move: ${JSON.stringify({ fullDialBefore, fullDialAfter })}`);
-  await setDialSpeed(32); const fastDialBefore = await dial(); await wait(300); const fastDialAfter = await dial();
+  await setDialSpeed(8); const fastDialBefore = await dial(); await wait(300); const fastDialAfter = await dial();
   const fastDialTurn = (fastDialAfter.phase - fastDialBefore.phase + 360) % 360;
   const fastHourTurn = (fastDialAfter.hourPhase - fastDialBefore.hourPhase + 360) % 360;
   ok(fastDialTurn > fullDialTurn && fastHourTurn > fullHourTurn,
@@ -33,7 +36,7 @@ export async function runScenario(t) {
   const reducedHourTurn = (reducedDialAfter.hourPhase - reducedDialBefore.hourPhase + 360) % 360;
   ok(reducedDialTurn > 0 && reducedHourTurn > 0 && reducedDialBefore.minute !== reducedDialAfter.minute
     && reducedDialBefore.hour !== reducedDialAfter.hour, `reduced clock stopped: ${JSON.stringify({ reducedDialBefore, reducedDialAfter })}`);
-  await setDialSpeed(32); const reducedFastBefore = await dial(); await wait(600); const reducedFastAfter = await dial();
+  await setDialSpeed(8); const reducedFastBefore = await dial(); await wait(600); const reducedFastAfter = await dial();
   const reducedFastTurn = (reducedFastAfter.phase - reducedFastBefore.phase + 360) % 360;
   const reducedFastHourTurn = (reducedFastAfter.hourPhase - reducedFastBefore.hourPhase + 360) % 360;
   ok(reducedFastTurn > reducedDialTurn && reducedFastHourTurn > reducedHourTurn,
@@ -89,7 +92,7 @@ export async function runScenario(t) {
   ok(await evaluate(`window.__CELL_SPHERE_APP__.snapshot.tick`) === tickBeforeConfirm, 'confirmation did not own its pause');
   await trustedId(t, 'new-world-keep'); ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.snapshot.tick'), (tick) => tick > tickBeforeConfirm, 1500), 'Keep watching did not resume');
 
-  const run32StartedAt = performance.now(); await evaluate(`(()=>{const s=document.getElementById('speed-select');s.value='32';s.dispatchEvent(new Event('change'))})()`);
+  const run8StartedAt = performance.now(); await evaluate(`(()=>{const s=document.getElementById('speed-select');s.value='8';s.dispatchEvent(new Event('change'))})()`);
 
   await setViewport(1440, 900); await wait(120); await trustedId(t, 'menu-button'); await trustedId(t, 'menu-history'); await wait(160);
   const history = await shellRect(evaluate); ok(history.surface === 'history' && history.left < 30 && history.width <= 520, 'History is not the desktop left shell');
@@ -105,17 +108,27 @@ export async function runScenario(t) {
   await drag([970, 360], [1090, 420]); ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='event-log'`), 'globe drag dismissed Event Log');
   await trustedId(t, 'event-log-close'); ok(distance(historyCamera, await evaluate('window.__CELL_SPHERE_APP__.camera.direction.slice()')) > 0, 'globe drag did not rotate');
 
-  ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 45000), '32x run did not finish');
-  const elapsed = (performance.now() - run32StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=document.getElementById('context-shell');return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!document.getElementById('result-control').hidden,event:document.getElementById('current-event-button').offsetHeight,pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,trophies:document.getElementById('result-trophies').textContent,noDuplicateProgressionNav:![...document.querySelectorAll('#result-dialog button')].some(b=>['Evolution','Trophies'].includes(b.textContent.trim())),snapshotStatus:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
+  ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 50000), '8x run did not finish');
+  const elapsed = (performance.now() - run8StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=document.getElementById('context-shell'),control=document.getElementById('result-control'),ids=[...document.querySelector('.hud-metrics').children].map(x=>x.id);return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!control.hidden,resultAction:control.dataset.action,resultClass:control.classList.contains('is-recommended'),resultExpanded:control.getAttribute('aria-expanded'),metricOrder:ids.join('|'),redundant:['result-score-button','result-entropy-button','result-reach-button'].some(id=>document.getElementById(id)),event:document.getElementById('current-event-button').offsetHeight,pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,trophies:document.getElementById('result-trophies').textContent,noDuplicateProgressionNav:![...document.querySelectorAll('#result-dialog button')].some(b=>['Evolution','Trophies'].includes(b.textContent.trim())),snapshotStatus:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
   ok(result.score > 0 && result.scene === 'world' && result.phase === 'result' && result.overlay === 'result' && result.surface === 'result'
-    && result.runVisible && result.resultControl && result.event >= 44 && result.pause && result.speed
-    && result.noDuplicateProgressionNav && result.snapshotStatus === 'extinct' && result.alive === 0 && result.reach === '0%'
+    && result.runVisible && result.resultControl && result.resultAction === 'recommended' && result.resultClass && result.resultExpanded === 'true'
+    && result.metricOrder === 'score-button|entropy-button|reach-button|result-control' && !result.redundant
+    && result.event >= 44 && result.pause && result.speed && result.noDuplicateProgressionNav && result.snapshotStatus === 'extinct' && result.alive === 0 && result.reach === '0%'
     && result.trophies.includes('First Extinction'), `terminal world failed: ${JSON.stringify(result)}`);
+  const terminalLayouts = [];
+  for (const [width, height] of [[320, 568], [390, 844], [1440, 900]]) {
+    await setViewport(width, height); await wait(1000);
+    const layout = await evaluate(`(()=>{const container=document.querySelector('.hud-metrics'),controls=[...container.children].filter(x=>!x.hidden),rects=controls.map(x=>x.getBoundingClientRect()),tops=new Set(rects.map(r=>Math.round(r.top))),style=getComputedStyle(container),plain=rects.map(r=>({left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}));return {count:controls.length,minHeight:Math.min(...rects.map(r=>r.height)),bounded:rects.every(r=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight),rows:tops.size,overlap:rects.some((a,i)=>rects.some((b,j)=>j>i&&!(a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom))),display:style.display,columns:style.gridTemplateColumns,rects:plain}})()`);
+    terminalLayouts.push({ width, height, ...layout });
+    ok(layout.count === 4 && layout.minHeight >= 44 && layout.bounded && !layout.overlap
+      && (width <= 520 ? layout.rows === 2 : layout.rows === 1), `terminal metrics failed ${width}x${height}: ${JSON.stringify(layout)}`);
+  }
+  await setViewport(1440, 900); await wait(100);
   await evaluate(`window.__CELL_SPHERE_APP__.trophyNotifications.hold('browser-evidence',true)`); await screenshot('shell-result-desktop.png'); await trustedId(t, 'result-close'); ok(await evaluate(`document.getElementById('context-shell').hidden`), 'Result did not close');
   ok(await evaluate(`window.__CELL_SPHERE_APP__.continuation.status==='cancelled'`), 'trusted Result interaction did not permanently cancel Auto Next');
   await trustedId(t, 'result-control'); await drag([800, 330], [930, 420]); const dragState = await evaluate(`({overlay:window.__CELL_SPHERE_APP__.overlay,surface:window.__CELL_SPHERE_APP__.surfaces.active,selected:window.__CELL_SPHERE_APP__.selectedNode})`); ok(dragState.overlay === 'result', `globe drag dismissed Result: ${JSON.stringify(dragState)}`);
   await click(1000, 450); await wait(120); ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='inspector'&&document.activeElement===document.getElementById('inspector-heading')`), 'cell tap did not replace Result and focus Inspector');
-  await trustedId(t, 'inspector-close'); await trustedId(t, 'result-control'); await trustedId(t, 'result-reach-button');
+  await trustedId(t, 'inspector-close'); await trustedId(t, 'result-control'); await trustedId(t, 'reach-button');
   const finalMetric = await shellRect(evaluate); ok(finalMetric.surface === 'metric' && sameRect(finalMetric, metricRects.reach, .25), 'final metric geometry changed');
   await trustedId(t, 'metric-close');
 
@@ -154,7 +167,7 @@ export async function runScenario(t) {
   await wait(180); const loss = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {replaced:a.canvas!==window.__CELL_SPHERE_RETIRED_CANVAS__,canvases:document.querySelectorAll('#gl-canvas').length,backend:a.renderer.backend,accepted:a.renderer.acceptedFrames,input:typeof a.input?.isActive==='function',errors:a.frameAudit.errors}})()`);
   ok(loss.replaced && loss.canvases === 1 && loss.backend === 'canvas2d' && loss.accepted > 0 && loss.input && !loss.errors, `context-loss fallback failed: ${JSON.stringify(loss)}`);
   const idb = await evaluate('window.__CELL_SPHERE_APP__.historyPlayback.recentRuns.ready()'); ok(errors.length === 0, `browser errors: ${errors.join(' | ')}`);
-  return { backend: boot.renderer, score: result.score, elapsed, nodeId, render, idb, metricRects, responsive, contextLoss: loss };
+  return { backend: boot.renderer, score: result.score, elapsed, nodeId, render, idb, metricRects, responsive, terminalLayouts, contextLoss: loss };
 }
 
 async function runIdentityMigrationScenario({ evaluate, wait, poll }, initialBoot) {
@@ -165,7 +178,7 @@ async function runIdentityMigrationScenario({ evaluate, wait, poll }, initialBoo
       trophyIds:['evolution-first-world'],legacyTrophyIds:['reach-river-touch'],trophyQueue:['evolution-first-world'],trophyBackfillVersion:2,
       trophyProgress:{version:3,adaptationIds:['long-filaments'],geographyMask:1,geographyVersion:3,crisisMask:2,adaptationCategoryMask:1,lakeTypeMask:1,lakeSalinityMask:1,aggregate:{totalCrisesEndured:4}}};
     const history={schema:4,worlds:[{id:'legacy-world',seed:17,tick:900,score:424242,rank:'Canopy',cause:'starvation',archetype:'Legacy World',echo:9,hash:'abcdef',inoculationCell:4,adaptations:[],events:[]}],memory:[{seq:0,nodeId:'reach-horizon-instinct',cost:1,balance:123,run:7}],trophies:[{seq:0,tick:900,kind:'trophy',importance:3,key:'trophy.earned',subjectId:'evolution-first-world',primaryCells:[],worldId:'legacy-world',run:7}]};
-    const settings={schema:3,motion:'reduced',contrast:'high',quality:'eco',cameraInertia:false,idleRotation:'off',adaptationMode:'manual',autoContinue:false,pauseOnPanels:true,speed:4,historyRetention:32};
+    const settings={schema:3,motion:'reduced',contrast:'high',quality:'eco',cameraInertia:false,idleRotation:'off',adaptationMode:'manual',autoContinue:false,pauseOnPanels:true,speed:16,historyRetention:32};
     localStorage.setItem(old+':meta:v1',JSON.stringify(meta));localStorage.setItem(old+':history:v2',JSON.stringify(history));localStorage.setItem(old+':settings:v3',JSON.stringify(settings));location.reload();return true})()`);
   await wait(1800); ok(await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000), 'legacy namespace reload failed');
   const migrated = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__,old=['incremental','network','game'].join('-');
@@ -178,7 +191,7 @@ async function runIdentityMigrationScenario({ evaluate, wait, poll }, initialBoo
     && migrated.keys[0] === 'legacy-result-key' && migrated.owned[0] === 'reach-horizon-instinct'
     && migrated.trophies[0] === 'evolution-first-world' && migrated.legacy[0] === 'reach-river-touch'
     && migrated.queue[0] === 'evolution-first-world' && migrated.history[0] === 'legacy-world'
-    && migrated.motion === 'reduced' && migrated.speed === 4 && migrated.canonical && migrated.old,
+    && migrated.motion === 'reduced' && migrated.speed === 8 && migrated.canonical && migrated.old,
   `browser namespace migration lost state: ${JSON.stringify(migrated)}`);
   const exported = await evaluate(`(async()=>{const old=['incremental','network','game'].join('-'),a=window.__CELL_SPHERE_APP__;
     const data=await import('./src/interface/app-data.js'),migration=await import('./src/platform/namespace-migration.js');

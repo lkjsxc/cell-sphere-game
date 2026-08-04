@@ -27,6 +27,12 @@ every future world.
 There is no active mid-run Adaptations system. Archived records from older saves
 remain readable legacy evidence but cannot affect current worlds or SCORE.
 
+Normal play exposes 1×, 2×, 4×, and 8×. For deterministic diagnostics, opening
+with `?dev=1` visibly enables session-only `DEV` speeds through 256×; these speeds
+and developer mode are never imported or exported as player preferences. Every
+authoritative tick still executes. At extinction the persistent metric sequence
+becomes `SCORE | ENTROPY | REACH | RESULT`, with RESULT as the recommended action.
+
 ## Progression model
 
 - Evolution topology: frequency-5 geodesic sphere, exactly **252 Skill Cells**,

@@ -3,8 +3,10 @@ import { BALANCE as B } from '../game/balance.js';
 import { RunController } from '../simulation/simulator.js';
 import { RUN_PROTOCOL_VERSION } from '../core/run-protocol.js';
 import { createWorldIdentity, identityFields, sameWorldIdentity } from '../core/world-session.js';
+import { MAX_TICKS_PER_SLICE, snapshotIntervalForSpeed, validateRuntimeSpeed } from '../core/runtime-speed.js';
 
-export function createRunDriver(caps, onMessage) {
+export function createRunDriver(caps, onMessage, options = {}) {
+  const developerMode = options.developerMode === true;
   let worker = null; let fallback = null; let generation = 0; let transportGeneration = 0;
   let runSequence = 0; let presentationSequence = 0;
   let activeIdentity = null; let speed = 1; let paused = false; let debt = 0;
@@ -41,7 +43,8 @@ export function createRunDriver(caps, onMessage) {
   function start(config, initialSpeed, identity = null) {
     const session = identity ?? reserveIdentity({ seed: config.seed });
     if (!sameWorldIdentity(session, activeIdentity)) throw new Error('world identity was not reserved');
-    cfg = { ...config, ...identityFields(session) }; speed = initialSpeed;
+    cfg = { ...config, ...identityFields(session) };
+    speed = validateRuntimeSpeed(initialSpeed, { developerMode, fallback: 1 });
     paused = false; debt = 0; lastSnapshot = null; settled = null; abortPending = false; authorityStarted = false;
     lastWorkerMessageAt = now(); statusRequestedAt = 0; const token = generation;
     if (caps.worker) try {
@@ -57,7 +60,7 @@ export function createRunDriver(caps, onMessage) {
         failWorker('The simulation worker stopped unexpectedly.', session); };
       worker.onmessageerror = () => { if (token === generation && transportToken === transportGeneration)
         failWorker('The simulation worker sent unreadable data.', session); };
-      worker.postMessage({ t: 'init', protocolVersion: RUN_PROTOCOL_VERSION, ...identityFields(session), cfg }); return session.runId;
+      worker.postMessage({ t: 'init', protocolVersion: RUN_PROTOCOL_VERSION, ...identityFields(session), cfg, developerMode }); return session.runId;
     } catch { /* deterministic pre-authority fallback below */ }
     startFallback(session); return session.runId;
   }
@@ -110,19 +113,21 @@ export function createRunDriver(caps, onMessage) {
       if (silent > 2500 && !statusRequestedAt) { statusRequestedAt = time; worker.postMessage({ t: 'status',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity) }); }
       else if (silent > 5000 || (statusRequestedAt && time - statusRequestedAt > 2000)) failWorker('World time stopped responding.'); }
     if (!fallback || paused || !['running', 'terminal-collapse'].includes(fallback.state.status)) return;
-    debt += (dt / 1000) * speed * B.TICKS_PER_SECOND; const ticks = Math.floor(debt); debt -= ticks; if (ticks) fallback.advance(ticks);
+    debt += (dt / 1000) * speed * B.TICKS_PER_SECOND;
+    const ticks = Math.min(Math.floor(debt), MAX_TICKS_PER_SLICE); debt -= ticks; if (ticks) fallback.advance(ticks);
     if (fallback.state.status === 'extinct' || fallback.state.status === 'aborted') return;
-    if (time - lastSnapshotTime > (speed >= 16 ? 80 : 100) || !lastSnapshot) { lastSnapshotTime = time;
+    if (time - lastSnapshotTime > snapshotIntervalForSpeed(speed) || !lastSnapshot) { lastSnapshotTime = time;
       emit({ t: 'snapshot', runId: activeIdentity.runId, ...fallback.snapshot() }); }
   }
   let lastSnapshotTime = 0;
   function ready(expected = activeIdentity) { if (!worker || settled || !sameWorldIdentity(expected, activeIdentity)) return false;
     authorityStarted = true; worker.postMessage({ t: 'speed',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity), value: speed });
     worker.postMessage({ t: 'start',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity) }); return true; }
-  function setSpeed(value) { speed = value; if (worker && activeIdentity) worker.postMessage({ t: 'speed',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity), value }); }
+  function setSpeed(value) { speed = validateRuntimeSpeed(value, { developerMode, fallback: speed });
+    if (worker && activeIdentity) worker.postMessage({ t: 'speed',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity), value: speed }); return speed; }
   function setPaused(value) { paused = value; if (worker && activeIdentity) worker.postMessage({ t: value ? 'pause' : 'resume',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity) }); }
   function stop() { generation++; retireWorker(); fallback = null; cfg = null;
-    lastSnapshot = null; activeIdentity = null; authorityStarted = false; settled = null; abortPending = false; debt = 0; statusRequestedAt = 0; }
+    lastSnapshot = null; activeIdentity = null; authorityStarted = false; settled = null; abortPending = false; debt = 0; statusRequestedAt = 0; lastSnapshotTime = 0; }
   return { reserveIdentity, start, stop, abort, ready, message, frame, setSpeed, setPaused,
     installSnapshot(value) { lastSnapshot = value; }, get snapshot() { return lastSnapshot; },
     get hasFallback() { return Boolean(fallback); }, get generation() { return generation; },

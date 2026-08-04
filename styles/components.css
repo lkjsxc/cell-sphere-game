@@ -58,7 +58,7 @@ button[data-action]:disabled { opacity: .38; filter: saturate(.4); box-shadow: n
   border-radius: var(--radius-m);
 }
 
-/* Metrics read as quiet edge typography, not dashboard cards. */
+/* Metrics remain compact while visibly presenting as interactive controls at rest. */
 .metric {
   display: flex;
   flex-direction: column;
@@ -69,12 +69,25 @@ button[data-action]:disabled { opacity: .38; filter: saturate(.4); box-shadow: n
 }
 
 .metric-button { position: relative; min-height: var(--touch-min); padding: var(--sp-1) var(--sp-5) var(--sp-1) var(--sp-2); color: inherit;
-  background: rgba(15, 22, 22, .42); border: 1px solid var(--border-faint); border-radius: var(--radius-s); text-align: left;
-  box-shadow: inset 0 0 0 1px rgba(210, 235, 219, .025); }
-.metric-button::after { content: "›"; position: absolute; right: var(--sp-2); top: 50%; transform: translateY(-50%); color: var(--text-faint); font-size: 1rem; }
-.metric-button:hover, .metric-button[aria-expanded="true"] { border-color: var(--border-strong); background: rgba(25,35,33,.68); }
+  cursor: pointer; background: rgba(18, 27, 26, .68); border: 1px solid rgba(230, 213, 167, .28); border-radius: var(--radius-s); text-align: left;
+  box-shadow: inset 0 0 0 1px rgba(210, 235, 219, .045), 0 2px 10px rgba(0, 0, 0, .18);
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+.metric-button::after { content: "›"; position: absolute; right: var(--sp-2); top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 1rem; }
+.metric-button:hover, .metric-button[aria-expanded="true"] { border-color: var(--border-strong); background: rgba(29, 40, 37, .88); }
+.metric-button:active { transform: scale(.97); background: rgba(36, 48, 44, .92); }
+.metric-button[aria-expanded="true"] { box-shadow: inset 0 0 0 1px rgba(241, 221, 161, .16), 0 3px 14px rgba(0, 0, 0, .24); }
 .metric-button[aria-expanded="true"]::after { content: "⌄"; color: var(--text-primary); }
 .metric-button:focus-visible { outline: 2px solid var(--life-glow); outline-offset: 2px; }
+
+.result-control { position: relative; min-height: var(--touch-min); min-width: 5.5rem; padding: var(--sp-1) var(--sp-3); cursor: pointer;
+  color: var(--text-inverse); background: linear-gradient(155deg, var(--life-core), var(--action-recommended));
+  border: 1px solid #f8e7b2; border-radius: var(--radius-s); text-align: left;
+  box-shadow: 0 .45rem 1.8rem rgba(240, 200, 111, .28); }
+.result-control .metric-label { color: #3c321c; font-weight: 800; }
+.result-control-value { font-size: var(--fs-body); letter-spacing: .04em; }
+.result-control:active { transform: scale(.97); }
+.result-control[aria-expanded="true"] { border-color: #fff5d4; box-shadow: 0 .5rem 2rem rgba(240, 200, 111, .36), inset 0 0 0 1px rgba(255,255,255,.3); }
+.result-control:focus-visible { outline: 3px solid #fff5d4; outline-offset: 3px; }
 
 .metric-label {
   font-size: var(--fs-caption);

@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createClock, advanceClock } from '../../src/core/clock.js';
-import { advanceTimeDial, createTimeDialState, visualDialRate } from '../../src/interface/policies/time-dial.js';
+import { advanceTimeDial, createTimeDialState, visualDialRate, VISUAL_DIAL_SPEED_CEILING } from '../../src/interface/policies/time-dial.js';
 import { pauseLabel } from '../../src/interface/pause-control.js';
 
 test('1x: 100ms yields exactly 1 tick at 10Hz', () => {
@@ -24,12 +24,13 @@ test('paused speed yields nothing and accumulates nothing', () => {
   assert.equal(c.accMs, 0);
 });
 
-test('maxTicks caps catch-up and drops backlog', () => {
+test('maxTicks bounds each catch-up slice without dropping authoritative backlog', () => {
   const c = createClock(10);
-  // Simulate a 10s suspend at 32x: 3200 ticks wanted, cap 500.
+  // Simulate a 10s delay at 32x: 3200 ticks wanted, 500 executed now and 2700 retained.
   const ticks = advanceClock(c, 10000, 32, 500);
-  assert.equal(ticks, 500);
-  assert.equal(c.accMs, 0);
+  assert.equal(ticks, 500); assert.equal(c.accMs, 270000);
+  assert.equal(advanceClock(c, 0, 32, 500), 0, 'zero-time pause does not execute debt');
+  assert.equal(advanceClock(c, 1, 32, 500), 500); assert.ok(c.accMs > 0);
 });
 
 test('fractional accumulation is preserved across slices', () => {
@@ -58,6 +59,8 @@ test('both visual dial hands move independently, freeze, and follow world speed'
     assert.ok(rates.every((rate, index) => index === 0 || rate > rates[index - 1]));
   }
   assert.ok(visualDialRate(1, true) < visualDialRate(1));
+  assert.equal(VISUAL_DIAL_SPEED_CEILING, 32);
+  assert.equal(visualDialRate(64), visualDialRate(32)); assert.equal(visualDialRate(256), visualDialRate(32));
 
   const wrapping = createTimeDialState(350); const beforeWrap = advanceTimeDial(wrapping, 0, { running: true, speed: 32 });
   const afterWrap = advanceTimeDial(wrapping, 100, { running: true, speed: 32 });

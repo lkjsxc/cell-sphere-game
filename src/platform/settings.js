@@ -5,7 +5,7 @@ export function defaultSettings() {
   const reduced = typeof matchMedia === 'function'
     && matchMedia('(prefers-reduced-motion: reduce)').matches;
   return {
-    schema: 4,
+    schema: 5,
     motion: reduced ? 'reduced' : 'full',
     contrast: 'normal',
     quality: 'auto',
@@ -23,7 +23,7 @@ const ENUMS = Object.freeze({
   contrast: new Set(['normal', 'high']),
   quality: new Set(['auto', 'eco', 'balanced', 'luminous']),
   idleRotation: new Set(['off', 'gentle', 'calm']),
-  speed: new Set([1, 2, 4, 8, 16, 32]),
+  speed: new Set([1, 2, 4, 8]),
   historyRetention: new Set([24, 32]),
 });
 const BOOLEANS = Object.freeze(['cameraInertia', 'autoContinue', 'pauseOnPanels']);
@@ -32,11 +32,12 @@ export function validateSettings(raw) {
   const out = defaultSettings();
   if (!raw || typeof raw !== 'object') return out;
   for (const [field, allowed] of Object.entries(ENUMS)) if (allowed.has(raw[field])) out[field] = raw[field];
+  if (Number.isFinite(raw.speed) && raw.speed > 8) out.speed = 8;
   for (const field of BOOLEANS) if (typeof raw[field] === 'boolean') out[field] = raw[field];
   if (!ENUMS.idleRotation.has(raw.idleRotation) && typeof raw.autoRotate === 'boolean') {
     out.idleRotation = raw.autoRotate ? 'calm' : 'off';
   }
-  out.schema = 4; return out;
+  out.schema = 5; return out;
 }
 
 export function loadSettings() { return loadNamespacedDocument('settings', validateSettings, defaultSettings); }

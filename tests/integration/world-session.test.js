@@ -6,8 +6,8 @@ import { createWorldIdentity, sameWorldIdentity } from '../../src/core/world-ses
 import { createContinuation } from '../../src/interface/policies/continuation.js';
 import { createWorldReplacementState, markWorldStarted, requestWorldReplacement } from '../../src/interface/policies/run-session.js';
 
-function node() { return { textContent: '', hidden: false, disabled: false, dataset: {}, classList: { toggle() {}, remove() {} },
-  setAttribute() {}, replaceChildren() {} }; }
+function node() { return { textContent: '', hidden: false, disabled: false, dataset: {}, classList: { toggle() {}, add() {}, remove() {} },
+  setAttribute() {}, removeAttribute() {}, replaceChildren() {} }; }
 function elements() { const value = {}; for (const name of ['title','run','memory','trophies','countdown','event','live',
   'resultRank','resultScore','resultCause','echoes','resultTrophies','resultImprint','resultFirstCycle','breakdown','score',
   'pressure','reach','trace','resultControl','pause','speed',

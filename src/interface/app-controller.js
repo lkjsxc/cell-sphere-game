@@ -9,7 +9,7 @@ import { pickNode } from '../rendering/picking.js';
 import { bindGlobeInput } from './globe-input.js';
 import { loadMeta, saveMeta, defaultMeta } from '../platform/storage.js';
 import { clearHistory, loadHistory, normalizeHistoryEvents, parseHistory, saveHistory, serializeHistory } from '../platform/history.js';
-import { applySettingsToDocument, saveSettings } from '../platform/settings.js';
+import { applySettingsToDocument, saveSettings, validateSettings } from '../platform/settings.js';
 import { recoverRunTransaction } from '../platform/run-transaction-store.js';
 import { createAppState } from './app-state.js';
 import { createRunDriver } from './run-driver.js';
@@ -21,6 +21,7 @@ import { applySafeLayout, safeLayout } from './policies/layout-policy.js'; impor
 import { advanceContinuation, cancelContinuation, completeContinuation, continuationLabel, createContinuation,
   createContinuationInteractionGuard, setContinuationHidden } from './policies/continuation.js';
 import { sameWorldIdentity } from '../core/world-session.js';
+import { isStandardSpeed, renderIntervalForSpeed, validateRuntimeSpeed } from '../core/runtime-speed.js';
 import { createWorldReplacementState, finishAbandoned, finishRun, requestWorldReplacement, startRun } from './policies/run-session.js';
 import { createNewWorldSurface } from './policies/new-world-surface.js'; import { createHistorySurface } from './history-surface.js'; import { createHistoryPlayback } from './history-playback.js';
 import { createInspectorSurface } from './inspection/inspector-surface.js';
@@ -40,11 +41,12 @@ import * as ui from './surfaces.js';
 const TITLE_SEED = TITLE_SHOWCASE.seed;
 export function startGameApp(options) { const app = new GameApp(options); app.boot(); return app; }
 class GameApp {
-  constructor({ canvas, caps, settings, storageMigration = null }) {
-    Object.assign(this, { canvas, caps, settings, storageMigration }); this.el = ui.elements(); this.topo4 = createTopology(4); this.topo = this.topo4; initializeProgression(this);
+  constructor({ canvas, caps, settings, storageMigration = null, developerMode = false }) {
+    Object.assign(this, { canvas, caps, settings, storageMigration, developerMode }); this.el = ui.elements(); this.topo4 = createTopology(4); this.topo = this.topo4; initializeProgression(this);
     this.camera = createCamera(); this.runTransactionRecovery = recoverRunTransaction(settings.historyRetention);
     this.meta = this.runTransactionRecovery?.meta ?? loadMeta(); this.archive = this.runTransactionRecovery?.history ?? loadHistory(settings.historyRetention);
-    this.resultKeys = new Set(this.meta.resultKeys); this.flow = createAppState(); this.speed = settings.speed; this.snapshot = null; this.selectedNode = null;
+    this.resultKeys = new Set(this.meta.resultKeys); this.flow = createAppState();
+    this.speed = validateRuntimeSpeed(settings.speed, { developerMode, fallback: 1 }); this.snapshot = null; this.selectedNode = null;
     this.renderer = null; this.fields = null; this.worldFields = null; this.showcase = null; this.overlay = null; this.cameraByScene = new Map();
     this.currentHistory = []; this.lastResult = null; this.lastScore = null; this.lastResultIdentity = null; this.requestId = 0; this.requestGeneration = 0;
     this.runSeed = null; this.activeRunId = 0; this.worldIdentity = null; this.retiredWorldIdentity = null;
@@ -52,7 +54,7 @@ class GameApp {
     this.visualSeed = null; this.historySnapshot = null; this.historyHighlights = [];
     this.last = performance.now(); this.lastRender = 0; this.lastInspect = 0; this.cameraPolicy = createCameraPolicy(this.last); this.layoutClass = null; this.effectivePaused = false;
     this.presentationAudit = { blankFrames: 0, lastBlank: null }; this.frameAudit = { frames: 0, scheduled: 0, errors: 0, lastError: null };
-    this.driver = createRunDriver(caps, (message) => this.message(message)); this.pause = createPauseControl((paused, reasons) => this.applyPause(paused, reasons));
+    this.driver = createRunDriver(caps, (message) => this.message(message), { developerMode }); this.pause = createPauseControl((paused, reasons) => this.applyPause(paused, reasons));
     this.continuation = createContinuation(); this.countdownLabel = '';
     this.interactionGuard = createContinuationInteractionGuard(document, (type) => this.cancelAutoNext(type));
     this.surfaces = createSurfaceCoordinator(() => this.closeActiveOverlay(), (focus) => this.interactionGuard.runProgrammaticFocus(focus));
@@ -73,7 +75,7 @@ class GameApp {
     if (temporary) ui.announce(this.el, 'Browser storage is unavailable or recovery is incomplete; this session remains playable but changes may be temporary.');
     window[DIAGNOSTIC_GLOBALS.boot] = Object.freeze({ product: PRODUCT, tagline: TAGLINE, version: VERSION,
       repository: REPOSITORY, pages: PAGES_URL, storage: STORAGE_KEYS, storageMigration: this.storageMigration,
-      renderer: this.renderer.backend, playable: true }); window[DIAGNOSTIC_GLOBALS.app] = this;
+      renderer: this.renderer.backend, playable: true, developerMode: this.developerMode }); window[DIAGNOSTIC_GLOBALS.app] = this;
     requestAnimationFrame((now) => this.frame(now)); console.info(`boot ok: ${this.renderer.backend}; passive world ready`);
   } makeSurfaces() {
     this.sceneSelector = createSceneSelector({ onSelect: (scene) => this.selectScene(scene) });
@@ -94,7 +96,7 @@ class GameApp {
         if (this.scene === 'trophies') this.trophySnapshot = buildTrophySnapshot(this.topo2, this.meta, this.trophyUi.selectedId, this.meta.trophyQueue); } });
     this.trophyNotifications.sync(this.meta);
     this.newWorld = createNewWorldSurface({ onClose: () => this.panelClosed('new-world'), onConfirm: () => this.confirmNewWorld() });
-    this.settingsUi = createSettingsSurface({ read: () => this.settings, onChange: (value) => this.applySettings(value), onClose: () => this.panelClosed('menu'), onAction: (action, value) => this.settingsAction(action, value) });
+    this.settingsUi = createSettingsSurface({ read: () => ({ ...this.settings, speed: this.speed }), onChange: (value) => this.applySettings(value), onClose: () => this.panelClosed('menu'), onAction: (action, value) => this.settingsAction(action, value) });
   }
   makeRenderer(seed, mode = 'world', identity = null) {
     this.visualSeed = seed; this.topo = mode === 'memory' ? this.topo3 : mode === 'trophies' ? this.topo2 : this.topo4;
@@ -140,7 +142,6 @@ class GameApp {
     document.getElementById('result-close')?.addEventListener('click', () => this.panelClosed('result'));
     this.el.eventButton.addEventListener('click', () => this.openEventLog()); document.getElementById('history-event-log')?.addEventListener('click', () => this.openEventLog());
     for (const button of [this.el.scoreButton, this.el.entropyButton, this.el.reachButton]) button.addEventListener('click', () => this.openMetric(button.dataset.metric));
-    for (const button of document.querySelectorAll('.metric-summary[data-metric]')) button.addEventListener('click', () => this.openMetric(button.dataset.metric));
     document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key === ',') { event.preventDefault(); this.openMenu(); }
       else if (event.key === 'Home' && this.scene === 'evolution' && !event.target.closest?.('#scene-selector')) { event.preventDefault(); this.focusAvailableSkill(); }
       else if (event.key === 'Home' && this.scene === 'trophies' && !event.target.closest?.('#scene-selector')) { event.preventDefault(); this.focusTrophy(); } });
@@ -153,8 +154,9 @@ class GameApp {
     const resize = () => this.resize(true);
     if (typeof ResizeObserver === 'function') { this.resizeObserver = new ResizeObserver(resize); this.resizeObserver.observe(this.canvas); }
     else addEventListener('resize', resize);
-    document.addEventListener('visibilitychange', () => { this.pause.set('hidden', document.hidden && ['starting', 'running'].includes(this.phase));
-      setContinuationHidden(this.continuation, document.hidden, performance.now()); this.updateContinuation(); });
+    document.addEventListener('visibilitychange', () => { const now = performance.now(); this.last = now;
+      this.pause.set('hidden', document.hidden && ['starting', 'running'].includes(this.phase));
+      setContinuationHidden(this.continuation, document.hidden, now); this.updateContinuation(); });
   }
   tapGlobe(x, y) {
     const hit = pickNode(this.canvas, x, y, this.camera, this.topo); if (!hit) { this.surfaces.blankTap(); return; }
@@ -204,7 +206,12 @@ class GameApp {
     const node = this.historyHighlights[0]; if (Number.isInteger(node) && node >= 0 && node < this.topo4.nodeCount) focusCamera(this.camera, this.topo4.positions.subarray(node * 3, node * 3 + 3));
     ui.announce(this.el, `${this.historyHighlights.length} event ${this.historyHighlights.length === 1 ? 'cell' : 'cells'} highlighted.`); }
   gameTime(tick = 0) { const seconds = Math.floor(tick / 10); return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
-  setSpeed(value) { this.speed = value; this.settings = { ...this.settings, speed: value }; saveSettings(this.settings); this.driver.setSpeed(value); }
+  setSpeed(value) {
+    const next = validateRuntimeSpeed(value, { developerMode: this.developerMode, fallback: this.speed });
+    this.speed = next; this.el.speed.value = String(next);
+    if (isStandardSpeed(next)) { this.settings = { ...this.settings, speed: next }; saveSettings(this.settings); }
+    this.driver.setSpeed(next); this.settingsUi?.sync?.(); return next;
+  }
   applyPause(paused, reasons = this.pause.values()) { if (paused !== this.effectivePaused) { this.effectivePaused = paused; this.driver.setPaused(paused); } this.timeDial.reset(performance.now());
     this.el.pause.setAttribute('aria-pressed', String(reasons.has('manual'))); this.el.pause.classList.toggle('is-paused', paused);
     this.el.pause.dataset.action = paused && reasons.size === 1 && reasons.has('manual') ? 'recommended' : 'normal'; this.el.pause.setAttribute('aria-label', pauseLabel(reasons)); }
@@ -248,10 +255,12 @@ class GameApp {
     if (name === 'inspector') this.selectedNode = null; this.resize(true);
   }
   applySettings(value) { const before = this.settings;
-    this.settings = value; saveSettings(this.settings); applySettingsToDocument(this.settings);
-    if (value.speed !== this.speed) { this.speed = value.speed; this.el.speed.value = String(value.speed); this.driver.setSpeed(value.speed); }
-    if (this.overlay && value.pauseOnPanels !== before.pauseOnPanels) this.pause.set('panel', this.phase === 'running' && value.pauseOnPanels);
-    if (this.phase === 'result' && value.autoContinue !== before.autoContinue && !value.autoContinue) {
+    const requestedSpeed = validateRuntimeSpeed(value?.speed, { developerMode: this.developerMode, fallback: this.speed });
+    const durableSpeed = isStandardSpeed(requestedSpeed) ? requestedSpeed : before.speed;
+    this.settings = validateSettings({ ...value, speed: durableSpeed }); saveSettings(this.settings); applySettingsToDocument(this.settings);
+    if (requestedSpeed !== this.speed) { this.speed = requestedSpeed; this.el.speed.value = String(requestedSpeed); this.driver.setSpeed(requestedSpeed); }
+    if (this.overlay && this.settings.pauseOnPanels !== before.pauseOnPanels) this.pause.set('panel', this.phase === 'running' && this.settings.pauseOnPanels);
+    if (this.phase === 'result' && this.settings.autoContinue !== before.autoContinue && !this.settings.autoContinue) {
       cancelContinuation(this.continuation, 'setting-disabled'); this.updateContinuation(); }
     this.resize(true); interruptCameraPolicy(this.cameraPolicy, performance.now()); }
   settingsAction(action, value) { try {
@@ -280,7 +289,7 @@ class GameApp {
     try { this.frameStep(now); } catch (error) { this.frameAudit.errors++; this.frameAudit.lastError = error.message; console.error('frame recovered', error); }
     finally { this.frameAudit.scheduled++; this.rafId = requestAnimationFrame((time) => this.frame(time)); }
   }
-  frameStep(now) { const dt = Math.min(100, now - this.last); this.last = now;
+  frameStep(now) { const dt = Math.max(0, now - this.last); this.last = now;
     this.timeDial.frame(now, { running: this.phase === 'running', paused: this.pause.paused, speed: this.speed, reduced: this.settings.motion === 'reduced' }); this.driver.frame(dt, now);
     if (this.scene === 'home') this.showcase?.update(now, this.settings.motion === 'reduced', document.hidden);
     const active = this.input?.isActive(); if (!active && this.selectedNode == null && this.settings.cameraInertia) applyInertia(this.camera);
@@ -295,7 +304,7 @@ class GameApp {
     if (this.phase === 'result') this.updateContinuation();
     if (this.inspector?.node != null && this.scene === 'world' && ['running', 'result'].includes(this.phase) && now - this.lastInspect > 333) this.requestInspection();
     const snap = this.historySnapshot ?? (this.scene === 'home' ? this.showcase?.snapshot : this.scene === 'evolution' ? this.memorySnapshot : this.scene === 'trophies' ? this.trophySnapshot : this.snapshot);
-    const cadence = this.scene === 'world' && this.speed >= 16 ? 66 : 0;
+    const cadence = this.scene === 'world' ? renderIntervalForSpeed(this.speed) : 0;
     if (!cadence || now - this.lastRender >= cadence) { this.renderer.render({ snapshot: snap ?? null, worldIdentity: this.scene === 'world' ? this.worldIdentity : null,
       camera: this.camera, selectedNode: this.selectedNode,
       highlightedCells: this.historyHighlights, time: now / 1000, pulse: this.settings.motion !== 'reduced' }); this.lastRender = now; }

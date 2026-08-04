@@ -28,13 +28,9 @@ export function advanceClock(clock, dtRealMs, speed, maxTicks) {
   const msPerTick = 1000 / clock.tps;
   let ticks = Math.floor(clock.accMs / msPerTick);
   if (ticks <= 0) return 0;
-  if (ticks > maxTicks) {
-    // Drop backlog rather than stall the main thread after a long suspend.
-    ticks = maxTicks;
-    clock.accMs = 0;
-  } else {
-    clock.accMs -= ticks * msPerTick;
-  }
+  if (ticks > maxTicks) ticks = maxTicks;
+  // A bounded caller may yield between slices, but authoritative tick debt is retained.
+  clock.accMs -= ticks * msPerTick;
   return ticks;
 }
 

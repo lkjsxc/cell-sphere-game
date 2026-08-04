@@ -53,6 +53,7 @@ test('full legacy namespace migration preserves every schema-8 progression and s
   assert.deepEqual(meta.trophyProgress, expectedMeta.trophyProgress);
   assert.deepEqual(JSON.parse(storage.getItem(STORAGE_KEYS.history)), validateHistory(legacyHistory, 32));
   assert.deepEqual(JSON.parse(storage.getItem(STORAGE_KEYS.settings)), validateSettings(legacySettings));
+  assert.equal(JSON.parse(storage.getItem(STORAGE_KEYS.settings)).speed, 8);
   for (const [key, value] of Object.entries(initial)) assert.equal(storage.getItem(key), value, `legacy source changed: ${key}`);
   const canonicalBefore = [STORAGE_KEYS.meta, STORAGE_KEYS.settings, STORAGE_KEYS.history].map((key) => storage.getItem(key));
   const repeated = migrateStorageNamespace(storage); assert.equal(repeated.complete, true);
@@ -97,8 +98,10 @@ test('legacy exports import all documents and subsequent exports use canonical p
     meta: legacyMeta, history: legacyHistory, settings: legacySettings });
   const parsed = parseImportedData(oldExport); assert.deepEqual(parsed.meta, validateMeta(legacyMeta));
   assert.deepEqual(parsed.history, validateHistory(legacyHistory, 32)); assert.deepEqual(parsed.settings, validateSettings(legacySettings));
-  const canonical = JSON.parse(serializeExportData(parsed.meta, parsed.history, parsed.settings));
-  assert.equal(canonical.product, PRODUCT); assert.deepEqual(canonical, createExportData(parsed.meta, parsed.history, parsed.settings));
+  const canonical = JSON.parse(serializeExportData(parsed.meta, parsed.history, { ...parsed.settings, speed: 256, developerMode: true }));
+  assert.equal(canonical.product, PRODUCT); assert.equal(canonical.settings.speed, 8);
+  assert.equal('developerMode' in canonical.settings, false);
+  assert.deepEqual(canonical, createExportData(parsed.meta, parsed.history, { ...parsed.settings, speed: 256, developerMode: true }));
   const storage = memoryStorage(); assert.deepEqual(saveImportedNamespace(parsed, storage), { ok: true, status: 'committed' });
   assert.deepEqual(loadFrom(storage, loadMeta), parsed.meta); assert.deepEqual(loadFrom(storage, loadHistory), parsed.history);
   assert.deepEqual(loadFrom(storage, loadSettings), parsed.settings);

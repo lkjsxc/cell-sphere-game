@@ -21,10 +21,11 @@ Latest `npm run verify` benchmark:
 
 Real Chrome/WebGL2 vertical slice:
 
-- 32× fresh world: 7.65 seconds wall time;
+- public 8× fresh world: 32.58 seconds wall time;
+- explicit `?dev=1` 256× fresh world: 1.67 seconds wall time;
 - draw calls: 4;
-- title render mean: 0.71 ms;
-- title render p95: 0.90 ms;
+- title render mean: 0.89 ms;
+- title render p95: 1.30 ms;
 - no browser errors;
 - context-loss fallback accepted Canvas frames.
 

@@ -1,6 +1,8 @@
 /** Current settings, 252-Skill economy, and graph-v4 migration contract. */
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import { defaultSettings, validateSettings } from '../../src/platform/settings.js';
+import { DEVELOPER_SPEEDS, STANDARD_SPEEDS, developerModeFromSearch, runtimeSpeedOptions,
+  validateRuntimeSpeed } from '../../src/core/runtime-speed.js';
 import { defaultMeta, validateMeta } from '../../src/platform/storage.js';
 import { MEMORY_GRAPH_VERSION, MEMORY_NODES, MEMORY_NODE_IDS, availableMemoryNodes, compileMemory,
   purchaseMemory, validateMemoryGraph } from '../../src/game/skills/index.js';
@@ -9,9 +11,20 @@ import { validateAtlasMapping } from '../../src/game/skills/atlas.js';
 import { createGeodesicTopology } from '../../src/world/icosphere.js';
 
 test('settings omit retired choice state and ignore old imported values', () => {
-  const settings = defaultSettings(); assert.equal(settings.schema, 4); assert.equal('adaptationMode' in settings, false);
-  const migrated = validateSettings({ ...settings, adaptationMode: 'manual', speed: 32 });
-  assert.equal('adaptationMode' in migrated, false); assert.equal(migrated.speed, 32); assert.equal(migrated.idleRotation, 'off');
+  const settings = defaultSettings(); assert.equal(settings.schema, 5); assert.equal('adaptationMode' in settings, false);
+  const migrated = validateSettings({ ...settings, adaptationMode: 'manual', developerMode: true, speed: 32 });
+  assert.equal('adaptationMode' in migrated, false); assert.equal('developerMode' in migrated, false);
+  assert.equal(migrated.speed, 8); assert.equal(migrated.idleRotation, 'off');
+});
+
+test('runtime speed policy is standard by default and developer-only by explicit URL flag', () => {
+  assert.deepEqual(runtimeSpeedOptions(false), STANDARD_SPEEDS); assert.deepEqual(runtimeSpeedOptions(true), DEVELOPER_SPEEDS);
+  assert.equal(developerModeFromSearch('?dev=1'), true); assert.equal(developerModeFromSearch('?dev=true'), false);
+  assert.equal(developerModeFromSearch('?developerMode=1'), false); assert.equal(developerModeFromSearch(''), false);
+  assert.equal(validateRuntimeSpeed(256, { developerMode: true }), 256);
+  assert.equal(validateRuntimeSpeed(256, { developerMode: false }), 8);
+  assert.equal(validateRuntimeSpeed(32, { developerMode: false }), 8);
+  assert.equal(validateRuntimeSpeed(7, { developerMode: false, fallback: 4 }), 4);
 });
 
 test('settings reject garbage and preserve independent accessibility preferences', () => {

@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { metricProjection } from '../../src/interface/inspection/metric-surface.js';
 import { EVENT_LOG_ROW_CAP, eventLogWorlds } from '../../src/interface/inspection/event-log-surface.js';
 
-test('one selector, context shell, compact dock, and three metric buttons are semantic', () => {
+test('one selector, context shell, compact dock, and ordered terminal metrics are semantic', () => {
   const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
   assert.deepEqual([...html.matchAll(/role="tab"[^>]*data-scene="([^"]+)"/g)].map((match) => match[1]),
     ['home', 'world', 'evolution', 'trophies']);
@@ -13,6 +13,14 @@ test('one selector, context shell, compact dock, and three metric buttons are se
   for (const [id, label] of [['score-button', 'SCORE'], ['entropy-button', 'ENTROPY'], ['reach-button', 'REACH']]) {
     assert.match(html, new RegExp(`id="${id}"[\\s\\S]{0,260}>${label}<`));
   }
+  const ordered = ['score-button', 'entropy-button', 'reach-button', 'result-control'].map((id) => html.indexOf(`id="${id}"`));
+  assert.ok(ordered.every((offset, index) => offset > (ordered[index - 1] ?? -1)));
+  assert.match(html, /id="result-control"[^>]*aria-expanded="false"[^>]*hidden/);
+  for (const retired of ['result-score-button', 'result-entropy-button', 'result-reach-button', 'result-summaries'])
+    assert.equal(html.includes(retired), false);
+  assert.doesNotMatch(html, /class="metric-summary"/);
+  const speedOptions = [...html.matchAll(/id="speed-select"[\s\S]*?<\/select>/g)][0]?.[0] ?? '';
+  assert.deepEqual([...speedOptions.matchAll(/option value="(\d+)"/g)].map((match) => Number(match[1])), [1, 2, 4, 8]);
   const rail = html.match(/<div class="command-rail[\s\S]*?<\/div>\s*<\/div>\s*<\/section>/)?.[0] ?? '';
   assert.match(rail, /pause-button/); assert.match(rail, /speed-select/); assert.match(rail, /menu-button/);
   assert.doesNotMatch(rail, /adaptation|card|offer/i);
@@ -41,8 +49,10 @@ test('History, visible metric affordances, and compact two-control dock keep bou
   assert.match(css, /\.context-result, \.context-history \{ grid-template-rows: auto minmax\(0, 1fr\) auto; \}/);
   assert.doesNotMatch(css, /adaptation|card-row/i);
   const components = readFileSync(new URL('../../styles/components.css', import.meta.url), 'utf8');
-  assert.match(components, /\.metric-button \{[^}]*border: 1px solid var\(--border-faint\)/s);
-  assert.match(components, /\.metric-button::after/);
+  assert.match(components, /\.metric-button \{[^}]*cursor: pointer[^}]*border: 1px solid/s);
+  assert.match(components, /\.metric-button::after/); assert.match(components, /\.metric-button:active/);
+  assert.match(components, /\.result-control \{[^}]*min-height: var\(--touch-min\)[^}]*linear-gradient/s);
+  assert.match(css, /\.hud-metrics:has\(#result-control:not\(\[hidden\]\)\)[^}]*grid-template-columns: repeat\(2/s);
   const controller = readFileSync(new URL('../../src/interface/app-controller.js', import.meta.url), 'utf8');
   assert.match(controller, /replaceRenderCanvas\(\)/); assert.match(controller, /retired\.replaceWith\(replacement\)/);
   assert.match(controller, /storage could not save that acknowledgement/);

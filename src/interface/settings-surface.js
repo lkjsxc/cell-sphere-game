@@ -1,6 +1,4 @@
 /** Unified Menu surface. The controller owns persistence and pause leases. */
-import { validateSettings } from '../platform/settings.js';
-
 const byId = (id) => document.getElementById(id);
 
 export function createSettingsSurface(options) {
@@ -9,7 +7,7 @@ export function createSettingsSurface(options) {
   let settings = options.read();
   close.addEventListener('click', () => options.onClose());
   form.addEventListener('change', () => {
-    settings = validateSettings(readForm(form, settings)); options.onChange(settings); render(form, settings);
+    options.onChange(readForm(form, settings)); settings = options.read(); render(form, settings);
   });
   for (const [id, action] of [['menu-history', 'history'], ['menu-result', 'result'], ['menu-event-log', 'event-log'],
     ['menu-new-world', 'new-world'], ['menu-home', 'scene-home'], ['menu-evolution', 'scene-evolution'], ['menu-trophies', 'scene-trophies']])

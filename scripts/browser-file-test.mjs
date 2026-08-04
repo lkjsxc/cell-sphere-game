@@ -37,9 +37,8 @@ try {
   await cdp.send('Emulation.setDeviceMetricsOverride', {
     width: 390, height: 844, deviceScaleFactor: 1, mobile: true,
   }, session);
-  await cdp.send('Page.navigate', {
-    url: `file://${ROOT}/index.html?demo=1&browser-file-test=1`,
-  }, session);
+  const publicUrl = `file://${ROOT}/index.html?demo=1&browser-file-test=1`;
+  await cdp.send('Page.navigate', { url: forceCanvas ? `${publicUrl}&dev=1` : publicUrl }, session);
   await wait(4500);
 
   const evaluate = async (expression) => {
@@ -55,12 +54,14 @@ try {
   };
   const tools = { evaluate, wait, poll, errors: cdp.errors, click,
     key: (value) => key(cdp, session, value), drag: (from, to) => drag(cdp, session, from, to), screenshot: (name) => screenshot(cdp, session, name),
+    navigate: async (url) => { await cdp.send('Page.navigate', { url }, session); await wait(2200); },
     setViewport: (width, height) => cdp.send('Emulation.setDeviceMetricsOverride',
       { width, height, deviceScaleFactor: 1, mobile: width < 600 }, session) };
+  if (!forceCanvas) await runDeveloperSpeedChecks(tools, publicUrl);
   const evidence = forceCanvas ? await runCanvasScenario(tools) : await runScenario(tools);
   console.log(forceCanvas ? `test:browser:file — PASS (canvas2d fallback; score ${evidence.score}; unified shell, History, Evolution, and Trophies)`
     : `test:browser:file — PASS (${evidence.backend}; unified shell; score ${evidence.score}; `
-      + `32x ${evidence.elapsed.toFixed(2)}s; 4 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
+      + `8x ${evidence.elapsed.toFixed(2)}s; developer 256x ${tools.developerEvidence.elapsed.toFixed(2)}s; 4 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
       + `visual IDB ${evidence.idb ? 'yes' : 'unavailable'}; adjacent Skill purchase ${evidence.nodeId})`);
   if (evidence.metricRects) console.log(`metric rects ${JSON.stringify(evidence.metricRects)} responsive ${JSON.stringify(evidence.responsive)}`);
   exitCode = 0;
@@ -74,10 +75,41 @@ try {
 }
 process.exit(exitCode);
 
+async function runDeveloperSpeedChecks(tools, publicUrl) {
+  const { evaluate, navigate, poll, wait, key, click } = tools;
+  await navigate(`${publicUrl}&dev=1`);
+  if (!await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000)) throw new Error('developer page did not boot');
+  const options = await evaluate(`(()=>({runtime:[...document.getElementById('speed-select').options].map(o=>Number(o.value)),defaults:[...document.getElementById('settings-speed').options].map(o=>Number(o.value)),marker:!document.getElementById('dev-mode-marker').hidden&&document.getElementById('dev-mode-marker').offsetHeight>0,dev:window.__CELL_SPHERE_BOOT__.developerMode,hook:Object.hasOwn(window,'__CSG_AGENT__')&&window.__CSG_AGENT__===null}))()`);
+  if (options.runtime.join(',') !== '1,2,4,8,16,32,64,128,256' || options.defaults.join(',') !== options.runtime.join(',')
+      || !options.marker || !options.dev || !options.hook) throw new Error(`developer speed exposure failed: ${JSON.stringify(options)}`);
+  await trustedControl(evaluate, click, '#begin-button');
+  if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'running', 5000)) throw new Error('developer check world did not start');
+  const runStartedAt = performance.now();
+  await trustedControl(evaluate, click, '#speed-select'); for (let index = 0; index < 8; index++) await key('ArrowDown'); await key('Enter'); await wait(120);
+  const runtime = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__,saved=JSON.parse(localStorage.getItem(b.storage.settings));return {selected:Number(document.getElementById('speed-select').value),runtime:a.speed,durable:a.settings.speed,saved:saved.speed}})()`);
+  if (runtime.selected !== 256 || runtime.runtime !== 256 || runtime.durable > 8 || runtime.saved > 8) throw new Error(`trusted developer runtime selection failed: ${JSON.stringify(runtime)}`);
+  await trustedControl(evaluate, click, '.menu-open'); await wait(80); await trustedControl(evaluate, click, '#settings-speed'); for (let index = 0; index < 8; index++) await key('ArrowDown'); await key('Enter'); await wait(120);
+  const isolated = await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,data=await import('./src/interface/app-data.js'),saved=JSON.parse(data.serializeExportData(a.meta,a.archive,{...a.settings,speed:256,developerMode:true}));return {runtime:a.speed,durable:a.settings.speed,exportSpeed:saved.settings.speed,exportDev:'developerMode' in saved.settings}})()`);
+  if (isolated.runtime !== 256 || isolated.durable > 8 || isolated.exportSpeed > 8 || isolated.exportDev) throw new Error(`developer settings leaked: ${JSON.stringify(isolated)}`);
+  if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 8000, 100)) throw new Error('256x developer world did not reach one result');
+  const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {status:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,disabled:document.getElementById('speed-select').disabled,results:a.meta.resultKeys.length}})()`);
+  if (result.status !== 'extinct' || result.alive !== 0 || !result.disabled || result.results !== 1) throw new Error(`256x terminal invalid: ${JSON.stringify(result)}`);
+  tools.developerEvidence = { elapsed: (performance.now() - runStartedAt) / 1000 };
+  await navigate(publicUrl);
+  if (!await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000)) throw new Error('public page did not return after developer check');
+  const normal = await evaluate(`(()=>({options:[...document.getElementById('speed-select').options].map(o=>Number(o.value)),dev:window.__CELL_SPHERE_BOOT__.developerMode,marker:document.getElementById('dev-mode-marker').hidden,hook:Object.hasOwn(window,'__CSG_AGENT__'),speed:window.__CELL_SPHERE_APP__.settings.speed}))()`);
+  if (normal.options.join(',') !== '1,2,4,8' || normal.dev || !normal.marker || normal.hook || normal.speed > 8) throw new Error(`public mode contaminated: ${JSON.stringify(normal)}`);
+}
+
+async function trustedControl(evaluate, click, selector) {
+  const point = await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw new Error('missing control');const r=e.getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()`);
+  await click(...point);
+}
+
 async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait, errors }) {
   const boot = await evaluate('window.__CELL_SPHERE_BOOT__'); if (boot?.renderer !== 'canvas2d') throw new Error('Canvas fallback did not boot');
   await screenshot('browser-canvas-title-mobile.png'); await setViewport(1440, 900); await wait(180); await screenshot('browser-canvas-title-desktop.png');
-  await evaluate(`(()=>{document.getElementById('begin-button').click();const speed=document.getElementById('speed-select');speed.value='32';speed.dispatchEvent(new Event('change'))})()`);
+  await evaluate(`(()=>{document.getElementById('begin-button').click();const speed=document.getElementById('speed-select');speed.value='256';speed.dispatchEvent(new Event('change'))})()`);
   if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 50000)) throw new Error('Canvas run did not finish');
   const terminal = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),status:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
   const score = terminal.score; if (terminal.status !== 'extinct' || terminal.alive !== 0 || terminal.reach !== '0%') throw new Error(`Canvas terminal snapshot stale: ${JSON.stringify(terminal)}`);

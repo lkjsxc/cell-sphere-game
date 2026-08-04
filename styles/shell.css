@@ -52,7 +52,9 @@
 .hud-event i { width: .5rem; height: .5rem; background: var(--state-info); border-radius: 50%; }
 .hud-event[data-read="true"] i { visibility: hidden; }
 .command-rail { grid-template-columns: auto auto; }
-#result-control { min-height: var(--touch-min); }
+.dev-mode-marker { position: absolute; top: calc(100% + 2px); right: var(--sp-2); padding: 1px 5px; color: var(--text-inverse);
+  background: var(--action-urgent); border-radius: var(--radius-s); font-size: .62rem; font-weight: 900; letter-spacing: .12em; }
+:root[data-developer-mode="true"] #run-screen { padding-top: calc(5.4rem + var(--safe-top)); }
 .time-dial.is-complete .clock-hand { transform: rotate(360deg); opacity: .78; }
 .time-dial.is-complete .clock-face { box-shadow: inset 0 0 0 2px var(--life-core); }
 
@@ -105,8 +107,7 @@
   touch-action: pan-y;
 }
 .context-result, .context-history { grid-template-rows: auto minmax(0, 1fr) auto; }
-.result-summaries, .menu-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
-.metric-summary { min-height: var(--touch-min); padding: var(--sp-2); border: 1px solid var(--border-faint); border-radius: var(--radius-s); text-align: left; }
+.menu-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
 .result-milestone { color: var(--action-available); font-weight: 700; }
 .context-result h3, .metric-slot h3, .menu-group h3 { margin-top: var(--sp-3); color: var(--text-secondary); font-size: var(--fs-caption); letter-spacing: .08em; text-transform: uppercase; }
 .result-actions { flex-wrap: wrap; justify-content: start; }
@@ -173,8 +174,13 @@
   .metric-button { flex: 1 1 0; min-width: 0; }
   .metric-value { font-size: 1rem; }
   .command-rail { width: auto; grid-template-columns: 90px 4.25rem; }
-  .result-summaries, .menu-grid { grid-template-columns: 1fr 1fr; }
+  .menu-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 520px) {
+  .hud-metrics:has(#result-control:not([hidden])) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(22rem, 100%); gap: var(--sp-1); }
+  .hud-metrics:has(#result-control:not([hidden])) > button { width: 100%; min-width: 0; }
 }
 @media (forced-colors: active) {
-  .scene-selector, .context-shell, .metric-button, .metric-count, .metric-row, .hud-event { border: 1px solid CanvasText; }
+  .scene-selector, .context-shell, .metric-button, .result-control, .metric-count, .metric-row, .hud-event { border: 1px solid CanvasText; }
 }

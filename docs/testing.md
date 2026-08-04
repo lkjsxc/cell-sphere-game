@@ -51,7 +51,7 @@ labeled accordingly.
 
 ### Integration
 
-- same-seed exact authority across 1×/2×/4×/8×/16×/32×;
+- same-seed exact authority across normal 1×/2×/4×/8× and explicit developer 16×/32×/64×/128×/256× lanes;
 - Worker/fallback protocol equivalence and command acknowledgement;
 - replacement/abandonment/result exactly-once transactions;
 - all 252 Skills legally purchasable by physical adjacency;
@@ -63,8 +63,9 @@ labeled accordingly.
 
 `test:browser:file` uses Chrome DevTools Protocol with real pointer and keyboard
 input. It verifies WebGL2 four-draw rendering, scene selection, stable details,
-metric affordances, responsive layouts, camera preservation, History, Result,
-Skill purchase, Trophy queueing, atomic replacement, unattended continuation,
+metric affordances, responsive terminal `SCORE | ENTROPY | REACH | RESULT` layouts,
+public speed isolation, explicit `?dev=1` 256× execution, camera preservation,
+History, Result, Skill purchase, Trophy queueing, atomic replacement, unattended continuation,
 context-loss fallback, fresh/migrated saves, and browser errors.
 
 `test:browser:canvas` forces Canvas 2D and verifies terminal authority, History,
