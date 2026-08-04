@@ -10,7 +10,8 @@ function node() { return { textContent: '', hidden: false, disabled: false, data
   setAttribute() {}, replaceChildren() {} }; }
 function elements() { const value = {}; for (const name of ['title','run','memory','trophies','countdown','event','live',
   'resultRank','resultScore','resultCause','echoes','resultTrophies','resultImprint','resultAdaptations','resultFirstCycle','breakdown','score',
-  'pressure','reach','trace','adaptationBadge','adaptationButton','adaptationModeLabel','resultControl','pause','speed']) value[name] = node();
+  'pressure','reach','trace','adaptationBadge','adaptationButton','adaptationModeLabel','resultControl','pause','speed',
+  'eventTime','eventButton']) value[name] = node();
   value.adaptationButton.dataset.mode = 'random'; return value; }
 function harness() {
   const counts = new Map(); const hit = (name) => counts.set(name, (counts.get(name) ?? 0) + 1); let runId = 0;
@@ -26,6 +27,7 @@ function harness() {
     snapshot: { old: true }, worldFields: { old: true }, fields: { old: true }, selectedNode: 4, overlay: 'history',
     lastInspect: 9, lastRender: 9,
     driver: { outcome: null, starts: [], stop() { hit('driver-stop'); this.snapshot = null; }, installSnapshot(value) { this.snapshot = value; },
+      abort() { hit('driver-abort'); return true; },
       reserveIdentity(value) { const identity = createWorldIdentity({ ...value, runId: ++runId }); this.identity = identity; return identity; },
       start(config, speed, identity) { this.starts.push({ config, speed, identity }); return identity.runId; } },
     flow: { send(event) { hit(`flow-${event}`); app.phase = 'starting'; }, select(scene) { app.scene = scene; } }, sceneSelector: { update() {} }, pause: { clear() { hit('pause-clear'); } },
@@ -54,6 +56,16 @@ test('replacement teardown clears every current-world field before one static bl
   assert.deepEqual(app.offers, []); assert.deepEqual(app.cards, []); assert.deepEqual(app.currentHistory, []);
   assert.equal(app.selectedNode, null); assert.equal(app.overlay, null); assert.equal(app.historySnapshot, null); assert.deepEqual(app.historyHighlights, []);
   assert.equal(app.lastResult, null); assert.equal(app.worldFields, null); assert.equal(app.driver.snapshot, app.snapshot);
+  assert.equal(app.el.eventTime.textContent, '00:00 · STARTING'); assert.equal(app.el.eventButton.dataset.read, 'true');
+  assert.equal(app.el.pause.disabled, false); assert.equal(app.el.speed.disabled, false);
+});
+
+test('every in-run replacement request waits for authoritative abandonment', () => {
+  const { app, counts } = harness(); app.phase = 'running';
+  app.worldIdentity = createWorldIdentity({ worldSessionId: 1, runId: 1, seed: 7, presentationGeneration: 1 });
+  assert.equal(requestWorldReplacement(app, 'requested-restart'), true);
+  assert.equal(app.worldReplacement.status, 'awaiting-authority'); assert.equal(counts.get('driver-abort'), 1);
+  assert.equal(app.driver.starts.length, 0); assert.equal(requestWorldReplacement(app, 'same-frame-race'), false);
 });
 
 test('100 replacement cycles are first-wins with unique seed, authority, identity, and blank frame', () => {
@@ -61,7 +73,7 @@ test('100 replacement cycles are first-wins with unique seed, authority, identit
   try { for (let cycle = 0; cycle < 100; cycle++) {
     assert.equal(requestWorldReplacement(app, 'soak'), true); assert.equal(requestWorldReplacement(app, 'same-frame-race'), false);
     const identity = app.worldIdentity; keys.add(identity.resultTransactionKey); seeds.add(identity.seed);
-    assert.equal(markWorldStarted(app, identity), true); app.phase = 'running';
+    assert.equal(markWorldStarted(app, identity), true); app.phase = 'result';
   } } finally { if (oldLocation) globalThis.location = oldLocation; else delete globalThis.location; }
   assert.equal(app.driver.starts.length, 100); assert.equal(app.presentationAudit.blankFrames, 100);
   assert.equal(app.worldReplacement.accepted, 100); assert.equal(app.worldReplacement.rejected, 100);

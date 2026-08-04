@@ -107,6 +107,18 @@ test('worker callbacks require the full session/run/generation tuple', () => wit
   assert.equal(messages.length, 0); deliver(worker, driver, { t: 'ready', runId }); assert.equal(messages.length, 1);
 }));
 
+test('retired Worker callbacks cannot kill or mutate same-session fallback authority', () => withWorkers(() => {
+  const messages = []; const driver = createRunDriver({ worker: true }, (message) => messages.push(message));
+  const runId = driver.start({ seed: 19 }, 1); const worker = FakeWorker.instances.at(-1);
+  const queuedError = worker.onerror; const queuedMessage = worker.onmessage;
+  deliver(worker, driver, { t: 'error', runId, fatal: true, message: 'pre-authority failure' });
+  assert.equal(worker.terminated, true); assert.equal(driver.hasFallback, true); assert.equal(driver.outcome, null);
+  const before = messages.length; queuedError?.(new Error('stale transport error'));
+  queuedMessage?.({ data: { t: 'extinct', ...identityFields(driver.identity), summary: { runId } } });
+  assert.equal(driver.hasFallback, true); assert.equal(driver.outcome, null);
+  assert.equal(messages.length, before); assert.equal(messages.some((message) => message.t === 'worker-failed'), false);
+}));
+
 test('worker silence requests status then exposes an explicit recoverable failure', () => withWorkers(() => {
   const messages = []; const driver = createRunDriver({ worker: true }, (message) => messages.push(message));
   const runId = driver.start({ seed: 5 }, 1); const worker = FakeWorker.instances.at(-1);

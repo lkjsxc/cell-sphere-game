@@ -6,20 +6,22 @@ import { normalizeHistoryEvents, appendAbandonedWorld, saveHistory } from '../..
 import { saveMeta } from '../../platform/storage.js';
 import { seedForRun } from '../app-data.js';
 import { applyRunResult } from './run-result.js';
-import { disableContinuation, resetContinuation, startContinuation } from './continuation.js';
+import { disableContinuation, resetContinuation, setContinuationHidden, startContinuation } from './continuation.js';
 import * as ui from '../surfaces.js';
 
 export function createWorldReplacementState() {
-  return { status: 'idle', reason: null, expectedIdentity: null, requestSequence: 0, accepted: 0, rejected: 0 };
+  return { status: 'idle', reason: null, expectedIdentity: null, requestSequence: 0,
+    recoveryAttempts: 0, accepted: 0, rejected: 0 };
 }
 export function requestWorldReplacement(app, reason, expectedIdentity = null) {
   const state = app.worldReplacement;
   if (state.status !== 'idle' || !expectedMatches(app, expectedIdentity)) { state.rejected++; return false; }
   state.status = 'requested'; state.reason = reason; state.expectedIdentity = expectedIdentity;
   state.requestSequence++; state.accepted++;
-  if (reason === 'confirmed-new-world' && phaseOf(app) === 'running' && app.driver.outcome == null) {
-    state.status = 'awaiting-authority'; app.newWorld?.pending();
+  if (phaseOf(app) === 'running' && app.driver.outcome == null) {
+    state.status = 'awaiting-authority'; app.newWorld?.pending?.();
     if (app.driver.abort(app.worldIdentity)) return true;
+    state.status = 'requested';
   }
   return performWorldReplacement(app);
 }
@@ -66,10 +68,16 @@ export function retireWorldPresentation(app) {
 }
 export function markWorldStarted(app, identity) {
   if (!sameWorldIdentity(identity, app.worldIdentity) || app.worldReplacement.status !== 'starting') return false;
-  app.worldReplacement.status = 'idle'; app.worldReplacement.reason = null; app.worldReplacement.expectedIdentity = null; return true;
+  app.worldReplacement.status = 'idle'; app.worldReplacement.reason = null; app.worldReplacement.expectedIdentity = null;
+  app.worldReplacement.recoveryAttempts = 0; return true;
 }
 export function recoverPreAuthorityFailure(app, identity) {
-  if (!sameWorldIdentity(identity, app.worldIdentity)) return false; const sequence = app.worldReplacement.requestSequence;
+  if (!sameWorldIdentity(identity, app.worldIdentity)) return false;
+  if (app.worldReplacement.recoveryAttempts >= 1) {
+    app.worldReplacement.status = 'idle'; app.flow.send?.('fail'); app.failRun?.('The simulation could not start after a recovery attempt.');
+    app.selectScene?.('home'); return false;
+  }
+  const sequence = app.worldReplacement.requestSequence; app.worldReplacement.recoveryAttempts++;
   app.worldReplacement.status = 'recovering'; queueMicrotask(() => {
     if (app.worldReplacement.status !== 'recovering' || app.worldReplacement.requestSequence !== sequence
       || !sameWorldIdentity(identity, app.worldIdentity)) return;
@@ -96,8 +104,10 @@ export function finishRun(app, result) {
     trophyIds: transaction.trophyIds, campaignResolvedNow: transaction.meta.runs === 4 });
   if (app.worldReplacement.status === 'awaiting-authority') return performWorldReplacement(app);
   app.selectScene('world');
-  if (app.settings.autoContinue) startContinuation(app.continuation, performance.now(), app.worldIdentity);
-  else disableContinuation(app.continuation, app.worldIdentity);
+  if (app.settings.autoContinue) {
+    const now = performance.now(); startContinuation(app.continuation, now, app.worldIdentity);
+    if (globalThis.document?.hidden === true) setContinuationHidden(app.continuation, true, now);
+  } else disableContinuation(app.continuation, app.worldIdentity);
   app.updateContinuation(); app.openResult(); return true;
 }
 export function finishAbandoned(app, summary) {

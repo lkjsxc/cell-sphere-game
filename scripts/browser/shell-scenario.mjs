@@ -65,12 +65,14 @@ export async function runScenario(t) {
 
   const run32StartedAt = performance.now(); await evaluate(`(()=>{const s=document.getElementById('speed-select');s.value='32';s.dispatchEvent(new Event('change'))})()`);
   ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.pendingCount()'), (count) => count > 0, 5000), 'manual Adaptation offer did not queue');
-  await trustedId(t, 'adaptations-button'); await wait(120); const compact = await evaluate(`(()=>{const s=document.getElementById('context-shell').getBoundingClientRect(),e=document.getElementById('current-event-button').getBoundingClientRect();return {height:s.height,viewport:innerHeight,cards:[...document.querySelectorAll('#adaptation-cards .card')].map(x=>x.getBoundingClientRect().height),eventVisible:e.width>0&&e.bottom<=s.top+1}})()`);
-  ok(compact.height <= compact.viewport * .37 && compact.cards.length === 3 && compact.cards.every((height) => height >= 44) && compact.eventVisible,
+  await trustedId(t, 'adaptations-button'); await wait(120); const compact = await evaluate(`(()=>{const s=document.getElementById('context-shell').getBoundingClientRect(),e=document.getElementById('current-event-button').getBoundingClientRect(),summary=document.querySelector('#adaptations-dialog details summary')?.getBoundingClientRect();return {height:s.height,viewport:innerHeight,cards:[...document.querySelectorAll('#adaptation-cards .card')].map(x=>x.getBoundingClientRect().height),summary:summary?.height??0,eventVisible:e.width>0&&e.bottom<=s.top+1}})()`);
+  ok(compact.height <= compact.viewport * .37 && compact.cards.length === 3 && compact.cards.every((height) => height >= 44) && compact.summary >= 44 && compact.eventVisible,
     `compact Adaptations failed: ${JSON.stringify(compact)}`); await screenshot('shell-adaptations-mobile.png'); await trustedId(t, 'adaptations-close');
 
   await setViewport(1440, 900); await wait(120); await trustedId(t, 'menu-button'); await trustedId(t, 'menu-history'); await wait(160);
   const history = await shellRect(evaluate); ok(history.surface === 'history' && history.left < 30 && history.width <= 520, 'History is not the desktop left shell');
+  const historyTracks = await evaluate(`(()=>{const panel=document.getElementById('history-dialog'),body=panel.querySelector('.surface-body'),p=panel.getBoundingClientRect(),b=body.getBoundingClientRect(),f=panel.querySelector('footer').getBoundingClientRect();return {bodyBeforeFooter:b.bottom<=f.top+1,footerBounded:f.bottom<=p.bottom+1&&p.bottom-f.bottom<40,bodyOverflow:getComputedStyle(body).overflowY,tracks:getComputedStyle(panel).gridTemplateRows.split(' ').length}})()`);
+  ok(historyTracks.bodyBeforeFooter && historyTracks.footerBounded && historyTracks.bodyOverflow === 'auto' && historyTracks.tracks === 3, `History shell tracks failed: ${JSON.stringify(historyTracks)}`);
   const historyCamera = await evaluate('window.__CELL_SPHERE_APP__.camera.direction.slice()'); await drag([960, 360], [1080, 410]);
   ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='history'`), 'globe drag dismissed History');
   await trustedId(t, 'history-event-log'); ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='event-log'`), 'History did not route to Event Log');
@@ -79,9 +81,10 @@ export async function runScenario(t) {
   await trustedId(t, 'event-log-close'); ok(distance(historyCamera, await evaluate('window.__CELL_SPHERE_APP__.camera.direction.slice()')) > 0, 'globe drag did not rotate');
 
   ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 45000), '32x run did not finish');
-  const elapsed = (performance.now() - run32StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=document.getElementById('context-shell');return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!document.getElementById('result-control').hidden,event:document.getElementById('current-event-button').offsetHeight,pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,adapt:document.getElementById('adaptations-button').disabled,trophies:document.getElementById('result-trophies').textContent}})()`);
+  const elapsed = (performance.now() - run32StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=document.getElementById('context-shell');return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!document.getElementById('result-control').hidden,event:document.getElementById('current-event-button').offsetHeight,pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,adapt:document.getElementById('adaptations-button').disabled,trophies:document.getElementById('result-trophies').textContent,snapshotStatus:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
   ok(result.score > 0 && result.scene === 'world' && result.phase === 'result' && result.overlay === 'result' && result.surface === 'result'
     && result.runVisible && result.resultControl && result.event >= 44 && result.pause && result.speed && result.adapt
+    && result.snapshotStatus === 'extinct' && result.alive === 0 && result.reach === '0%'
     && result.trophies.includes('First Extinction'), `terminal world failed: ${JSON.stringify(result)}`);
   await evaluate(`window.__CELL_SPHERE_APP__.trophyNotifications.hold('browser-evidence',true)`); await screenshot('shell-result-desktop.png'); await trustedId(t, 'result-close'); ok(await evaluate(`document.getElementById('context-shell').hidden`), 'Result did not close');
   ok(await evaluate(`window.__CELL_SPHERE_APP__.continuation.status==='cancelled'`), 'trusted Result interaction did not permanently cancel Auto Next');
@@ -111,8 +114,20 @@ export async function runScenario(t) {
   await evaluate(`window.__CELL_SPHERE_APP__.trophyNotifications.hold('browser-evidence',false)`);
   const bounded = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {...a.worldResourceAudit(),raf:a.frameAudit}})()`);
   ok(!bounded.historyRequests && !bounded.adaptationEffects && !bounded.adaptationBytes && !bounded.adaptationTimers && !bounded.raf.errors, `replacement resources leaked: ${JSON.stringify(bounded)}`);
+
+  await installFirstReplacementCapture(evaluate);
+  const unattended = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.continuation.durationMs=800;a.settings={...a.settings,autoContinue:true};return a.worldIdentity.worldSessionId})()`);
+  ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 45000), 'untouched countdown world did not finish');
+  ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.worldIdentity.worldSessionId'), (session) => session > unattended, 5000), 'untouched result countdown did not replace the world');
+  assertBlankReplacement(await evaluate('window.__CELL_SPHERE_APP__.__firstReplacementFrame'), 'WebGL2 countdown');
+
+  const lossRequested = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,gl=a.renderer?.gl,ext=gl?.getExtension('WEBGL_lose_context');if(!ext)return false;window.__CELL_SPHERE_RETIRED_CANVAS__=a.canvas;ext.loseContext();return true})()`);
+  ok(lossRequested, 'WEBGL_lose_context unavailable');
+  ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.renderer?.backend'), (backend) => backend === 'canvas2d', 3000), 'WebGL context loss did not activate Canvas 2D');
+  await wait(180); const loss = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {replaced:a.canvas!==window.__CELL_SPHERE_RETIRED_CANVAS__,canvases:document.querySelectorAll('#gl-canvas').length,backend:a.renderer.backend,accepted:a.renderer.acceptedFrames,input:typeof a.input?.isActive==='function',errors:a.frameAudit.errors}})()`);
+  ok(loss.replaced && loss.canvases === 1 && loss.backend === 'canvas2d' && loss.accepted > 0 && loss.input && !loss.errors, `context-loss fallback failed: ${JSON.stringify(loss)}`);
   const idb = await evaluate('window.__CELL_SPHERE_APP__.historyPlayback.recentRuns.ready()'); ok(errors.length === 0, `browser errors: ${errors.join(' | ')}`);
-  return { backend: boot.renderer, score: result.score, elapsed, nodeId, render, idb, metricRects, responsive };
+  return { backend: boot.renderer, score: result.score, elapsed, nodeId, render, idb, metricRects, responsive, contextLoss: loss };
 }
 
 async function runIdentityMigrationScenario({ evaluate, wait, poll }, initialBoot) {

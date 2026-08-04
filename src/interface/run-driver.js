@@ -6,7 +6,8 @@ import { createWorldIdentity, identityFields, sameWorldIdentity } from '../core/
 import { executeAdaptationMode, executeAdaptationSelection } from '../simulation/protocol/adaptation-command.js';
 
 export function createRunDriver(caps, onMessage) {
-  let worker = null; let fallback = null; let generation = 0; let runSequence = 0; let presentationSequence = 0; let commandSequence = 0;
+  let worker = null; let fallback = null; let generation = 0; let transportGeneration = 0;
+  let runSequence = 0; let presentationSequence = 0; let commandSequence = 0;
   let activeIdentity = null; let speed = 1; let paused = false; let debt = 0;
   let lastSnapshot = null; let cfg = null; let authorityStarted = false;
   let settled = null; let abortPending = false; let lastWorkerMessageAt = 0; let statusRequestedAt = 0;
@@ -46,20 +47,29 @@ export function createRunDriver(caps, onMessage) {
     lastWorkerMessageAt = now(); statusRequestedAt = 0; const token = generation;
     if (caps.worker) try {
       worker = new Worker(new URL('../simulation/protocol/worker-entry.js', import.meta.url), { type: 'module' });
+      const transportToken = ++transportGeneration;
       worker.onmessage = (event) => {
-        if (token !== generation || !sameWorldIdentity(session, activeIdentity) || !accepts(event.data, session, true)) return;
+        if (token !== generation || transportToken !== transportGeneration
+          || !sameWorldIdentity(session, activeIdentity) || !accepts(event.data, session, true)) return;
         if (event.data.t === 'error' && event.data.fatal) failWorker(event.data.message, session);
         else emit(event.data, session);
       };
-      worker.onerror = () => { if (token === generation) failWorker('The simulation worker stopped unexpectedly.', session); };
-      worker.onmessageerror = () => { if (token === generation) failWorker('The simulation worker sent unreadable data.', session); };
+      worker.onerror = () => { if (token === generation && transportToken === transportGeneration)
+        failWorker('The simulation worker stopped unexpectedly.', session); };
+      worker.onmessageerror = () => { if (token === generation && transportToken === transportGeneration)
+        failWorker('The simulation worker sent unreadable data.', session); };
       worker.postMessage({ t: 'init', protocolVersion: RUN_PROTOCOL_VERSION, ...identityFields(session), cfg }); return session.runId;
     } catch { /* deterministic pre-authority fallback below */ }
     startFallback(session); return session.runId;
   }
 
+  function retireWorker() {
+    transportGeneration++; const retired = worker; worker = null;
+    if (!retired) return;
+    retired.onmessage = null; retired.onerror = null; retired.onmessageerror = null; retired.terminate();
+  }
   function startFallback(session = activeIdentity) {
-    worker?.terminate(); worker = null;
+    retireWorker();
     try {
       const runId = session.runId; fallback = new RunController(cfg, (message) => emit({ ...message, runId }, session));
       authorityStarted = true; fallback.start(); const snapshot = fallback.snapshot(); emit({ t: 'snapshot', ...snapshot, runId }, session);
@@ -69,7 +79,7 @@ export function createRunDriver(caps, onMessage) {
   function failWorker(reason, session = activeIdentity) {
     if (settled || !sameWorldIdentity(session, activeIdentity)) return;
     if (!authorityStarted) { startFallback(session); return; }
-    worker?.terminate(); worker = null; fallback = null; settled = 'failed';
+    retireWorker(); fallback = null; settled = 'failed';
     onMessage({ t: 'worker-failed', ...identityFields(session), phase: 'authority', recoverable: false, message: reason });
   }
 
@@ -125,7 +135,7 @@ export function createRunDriver(caps, onMessage) {
     worker.postMessage({ t: 'start', ...identityFields(activeIdentity) }); return true; }
   function setSpeed(value) { speed = value; if (worker && activeIdentity) worker.postMessage({ t: 'speed', ...identityFields(activeIdentity), value }); }
   function setPaused(value) { paused = value; if (worker && activeIdentity) worker.postMessage({ t: value ? 'pause' : 'resume', ...identityFields(activeIdentity) }); }
-  function stop() { generation++; commandSequence++; worker?.terminate(); worker = null; fallback = null; cfg = null;
+  function stop() { generation++; commandSequence++; retireWorker(); fallback = null; cfg = null;
     lastSnapshot = null; activeIdentity = null; authorityStarted = false; settled = null; abortPending = false; debt = 0; statusRequestedAt = 0; }
   return { reserveIdentity, start, stop, abort, ready, message, chooseAdaptation, setAdaptationMode, frame, setSpeed, setPaused,
     installSnapshot(value) { lastSnapshot = value; }, get snapshot() { return lastSnapshot; },

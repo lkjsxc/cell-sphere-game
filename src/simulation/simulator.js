@@ -14,7 +14,7 @@ import { runDeath } from './lifecycle/death.js';
 import { analyzeConnectivity } from './connectivity.js';
 import { runSummary } from './summary.js';
 import { logReplay, recordHistory, REPLAY } from './replay.js';
-import { buildSnapshot } from './snapshot.js';
+import { buildSnapshot, snapshotTransfers } from './snapshot.js';
 import { buildAbandonedRun, buildRunResult, dominantCause } from './result.js';
 import { HistoryRecorder } from '../history/recorder.js';
 
@@ -85,6 +85,8 @@ export class RunController {
     }
     recordHistory(s, 'run-extinct', { cause: s.extinction.cause });
     this.historyRecorder.observe(s, true, true);
+    const terminalSnapshot = this.snapshot();
+    this.emit({ t: 'snapshot', ...terminalSnapshot }, snapshotTransfers(terminalSnapshot));
     this.emit({ t: 'history-batch', events: s.history.slice(historyStart).map((event) => ({ ...event })) });
     this.emit({ t: 'extinct', summary: this.buildResult() });
     return true;

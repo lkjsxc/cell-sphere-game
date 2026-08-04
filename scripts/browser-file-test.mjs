@@ -79,7 +79,8 @@ async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait
   await screenshot('browser-canvas-title-mobile.png'); await setViewport(1440, 900); await wait(180); await screenshot('browser-canvas-title-desktop.png');
   await evaluate(`(()=>{document.getElementById('begin-button').click();const speed=document.getElementById('speed-select');speed.value='32';speed.dispatchEvent(new Event('change'))})()`);
   if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 50000)) throw new Error('Canvas run did not finish');
-  const score = await evaluate("Number(document.getElementById('result-score').textContent.replaceAll(',',''))");
+  const terminal = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),status:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
+  const score = terminal.score; if (terminal.status !== 'extinct' || terminal.alive !== 0 || terminal.reach !== '0%') throw new Error(`Canvas terminal snapshot stale: ${JSON.stringify(terminal)}`);
   await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-canvas-history-desktop.png');
   await evaluate("document.getElementById('scene-evolution').click()"); await wait(180); await screenshot('browser-canvas-evolution-desktop.png');
   const atlas = await evaluate('window.__CELL_SPHERE_APP__.memorySnapshot.memoryStatus.length'); await evaluate("document.getElementById('scene-trophies').click()"); await wait(180); await screenshot('browser-canvas-trophies-desktop.png');

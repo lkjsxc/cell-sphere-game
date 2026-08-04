@@ -57,10 +57,13 @@ export function updateHud(el, snap) {
 export function resetWorldPresentation(el, snapshot = null) {
   updateHud(el, snapshot ?? { entropy: 0, status: 'starting', alive: { length: 2562 },
     metrics: { score: 0, coverage: 0, aliveCount: 0 }, reach: null });
-  el.event.textContent = ''; el.live.textContent = ''; el.resultRank.textContent = ''; el.resultScore.textContent = '0';
+  el.eventTime.textContent = '00:00 · STARTING'; el.event.textContent = 'Preparing a new world.'; el.eventButton.dataset.read = 'true';
+  el.live.textContent = ''; el.resultRank.textContent = ''; el.resultScore.textContent = '0';
   el.resultCause.textContent = ''; el.echoes.textContent = ''; el.resultTrophies.textContent = '';
   el.resultImprint.textContent = ''; el.resultAdaptations.textContent = ''; el.resultFirstCycle.textContent = ''; el.breakdown.replaceChildren();
-  el.resultControl.hidden = true; el.pause.disabled = false; el.pause.classList.remove('is-complete'); el.speed.disabled = false; el.adaptationButton.disabled = false;
+  el.resultControl.hidden = true; el.pause.disabled = false; el.pause.classList.remove('is-complete');
+  el.pause.setAttribute('aria-pressed', 'false'); el.pause.setAttribute('aria-label', 'Pause world time');
+  el.speed.disabled = false; el.speed.setAttribute('aria-label', 'Game speed'); el.adaptationButton.disabled = false;
   updateAdaptationMode(el, el.adaptationButton.dataset.mode === 'manual' ? 'manual' : 'random');
 }
 

@@ -86,7 +86,9 @@ class GameApp {
     this.trophyUi = createTrophySurface({ onClose: () => this.closeTrophy(), onSelect: (id) => this.selectTrophy(id) });
     this.trophyNotifications = createTrophyNotifications({ reduced: () => this.settings.motion === 'reduced',
       announce: (text) => { this.el.live.textContent = text; }, onSelect: (id) => { if (this.scene !== 'trophies') this.selectScene('trophies'); selectTrophy(this, id); },
-      onAcknowledge: (id) => { this.meta = { ...this.meta, trophyQueue: (this.meta.trophyQueue ?? []).filter((entry) => entry !== id) }; saveMeta(this.meta);
+      onAcknowledge: (id) => {
+        this.meta = { ...this.meta, trophyQueue: (this.meta.trophyQueue ?? []).filter((entry) => entry !== id) };
+        if (!saveMeta(this.meta)) ui.announce(this.el, 'Trophy feedback was acknowledged for this session, but storage could not save that acknowledgement.');
         if (this.scene === 'trophies') this.trophySnapshot = buildTrophySnapshot(this.topo2, this.meta, this.trophyUi.selectedId, this.meta.trophyQueue); } });
     this.trophyNotifications.sync(this.meta);
     this.newWorld = createNewWorldSurface({ onClose: () => this.panelClosed('new-world'), onConfirm: () => this.confirmNewWorld() });
@@ -98,12 +100,30 @@ class GameApp {
     else { this.worldFields = createFields(createRng(seed ^ 0x51ab3d71), this.topo4); this.fields = this.worldFields; }
     const binding = identity ?? (mode === 'world' && this.worldIdentity?.seed === seed ? this.worldIdentity : null);
     this.renderer?.dispose(); this.renderer = null;
-    const fallback = () => { this.renderer?.dispose(); const next = new Canvas2DRenderer(this.canvas, this.topo, this.fields);
-      next.bindWorldSession(binding); this.renderer = next; ui.announce(this.el, 'WebGL was lost. The observational Canvas renderer is continuing.'); };
+    const fallback = () => {
+      if (this.renderer?.backend === 'canvas2d') return;
+      this.renderer?.dispose(); this.renderer = null; let next;
+      try { next = new Canvas2DRenderer(this.canvas, this.topo, this.fields); }
+      catch (firstError) {
+        this.replaceRenderCanvas();
+        try { next = new Canvas2DRenderer(this.canvas, this.topo, this.fields); }
+        catch { throw firstError; }
+      }
+      next.bindWorldSession(binding); this.renderer = next;
+      ui.announce(this.el, 'WebGL was lost. The observational Canvas renderer is continuing.');
+    };
     try { const next = new GLRenderer(this.canvas, this.topo, this.fields, { onContextLoss: fallback });
       next.bindWorldSession(binding); this.renderer = next; }
     catch (error) { console.warn('WebGL2 unavailable; Canvas 2D active', error); fallback(); }
-  } bindUi() {
+  }
+  replaceRenderCanvas() {
+    const retired = this.canvas; const replacement = /** @type {HTMLCanvasElement} */ (retired.cloneNode(false));
+    replacement.width = retired.width; replacement.height = retired.height; const hadInput = Boolean(this.input);
+    this.input?.dispose(); this.input = null; retired.replaceWith(replacement); this.canvas = replacement;
+    if (this.resizeObserver) { this.resizeObserver.disconnect(); this.resizeObserver.observe(replacement); }
+    if (hadInput) this.bindCanvas(); return replacement;
+  }
+  bindUi() {
     this.el.begin.addEventListener('click', () => this.phase === 'idle' ? this.requestWorldReplacement('title-grow') : this.selectScene('world'));
     this.el.restart.addEventListener('click', () => ['idle', 'result'].includes(this.phase) ? this.requestWorldReplacement('evolution-restart', this.phase === 'result' ? this.lastResultIdentity : null) : this.selectScene('world'));
     this.el.resultNext.addEventListener('click', () => this.requestWorldReplacement('manual-next', this.lastResultIdentity));
@@ -131,7 +151,8 @@ class GameApp {
       onInteractionEnd: () => interruptCameraPolicy(this.cameraPolicy, performance.now()) }); }
   bindLifecycle() {
     const resize = () => this.resize(true);
-    if (typeof ResizeObserver === 'function') new ResizeObserver(resize).observe(this.canvas); else addEventListener('resize', resize);
+    if (typeof ResizeObserver === 'function') { this.resizeObserver = new ResizeObserver(resize); this.resizeObserver.observe(this.canvas); }
+    else addEventListener('resize', resize);
     document.addEventListener('visibilitychange', () => { this.pause.set('hidden', document.hidden && ['starting', 'running'].includes(this.phase));
       setContinuationHidden(this.continuation, document.hidden, performance.now()); this.updateContinuation(); });
   }

@@ -148,6 +148,17 @@ test('manual extinction preserves unresolved offers and semantic history', () =>
   assert.ok(result.history.length <= 80);
 });
 
+test('the authoritative terminal snapshot is emitted before the extinction result', () => {
+  const messages = []; const controller = run(31337, 'random', (message) => messages.push(message));
+  const result = finish(controller); const extinctIndex = messages.findIndex((message) => message.t === 'extinct');
+  const terminalIndex = messages.findLastIndex((message, index) => index < extinctIndex && message.t === 'snapshot');
+  assert.ok(terminalIndex >= 0 && terminalIndex < extinctIndex);
+  const snapshot = messages[terminalIndex]; assert.equal(snapshot.status, 'extinct');
+  assert.equal(snapshot.metrics.aliveCount, 0); assert.equal(snapshot.metrics.coverage, 0);
+  assert.equal(snapshot.alive.some(Boolean), false); assert.equal(result.finalLivingCount, 0);
+  assert.equal(snapshot.tick, result.tick); assert.equal(snapshot.entropy, controller.state.entropy);
+});
+
 test('inspection and result/snapshot queries do not mutate authority or RNG', () => {
   const controller = run(14, 'manual');
   controller.advance(100);

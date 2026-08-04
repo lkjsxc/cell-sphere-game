@@ -212,6 +212,15 @@ test('untouched continuation fires once, while hidden time is excluded', () => {
   }
 });
 
+test('a result born while hidden receives its full visible inactivity interval', () => {
+  const state = createContinuation(9000); const createdAt = 1000;
+  startContinuation(state, createdAt, { resultTransactionKey: 'hidden-result' });
+  setContinuationHidden(state, true, createdAt); assert.equal(state.status, 'paused-hidden');
+  setContinuationHidden(state, false, createdAt + 60_000); assert.equal(state.remainingMs, 9000);
+  assert.equal(advanceContinuation(state, createdAt + 68_999), false);
+  assert.equal(advanceContinuation(state, createdAt + 69_000), true);
+});
+
 test('every trusted interaction class cancels permanently; untrusted and movement do not', () => {
   const cases = [
     [{ type: 'pointerdown', pointerType: 'mouse', isTrusted: true }, 'pointer'],

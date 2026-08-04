@@ -35,6 +35,15 @@ test('metric projections use actual score, entropy snapshots, and Reach ledger v
   assert.deepEqual(reach.direct[0].cells, [2, 3]);
 });
 
+test('History and mobile Adaptations keep bounded shared-shell geometry', () => {
+  const css = readFileSync(new URL('../../styles/shell.css', import.meta.url), 'utf8');
+  assert.match(css, /\.context-result, \.context-history \{ grid-template-rows: auto minmax\(0, 1fr\) auto; \}/);
+  assert.match(css, /\.adaptation-body summary \{[^}]*min-height: var\(--touch-min\)/s);
+  const controller = readFileSync(new URL('../../src/interface/app-controller.js', import.meta.url), 'utf8');
+  assert.match(controller, /replaceRenderCanvas\(\)/); assert.match(controller, /retired\.replaceWith\(replacement\)/);
+  assert.match(controller, /storage could not save that acknowledgement/);
+});
+
 test('Event Log current/archive models and rows stay bounded', () => {
   const events = Array.from({ length: EVENT_LOG_ROW_CAP + 25 }, (_, seq) => ({ seq, tick: seq, key: 'run.germination', kind: 'life', primaryCells: [seq % 8] }));
   const model = eventLogWorlds({ events, seed: 7, tick: 104, terminal: false }, { worlds: [
