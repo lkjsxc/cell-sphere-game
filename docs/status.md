@@ -54,19 +54,19 @@ no correction.
 
 Current production-module evidence:
 
-- fresh 150 seeds: median SCORE 8,692, median duration 323.5 seconds, median peak
-  land occupancy 26.5%, p90 42.8%, and conservation error zero at 1e-6;
-- SCORE trace 150 seeds: zero decreases, zero Result mismatch, median 8.5% of
+- fresh 500 seeds: median SCORE 8,782, median duration 312.0 seconds, median peak
+  land occupancy 27.5%, p90 40.7%, and conservation error zero at 1e-6;
+- SCORE trace 500 seeds: zero decreases, zero Result mismatch, median 8.4% of
   final visible at 15 seconds and 100% before terminal Result;
-- matched freshwater 60 seeds: median duration ratio 1.154 and 5.4-second median
-  resource-exhaustion delay; controls sometimes win;
+- matched freshwater 300 seeds/294 pairs: median duration ratio 1.175 and
+  5.5-second median resource-exhaustion delay; controls sometimes win;
 - paired first-root 60 seeds: 16,000 → 19,000 potential and median SCORE
   8,892 → 10,676;
 - full-build 24 seeds: median 106 transformed, 17 reclaimed, 24 glacial-lake,
   5 maritime-forest, and 105 ever-powered cells; fresh controls had zero;
-- full-build 100 seeds: exact sustained REACH 100 in 4%; all achieved worlds
-  later became extinct; 100 fresh controls achieved zero;
-- full SCORE is bounded near 1.099 million.
+- full-build 300 seeds: exact sustained REACH 100 in 8 (2.67%); all achieved
+  worlds later became extinct; 100 fresh controls achieved zero;
+- full SCORE median/max: 1,099,200.
 
 ## Interface, speed, and accessibility
 
@@ -96,15 +96,16 @@ Current production-module evidence:
 
 ## Candidate verification
 
-- unit: 142 / 142;
+- unit: 143 / 143;
 - integration: 73 / 73 after production worldmaking/REACH and Trophy-proof tests;
-- agent smoke: 5 / 5;
+- agent smoke: 6 / 6;
 - Skill topology/content/build audit: PASS (252 cells, 16 recipes);
-- resource 150, SCORE trace 150, transformation 24: PASS;
-- freshwater 60 measured within target after finite-support tuning;
-- exact REACH cohort 100: 4 achievements, zero fresh, terminal bounded;
-- deep 1,000-world pre-final resource and SCORE cohorts established monotonicity,
-  conservation, and fresh score bounds before the final access-floor retune.
+- final resource 500, SCORE trace 500, freshwater 300, transformation 24: PASS;
+- exact REACH cohort 300: 8 achievements, zero fresh, terminal bounded;
+- nine fair policies completed twelve-world campaigns with bounded traces. At
+  world 12: Scarcity activated Wasteland Reclaimer and transformed 47 cells;
+  Marine activated Pelagic Colony; Luminous energized 311 cells; Terraforming
+  activated reclamation and transformed 14 cells. Best SCORE ranged 151k–247k.
 
 Full `npm run verify`, balance, browser WebGL2/Canvas, soak, deep audits, CI, and
 Pages/public-byte verification are required again for the final candidate.

@@ -88,7 +88,7 @@ function publicBuilds(compiled) {
     near: Object.freeze(nearSource.map(publicBuild).slice(0, 24)) });
 }
 function publicBuild(build) { return Object.freeze({ id: build.id, name: build.name ?? build.nameEn ?? build.id,
-  progress: Number.isFinite(build.progress) ? build.progress : build.active ? 1 : 0,
+  progress: Number.isFinite(build.after) ? build.after : Number.isFinite(build.progress) ? build.progress : build.active ? 1 : 0,
   active: Boolean(build.active), missing: Object.freeze((build.missing ?? []).map((item) => typeof item === 'string'
     ? item : Object.freeze({ type: item.type, id: item.id, remaining: item.remaining })).slice(0, 12)),
   effects: Object.freeze(Object.entries(build.mechanicalEffects ?? build.effect ?? {}).map(([key, value]) => Object.freeze({ key, value }))),

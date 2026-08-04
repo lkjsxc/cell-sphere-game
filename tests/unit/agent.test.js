@@ -19,6 +19,7 @@ test('fair observation uses an explicit public allowlist', () => {
     assert.deepEqual(sorted(Object.keys(skill.evolutionPower)), ['after', 'before', 'delta']);
     assert.deepEqual(sorted(Object.keys(skill.worldPotential)), ['after', 'before', 'delta']);
   }
+  assert.ok(observation.availableSkills.some((skill) => skill.buildProgress.some((build) => build.progress > 0)));
   rejectPrivateKeys(observation);
 });
 
@@ -31,6 +32,14 @@ test('agent save schema validates browser subdocuments and hashes canonical stat
   assert.equal(repaired.campaignSeed, 0); assert.equal(repaired.goal, 'balanced');
   assert.equal(repaired.worldOrdinal, 1); assert.equal(repaired.meta.echoBalance, 0);
   assert.deepEqual(repaired.history.worlds, []);
+});
+
+test('build-goal policy prioritizes visible recipe progress', () => {
+  const skill = (id, affinity, buildProgress=[]) => ({ id, name:id, affinity, tags:[], kind:'root', cost:10,
+    reachable:true, affordable:true, gameplay:{ summary:'effect', unlocks:[] }, buildProgress });
+  const observation = { availableSkills: [skill('generic','Scarcity'), skill('recipe','Fertility',[
+    { id:'wasteland-reclaimer', progress:.75, active:false }])] };
+  assert.equal(choosePolicyAction(observation,'scarcity').action.skillId,'recipe');
 });
 
 test('every deterministic policy chooses a legal action from observation only', () => {

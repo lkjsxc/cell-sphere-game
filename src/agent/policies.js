@@ -14,6 +14,15 @@ const PREFERENCES = Object.freeze({
   terraforming: ['Scarcity', 'Luminous', 'Freshwater'],
   'reach-100': ['Marine', 'Cryogenic', 'Freshwater', 'Scarcity', 'Fertility', 'Luminous'],
 });
+const TARGET_BUILDS = Object.freeze({ sustainability: ['circular-biosphere', 'lake-garden'],
+  freshwater: ['lake-garden', 'bioelectric-wetland'], 'rich-rush': ['rich-rush'],
+  'scarcity-reclaimer': ['wasteland-reclaimer', 'depletion-bloom'],
+  cryogenic: ['cold-dormancy', 'cryolake-engineer'], marine: ['pelagic-colony', 'littoral-succession', 'brine-harvester'],
+  luminous: ['illuminated-biosphere', 'bioelectric-wetland', 'hydrothermal-grid'],
+  cryolake: ['cryolake-engineer'], 'littoral-forest': ['littoral-succession'],
+  terraforming: ['wasteland-reclaimer', 'cryolake-engineer', 'littoral-succession', 'depletion-bloom'],
+  'reach-100': ['world-gardener', 'pelagic-colony', 'cold-dormancy'],
+});
 const ALIASES = Object.freeze({ scarcity: 'scarcity-reclaimer', reclaimer: 'scarcity-reclaimer',
   expansion: 'rich-rush', resilience: 'sustainability', efficiency: 'scarcity-reclaimer',
   first: 'balanced', random: 'random-legal', autonomous: 'balanced', reach100: 'reach-100' });
@@ -50,6 +59,9 @@ function candidateScore(skill, preferences, policy) {
   const text = `${skill.tags.join(' ')} ${skill.gameplay.summary}`.toLowerCase();
   const terms = policyTerms(policy); for (const term of terms) if (text.includes(term)) score += 18;
   if (skill.gameplay.unlocks.length) score += policy === 'reach-100' ? 35 : 12;
+  const targets = TARGET_BUILDS[policy] ?? [];
+  for (const build of skill.buildProgress ?? []) if (targets.includes(build.id))
+    score += 120 + (build.progress ?? 0) * 80 + (build.active ? 100 : 0);
   return score + kindPriority(skill.kind) - skill.cost / 1000;
 }
 function policyTerms(policy) {

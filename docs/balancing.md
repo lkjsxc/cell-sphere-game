@@ -31,35 +31,35 @@ Echoes use the production bounded reward curve over current-model SCORE.
 
 ### Fresh local ecology
 
-`audit:resources -- --count=150` produced:
+`audit:resources -- --count=500` produced:
 
 | Metric | p25 | median | p75 | p90 |
 |---|---:|---:|---:|---:|
-| SCORE | 6,491 | 8,692 | 10,055 | 10,852 |
-| Duration (seconds) | 296.9 | 323.5 | 361.9 | 361.9 |
-| Peak whole-world Reach | 8.0% | 13.0% | 17.5% | 21.7% |
-| Peak land occupancy | 16.3% | 26.5% | 34.4% | 42.8% |
-| Resource stock remaining | 58.8% | 64.3% | 75.2% | 89.4% |
+| SCORE | 6,699 | 8,782 | 10,036 | 10,732 |
+| Duration (seconds) | 291.4 | 312.0 | 359.5 | 361.9 |
+| Peak whole-world Reach | 8.7% | 13.3% | 17.1% | 20.5% |
+| Peak land occupancy | 17.7% | 27.5% | 34.5% | 40.7% |
+| Resource stock remaining | 59.0% | 66.3% | 76.6% | 88.1% |
 
-The 150 worlds had zero conservation error at six-decimal reporting precision.
-Living-cell time was confined to the top two initial-resource quintiles, with
-75.0% in the richest quintile. Median births occurred at 0.726 local richness.
-The median world left 73.5% of land unoccupied: new saves follow ecological
+The 500 worlds had zero conservation error at six-decimal reporting precision.
+Living-cell time was confined almost entirely to the top two initial-resource
+quintiles, with 73.5% in the richest quintile. Median births occurred at 0.719
+local richness. The median world left 72.5% of land unoccupied: new saves follow ecological
 niches rather than painting ordinary land.
 
 ### Monotone SCORE trace
 
-A 150-world tick trace recorded zero decreases and zero Result mismatches. Median
-live SCORE shares were 8.5% at 15 seconds, 49.1% at one-quarter duration, 78.5%
-at half duration, 92.7% at three-quarter duration, and 100% before the terminal
+A 500-world tick trace recorded zero decreases and zero Result mismatches. Median
+live SCORE shares were 8.4% at 15 seconds, 47.6% at one-quarter duration, 78.7%
+at half duration, 92.5% at three-quarter duration, and 100% before the terminal
 Result. The largest median tick jump was 112 SCORE.
 
 ### Finite freshwater advantage
 
-A 60-world matched-start cohort compared resource-rich cells near lakes with
-same-biome far controls. Median duration ratio was 1.154, median resource-
-exhaustion delay was 5.4 seconds, and near starts won 93.3% rather than 100%.
-Median near duration was 336.9 seconds versus 283.1 seconds far from freshwater.
+A 300-world matched-start cohort produced 294 same-biome pairs. Median duration
+ratio was 1.175, median resource-exhaustion delay was 5.5 seconds, and near
+starts won 93.9% rather than 100%. Median near duration was 340.3 seconds versus
+284.1 seconds far from freshwater.
 Finite catchment/founder stock is included in resource conservation; local
 moisture buffering does not create energy.
 
@@ -86,9 +86,9 @@ cryolakes, 5 maritime forests, and 105 ever-powered cells. Fresh controls
 produced no transformations or powered cells. Full SCORE is bounded at about
 1.099 million.
 
-A deterministic 100-seed full-build cohort achieved exact all-2,562-cell living
-coverage for the required 25 consecutive ticks in 4 seeds. Every achieved world
-later became extinct by the normal terminal bound. One hundred fresh controls
+A deterministic 300-seed full-build cohort achieved exact all-2,562-cell living
+coverage for the required 25 consecutive ticks in 8 seeds (2.67%). Every
+achieved world later became extinct by the normal terminal bound. One hundred fresh controls
 had zero achievements and median peak coverage 13.4%. `REACH 100%` is therefore
 possible, rare, exact, late-build-only, and not immortality.
 

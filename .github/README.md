@@ -47,12 +47,12 @@ becomes `SCORE | ENTROPY | REACH | RESULT`, with RESULT as the recommended actio
   1,200,000 at full Evolution. Sixteen visible build recipes compile from Skills.
 - SCORE model v3 is monotone during a world and reports cumulative Survival,
   Exploration, Presence, Coherence, Stewardship, and Worldmaking.
-- Measured fresh 150-seed medians: SCORE 8,692, duration 323.5 seconds, and 26.5%
-  peak land occupancy; 75.0% of living-cell time was in the richest quintile.
+- Measured fresh 500-seed medians: SCORE 8,782, duration 312.0 seconds, and 27.5%
+  peak land occupancy; 73.5% of living-cell time was in the richest quintile.
 - A paired 60-seed first-root check moved World Potential 16,000 → 19,000 and
   median next-world SCORE 8,892 → 10,676, not an order-of-magnitude jump.
-- Full-Evolution SCORE is capped near 1.10 million; a 100-seed full-build audit
-  produced exact sustained REACH 100% in 4% of deterministic seeds.
+- Full-Evolution SCORE is capped at 1,099,200; a 300-seed full-build audit
+  produced exact sustained REACH 100% in 2.7% of deterministic seeds.
 
 ## Technical guarantees
 
