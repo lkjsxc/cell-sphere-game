@@ -16,16 +16,16 @@
 Latest `npm run verify` benchmark:
 
 ```text
-3176 ticks in 751 ms = 4,231 ticks/s; 11 MB heap used
+3176 ticks in 447 ms = 7,103 ticks/s; 13 MB heap used
 ```
 
 Real Chrome/WebGL2 vertical slice:
 
-- public 8× fresh world: 37.91 seconds wall time;
-- explicit `?dev=1` 256× fresh world: 1.70 seconds wall time;
+- public 8× fresh world: 37.98 seconds wall time;
+- explicit `?dev=1` 256× fresh world: 1.72 seconds wall time;
 - draw calls: 4;
-- title render mean: 1.13 ms;
-- title render p95: 1.50 ms;
+- title render mean: 1.15 ms;
+- title render p95: 1.30 ms;
 - no browser errors;
 - context-loss fallback accepted Canvas frames.
 
@@ -35,7 +35,11 @@ measured on the audit host, not physical-device claims.
 ## Data layout
 
 The living world uses typed arrays and reusable snapshot/renderer buffers.
-Evolution compiles 252 ownership cells only when meta changes; Trophy state uses
+Immutable freshwater/build access profiles are compiled once. Resource ecology
+updates every living cell every tick and refreshes all cells on the same ticks
+that environment authority can mutate unoccupied cells; this removes redundant
+work without skipping an authoritative mutation. Evolution compiles 252
+ownership cells only when meta changes; Trophy state uses
 96 meaningful nodes. Event graph fields and habitat arrays are bounded by world
 cell count. No active offer/card propagation buffers remain.
 

@@ -88,10 +88,10 @@ cryolakes, 5 maritime forests, and 100 ever-powered cells. Fresh controls
 produced no transformations or powered cells. Full SCORE is bounded at about
 1.099 million.
 
-The deep production progression checkpoints measured median SCORE 518,404 at 63
-Skills / 580,000 potential, 776,768 at 126 / 848,000, and 1,099,200 at full
-252 / 1,200,000. Full median duration was 347.2 seconds and median peak Reach
-98.6%; exact coverage remains rare because it must persist for the full interval.
+The final deep production checkpoints measured median SCORE 519,393 at 63 Skills
+/ 580,000 potential, 776,768 at 126 / 848,000, and 1,099,200 at full 252 /
+1,200,000. Full median duration was 358.5 seconds and median peak Reach 98.7%;
+exact coverage remains rare because it must persist for the full interval.
 
 A deterministic 300-seed full-build cohort achieved exact all-2,562-cell living
 coverage for the required 25 consecutive ticks in 8 seeds (2.67%). Every

@@ -1,7 +1,7 @@
-# Status — local-resource ecology release candidate
+# Status — local-resource ecology release
 
-> Snapshot: 2026-08-04. This describes the current candidate. Public deployment
-> evidence is recorded only after the exact revision is pushed and Pages succeeds.
+> Snapshot: 2026-08-04. Implementation `6f56735` is pushed, CI-verified, deployed
+> by Pages, and cache-busted public-byte verified.
 
 ## Product state
 
@@ -109,7 +109,7 @@ Current production-module evidence:
 
 Final local release gates:
 
-- `npm run verify`: all 22 gates PASS; benchmark 4,231 ticks/s, 11 MB heap;
+- `npm run verify`: all 22 gates PASS; benchmark 7,103 ticks/s, 13 MB heap;
 - deep campaign: 200 fresh median SCORE 9,061 / 18 Echoes / 312.4 seconds;
   potential-policy median 105,000 after 15.565 minutes and first resolution
   20.197 minutes; full median SCORE 1,099,200;
@@ -118,8 +118,8 @@ Final local release gates:
 - full balance: six 30-run policies; PASS;
 - terminal soak: 1,000 worlds, zero invalid states, duplicate terminal messages,
   or liveness repairs; median 3,169 ticks, maximum 3,620;
-- WebGL2 real-CDP: PASS, 4 draws, SCORE 10,774, 8× completion 37.91 seconds,
-  DEV 256× 1.70 seconds, title mean 1.13 ms / p95 1.50 ms;
+- WebGL2 real-CDP: PASS, 4 draws, SCORE 10,774, 8× completion 37.98 seconds,
+  DEV 256× 1.72 seconds, title mean 1.15 ms / p95 1.30 ms;
 - Canvas real-CDP: PASS with SCORE 10,774;
 - production full-build fixtures rendered and manually inspected in both backends:
   local resource variation, recovering/reclaimed soil, cryolakes, maritime
@@ -127,7 +127,13 @@ Final local release gates:
 - title showcase replay v4: 89 frames, SHA-256
   `b19a8ccf45fd583b8ddcbb924aa190d006c7710f2a2f59dbf8bc8af802e2ae5b`.
 
-CI, Pages, public-byte comparison, and deployed-browser verification remain.
+GitHub Actions run `30948480380` passed verify and Pages for implementation
+`6f56735fd6d1832b84831476426df9ad47f68f72`. Cache-busted public `index.html`,
+SCORE, potential, resource ecology, worldmaking, shaders, and agent environment
+were SHA-256-identical to that revision. Public-network Chrome on the audit host
+returned `ERR_INTERNET_DISCONNECTED`; deployed interaction is therefore not
+claimed. The same byte-identical files passed the complete local trusted-CDP
+WebGL2/Canvas paths.
 
 ## Revision state
 
@@ -138,5 +144,8 @@ CI, Pages, public-byte comparison, and deployed-browser verification remain.
 - Evolution/build compiler: `32cedd6`.
 - RESULT/developer speed: `2fc6bc6`.
 - Fair agent environment: `745c78d`.
-- Exact final product build, push, Actions run, Pages revision, and cache-busted
-  public browser evidence: pending final verification.
+- Final product implementation/performance build:
+  `6f56735fd6d1832b84831476426df9ad47f68f72`.
+- GitHub Actions/Pages: run `30948480380`, verify and pages both succeeded.
+- Public product bytes: exact match to `6f56735`; deployed-Chrome limitation is
+  recorded above rather than reported as a pass.

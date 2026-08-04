@@ -44,6 +44,13 @@ and Canvas tests passed before implementation.
 | REACH B | low final route cost achieved 37%, too common | Reject and restore meaningful cost. |
 | REACH C | route cost 0.72: exact sustained rate 4/100; all later extinct | Accept for 300-seed verification. |
 | SCORE cap | full cohort saturated at 1.106m | Tighten component caps to ~1.099m. |
+| Performance A | first CI measured 1,777 ticks/s below 3,000 gate | Reject; profile local ecology hot paths. |
+| Performance B | immutable access/freshwater profiles and mutation-aligned resource refresh: local 7,103 ticks/s, fresh hash `8871b024` unchanged | Accept; retain 3,000 gate. |
 
-Final deploy/browser/CI evidence will change relevant rows to **deployed** only after
-public bytes are verified against the reviewed revision.
+Implementation `6f56735fd6d1832b84831476426df9ad47f68f72` passed GitHub Actions
+run `30948480380`; verify and Pages succeeded. Seven cache-busted public files
+were byte-identical, including resource ecology, SCORE, potential, worldmaking,
+shaders, and agent authority. Local trusted-CDP WebGL2/Canvas passed against
+those bytes. Public-network Chrome returned `ERR_INTERNET_DISCONNECTED`, so no
+remote-interaction pass is fabricated; the deployment status is **deployed with
+that explicit host limitation**.
