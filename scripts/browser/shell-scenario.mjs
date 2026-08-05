@@ -1,4 +1,6 @@
 /** Trusted-CDP production evidence for the unified shell vertical slice. */
+import { assertSkillGeometry } from './evidence.mjs';
+
 export async function runScenario(t) {
   const { evaluate, wait, poll, errors, click, drag, screenshot, setViewport, key } = t;
   let boot = await evaluate('window.__CELL_SPHERE_BOOT__'); ok(boot?.playable, 'app did not boot');
@@ -147,6 +149,7 @@ export async function runScenario(t) {
   const nodeId = await evaluate(`window.__CELL_SPHERE_APP__.memorySnapshot.nodeStates.find(n=>n.reachable&&n.affordable&&!n.owned)?.id`); ok(nodeId, 'no adjacent affordable Skill Cell');
   const ownedBefore = await evaluate('window.__CELL_SPHERE_APP__.meta.memoryNodes.length'); await evaluate(`window.__CELL_SPHERE_APP__.selectMemoryNode(${JSON.stringify(nodeId)})`);
   const skillDetail = await evaluate(`document.getElementById('memory-node-panel').textContent`); ok(skillDetail.includes('Gameplay') && skillDetail.includes('World Potential') && skillDetail.includes('→') && skillDetail.includes('held'), `Skill detail lacks before/after evidence: ${skillDetail}`);
+  await assertSkillGeometry(t);
   await trustedId(t, 'memory-unlock');
   ok(await evaluate(`window.__CELL_SPHERE_APP__.meta.memoryNodes.length`) === ownedBefore + 1, 'Skill unlock transaction failed');
   ok(await evaluate(`window.__CELL_SPHERE_APP__.phase==='result'&&window.__CELL_SPHERE_APP__.worldIdentity.resultTransactionKey===${JSON.stringify(runIdentity)}`), 'Evolution replaced terminal world authority');

@@ -52,20 +52,33 @@ export async function assertDockGeometry(t) {
 }
 export async function assertSkillGeometry(t) {
   const { evaluate, setViewport, wait, screenshot } = t;
-  for (const [width, height] of [[320,568],[360,640],[390,844],[430,932],[844,390],[768,1024],[1440,900]]) {
+  for (const [width, height] of [[320,568],[360,480],[390,320],[390,844],[430,932],[640,360],[667,375],[844,390],[768,1024],[1440,900]]) {
     await setViewport(width,height); await wait(100);
-    const g = await evaluate(`(() => { const app=window.__CELL_SPHERE_APP__,panel=document.getElementById('memory-node-panel'),body=panel.querySelector('.surface-body'),
-      footer=panel.querySelector('.surface-actions'),close=document.getElementById('memory-node-close').getBoundingClientRect(); body.scrollTop=body.scrollHeight;
-      const last=document.querySelector('#memory-node-meta dd:last-of-type')?.getBoundingClientRect(),f=footer.getBoundingClientRect(),p=panel.getBoundingClientRect(); body.scrollTop=0;
-      return {dist:app.camera.dist,p:[p.left,p.top,p.right,p.bottom],close:[close.left,close.top,close.right,close.bottom],
-        overlap:Boolean(last&&last.bottom>f.top+1),horizontal:panel.scrollWidth>panel.clientWidth}; })()`);
+    const g = await skillGeometry(evaluate);
     const distMax = width < 600 ? 5.6 : width < 900 ? 4.7 : 3.8;
     assert(!g.overlap && !g.horizontal && g.dist <= distMax && g.p[0] >= -1 && g.p[1] >= -1
-      && g.p[2] <= width + 1 && g.p[3] <= height + 1 && g.close[0] >= 0 && g.close[2] <= width,
+      && g.p[2] <= width + 1 && g.p[3] <= height + 1 && g.close[0] >= 0 && g.close[2] <= width
+      && g.unlock[0] >= g.p[0] && g.unlock[1] >= g.p[1] && g.unlock[2] <= g.p[2]
+      && g.unlock[3] <= Math.min(g.p[3], height) && g.unlock[3] - g.unlock[1] >= 43,
     `skill geometry at ${width}x${height}: ${JSON.stringify(g)}`);
-    if ([[320,568],[390,844],[844,390],[768,1024],[1440,900]].some(v=>v[0]===width&&v[1]===height)) await screenshot(`browser-skill-${width}x${height}.png`);
+    if ([[320,568],[390,320],[390,844],[667,375],[844,390],[768,1024],[1440,900]].some(v=>v[0]===width&&v[1]===height)) await screenshot(`browser-skill-${width}x${height}.png`);
   }
+  await setViewport(320,568); await evaluate("document.documentElement.style.fontSize='200%'"); await wait(100);
+  const scaled = await skillGeometry(evaluate);
+  assert(scaled.unlock[0] >= scaled.p[0] && scaled.unlock[2] <= scaled.p[2]
+    && scaled.unlock[1] >= scaled.p[1] && scaled.unlock[3] <= Math.min(scaled.p[3], 568)
+    && scaled.unlock[3] - scaled.unlock[1] >= 43, `200% Skill unlock geometry: ${JSON.stringify(scaled)}`);
+  await screenshot('browser-skill-text-200.png'); await evaluate("document.documentElement.style.fontSize=''");
   await setViewport(390,844); await wait(100);
+}
+async function skillGeometry(evaluate) {
+  return evaluate(`(() => { const app=window.__CELL_SPHERE_APP__,panel=document.getElementById('memory-node-panel'),body=panel.querySelector('.surface-body'),
+    footer=panel.querySelector('.surface-actions'),close=document.getElementById('memory-node-close').getBoundingClientRect(),unlock=document.getElementById('memory-unlock').getBoundingClientRect(); body.scrollTop=body.scrollHeight;
+    const last=document.querySelector('#memory-node-meta dd:last-of-type')?.getBoundingClientRect(),f=footer.getBoundingClientRect(),p=panel.getBoundingClientRect(); body.scrollTop=0;
+    return {dist:app.camera.dist,p:[p.left,p.top,p.right,p.bottom],close:[close.left,close.top,close.right,close.bottom],unlock:[unlock.left,unlock.top,unlock.right,unlock.bottom],footer:[f.left,f.top,f.right,f.bottom],
+      rows:getComputedStyle(panel).gridTemplateRows,padding:getComputedStyle(panel).padding,footerHeight:getComputedStyle(footer).height,
+      footerGrid:getComputedStyle(footer).gridRow,footerMin:getComputedStyle(footer).minHeight,beforePosition:getComputedStyle(panel,'::before').position,beforeGrid:getComputedStyle(panel,'::before').gridRow,
+      overlap:Boolean(last&&last.bottom>f.top+1),horizontal:panel.scrollWidth>panel.clientWidth}; })()`);
 }
 function distance(a, b) { return Math.hypot(...a.map((value, index) => value - b[index])); }
 function assert(value, message) { if (!value) throw new Error(message); }

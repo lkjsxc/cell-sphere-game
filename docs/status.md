@@ -32,6 +32,10 @@
 
 ## Evolution, builds, and migration
 
+- Evolution Skill detail now uses its actual three-row structure rather than the
+  shared four-row shell template. The Unlock footer has a noncollapsing track,
+  constrained columns, and a taller bounded mobile sheet; the button is fully
+  visible at short portrait/landscape sizes and 200% text.
 - Evolution remains a frequency-5 sphere: 252 cells, 750 boundaries, 12
   pentagons, and 240 hexagons.
 - The six 42-cell affinities are Fertility, Freshwater, Scarcity, Cryogenic,

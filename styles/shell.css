@@ -87,8 +87,7 @@
   touch-action: pan-y;
   user-select: text;
 }
-.context-result, .context-history, .context-event-log, .context-metric,
-.context-menu, .skill-detail, .context-confirm {
+.context-result, .context-history, .context-event-log, .context-metric, .context-menu {
   display: grid;
   grid-template-rows: auto minmax(0, auto) minmax(0, 1fr) auto;
   overflow: hidden;
@@ -107,6 +106,12 @@
   touch-action: pan-y;
 }
 .context-result, .context-history { grid-template-rows: auto minmax(0, 1fr) auto; }
+.skill-detail, .context-confirm { display: grid; grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) max-content; overflow: hidden; }
+.skill-detail > header, .skill-detail > .surface-actions { min-width: 0; }
+.skill-detail > header .eyebrow { min-width: 0; overflow-wrap: anywhere; }
+.skill-detail .inspection-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); }
+.skill-detail .inspection-grid dd { overflow-wrap: anywhere; }
 .menu-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
 .result-milestone { color: var(--action-available); font-weight: 700; }
 .context-result h3, .metric-slot h3, .menu-group h3 { margin-top: var(--sp-3); color: var(--text-secondary); font-size: var(--fs-caption); letter-spacing: .08em; text-transform: uppercase; }
@@ -155,6 +160,7 @@
     border-radius: var(--radius-l) var(--radius-l) 0 0;
   }
   .context-shell::before { content: ""; position: absolute; z-index: 2; top: 7px; left: 50%; width: 2.5rem; height: 3px; background: var(--border-strong); border-radius: var(--radius-pill); transform: translateX(-50%); }
+  .context-shell:has(.skill-detail:not([hidden])) { height: min(76dvh, 34rem); }
   .context-surface { padding: var(--sp-4) var(--sp-3) calc(var(--sp-3) + var(--safe-bottom)); }
   .context-surface header { padding-top: var(--sp-2); }
   #app:has(.context-shell:not([hidden])) .hud-event { bottom: calc(56dvh + var(--sp-2) + var(--safe-bottom)); }
