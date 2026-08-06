@@ -7,20 +7,30 @@ import { REACH_MEMORY } from './reach.js';
 import { RESERVE_MEMORY } from './reserve.js';
 import { renderMemorySnapshot } from './scene.js';
 import { MEMORY_ATLAS_HASH } from './atlas.js';
-import { AFFINITY_METADATA_HASH, EVOLUTION_AFFINITIES, EVOLUTION_AFFINITY_IDS,
-  EVOLUTION_CONTENT_VERSION } from './affinities.js';
-import { BUILD_RECIPES, compileBuilds } from './builds.js';
-import { BASE_WORLD_POTENTIAL, FULL_EVOLUTION_POWER, WORLD_POTENTIAL_VERSION,
-  worldPotentialForPower } from './potential.js';
+import { AFFINITY_METADATA_HASH, EVOLUTION_AFFINITY_IDS, EVOLUTION_CONTENT_VERSION } from './affinities.js';
+import { BUILD_MASTERY_VERSION } from './builds.js';
+import { FULL_EVOLUTION_POWER, WORLD_POTENTIAL_VERSION } from './potential.js';
+import { EVOLUTION_COST_VERSION, nextEvolutionCostForNode } from './cost.js';
+import { EVOLUTION_EFFECT_VERSION, compileEvolutionVector } from './effects.js';
+import { EVOLUTION_LEVEL_VECTOR_VERSION, canonicalLevelVectorKey, levelFromVector,
+  levelMapFromVector, normalizeEvolutionLevelVector, normalizedMetaRevision,
+  ownedIdsFromVector, replaceEvolutionLevel, summarizeEvolutionLevelVector } from './levels.js';
+import { compareProgressionIntegers, incrementProgressionInteger, normalizeProgressionInteger,
+  parseProgressionInteger, subtractProgressionIntegers } from '../../core/progression-integer.js';
 import { hashStringU32, hexU32 } from '../../core/hash.js';
 import { createGeodesicTopology } from '../../world/icosphere.js';
 export { createMemoryFields } from './scene.js';
 export { MEMORY_ATLAS_REVERSE } from './atlas.js';
 export { applyMemoryConditionals } from './node.js';
 export { AFFINITY_METADATA_HASH, EVOLUTION_AFFINITIES, EVOLUTION_AFFINITY_IDS, EVOLUTION_CONTENT_VERSION } from './affinities.js';
-export { BUILD_RECIPES, compileBuilds } from './builds.js';
+export { BUILD_MASTERY_VERSION, BUILD_RECIPES, compileBuilds } from './builds.js';
+export { EVOLUTION_COST_VERSION, evolutionCostForTargetLevel } from './cost.js';
+export { EVOLUTION_EFFECT_VERSION, EVOLUTION_COMPILE_CACHE_LIMIT, clearEvolutionCompileCache,
+  evolutionCompileCacheDiagnostics, getEvolutionCompileCacheDiagnostics, resetEvolutionCompileCache } from './effects.js';
+export { EVOLUTION_LEVEL_VECTOR_VERSION, boundedEvolutionLevelRefinement } from './levels.js';
 export { BASE_WORLD_POTENTIAL, EVOLUTION_POWER_BY_KIND, FULL_EVOLUTION_POWER, WORLD_POTENTIAL_ANCHORS,
-  WORLD_POTENTIAL_VERSION, modeledScoreRange, worldPotentialForPower } from './potential.js';
+  WORLD_POTENTIAL_VERSION, legacyWorldPotentialV2Number, modeledScoreRange,
+  worldPotentialForBreadthAndDepth, worldPotentialForPower } from './potential.js';
 
 export const MEMORY_GRAPH_VERSION = 5;
 export const HABITAT_CAPABILITIES = Object.freeze([
@@ -45,29 +55,59 @@ export const MEMORY_CELL_BY_ID = Object.freeze(Object.fromEntries(MEMORY_NODES.m
 export const MEMORY_PHYSICAL_ADJACENCY = Object.freeze(Object.fromEntries(MEMORY_NODES.map((node) => [node.id,
   Object.freeze(Array.from(TOPOLOGY.nodeNeighbors.slice(TOPOLOGY.nodeStart[node.cell], TOPOLOGY.nodeStart[node.cell + 1]),
     (cell) => BY_CELL.get(cell)?.id).filter(Boolean))])));
-const ADDITIVE = new Set(['growthCap', 'anastomosis', 'redundantLoops',
+const ADDITIVE_EFFECT_KEYS = Object.freeze(['growthCap', 'anastomosis', 'redundantLoops',
   'coldReserve', 'symbioticFilm', 'distributedSensing']);
 const EFFECT_KEYS = new Set(['reach', 'uptake', 'maintenance', 'conductance', 'reinforce',
   'stressResist', 'heatTol', 'droughtTol', 'toxinTol',
-  'energyCap', 'regrow', 'growCost', ...ADDITIVE]);
-const COMPILED = new Map(); const COMPILED_LIMIT = 512;
+  'energyCap', 'regrow', 'growCost', ...ADDITIVE_EFFECT_KEYS]);
+
+export const EVOLUTION_COMPILER_VERSIONS = Object.freeze({
+  levels: EVOLUTION_LEVEL_VECTOR_VERSION, cost: EVOLUTION_COST_VERSION,
+  effects: EVOLUTION_EFFECT_VERSION, mastery: BUILD_MASTERY_VERSION,
+  potential: WORLD_POTENTIAL_VERSION,
+});
 
 export function getMemoryNode(id) { return BY_ID.get(id) ?? null; }
 export function getMemoryAdjacentIds(id) { return MEMORY_PHYSICAL_ADJACENCY[id] ?? Object.freeze([]); }
-export function newlyAvailableAdjacentIds(meta, id) {
-  const owned = recognizedOwnedIds(meta); const baseline = owned.has(id)
-    ? { ...meta, memoryNodes: (meta?.memoryNodes ?? []).filter((ownedId) => ownedId !== id) } : meta;
-  return Object.freeze(getMemoryAdjacentIds(id).filter((neighborId) => {
-    const state = memoryNodeState(baseline, BY_ID.get(neighborId)); return state && !state.owned && !state.reachable;
-  }));
+export function normalizeEvolutionLevels(meta) {
+  return normalizeEvolutionLevelVector(meta, MEMORY_NODE_IDS);
 }
-function recognizedOwnedIds(meta) {
-  return new Set(Array.isArray(meta?.memoryNodes) ? meta.memoryNodes.filter((id) => BY_ID.has(id)) : []);
+export function evolutionLevel(meta, id) {
+  return BY_ID.has(id) ? levelFromVector(normalizeEvolutionLevels(meta), id) : '0';
 }
+export function ownedEvolutionIds(meta) {
+  return ownedIdsFromVector(normalizeEvolutionLevels(meta));
+}
+export function canonicalEvolutionKey(meta) {
+  return canonicalLevelVectorKey(normalizeEvolutionLevels(meta));
+}
+export function evolutionLevelVectorHash(meta) {
+  return hexU32(hashStringU32(canonicalEvolutionKey(meta)));
+}
+export function evolutionSummary(meta) {
+  return summarizeEvolutionLevelVector(normalizeEvolutionLevels(meta), MEMORY_NODES, EVOLUTION_AFFINITY_IDS);
+}
+export function evolutionAffinitySummaries(meta) { return evolutionSummary(meta).affinities; }
+export function evolutionAffinitySummary(meta, affinityId) {
+  return evolutionAffinitySummaries(meta).find((entry) => entry.affinity === affinityId) ?? null;
+}
+export function evolutionAffinityBreadth(meta) {
+  return Object.freeze(Object.fromEntries(evolutionAffinitySummaries(meta)
+    .map((entry) => [entry.affinity, entry.breadth])));
+}
+export function evolutionAffinityDepth(meta) {
+  return Object.freeze(Object.fromEntries(evolutionAffinitySummaries(meta)
+    .map((entry) => [entry.affinity, entry.depth])));
+}
+export const affinityEvolutionSummaries = evolutionAffinitySummaries;
+export const affinityBreadthSummary = evolutionAffinityBreadth;
+export const affinityDepthSummary = evolutionAffinityDepth;
+
+function recognizedOwnedIds(meta) { return new Set(ownedEvolutionIds(meta)); }
 function firstOwnedAdjacentId(id, ownedIds) {
   return getMemoryAdjacentIds(id).find((neighborId) => ownedIds.has(neighborId)) ?? null;
 }
-/** The sole current adjacency authority; only actual level-3 cell neighbors count. */
+/** The sole current adjacency authority; only actual frequency-5 cell neighbors count. */
 export function hasOwnedAdjacentCell(meta, id, ownedIds = recognizedOwnedIds(meta)) {
   return BY_ID.has(id) && firstOwnedAdjacentId(id, ownedIds) !== null;
 }
@@ -78,113 +118,149 @@ function memoryFrontier(meta, id, ownedIds) {
     bootstrap, frontierMet: adjacencyMet || bootstrap };
 }
 
-export function memoryNodeState(meta, node, selectedId = null, ownedIds = recognizedOwnedIds(meta)) {
-  const current = BY_ID.get(node?.id); if (!current) return null;
-  const owned = ownedIds.has(current.id); const frontier = memoryFrontier(meta, current.id, ownedIds);
-  const affordable = Number.isFinite(meta?.echoBalance) && meta.echoBalance >= current.cost;
-  return Object.freeze({ ...current, owned, reachable: !owned && frontier.frontierMet,
+export function evolutionCellState(meta, nodeOrId, selectedId = null) {
+  const id = typeof nodeOrId === 'string' ? nodeOrId : nodeOrId?.id;
+  const node = BY_ID.get(id);
+  if (!node) return Object.freeze({ id: id ?? null, reason: 'unknown-cell', owned: false,
+    locked: true, reachable: false, affordable: false, selectedReady: false,
+    currentLevel: '0', nextLevel: '1', nextCost: null });
+  const vector = normalizeEvolutionLevels(meta); const levels = levelMapFromVector(vector);
+  const currentLevel = levels.get(id) ?? '0'; const nextLevel = incrementProgressionInteger(currentLevel);
+  const nextCost = nextEvolutionCostForNode(node, currentLevel);
+  const ownedIds = new Set(vector.map((entry) => entry.id)); const owned = currentLevel !== '0';
+  const frontier = memoryFrontier(meta, id, ownedIds); const reachable = owned || frontier.frontierMet;
+  const balance = normalizeProgressionInteger(meta?.echoBalance, '0');
+  const affordable = compareProgressionIntegers(balance, nextCost) >= 0;
+  const reason = !reachable ? 'adjacency-required' : !affordable ? 'insufficient-echoes' : 'ready';
+  return Object.freeze({ ...node, currentLevel, nextLevel, nextCost, owned, reachable,
     locked: !owned && !frontier.frontierMet, affordable, adjacencyMet: frontier.adjacencyMet,
-    adjacentOwnedId: frontier.adjacentOwnedId, bootstrap: frontier.bootstrap,
-    selectedReady: selectedId === current.id && !owned && frontier.frontierMet && affordable });
+    adjacentOwnedId: frontier.adjacentOwnedId, bootstrap: frontier.bootstrap, reason,
+    selectedReady: selectedId === id && reason === 'ready' });
 }
 
+/** Legacy state alias; ownership and readiness are derived from levels. */
+export function memoryNodeState(meta, node, selectedId = null) {
+  const state = evolutionCellState(meta, node, selectedId);
+  return state.reason === 'unknown-cell' ? null : state;
+}
 export function groupAccessibleMemory(meta, selectedId = null) {
-  const ownedIds = recognizedOwnedIds(meta);
-  const nodes = MEMORY_NODES.map((node) => memoryNodeState(meta, node, selectedId, ownedIds));
+  const nodes = MEMORY_NODES.map((node) => evolutionCellState(meta, node, selectedId));
   return Object.freeze(MEMORY_BRANCHES.map((affinity) => Object.freeze({ branch: affinity, affinity,
     nodes: Object.freeze(nodes.filter((node) => node.affinity === affinity)) })));
 }
 export function availableMemoryNodes(meta) {
-  return Object.freeze(MEMORY_NODES.filter((node) => canPurchaseMemory(meta, node.id)));
+  const ready = MEMORY_NODES.map((node) => evolutionCellState(meta, node, node.id))
+    .filter((state) => state.reason === 'ready');
+  return Object.freeze([...ready.filter((state) => !state.owned), ...ready.filter((state) => state.owned)]);
 }
-export function canPurchaseMemory(meta, id) {
-  const node = BY_ID.get(id);
-  if (!node || !Array.isArray(meta?.memoryNodes) || !Number.isFinite(meta.echoBalance)) return false;
-  const state = memoryNodeState(meta, node, id);
-  return state.selectedReady;
+export function canPurchaseEvolutionLevel(meta, id) {
+  return evolutionCellState(meta, id, id).reason === 'ready';
 }
-export function purchaseMemory(meta, id) {
-  if (!canPurchaseMemory(meta, id)) return Object.freeze({ ok: false, meta });
-  const node = BY_ID.get(id); const balance = meta.echoBalance - node.cost;
-  if (balance < 0) return Object.freeze({ ok: false, meta });
-  const next = { ...meta, echoBalance: balance, memoryNodes: [...meta.memoryNodes, id] };
-  return Object.freeze({ ok: true, node, spent: node.cost, preview: memoryPurchasePreview(meta, id), meta: next });
-}
-export const transactMemoryPurchase = purchaseMemory;
+/** Legacy eligibility alias; owned cells remain purchasable for their next level. */
+export const canPurchaseMemory = canPurchaseEvolutionLevel;
 
-/** Compile canonical owned order once; disconnected migrated islands remain effective. */
-export function compileMemory(meta) {
-  const owned = recognizedOwnedIds(meta); const key = MEMORY_NODE_IDS.filter((id) => owned.has(id)).join('|');
-  if (COMPILED.has(key)) return COMPILED.get(key);
-  const effects = {}; const conditionals = []; const unlocks = []; const resonance = new Map(); const ownedNodes = [];
-  let evolutionPower = 0;
-  for (const node of MEMORY_NODES) {
-    if (!owned.has(node.id)) continue; const effect = node.effect; ownedNodes.push(node);
-    evolutionPower += node.evolutionPower;
-    if (effect.type === 'scalar') mergeEffect(effects, effect);
-    else if (effect.type === 'conditional') conditionals.push(Object.freeze({ nodeId: node.id, ...effect }));
-    else if (effect.type === 'resonance') {
-      const resonanceKey = `${effect.branch}:${effect.key}:${effect.direction}:${effect.cap}:${effect.scale}`;
-      resonance.set(resonanceKey, { ...effect, points: (resonance.get(resonanceKey)?.points ?? 0) + 1 });
-    } else unlocks.push(Object.freeze({ nodeId: node.id, key: effect.key, mode: effect.mode }));
-    if (effect.bonus) mergeEffect(effects, effect.bonus);
-  }
-  const resonanceCurves = [];
-  for (const curve of resonance.values()) {
-    const benefit = curve.cap * (1 - Math.exp(-curve.points / curve.scale));
-    const value = curve.direction === 'down' ? 1 - benefit : 1 + benefit;
-    mergeEffect(effects, { key: curve.key, value, operation: 'multiply' });
-    resonanceCurves.push(Object.freeze({ ...curve, value }));
-  }
-  boundCompiledEffects(effects);
-  const capabilitySet = new Set(unlocks.filter((entry) => entry.mode === 'habitat').map((entry) => entry.key));
-  const builds = compileBuilds(ownedNodes); const worldPotential = worldPotentialForPower(evolutionPower);
-  const compiled = Object.freeze({ effects: Object.freeze(effects),
-    conditionals: Object.freeze(conditionals), unlocks: Object.freeze(unlocks),
-    resonanceCurves: Object.freeze(resonanceCurves), evolutionPower, worldPotential,
-    potentialVersion: WORLD_POTENTIAL_VERSION, contentVersion: EVOLUTION_CONTENT_VERSION,
-    habitatCapabilities: Object.freeze(HABITAT_CAPABILITIES.filter((keyName) => capabilitySet.has(keyName))),
-    activeBuilds: builds.activeBuilds, nearBuilds: builds.nearBuilds, buildEffects: builds.buildEffects,
-    buildCapabilities: builds.capabilities, transformations: builds.transformations });
-  COMPILED.set(key, compiled);
-  if (COMPILED.size > COMPILED_LIMIT) COMPILED.delete(COMPILED.keys().next().value);
-  return compiled;
+export function newlyAvailableAdjacentIds(meta, id) {
+  const vector = normalizeEvolutionLevels(meta); const current = levelFromVector(vector, id);
+  const baseline = current !== '0'
+    ? { ...meta, evolutionLevels: replaceEvolutionLevel(vector, MEMORY_NODE_IDS, id, '0') } : meta;
+  return Object.freeze(getMemoryAdjacentIds(id).filter((neighborId) => {
+    const state = evolutionCellState(baseline, neighborId); return !state.owned && !state.reachable;
+  }));
 }
 
-export function worldPotential(meta) { return compileMemory(meta).worldPotential; }
-export function memoryPurchasePreview(meta, id) {
-  const node = BY_ID.get(id); if (!node) return null; const owned = recognizedOwnedIds(meta).has(id);
-  const without = owned ? { ...meta, memoryNodes: (meta?.memoryNodes ?? []).filter((ownedId) => ownedId !== id) } : meta;
-  const withNode = owned ? meta : { ...meta, memoryNodes: [...(meta?.memoryNodes ?? []), id] };
-  const before = compileMemory(without);
-  const after = compileMemory(withNode);
+export function nextEvolutionCost(meta, id) {
+  const node = BY_ID.get(id); return node ? nextEvolutionCostForNode(node, evolutionLevel(meta, id)) : null;
+}
+
+export function compileEvolution(meta) {
+  const vector = normalizeEvolutionLevels(meta);
+  return compileEvolutionVector({ vector, canonicalKey: canonicalLevelVectorKey(vector), nodes: MEMORY_NODES,
+    summary: summarizeEvolutionLevelVector(vector, MEMORY_NODES, EVOLUTION_AFFINITY_IDS),
+    contentVersion: EVOLUTION_CONTENT_VERSION, habitatCapabilities: HABITAT_CAPABILITIES });
+}
+/** Legacy compiler alias; binary ownership is never authoritative. */
+export const compileMemory = compileEvolution;
+export function worldPotential(meta) { return compileEvolution(meta).worldPotential; }
+
+export function previewEvolutionLevel(meta, id) {
+  const node = BY_ID.get(id); if (!node) return null;
+  const vector = normalizeEvolutionLevels(meta); const oldLevel = levelFromVector(vector, id);
+  const newLevel = incrementProgressionInteger(oldLevel); const cost = nextEvolutionCostForNode(node, oldLevel);
+  const nextVector = replaceEvolutionLevel(vector, MEMORY_NODE_IDS, id, newLevel);
+  const before = compileEvolution({ ...meta, evolutionLevels: vector });
+  const after = compileEvolution({ ...meta, evolutionLevels: nextVector });
   const keys = new Set([...Object.keys(before.effects), ...Object.keys(after.effects)]);
   const changes = [...keys].filter((keyName) => (before.effects[keyName] ?? 1) !== (after.effects[keyName] ?? 1))
-    .map((keyName) => Object.freeze({ key: keyName, before: before.effects[keyName] ?? 1, after: after.effects[keyName] ?? 1 }));
+    .map((keyName) => Object.freeze({ key: keyName, before: before.effects[keyName] ?? 1,
+      after: after.effects[keyName] ?? 1 }));
   const unlocked = after.unlocks.filter((entry) => !before.unlocks.some((old) => old.key === entry.key));
   const beforeBuilds = new Map([...before.activeBuilds, ...before.nearBuilds].map((build) => [build.id, build]));
-  const buildProgress = [...after.activeBuilds, ...after.nearBuilds].filter((build) => node.buildContributions.includes(build.id)).map((build) => Object.freeze({
-    id: build.id, name: build.name, before: beforeBuilds.get(build.id)?.progress ?? 0, after: build.progress,
-    active: build.active, missing: build.missing,
-  }));
-  return Object.freeze({ nodeId: id, powerBefore: before.evolutionPower, powerAfter: after.evolutionPower,
-    powerGain: after.evolutionPower - before.evolutionPower, potentialBefore: before.worldPotential, potentialAfter: after.worldPotential,
-    potentialDelta: after.worldPotential - before.worldPotential, changes: Object.freeze(changes), unlocked: Object.freeze(unlocked),
-    buildProgress: Object.freeze(buildProgress) });
+  const buildProgress = [...after.activeBuilds, ...after.nearBuilds]
+    .filter((build) => node.buildContributions.includes(build.id)).map((build) => Object.freeze({
+      id: build.id, name: build.name, before: beforeBuilds.get(build.id)?.progress ?? 0, after: build.progress,
+      rankBefore: beforeBuilds.get(build.id)?.masteryRank ?? '0', rankAfter: build.masteryRank,
+      active: build.active, missing: build.missing,
+    }));
+  return Object.freeze({ nodeId: id, oldLevel, newLevel, cost,
+    powerBefore: before.evolutionPower, powerAfter: after.evolutionPower,
+    powerGain: after.evolutionPower - before.evolutionPower,
+    potentialBefore: before.worldPotential, potentialAfter: after.worldPotential,
+    potentialDelta: subtractProgressionIntegers(after.worldPotential, before.worldPotential),
+    changes: Object.freeze(changes), unlocked: Object.freeze(unlocked),
+    buildProgress: Object.freeze(buildProgress), compilerVersions: EVOLUTION_COMPILER_VERSIONS });
 }
-function mergeEffect(target, effect) {
-  if (effect.operation === 'add' || ADDITIVE.has(effect.key)) target[effect.key] = (target[effect.key] ?? 0) + effect.value;
-  else target[effect.key] = (target[effect.key] ?? 1) * effect.value;
+/** Legacy preview alias; it now previews exactly one next level. */
+export const memoryPurchasePreview = previewEvolutionLevel;
+
+export function purchaseEvolutionLevel(meta, id, command = {}) {
+  const node = BY_ID.get(id); const balanceBefore = normalizeProgressionInteger(meta?.echoBalance, '0');
+  const revision = normalizedMetaRevision(meta); const transactionKey = validTransactionKey(command?.transactionKey);
+  if (!node) return failedPurchase(meta, null, id, 'unknown-cell', balanceBefore, revision, transactionKey);
+  const vector = normalizeEvolutionLevels(meta); const oldLevel = levelFromVector(vector, id);
+  const receipts = normalizeTransactionKeys(meta?.evolutionTransactionKeys);
+  if (transactionKey && receipts.includes(transactionKey))
+    return failedPurchase(meta, node, id, 'duplicate-transaction', balanceBefore, revision, transactionKey, oldLevel);
+  if (command?.expectedLevel !== undefined && canonicalCommandInteger(command.expectedLevel) !== oldLevel)
+    return failedPurchase(meta, node, id, 'stale-level', balanceBefore, revision, transactionKey, oldLevel);
+  if (command?.expectedRevision !== undefined && canonicalCommandInteger(command.expectedRevision) !== revision)
+    return failedPurchase(meta, node, id, 'stale-revision', balanceBefore, revision, transactionKey, oldLevel);
+  const state = evolutionCellState({ ...meta, evolutionLevels: vector, echoBalance: balanceBefore }, id, id);
+  if (state.reason !== 'ready')
+    return failedPurchase(meta, node, id, state.reason, balanceBefore, revision, transactionKey, oldLevel, state.nextCost);
+  const preview = previewEvolutionLevel({ ...meta, evolutionLevels: vector }, id);
+  const balanceAfter = subtractProgressionIntegers(balanceBefore, state.nextCost);
+  const newLevel = state.nextLevel; const evolutionLevels = replaceEvolutionLevel(vector, MEMORY_NODE_IDS, id, newLevel);
+  const nextReceipts = transactionKey ? [...receipts.filter((key) => key !== transactionKey), transactionKey].slice(-32) : receipts;
+  const { memoryNodes: _legacyMemoryNodes, ...canonicalInput } = meta ?? {};
+  const nextMeta = Object.freeze({ ...canonicalInput, evolutionLevels, echoBalance: balanceAfter,
+    revision: incrementProgressionInteger(revision), evolutionTransactionKeys: Object.freeze(nextReceipts) });
+  return Object.freeze({ ok: true, reason: 'ready', node, nodeId: id, oldLevel, newLevel,
+    cost: state.nextCost, spent: state.nextCost, balanceBefore, balanceAfter, transactionKey,
+    preview, compilerVersions: EVOLUTION_COMPILER_VERSIONS, meta: nextMeta });
 }
-const EFFECT_CAPS = Object.freeze({ reach:.9, uptake:.9, maintenance:.5, conductance:1, reinforce:.8,
-  stressResist:.9, heatTol:.5, droughtTol:.5, toxinTol:.5, energyCap:.9, regrow:.9, growCost:.35 });
-function boundCompiledEffects(effects) {
-  for (const [key, cap] of Object.entries(EFFECT_CAPS)) if (key in effects) {
-    const raw = effects[key]; const delta = Math.abs(raw - 1);
-    effects[key] = raw < 1 ? 1 - cap * (1 - Math.exp(-delta / cap)) : 1 + cap * (1 - Math.exp(-delta / cap));
-  }
+
+function failedPurchase(meta, node, id, reason, balance, revision, transactionKey, oldLevel = '0', cost = null) {
+  const canonicalCost = cost ?? (node ? nextEvolutionCostForNode(node, oldLevel) : null);
+  return Object.freeze({ ok: false, reason, node, nodeId: id, oldLevel,
+    newLevel: oldLevel, cost: canonicalCost, spent: '0', balanceBefore: balance,
+    balanceAfter: balance, revision, transactionKey, preview: node ? previewEvolutionLevel(meta, id) : null,
+    compilerVersions: EVOLUTION_COMPILER_VERSIONS, meta });
 }
-export function memoryEffects(meta) { return compileMemory(meta).effects; }
+function canonicalCommandInteger(value) {
+  try { return parseProgressionInteger(value); } catch { return null; }
+}
+function validTransactionKey(value) {
+  return typeof value === 'string' && value.length > 0 && value.length <= 128 ? value : null;
+}
+function normalizeTransactionKeys(value) {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((key) => validTransactionKey(key)))].slice(-32);
+}
+
+/** Legacy transaction aliases backed by level authority. */
+export const purchaseMemory = purchaseEvolutionLevel;
+export const transactMemoryPurchase = purchaseEvolutionLevel;
+export function memoryEffects(meta) { return compileEvolution(meta).effects; }
 export function campaignResolved(meta) { return Number.isFinite(meta?.runs) && meta.runs >= 5; }
 export function buildMemoryScene(meta, selectedId = null) {
   const groups = groupAccessibleMemory(meta, selectedId); const nodes = Object.freeze(groups.flatMap((group) => group.nodes));

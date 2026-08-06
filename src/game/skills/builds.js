@@ -1,4 +1,14 @@
 /** Pure visible Build recipe compiler. Recipes use only owned Skill metadata. */
+import {
+  compareProgressionIntegers,
+  incrementProgressionInteger,
+  minProgressionInteger,
+  normalizeProgressionInteger,
+  sumProgressionIntegers,
+} from '../../core/progression-integer.js';
+import { boundedEvolutionLevelRefinement } from './levels.js';
+
+export const BUILD_MASTERY_VERSION = 1;
 const recipe = (id, name, affinities, tags, effects, tradeoffs, habitats, capabilities = [], transformations = []) => Object.freeze({
   id, name,
   requiredAffinities: freezeRequirements(affinities),
@@ -46,23 +56,25 @@ export const BUILD_RECIPES = Object.freeze([
 ]);
 
 export function compileBuilds(ownedNodes = []) {
-  const affinities = counts(ownedNodes.map((node) => node.affinity));
-  const tags = counts(ownedNodes.flatMap((node) => node.secondaryTags ?? []));
-  const builds = BUILD_RECIPES.map((entry) => compileRecipe(entry, affinities, tags));
+  const nodes = ownedNodes.map((node) => ({ node,
+    level: normalizeProgressionInteger(node.evolutionLevel, '1') }));
+  const affinities = counts(nodes.map(({ node }) => node.affinity));
+  const tags = counts(nodes.flatMap(({ node }) => node.secondaryTags ?? []));
+  const builds = BUILD_RECIPES.map((entry) => compileRecipe(entry, nodes, affinities, tags));
   const activeBuilds = Object.freeze(builds.filter((entry) => entry.active));
   const nearBuilds = Object.freeze(builds.filter((entry) => !entry.active && entry.progress >= 0.5)
     .sort((a, b) => b.progress - a.progress || a.id.localeCompare(b.id)).slice(0, 8));
   const buildEffects = {}; const capabilities = new Set(); const transformations = new Set();
   for (const build of activeBuilds) {
     for (const [key, value] of Object.entries(build.mechanicalEffects)) {
-      const combined = key.endsWith('Cost') || key.endsWith('Upkeep') || key.endsWith('Growth') || value < 1
-        ? (buildEffects[key] ?? 1) * value : (buildEffects[key] ?? 1) * value;
+      const combined = (buildEffects[key] ?? 1) * value;
       buildEffects[key] = Math.max(0.5, Math.min(2, combined));
     }
     build.capabilities.forEach((value) => capabilities.add(value));
     build.transformations.forEach((value) => transformations.add(value));
   }
-  return Object.freeze({ builds: Object.freeze(builds), activeBuilds, nearBuilds,
+  return Object.freeze({ version: BUILD_MASTERY_VERSION, builds: Object.freeze(builds), activeBuilds, nearBuilds,
+    masteryRating: sumProgressionIntegers(activeBuilds.map((build) => build.masteryRank)),
     buildEffects: Object.freeze(buildEffects), capabilities: Object.freeze([...capabilities].sort()),
     transformations: Object.freeze([...transformations].sort()) });
 }
@@ -73,16 +85,41 @@ export function buildContributionsFor(affinity, tags = []) {
     || entry.requiredTags.some((part) => tagSet.has(part.id))).map((entry) => entry.id));
 }
 
-function compileRecipe(entry, affinities, tags) {
-  const ingredients = [...entry.requiredAffinities.map((part) => ({ ...part, type: 'affinity', owned: affinities[part.id] ?? 0 })),
-    ...entry.requiredTags.map((part) => ({ ...part, type: 'tag', owned: tags[part.id] ?? 0 }))];
+function compileRecipe(entry, nodes, affinities, tags) {
+  const ingredients = [...entry.requiredAffinities.map((part) => ingredient(part, 'affinity', nodes, affinities)),
+    ...entry.requiredTags.map((part) => ingredient(part, 'tag', nodes, tags))];
   const required = ingredients.reduce((sum, part) => sum + part.count, 0);
   const satisfied = ingredients.reduce((sum, part) => sum + Math.min(part.count, part.owned), 0);
   const missing = Object.freeze(ingredients.filter((part) => part.owned < part.count).map((part) => Object.freeze({
     type: part.type, id: part.id, required: part.count, owned: part.owned, remaining: part.count - part.owned,
   })));
-  return Object.freeze({ ...entry, progress: required ? satisfied / required : 1, active: missing.length === 0, missing });
+  const masteryRank = ingredients.length
+    ? ingredients.reduce((rank, part) => minProgressionInteger(rank, part.support), ingredients[0].support) : '1';
+  const masteryRefinement = boundedEvolutionLevelRefinement(masteryRank);
+  const mechanicalEffects = Object.freeze(Object.fromEntries(Object.entries(entry.mechanicalEffects)
+    .map(([key, value]) => [key, refineMechanicalEffect(value, masteryRefinement)])));
+  return Object.freeze({ ...entry, authoredMechanicalEffects: entry.mechanicalEffects, mechanicalEffects,
+    progress: required ? satisfied / required : 1, active: masteryRank !== '0', missing,
+    masteryVersion: BUILD_MASTERY_VERSION, masteryRank, nextMasteryRank: incrementProgressionInteger(masteryRank),
+    masteryRefinement, ingredientSupport: Object.freeze(ingredients.map((part) => Object.freeze({
+      type: part.type, id: part.id, required: part.count, support: part.support,
+    }))) });
 }
+
+function ingredient(part, type, nodes, breadthCounts) {
+  const matching = nodes.filter(({ node }) => type === 'affinity' ? node.affinity === part.id
+    : node.secondaryTags?.includes(part.id));
+  const levels = matching.map(({ level }) => level)
+    .sort((left, right) => compareProgressionIntegers(right, left));
+  return { ...part, type, owned: breadthCounts[part.id] ?? 0, support: levels[part.count - 1] ?? '0' };
+}
+
+/** Rank one is exact authored behavior; later ranks add at most 35% of its delta from one. */
+function refineMechanicalEffect(value, refinement) {
+  if (!refinement || value === 1) return value;
+  return 1 + (value - 1) * (1 + 0.35 * refinement);
+}
+
 function counts(values) { const result = {}; for (const value of values) if (value) result[value] = (result[value] ?? 0) + 1; return result; }
 function freezeRequirements(requirements) {
   return Object.freeze(Object.entries(requirements).map(([id, count]) => Object.freeze({ id, count })));
