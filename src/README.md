@@ -9,7 +9,7 @@ core, and game logic all run under `node:test`).
 | `core/` | PRNG, fixed math, clock, state machine, hashing, seed codes | — |
 | `world/` | Icosphere topology, static environmental fields | core |
 | `simulation/` | Deterministic run-state evolution (tick) | core, world, game |
-| `game/` | Content + rules: adaptations, phenotypes, strains, events, scoring, echoes, memory nodes, trophies, challenges, autoplay, balance constants | core, world |
+| `game/` | Content + rules: adaptations, phenotypes, strains, events, scoring, echoes, Evolution, trophies, challenges, autoplay, balance constants | core, world |
 | `rendering/` | WebGL2 renderer, Canvas 2D fallback, camera, picking, share card | core, world (reads snapshots only) |
 | `history/` | Bounded visual checkpoint codec, recorder, and preview projection | core |
 | `interface/` | DOM screens, HUD, user intent, app state machine | all above |

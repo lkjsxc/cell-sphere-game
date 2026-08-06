@@ -1,18 +1,28 @@
-# src/game/
+# `src/game/`
 
-Frozen content and pure cross-run rules. Simulation and interface consume the
-same definitions; this directory owns no DOM or storage I/O.
+Frozen content and pure cross-run rules. Simulation, interface, audits, and fair
+agents import these production definitions; this directory owns no DOM or storage I/O.
 
-| Module | Responsibility |
+| Module | Source-of-truth responsibility |
 |---|---|
-| `balance.js` | Simulation and progression constants with units. |
-| `strains.js` | Starting morphologies and closed trait keys. |
-| `events-content.js` | Spatial environmental field families. |
-| `scoring.js` | Monotone cumulative six-axis SCORE v3, ranks, bounded Echoes. |
-| `skills/` | 252-cell affinities, builds, adjacency, compilation, migration. |
-| `trophies/` | 96 current criteria, facts-v5 proof, Trophy Sphere. |
+| `balance.js` | Finite tick/simulation constants with units. |
+| `environment-level.js` | Exact unlimited Environment Level/frontier/attempt rules, version 1. |
+| `scoring.js` | Monotone exact SCORE model/formula v4, Echoes, and procedural ranks. |
+| `skills/` | Frequency-5 252-cell sparse levels, costs, effects, Potential v3, Builds/mastery, transactions, and migration. |
+| `events-content.js` | Bounded whole-cell environmental pressure families. |
+| `trophies/` | 96 read-only current criteria and authority-neutral proof. |
 
-Current worlds are autonomous and contain no mid-run choice authority. Evolution
-purchases are pure exactly-once meta transactions requiring Echoes and direct
-geodesic adjacency. Current Trophy proof is authority-neutral and cannot consume
-retired legacy choice evidence.
+Evolution Level 0 is locked, Level 1 is authored identity, and Level 2+ is
+unlimited. Level 0 → 1 needs Echoes and direct Level-1+ adjacency except for six
+fresh-vector roots; repeat levels need ownership and Echoes only. Level-one
+breadth costs 17,820 and yields Potential 1,200,000, but is not completion.
+
+Exact progression uses shared `bigint` operations and canonical decimal strings at
+boundaries. The challenge-profile compiler in `src/simulation/` reduces unlimited
+Environment rating minus Evolution defense to bounded finite run coefficients.
+Worlds remain autonomous; active Adaptations are retired, and Trophies never feed
+simulation, Potential, SCORE, pressure, or purchase eligibility.
+
+Focused gates: `audit:evolution-levels`, `audit:environment-levels`,
+`audit:progression-numbers`, `audit:luminous`, `agent:long`, and
+`balance:holdout`.

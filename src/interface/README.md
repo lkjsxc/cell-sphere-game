@@ -1,34 +1,34 @@
-# src/interface/
+# `src/interface/`
 
-DOM-facing composition. It translates player intent into explicit commands;
-it never mutates simulation arrays or consumes authoritative randomness.
+DOM-facing composition translates player intent into explicit commands. It never
+mutates simulation arrays, consumes authoritative randomness, or changes SCORE.
 
-| Module | Responsibility |
+| Module | Source-of-truth responsibility |
 |---|---|
-| `app-controller.js` | Orthogonal scene/phase composition, one-shell ownership, persistence transactions. |
-| `app-state.js` | Independent world phase and Home/World/Evolution/Trophies scene state. |
-| `run-driver.js` | Worker-first timing with the same main-thread fallback controller. |
-| `globe-input.js` | Tap/drag/pinch/wheel classification and pointer capture. |
-| `camera-policy.js` | Optional idle rotation, interruption, and reduced-motion gate. |
-| `pause-control.js` | Independent manual/hidden/panel pause reasons. |
-| `surfaces.js` | Core HUD, terminal Result data, notices, and scene visibility. |
-| `inspection/` | Read-only cell, shared metric, and bounded Event Log surfaces. |
-| `panel-surfaces.js` | Explicit Adaptation and Memory-node/list interactions. |
-| `policies/adaptation-effects.js` | Two-event visual queue, reduced-motion gate, bottom caption lifetime. |
-| `policies/continuation.js` | Untouched-only nine-second result countdown; hidden-time pause and trusted-interaction cancellation. |
-| `policies/run-session.js` | First-wins atomic teardown, typed blank frame, and authority replacement transaction. |
-| `policies/run-result.js` | Idempotent Echo/Imprint/History completion transaction. |
-| `policies/surface-coordinator.js` | One physical shell, post-gesture dismissal, Escape, and focus restoration. |
-| `policies/scene-selector.js` | Stable semantic four-scene tablist and keyboard navigation. |
-| `history-surface.js` | Nonmodal scrubber, world/event navigation, and Event Log route. |
-| `history-playback.js` | Current/past bundle loading, stale guards, projection, and live restoration. |
-| `settings-surface.js` | Unified Menu groups, validated preferences, and local-data actions. |
-| `app-data.js` | Quality/DPR, seed, and export/import browser helpers. |
+| `app-controller.js` | Home/World/Evolution/Trophies composition, shell ownership, and persistence orchestration. |
+| `app-state.js` | Independent world phase and selected-scene state. |
+| `run-driver.js` | Worker-first run-protocol-v5 timing with identical fallback. |
+| `globe-input.js` | Tap versus drag/pinch/wheel/cancellation classification and pointer capture. |
+| `panel-surfaces.js` | 252-cell Evolution semantic tree/detail, exact levels/costs, ready states, and purchase button. |
+| `policies/progression-spheres.js` | Shared second-activation Evolution transaction and Trophy selection. |
+| `policies/run-session.js` | First-wins atomic replacement and typed blank frame. |
+| `policies/run-result.js` | Idempotent SCORE-v4/Echo/History-6/frontier/Trophy transaction. |
+| `surfaces.js` / `inspection/` | HUD, Result, pressure/metric explanations, Inspector, and Event Log. |
+| `runtime-speed-controls.js` | Player 1×/2×/4×/8× and explicit session-only developer 16×–256× controls. |
+| `history-surface.js` / `history-playback.js` | Bounded semantic and optional visual History. |
+| `settings-surface.js` / `app-data.js` | Validated preferences and browser import/export helpers. |
 
-Selected scene, authoritative world phase, simulation status, and shell mode are
-separate concerns. Ordinary world taps only select cells; only Skill Cell Unlock
-commands spend currency, and an active run receives those Skills next world.
-The one bounded context shell continues world time unless the panel pause
-preference owns its explicit pause reason. Adaptation captions are nonblocking and render
-below context sheets; presentation events are released at world/result
-transitions. Automatic continuation never purchases Memory.
+Evolution activation is a state machine: an unselected cell activation selects
+and opens detail without buying; a later discrete activation of the same selected
+ready cell buys exactly one level. Different-cell selection, blank taps, non-ready
+activation, and movement/gesture/inertia/cancellation never buy. Pointer, touch,
+keyboard, hidden semantic tree, and visible button converge on one transaction,
+which sends expected level/meta revision and leaves the cell selected after success.
+Activating an already selected Evolution cell never closes its detail.
+
+The UI presents canonical decimal strings for exact Echoes, Potential v3, SCORE
+v4, Environment Level, and costs from meta schema 11/History 6. Active
+Adaptations are retired; only inert archived evidence may be displayed. Opening
+panes and changing scene/camera/speed remain authority-neutral. Relevant gates
+are interface unit tests, integration transaction tests, `test:browser:file`,
+`test:browser:canvas`, and `audit:evolution-levels`.

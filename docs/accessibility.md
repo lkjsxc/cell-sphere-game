@@ -9,23 +9,26 @@
   borders, backgrounds, and disclosure marks; affordance is not hover-only.
   RESULT follows REACH in reading/visual order and gains a recommended-action
   cue at extinction.
-- Evolution exposes a synchronized offscreen `role="tree"` with all 252 Skill
-  Cells, owned/reachable/affordable state, and roving keyboard focus.
+- Evolution exposes a synchronized offscreen `role="tree"` with all 252 cells,
+  exact levels, owned/reachable/affordable state, and roving keyboard focus.
 - Trophy Sphere exposes all 96 criteria in a semantic grid.
 - Inspector fields use real headings and definition lists. Locked habitats name
   the missing Evolution capability.
 
 ## Shared detail shell
 
-Result, History, Event Log, Menu, metrics, Inspector, Skill detail, Trophy detail,
-and New World confirmation use one bounded nonmodal shell. The selected globe
-remains visible and draggable. Skill detail reserves a dedicated intrinsic footer
+Result, History, Event Log, Menu, metrics, Inspector, Evolution detail, Trophy
+detail, and New World confirmation use one bounded nonmodal shell. The selected
+globe remains visible and draggable. Evolution detail reserves a dedicated
+intrinsic footer
 track, so its 44 CSS px Unlock action cannot be collapsed or clipped by the
 scrolling evidence body.
 
 Interaction contract:
 
-- same trigger toggles;
+- repeated non-Evolution metric triggers toggle;
+- a repeated selected Evolution activation purchases one ready level or announces
+  the stable non-ready reason; it never closes the detail;
 - another trigger replaces the current detail in one gesture;
 - Escape and Close dismiss;
 - opening a pane does not move or zoom the camera;
@@ -38,7 +41,7 @@ or summary buttons.
 
 ## Notifications
 
-Trophy and Skill notifications use bounded FIFO queues, persist unread state,
+Trophy and Evolution notifications use bounded FIFO queues, persist unread state,
 and never block world authority. Only one reveal is announced at a time. Reduced
 motion uses static emphasis rather than removing information.
 
@@ -47,7 +50,10 @@ motion uses static emphasis rather than removing information.
 Motion settings use centralized duration variables. Reduced motion preserves
 world-time meaning in the clock while removing decorative transitions. High
 contrast strengthens material boundaries and focus indicators. Text and controls
-remain bounded at 200% font scaling. The Skill action is geometry-tested at
+remain bounded at 200% font scaling. Large exact progression values use compact
+engineering notation plus a 44px `Copy exact` action; a maximum-width Evolution
+level and exact balance are included in the responsive evidence. The Evolution
+action is geometry-tested at
 320×568, short 390×320 and 640/667 landscape viewports, tablet/desktop sizes,
 and 200% text.
 

@@ -1,7 +1,102 @@
-# Status — local-resource ecology release
+# Status
 
-> Snapshot: 2026-08-04. Implementation `6f56735` is pushed, CI-verified, deployed
-> by Pages, and cache-busted public-byte verified.
+## Current authority — endless progression
+
+> Documentation alignment: 2026-08-06. This section records implemented current
+> authority. The verified 2026-08-04 release ledger is preserved below as
+> historical evidence; its finite-progression formulas and measurements do not
+> describe the endless model.
+
+- Product identity is `cell-sphere-game` — **Every extinction becomes memory.**
+- Evolution is a frequency-5 sphere with 252 cells, 750 boundaries, 12 pentagons,
+  240 hexagons, and six connected 42-cell affinities.
+- Its exact sparse level vector omits Level 0 cells. Level 1 preserves authored
+  identity; Level 2+ is unlimited. Level 0 → 1 requires Echoes plus a directly
+  adjacent Level-1+ cell, with six roots able to bootstrap only a fresh vector.
+  Repeat upgrades require ownership and Echoes only.
+- Level-one breadth costs 17,820 Echoes and yields World Potential 1,200,000. It
+  is a breadth milestone, not completion. Potential v3 and SCORE v4 continue
+  exactly beyond it with no design maximum.
+- Cross-run exact values use `bigint` internally and canonical decimal strings at
+  JSON, storage, History, agent, diagnostic, and hash boundaries.
+- Environment Levels are unlimited and separate from world ordinal. Worlds 1–2
+  use protected Level 0; World 3 attempts Level 1. The versioned challenge
+  compiler computes any level directly into bounded finite runtime coefficients.
+- Current boundaries are meta schema 11, History schema 6, agent save and
+  observation schemas 2, and replay/run protocol 5.
+- Evolution activation is select-first: only a later activation of the same
+  selected ready cell buys one level. Stale expected level/revision is rejected.
+- Active Adaptations are retired; archived evidence is readable and inert.
+  Luminous presentation follows authoritative whole-cell charge, decays to zero,
+  and never draws wires.
+- Player speeds are 1×/2×/4×/8×; visible session-only developer speeds are
+  16×/32×/64×/128×/256×, with every authoritative tick executed.
+
+Focused current gates are `audit:evolution-levels`, `audit:environment-levels`,
+`audit:luminous`, `audit:progression-numbers`, `agent:long`, and
+`balance:holdout`.
+
+## 2026-08-06 candidate evidence
+
+- Unit: 182/182; integration: 76/76. A complete 26-gate `npm run verify`
+  passed. The regenerated deterministic showcase contains 89 frames at SHA-256
+  `bd1a77300744a5d2f7b15a5f3c7b728b6b0ca56a6252505e306f7f00c1a820ec`; its
+  source metadata and checked-in bytes passed `showcase:check`.
+- Full campaign evidence covered 80 fresh worlds, nine 8-cohort/five-world fair
+  policies, 30 first-root worlds, and 30 level-one-breadth worlds. Fresh median
+  SCORE/duration were 8,982/312.2 seconds; first-root median SCORE was 10,579;
+  marginal-value first resolution was 21.455 minutes with 80,000 median Potential
+  after three worlds; breadth SCORE was 1,099,200.
+- Full fresh ecology/SCORE cohorts covered 500 worlds each: resource median SCORE
+  8,782, duration 312.0 seconds, zero reported conservation error, and 73.5% of
+  living-cell ticks in the richest quintile; SCORE traces had zero decreases and
+  zero Result mismatch. The 294 matched freshwater pairs had median duration
+  ratio 1.175 and 5.5-second resource-exhaustion delay.
+- Environment evidence used 16 matched seeds at Levels 0/1/2/4/8/32. Mean paired
+  peak-Reach deltas were negative at every transition, runtime/event bounds held,
+  immediate-death
+  farming failed, and directly compiled matched/overpowered Evolution vectors
+  reduced pressure to zero at Levels 8, 32, and 1,000,000.
+- The untouched holdout tournament ran 88 six-world campaigns: 22 policies × four
+  holdout seeds, 528 production worlds, deterministic reruns, bounded traces,
+  22 policy-stratified deterministic reruns, six valid affinity specialists,
+  four distinct early Builds, and no failures.
+  Eight long policies also completed twelve worlds; separate balanced and
+  depth-first campaigns completed 40 worlds with 77 and 40 purchases.
+- The production terminal/persistence soak completed 10,000 worlds across 12
+  deterministic workers: 266–3,620 ticks, 32 retained History worlds, maximum
+  363,684-byte History, 16 receipt keys, 10,000 distinct within-worker run seeds,
+  10,000 duplicate rejections, maximum per-worker observed heap 48.8 MiB, and no
+  invalid result.
+- Standalone benchmark: 6,743 fresh ticks/s; breadth 1,642, deep Luminous 2,172,
+  extreme 513-digit Environment 10,294; compile cache 512 entries/3.45 MB in that
+  cohort and below its 8 MiB bound. The fresh gate exceeds its 3,000 ticks/s
+  release floor and is 4.0% below the 7,026 starting baseline; breadth/deep
+  figures are separate bounded-complexity stress baselines, not fresh-gate claims.
+- Trusted-CDP Worker/WebGL2, no-Worker fallback/WebGL2, and forced Canvas all
+  passed at identical SCORE 10,774. Instrumented WebGL calls confirmed exactly
+  four draws (Worker 8× 39.12 seconds and DEV 256× 1.75 seconds; fallback 8×
+  41.86 seconds and DEV 256× 1.75 seconds). Real keyboard, pointer, and touch paths exercised select-first/second-
+  activation; drag, wheel, touch movement, pinch, and pointer cancellation did
+  not purchase. Both renderers presented an identity-bound production deep-Luminous snapshot with 2,301
+  powered cells, focused charged day/night cells, and a zero-charge terminal
+  decay frame; pixel hashes differed across those frames, screenshots were
+  manually inspected, and no wire geometry appeared. Canvas selected-ready pixels
+  changed under normal motion and remained hash-identical under reduced motion.
+  A 1,019-digit selected cell
+  with a 4,096-digit balance retained a copyable exact cost and passed the same
+  responsive/200%-text geometry matrix.
+
+No physical-device or screen-reader session is claimed. CI, push, Pages, and
+cache-busted deployed-byte verification remain pending for this candidate.
+
+<details>
+<summary>Historical 2026-08-04 local-resource ecology release ledger</summary>
+
+## Historical snapshot — local-resource ecology release
+
+> Snapshot: 2026-08-04. Implementation `6f56735` was pushed, CI-verified,
+> deployed by Pages, and cache-busted public-byte verified.
 
 ## Product state
 
@@ -154,3 +249,5 @@ WebGL2/Canvas paths.
 - GitHub Actions/Pages: run `30948480380`, verify and pages both succeeded.
 - Public product bytes: exact match to `6f56735`; deployed-Chrome limitation is
   recorded above rather than reported as a pass.
+
+</details>

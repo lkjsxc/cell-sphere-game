@@ -1,15 +1,26 @@
-# tests/integration/
+# `tests/integration/`
 
-Production `RunController` whole-run tests.
+Production-module whole-run and cross-boundary tests.
 
-`determinism.test.js` protects seeded inoculation, exactly uniform isolated
-random decisions, manual resolution ticks, chunk/speed invariance, zero-input
-completion, replay schema, hundreds of neutral inspection/snapshot queries,
-conditional Memory behavior, semantic History ordering/pruning, and storage
-failure behavior.
+- `determinism.test.js`, `run-driver.test.js`, `world-session.test.js`, and
+  `reliability.test.js` protect run/replay protocol 5, command acknowledgement,
+  Worker/fallback and 1×/2×/4×/8× plus developer 16×–256× equality, bounded
+  terminal behavior, exactly-once replacement/result/frontier transactions, and
+  repeated lifecycle safety.
+- `skill-globe.test.js` protects the frequency-5 252-cell topology, Level-1
+  physical frontier/root bootstrap, unlimited owned-cell upgrades, exact debit,
+  stale expected-level/revision rejection, Potential v3, Builds/mastery, and
+  schema-11 legacy-to-Level-1 migration.
+- `history-codec.test.js` protects bounded History schema 6, exact decimal
+  purchase/Environment records, strict visual-bundle decoding, thinning, stale
+  guards, storage fallback, and recorder neutrality.
+- `agent-environment.test.js` protects observation/save schema 2, public pressure,
+  exact values, legal advance/retry/purchase actions, hidden-authority exclusion,
+  deterministic policies, and production transaction/replay hashes.
+- `worldmaking-reach.test.js` protects whole-cell transformations, authoritative
+  Luminous charge/decay/zero evidence, sustained exact REACH 100, and later extinction.
+- Trophy and showcase suites retain catalog/legacy isolation and deterministic
+  production artifact/hash checks.
 
-`history-codec.test.js` covers strict `INHV` round trips/malformed data,
-thinning, nearest seek/projection reuse, schema-2 primary-cell migration,
-IndexedDB-unavailable fallback, stale guards, size/timing, and recorder
-neutrality. Camera/panel interaction remains outside the run digest and is
-covered by browser evidence.
+Real pointer/touch/keyboard second-activation and visual WebGL/Canvas claims stay
+in browser acceptance; a mocked integration call is not equivalent evidence.

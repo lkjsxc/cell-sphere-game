@@ -11,7 +11,7 @@ pentagons, 240 hexagons, and six connected 42-cell affinities.
 - `levels.js`: Evolution level vector v1, exact affinity/depth summaries, and
   bounded decimal-magnitude projection.
 - `cost.js`: Evolution cost v1.
-- `effects.js`: Evolution effect compiler v2 and its bounded 512-entry cache.
+- `effects.js`: Evolution effect compiler v2 and its bounded 512-entry/8 MiB cache.
 - `builds.js`: sixteen authored Build recipes and Build mastery v1.
 - `potential.js`: World Potential v3 plus the narrowly named legacy v2 Number
   projection.
@@ -35,8 +35,8 @@ present and maps each recognized ID to level `"1"`; compatibility APIs such as
 
 A level-0 cell needs a directly adjacent owned cell. One of the six roots can
 bootstrap only at zero breadth. An owned cell always remains reachable for its
-next upgrade. Purchases validate optional expected level, expected revision,
-and transaction key; debit exact decimal Echoes; increment one level and one
+next upgrade. Purchases require expected level, expected revision, and a bounded
+length-framed transaction key; debit exact decimal Echoes; increment one level and one
 revision; and retain at most 32 transaction receipts.
 
 For target level `n >= 1`, node base cost `b`, and node Evolution Power `e`:
@@ -45,14 +45,16 @@ For target level `n >= 1`, node base cost `b`, and node Evolution Power `e`:
 cost(n) = b*n^2 + e*n*(n-1)
 ```
 
-The formula is direct bigint arithmetic and level 1 is exactly the authored
-base cost.
+The formula is direct `bigint` arithmetic and Level 1 is exactly the authored
+base cost. All 252 Level-1 base costs sum to 17,820 Echoes; that total describes
+level-one breadth only, not the unlimited economy or completion.
 
 ## Compilation and formulas
 
 Compilation scans the fixed 252-cell catalog once and is independent of decimal
 level magnitude. Its cache key contains the complete canonical vector and all
-relevant versions; diagnostics and reset functions are exported for audits.
+relevant versions; both entry count and serialized key/payload weight are bounded,
+and diagnostics/reset functions are exported for audits.
 Level 1 preserves authored effects, conditions, unlocks, Resonance, habitats,
 Build activation/effects, breadth power 384, and World Potential `"1200000"`.
 Unlock flags never duplicate.
@@ -86,3 +88,17 @@ distinct matching cells. Recipe rank is the minimum ingredient support. Rank 1
 is exact authored behavior; higher exact ranks apply only bounded mechanical
 refinement, so one deeply levelled cell cannot replace multi-cell or
 multi-affinity breadth.
+
+## Interaction, persistence, and gates
+
+`purchaseEvolutionLevel` is the one-level exact transaction authority; interface
+`policies/progression-spheres.js` supplies selected cell, expected level, and meta
+revision. First activation only selects/opens detail; a later activation of the
+same selected ready cell may transact. Stale, repeated, moved, cancelled, blank,
+or non-ready activations cannot debit. Meta schema 11 persists the sparse vector
+and History schema 6 records old/new level, exact cost/balance, Environment Level,
+and compiler versions as canonical decimal strings.
+
+Canonical focused gates are `audit:evolution-levels`,
+`audit:progression-numbers`, agent long/holdout campaigns, transaction unit/
+integration coverage, and real pointer/touch/keyboard browser acceptance.

@@ -2,13 +2,26 @@
 
 Concise architecture/product records: context → decision → consequence → evidence.
 
-## D0 — 2026-08-04 progression compression supersedes older records
+## D0 — 2026-08-06 endless progression supersedes older records
 
-Current authority removes active mid-run Adaptations, uses a 252-cell Evolution
-Globe with six environmental affinities/builds, finite per-cell resource ecology,
-world-ordinal events, gated habitats, whole-cell transformations, exact REACH
-100%, and monotone SCORE model v3. Any older decision below that conflicts is retained
-only as historical evidence. Current evidence is in `status.md` and source/tests.
+Current authority is `cell-sphere-game` with a frequency-5, 252-cell Evolution
+Globe. Its canonical sparse levels are exact: Level 0 is locked, Level 1 preserves
+authored identity, and Level 2+ is unlimited. Level 0 → 1 requires Echoes and one
+directly adjacent Level-1+ cell, except that six roots bootstrap a fresh vector;
+repeat levels require ownership and Echoes only. Buying every Level-1 identity
+costs 17,820 Echoes and yields Potential v3 value 1,200,000, a breadth milestone
+rather than completion. SCORE authority is v4. Exact progression uses `bigint`
+internally and canonical decimal strings at boundaries.
+
+Environment Levels are unlimited: Worlds 1–2 use protected Level 0 and World 3
+attempts Level 1; a direct versioned compiler reduces exact public challenge and
+Evolution defense to bounded runtime coefficients. Current boundaries are meta
+schema 11, History schema 6, agent save/observation schema 2, and replay/run
+protocol 5. Active Adaptations are retired and archival records are inert.
+Luminous authority is whole-cell charge with decay and no wires. Player speeds
+are 1×/2×/4×/8×; explicit developer mode adds 16× through 256× while executing
+every tick. Any conflicting claim below is an archival decision record, not
+current authority; preserve it as history and follow `status.md`, source, and tests.
 
 ## D1 — Zero runtime dependencies
 

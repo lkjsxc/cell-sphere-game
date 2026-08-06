@@ -1,33 +1,58 @@
 # Balance model
 
-> Current production model, 2026-08-04. Measurements use production modules and
-> deterministic seed cohorts. Modeled completion estimates are labeled.
+> Current endless-progression authority. The collapsed 2026-08-04 production
+> cohort is preserved below as a historical level-one/local-ecology baseline; its
+> Potential v2, SCORE v3, and finite-progression wording are not current formulas.
 
-## Targets
+## Compatibility targets, not caps
 
 | Checkpoint | Target |
 |---|---:|
 | Fresh SCORE | roughly 8,000–15,000 |
+| First-root next-world SCORE | roughly 10,000–20,000 |
 | World Potential after 12–18 minutes at 1× | roughly 80,000–130,000 |
-| Strong full-progression SCORE | roughly 850,000–1,100,000 |
+| Strong level-one-breadth SCORE | roughly 850,000–1,100,000 |
 | Ordinary world duration | approximately 270–330 game seconds |
 | Bounded terminal | near 360 game seconds |
 | First campaign resolution | approximately 18–24 minutes at 1× |
 
-SCORE model v3 is:
+## Current endless formulas and invariants
 
-```text
-quality = weighted cumulative authoritative merit
-score = round(quality × World Potential × Challenge)
-```
+- The frequency-5 Evolution sphere has 252 cells. Level 0 is locked, Level 1 is
+  authored identity, and Level 2+ is unlimited. Six roots bootstrap a fresh exact
+  sparse vector; other Level 0 → 1 purchases require a directly adjacent Level-1+
+  cell. Repeat levels require ownership and Echoes only.
+- Level-one breadth costs 17,820 Echoes and yields Potential v3 `"1200000"`.
+  It is a compatibility anchor, not completion. Fresh and first-root anchors stay
+  `"16000"` and `"19000"`; exact weighted excess depth continues Potential.
+- For target level `n`, authored base cost `b`, and cell breadth power `e`, cost
+  v1 is `b*n^2 + e*n*(n-1)`. It is direct, exact, monotone, superlinear, and has
+  no gameplay maximum; Level 1 remains exactly the authored base cost.
+- SCORE v4 applies bounded six-axis cumulative quality to exact Potential v3 and
+  bounded exposure/performance-gated Environment credit. It is monotone, shared
+  by HUD/Result/History/audits/agents, has no terminal correction, and cannot be
+  farmed by immediate high-level death. Ranks continue procedurally.
+- Exact levels, costs, Echoes, Potential, SCORE, and Environment Levels use
+  `bigint` operations internally and canonical base-10 strings at boundaries.
+- Environment Levels are unlimited. Worlds 1–2 use protected Level 0 and World 3
+  Level 1. Challenge-profile v1 directly reduces six exact public-rating/defense
+  comparisons to bounded runtime scarcity, renewal, climate, toxicity,
+  maintenance, and event coefficients. Work and world/event bounds are independent
+  of level magnitude.
+- For a fixed finite Evolution vector, higher Environment Levels must be no easier
+  on matched seeds. Upgraded vectors must remain able to contest later levels;
+  extinction and the near-360-second terminal remain.
+- Build rank 1 retains authored level-one breadth behavior. Higher exact mastery
+  requires the relevant distinct cells and changes only bounded mechanics. One
+  deeply upgraded cell cannot satisfy a multi-cell or multi-affinity recipe.
+- Luminous balance is measured from authoritative whole-cell charge, production,
+  retention, decay, powered-cell exposure, and zero-charge absence—never ownership
+  alone or wire geometry.
 
-The six monotone merit axes are Survival, Exploration, Presence, Coherence,
-Stewardship, and Worldmaking. HUD, Result, audits, and agent play call the same
-function. No terminal correction, camera, quality, frame rate, speed, or menu
-state can change SCORE. Component caps keep full progression near 1.10 million.
-Echoes use the production bounded reward curve over current-model SCORE.
+<details>
+<summary>Historical 2026-08-04 measured local-ecology and level-one-breadth baseline</summary>
 
-## Current measured distributions
+## Historical measured distributions
 
 ### Fresh local ecology
 
@@ -122,11 +147,17 @@ Worlds 1–2 suppress harmful events. World 3 schedules one mild event no earlie
 than tick 2400. Worlds 4–5 schedule one or two, worlds 6–10 two to four, and later
 eras three to six, based only on persisted ordinal and deterministic RNG.
 
-## Gates
+</details>
 
-- `audit:resources`, `audit:freshwater`, `audit:score-trace`;
-- `audit:skills`, `audit:transformations`, `audit:reach100`;
-- `audit:habitats`, `audit:events`, `audit:trophies`, `audit:campaign`;
-- `agent:smoke`, `agent:campaign`, `balance`, and `terminal:soak`.
+## Current gates
 
-Machine-readable outputs are written under ignored `reports/`.
+- ecology/SCORE: `audit:resources`, `audit:freshwater`, `audit:score-trace`;
+- progression: `audit:evolution-levels`, `audit:environment-levels`,
+  `audit:progression-numbers`, and `audit:campaign`;
+- worlds/presentation: `audit:transformations`, `audit:reach100`,
+  `audit:habitats`, `audit:events`, `audit:luminous`, and `audit:trophies`;
+- fair campaigns: `agent:smoke`, `agent:campaign`, `agent:long`,
+  `balance:holdout`, and `terminal:soak`.
+
+Reports must distinguish current training/holdout evidence from the archived
+baseline above. Machine-readable outputs are written under ignored `reports/`.

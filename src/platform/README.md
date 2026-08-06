@@ -1,22 +1,34 @@
-# src/platform/
+# `src/platform/`
 
-Small browser adapters that degrade honestly when APIs or storage are absent.
+Small browser adapters that validate every boundary and degrade honestly when an
+API or storage is absent.
 
-| Module | Responsibility |
+| Module | Source-of-truth responsibility |
 |---|---|
+| `settings.js` | Canonical schema-3 durable player preferences; developer mode/speeds are excluded. |
+| `storage.js` | Meta schema 11: exact Echoes/SCORE, sparse Evolution levels, Environment frontier, Trophies, and transaction keys. |
+| `history.js` | Bounded semantic History schema 6, including exact Evolution and Environment evidence. |
+| `run-transaction-store.js` | Crash recovery coupling Result, reward, History, frontier, and idempotency. |
+| `namespace-store.js` | Per-document validation, verified writes/receipts, and safe legacy fallback. |
+| `namespace-migration.js` | All-or-rollback browser namespace adoption/import. |
+| `recent-runs.js` | Optional bounded IndexedDB visual checkpoints; never authority. |
 | `capabilities.js` | WebGL2, Worker, device, sharing, and DPR hints. |
-| `settings.js` | Canonical schema-3 durable preferences. |
-| `storage.js` | Canonical schema-8 Echo/Skill/Trophy/result-key progression. |
-| `history.js` | Canonical schema-4 semantic archive, 24/32 worlds, 700 KB cap. |
-| `namespace-store.js` | Per-document validation, verified writes, receipts, and safe legacy fallback policy. |
-| `namespace-migration.js` | Three-document boot adoption and all-or-rollback semantic import commit. |
-| `recent-runs.js` | Canonical IndexedDB visual bundles plus nonblocking verified legacy copy. |
 
-Namespace migration preserves every recognized owned ID, disconnected islands,
-Echoes, scores, run/seed cursors, result idempotency, current/Legacy Trophies,
-queue/progress, Settings, semantic History, and bounded Imprints. Canonical
-parseable documents win and degrade field-by-field; verified receipts permit
-only a rollback-safe malformed-canonical recovery. Legacy sources are never
-deleted. Approximate visual detail remains device-local and is copied by record
-ID only after strict decode/verification. Every adapter returns truthful success
-and keeps the current session playable when persistence is absent or corrupt.
+Levels, costs, Echoes, Potential v3, SCORE v4, run counters, and Environment
+Levels are exact non-negative values: operations use `bigint`; JSON/storage/
+History/hash boundaries use canonical decimal strings. Raw `bigint`, unsafe
+`Number` coercion, malformed decimals, and nonfinite values are forbidden.
+
+Schema 11 migrates recognized legacy 642/252 ownership to each cell's exact Level
+1 without duplicate levels or repeated charges/refunds. It preserves exact
+balances, SCORE versions, completed-run and attempt/world-seed cursors,
+attainable Environment frontier evidence, bounded result/Evolution transaction
+keys, Trophies, Imprints, and byte/entry-bounded History. Browser import rejects
+more than 2 MiB before JSON parsing. Archived
+Adaptation records remain readable and inert. Browser saves never import separate
+agent-save schema 2 documents. Storage failure keeps the session playable and
+truthfully temporary.
+
+Primary gates: unit/integration persistence and crash-recovery suites,
+`audit:progression-numbers`, `audit:evolution-levels`, and
+`audit:environment-levels`.

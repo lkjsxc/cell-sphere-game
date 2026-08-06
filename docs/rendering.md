@@ -22,7 +22,7 @@ authority.
 ## Whole-cell visual language
 
 The smallest visible world unit is a complete cell. Terrain, lakes, habitats,
-life, environmental events, selected state, Skill ownership, and Trophy state
+life, environmental events, selected state, Evolution ownership, and Trophy state
 change complete cell material. Production rendering has no sub-cell rivers,
 paths, ribbons, stripes, arrows, dots, or glyph overlays.
 

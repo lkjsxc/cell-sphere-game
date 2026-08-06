@@ -5,7 +5,7 @@
 A mobile-first passive-observation roguelite on a rich spherical ecology. The
 player watches autonomous network life discover geography, rotates and inspects
 without steering it, understands its story through visual History, and gardens
-adjacent permanent Skill Cells across the Evolution Globe between worlds.
+adjacent permanent Evolution cells across the Evolution Globe between worlds.
 
 ## Product thesis
 
@@ -23,7 +23,7 @@ not a click-to-place game, and not a hidden-tab idle process.
 - median ordinary run 270–330 game seconds, ceiling about 360;
 - first campaign resolution target 18–24 minutes;
 - first trophy-scale recognition remains targeted around four hours; Evolution Globe mastery is a long-horizon modeled pursuit;
-- same seed + world ordinal + unlocked skills produces the same result at every speed;
+- same seed + world ordinal + Evolution levels produces the same result at every speed;
 - pointer-only completeness, semantic alternatives, reduced-motion safety;
 - desktop and smartphone Chrome, low allocation, restrained draw count;
 - exact evidence language: implemented, tested, measured, observed, deployed,
@@ -37,6 +37,6 @@ not a click-to-place game, and not a hidden-tab idle process.
 4. Extinction is inevitable, causal, narrated, and converted into permanent inheritance.
 5. Autonomous worlds support ambient play while permanent Evolution creates strategy.
 6. History makes autonomous behavior understandable during and after a run.
-7. The globe-native Permanent Skill Tree rewards repeated extinction.
+7. The globe-native Evolution sphere rewards repeated extinction.
 8. Excellent deterministic source, tests, accessibility, deployment, and
    honest performance evidence.
