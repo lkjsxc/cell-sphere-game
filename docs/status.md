@@ -36,7 +36,7 @@ Focused current gates are `audit:evolution-levels`, `audit:environment-levels`,
 `audit:luminous`, `audit:progression-numbers`, `agent:long`, and
 `balance:holdout`.
 
-## 2026-08-06 candidate evidence
+## 2026-08-06 release evidence
 
 - Unit: 182/182; integration: 76/76. A complete 26-gate `npm run verify`
   passed. The regenerated deterministic showcase contains 89 frames at SHA-256
@@ -87,8 +87,13 @@ Focused current gates are `audit:evolution-levels`, `audit:environment-levels`,
   with a 4,096-digit balance retained a copyable exact cost and passed the same
   responsive/200%-text geometry matrix.
 
-No physical-device or screen-reader session is claimed. CI, push, Pages, and
-cache-busted deployed-byte verification remain pending for this candidate.
+No physical-device or screen-reader session is claimed. Source revision `0f43b24`
+was pushed to `main`; GitHub Actions run `31129790181` passed both `verify` and
+`pages`, and Pages deployment `5785953056` recorded that exact SHA. Cache-busted
+public fetches byte-matched six representative production artifacts. A deployed
+Chrome play path could not be completed because this audit host's Chrome reports
+`ERR_INTERNET_DISCONNECTED` for every remote URL; trusted-CDP file-origin Worker,
+fallback-simulation, WebGL2, and Canvas paths all passed.
 
 <details>
 <summary>Historical 2026-08-04 local-resource ecology release ledger</summary>
