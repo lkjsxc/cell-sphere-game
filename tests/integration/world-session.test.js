@@ -3,14 +3,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { defaultMeta } from '../../src/platform/storage.js';
 import { createWorldIdentity, sameWorldIdentity } from '../../src/core/world-session.js';
-import { createContinuation } from '../../src/interface/policies/continuation.js';
-import { createWorldReplacementState, markWorldStarted, requestWorldReplacement } from '../../src/interface/policies/run-session.js';
+import {createContinuation} from '../../src/interface/policies/continuation.js';
+import {defaultHistory} from '../../src/platform/history.js';
+import {createWorldReplacementState,markWorldStarted,recoverAuthorityLossDuringReplacement,requestWorldReplacement} from '../../src/interface/policies/run-session.js';
 
 function node() { return { textContent: '', hidden: false, disabled: false, dataset: {}, classList: { toggle() {}, add() {}, remove() {} },
   setAttribute() {}, removeAttribute() {}, replaceChildren() {} }; }
 function elements() { const value = {}; for (const name of ['title','run','memory','trophies','countdown','event','live',
-  'resultRank','resultScore','resultCause','echoes','resultTrophies','resultImprint','resultFirstCycle','breakdown','score',
-  'pressure','reach','trace','resultControl','pause','speed',
+  'resultRank','resultScore','resultEnvironment','resultPower','resultCause','echoes','resultTrophies','resultImprint','resultFirstCycle','breakdown','score',
+  'pressure','reach','trace','environmentLevel','resultControl','resultNext','resultRetry','pause','speed',
   'eventTime','eventButton']) value[name] = node();
   return value; }
 function harness() {
@@ -18,7 +19,7 @@ function harness() {
   const renderer = { backend: 'test', lastFrameAudit: null, bindWorldSession() { hit('bind'); }, resetDynamicState() { hit('renderer-reset'); },
     render(scene) { hit('render'); const snap = scene.snapshot; this.lastFrameAudit = { lifeCells: snap.alive.reduce((a,b)=>a+b,0),
       eventCells: snap.eventStrength.reduce((a,b)=>a+(b>0),0), highlights: scene.highlightedCells.length }; return true; } };
-  const app = { phase: 'idle', scene: 'home', meta: defaultMeta(), settings: { historyRetention: 24 }, speed: 32,
+  const app={phase:'idle',scene:'home',meta:defaultMeta(),archive:defaultHistory(),settings:{historyRetention:24},speed:32,
     el: elements(), topo4: { nodeCount: 32 }, worldIdentity: null, retiredWorldIdentity: null, activeRunId: 0,
     worldSessionSequence: 0, presentationGeneration: 0, worldReplacement: createWorldReplacementState(),
     requestId: 0, requestGeneration: 0, continuation: createContinuation(), countdownLabel: '', renderer,
@@ -47,7 +48,7 @@ test('replacement teardown clears every current-world field before one static bl
     if (oldLocation) globalThis.location = oldLocation; else delete globalThis.location;
   }
   assert.equal(app.worldReplacement.status, 'starting'); assert.equal(app.driver.starts.length, 1);
-  assert.equal(app.meta.worldSeedIndex, 1); assert.equal(app.presentationAudit.blankFrames, 1);
+  assert.equal(app.meta.worldSeedIndex, '1'); assert.equal(app.presentationAudit.blankFrames, 1);
   assert.deepEqual(app.renderer.lastFrameAudit, { lifeCells: 0, eventCells: 0, highlights: 0 });
   assert.equal(sameWorldIdentity(app.snapshot, app.worldIdentity), true); assert.equal(app.snapshot.status, 'starting');
   assert.equal(counts.get('renderer-reset'), 2, 'old and new renderer dynamic state');
@@ -68,6 +69,15 @@ test('every in-run replacement request waits for authoritative abandonment', () 
   assert.equal(app.driver.starts.length, 0); assert.equal(requestWorldReplacement(app, 'same-frame-race'), false);
 });
 
+test('fatal authority loss after accepted abort records no reward and continues replacement',()=>{
+ const oldLocation=globalThis.location;globalThis.location={search:''};const{app}=harness();app.phase='running';app.meta={...app.meta,worldSeedIndex:'1'};
+ app.worldIdentity=createWorldIdentity({worldSessionId:1,runId:1,seed:7,presentationGeneration:1});app.snapshot={...app.worldIdentity,tick:50,worldOrdinal:'1',score:'0'};
+ try{assert.equal(requestWorldReplacement(app,'authority-loss'),true);const failed={...app.worldIdentity,t:'worker-failed'};
+  assert.equal(recoverAuthorityLossDuringReplacement(app,failed),true);assert.equal(app.worldReplacement.status,'starting');assert.equal(app.driver.starts.length,1);
+  assert.equal(app.archive.worlds.length,1);assert.equal(app.archive.worlds[0].cause,'abandoned');assert.equal(app.meta.totalEchoes,'0');
+ }finally{if(oldLocation)globalThis.location=oldLocation;else delete globalThis.location}
+});
+
 test('100 replacement cycles are first-wins with unique seed, authority, identity, and blank frame', () => {
   const oldLocation = globalThis.location; globalThis.location = { search: '' }; const { app } = harness(); const keys = new Set(); const seeds = new Set();
   try { for (let cycle = 0; cycle < 100; cycle++) {
@@ -77,7 +87,8 @@ test('100 replacement cycles are first-wins with unique seed, authority, identit
   } } finally { if (oldLocation) globalThis.location = oldLocation; else delete globalThis.location; }
   assert.equal(app.driver.starts.length, 100); assert.equal(app.presentationAudit.blankFrames, 100);
   assert.equal(app.worldReplacement.accepted, 100); assert.equal(app.worldReplacement.rejected, 100);
-  assert.equal(keys.size, 100); assert.equal(seeds.size, 100); assert.equal(app.meta.worldSeedIndex, 100);
+  assert.equal(keys.size, 100); assert.equal(seeds.size, 100); assert.equal(app.meta.worldSeedIndex, '100');
   assert.equal(new Set(app.driver.starts.map((item) => item.identity.runId)).size, 100);
-  assert.equal(new Set(app.driver.starts.map((item) => item.identity.presentationGeneration)).size, 100);
+  assert.equal(new Set(app.driver.starts.map((item)=>item.identity.presentationGeneration)).size,100);
+  assert.equal(new Set(app.driver.starts.map((item)=>item.config.worldOrdinal)).size,100);
 });

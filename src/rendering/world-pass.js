@@ -121,7 +121,7 @@ export class WorldPass {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.eventBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.eventData);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.ecologyBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.ecologyData);
   }
-  draw(vp, eye, snapshot, selectedNode, highlightedCells = []) {
+  draw(vp, eye, snapshot, selectedNode, highlightedCells = [], time = 0, pulse = false) {
     if (this.disposed || !this.accepts(snapshot)) return false;
     const gl = this.gl; this.uploadLife(snapshot);
     const globe = this.programs.globe;
@@ -130,6 +130,9 @@ export class WorldPass {
     gl.uniform3fv(globe.u.get('uEye'), eye);
     gl.uniform1f(globe.u.get('uEntropy'), snapshot?.entropy ?? 0);
     gl.uniform1f(globe.u.get('uMemory'), ['memory', 'trophies'].includes(snapshot?.status) ? 1 : 0);
+    gl.uniform1f(globe.u.get('uTime'), Number.isFinite(time) ? time : 0);
+    gl.uniform1f(globe.u.get('uPulse'), pulse ? 1 : 0);
+    gl.uniform1f(globe.u.get('uElectricityDevelopment'), Math.max(0, Math.min(1, snapshot?.electricityDevelopment ?? 0)));
     const selected = Number.isInteger(selectedNode) ? selectedNode : -1;
     gl.uniform1f(globe.u.get('uHasSelection'), selected >= 0 ? 1 : 0);
     gl.uniform3fv(globe.u.get('uSelectedCenter'), selected >= 0

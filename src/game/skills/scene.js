@@ -1,7 +1,9 @@
 /** Direct cellular projection for the dedicated frequency-5 Evolution atlas. */
 export const MEMORY_STATUS = Object.freeze({
-  EMPTY: 0, LOCKED: 1, UNAFFORDABLE: 2, AFFORDABLE: 3, OWNED: 4,
-  SELECTED_LOCKED: 5, SELECTED_UNAFFORDABLE: 6, SELECTED_AFFORDABLE: 7, SELECTED_OWNED: 8,
+  EMPTY: 0, LOCKED: 1, UNAFFORDABLE: 2, AFFORDABLE: 3, OWNED_UNAFFORDABLE: 4,
+  SELECTED_LOCKED: 5, SELECTED_UNAFFORDABLE: 6, SELECTED_AFFORDABLE: 7,
+  OWNED_AFFORDABLE: 8, SELECTED_OWNED_UNAFFORDABLE: 9, SELECTED_OWNED_AFFORDABLE: 10,
+  OWNED: 4, SELECTED_OWNED: 9,
 });
 const KINDS = Object.freeze({ resonance: 1, conditional: 2, unlock: 3, keystone: 4, major: 5, capstone: 6, root: 7 });
 const BRANCHES = Object.freeze({ Marine: 1, Freshwater: 2, Scarcity: 3, Fertility: 4, Cryogenic: 5, Luminous: 6 });
@@ -47,7 +49,8 @@ export function renderMemorySnapshot(topo, meta, scene, emphasizedIds = []) {
 }
 
 function statusFor(node, selected) {
-  if (node.owned) return selected ? MEMORY_STATUS.SELECTED_OWNED : MEMORY_STATUS.OWNED;
+  if (node.owned && node.affordable) return selected ? MEMORY_STATUS.SELECTED_OWNED_AFFORDABLE : MEMORY_STATUS.OWNED_AFFORDABLE;
+  if (node.owned) return selected ? MEMORY_STATUS.SELECTED_OWNED_UNAFFORDABLE : MEMORY_STATUS.OWNED_UNAFFORDABLE;
   if (node.locked) return selected ? MEMORY_STATUS.SELECTED_LOCKED : MEMORY_STATUS.LOCKED;
   if (node.affordable) return selected ? MEMORY_STATUS.SELECTED_AFFORDABLE : MEMORY_STATUS.AFFORDABLE;
   return selected ? MEMORY_STATUS.SELECTED_UNAFFORDABLE : MEMORY_STATUS.UNAFFORDABLE;

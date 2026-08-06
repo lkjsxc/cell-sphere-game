@@ -54,7 +54,7 @@ export function createInspectorSurface(options) {
     const stateName = d.alive ? (d.stress > 0.75 ? 'Alive · critical stress' : 'Alive')
       : d.biomass > 0.02 ? 'Dead tissue / scar' : 'Unoccupied';
     const role = d.activeEdges >= 4 ? 'Connected center' : d.activeEdges === 1 ? 'Frontier cell' : d.activeEdges > 1 ? 'Connected tissue' : 'Isolated';
-    const access = d.habitatAccessible ? 'Accessible' : `Evolution access required · ${d.requiredSkill} (${d.requiredCapability})`;
+    const access = d.habitatAccessible ? 'Accessible' : `Evolution level required · ${d.requiredSkill} (${d.requiredCapability})`;
     const ecology = d.ecologicalAccessible ? label(d.ecologicalReason) : `Blocked · ${label(d.ecologicalReason)}`;
     dl.append(...definitionRows([['State', stateName], ['Role', role], ['Habitat access', access],
       ['Ecological access', ecology], ['Resource floor', `${Math.round((d.resourceFloor ?? 0) * 100)}%`],

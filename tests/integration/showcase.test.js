@@ -13,7 +13,7 @@ function payload() {
 
 test('showcase metadata and checked-in bytes are exact', () => {
   const { bytes, history } = payload();
-  assert.equal(TITLE_SHOWCASE.schema, 1); assert.equal(TITLE_SHOWCASE.replayVersion, 4);
+  assert.equal(TITLE_SHOWCASE.schema,1);assert.equal(TITLE_SHOWCASE.replayVersion,5);
   assert.equal(TITLE_SHOWCASE.frameCount, 89); assert.equal(TITLE_SHOWCASE.durationMs, 22_250);
   assert.equal(TITLE_SHOWCASE.frameIntervalMs, 250); assert.equal(history.cellCount, 2562);
   assert.equal(history.frames.length, TITLE_SHOWCASE.frameCount);

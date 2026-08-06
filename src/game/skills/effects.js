@@ -1,15 +1,29 @@
 import { compileBuilds, BUILD_MASTERY_VERSION } from './builds.js';
 import { EVOLUTION_LEVEL_VECTOR_VERSION, boundedEvolutionLevelRefinement, levelMapFromVector } from './levels.js';
 import { WORLD_POTENTIAL_VERSION, worldPotentialForBreadthAndDepth } from './potential.js';
+import { addProgressionIntegers, multiplyProgressionIntegers,
+  sumProgressionIntegers } from '../../core/progression-integer.js';
 
 export const EVOLUTION_EFFECT_VERSION = 2;
 export const EVOLUTION_COMPILE_CACHE_LIMIT = 512;
+export const EVOLUTION_COMPILE_CACHE_BYTE_LIMIT = 8 * 1024 * 1024;
 
 const ADDITIVE = new Set(['growthCap', 'anastomosis', 'redundantLoops',
   'coldReserve', 'symbioticFilm', 'distributedSensing']);
 const EFFECT_CAPS = Object.freeze({ reach:.9, uptake:.9, maintenance:.5, conductance:1, reinforce:.8,
   stressResist:.9, heatTol:.5, droughtTol:.5, toxinTol:.5, energyCap:.9, regrow:.9, growCost:.35 });
-const CACHE = new Map();
+const CACHE=new Map();const CACHE_WEIGHTS=new Map();let cacheBytes=0;let oversizeSkips=0;
+const BUILD_PRESSURE_CHANNELS = Object.freeze({
+  'rich-rush':['scarcity'], 'lake-garden':['scarcity','renewal'],
+  'circular-biosphere':['scarcity','renewal','maintenance'], 'wasteland-reclaimer':['scarcity','toxicity'],
+  'cold-dormancy':['climate','maintenance','events'], 'cryolake-engineer':['climate','events'],
+  'brine-harvester':['maintenance'], 'pelagic-colony':['maintenance','events'],
+  'littoral-succession':['renewal','maintenance'], 'bioelectric-wetland':['renewal','toxicity','maintenance'],
+  'hydrothermal-grid':['maintenance','events'], 'illuminated-biosphere':['toxicity','maintenance','events'],
+  'polar-current':['climate','events'], 'depletion-bloom':['scarcity','toxicity'],
+  'world-gardener':['scarcity','renewal','climate','toxicity','maintenance','events'],
+  'lake-to-light-network':['renewal','maintenance','events'],
+});
 let hits = 0; let misses = 0; let evictions = 0;
 
 /** Compile all 252 catalog entries once, independent of level magnitude. */
@@ -45,6 +59,10 @@ export function compileEvolutionVector({ vector, canonicalKey, nodes, summary, c
   boundCompiledEffects(effects);
   const capabilitySet = new Set(unlocks.filter((entry) => entry.mode === 'habitat').map((entry) => entry.key));
   const builds = compileBuilds(ownedNodes);
+  const affinityDefense = Object.freeze(Object.fromEntries(summary.affinities.map((entry) => [entry.affinity,
+    multiplyProgressionIntegers(entry.defenseRating, '16')])));
+  const pressureDefense = compilePressureDefense(builds.activeBuilds);
+  const electricityMastery = compileElectricityMastery(builds.activeBuilds);
   const worldPotential = worldPotentialForBreadthAndDepth(summary.breadthPower, summary.depth);
   const compiled = Object.freeze({ effects: Object.freeze(effects),
     conditionals: Object.freeze(conditionals), unlocks: Object.freeze(unlocks),
@@ -53,6 +71,7 @@ export function compileEvolutionVector({ vector, canonicalKey, nodes, summary, c
     evolutionDefenseRating: summary.evolutionDefenseRating,
     totalEvolutionLevels: summary.totalLevels, excessEvolutionDepth: summary.excessDepth,
     minimumOwnedLevel: summary.minimumOwnedLevel, affinitySummaries: summary.affinities,
+    affinityDefense, pressureDefense, electricityMastery,
     affinityBreadth: Object.freeze(Object.fromEntries(summary.affinities.map((entry) => [entry.affinity, entry.breadth]))),
     affinityDepth: Object.freeze(Object.fromEntries(summary.affinities.map((entry) => [entry.affinity, entry.depth]))),
     worldPotential, potentialVersion: WORLD_POTENTIAL_VERSION,
@@ -63,10 +82,12 @@ export function compileEvolutionVector({ vector, canonicalKey, nodes, summary, c
     buildMasteryRating: builds.masteryRating, masteryRating: builds.masteryRating,
     buildCapabilities: builds.capabilities,
     transformations: builds.transformations });
-  CACHE.set(key, compiled);
-  if (CACHE.size > EVOLUTION_COMPILE_CACHE_LIMIT) {
-    CACHE.delete(CACHE.keys().next().value); evictions++;
-  }
+  const weight=(key.length+JSON.stringify(compiled).length)*2;
+  if(weight<=EVOLUTION_COMPILE_CACHE_BYTE_LIMIT){CACHE.set(key,compiled);CACHE_WEIGHTS.set(key,weight);cacheBytes+=weight;
+    while(CACHE.size>EVOLUTION_COMPILE_CACHE_LIMIT||cacheBytes>EVOLUTION_COMPILE_CACHE_BYTE_LIMIT){
+      const oldest=CACHE.keys().next().value;CACHE.delete(oldest);cacheBytes-=CACHE_WEIGHTS.get(oldest)??0;CACHE_WEIGHTS.delete(oldest);evictions++;
+    }
+  }else oversizeSkips++;
   return compiled;
 }
 
@@ -98,11 +119,25 @@ function boundCompiledEffects(effects) {
   }
 }
 
-export function evolutionCompileCacheDiagnostics() {
-  return Object.freeze({ size: CACHE.size, limit: EVOLUTION_COMPILE_CACHE_LIMIT, hits, misses, evictions });
+function compileElectricityMastery(activeBuilds) {
+  const ids = new Set(['bioelectric-wetland','hydrothermal-grid','illuminated-biosphere','depletion-bloom','lake-to-light-network']);
+  const builds = activeBuilds.filter((build) => ids.has(build.id));
+  const development = builds.reduce((best, build) => Math.max(best, build.masteryRefinement ?? 0), 0);
+  return Object.freeze({ rating:sumProgressionIntegers(builds.map((build) => build.masteryRank)),
+    development, generationScale:1 + .75 * development, retention:.992 + .004 * development,
+    upkeepScale:1 - .25 * development, domainScale:1 + .25 * development,
+    visualDevelopment:development });
 }
-export function resetEvolutionCompileCache() {
-  CACHE.clear(); hits = 0; misses = 0; evictions = 0;
+function compilePressureDefense(activeBuilds) {
+  const result = { scarcity:'0', renewal:'0', climate:'0', toxicity:'0', maintenance:'0', events:'0' };
+  for (const build of activeBuilds) for (const channel of BUILD_PRESSURE_CHANNELS[build.id] ?? []) {
+    result[channel] = addProgressionIntegers(result[channel], multiplyProgressionIntegers(build.masteryRank, '50'));
+  }
+  return Object.freeze(result);
 }
+
+export function evolutionCompileCacheDiagnostics(){return Object.freeze({size:CACHE.size,limit:EVOLUTION_COMPILE_CACHE_LIMIT,
+  bytes:cacheBytes,byteLimit:EVOLUTION_COMPILE_CACHE_BYTE_LIMIT,hits,misses,evictions,oversizeSkips});}
+export function resetEvolutionCompileCache(){CACHE.clear();CACHE_WEIGHTS.clear();cacheBytes=0;oversizeSkips=0;hits=0;misses=0;evictions=0;}
 export const getEvolutionCompileCacheDiagnostics = evolutionCompileCacheDiagnostics;
 export const clearEvolutionCompileCache = resetEvolutionCompileCache;

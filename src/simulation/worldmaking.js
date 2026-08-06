@@ -45,8 +45,9 @@ function runReclamation(state, cell, active) {
     || state.transformationState[cell] === TRANSFORMATION.RECOVERING;
   if (!poor) return;
   const powered = state.electricityQ[cell] / 255;
+  const mastery = state.electricityMastery?.domainScale ?? 1;
   const rate = .003 * (1 + powered * (active.has('depletion-bloom') ? 2 : .5))
-    * (1 + freshwaterSupportAt(state, cell) * .5);
+    * (1 + freshwaterSupportAt(state, cell) * .5) * mastery;
   const restored = transferRecyclable(state, cell, rate);
   if (!(restored > 0)) return;
   if (state.transformationState[cell] === TRANSFORMATION.NONE) state.transformationState[cell] = TRANSFORMATION.RECOVERING;
@@ -105,13 +106,20 @@ function runElectricity(state, cell, active) {
   const biome = state.effectiveBiome[cell];
   const wet = biome === BIOME.LAKE || biome === BIOME.WETLAND || freshwaterSupportAt(state, cell) > .35;
   const marine = biome === BIOME.DEEP_OCEAN || biome === BIOME.SHALLOW_OCEAN;
-  const domain = active.has('illuminated-biosphere') ? 1 : active.has('bioelectric-wetland') && wet ? 1
-    : active.has('hydrothermal-grid') && marine ? 1 : active.has('depletion-bloom') ? .6 : 0;
+  const mastery = state.electricityMastery ?? {};
+  // Rank 1 preserves the authored build baseline; repeat-level mastery supplies bounded refinement.
+  let domain = active.has('illuminated-biosphere') ? 1
+    : active.has('bioelectric-wetland') && wet ? 1
+      : active.has('hydrothermal-grid') && marine ? 1
+        : active.has('lake-to-light-network') && wet ? .82
+          : active.has('depletion-bloom') ? .6 : 0;
+  domain = Math.min(1.6, domain * (mastery.domainScale ?? 1));
   if (!(domain > 0) || !(flux > .00001) || state.energy[cell] < .02) return decayCharge(state, cell);
-  const generated = Math.min(.016, flux * .055 * domain);
-  const upkeep = Math.min(state.energy[cell], .00018 + generated * .04);
+  const generationScale = mastery.generationScale ?? 1;
+  const generated = Math.min(.016 * generationScale, flux * .055 * domain * generationScale);
+  const upkeep = Math.min(state.energy[cell], (.00018 + generated * .04) * (mastery.upkeepScale ?? 1));
   state.energy[cell] = Math.fround(state.energy[cell] - upkeep);
-  state.electricCharge[cell] = Math.fround(clamp01(state.electricCharge[cell] * .992 + generated));
+  state.electricCharge[cell] = Math.fround(clamp01(state.electricCharge[cell] * (mastery.retention ?? .992) + generated));
   state.electricityQ[cell] = Math.round(state.electricCharge[cell] * 255);
   if (state.electricityQ[cell] >= 20 && !state.everPowered[cell]) {
     state.everPowered[cell] = 1; recordHistory(state, 'powered-cell', { cell });
@@ -120,7 +128,8 @@ function runElectricity(state, cell, active) {
 
 function decayCharge(state, cell) {
   if (state.electricCharge[cell] <= 0) { state.electricityQ[cell] = 0; return; }
-  state.electricCharge[cell] = Math.fround(state.electricCharge[cell] * .985);
+  const development = state.electricityMastery?.development ?? 0;
+  state.electricCharge[cell] = Math.fround(state.electricCharge[cell] * (.985 + .006 * development));
   state.electricityQ[cell] = state.electricCharge[cell] < .004 ? 0 : Math.round(state.electricCharge[cell] * 255);
 }
 function hasLowerNeighbor(state, cell) { const altitude = state.fields.altitude[cell];

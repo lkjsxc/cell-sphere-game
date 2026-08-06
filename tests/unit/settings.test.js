@@ -57,16 +57,17 @@ test('full graph-v4 ownership migrates to all current cells without charge and e
   const raw = { schema: 8, memoryGraphVersion: 4, memoryNodes: LEGACY_MEMORY_MANIFEST.map((row) => row.oldId),
     echoBalance: 37, totalEchoes: 50, bestScore: 612345 };
   const once = validateMeta(raw); const twice = validateMeta(once);
-  assert.equal(once.memoryGraphVersion, MEMORY_GRAPH_VERSION); assert.equal(once.memoryNodes.length, 252);
-  assert.equal(once.legacyMemoryNodes.length, 642); assert.equal(once.echoBalance, 37); assert.equal(twice.echoBalance, 37);
-  assert.equal(once.bestScore, 0); assert.equal(once.legacyBestScore, 612345);
+  assert.equal(once.memoryGraphVersion, MEMORY_GRAPH_VERSION); assert.equal(once.evolutionLevels.length, 252);
+  assert.ok(once.evolutionLevels.every((entry) => entry.level === '1'));
+  assert.equal(once.legacyMemoryNodes.length, 642); assert.equal(once.echoBalance, '37'); assert.equal(twice.echoBalance, '37');
+  assert.equal(once.bestScore, '0'); assert.equal(once.legacyBestScore, '612345');
 });
 
 test('scattered and unknown graph-v4 IDs preserve mapped islands and quarantine corruption', () => {
   const rows = [LEGACY_MEMORY_MANIFEST[0], LEGACY_MEMORY_MANIFEST[107], LEGACY_MEMORY_MANIFEST[321]];
   const meta = validateMeta({ schema: 8, memoryGraphVersion: 4, memoryNodes: [...rows.map((row) => row.oldId), 'foreign-skill'], echoBalance: 4 });
-  for (const row of rows) assert.ok(meta.memoryNodes.includes(row.targetId));
-  assert.deepEqual(meta.quarantinedMemoryNodes, ['foreign-skill']); assert.equal(meta.echoBalance >= 4, true);
+  for (const row of rows) assert.ok(meta.evolutionLevels.some((entry) => entry.id === row.targetId && entry.level === '1'));
+  assert.deepEqual(meta.quarantinedMemoryNodes, ['foreign-skill']); assert.equal(BigInt(meta.echoBalance) >= 4n, true);
 });
 
 test('compiled full progression is bounded and exposes every habitat capability', () => {
@@ -82,10 +83,10 @@ test('complete level-one breadth can be purchased legally before unlimited upgra
   while (normalizeEvolutionLevels(meta).length < MEMORY_NODES.length && guard++ < 1000) {
     const node = availableMemoryNodes(meta).find((candidate) => candidate.currentLevel === '0');
     assert.ok(node, `frontier stopped at ${normalizeEvolutionLevels(meta).length}`);
-    const tx = purchaseMemory(meta, node.id, { expectedLevel:'0', expectedRevision:meta.revision });
+    const tx=purchaseMemory(meta,node.id,{expectedLevel:'0',expectedRevision:meta.revision,transactionKey:`breadth-${guard}`});
     assert.equal(tx.ok, true); spent += BigInt(tx.spent); meta = tx.meta;
   }
   assert.equal(normalizeEvolutionLevels(meta).length, 252); assert.equal(spent, 17820n); assert.equal(meta.echoBalance, '82180');
-  const upgrade = purchaseMemory(meta, MEMORY_NODE_IDS[0], { expectedLevel:'1', expectedRevision:meta.revision });
+  const upgrade=purchaseMemory(meta,MEMORY_NODE_IDS[0],{expectedLevel:'1',expectedRevision:meta.revision,transactionKey:'breadth-upgrade'});
   assert.equal(upgrade.ok, true); assert.equal(upgrade.newLevel, '2');
 });

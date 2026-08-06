@@ -5,7 +5,7 @@ import { REPLAY, REPLAY_VERSION } from '../../src/simulation/replay.js';
 import { scoreResult } from '../../src/game/scoring.js';
 import { RUN_PROTOCOL_VERSION, acceptsRunProtocol } from '../../src/core/run-protocol.js';
 import { compileMemory, MEMORY_NODES } from '../../src/game/skills/index.js';
-import { appendWorld, loadHistory, normalizeHistoryEvents, saveHistory, serializeHistory } from '../../src/platform/history.js';
+import { appendWorld, defaultHistory, loadHistory, normalizeHistoryEvents, saveHistory, serializeHistory } from '../../src/platform/history.js';
 
 function runFull(cfg, chunk = 50) { const controller = new RunController({ worldOrdinal: 1, worldPotential: 16000, ...cfg }); controller.start();
   while (controller.state.status !== 'extinct') controller.advance(chunk); return controller.buildResult(); }
@@ -55,8 +55,8 @@ test('strain and permanent Evolution remain authoritative start inputs', () => {
   assert.notEqual(evolved.hash, pioneer.hash); assert.equal(evolved.worldPotential, memory.worldPotential);
 });
 
-test('replay schema 4 contains only stable run creation inputs', () => {
-  const result = runFull({ seed: 8888 }); assert.equal(result.replayVersion, REPLAY_VERSION); assert.equal(REPLAY_VERSION, 4);
+test('replay schema 5 contains only stable run creation inputs', () => {
+  const result = runFull({ seed: 8888 }); assert.equal(result.replayVersion, REPLAY_VERSION); assert.equal(REPLAY_VERSION, 5);
   assert.deepEqual(result.replay.map((entry) => entry[1]), [REPLAY.STRAIN, REPLAY.INOCULATE]);
   assert.ok(result.replay.flat().every(Number.isInteger));
 });
@@ -71,11 +71,11 @@ test('owned conditional Evolution changes only its declared runtime condition', 
 
 test('semantic History remains bounded, serializable, and corruption-safe', () => {
   const result = runFull({ seed: 443322 }); const score = scoreResult(result); const events = normalizeHistoryEvents(result.history);
-  assert.ok(events.length > 5 && events.length <= 80); let archive = { schema: 5, worlds: [], memory: [], trophies: [] };
+  assert.ok(events.length > 5 && events.length <= 80); let archive = defaultHistory();
   for (let run = 1; run <= 35; run++) archive = appendWorld(archive, { ...result, seed: run }, score, run, 24);
   assert.equal(archive.worlds.length, 24); assert.ok(serializeHistory(archive).length < 700000);
   globalThis.localStorage = { getItem: () => '{broken', setItem: () => {} };
-  try { assert.deepEqual(loadHistory(), { schema: 5, worlds: [], memory: [], trophies: [] });
+  try { assert.deepEqual(loadHistory(), defaultHistory());
     globalThis.localStorage.setItem = () => { throw new Error('quota'); }; assert.equal(saveHistory(archive), false); }
   finally { delete globalThis.localStorage; }
 });

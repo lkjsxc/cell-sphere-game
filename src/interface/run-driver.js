@@ -18,13 +18,14 @@ export function createRunDriver(caps, onMessage, options = {}) {
     stop(); const runId = ++runSequence;
     activeIdentity = createWorldIdentity({ worldSessionId: value?.worldSessionId ?? runId, runId,
       seed: value?.seed ?? 0, presentationGeneration: value?.presentationGeneration ?? ++presentationSequence,
+      environmentLevel:value?.environmentLevel, challengeProfileHash:value?.challengeProfileHash,
       resultTransactionKey: value?.resultTransactionKey });
     presentationSequence = Math.max(presentationSequence, activeIdentity.presentationGeneration);
     return activeIdentity;
   }
   function accepts(value, identity = activeIdentity, complete = false) {
     if (!identity || value?.runId !== identity.runId) return false;
-    for (const name of ['worldSessionId', 'seed', 'presentationGeneration', 'resultTransactionKey']) {
+    for (const name of ['worldSessionId', 'seed', 'presentationGeneration', 'environmentLevel', 'challengeProfileHash', 'resultTransactionKey']) {
       if ((complete || value?.[name] != null) && value?.[name] !== identity[name]) return false;
     }
     return true;

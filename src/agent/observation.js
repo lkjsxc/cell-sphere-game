@@ -1,101 +1,108 @@
 /** Fair player-visible projection. Hidden simulation and future-seed state never enter it. */
 import { SCORE_MODEL_VERSION } from '../game/scoring.js';
 import { TROPHIES } from '../game/trophies/index.js';
-import { compileMemory, getMemoryAdjacentIds, groupAccessibleMemory,
-  memoryPurchasePreview } from '../game/skills/index.js';
+import { compileEvolution, evolutionCellState, getMemoryAdjacentIds, groupAccessibleMemory,
+  previewEvolutionLevel } from '../game/skills/index.js';
+import { recommendedEnvironmentLevel } from '../game/environment-level.js';
+import { compileChallengeProfile } from '../simulation/challenge-profile.js';
+import {formatProgressionEngineering,incrementProgressionInteger,maxProgressionInteger,
+  normalizeProgressionInteger} from '../core/progression-integer.js';
 import { AGENT_GOALS } from './schema.js';
 
-export const OBSERVATION_SCHEMA = 1;
+export const OBSERVATION_SCHEMA = 2;
 export const OBSERVATION_KEYS = Object.freeze([
-  'schema', 'worldOrdinal', 'echoBalance', 'scoreModelVersion', 'bestScore',
-  'worldPotential', 'evolutionPower', 'ownedSkills', 'availableSkills',
-  'activeBuilds', 'nearBuilds', 'habitatCapabilities', 'lastResult',
-  'trophySummary', 'goals',
+  'schema', 'metaRevision', 'worldOrdinal', 'environmentLevel', 'highestEnvironmentLevel',
+  'nextWorldPressure', 'echoBalance', 'echoBalanceFormatted', 'scoreModelVersion', 'bestScore',
+  'worldPotential', 'evolutionSummary', 'affinities', 'evolutionCells', 'ownedEvolutionCells', 'availableEvolutionCells',
+  'activeBuilds', 'nearBuilds', 'habitatCapabilities', 'lastResult', 'trophySummary', 'goals',
 ]);
-export const PUBLIC_SKILL_KEYS = Object.freeze([
-  'id', 'name', 'affinity', 'tags', 'kind', 'tier', 'cost', 'owned',
-  'reachable', 'affordable', 'gameplay', 'evolutionPower', 'worldPotential',
-  'buildProgress', 'neighbors',
+export const PUBLIC_CELL_KEYS = Object.freeze([
+  'id', 'name', 'affinity', 'tags', 'kind', 'tier', 'currentLevel', 'nextLevel', 'nextCost',
+  'nextCostFormatted', 'owned', 'reachable', 'affordable', 'reason', 'gameplay', 'evolutionPower',
+  'worldPotential', 'buildProgress', 'masteryContribution', 'neighbors',
 ]);
-const POWER = Object.freeze({ root: 1, resonance: 1, major: 2, conditional: 2,
-  unlock: 3, capability: 3, keystone: 5, capstone: 8 });
-const BRANCH_PUBLIC = Object.freeze({ Reach: ['Marine', ['marine', 'frontier']],
-  Flow: ['Freshwater', ['freshwater', 'transport']], Reserve: ['Scarcity', ['scarcity', 'storage']],
-  Ecology: ['Fertility', ['rich-terrain', 'resilience']], Perception: ['Cryogenic', ['cryogenic', 'sensing']],
-  Continuity: ['Luminous', ['luminous', 'continuity']] });
+/** Schema-1 import compatibility; schema-2 callers use PUBLIC_CELL_KEYS. */
+export const PUBLIC_SKILL_KEYS = PUBLIC_CELL_KEYS;
 
 export function buildAgentObservation(state) {
-  const compiled = compileMemory(state.meta); const groups = groupAccessibleMemory(state.meta);
-  const all = groups.flatMap((group) => group.nodes); const owned = all.filter((node) => node.owned);
-  const reachable = all.filter((node) => node.reachable);
-  const ownedEntries = Object.freeze(owned.map((node) => publicSkill(state.meta, node, compiled)));
-  const availableEntries = Object.freeze(reachable.map((node) => publicSkill(state.meta, node, compiled)));
-  const builds = publicBuilds(compiled);
-  return Object.freeze({ schema: OBSERVATION_SCHEMA, worldOrdinal: state.meta.runs + 1,
-    echoBalance: state.meta.echoBalance, scoreModelVersion: state.meta.scoreModelVersion ?? SCORE_MODEL_VERSION,
-    bestScore: state.meta.bestScore, worldPotential: compiled.worldPotential,
-    evolutionPower: evolutionPower(compiled, owned), ownedSkills: ownedEntries,
-    availableSkills: availableEntries, activeBuilds: builds.active, nearBuilds: builds.near,
-    habitatCapabilities: Object.freeze([...(compiled.habitatCapabilities ?? [])]),
-    lastResult: state.lastResult, trophySummary: trophySummary(state.meta),
-    goals: Object.freeze({ selected: state.goal, available: AGENT_GOALS }),
+  const compiled = compileEvolution(state.meta); const groups = groupAccessibleMemory(state.meta);
+  const all = groups.flatMap((group) => group.nodes); const cells = Object.freeze(all.map((node) => publicSkill(state.meta, node, compiled)));
+  const ownedEntries = Object.freeze(cells.filter((node) => node.owned));
+  const availableEntries = Object.freeze(cells.filter((node) => node.reachable));
+  const builds = publicBuilds(compiled); const environmentLevel = recommendedEnvironmentLevel(state.meta);
+  const pressure = compileChallengeProfile({ environmentLevel, evolution:compiled });
+  return Object.freeze({ schema:OBSERVATION_SCHEMA, metaRevision:normalizeProgressionInteger(state.meta.revision, '0'),
+    worldOrdinal:incrementProgressionInteger(maxProgressionInteger(state.meta.runs,state.meta.worldSeedIndex)),environmentLevel,
+    highestEnvironmentLevel:normalizeProgressionInteger(state.meta.highestEnvironmentLevel, '0'),
+    nextWorldPressure:publicPressure(pressure),
+    echoBalance:state.meta.echoBalance, echoBalanceFormatted:formatExact(state.meta.echoBalance),
+    scoreModelVersion:state.meta.scoreModelVersion ?? SCORE_MODEL_VERSION,
+    bestScore:state.meta.bestScore, worldPotential:compiled.worldPotential,
+    evolutionSummary:Object.freeze({ breadth:compiled.affinitySummaries.reduce((sum, entry) => sum + entry.breadth, 0),
+      totalLevels:compiled.totalEvolutionLevels, excessDepth:compiled.excessEvolutionDepth,
+      breadthPower:compiled.breadthPower, defenseRating:compiled.evolutionDefenseRating,
+      levelVectorVersion:compiled.levelVectorVersion, effectVersion:compiled.effectVersion,
+      potentialVersion:compiled.potentialVersion }),
+    affinities:Object.freeze(compiled.affinitySummaries.map((entry) => Object.freeze({ ...entry,
+      pressureDefense:compiled.affinityDefense?.[entry.affinity] ?? '0' }))),
+    evolutionCells:cells, ownedEvolutionCells:ownedEntries, availableEvolutionCells:availableEntries,
+    activeBuilds:builds.active, nearBuilds:builds.near,
+    habitatCapabilities:Object.freeze([...(compiled.habitatCapabilities ?? [])]),
+    lastResult:state.lastResult, trophySummary:trophySummary(state.meta),
+    goals:Object.freeze({ selected:state.goal, available:AGENT_GOALS }),
   });
 }
 
-export function publicAffinity(node) {
-  const fallback = BRANCH_PUBLIC[node.branch] ?? ['Fertility', []];
-  return typeof node.affinity === 'string' && node.affinity ? node.affinity : fallback[0];
-}
-export function publicTags(node) {
-  const fallback = BRANCH_PUBLIC[node.branch]?.[1] ?? [];
-  const tags = Array.isArray(node.tags) ? node.tags : Array.isArray(node.secondaryTags) ? node.secondaryTags : fallback;
-  return Object.freeze([...new Set(tags.filter((tag) => typeof tag === 'string'))].slice(0, 12));
-}
-export function skillPower(node) {
-  return Number.isFinite(node.evolutionPower) && node.evolutionPower >= 0
-    ? node.evolutionPower : (POWER[node.kind] ?? 1);
-}
+export function publicAffinity(node) { return node.affinity ?? 'Fertility'; }
+export function publicTags(node) { return Object.freeze([...(node.secondaryTags ?? [])]); }
 
 function publicSkill(meta, node, compiled) {
-  const preview = memoryPurchasePreview(meta, node.id); const beforePower = evolutionPower(compiled,
-    groupAccessibleMemory(meta).flatMap((group) => group.nodes).filter((entry) => entry.owned));
-  return Object.freeze({ id: node.id, name: node.name ?? node.nameEn ?? node.id,
-    affinity: publicAffinity(node), tags: publicTags(node), kind: node.kind, tier: node.tier,
-    cost: node.cost, owned: node.owned, reachable: node.reachable, affordable: node.affordable,
-    gameplay: Object.freeze({ before: preview?.changes?.map((change) => `${change.key}: ${format(change.before)}`).join('; ') || 'Current build',
-      after: preview?.changes?.map((change) => `${change.key}: ${format(change.after)}`).join('; ')
+  const state = evolutionCellState(meta, node); const preview = previewEvolutionLevel(meta, node.id);
+  return Object.freeze({ id:node.id, name:node.name ?? node.nameEn ?? node.id,
+    affinity:publicAffinity(node), tags:publicTags(node), kind:node.kind, tier:node.tier,
+    currentLevel:state.currentLevel,nextLevel:state.nextLevel,nextCost:state.nextCost,
+    nextCostFormatted:state.nextCost===null?'Unavailable at document security boundary':formatExact(state.nextCost), owned:state.owned, reachable:state.reachable,
+    affordable:state.affordable, reason:state.reason,
+    gameplay:Object.freeze({ before:preview?.changes?.map((change) => `${change.key}: ${format(change.before)}`).join('; ') || 'Current build',
+      after:preview?.changes?.map((change) => `${change.key}: ${format(change.after)}`).join('; ')
         || node.effectEn || node.description || 'Permanent production effect',
-      summary: node.effectEn ?? node.description ?? 'Permanent production effect',
-      unlocks: Object.freeze((preview?.unlocked ?? []).map((entry) => entry.key)) }),
-    evolutionPower: Object.freeze({ before: beforePower, after: beforePower + (node.owned ? 0 : skillPower(node)),
-      delta: node.owned ? 0 : skillPower(node) }),
-    worldPotential: Object.freeze({ before: preview?.potentialBefore ?? compiled.worldPotential,
-      after: preview?.potentialAfter ?? compiled.worldPotential,
-      delta: preview?.potentialDelta ?? preview?.potentialGain ?? 0 }),
-    buildProgress: Object.freeze((preview?.buildProgress ?? []).map(publicBuild).slice(0, 12)),
-    neighbors: Object.freeze([...getMemoryAdjacentIds(node.id)]),
+      summary:node.effectEn ?? node.description ?? 'Permanent production effect',
+      unlocks:Object.freeze((preview?.unlocked ?? []).map((entry) => entry.key)) }),
+    evolutionPower:Object.freeze({ before:preview?.powerBefore ?? compiled.breadthPower,
+      after:preview?.powerAfter ?? compiled.breadthPower, delta:preview?.powerGain ?? 0 }),
+    worldPotential:Object.freeze({ before:preview?.potentialBefore ?? compiled.worldPotential,
+      after:preview?.potentialAfter ?? compiled.worldPotential, delta:preview?.potentialDelta ?? '0' }),
+    buildProgress:Object.freeze((preview?.buildProgress ?? []).map(publicBuild).slice(0, 16)),
+    masteryContribution:Object.freeze({ affinityDefense:compiled.affinityDefense?.[node.affinity] ?? '0',
+      builds:Object.freeze([...(node.buildContributions ?? [])]) }),
+    neighbors:Object.freeze([...getMemoryAdjacentIds(node.id)]),
   });
 }
-function evolutionPower(compiled, owned) {
-  if (Number.isFinite(compiled.evolutionPower)) return compiled.evolutionPower;
-  return owned.reduce((sum, node) => sum + skillPower(node), 0);
-}
 function publicBuilds(compiled) {
-  const source = Array.isArray(compiled.builds) ? compiled.builds : [];
-  const activeSource = Array.isArray(compiled.activeBuilds) ? compiled.activeBuilds : source.filter((build) => build.active);
-  const nearSource = Array.isArray(compiled.nearBuilds) ? compiled.nearBuilds : source.filter((build) => !build.active && (build.progress ?? 0) > 0);
-  return Object.freeze({ active: Object.freeze(activeSource.map(publicBuild).slice(0, 24)),
-    near: Object.freeze(nearSource.map(publicBuild).slice(0, 24)) });
+  return Object.freeze({ active:Object.freeze((compiled.activeBuilds ?? []).map(publicBuild).slice(0, 24)),
+    near:Object.freeze((compiled.nearBuilds ?? []).map(publicBuild).slice(0, 24)) });
 }
-function publicBuild(build) { return Object.freeze({ id: build.id, name: build.name ?? build.nameEn ?? build.id,
-  progress: Number.isFinite(build.after) ? build.after : Number.isFinite(build.progress) ? build.progress : build.active ? 1 : 0,
-  active: Boolean(build.active), missing: Object.freeze((build.missing ?? []).map((item) => typeof item === 'string'
-    ? item : Object.freeze({ type: item.type, id: item.id, remaining: item.remaining })).slice(0, 12)),
-  effects: Object.freeze(Object.entries(build.mechanicalEffects ?? build.effect ?? {}).map(([key, value]) => Object.freeze({ key, value }))),
-  tradeoffs: Object.freeze([...(build.tradeoffs ?? [])]), habitats: Object.freeze([...(build.habitats ?? [])]) }); }
+function publicBuild(build) { return Object.freeze({ id:build.id, name:build.name ?? build.nameEn ?? build.id,
+  progress:Number.isFinite(build.after) ? build.after : Number.isFinite(build.progress) ? build.progress : build.active ? 1 : 0,
+  active:Boolean(build.active), masteryRank:normalizeProgressionInteger(build.rankAfter ?? build.masteryRank, '0'),
+  nextMasteryRank:normalizeProgressionInteger(build.nextMasteryRank, '1'),
+  missing:Object.freeze((build.missing ?? []).map((item) => typeof item === 'string'
+    ? item : Object.freeze({ type:item.type, id:item.id, remaining:item.remaining })).slice(0, 16)),
+  ingredientSupport:Object.freeze((build.ingredientSupport ?? []).map((item) => Object.freeze({ ...item }))),
+  effects:Object.freeze(Object.entries(build.mechanicalEffects ?? build.effect ?? {}).map(([key, value]) => Object.freeze({ key, value }))),
+  tradeoffs:Object.freeze([...(build.tradeoffs ?? [])]), habitats:Object.freeze([...(build.habitats ?? [])]) }); }
+function publicPressure(profile) { return Object.freeze({ version:profile.version, environmentLevel:profile.environmentLevel,
+  publicRating:profile.publicRating, hash:profile.hash,
+  dimensions:Object.freeze(Object.fromEntries(Object.entries(profile.dimensions).map(([key, value]) => [key,
+    Object.freeze({ environmentRating:value.environmentRating, defenseRating:value.defenseRating, pressure:value.pressure })]))),
+  events:Object.freeze({ count:profile.events.count, earliestStartTick:profile.events.earliestStartTick,
+    intensityMin:profile.events.intensityMin, intensityMax:profile.events.intensityMax,
+    telegraphTicks:profile.events.telegraphTicks }) }); }
 function trophySummary(meta) {
-  const owned = new Set(meta.trophyIds ?? []); return Object.freeze({ earned: owned.size,
-    total: TROPHIES.length, queued: Object.freeze([...(meta.trophyQueue ?? [])]),
-    ids: Object.freeze(TROPHIES.filter((trophy) => owned.has(trophy.id)).map((trophy) => trophy.id)) });
+  const owned = new Set(meta.trophyIds ?? []); return Object.freeze({ earned:owned.size,
+    total:TROPHIES.length, queued:Object.freeze([...(meta.trophyQueue ?? [])]),
+    ids:Object.freeze(TROPHIES.filter((trophy) => owned.has(trophy.id)).map((trophy) => trophy.id)) });
 }
 function format(value) { return Number.isFinite(value) ? `${Math.round(value * 1000) / 1000}` : 'unchanged'; }
+function formatExact(value) { const exact=normalizeProgressionInteger(value, '0');
+  return exact.length <= 15 ? exact.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : formatProgressionEngineering(exact, 6); }

@@ -4,15 +4,20 @@ import {
   incrementProgressionInteger,
   maxProgressionInteger,
   normalizeProgressionInteger,
-  parseProgressionInteger,
+  parseProgressionInteger,subtractProgressionIntegers,
 } from '../core/progression-integer.js';
 
 export const ENVIRONMENT_LEVEL_VERSION = 1;
 export const PROTECTED_WORLD_COUNT = '2';
+/** Leaves room for the public ×1,000 rating inside the shared malformed-document bound. */
+export const ENVIRONMENT_LEVEL_DOCUMENT_DIGIT_LIMIT = 4092;
 
 /** JSON-safe canonical Environment Level. Invalid input degrades field-locally. */
 export function normalizeEnvironmentLevel(value, fallback = '0') {
-  return normalizeProgressionInteger(value, fallback);
+  const safeFallback = normalizeProgressionInteger(fallback, '0');
+  const boundedFallback = safeFallback.length <= ENVIRONMENT_LEVEL_DOCUMENT_DIGIT_LIMIT ? safeFallback : '0';
+  const canonical = normalizeProgressionInteger(value, boundedFallback);
+  return canonical.length <= ENVIRONMENT_LEVEL_DOCUMENT_DIGIT_LIMIT ? canonical : boundedFallback;
 }
 
 /**
@@ -77,11 +82,15 @@ export function resolveEnvironmentAttempt(meta, options = {}) {
  * Extinction is normal authoritative completion. Completing the current
  * frontier unlocks exactly one next level; lower retries never skip levels.
  */
-export function frontierAfterEnvironmentCompletion(meta, environmentLevel) {
-  const attempted = normalizeEnvironmentLevel(environmentLevel, '0');
-  const current = highestEnvironmentLevel(meta);
-  if (compareProgressionIntegers(attempted, current) !== 0) return current;
-  return incrementProgressionInteger(current);
+export function frontierAfterEnvironmentCompletion(meta,environmentLevel){
+  const attempted=normalizeEnvironmentLevel(environmentLevel,'0'),current=highestEnvironmentLevel(meta);
+  if(compareProgressionIntegers(attempted,current)!==0)return current;
+  const next=incrementProgressionInteger(current);return next.length<=ENVIRONMENT_LEVEL_DOCUMENT_DIGIT_LIMIT?next:current;
+}
+
+/** Maximum frontier evidence possible after the recorded completed-world count. */
+export function attainableEnvironmentFrontierForRuns(runs){const value=normalizeProgressionInteger(runs,'0');
+ if(value==='0')return'0';if(compareProgressionIntegers(value,'2')<=0)return'1';return subtractProgressionIntegers(value,'1');
 }
 
 /** Canonical public Environment Level comparison. */

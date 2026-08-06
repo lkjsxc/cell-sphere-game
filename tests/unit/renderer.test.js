@@ -173,7 +173,9 @@ test('production renderer keeps four draws and has no fine waterway machinery', 
   assert.match(renderer, /drawCalls = 4/);
   assert.doesNotMatch(renderer, /network|vein|tip|drawElementsInstanced/i);
   assert.doesNotMatch(fallback, /edgeActive|conductance|flux|renderNetwork|tip|vein/i);
-  assert.doesNotMatch(shaders, /orbit|uTwinkle|uTime/);
+  assert.doesNotMatch(shaders, /orbit|uTwinkle/);
+  assert.match(shaders, /uTime/); assert.match(shaders, /uPulse/); assert.match(shaders, /uElectricityDevelopment/);
+  assert.match(world, /uElectricityDevelopment/);
   assert.doesNotMatch(production, /riverDown|riverUp|riverMeta|aRiver|vRiver|drawRivers|riverBoundary|quadraticCurveTo|localChannel/i);
   assert.match(shaders, /float lakeCell/); assert.match(geometry, /const lakeEdge/);
   assert.match(shaders, /resourceState/); assert.match(shaders, /recoveringResource/); assert.match(shaders, /powered/);

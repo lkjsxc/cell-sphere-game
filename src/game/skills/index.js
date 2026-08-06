@@ -12,11 +12,11 @@ import { BUILD_MASTERY_VERSION } from './builds.js';
 import { FULL_EVOLUTION_POWER, WORLD_POTENTIAL_VERSION } from './potential.js';
 import { EVOLUTION_COST_VERSION, nextEvolutionCostForNode } from './cost.js';
 import { EVOLUTION_EFFECT_VERSION, compileEvolutionVector } from './effects.js';
-import { EVOLUTION_LEVEL_VECTOR_VERSION, canonicalLevelVectorKey, levelFromVector,
+import {EVOLUTION_LEVEL_VECTOR_VERSION,EVOLUTION_LEVEL_DOCUMENT_DIGIT_LIMIT,canonicalLevelVectorKey,levelFromVector,
   levelMapFromVector, normalizeEvolutionLevelVector, normalizedMetaRevision,
   ownedIdsFromVector, replaceEvolutionLevel, summarizeEvolutionLevelVector } from './levels.js';
-import { compareProgressionIntegers, incrementProgressionInteger, normalizeProgressionInteger,
-  parseProgressionInteger, subtractProgressionIntegers } from '../../core/progression-integer.js';
+import {compareProgressionIntegers,incrementProgressionInteger,normalizeProgressionInteger,
+  parseProgressionInteger,ProgressionIntegerError,subtractProgressionIntegers} from '../../core/progression-integer.js';
 import { hashStringU32, hexU32 } from '../../core/hash.js';
 import { createGeodesicTopology } from '../../world/icosphere.js';
 export { createMemoryFields } from './scene.js';
@@ -25,9 +25,9 @@ export { applyMemoryConditionals } from './node.js';
 export { AFFINITY_METADATA_HASH, EVOLUTION_AFFINITIES, EVOLUTION_AFFINITY_IDS, EVOLUTION_CONTENT_VERSION } from './affinities.js';
 export { BUILD_MASTERY_VERSION, BUILD_RECIPES, compileBuilds } from './builds.js';
 export { EVOLUTION_COST_VERSION, evolutionCostForTargetLevel } from './cost.js';
-export { EVOLUTION_EFFECT_VERSION, EVOLUTION_COMPILE_CACHE_LIMIT, clearEvolutionCompileCache,
+export { EVOLUTION_EFFECT_VERSION, EVOLUTION_COMPILE_CACHE_LIMIT, EVOLUTION_COMPILE_CACHE_BYTE_LIMIT, clearEvolutionCompileCache,
   evolutionCompileCacheDiagnostics, getEvolutionCompileCacheDiagnostics, resetEvolutionCompileCache } from './effects.js';
-export { EVOLUTION_LEVEL_VECTOR_VERSION, boundedEvolutionLevelRefinement } from './levels.js';
+export { EVOLUTION_LEVEL_VECTOR_VERSION, EVOLUTION_LEVEL_DOCUMENT_DIGIT_LIMIT, boundedEvolutionLevelRefinement } from './levels.js';
 export { BASE_WORLD_POTENTIAL, EVOLUTION_POWER_BY_KIND, FULL_EVOLUTION_POWER, WORLD_POTENTIAL_ANCHORS,
   WORLD_POTENTIAL_VERSION, legacyWorldPotentialV2Number, modeledScoreRange,
   worldPotentialForBreadthAndDepth, worldPotentialForPower } from './potential.js';
@@ -124,14 +124,17 @@ export function evolutionCellState(meta, nodeOrId, selectedId = null) {
   if (!node) return Object.freeze({ id: id ?? null, reason: 'unknown-cell', owned: false,
     locked: true, reachable: false, affordable: false, selectedReady: false,
     currentLevel: '0', nextLevel: '1', nextCost: null });
-  const vector = normalizeEvolutionLevels(meta); const levels = levelMapFromVector(vector);
-  const currentLevel = levels.get(id) ?? '0'; const nextLevel = incrementProgressionInteger(currentLevel);
-  const nextCost = nextEvolutionCostForNode(node, currentLevel);
-  const ownedIds = new Set(vector.map((entry) => entry.id)); const owned = currentLevel !== '0';
-  const frontier = memoryFrontier(meta, id, ownedIds); const reachable = owned || frontier.frontierMet;
-  const balance = normalizeProgressionInteger(meta?.echoBalance, '0');
-  const affordable = compareProgressionIntegers(balance, nextCost) >= 0;
-  const reason = !reachable ? 'adjacency-required' : !affordable ? 'insufficient-echoes' : 'ready';
+  const vector=normalizeEvolutionLevels(meta),levels=levelMapFromVector(vector);
+  const currentLevel=levels.get(id)??'0';let nextLevel=null,nextCost=null,boundary=false;
+  try{nextLevel=incrementProgressionInteger(currentLevel);if(nextLevel.length>EVOLUTION_LEVEL_DOCUMENT_DIGIT_LIMIT)boundary=true;
+    else nextCost=nextEvolutionCostForNode(node,currentLevel)}
+  catch(error){if(isProgressionBoundary(error))boundary=true;else throw error}
+  if(boundary){nextLevel=null;nextCost=null}
+  const ownedIds=new Set(vector.map((entry)=>entry.id)),owned=currentLevel!=='0';
+  const frontier=memoryFrontier(meta,id,ownedIds),reachable=owned||frontier.frontierMet;
+  const balance=normalizeProgressionInteger(meta?.echoBalance,'0');
+  const affordable=!boundary&&compareProgressionIntegers(balance,nextCost)>=0;
+  const reason=boundary?'progression-security-boundary':!reachable?'adjacency-required':!affordable?'insufficient-echoes':'ready';
   return Object.freeze({ ...node, currentLevel, nextLevel, nextCost, owned, reachable,
     locked: !owned && !frontier.frontierMet, affordable, adjacencyMet: frontier.adjacencyMet,
     adjacentOwnedId: frontier.adjacentOwnedId, bootstrap: frontier.bootstrap, reason,
@@ -161,15 +164,16 @@ export const canPurchaseMemory = canPurchaseEvolutionLevel;
 
 export function newlyAvailableAdjacentIds(meta, id) {
   const vector = normalizeEvolutionLevels(meta); const current = levelFromVector(vector, id);
-  const baseline = current !== '0'
-    ? { ...meta, evolutionLevels: replaceEvolutionLevel(vector, MEMORY_NODE_IDS, id, '0') } : meta;
+  if (current !== '0') return Object.freeze([]);
+  const baseline = meta;
   return Object.freeze(getMemoryAdjacentIds(id).filter((neighborId) => {
     const state = evolutionCellState(baseline, neighborId); return !state.owned && !state.reachable;
   }));
 }
 
-export function nextEvolutionCost(meta, id) {
-  const node = BY_ID.get(id); return node ? nextEvolutionCostForNode(node, evolutionLevel(meta, id)) : null;
+export function nextEvolutionCost(meta,id){const node=BY_ID.get(id);if(!node)return null;
+ try{const current=evolutionLevel(meta,id),next=incrementProgressionInteger(current);return next.length>EVOLUTION_LEVEL_DOCUMENT_DIGIT_LIMIT?null:nextEvolutionCostForNode(node,current)}
+ catch(error){if(isProgressionBoundary(error))return null;throw error}
 }
 
 export function compileEvolution(meta) {
@@ -182,11 +186,12 @@ export function compileEvolution(meta) {
 export const compileMemory = compileEvolution;
 export function worldPotential(meta) { return compileEvolution(meta).worldPotential; }
 
-export function previewEvolutionLevel(meta, id) {
-  const node = BY_ID.get(id); if (!node) return null;
-  const vector = normalizeEvolutionLevels(meta); const oldLevel = levelFromVector(vector, id);
-  const newLevel = incrementProgressionInteger(oldLevel); const cost = nextEvolutionCostForNode(node, oldLevel);
-  const nextVector = replaceEvolutionLevel(vector, MEMORY_NODE_IDS, id, newLevel);
+export function previewEvolutionLevel(meta,id){
+  const node=BY_ID.get(id);if(!node)return null;
+  const vector=normalizeEvolutionLevels(meta),oldLevel=levelFromVector(vector,id);let newLevel,cost,nextVector;
+  try{newLevel=incrementProgressionInteger(oldLevel);cost=nextEvolutionCostForNode(node,oldLevel);
+    nextVector=replaceEvolutionLevel(vector,MEMORY_NODE_IDS,id,newLevel)}
+  catch(error){if(isProgressionBoundary(error))return null;throw error}
   const before = compileEvolution({ ...meta, evolutionLevels: vector });
   const after = compileEvolution({ ...meta, evolutionLevels: nextVector });
   const keys = new Set([...Object.keys(before.effects), ...Object.keys(after.effects)]);
@@ -216,20 +221,25 @@ export function purchaseEvolutionLevel(meta, id, command = {}) {
   const node = BY_ID.get(id); const balanceBefore = normalizeProgressionInteger(meta?.echoBalance, '0');
   const revision = normalizedMetaRevision(meta); const transactionKey = validTransactionKey(command?.transactionKey);
   if (!node) return failedPurchase(meta, null, id, 'unknown-cell', balanceBefore, revision, transactionKey);
-  const vector = normalizeEvolutionLevels(meta); const oldLevel = levelFromVector(vector, id);
+  if(command.transactionKey===undefined||command.expectedLevel===undefined||command.expectedRevision===undefined)
+    return failedPurchase(meta,node,id,'missing-precondition',balanceBefore,revision,transactionKey);
+  if(!transactionKey)return failedPurchase(meta,node,id,'invalid-transaction-key',balanceBefore,revision,null);
+  const expectedLevel=canonicalCommandInteger(command.expectedLevel),expectedRevision=canonicalCommandInteger(command.expectedRevision);
+  if(expectedLevel===null||expectedRevision===null)return failedPurchase(meta,node,id,'invalid-precondition',balanceBefore,revision,transactionKey);
+  const vector=normalizeEvolutionLevels(meta),oldLevel=levelFromVector(vector,id);
   const receipts = normalizeTransactionKeys(meta?.evolutionTransactionKeys);
   if (transactionKey && receipts.includes(transactionKey))
     return failedPurchase(meta, node, id, 'duplicate-transaction', balanceBefore, revision, transactionKey, oldLevel);
-  if (command?.expectedLevel !== undefined && canonicalCommandInteger(command.expectedLevel) !== oldLevel)
-    return failedPurchase(meta, node, id, 'stale-level', balanceBefore, revision, transactionKey, oldLevel);
-  if (command?.expectedRevision !== undefined && canonicalCommandInteger(command.expectedRevision) !== revision)
-    return failedPurchase(meta, node, id, 'stale-revision', balanceBefore, revision, transactionKey, oldLevel);
-  const state = evolutionCellState({ ...meta, evolutionLevels: vector, echoBalance: balanceBefore }, id, id);
+  if(expectedLevel!==oldLevel)return failedPurchase(meta,node,id,'stale-level',balanceBefore,revision,transactionKey,oldLevel);
+  if(expectedRevision!==revision)return failedPurchase(meta,node,id,'stale-revision',balanceBefore,revision,transactionKey,oldLevel);
+  let state;try{state=evolutionCellState({...meta,evolutionLevels:vector,echoBalance:balanceBefore},id,id)}
+  catch(error){if(isProgressionBoundary(error))return failedPurchase(meta,node,id,'progression-security-boundary',balanceBefore,revision,transactionKey,oldLevel,'0');throw error}
   if (state.reason !== 'ready')
     return failedPurchase(meta, node, id, state.reason, balanceBefore, revision, transactionKey, oldLevel, state.nextCost);
-  const preview = previewEvolutionLevel({ ...meta, evolutionLevels: vector }, id);
-  const balanceAfter = subtractProgressionIntegers(balanceBefore, state.nextCost);
-  const newLevel = state.nextLevel; const evolutionLevels = replaceEvolutionLevel(vector, MEMORY_NODE_IDS, id, newLevel);
+  let preview,balanceAfter,evolutionLevels;const newLevel=state.nextLevel;
+  try{preview=previewEvolutionLevel({...meta,evolutionLevels:vector},id);balanceAfter=subtractProgressionIntegers(balanceBefore,state.nextCost);
+    evolutionLevels=replaceEvolutionLevel(vector,MEMORY_NODE_IDS,id,newLevel)}
+  catch(error){if(isProgressionBoundary(error))return failedPurchase(meta,node,id,'progression-security-boundary',balanceBefore,revision,transactionKey,oldLevel,state.nextCost);throw error}
   const nextReceipts = transactionKey ? [...receipts.filter((key) => key !== transactionKey), transactionKey].slice(-32) : receipts;
   const { memoryNodes: _legacyMemoryNodes, ...canonicalInput } = meta ?? {};
   const nextMeta = Object.freeze({ ...canonicalInput, evolutionLevels, echoBalance: balanceAfter,
@@ -239,13 +249,17 @@ export function purchaseEvolutionLevel(meta, id, command = {}) {
     preview, compilerVersions: EVOLUTION_COMPILER_VERSIONS, meta: nextMeta });
 }
 
-function failedPurchase(meta, node, id, reason, balance, revision, transactionKey, oldLevel = '0', cost = null) {
-  const canonicalCost = cost ?? (node ? nextEvolutionCostForNode(node, oldLevel) : null);
+function failedPurchase(meta,node,id,reason,balance,revision,transactionKey,oldLevel='0',cost=undefined){
+  let canonicalCost=cost;
+  if(canonicalCost===undefined&&node)try{canonicalCost=nextEvolutionCostForNode(node,oldLevel)}catch(error){if(isProgressionBoundary(error))canonicalCost=null;else throw error}
+  canonicalCost??=null;
   return Object.freeze({ ok: false, reason, node, nodeId: id, oldLevel,
     newLevel: oldLevel, cost: canonicalCost, spent: '0', balanceBefore: balance,
-    balanceAfter: balance, revision, transactionKey, preview: node ? previewEvolutionLevel(meta, id) : null,
+    balanceAfter:balance,revision,transactionKey,preview:safePurchasePreview(meta,node&&id),
     compilerVersions: EVOLUTION_COMPILER_VERSIONS, meta });
 }
+function isProgressionBoundary(error){return error instanceof ProgressionIntegerError||(error instanceof RangeError&&/too wide|digit|boundary/i.test(error.message))}
+function safePurchasePreview(meta,id){if(!id)return null;try{return previewEvolutionLevel(meta,id)}catch(error){if(isProgressionBoundary(error))return null;throw error}}
 function canonicalCommandInteger(value) {
   try { return parseProgressionInteger(value); } catch { return null; }
 }
@@ -261,7 +275,7 @@ function normalizeTransactionKeys(value) {
 export const purchaseMemory = purchaseEvolutionLevel;
 export const transactMemoryPurchase = purchaseEvolutionLevel;
 export function memoryEffects(meta) { return compileEvolution(meta).effects; }
-export function campaignResolved(meta) { return Number.isFinite(meta?.runs) && meta.runs >= 5; }
+export function campaignResolved(meta) { return compareProgressionIntegers(meta?.runs ?? '0', '5') >= 0; }
 export function buildMemoryScene(meta, selectedId = null) {
   const groups = groupAccessibleMemory(meta, selectedId); const nodes = Object.freeze(groups.flatMap((group) => group.nodes));
   return Object.freeze({ version: MEMORY_GRAPH_VERSION, selectedId, nodes, groups });

@@ -26,7 +26,8 @@ export function buildRunResult(s) {
     challengeProfileHash: s.challengeProfileHash, pressureProfile: s.challengeProfile,
     scoreModelVersion: SCORE_MODEL_VERSION, score: s.scoreMerit.total,
     scoreProjection: { ...scoreProjection, total: s.scoreMerit.total }, scoreMerit: copyMerit(s.scoreMerit),
-    worldPotential: s.worldPotential, evolutionPower: s.evolutionPower, potentialVersion: s.potentialVersion,
+    worldPotential: s.worldPotential, evolutionPower: s.evolutionPower,
+    evolutionDepth: s.evolutionDepth, potentialVersion: s.potentialVersion,
     history: serializeHistory(s),
     coverage: s.coverage,
     peakCoverage: s.peakCoverage, peakLandOccupancy: s.peakLandOccupancy,
@@ -59,7 +60,9 @@ export function buildRunResult(s) {
     glacialLakeCells: s.glacialLakeCells, maritimeForestCells: s.maritimeForestCells,
     reclaimedCells: s.reclaimedCells, electrifiedCells: s.peakElectrifiedCells,
     finalElectrifiedCells: s.electrifiedCells, everPoweredCells: countMask(s.everPowered),
-    poweredCellSeconds: s.poweredCellTicks / B.TICKS_PER_SECOND, reach100: reachGoalSummary(s),
+    poweredCellSeconds: s.poweredCellTicks / B.TICKS_PER_SECOND,
+    electricityMasteryRating: s.electricityMastery?.rating ?? '0',
+    electricityDevelopment: s.electricityMastery?.visualDevelopment ?? 0, reach100: reachGoalSummary(s),
     imprint: deriveImprint(s),
     causes: { ...s.causes },
     reach: buildReachResult(s),
@@ -78,6 +81,7 @@ export function buildAbandonedRun(s) {
     environmentLevel: s.environmentLevel, challengeProfileVersion: s.challengeProfileVersion,
     challengeProfileHash: s.challengeProfileHash, pressureProfile: s.challengeProfile,
     scoreModelVersion: SCORE_MODEL_VERSION, worldPotential: s.worldPotential, evolutionPower: s.evolutionPower,
+    evolutionDepth: s.evolutionDepth,
     potentialVersion: s.potentialVersion, scoreMerit: copyMerit(s.scoreMerit),
     history: serializeHistory(s), reach: { ...buildReachResult(s), goal: reachGoalSummary(s) }, cause: 'abandoned' };
 }

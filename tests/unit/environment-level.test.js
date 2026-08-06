@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  ENVIRONMENT_LEVEL_VERSION,
+  ENVIRONMENT_LEVEL_DOCUMENT_DIGIT_LIMIT,ENVIRONMENT_LEVEL_VERSION,
   frontierAfterEnvironmentCompletion,
   legacyEnvironmentFrontierForRuns,
   recommendedEnvironmentLevel,
@@ -28,6 +28,11 @@ test('Environment Level frontier protects worlds one and two then recommends Lev
   assert.equal(recommendedEnvironmentLevel({ runs: '1', highestEnvironmentLevel: '1' }), '0');
   assert.equal(recommendedEnvironmentLevel({ runs: '2', highestEnvironmentLevel: '1' }), '1');
   assert.equal(resolveEnvironmentAttempt({ runs: '1', highestEnvironmentLevel: '99' }, { mode: 'advance' }).reason, 'protected-onboarding');
+});
+
+test('document security boundary preserves the current frontier instead of resetting or throwing',()=>{
+ const current='9'.repeat(ENVIRONMENT_LEVEL_DOCUMENT_DIGIT_LIMIT),runs=`1${'0'.repeat(ENVIRONMENT_LEVEL_DOCUMENT_DIGIT_LIMIT)}`;
+ assert.equal(frontierAfterEnvironmentCompletion({runs,highestEnvironmentLevel:current},current),current);
 });
 
 test('completion advances exactly one frontier while retry and lower selection do not skip', () => {

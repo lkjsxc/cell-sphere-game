@@ -45,6 +45,9 @@ out vec4 outColor;
 uniform vec3 uEye;
 uniform float uEntropy;
 uniform float uMemory;
+uniform float uTime;
+uniform float uPulse;
+uniform float uElectricityDevelopment;
 uniform vec3 uSelectedCenter;
 uniform float uHasSelection;
 uniform vec3 uHistoryCenter[8];
@@ -125,12 +128,23 @@ void main() {
   float atlasStatus = floor(vLife.x + 0.5);
   float atlasBranch = floor(vLife.y + 0.01);
   float atlasKind = floor(fract(vLife.y) * 10.0 + 0.5);
-  float selectedStatus = step(4.5, atlasStatus);
-  float plainStatus = atlasStatus - selectedStatus * 4.0;
-  float lockedCell = step(0.5, plainStatus) * (1.0 - step(1.5, plainStatus));
-  float unaffordableCell = step(1.5, plainStatus) * (1.0 - step(2.5, plainStatus));
-  float affordableCell = step(2.5, plainStatus) * (1.0 - step(3.5, plainStatus));
-  float ownedCell = step(3.5, plainStatus);
+  float s1 = 1.0 - step(0.5, abs(atlasStatus - 1.0));
+  float s2 = 1.0 - step(0.5, abs(atlasStatus - 2.0));
+  float s3 = 1.0 - step(0.5, abs(atlasStatus - 3.0));
+  float s4 = 1.0 - step(0.5, abs(atlasStatus - 4.0));
+  float s5 = 1.0 - step(0.5, abs(atlasStatus - 5.0));
+  float s6 = 1.0 - step(0.5, abs(atlasStatus - 6.0));
+  float s7 = 1.0 - step(0.5, abs(atlasStatus - 7.0));
+  float s8 = 1.0 - step(0.5, abs(atlasStatus - 8.0));
+  float s9 = 1.0 - step(0.5, abs(atlasStatus - 9.0));
+  float s10 = 1.0 - step(0.5, abs(atlasStatus - 10.0));
+  float selectedStatus = clamp(s5 + s6 + s7 + s9 + s10, 0.0, 1.0);
+  float lockedCell = s1 + s5;
+  float unaffordableCell = s2 + s6;
+  float affordableCell = s3 + s7;
+  float ownedCell = s4 + s8 + s9 + s10;
+  float ownedReadyCell = s8 + s10;
+  float selectedReadyCell = s7 + s10;
   vec3 branchColor = vec3(0.48, 0.58, 0.47);
   if (atlasBranch < 1.5) branchColor = vec3(0.192, 0.365, 0.659); // Marine
   else if (atlasBranch < 2.5) branchColor = vec3(0.333, 0.749, 0.820); // Freshwater
@@ -145,7 +159,14 @@ void main() {
   atlasBase = mix(atlasBase, branchColor * 0.58, unaffordableCell * (0.40 + (1.0 - inset) * 0.26));
   atlasBase = mix(atlasBase, branchColor * 1.22, affordableCell * (0.64 + inset * 0.30));
   atlasBase = mix(atlasBase, branchColor * (0.82 + broadGlyph * 0.24), ownedCell * (0.58 + inset * 0.34));
+  atlasBase = mix(atlasBase, branchColor * (1.18 + inset * 0.18), ownedReadyCell * (0.30 + inset * 0.22));
   atlasBase += selectedStatus * vec3(0.24, 0.30, 0.26) * (0.45 + inset * 0.35);
+  float readyCore = smoothstep(0.9970, 0.99976, centerDot);
+  float readyRing = smoothstep(0.9925, 0.9972, centerDot) * (1.0 - readyCore);
+  float readyPattern = step(0.58, broadGlyph) * (1.0 - readyCore);
+  float readyBreath = mix(1.0, 0.84 + 0.16 * sin(uTime * 2.2), uPulse);
+  atlasBase += selectedReadyCell * readyBreath * (readyCore * vec3(0.50, 0.56, 0.34)
+    + readyRing * vec3(0.32, 0.38, 0.23) + readyPattern * vec3(0.08, 0.11, 0.06));
   atlasBase += emphasis * vec3(0.18, 0.22, 0.15) * inset;
   base = mix(base, atlasBase, uMemory);
   vec3 n = normalize(vPos);
@@ -157,7 +178,11 @@ void main() {
   float plate = smoothstep(0.996, 0.9998, dot(n, normalize(vCenter)));
   vec3 col = base * (0.22 + 0.90 * diffuse) + base * plate * 0.07;
   col += vec3(0.38, 0.39, 0.20) * alive * life * (0.08 + 0.12 * plate) * night;
-  col += powered * ordinary * vec3(0.36, 0.29, 0.11) * (0.14 + (1.0 - night) * 0.30 + plate * 0.12);
+  float chargeLight = pow(powered, 0.62) * ordinary;
+  vec3 chargeColor = mix(vec3(0.62, 0.43, 0.12), vec3(0.72, 0.68, 0.28), uElectricityDevelopment);
+  col += chargeLight * chargeColor * (0.22 + (1.0 - night) * 0.54
+    + plate * (0.22 + uElectricityDevelopment * 0.20));
+  col += chargeLight * readyCore * vec3(0.28, 0.24, 0.08) * (0.18 + uElectricityDevelopment * 0.24);
   col += rim * vec3(0.08, 0.13, 0.14) * (1.0 - uEntropy * 0.5);
   float eventFamily = floor(vEvent.x + 0.5); float eventAmount = clamp(vEvent.y / 255.0, 0.0, 1.0);
   vec3 eventTint = vec3(0.70); if (eventFamily < 1.5) eventTint = vec3(0.85, 0.62, 0.30);

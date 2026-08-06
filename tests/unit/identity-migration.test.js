@@ -6,7 +6,7 @@ import { EXPORT_FILENAME, LEGACY_PRODUCT, LEGACY_STORAGE_KEYS, PAGES_URL, PRODUC
 import { MEMORY_NODE_IDS } from '../../src/game/skills/index.js';
 import { LEGACY_MEMORY_MANIFEST } from '../../src/game/skills/legacy-v4-manifest.js';
 import { LEGACY_TROPHY_IDS, TROPHY_IDS } from '../../src/game/trophies/index.js';
-import { createExportData, parseImportedData, serializeExportData } from '../../src/interface/app-data.js';
+import {createExportData,IMPORT_DOCUMENT_BYTE_LIMIT,parseImportedData,serializeExportData} from '../../src/interface/app-data.js';
 import { defaultHistory, loadHistory, validateHistory } from '../../src/platform/history.js';
 import { migrateStorageNamespace, saveImportedNamespace } from '../../src/platform/namespace-migration.js';
 import { defaultSettings, loadSettings, validateSettings } from '../../src/platform/settings.js';
@@ -45,9 +45,10 @@ test('full legacy namespace migration preserves every schema-8 progression and s
   const initial = legacyNamespace(); const storage = memoryStorage(initial); const report = migrateStorageNamespace(storage);
   assert.equal(report.complete, true); assert.deepEqual(Object.values(report.documents).map((item) => item.status), ['migrated', 'migrated', 'migrated']);
   const meta = JSON.parse(storage.getItem(STORAGE_KEYS.meta)); const expectedMeta = validateMeta(legacyMeta);
-  assert.equal(meta.bestScore, 0); assert.equal(meta.legacyBestScore, 812345); assert.equal(meta.totalEchoes, 987); assert.equal(meta.echoBalance, 444);
-  assert.equal(meta.runs, 37); assert.equal(meta.worldSeedIndex, 52); assert.deepEqual(meta.resultKeys, ['result-a', 'result-b']);
-  assert.equal(meta.memoryNodes.length, 252); assert.equal(meta.legacyMemoryNodes.length, 642); assert.deepEqual(meta.memoryNodes, expectedMeta.memoryNodes);
+  assert.equal(meta.bestScore, '0'); assert.equal(meta.legacyBestScore, '812345'); assert.equal(meta.totalEchoes, '987'); assert.equal(meta.echoBalance, '444');
+  assert.equal(meta.runs, '37'); assert.equal(meta.worldSeedIndex, '52'); assert.equal(meta.highestEnvironmentLevel, '4');
+  assert.deepEqual(meta.resultKeys, ['result-a', 'result-b']);
+  assert.equal(meta.evolutionLevels.length, 252); assert.equal(meta.legacyMemoryNodes.length, 642); assert.deepEqual(meta.evolutionLevels, expectedMeta.evolutionLevels);
   assert.deepEqual(meta.imprints, expectedMeta.imprints); assert.deepEqual(meta.trophyIds, expectedMeta.trophyIds);
   assert.deepEqual(meta.legacyTrophyIds, expectedMeta.legacyTrophyIds); assert.deepEqual(meta.trophyQueue, expectedMeta.trophyQueue);
   assert.deepEqual(meta.trophyProgress, expectedMeta.trophyProgress);
@@ -66,9 +67,10 @@ test('valid canonical wins coexistence and corrupt canonical degrades field-by-f
     worldSeedIndex: 15, memoryNodes: [MEMORY_NODE_IDS[1]], resultKeys: ['new-result'] };
   const storage = memoryStorage({ ...legacyNamespace(), [STORAGE_KEYS.meta]: JSON.stringify(canonical) });
   migrateStorageNamespace(storage); const meta = validateMeta(JSON.parse(storage.getItem(STORAGE_KEYS.meta)));
-  assert.equal(meta.bestScore, 0); assert.equal(meta.legacyBestScores[2], 900001);
-  assert.equal(meta.legacyBestScore, 900001); assert.equal(meta.totalEchoes, 700); assert.equal(meta.echoBalance, 0);
-  assert.equal(meta.runs, 9); assert.equal(meta.worldSeedIndex, 15); assert.deepEqual(meta.memoryNodes, [MEMORY_NODE_IDS[1]]);
+  assert.equal(meta.bestScore, '0'); assert.equal(meta.legacyBestScores[2], '900001');
+  assert.equal(meta.legacyBestScore, '900001'); assert.equal(meta.totalEchoes, '700'); assert.equal(meta.echoBalance, '0');
+  assert.equal(meta.runs, '9'); assert.equal(meta.worldSeedIndex, '15');
+  assert.deepEqual(meta.evolutionLevels, [{ id:MEMORY_NODE_IDS[1], level:'1' }]);
   assert.deepEqual(meta.resultKeys, ['new-result']);
 
   const blocked = memoryStorage({ ...legacyNamespace(), [STORAGE_KEYS.meta]: '{truncated' });
@@ -80,7 +82,7 @@ test('valid canonical wins coexistence and corrupt canonical degrades field-by-f
 test('a verified legacy receipt permits safe malformed-canonical recovery, while failures stay repeatable', () => {
   const storage = memoryStorage(legacyNamespace()); migrateStorageNamespace(storage);
   storage.setItem(STORAGE_KEYS.meta, '{truncated'); const recovered = migrateStorageNamespace(storage);
-  assert.equal(recovered.documents.meta.status, 'migrated'); assert.equal(JSON.parse(storage.getItem(STORAGE_KEYS.meta)).totalEchoes, 987);
+  assert.equal(recovered.documents.meta.status, 'migrated'); assert.equal(JSON.parse(storage.getItem(STORAGE_KEYS.meta)).totalEchoes, '987');
 
   const partial = memoryStorage(legacyNamespace()); partial.failKey = STORAGE_KEYS.history;
   const first = migrateStorageNamespace(partial); assert.equal(first.complete, false);
@@ -91,6 +93,25 @@ test('a verified legacy receipt permits safe malformed-canonical recovery, while
 
   const throwing = { getItem() { throw new Error('denied'); }, setItem() { throw new Error('denied'); } };
   const unavailable = migrateStorageNamespace(throwing); assert.equal(unavailable.available, false); assert.equal(unavailable.complete, false);
+});
+
+test('schema-11 import rejects impossible Environment frontier evidence',()=>{
+ assert.equal(validateMeta({...defaultMeta(),runs:'2',worldSeedIndex:'2',highestEnvironmentLevel:'999'}).highestEnvironmentLevel,'1');
+ assert.equal(validateMeta({...defaultMeta(),runs:'10',worldSeedIndex:'10',highestEnvironmentLevel:'999'}).highestEnvironmentLevel,'9');
+});
+
+test('schema-11 exact values survive repeated browser export/import above 2^53',()=>{
+  const huge=`9${'8'.repeat(999)}`,raw={...defaultMeta(),revision:'9007199254740992',runs:'9007199254740993',worldSeedIndex:'9007199254740994',
+    bestScore:huge,totalEchoes:huge,echoBalance:huge,highestEnvironmentLevel:huge,evolutionLevels:[{id:MEMORY_NODE_IDS[0],level:huge}]};
+  const first=validateMeta(raw),second=validateMeta(JSON.parse(JSON.stringify(first)));
+  assert.deepEqual(second,first);assert.equal(first.evolutionLevels[0].level,huge);assert.equal(first.bestScore,huge);
+  const exported=serializeExportData(first,defaultHistory(),defaultSettings()),imported=parseImportedData(exported);
+  assert.deepEqual(imported.meta,first);assert.equal(imported.meta.runs,'9007199254740993');
+  const degraded=validateMeta({...first,echoBalance:'01',runs:'-1'});assert.equal(degraded.echoBalance,'0');assert.equal(degraded.runs,'0');assert.equal(degraded.bestScore,huge);
+});
+
+test('browser import rejects oversized JSON before parsing',()=>{
+ assert.throws(()=>parseImportedData(' '.repeat(IMPORT_DOCUMENT_BYTE_LIMIT+1)),/security boundary/);
 });
 
 test('legacy exports import all documents and subsequent exports use canonical product and filename', () => {

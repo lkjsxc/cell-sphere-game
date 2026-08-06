@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { hashStringU32, hexU32 } from '../../src/core/hash.js';
 import {
   BUILD_MASTERY_VERSION, BUILD_RECIPES, EVOLUTION_COST_VERSION, EVOLUTION_EFFECT_VERSION,
-  EVOLUTION_LEVEL_VECTOR_VERSION, MEMORY_NODES, MEMORY_NODE_IDS, MEMORY_ROOT_IDS,
+  EVOLUTION_LEVEL_VECTOR_VERSION, EVOLUTION_LEVEL_DOCUMENT_DIGIT_LIMIT, MEMORY_NODES, MEMORY_NODE_IDS, MEMORY_ROOT_IDS,
   WORLD_POTENTIAL_VERSION, availableMemoryNodes, canonicalEvolutionKey, compileEvolution,
   evolutionAffinitySummaries, evolutionCellState, evolutionCompileCacheDiagnostics,
   evolutionCostForTargetLevel, evolutionLevel, evolutionLevelVectorHash, nextEvolutionCost, normalizeEvolutionLevels,
@@ -46,6 +46,13 @@ test('level 0, 1, 2, and thousand-digit levels remain exact without full Number 
   assert.equal(normalizeEvolutionLevels(levels([{ id, level:huge }]))[0].level.length, 1000);
 });
 
+test('document-width guard accepts the largest compilable level and rejects malformed wider input',()=>{
+  const id=MEMORY_NODE_IDS[0],largest='9'.repeat(EVOLUTION_LEVEL_DOCUMENT_DIGIT_LIMIT),tooWide='9'.repeat(EVOLUTION_LEVEL_DOCUMENT_DIGIT_LIMIT+1);
+  const compiled=compileEvolution({evolutionLevels:[{id,level:largest}]});
+  assert.equal(compiled.totalEvolutionLevels,largest);assert.ok(compiled.worldPotential.length<=4096);
+  assert.deepEqual(normalizeEvolutionLevels({evolutionLevels:[{id,level:tooWide}]}),[]);
+});
+
 test('direct exact cost is authored base*n^2 + power*n*(n-1), including above 2^53', () => {
   const node = MEMORY_NODES[0];
   assert.equal(evolutionCostForTargetLevel(node, '1'), String(node.cost));
@@ -62,7 +69,8 @@ test('first unlock requires a root bootstrap or direct adjacency; owned cells ar
   const nonRoot = MEMORY_NODES.find((node) => !MEMORY_ROOT_IDS.includes(node.id));
   assert.equal(evolutionCellState({ echoBalance:'100000' }, root.id, root.id).reason, 'ready');
   assert.equal(evolutionCellState({ echoBalance:'100000' }, nonRoot.id, nonRoot.id).reason, 'adjacency-required');
-  const first = purchaseEvolutionLevel({ echoBalance:'100000', revision:'0' }, root.id);
+  const first=purchaseEvolutionLevel({echoBalance:'100000',revision:'0'},root.id,
+    {expectedLevel:'0',expectedRevision:'0',transactionKey:'first-root'});
   assert.equal(first.ok, true); assert.equal(first.newLevel, '1');
   const adjacent = availableMemoryNodes(first.meta).find((state) => state.currentLevel === '0');
   assert.ok(adjacent); assert.equal(adjacent.adjacencyMet, true);
@@ -86,9 +94,20 @@ test('one purchase changes one level, exact-debits, canonicalizes revision, and 
   assert.deepEqual(tx.compilerVersions, { levels:1, cost:1, effects:2, mastery:1, potential:3 });
 });
 
+test('document security boundary rejects an unrepresentable successor without charging or throwing',()=>{
+ const node=MEMORY_NODES[0],level='9'.repeat(1019),meta={evolutionLevels:[{id:node.id,level}],echoBalance:'9'.repeat(3000),revision:'0'};
+ const state=evolutionCellState(meta,node.id,node.id);assert.equal(state.reason,'progression-security-boundary');
+ assert.equal(state.nextLevel,null);assert.equal(state.nextCost,null);assert.equal(nextEvolutionCost(meta,node.id),null);
+ assert.equal(previewEvolutionLevel(meta,node.id),null);assert.equal(availableMemoryNodes(meta).some((entry)=>entry.id===node.id),false);
+ const tx=purchaseEvolutionLevel(meta,node.id,{expectedLevel:level,expectedRevision:'0',transactionKey:'boundary-upgrade'});
+ assert.equal(tx.ok,false);assert.equal(tx.reason,'progression-security-boundary');assert.equal(tx.balanceAfter,meta.echoBalance);
+});
+
 test('stale and duplicate commands are idempotent and 32 transaction receipts stay bounded', () => {
   const root = MEMORY_ROOT_IDS[0]; const meta = { echoBalance:'100000', revision:'4',
     evolutionTransactionKeys:Array.from({ length:32 }, (_, index) => `old-${index}`) };
+  assert.equal(purchaseEvolutionLevel(meta,root,{transactionKey:'missing'}).reason,'missing-precondition');
+  assert.equal(purchaseEvolutionLevel(meta,root,{expectedLevel:'0',expectedRevision:'4',transactionKey:'x'.repeat(129)}).reason,'invalid-transaction-key');
   const staleLevel = purchaseEvolutionLevel(meta, root, { expectedLevel:'1', expectedRevision:'4', transactionKey:'stale-l' });
   assert.equal(staleLevel.reason, 'stale-level'); assert.equal(staleLevel.balanceAfter, '100000');
   const staleRevision = purchaseEvolutionLevel(meta, root, { expectedLevel:'0', expectedRevision:'3', transactionKey:'stale-r' });
@@ -142,8 +161,10 @@ test('level continuations and thousand-digit direct compilation are monotone, bo
   assert.ok(giant.worldPotential.length > 3000);
   for (const value of [...Object.values(giant.effects), ...Object.values(giant.buildEffects)])
     assert.ok(Number.isFinite(value) && value >= 0.5 && value <= 2);
-  assert.equal(giant.totalEvolutionLevels, huge);
-  assert.equal(JSON.stringify(giant).includes('null'), false);
+  assert.equal(giant.totalEvolutionLevels,huge);assert.equal(JSON.stringify(giant).includes('null'),false);
+  const allHuge=compileEvolution(levels(MEMORY_NODE_IDS.map((cellId)=>({id:cellId,level:huge}))));
+  assert.ok(allHuge.worldPotential.length>=3990&&allHuge.worldPotential.length<=4096);
+  const cache=evolutionCompileCacheDiagnostics();assert.ok(cache.bytes<=cache.byteLimit);
   const preview = previewEvolutionLevel(levels([{ id, level:'1' }]), id);
   assert.equal(preview.oldLevel, '1'); assert.equal(preview.newLevel, '2');
   assert.ok(BigInt(preview.potentialAfter) > BigInt(preview.potentialBefore));
@@ -183,5 +204,6 @@ test('compile cache is complete-keyed, bounded to 512 entries, and auditable', (
   assert.equal(compileEvolution(levels([{ id, level:'1' }])), first);
   for (let level = 2; level <= 530; level++) compileEvolution(levels([{ id, level:String(level) }]));
   const report = evolutionCompileCacheDiagnostics();
-  assert.equal(report.limit, 512); assert.equal(report.size, 512); assert.ok(report.hits >= 1); assert.ok(report.evictions >= 18);
+  assert.equal(report.limit,512);assert.equal(report.size,512);assert.ok(report.bytes<=report.byteLimit);
+  assert.ok(report.hits>=1);assert.ok(report.evictions>=18);
 });

@@ -11,7 +11,7 @@ import { applyRunResult } from '../../src/interface/policies/run-result.js';
 test('schema-5 migration preserves progression and grants no trophies on load', () => {
   const loaded = validateMeta({ schema: 5, runs: 12, bestScore: 90000, totalEchoes: 70, echoBalance: 17,
     worldSeedIndex: 12, memoryNodes: ['reach-horizon-instinct'], imprints: [] });
-  assert.equal(loaded.schema, 10); assert.equal(loaded.runs, 12); assert.equal(loaded.bestScore, 0); assert.equal(loaded.legacyBestScore, 90000);
+  assert.equal(loaded.schema, 11); assert.equal(loaded.runs, '12'); assert.equal(loaded.bestScore, '0'); assert.equal(loaded.legacyBestScore, '90000');
   assert.deepEqual(loaded.trophyIds, []); assert.deepEqual(loaded.trophyQueue, []); assert.equal(loaded.trophyBackfillVersion, 0);
 });
 
@@ -73,7 +73,7 @@ test('exact REACH 100 and whole-cell worldmaking award current mastery criteria'
 });
 
 test('SCORE mastery requires its score and quality evidence in the same world', () => {
-  const meta={...defaultMeta(),bestScore:100000,trophyBackfillVersion:3};const facts=validateTrophyFacts({version:4,autonomous:1,masteryFlags:0,reach:[],morph:[],scoreAxesBp:[10000,9000,9000,10000,9000,9000],lake:[],habitat:[]});
+  const meta={...defaultMeta(),bestScore:'100000',trophyBackfillVersion:3};const facts=validateTrophyFacts({version:4,autonomous:1,masteryFlags:0,reach:[],morph:[],scoreAxesBp:[10000,9000,9000,10000,9000,9000],lake:[],habitat:[]});
   const separated=reconcileTrophies(meta,defaultHistory(),facts);assert.ok(!separated.meta.trophyIds.includes('mastery-score-ninety'));
   const same=reconcileTrophies(separated.meta,defaultHistory(),{...facts,masteryFlags:1});assert.ok(same.meta.trophyIds.includes('mastery-score-ninety'));
 });
@@ -91,7 +91,7 @@ test('v1 river bit and ownership never create current lake proof or award', () =
 
 test('accepted terminal result stores facts, semantic award, and persistent queue exactly once', () => {
   const result = completedResult(); const keys = new Set();
-  const first = applyRunResult(defaultMeta(), { schema: 5, worlds: [], memory: [], trophies: [] }, result, 24, keys);
+  const first = applyRunResult(defaultMeta(), defaultHistory(), result, 24, keys);
   assert.equal(first.applied, true); assert.deepEqual(first.trophyIds, ['evolution-first-world']);
   assert.deepEqual(first.meta.trophyQueue, ['evolution-first-world']); assert.ok(first.archive.worlds[0].trophyFacts);
   assert.equal(first.archive.worlds[0].events.filter((event) => event.key === 'trophy.earned').length, 1);
@@ -105,7 +105,8 @@ test('accepted terminal result stores facts, semantic award, and persistent queu
 });
 
 test('non-world progression recognition still appends one bounded semantic Trophy event', () => {
-  const recognition = reconcileTrophies({ ...defaultMeta(), trophyBackfillVersion: 3, memoryNodes: [MEMORY_ROOT_IDS[0]] }, defaultHistory());
+  const recognition = reconcileTrophies({ ...defaultMeta(), trophyBackfillVersion:3,
+    evolutionLevels:[{id:MEMORY_ROOT_IDS[0],level:'1'}] }, defaultHistory());
   assert.deepEqual(recognition.awardedIds, ['evolution-first-skill']); const archive = appendTrophyEvents(defaultHistory(), recognition.awardedIds);
   assert.equal(archive.trophies.length, 1); assert.equal(archive.trophies[0].subjectId, 'evolution-first-skill');
   assert.deepEqual(appendTrophyEvents(archive, recognition.awardedIds).trophies, archive.trophies);

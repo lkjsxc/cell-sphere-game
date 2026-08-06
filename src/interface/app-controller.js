@@ -22,7 +22,8 @@ import { advanceContinuation, cancelContinuation, completeContinuation, continua
   createContinuationInteractionGuard, setContinuationHidden } from './policies/continuation.js';
 import { sameWorldIdentity } from '../core/world-session.js';
 import { isStandardSpeed, renderIntervalForSpeed, validateRuntimeSpeed } from '../core/runtime-speed.js';
-import { createWorldReplacementState, finishAbandoned, finishRun, requestWorldReplacement, startRun } from './policies/run-session.js';
+import { createWorldReplacementState, finishAbandoned, finishRun, requestWorldReplacement,
+  retryEnvironmentLevel, startRun } from './policies/run-session.js';
 import { createNewWorldSurface } from './policies/new-world-surface.js'; import { createHistorySurface } from './history-surface.js'; import { createHistoryPlayback } from './history-playback.js';
 import { createInspectorSurface } from './inspection/inspector-surface.js';
 import { createMemorySurface } from './panel-surfaces.js';
@@ -31,8 +32,8 @@ import { createSceneSelector } from './policies/scene-selector.js';
 import { createTrophySurface } from './policies/trophy-surface.js';
 import { buildTrophySnapshot } from '../game/trophies/scene.js';
 import { createTrophyNotifications } from './policies/trophy-notifications.js';
-import { availableSkills, buySkill, closeSkill, closeTrophy, enterEvolution, enterTrophies, focusAvailableSkill,
-  focusTrophy, initializeProgression, presentEvolution, presentTrophies, progressionTap, reconcileBeforeHistoryClear, selectSkill, selectTrophy } from './policies/progression-spheres.js';
+import {availableEvolutionLevels,buyEvolutionLevel,closeEvolutionCell,closeTrophy,enterEvolution,enterTrophies,focusAvailableEvolutionCell,
+  focusTrophy,initializeProgression,presentEvolution,presentTrophies,progressionTap,reconcileBeforeHistoryClear,selectEvolutionCell,selectTrophy} from './policies/progression-spheres.js';
 import { createSettingsSurface } from './settings-surface.js';
 import { downloadData, parseImportedData, qualityDpr } from './app-data.js';
 import { saveImportedNamespace } from '../platform/namespace-migration.js';
@@ -70,7 +71,7 @@ class GameApp {
       || (this.runTransactionRecovery && !this.runTransactionRecovery.persisted);
     this.el.boot.textContent = `Cells ready — ${this.renderer.backend === 'webgl2' ? 'WebGL2' : 'Canvas 2D'}${temporary ? ' · progress is temporary' : ''}`;
     ui.show(this.el, 'home'); this.sceneSelector.update('home');
-    if (this.meta.migrationNotice?.pending) { ui.toast(this.el, 'Your earlier skills and Imprints were moved into the Evolution Globe.');
+    if (this.meta.migrationNotice?.pending) { ui.toast(this.el, 'Your earlier Evolution cells and Imprints were moved into the Evolution Globe.');
       this.meta = { ...this.meta, migrationNotice: { ...this.meta.migrationNotice, pending: false } }; saveMeta(this.meta); }
     if (temporary) ui.announce(this.el, 'Browser storage is unavailable or recovery is incomplete; this session remains playable but changes may be temporary.');
     window[DIAGNOSTIC_GLOBALS.boot] = Object.freeze({ product: PRODUCT, tagline: TAGLINE, version: VERSION,
@@ -131,11 +132,12 @@ class GameApp {
     this.el.begin.addEventListener('click', () => this.phase === 'idle' ? this.requestWorldReplacement('title-grow') : this.selectScene('world'));
     this.el.restart.addEventListener('click', () => ['idle', 'result'].includes(this.phase) ? this.requestWorldReplacement('evolution-restart', this.phase === 'result' ? this.lastResultIdentity : null) : this.selectScene('world'));
     this.el.resultNext.addEventListener('click', () => this.requestWorldReplacement('manual-next', this.lastResultIdentity));
+    this.el.resultRetry.addEventListener('click', () => retryEnvironmentLevel(this));
     document.getElementById('trophy-next-button')?.addEventListener('click', () => ['idle', 'result'].includes(this.phase) ? this.requestWorldReplacement('trophy-restart', this.phase === 'result' ? this.lastResultIdentity : null) : this.selectScene('world'));
     document.getElementById('trophy-focus')?.addEventListener('click', () => this.focusTrophy());
     this.el.pause.addEventListener('click', () => { if (this.phase === 'running') this.pause.set('manual', !this.pause.has('manual')); });
     this.el.speed.addEventListener('change', () => this.setSpeed(Number(this.el.speed.value)));
-    document.getElementById('evolution-focus-available')?.addEventListener('click', () => this.focusAvailableSkill());
+    document.getElementById('evolution-focus-available')?.addEventListener('click',()=>this.focusAvailableEvolutionCell());
     document.querySelectorAll('.menu-open').forEach((button) => button.addEventListener('click', () => this.openMenu()));
     document.querySelectorAll('.history-open').forEach((button) => button.addEventListener('click', () => this.openHistory()));
     this.el.resultHistory.addEventListener('click', () => this.openHistory('current')); this.el.resultControl.addEventListener('click', () => this.openResult());
@@ -143,7 +145,7 @@ class GameApp {
     this.el.eventButton.addEventListener('click', () => this.openEventLog()); document.getElementById('history-event-log')?.addEventListener('click', () => this.openEventLog());
     for (const button of [this.el.scoreButton, this.el.entropyButton, this.el.reachButton]) button.addEventListener('click', () => this.openMetric(button.dataset.metric));
     document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key === ',') { event.preventDefault(); this.openMenu(); }
-      else if (event.key === 'Home' && this.scene === 'evolution' && !event.target.closest?.('#scene-selector')) { event.preventDefault(); this.focusAvailableSkill(); }
+      else if(event.key==='Home'&&this.scene==='evolution'&&!event.target.closest?.('#scene-selector')){event.preventDefault();this.focusAvailableEvolutionCell();}
       else if (event.key === 'Home' && this.scene === 'trophies' && !event.target.closest?.('#scene-selector')) { event.preventDefault(); this.focusTrophy(); } });
   }
   bindCanvas() { const interrupt = () => interruptCameraPolicy(this.cameraPolicy, performance.now());
@@ -178,7 +180,7 @@ class GameApp {
     const active = ['starting', 'running'].includes(this.phase); this.el.restart.textContent = active ? 'Return to World' : 'Next World';
     const trophyNext = document.getElementById('trophy-next-button'); if (trophyNext) trophyNext.textContent = active ? 'Return to World' : 'Next World';
     const evolutionLine = document.getElementById('evolution-line'); if (evolutionLine) evolutionLine.textContent = active
-      ? 'Current world unchanged; unlocked Skills begin next world.' : 'Shape what every future world inherits.';
+      ? 'Current world unchanged; Evolution upgrades begin next world.' : 'Shape what every future world inherits.';
   }
   selectCell(node, context = null) {
     this.closeActiveOverlay(); this.selectedNode = node; interruptCameraPolicy(this.cameraPolicy, performance.now(), 60_000);
@@ -190,8 +192,8 @@ class GameApp {
     requestId: ++this.requestId, requestGeneration: this.requestGeneration, node: this.selectedNode }); this.lastInspect = performance.now(); }
   closeInspector() { this.inspector.close(); this.surfaces.close('inspector'); if (this.overlay === 'inspector') this.overlay = null;
     this.selectedNode = null; this.resize(true); interruptCameraPolicy(this.cameraPolicy, performance.now()); }
-  requestWorldReplacement(reason, expected = null) { return requestWorldReplacement(this, reason, expected); }
-  startRun(reason = null) { return startRun(this, reason); }
+  requestWorldReplacement(reason, expected = null, attemptOptions = null) { return requestWorldReplacement(this, reason, expected, attemptOptions); }
+  startRun(reason = null, attemptOptions = null) { return startRun(this, reason, attemptOptions); }
   message(message) { if (!sameWorldIdentity(message, this.worldIdentity)) return false;
     if (!this.historyPlayback.handle(message)) return handleRunMessage(this, message); return true; }
   mergeHistory(events) { const bySeq = new Map(this.currentHistory.map((event) => [event.seq, event]));
@@ -218,8 +220,10 @@ class GameApp {
   finishRun(result) { finishRun(this, result); }
   finishAbandoned(summary) { finishAbandoned(this, summary); }
   failRun(message) { this.pause.set('worker-failed', true); ui.announce(this.el, `${message} Start a new world to continue.`); }
-  enterMemory() { enterEvolution(this); } enterTrophies() { enterTrophies(this); }
-  selectMemoryNode(id) { selectSkill(this, id); } closeMemoryNode() { closeSkill(this); } buyMemory(id) { buySkill(this, id); }
+  enterEvolution(){enterEvolution(this)}enterMemory(){this.enterEvolution()}
+  enterTrophies(){enterTrophies(this)}
+  selectEvolutionCell(id){selectEvolutionCell(this,id)}closeEvolutionCell(){closeEvolutionCell(this)}buyEvolutionLevel(id){buyEvolutionLevel(this,id)}
+  selectMemoryNode(id){this.selectEvolutionCell(id)}closeMemoryNode(){this.closeEvolutionCell()}buyMemory(id){this.buyEvolutionLevel(id)}
   selectTrophy(id) { selectTrophy(this, id); } closeTrophy() { closeTrophy(this); } focusTrophy() { focusTrophy(this); }
   openHistory(scope = null) { if (this.surfaces.toggle('history')) return;
     this.historyPlayback.open(scope ?? (this.scene === 'world' ? 'current' : 'past')); }
@@ -240,12 +244,12 @@ class GameApp {
   openNewWorld() { if (this.phase !== 'running' || this.surfaces.toggle('new-world')) return; this.openFull('new-world');
     this.pause.set('new-world', true); this.newWorld.open(this.snapshot); this.activateSurface('new-world', this.newWorld.surface, 'new-world-heading'); }
   confirmNewWorld() { return this.requestWorldReplacement('confirmed-new-world', this.worldIdentity); }
-  focusAvailableSkill() { focusAvailableSkill(this); }
+  focusAvailableEvolutionCell(){focusAvailableEvolutionCell(this)}focusAvailableSkill(){this.focusAvailableEvolutionCell()}
   openFull(name) { this.closeActiveOverlay(); this.overlay = name; this.pause.set('panel', this.phase === 'running' && this.settings.pauseOnPanels); }
   activateSurface(name, element, heading) { this.surfaces.open(name, element, document.getElementById(heading), [], { dismissOnBlank: true }); this.resize(true); }
   panelClosed(name) { if (this.overlay === name) this.closeActiveOverlay(); }
   closeActiveOverlay() { const name = this.overlay; if (!name) return;
-    if (name === 'memory-node') return closeSkill(this); if (name === 'trophy-detail') return closeTrophy(this);
+    if(name==='memory-node')return closeEvolutionCell(this);if(name==='trophy-detail')return closeTrophy(this);
     if (name === 'inspector') this.inspector.close();
     else if (name === 'history') { this.historyPlayback.close(); this.historyUi.close(); }
     else if (name === 'menu') this.settingsUi.close(); else if (name === 'new-world') this.newWorld.close();
@@ -270,14 +274,14 @@ class GameApp {
     else if (action === 'camera-reset') { Object.assign(this.camera, createCamera()); this.selectedNode = null; }
     else if (action === 'export') downloadData(this.meta, this.archive, this.settings);
     else if (action === 'clear-history' && confirm('Clear all preserved History?')) { const trophies = reconcileBeforeHistoryClear(this); this.archive = clearHistory(); saveHistory(this.archive); this.historyPlayback.clear(); ui.announce(this.el, `History was cleared.${trophies.length ? ` ${trophies.length} proven trophies were preserved.` : ''}`); }
-    else if (action === 'reset-progress' && confirm('Reset Echoes, Evolution Globe skills, Imprints, and Trophies? This cannot be undone.')) { this.meta = defaultMeta(); this.resultKeys = new Set(); saveMeta(this.meta); this.trophyNotifications.replace(this.meta); ui.announce(this.el, 'Progression was reset.'); }
+    else if (action === 'reset-progress' && confirm('Reset Echoes, Evolution levels, Imprints, and Trophies? This cannot be undone.')) { this.meta = defaultMeta(); this.resultKeys = new Set(); saveMeta(this.meta); this.trophyNotifications.replace(this.meta); ui.announce(this.el, 'Progression was reset.'); }
     else if (action === 'import') { const data = parseImportedData(value); const persistence = saveImportedNamespace(data);
       this.meta = data.meta; this.resultKeys = new Set(this.meta.resultKeys); this.archive = data.history; this.applySettings(data.settings);
       this.trophyNotifications.replace(this.meta); ui.announce(this.el, persistence.ok ? 'Local data was imported.'
         : 'Local data was imported for this session, but browser storage could not commit it safely.'); }
     else if (action === 'import-error') throw new Error('invalid import');
   } catch { ui.announce(this.el, 'That local-data action could not be completed.'); } }
-  availableMemory() { return availableSkills(this); }
+  availableEvolutionLevels(){return availableEvolutionLevels(this)}availableMemory(){return this.availableEvolutionLevels()}
   worldResourceAudit() { return Object.freeze({ interactionListeners: this.interactionGuard.listenerCount,
     historyRequests: this.historyPlayback.pendingRequests }); }
   cancelAutoNext(reason) { if (this.phase !== 'result') return false;

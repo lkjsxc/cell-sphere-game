@@ -12,7 +12,7 @@ test('full production build can sustain exact REACH 100 and still becomes extinc
   assert.equal(result.reach100.achieved, true); assert.equal(result.reach100.requiredTicks, REACH_100_REQUIRED_TICKS);
   assert.equal(result.peakCoverage, 1); assert.ok(result.reach100.achievedTick > 0);
   assert.equal(controller.state.status, 'extinct'); assert.ok(result.tick > result.reach100.achievedTick);
-  assert.ok(result.score <= 1_100_000); assert.ok(result.activeBuilds.includes('world-gardener'));
+  assert.ok(BigInt(result.score) <= 1_100_000n); assert.ok(result.activeBuilds.includes('world-gardener'));
 });
 
 test('whole-cell transformations and electricity require production builds', { timeout: 30_000 }, () => {
@@ -25,8 +25,10 @@ test('whole-cell transformations and electricity require production builds', { t
   assert.ok(Math.abs(developed.resourceConservationError) < 1e-4);
 });
 
-function run(seed, memory, worldOrdinal) { const controller = new RunController({ seed, worldOrdinal,
-  worldPotential: memory.worldPotential, evolutionPower: memory.evolutionPower, potentialVersion: memory.potentialVersion,
+function run(seed, memory, worldOrdinal) { const controller = new RunController({ seed, worldOrdinal, environmentLevel:'0',
+  worldPotential: memory.worldPotential, evolutionPower: memory.evolutionPower, evolutionDepth:memory.evolutionDepth,
+  potentialVersion: memory.potentialVersion,
   memoryEffects: memory.effects, memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks,
-  habitatCapabilities: memory.habitatCapabilities, activeBuilds: memory.activeBuilds, buildEffects: memory.buildEffects });
+  habitatCapabilities: memory.habitatCapabilities, activeBuilds: memory.activeBuilds, buildEffects: memory.buildEffects,
+  electricityMastery:memory.electricityMastery });
   controller.start(); controller.advance(4000); return controller; }

@@ -111,9 +111,9 @@ function profileFromDimensions(environmentLevel, publicRating, dimensions) {
   const qClimate = dimensions.climate.pressure; const qToxicity = dimensions.toxicity.pressure;
   const qMaintenance = dimensions.maintenance.pressure; const qEvents = dimensions.events.pressure;
   const eventRamp = clamp01((qEvents - 0.35) / 0.65);
-  const scarcityRamp = clamp01((qScarcity - 0.35) / 0.65);
-  const renewalRamp = clamp01((qRenewal - 0.35) / 0.65);
-  const maintenanceRamp = clamp01((qMaintenance - 0.35) / 0.65);
+  const scarcityRamp = difficultyRamp(qScarcity);
+  const renewalRamp = difficultyRamp(qRenewal);
+  const maintenanceRamp = difficultyRamp(qMaintenance);
   const eventCount = environmentLevel === '0' ? 0 : Math.min(MAX_EVENTS_PER_WORLD, 1 + Math.floor(eventRamp * 5 + 1e-9));
   const profile = {
     version: CHALLENGE_PROFILE_VERSION, environmentLevel, publicRating, dimensions,
@@ -145,5 +145,9 @@ function averagePressure(dimensions) {
 function finite(value, min, max) {
   const bounded = Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : min;
   return Math.round(bounded * 1_000_000) / 1_000_000;
+}
+function difficultyRamp(pressure) {
+  if (!(pressure > 0)) return 0;
+  return 0.04 + 0.96 * clamp01((pressure - 0.35) / 0.65);
 }
 function clamp01(value) { return Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0)); }

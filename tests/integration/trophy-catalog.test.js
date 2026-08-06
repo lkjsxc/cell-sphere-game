@@ -37,7 +37,8 @@ test('every rich condition has passing evidence and a failing leaf boundary', ()
 test('maximal persisted proof recognizes all 96 while empty load data recognizes none', () => {
   const empty = reconcileTrophies({ ...defaultMeta(), trophyBackfillVersion: 3 }, { worlds: [] }); assert.deepEqual(empty.awardedIds, []);
   const aggregate = Object.fromEntries([...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS].map((key) => [key, 10_000_000]));
-  const meta = { ...defaultMeta(), runs: 240, bestScore: 2_000_000, totalEchoes: 4000, memoryNodes: MEMORY_NODE_IDS,
+  const meta = { ...defaultMeta(), runs:'240', bestScore:'2000000', totalEchoes:'4000',
+    evolutionLevels:MEMORY_NODE_IDS.map((id)=>({id,level:'1'})),
     imprints: Array.from({ length: 8 }, () => ({ kind: 'strongest-corridor' })), trophyBackfillVersion: 3,
     trophyProgress: { ...defaultMeta().trophyProgress, geographyMask: 63, crisisMask: 127,
       lakeTypeMask: 31, lakeSalinityMask: 7, aggregate } };

@@ -1,13 +1,16 @@
-/** Bounded semantic History schema 5. Visual detail is stored separately. */
+/** Bounded semantic History schema 6. Visual detail is stored separately. */
 import { buildTrophyFacts, validateTrophyFacts } from '../game/trophies/facts.js';
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
+import { normalizeEnvironmentLevel } from '../game/environment-level.js';
+import { addProgressionIntegers, compareProgressionIntegers, incrementProgressionInteger,
+  normalizeProgressionInteger } from '../core/progression-integer.js';
 const MAX_BYTES = 700_000;
 const MAX_EVENTS = 80;
 const MAX_MEMORY_EVENTS = 128;
 const MAX_TROPHY_EVENTS = 128;
 const CELL_COUNT = 2562;
 
-export function defaultHistory() { return { schema: 5, worlds: [], memory: [], trophies: [] }; }
+export function defaultHistory() { return { schema: 6, worlds: [], evolution: [], trophies: [] }; }
 function finiteInt(value, min = 0) { return Number.isFinite(value) && value >= min ? Math.floor(value) : null; }
 
 const SIM_EVENT = Object.freeze({
@@ -63,40 +66,50 @@ function validateEvent(raw, index) {
 
 function validateWorld(raw) {
   if (!raw || typeof raw !== 'object') return null;
-  const seed = finiteInt(raw.seed); const tick = finiteInt(raw.tick); const score = finiteInt(raw.score);
-  if (seed === null || seed >= 0x40000000 || tick === null || score === null) return null;
+  const seed = finiteInt(raw.seed); const tick = finiteInt(raw.tick);
+  if (seed === null || seed >= 0x40000000 || tick === null) return null;
   const events = Array.isArray(raw.events) ? raw.events.slice(0, MAX_EVENTS).map(validateEvent).filter(Boolean)
     .sort((a, b) => a.seq - b.seq || a.tick - b.tick) : [];
-  const world = { id: typeof raw.id === 'string' ? raw.id.slice(0, 48) : `${seed}-${tick}`, seed, tick, score,
-    rank: typeof raw.rank === 'string' ? raw.rank.slice(0, 24) : 'Seed',
+  const world = { id: typeof raw.id === 'string' ? raw.id.slice(0, 64) : `${seed}-${tick}`, seed, tick,
+    score: normalizeProgressionInteger(raw.score, '0'),
+    rank: typeof raw.rank === 'string' ? raw.rank.slice(0, 64) : 'Seed',
     cause: typeof raw.cause === 'string' ? raw.cause.slice(0, 32) : 'unknown',
     archetype: typeof raw.archetype === 'string' ? raw.archetype.slice(0, 40) : 'Living World',
-    echo: finiteInt(raw.echo) ?? 0, hash: typeof raw.hash === 'string' ? raw.hash.slice(0, 16) : '',
+    echo: normalizeProgressionInteger(raw.echo, '0'), hash: typeof raw.hash === 'string' ? raw.hash.slice(0, 16) : '',
     scoreModelVersion: finiteInt(raw.scoreModelVersion) ?? 1,
-    worldPotential: finiteInt(raw.worldPotential) ?? 0, potentialVersion: finiteInt(raw.potentialVersion) ?? 1,
-    evolutionPower: finiteInt(raw.evolutionPower) ?? 0, worldOrdinal: finiteInt(raw.worldOrdinal, 1) ?? 1,
+    worldPotential: normalizeProgressionInteger(raw.worldPotential, '0'), potentialVersion: finiteInt(raw.potentialVersion) ?? 1,
+    evolutionPower: finiteInt(raw.evolutionPower) ?? 0,
+    evolutionDepth: normalizeProgressionInteger(raw.evolutionDepth, '0'),
+    worldOrdinal: normalizeProgressionInteger(raw.worldOrdinal, '1'),
+    environmentLevel: normalizeEnvironmentLevel(raw.environmentLevel, legacyEnvironmentLevel(raw.worldOrdinal)),
+    challengeProfileVersion: finiteInt(raw.challengeProfileVersion) ?? 0,
+    challengeProfileHash: typeof raw.challengeProfileHash === 'string' && /^[0-9a-f]{8}$/.test(raw.challengeProfileHash) ? raw.challengeProfileHash : '',
     resourceInitial: Number.isFinite(raw.resourceInitial) ? Math.max(0, raw.resourceInitial) : 0,
     resourceFinal: Number.isFinite(raw.resourceFinal) ? Math.max(0, raw.resourceFinal) : 0,
     resourceRecoveredCells: finiteInt(raw.resourceRecoveredCells) ?? 0,
     freshwaterSupportedCellSeconds: finiteInt(raw.freshwaterSupportedCellSeconds) ?? 0,
     transformedCells: finiteInt(raw.transformedCells) ?? 0, electrifiedCells: finiteInt(raw.electrifiedCells) ?? 0,
-    reach100: raw.reach100 === true, activeBuilds: Array.isArray(raw.activeBuilds)
-      ? [...new Set(raw.activeBuilds.filter((id) => typeof id === 'string' && /^[a-z][a-z0-9-]{1,47}$/.test(id)))].slice(0, 16) : [],
+    finalElectrifiedCells: finiteInt(raw.finalElectrifiedCells) ?? 0,
+    everPoweredCells: finiteInt(raw.everPoweredCells) ?? 0,
+    poweredCellSeconds: finiteInt(raw.poweredCellSeconds) ?? 0,
+    electricityMasteryRating: normalizeProgressionInteger(raw.electricityMasteryRating, '0'),
+    electricityDevelopment: Number.isFinite(raw.electricityDevelopment) ? Math.max(0, Math.min(1, raw.electricityDevelopment)) : 0,
+    reach100:raw.reach100===true,activeBuilds:Array.isArray(raw.activeBuilds)
+      ?[...new Set(raw.activeBuilds.slice(0,64).filter((id)=>typeof id==='string'&&/^[a-z][a-z0-9-]{1,47}$/.test(id)))].slice(0,16):[],
     inoculationCell: Number.isInteger(raw.inoculationCell) ? raw.inoculationCell : null, events };
-  const legacyAdaptations = Array.isArray(raw.adaptations) ? raw.adaptations.filter((id) => typeof id === 'string').slice(0, 24) : [];
+  if (typeof raw.resultTransactionKey === 'string' && raw.resultTransactionKey.length <= 128) world.resultTransactionKey = raw.resultTransactionKey;
+  const legacyAdaptations=Array.isArray(raw.adaptations)?raw.adaptations.slice(0,48).filter((id)=>typeof id==='string').slice(0,24):[];
   if (legacyAdaptations.length) world.adaptations = legacyAdaptations;
   const trophyFacts = validateTrophyFacts(raw.trophyFacts); if (trophyFacts) world.trophyFacts = trophyFacts; return world;
 }
 
 export function validateHistory(raw, retention = 24) {
   const out = defaultHistory(); if (!raw || typeof raw !== 'object') return out;
-  if (Array.isArray(raw.worlds)) out.worlds = raw.worlds.map(validateWorld).filter(Boolean).slice(-retention);
-  if (Array.isArray(raw.memory)) out.memory = raw.memory.filter((event) => event && typeof event.nodeId === 'string'
-    && Number.isFinite(event.cost) && event.cost >= 0).slice(-MAX_MEMORY_EVENTS)
-    .map((event, index) => ({ seq: finiteInt(event.seq) ?? index, nodeId: event.nodeId.slice(0, 48),
-      cost: Math.floor(event.cost), balance: finiteInt(event.balance) ?? 0, run: finiteInt(event.run) ?? 0 }));
-  if (Array.isArray(raw.trophies)) out.trophies = raw.trophies.map(validateTrophyEvent).filter(Boolean).slice(-MAX_TROPHY_EVENTS);
-  return out;
+  if(Array.isArray(raw.worlds))out.worlds=raw.worlds.slice(-retention*2).map(validateWorld).filter(Boolean).slice(-retention);
+  const evolution=Array.isArray(raw.evolution)?raw.evolution:Array.isArray(raw.memory)?raw.memory:[];
+  out.evolution=evolution.slice(-MAX_MEMORY_EVENTS*2).map(validateEvolutionEvent).filter(Boolean).slice(-MAX_MEMORY_EVENTS);
+  if(Array.isArray(raw.trophies))out.trophies=raw.trophies.slice(-MAX_TROPHY_EVENTS*2).map(validateTrophyEvent).filter(Boolean).slice(-MAX_TROPHY_EVENTS);
+  return trimValidatedHistory(out).value;
 }
 
 export function loadHistory(retention = 24) {
@@ -104,54 +117,116 @@ export function loadHistory(retention = 24) {
 }
 export function saveHistory(history, retention = 24) {
   try {
-    const value = validateHistory(history, retention); let text = JSON.stringify(value);
-    while (text.length > MAX_BYTES && value.worlds.length > 1) { value.worlds.shift(); text = JSON.stringify(value); }
-    if (text.length > MAX_BYTES) return false;
+    const { value, bytes } = boundHistoryDocument(history, retention);
+    if (bytes > MAX_BYTES) return false;
     return saveNamespacedDocument('history', value, (item) => validateHistory(item, retention));
   } catch { return false; }
 }
 export function normalizeHistoryEvents(events) { return (Array.isArray(events) ? events : []).slice(0, MAX_EVENTS).map(validateEvent).filter(Boolean); }
-export function appendWorld(history, result, score, runIndex, retention = 24) {
-  const events = normalizeHistoryEvents(result.history); const record = validateWorld({ id: `${runIndex}-${result.seed}-${result.hash}`,
+export function appendWorld(history,result,score,runIndex,retention=24){
+  const source=validateHistory(history,retention),key=result.resultTransactionKey;
+  if(key&&source.worlds.some((entry)=>entry.resultTransactionKey===key))return source;
+  const events=normalizeHistoryEvents(result.history);const record=validateWorld({id:`world-${result.seed}-${result.hash}-${result.tick}`,
     seed: result.seed, tick: result.tick, score: score.total, rank: score.rank.en, cause: result.cause, echo: score.echoes,
     hash: result.hash, archetype: result.archetype, inoculationCell: result.inoculationCell,
     scoreModelVersion: score.modelVersion, worldPotential: result.worldPotential, potentialVersion: result.potentialVersion,
-    evolutionPower: result.evolutionPower, worldOrdinal: result.worldOrdinal,
+    evolutionPower: result.evolutionPower, evolutionDepth: result.evolutionDepth, worldOrdinal: result.worldOrdinal,
+    environmentLevel: result.environmentLevel, challengeProfileVersion: result.challengeProfileVersion,
+    challengeProfileHash: result.challengeProfileHash, resultTransactionKey: result.resultTransactionKey,
     resourceInitial: result.resourceInitial, resourceFinal: result.resourceFinal,
     resourceRecoveredCells: result.resourceRecoveredCells,
     freshwaterSupportedCellSeconds: result.freshwaterSupportedCellSeconds,
     transformedCells: result.transformedCells, electrifiedCells: result.electrifiedCells,
+    finalElectrifiedCells: result.finalElectrifiedCells, everPoweredCells: result.everPoweredCells,
+    poweredCellSeconds: result.poweredCellSeconds, electricityMasteryRating: result.electricityMasteryRating,
+    electricityDevelopment: result.electricityDevelopment,
     reach100: result.reach100?.achieved === true, activeBuilds: result.activeBuilds,
-    trophyFacts: result.trophyFacts ?? buildTrophyFacts(result, score), events });
-  return validateHistory({ ...history, worlds: [...history.worlds, record] }, retention);
+    trophyFacts:result.trophyFacts??buildTrophyFacts(result,score),events});
+  return validateHistory({...source,worlds:[...source.worlds,record]},retention);
 }
-export function appendAbandonedWorld(history, result, retention = 24) {
-  const record = validateWorld({ id: `abandoned-${result.runId}-${result.seed}-${result.tick}`,
+export function appendAbandonedWorld(history,result,retention=24){
+  const source=validateHistory(history,retention),id=`abandoned-${result.runId}-${result.seed}-${result.tick}`;
+  if(source.worlds.some((entry)=>entry.id===id))return source;
+  const record=validateWorld({id,
     seed: result.seed, tick: result.tick, score: result.score, rank: 'Abandoned', cause: 'abandoned',
     echo: 0, hash: '', archetype: result.archetype, inoculationCell: result.inoculationCell,
     scoreModelVersion: result.scoreModelVersion, worldPotential: result.worldPotential,
-    potentialVersion: result.potentialVersion, evolutionPower: result.evolutionPower, worldOrdinal: result.worldOrdinal,
-    events: normalizeHistoryEvents(result.history) });
-  return validateHistory({ ...history, worlds: [...history.worlds, record] }, retention);
+    potentialVersion: result.potentialVersion, evolutionPower: result.evolutionPower,
+    evolutionDepth: result.evolutionDepth, worldOrdinal: result.worldOrdinal,
+    environmentLevel: result.environmentLevel, challengeProfileVersion: result.challengeProfileVersion,
+    challengeProfileHash:result.challengeProfileHash,events:normalizeHistoryEvents(result.history)});
+  return validateHistory({...source,worlds:[...source.worlds,record]},retention);
 }
-export function appendMemoryEvent(history, nodeId, cost, balance, run) { const event = { seq: history.memory.length, nodeId, cost, balance, run };
-  return validateHistory({ ...history, memory: [...history.memory, event] }, 32); }
+export function appendEvolutionEvent(history,evidence){
+  const source=validateHistory(history,32);
+  if(evidence?.transactionKey&&source.evolution.some((entry)=>entry.transactionKey===evidence.transactionKey))return source;
+  const event=validateEvolutionEvent({...evidence,seq:source.evolution.length},source.evolution.length);
+  if(!event)return source;
+  return validateHistory({ ...source, evolution: [...source.evolution, event] }, 32);
+}
+/** Legacy writer alias; old binary records remain readable as Level 0 → 1. */
+export function appendMemoryEvent(history, nodeId, cost, balance, run) {
+  if (nodeId && typeof nodeId === 'object') return appendEvolutionEvent(history, nodeId);
+  const balanceAfter = normalizeProgressionInteger(balance, '0'); const exactCost = normalizeProgressionInteger(cost, '0');
+  return appendEvolutionEvent(history, { nodeId, oldLevel:'0', newLevel:'1', cost:exactCost,
+    balanceBefore:addProgressionIntegers(balanceAfter, exactCost), balanceAfter, run });
+}
 export function appendTrophyEvents(history, ids, worldId = history.worlds.at(-1)?.id) {
   if (!ids?.length) return history; const source = validateHistory(history, 32); const world = source.worlds.find((entry) => entry.id === worldId);
   const known = new Set(source.trophies.map((event) => event.subjectId)); const added = ids.filter((id) => !known.has(id)).map((id, index) => ({
     seq: source.trophies.length + index, tick: world?.tick ?? 0, kind: 'trophy', importance: 3, key: 'trophy.earned',
-    subjectId: id, primaryCells: [], worldId: world?.id ?? null, run: source.worlds.length }));
+    subjectId:id, primaryCells:[], worldId:world?.id??null,
+    run:world?.worldOrdinal??String(source.worlds.length) }));
   if (!added.length) return source; const worlds = source.worlds.map((entry) => {
     if (entry.id !== worldId) return entry; let seq = entry.events.reduce((max, event) => Math.max(max, event.seq), -1) + 1;
     return { ...entry, events: [...entry.events, ...added.map((event) => ({ ...event, seq: seq++ }))].slice(-MAX_EVENTS) };
   }); return validateHistory({ ...source, worlds, trophies: [...source.trophies, ...added] }, 32);
 }
+function validateEvolutionEvent(raw, index) {
+  if (!raw || typeof raw !== 'object' || typeof raw.nodeId !== 'string'
+    || !/^[a-z][a-z-]{1,63}$/.test(raw.nodeId)) return null;
+  const oldLevel = normalizeProgressionInteger(raw.oldLevel, '0');
+  const newLevel=normalizeProgressionInteger(raw.newLevel,safeIncrement(oldLevel));
+  const cost = normalizeProgressionInteger(raw.cost, '0');
+  const balanceAfter = normalizeProgressionInteger(raw.balanceAfter ?? raw.balance, '0');
+  const balanceBefore=normalizeProgressionInteger(raw.balanceBefore,safeAdd(balanceAfter,cost));
+  const event = { seq: finiteInt(raw.seq) ?? index, kind: 'evolution-level', nodeId: raw.nodeId,
+    oldLevel, newLevel, cost, balanceBefore, balanceAfter,
+    run: normalizeProgressionInteger(raw.run, '0'),
+    environmentLevel: normalizeEnvironmentLevel(raw.environmentLevel, '0') };
+  if (typeof raw.transactionKey === 'string' && raw.transactionKey.length > 0 && raw.transactionKey.length <= 128)
+    event.transactionKey = raw.transactionKey;
+  if (raw.compilerVersions && typeof raw.compilerVersions === 'object') event.compilerVersions = Object.freeze(
+    Object.fromEntries(Object.entries(raw.compilerVersions).filter(([, value]) => Number.isInteger(value) && value >= 0 && value <= 64)));
+  return event;
+}
+function safeIncrement(value){try{return incrementProgressionInteger(value)}catch{return value}}
+function safeAdd(left,right){try{return addProgressionIntegers(left,right)}catch{return left}}
+function legacyEnvironmentLevel(worldOrdinal) {
+  const ordinal = normalizeProgressionInteger(worldOrdinal, '1');
+  if (compareProgressionIntegers(ordinal, '2') <= 0) return '0'; if (ordinal === '3') return '1';
+  if (compareProgressionIntegers(ordinal, '5') <= 0) return '2';
+  if (compareProgressionIntegers(ordinal, '10') <= 0) return '3'; return '4';
+}
 function validateTrophyEvent(raw, index) { if (!raw || typeof raw !== 'object' || raw.key !== 'trophy.earned'
     || typeof raw.subjectId !== 'string' || !/^[a-z][a-z-]{2,63}$/.test(raw.subjectId)) return null;
   return { seq: finiteInt(raw.seq) ?? index, tick: finiteInt(raw.tick) ?? 0, kind: 'trophy', importance: 3,
-    key: 'trophy.earned', subjectId: raw.subjectId, primaryCells: [], worldId: typeof raw.worldId === 'string' ? raw.worldId.slice(0, 48) : null,
-    run: finiteInt(raw.run) ?? 0 };
+    key:'trophy.earned', subjectId:raw.subjectId, primaryCells:[], worldId:typeof raw.worldId==='string'?raw.worldId.slice(0,48):null,
+    run:normalizeProgressionInteger(raw.run, '0') };
 }
 export function clearHistory() { return defaultHistory(); }
-export function serializeHistory(history) { return JSON.stringify(validateHistory(history, 32), null, 2); }
+export function serializeHistory(history) { return boundHistoryDocument(history, 32, 2).text; }
 export function parseHistory(text, retention = 24) { return validateHistory(JSON.parse(text), retention); }
+function boundHistoryDocument(history, retention, space = 0) {
+  return trimValidatedHistory(validateHistory(history, retention), space);
+}
+function trimValidatedHistory(value, space = 0) {
+  let text=JSON.stringify(value,null,space),bytes=documentBytes(text);
+  while (bytes > MAX_BYTES && (value.worlds.length || value.evolution.length || value.trophies.length)) {
+    const candidates=[value.worlds,value.evolution,value.trophies].filter((entries)=>entries.length)
+      .map((entries)=>({entries,bytes:documentBytes(JSON.stringify(entries))})).sort((left,right)=>right.bytes-left.bytes);
+    candidates[0].entries.shift(); text = JSON.stringify(value, null, space); bytes = documentBytes(text);
+  }
+  return { value, text, bytes };
+}
+function documentBytes(text) { return typeof TextEncoder === 'function' ? new TextEncoder().encode(text).byteLength : text.length; }

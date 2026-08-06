@@ -1,10 +1,14 @@
 /** Versioned, corruption-safe persistence for cross-run progression. */
-import { MEMORY_GRAPH_VERSION, MEMORY_NODE_IDS, getMemoryNode } from '../game/skills/index.js';
+import { EVOLUTION_LEVEL_VECTOR_VERSION, MEMORY_GRAPH_VERSION, MEMORY_NODE_IDS,
+  getMemoryNode, normalizeEvolutionLevels } from '../game/skills/index.js';
 import { LEGACY_MEMORY_BY_ID, LEGACY_MEMORY_GRAPH_VERSION } from '../game/skills/legacy-v4-manifest.js';
 import { LEGACY_TROPHY_IDS, TROPHY_CATALOG_VERSION, TROPHY_IDS } from '../game/trophies/index.js';
 import { TROPHY_MAX_KEYS, TROPHY_SUM_KEYS } from '../game/trophies/keys.js';
 import { createGeodesicTopology, createTopology } from '../world/icosphere.js';
 import { SCORE_MODEL_VERSION } from '../game/scoring.js';
+import {attainableEnvironmentFrontierForRuns,legacyEnvironmentFrontierForRuns,normalizeEnvironmentLevel} from '../game/environment-level.js';
+import { addProgressionIntegers, compareProgressionIntegers, maxProgressionInteger,
+  normalizeProgressionInteger } from '../core/progression-integer.js';
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 const VALID_MEMORY_IDS = new Set(MEMORY_NODE_IDS);
 const VALID_TROPHY_IDS = new Set(TROPHY_IDS);
@@ -17,11 +21,13 @@ export const LEGACY_MEMORY_MAP = Object.freeze({
 });
 
 export function defaultMeta() {
-  return { schema: 10, memoryGraphVersion: MEMORY_GRAPH_VERSION, memoryMigrationVersion: MEMORY_GRAPH_VERSION,
+  return { schema: 11, revision: '0', memoryGraphVersion: MEMORY_GRAPH_VERSION,
+    memoryMigrationVersion: MEMORY_GRAPH_VERSION, evolutionLevelVectorVersion: EVOLUTION_LEVEL_VECTOR_VERSION,
     trophyVersion: TROPHY_CATALOG_VERSION,
-    scoreModelVersion: SCORE_MODEL_VERSION, bestScore: 0, legacyBestScore: 0, legacyBestScores: {},
-    totalEchoes: 0, echoBalance: 0, runs: 0, worldSeedIndex: 0, resultKeys: [],
-    memoryNodes: [], legacyMemoryNodes: [], quarantinedMemoryNodes: [], imprints: [], trophyIds: [], legacyTrophyIds: [], trophyQueue: [], trophyBackfillVersion: 0,
+    scoreModelVersion: SCORE_MODEL_VERSION, bestScore: '0', legacyBestScore: '0', legacyBestScores: {},
+    totalEchoes: '0', echoBalance: '0', runs: '0', worldSeedIndex: '0', highestEnvironmentLevel: '0',
+    resultKeys: [], evolutionTransactionKeys: [], evolutionLevels: [],
+    legacyMemoryNodes: [], quarantinedMemoryNodes: [], imprints: [], trophyIds: [], legacyTrophyIds: [], trophyQueue: [], trophyBackfillVersion: 0,
     trophyProgress: { version: 4, geographyMask: 0, geographyVersion: 3,
       crisisMask: 0, lakeTypeMask: 0, lakeSalinityMask: 0, aggregate: {} },
     legacyAdaptationProgress: { ids: [], categoryMask: 0 }, migrationNotice: null };
@@ -31,46 +37,60 @@ export function defaultMeta() {
 export function validateMeta(raw) {
   const base = defaultMeta(); if (raw === null || typeof raw !== 'object') return base;
   const sourceSchema = Number.isInteger(raw.schema) ? raw.schema : 1; const out = { ...base };
+  out.revision = normalizeProgressionInteger(raw.revision, '0');
   const sourceScoreVersion = boundedInteger(raw.scoreModelVersion, 1);
-  const sourceBest = boundedInteger(raw.bestScore, 0); const legacyBestScores = {};
-  if (raw.legacyBestScores && typeof raw.legacyBestScores === 'object') for (const version of [1, 2]) {
-    const value = boundedInteger(raw.legacyBestScores[version], 0); if (value) legacyBestScores[version] = value;
+  const sourceBest = normalizeProgressionInteger(raw.bestScore, '0'); const legacyBestScores = {};
+  if (raw.legacyBestScores && typeof raw.legacyBestScores === 'object') for (const [rawVersion, rawValue] of Object.entries(raw.legacyBestScores)) {
+    const version = boundedInteger(Number(rawVersion), 0); if (version < 1 || version >= SCORE_MODEL_VERSION) continue;
+    const value = normalizeProgressionInteger(rawValue, '0'); if (value !== '0') legacyBestScores[version] = value;
   }
-  const undifferentiatedLegacy = boundedInteger(raw.legacyBestScore, 0);
-  if (undifferentiatedLegacy) legacyBestScores[1] = Math.max(legacyBestScores[1] ?? 0, undifferentiatedLegacy);
+  const undifferentiatedLegacy = normalizeProgressionInteger(raw.legacyBestScore, '0');
+  if (undifferentiatedLegacy !== '0') legacyBestScores[1] = maxProgressionInteger(legacyBestScores[1] ?? '0', undifferentiatedLegacy);
   if (sourceScoreVersion === SCORE_MODEL_VERSION) out.bestScore = sourceBest;
-  else if (sourceBest) legacyBestScores[Math.min(2, Math.max(1, sourceScoreVersion))] = Math.max(
-    legacyBestScores[Math.min(2, Math.max(1, sourceScoreVersion))] ?? 0, sourceBest);
+  else if (sourceBest !== '0') {
+    const version = Math.max(1, Math.min(SCORE_MODEL_VERSION - 1, sourceScoreVersion));
+    legacyBestScores[version] = maxProgressionInteger(legacyBestScores[version] ?? '0', sourceBest);
+  }
   out.legacyBestScores = legacyBestScores;
-  out.legacyBestScore = Math.max(0, ...Object.values(legacyBestScores));
-  out.totalEchoes = boundedInteger(raw.totalEchoes, 0);
-  out.echoBalance = Number.isFinite(raw.echoBalance) && raw.echoBalance >= 0 ? Math.floor(raw.echoBalance)
-    : sourceSchema === 1 ? out.totalEchoes : 0;
-  out.runs = boundedInteger(raw.runs, 0);
-  out.worldSeedIndex = Math.max(out.runs, boundedInteger(raw.worldSeedIndex, out.runs));
-  if (Array.isArray(raw.resultKeys)) out.resultKeys = [...new Set(raw.resultKeys.filter((key) =>
-    typeof key === 'string' && key.length > 0 && key.length <= 128))].slice(-16);
+  out.legacyBestScore = Object.values(legacyBestScores).reduce((best, value) => maxProgressionInteger(best, value), '0');
+  out.totalEchoes = normalizeProgressionInteger(raw.totalEchoes, '0');
+  out.echoBalance = normalizeProgressionInteger(raw.echoBalance, sourceSchema === 1 ? out.totalEchoes : '0');
+  out.runs = normalizeProgressionInteger(raw.runs, '0');
+  out.worldSeedIndex = maxProgressionInteger(out.runs, normalizeProgressionInteger(raw.worldSeedIndex, out.runs));
+  const migratedFrontier = sourceSchema >= 11
+    ? normalizeEnvironmentLevel(raw.highestEnvironmentLevel, '0') : legacyEnvironmentFrontierForRuns(out.runs);
+  const normalizedFrontier=compareProgressionIntegers(out.runs,'2')>=0?maxProgressionInteger('1',migratedFrontier):migratedFrontier;
+  const attainableFrontier=attainableEnvironmentFrontierForRuns(out.runs);
+  out.highestEnvironmentLevel=compareProgressionIntegers(normalizedFrontier,attainableFrontier)>0?attainableFrontier:normalizedFrontier;
+  if (Array.isArray(raw.resultKeys)) out.resultKeys = uniqueTransactionKeys(raw.resultKeys, 16);
+  if (Array.isArray(raw.evolutionTransactionKeys)) out.evolutionTransactionKeys = uniqueTransactionKeys(raw.evolutionTransactionKeys, 32);
   const sourceGraphVersion = boundedInteger(raw.memoryGraphVersion, sourceSchema >= 4 ? LEGACY_MEMORY_GRAPH_VERSION : 3);
-  const ownership = migrateMemoryIds(raw.memoryNodes, sourceSchema, sourceGraphVersion);
-  out.memoryNodes = MEMORY_NODE_IDS.filter((id) => ownership.valid.includes(id));
+  const ownership=migrateMemoryIds(Array.isArray(raw.memoryNodes)?raw.memoryNodes.slice(0,1300):raw.memoryNodes,sourceSchema,sourceGraphVersion);
+  out.evolutionLevels=Array.isArray(raw.evolutionLevels)
+    ?normalizeEvolutionLevels({evolutionLevels:raw.evolutionLevels.slice(0,MEMORY_NODE_IDS.length*2)})
+    : normalizeEvolutionLevels({ memoryNodes: ownership.valid });
   out.legacyMemoryNodes = sourceGraphVersion < MEMORY_GRAPH_VERSION
     ? ownership.legacy : uniqueLegacyIds(raw.legacyMemoryNodes);
   out.memoryMigrationVersion = MEMORY_GRAPH_VERSION;
-  if (sourceGraphVersion < MEMORY_GRAPH_VERSION) out.echoBalance += ownership.refund;
-  out.quarantinedMemoryNodes = mergeQuarantine(ownership.quarantine, raw.quarantinedMemoryNodes);
-  if (Array.isArray(raw.imprints)) out.imprints = raw.imprints.map((value) => validateImprint(value, sourceSchema)).filter(Boolean).slice(-8);
+  out.evolutionLevelVectorVersion = EVOLUTION_LEVEL_VECTOR_VERSION;
+  if (sourceGraphVersion < MEMORY_GRAPH_VERSION) out.echoBalance = addProgressionIntegers(out.echoBalance, ownership.refund);
+  out.quarantinedMemoryNodes = mergeQuarantine([
+    ...ownership.quarantine,...quarantinedEvolutionIds(Array.isArray(raw.evolutionLevels)?raw.evolutionLevels.slice(0,MEMORY_NODE_IDS.length*2):[]),
+  ], raw.quarantinedMemoryNodes);
+  if(Array.isArray(raw.imprints))out.imprints=raw.imprints.slice(-16).map((value)=>validateImprint(value,sourceSchema)).filter(Boolean).slice(-8);
   if (sourceSchema >= 6) {
-    const rawOwned = Array.isArray(raw.trophyIds) ? raw.trophyIds : []; const ownedTrophies = new Set(rawOwned.filter((id) => VALID_TROPHY_IDS.has(id)));
-    const legacy = new Set([...(Array.isArray(raw.legacyTrophyIds) ? raw.legacyTrophyIds : []), ...rawOwned].filter((id) => VALID_LEGACY_TROPHY_IDS.has(id)));
+    const rawOwned=Array.isArray(raw.trophyIds)?raw.trophyIds.slice(0,TROPHY_IDS.length*2):[]; const ownedTrophies = new Set(rawOwned.filter((id) => VALID_TROPHY_IDS.has(id)));
+    const legacy=new Set([...(Array.isArray(raw.legacyTrophyIds)?raw.legacyTrophyIds.slice(0,LEGACY_TROPHY_IDS.length*2):[]),...rawOwned]
+      .filter((id)=>VALID_LEGACY_TROPHY_IDS.has(id)));
     out.trophyIds = TROPHY_IDS.filter((id) => ownedTrophies.has(id)); out.legacyTrophyIds = LEGACY_TROPHY_IDS.filter((id) => legacy.has(id));
     out.trophyBackfillVersion = [1, 2, 3].includes(raw.trophyBackfillVersion) ? raw.trophyBackfillVersion : 0;
-    const queued = new Set(Array.isArray(raw.trophyQueue) ? raw.trophyQueue.filter((id) => ownedTrophies.has(id)) : []);
+    const queued=new Set(Array.isArray(raw.trophyQueue)?raw.trophyQueue.slice(0,TROPHY_IDS.length*2).filter((id)=>ownedTrophies.has(id)):[]);
     out.trophyQueue = TROPHY_IDS.filter((id) => queued.has(id)); out.trophyProgress = validateTrophyProgress(raw.trophyProgress);
     out.legacyAdaptationProgress = validateLegacyAdaptationProgress(raw.legacyAdaptationProgress ?? raw.trophyProgress);
   }
   if (sourceGraphVersion < MEMORY_GRAPH_VERSION) out.migrationNotice = Object.freeze({
     kind: 'evolution-frequency-5', pending: true, refund: ownership.refund,
-    legacyOwned: ownership.legacy.length, currentOwned: out.memoryNodes.length,
+    legacyOwned: ownership.legacy.length, currentOwned: out.evolutionLevels.length,
   });
   else if (validMigrationNotice(raw.migrationNotice)) out.migrationNotice = Object.freeze({ ...raw.migrationNotice });
   return out;
@@ -80,7 +100,7 @@ export function convertImprintToAtlas(imprint) { return validateImprint(imprint,
 
 function migrateMemoryIds(raw, sourceSchema, sourceGraphVersion) {
   const valid = []; const quarantine = []; const legacy = []; let legacySpend = 0;
-  if (!Array.isArray(raw)) return { valid, quarantine, legacy, refund: 0 };
+  if (!Array.isArray(raw)) return { valid, quarantine, legacy, refund: '0' };
   for (const candidate of raw) {
     if (typeof candidate !== 'string' || !/^[a-z][a-z-]{0,63}$/.test(candidate)) continue;
     const oldId = sourceSchema < 4 ? (LEGACY_MEMORY_MAP[candidate] ?? candidate) : candidate;
@@ -94,7 +114,7 @@ function migrateMemoryIds(raw, sourceSchema, sourceGraphVersion) {
     else if (!quarantine.includes(candidate)) quarantine.push(candidate);
   }
   const representedCost = valid.reduce((sum, id) => sum + (getMemoryNode(id)?.cost ?? 0), 0);
-  return { valid, quarantine, legacy, refund: Math.max(0, legacySpend - representedCost) };
+  return { valid, quarantine, legacy, refund: String(Math.max(0, legacySpend - representedCost)) };
 }
 
 function validateImprint(raw, sourceSchema) {
@@ -170,13 +190,18 @@ function validateTrophyProgress(raw) { const value = raw && typeof raw === 'obje
     crisisMask: Math.min(127, boundedInteger(value.crisisMask, 0)),
     lakeTypeMask: Math.min(31, boundedInteger(value.lakeTypeMask, 0)), lakeSalinityMask: Math.min(7, boundedInteger(value.lakeSalinityMask, 0)), aggregate }; }
 function validateLegacyAdaptationProgress(raw) { const value = raw && typeof raw === 'object' ? raw : {};
-  const ids = Array.isArray(value.ids ?? value.adaptationIds) ? [...new Set((value.ids ?? value.adaptationIds)
-    .filter((id) => typeof id === 'string' && /^[a-z0-9-]{1,48}$/.test(id)))].slice(0, 24) : [];
+  const ids=Array.isArray(value.ids??value.adaptationIds)?[...new Set((value.ids??value.adaptationIds).slice(0,48)
+    .filter((id)=>typeof id==='string'&&/^[a-z0-9-]{1,48}$/.test(id)))].slice(0,24):[];
   return { ids, categoryMask: Math.min(63, boundedInteger(value.categoryMask ?? value.adaptationCategoryMask, 0)) }; }
+function uniqueTransactionKeys(values,limit){return[...new Set(values.slice(-limit*2).filter((key)=>
+  typeof key==='string'&&key.length>0&&key.length<=128))].slice(-limit)}
+function quarantinedEvolutionIds(raw) { if (!Array.isArray(raw)) return [];
+  return raw.map((entry) => entry?.id).filter((id) => typeof id === 'string'
+    && /^[a-z][a-z-]{0,63}$/.test(id) && !VALID_MEMORY_IDS.has(id)); }
 function boundedInteger(value, fallback) { return Number.isFinite(value) && value >= 0 ? Math.floor(value) : fallback; }
-function mergeQuarantine(found, raw) { const ids = [...new Set(found)]; if (Array.isArray(raw)) for (const id of raw)
+function mergeQuarantine(found,raw){const ids=[...new Set(found)];if(Array.isArray(raw))for(const id of raw.slice(0,64))
   if (typeof id === 'string' && /^[a-z][a-z-]{0,63}$/.test(id) && !ids.includes(id)) ids.push(id); return ids.slice(0, 32); }
-function uniqueLegacyIds(raw) { return Array.isArray(raw) ? [...new Set(raw.filter((id) => typeof id === 'string' && LEGACY_MEMORY_BY_ID.has(id)))].slice(0, 642) : []; }
+function uniqueLegacyIds(raw){return Array.isArray(raw)?[...new Set(raw.slice(0,1300).filter((id)=>typeof id==='string'&&LEGACY_MEMORY_BY_ID.has(id)))].slice(0,642):[]}
 function validMigrationNotice(value) { return value && typeof value === 'object' && value.kind === 'evolution-frequency-5'
   && typeof value.pending === 'boolean'; }
 

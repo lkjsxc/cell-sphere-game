@@ -3,8 +3,8 @@ import {
   addProgressionIntegers,
   divideProgressionIntegers,
   multiplyProgressionIntegers,
+  multiplyDivideProgressionInteger,
   normalizeProgressionInteger,
-  projectProgressionInteger,
 } from '../../core/progression-integer.js';
 
 export const WORLD_POTENTIAL_VERSION = 3;
@@ -67,10 +67,9 @@ export function worldPotentialForPower(power) {
   return worldPotentialForBreadthAndDepth(power, '0');
 }
 
-/** Deliberately bounded Number projection, not authoritative progression arithmetic. */
+/** Deliberately labeled exact projection, not an authoritative SCORE promise. */
 export function modeledScoreRange(potential) {
   const canonical = normalizeProgressionInteger(potential, String(BASE_WORLD_POTENTIAL));
-  const bounded = Math.max(BASE_WORLD_POTENTIAL,
-    projectProgressionInteger(canonical, WORLD_POTENTIAL_ANCHORS.at(-1).potential));
-  return Object.freeze({ low: Math.round(bounded * 0.60), high: Math.round(bounded * 0.82), modeled: true });
+  return Object.freeze({ low: multiplyDivideProgressionInteger(canonical, '60', '100'),
+    high: multiplyDivideProgressionInteger(canonical, '82', '100'), modeled: true });
 }

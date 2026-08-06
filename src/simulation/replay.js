@@ -1,6 +1,6 @@
 /** Compact replay, semantic history, and terminal authority hash. */
 import { hashF32, hashString, hashU8, hexU32 } from '../core/hash.js';
-export const REPLAY_VERSION = 4;
+export const REPLAY_VERSION = 5;
 export const REPLAY = Object.freeze({ STRAIN: 0, INOCULATE: 1, SPEED: 2 });
 
 /** @param {object} state @param {number} type @param {...number} args */
@@ -92,7 +92,7 @@ export function finalStateHash(state) {
     proof.freezeLakeSurvivals, proof.loopSurplusPeak, proof.loopLivingSamples,
   ]), 1000);
   h = hashString(h, [state.worldOrdinal, state.environmentLevel, state.challengeProfileVersion,
-    state.challengeProfileHash, state.worldPotential, state.scoreMerit.total].join('|'));
+    state.challengeProfileHash, state.worldPotential, state.evolutionDepth, state.scoreMerit.total].join('|'));
   const replayValues = [];
   for (const entry of state.replay) replayValues.push(entry.length, ...entry);
   h = hashF32(h, Float32Array.from(replayValues), 1);

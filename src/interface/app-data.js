@@ -3,11 +3,13 @@ import { validateMeta } from '../platform/storage.js';
 import { validateHistory } from '../platform/history.js';
 import { validateSettings } from '../platform/settings.js';
 import { EXPORT_FILENAME, EXPORT_PRODUCTS, PRODUCT } from '../core/identity.js';
+import { normalizeProgressionInteger, parseProgressionIntegerRuntime } from '../core/progression-integer.js';
 
 export function seedForRun(runCount, search = location.search) {
   const params = new URLSearchParams(search); const raw = params.get('seed'); const given = raw === null ? NaN : Number(raw);
   if (Number.isInteger(given) && given >= 0 && given < 0x40000000) return given;
-  return (20260731 + runCount * 104729) & 0x3fffffff;
+  const run = parseProgressionIntegerRuntime(normalizeProgressionInteger(runCount, '0'));
+  return Number((20260731n + run * 104729n) & 0x3fffffffn);
 }
 
 export function qualityDpr(settings, caps) {
@@ -31,8 +33,11 @@ export function downloadData(meta, history, settings) {
   link.href = url; link.download = EXPORT_FILENAME; link.click(); URL.revokeObjectURL(url);
 }
 
-export function parseImportedData(text) {
-  const raw = JSON.parse(text);
+export const IMPORT_DOCUMENT_BYTE_LIMIT=2*1024*1024;
+export function parseImportedData(text){
+  if(typeof text!=='string'||text.length>IMPORT_DOCUMENT_BYTE_LIMIT||new TextEncoder().encode(text).byteLength>IMPORT_DOCUMENT_BYTE_LIMIT)
+    throw new Error('game export exceeds the document security boundary');
+  const raw=JSON.parse(text);
   if (!raw || !EXPORT_PRODUCTS.includes(raw.product)) throw new Error('not a game export');
   return { meta: validateMeta(raw.meta), history: validateHistory(raw.history, 32), settings: validateSettings(raw.settings) };
 }

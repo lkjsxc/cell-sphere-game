@@ -62,7 +62,8 @@ test('root purchase opens direct neighbors and a second activation upgrades exac
   const opened = newlyAvailableAdjacentIds(meta, root.id); assert.ok(opened.length > 0);
   const first = purchaseEvolutionLevel(meta, root.id, { expectedLevel:'0', expectedRevision:'0', transactionKey:'root-1' });
   assert.equal(first.ok, true); assert.equal(first.meta.echoBalance, String(1000 - root.cost));
-  assert.deepEqual(newlyAvailableAdjacentIds(first.meta, root.id), opened);
+  assert.deepEqual(newlyAvailableAdjacentIds(first.meta, root.id), []);
+  assert.ok(opened.every((id) => evolutionCellState(first.meta, id).reachable));
   assert.equal(first.preview.powerBefore, 0); assert.equal(first.preview.powerAfter, 1);
   assert.equal(first.preview.potentialBefore, String(BASE_WORLD_POTENTIAL)); assert.equal(first.preview.potentialAfter, '19000');
   const secondCost = BigInt(root.cost) * 4n + BigInt(root.evolutionPower) * 2n;
@@ -72,7 +73,8 @@ test('root purchase opens direct neighbors and a second activation upgrades exac
   assert.equal(second.spent, String(secondCost)); assert.equal(evolutionLevel(second.meta, root.id), '2');
   assert.equal(normalizeEvolutionLevels(second.meta).length, 1);
   const nonadjacent = MEMORY_NODES.find((node) => !getMemoryAdjacentIds(root.id).includes(node.id) && node.id !== root.id);
-  assert.equal(purchaseEvolutionLevel(second.meta, nonadjacent.id).reason, 'adjacency-required');
+  assert.equal(purchaseEvolutionLevel(second.meta,nonadjacent.id,{expectedLevel:'0',expectedRevision:second.meta.revision,
+    transactionKey:'nonadjacent'}).reason,'adjacency-required');
 });
 
 test('all 252 level-one cells are acquired by legal adjacency for exact authored cost 17820', () => {

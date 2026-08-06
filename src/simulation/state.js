@@ -11,6 +11,7 @@ import { buildEntropyLut, buildSeasonLut, buildNodeSeasonOffsets } from './envir
 import { scheduleEvents } from './events.js';
 import { normalizeEnvironmentLevel } from '../game/environment-level.js';
 import { compileChallengeProfile, validateChallengeProfile } from './challenge-profile.js';
+import { compareProgressionIntegers, normalizeProgressionInteger } from '../core/progression-integer.js';
 import { recordHistory } from './replay.js';
 import { birthCell, killCell } from './lifecycle/cell-lifecycle.js';
 import { createReachLedger, REACH_CAUSE } from './lifecycle/reach-ledger.js';
@@ -31,7 +32,8 @@ const STREAM = Object.freeze({
 /** @param {Object} cfg run configuration */
 export function createRunState(cfg) {
   const seed = cfg.seed >>> 0;
-  const worldOrdinal = Number.isInteger(cfg.worldOrdinal) && cfg.worldOrdinal > 0 ? cfg.worldOrdinal : 1;
+  const worldOrdinal = normalizeProgressionInteger(cfg.worldOrdinal, '1') === '0'
+    ? '1' : normalizeProgressionInteger(cfg.worldOrdinal, '1');
   const environmentLevel = normalizeEnvironmentLevel(cfg.environmentLevel, legacyEnvironmentLevel(worldOrdinal));
   const challengeProfile = cfg.challengeProfile
     ? validateChallengeProfile(cfg.challengeProfile)
@@ -57,8 +59,10 @@ export function createRunState(cfg) {
     habitatCapabilities, habitatCapabilitySet: new Set(habitatCapabilities),
     activeBuilds, activeBuildIdSet: new Set(activeBuilds),
     buildEffects: cfg.buildEffects && typeof cfg.buildEffects === 'object' ? { ...cfg.buildEffects } : {},
-    worldPotential: Number.isFinite(cfg.worldPotential) && cfg.worldPotential >= 0 ? Math.round(cfg.worldPotential) : 16000,
+    electricityMastery: normalizeElectricityMastery(cfg.electricityMastery),
+    worldPotential: normalizeProgressionInteger(cfg.worldPotential, '16000'),
     evolutionPower: Number.isFinite(cfg.evolutionPower) ? Math.max(0, Math.round(cfg.evolutionPower)) : 0,
+    evolutionDepth: normalizeProgressionInteger(cfg.evolutionDepth, '0'),
     potentialVersion: Number.isInteger(cfg.potentialVersion) ? cfg.potentialVersion : 1,
     worldOrdinal, worldEra, environmentLevel: challengeProfile.environmentLevel,
     challengeProfile, challengeProfileVersion: challengeProfile.version,
@@ -103,7 +107,7 @@ export function createRunState(cfg) {
 
     phaseIndex: -1, coverageMilestoneIndex: 0, loopMilestone: false, geographySeen: 0,
     wasFragmented: false, reconnectedUntil: -1,
-    replayVersion: 4, replay: [], history: [],
+    replayVersion: 5, replay: [], history: [],
     ...worldmaking, ...createReachGoalState(),
   };
   installResourceState(state, resource);
@@ -221,9 +225,20 @@ export function beginTerminalCollapse(state, reason) {
   return true;
 }
 
-function legacyEnvironmentLevel(ordinal) { return ordinal <= 2 ? '0' : ordinal === 3 ? '1' : ordinal <= 5 ? '2' : ordinal <= 10 ? '3' : '4'; }
+function legacyEnvironmentLevel(ordinal) {
+  if (compareProgressionIntegers(ordinal, '2') <= 0) return '0'; if (ordinal === '3') return '1';
+  if (compareProgressionIntegers(ordinal, '5') <= 0) return '2';
+  if (compareProgressionIntegers(ordinal, '10') <= 0) return '3'; return '4';
+}
 function legacyEraForEnvironmentLevel(level) {
   if (level === '0') return 1; if (level === '1') return 2; if (level === '2') return 3; if (level === '3') return 4; return 5;
+}
+function normalizeElectricityMastery(raw) { const value = raw && typeof raw === 'object' ? raw : {};
+  const bounded = (input, fallback, min, max) => Number.isFinite(input) ? Math.max(min, Math.min(max, input)) : fallback;
+  return Object.freeze({ rating:normalizeProgressionInteger(value.rating, '0'),
+    development:bounded(value.development, 0, 0, 1), generationScale:bounded(value.generationScale, 1, 1, 1.75),
+    retention:bounded(value.retention, .992, .992, .996), upkeepScale:bounded(value.upkeepScale, 1, .75, 1),
+    domainScale:bounded(value.domainScale, 1, 1, 1.25), visualDevelopment:bounded(value.visualDevelopment, 0, 0, 1) });
 }
 function sumMask(values) { let total = 0; for (const value of values ?? []) total += value ? 1 : 0; return total; }
 

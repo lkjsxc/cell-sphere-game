@@ -2,7 +2,7 @@
  *  be stable and sensitive. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fnv1aBytes, hashStringU32, hashF32, hexU32 } from '../../src/core/hash.js';
+import {boundedTransactionKey,digestString128,fnv1aBytes,hashStringU32,hashF32,hexU32} from '../../src/core/hash.js';
 
 test('known FNV-1a vector', () => {
   // FNV-1a 32 of empty input is the offset basis.
@@ -27,6 +27,12 @@ test('hashF32 is deterministic and quantization-tolerant', () => {
   // Real change does.
   const d = new Float32Array([1, 2.5, -3.25, 0.01]);
   assert.notEqual(hashF32(1, a, 1000), hashF32(1, d, 1000));
+});
+
+test('bounded transaction tuples are framed, deterministic, and compact huge exact material',()=>{
+ const direct=boundedTransactionKey('test',['ab','c']),other=boundedTransactionKey('test',['a','bc']),huge=boundedTransactionKey('test',['9'.repeat(4096)]);
+ assert.notEqual(direct,other);assert.equal(huge,boundedTransactionKey('test',['9'.repeat(4096)]));assert.ok(huge.length<=128);
+ assert.match(digestString128('abc'),/^[0-9a-f]{32}$/);
 });
 
 test('hexU32 pads to 8 chars', () => {

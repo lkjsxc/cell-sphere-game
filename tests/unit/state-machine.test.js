@@ -74,7 +74,7 @@ test('production interface excludes rejected modal controls and copy', () => {
   }
   assert.equal(html.includes('id="adaptation-mode"'), false); assert.equal(html.includes('<dialog id="history-dialog"'), false);
   for (const obsolete of ['>Memory<', 'Memory cell', 'Remembered', 'Atlas list', 'memory-list-button', 'memory-list-dialog']) assert.equal(html.includes(obsolete), false, obsolete);
-  for (const current of ['Evolution Globe', 'PERMANENT SKILL TREE', 'Shape what every future world inherits.', 'Leave this world?', 'Event Log']) assert.equal(html.includes(current), true, current);
+  for (const current of ['Evolution Globe', 'PERMANENT EVOLUTION', 'Shape what every future world inherits.', 'Environment Level', 'Leave this world?', 'Event Log']) assert.equal(html.includes(current), true, current);
   for (const removed of ['adaptations-button', 'adaptations-dialog', 'adaptationMode', 'result-adaptations']) assert.equal(html.includes(removed), false, removed);
   assert.equal(/id="pause-button"[^>]*>Pause</.test(html), false);
   assert.equal((html.match(/role="tab"/g) ?? []).length, 4); assert.equal(html.includes('NETWORK SCORE'), false);

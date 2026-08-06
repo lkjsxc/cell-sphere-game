@@ -1,4 +1,6 @@
 /** Compact deterministic Trophy proof retained with completed semantic History. */
+import { compareProgressionIntegers, normalizeProgressionInteger,
+  projectProgressionInteger } from '../../core/progression-integer.js';
 const GEO = Object.freeze({ 'geo.coast.reached': 1, 'geo.lake.reached': 2, 'geo.forest.reached': 4,
   'geo.mountain.reached': 8, 'geo.wetland.reached': 16, 'geo.world_knot.reached': 32 });
 const CRISIS = Object.freeze({ drought: 1, heat: 2, freeze: 4, 'toxic-rain': 8, 'solar-flare': 16, ash: 32, blight: 64 });
@@ -18,12 +20,12 @@ export function buildTrophyFacts(result, score) {
   if (geographyMask === 63 && (result.peakCoverage ?? 0) >= .15) flags |= 32;
   if ((lake.lakeLoopSeconds ?? 0) >= 180 && (lake.distinctLakesReached ?? 0) >= 6) flags |= 64;
   if (((lake.ecologyMask ?? 0) & 15) === 15 && (lake.lakeLivingSeconds ?? 0) >= 180 && (lake.lakeRegionPeak ?? 0) >= 100) flags |= 128;
-  const total = score?.total ?? 0;
-  if (total >= 100000 && axes[1] >= 4500) masteryFlags |= 1;
-  if (total >= 250000 && meetsAxes(axes, [8500,4200,3000,8500,5000,6500])) masteryFlags |= 2;
-  if (total >= 500000 && (flags & 1)) masteryFlags |= 4;
-  if (total >= 750000 && habitatClassCount >= 3) masteryFlags |= 8;
-  if (total >= 1000000 && meetsAxes(axes, [9000,6500,5000,9000,5500,7500])) masteryFlags |= 16;
+  const total = normalizeProgressionInteger(score?.total, '0');
+  if (atLeast(total, '100000') && axes[1] >= 4500) masteryFlags |= 1;
+  if (atLeast(total, '250000') && meetsAxes(axes, [8500,4200,3000,8500,5000,6500])) masteryFlags |= 2;
+  if (atLeast(total, '500000') && (flags & 1)) masteryFlags |= 4;
+  if (atLeast(total, '750000') && habitatClassCount >= 3) masteryFlags |= 8;
+  if (atLeast(total, '1000000') && meetsAxes(axes, [9000,6500,5000,9000,5500,7500])) masteryFlags |= 16;
   return validateTrophyFacts({ version: 5, scoreModelVersion: score?.modelVersion ?? result.scoreModelVersion,
     survivalSeconds: result.survivalSeconds, peakCoverageBp: bp(result.peakCoverage),
     sustainedCoverageBp: bp(result.sustainedCoverage), geographyMask, crisisMask,
@@ -41,7 +43,7 @@ export function buildTrophyFacts(result, score) {
     transformedCells: result.transformedCells, electrifiedCells: result.electrifiedCells,
     glacialLakeCells: result.glacialLakeCells, maritimeForestCells: result.maritimeForestCells,
     reach100: result.reach100?.achieved ? 1 : 0,
-    worldOrdinal: result.worldOrdinal, eventCount: result.crisesTotal,
+    worldOrdinal: projectProgressionInteger(normalizeProgressionInteger(result.worldOrdinal, '1'), 1_000_000), eventCount: result.crisesTotal,
     scarcityCause: ['resource-exhaustion', 'maintenance-starvation'].includes(result.cause) ? 1 : 0 });
 }
 
@@ -54,7 +56,8 @@ export function deriveLegacyTrophyFacts(world) {
     geographyMask: eventMask(events, GEO), crisisMask: crisisEventMask(events), crisesEndured: crisisCount(events),
     reach: [], morph: morphology(events), scoreAxesBp: [], flags: 0, masteryFlags:0, ecologyMask: 0,
     lakeTypeMask: 0, lakeSalinityMask: 0, lake: [], habitat: [], habitatMask:0, habitatClassCount: 0, autonomous:0,
-    resourceDepletedCells: 0, resourceRemainingBp: 0, worldOrdinal: world?.worldOrdinal ?? 1,
+    resourceDepletedCells: 0, resourceRemainingBp: 0,
+    worldOrdinal: projectProgressionInteger(normalizeProgressionInteger(world?.worldOrdinal, '1'), 1_000_000),
     eventCount: crisisCount(events), scarcityCause: 0 });
 }
 
@@ -89,6 +92,7 @@ function eventKey(event) { if (event.key) return event.key; const type = event.t
     : type === 'component-reconnected' ? 'morph.component.reconnected' : type === 'event-end' ? 'crisis.ended'
       : type?.startsWith('geo-') ? `geo.${type.slice(4).replaceAll('-', '_')}.reached` : type === 'coverage' ? 'geo.coverage.milestone' : ''; }
 function factor(entries, id) { return entries?.find((entry) => entry.id === id)?.count ?? 0; }
+function atLeast(value, threshold) { return compareProgressionIntegers(value, threshold) >= 0; }
 function meetsAxes(values,thresholds){return thresholds.every((threshold,index)=>values[index]>=threshold)}
 function scoreAxes(score) { const by = new Map((score?.breakdown ?? []).map((part) => [part.key, bp(part.q)]));
   return ['survival', 'exploration', 'presence', 'coherence', 'stewardship', 'worldmaking'].map((key) => by.get(key) ?? 0); }

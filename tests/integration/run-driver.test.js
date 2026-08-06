@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { createRunDriver } from '../../src/interface/run-driver.js';
 import { seedForRun } from '../../src/interface/app-data.js';
 import { identityFields } from '../../src/core/world-session.js';
+import { compileChallengeProfile } from '../../src/simulation/challenge-profile.js';
 
 class FakeWorker {
   static instances = [];
@@ -68,8 +69,11 @@ test('fallback synchronous emissions occur only after the complete identity is p
   const messages = []; let published = null; const driver = createRunDriver({ worker: false }, (message) => {
     assert.deepEqual(identityFields(message), identityFields(published)); messages.push(message);
   });
-  published = driver.reserveIdentity({ worldSessionId: 91, seed: 123, presentationGeneration: 17 });
-  const runId = driver.start({ seed: 123, worldOrdinal: 1, worldPotential: 16000 }, 1, published);
+  const profile=compileChallengeProfile({environmentLevel:'0'});
+  published = driver.reserveIdentity({ worldSessionId:91, seed:123, presentationGeneration:17,
+    environmentLevel:'0', challengeProfileHash:profile.hash });
+  const runId = driver.start({ seed:123, worldOrdinal:'1', worldPotential:'16000',
+    environmentLevel:'0', challengeProfile:profile }, 1, published);
   assert.equal(runId, published.runId); assert.equal(messages.some((message) => message.t === 'started'), true);
   assert.equal(messages.some((message) => message.t === 'snapshot'), true);
   driver.stop(); assert.equal(driver.identity, null); assert.equal(driver.snapshot, null); assert.equal(driver.runId, 0);

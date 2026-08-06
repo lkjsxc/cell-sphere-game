@@ -5,6 +5,7 @@ import { cameraBasis } from './camera.js';
 import { EVENT_TINT_LIST } from './event-tints.js';
 import { sameWorldIdentity } from '../core/world-session.js';
 
+const WORLD_LIGHT = Object.freeze((() => { const value=[-.52,.72,.44]; const length=Math.hypot(...value); return value.map((axis)=>axis/length); })());
 const BIOME_COLOR = Object.freeze([
   [8, 42, 62], [14, 76, 88], [145, 126, 76], [35, 91, 45], [22, 73, 42],
   [83, 119, 50], [137, 116, 52], [164, 116, 53], [37, 110, 82], [96, 94, 72],
@@ -71,7 +72,7 @@ export class Canvas2DRenderer {
         (snapshot?.resourceRichnessQ?.[cell] ?? 128) / 255, isWater);
       this.cellPath(cell); ctx.fillStyle = `rgba(${local[0]},${local[1]},${local[2]},${.58 + this.facing[cell] * .34})`; ctx.fill();
     }
-    if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1);
+    if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1, scene.time ?? 0, scene.pulse === true);
     this.drawBoundaries(false); this.drawBoundaries(true);
     for (const cell of (scene.highlightedCells ?? []).slice(0, 8)) {
       if (this.facing[cell] <= 0) continue; this.cellPath(cell, 0.82);
@@ -108,15 +109,18 @@ export class Canvas2DRenderer {
     ctx.closePath();
   }
 
-  drawCellOverlays(snapshot, fade) {
+  drawCellOverlays(snapshot, fade, time = 0, pulse = false) {
     const { ctx, topo } = this;
     for (let cell = 0; cell < topo.nodeCount; cell++) {
       if (this.facing[cell] <= 0.02) continue;
       if (snapshot.status === 'memory' || snapshot.status === 'trophies') {
-        const styles = memoryStyles(snapshot.memoryStatus[cell], snapshot.memoryKind[cell], snapshot.memoryImprintWeight[cell], fade, snapshot.memoryBranch[cell]);
+        const styles = memoryStyles(snapshot.memoryStatus[cell], snapshot.memoryKind[cell],
+          snapshot.memoryImprintWeight[cell], fade, snapshot.memoryBranch[cell], time, pulse);
         if (!styles) continue; this.cellPath(cell); ctx.fillStyle = styles.fill; ctx.fill();
-        if (styles.inset) { this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill(); }
-        if (styles.stroke) { ctx.strokeStyle = styles.stroke; ctx.lineWidth = styles.width; ctx.stroke(); }
+        if (styles.outerStroke) { ctx.strokeStyle = styles.outerStroke; ctx.lineWidth = styles.outerWidth;
+          ctx.setLineDash(styles.dash ?? []); ctx.stroke(); ctx.setLineDash([]); }
+        if (styles.inset) { this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill();
+          if (styles.stroke) { ctx.strokeStyle = styles.stroke; ctx.lineWidth = styles.width; ctx.stroke(); } }
         continue;
       }
       const state = snapshot.lifeState?.[cell]
@@ -127,7 +131,15 @@ export class Canvas2DRenderer {
           if (styles.stroke) { ctx.strokeStyle = styles.stroke; ctx.lineWidth = styles.width; ctx.stroke(); } }
       }
       const powered = (snapshot.electricityQ?.[cell] ?? 0) / 255;
-      if (powered > 0) { this.cellPath(cell); ctx.fillStyle = `rgba(238,194,72,${powered * .28 * fade})`; ctx.fill(); }
+      if (powered > 0) {
+        const at=cell*3; const lightDot=topo.positions[at]*WORLD_LIGHT[0]+topo.positions[at+1]*WORLD_LIGHT[1]+topo.positions[at+2]*WORLD_LIGHT[2];
+        const day=Math.max(0,Math.min(1,(lightDot+.16)/.30)); const night=1-day;
+        const development=Math.max(0,Math.min(1,snapshot.electricityDevelopment??0));
+        const glow=Math.pow(powered,.62)*( .24+night*.38+development*.14)*fade;
+        this.cellPath(cell); ctx.fillStyle=`rgba(238,194,72,${Math.min(.72,glow)})`; ctx.fill();
+        this.cellPath(cell,.52-development*.08); ctx.fillStyle=`rgba(255,231,126,${Math.min(.78,glow*(.72+development*.28))})`; ctx.fill();
+        ctx.strokeStyle=`rgba(255,239,161,${Math.min(.86,glow+.16)})`;ctx.lineWidth=1+development*.8;ctx.stroke();
+      }
       const eventAmount = (snapshot.eventStrength?.[cell] ?? 0) / 255; const tint = EVENT_TINT_LIST[(snapshot.eventFamily?.[cell] ?? 0) - 1];
       if (eventAmount > 0 && tint) { this.cellPath(cell); ctx.fillStyle = `rgba(${tint[0] * 255 | 0},${tint[1] * 255 | 0},${tint[2] * 255 | 0},${eventAmount * .20 * fade})`; ctx.fill(); }
     }
@@ -152,16 +164,27 @@ export class Canvas2DRenderer {
   dispose() { if (this.disposed) return; this.disposed = true; this.boundIdentity = null; this.lastFrameAudit = null; }
 }
 
-function memoryStyles(status, kind, fossil, fade, branch) {
+function memoryStyles(status, kind, fossil, fade, branch, time, pulse) {
   if (!status && !fossil) return null;
-  const selected = status >= 5; const plain = selected ? status - 4 : status;
-  const special = kind >= 4; const stroke = selected ? 'rgba(225,244,232,.98)' : plain === 2 ? 'rgba(171,185,168,.65)' : null;
+  const selected = [5,6,7,9,10].includes(status); const unlockReady = [3,7].includes(status);
+  const owned = [4,8,9,10].includes(status); const ownedReady = [8,10].includes(status);
+  const selectedReady = [7,10].includes(status); const locked = [1,5].includes(status);
+  const unaffordable = [2,6].includes(status); const special = kind >= 4;
   const tint = ['55,58,59', '49,93,168', '85,191,209', '194,139,66', '105,173,104', '215,237,245', '216,173,76'][branch] ?? '55,58,59';
-  if (plain === 1) return { fill: `rgba(${tint},${0.76 * fade})`, stroke, width: 1.2 };
-  if (plain === 2) return { fill: `rgba(104,119,105,${0.52 * fade})`, inset: 'rgba(38,43,41,.62)', scale: 0.62, stroke, width: 1.0 };
-  if (plain === 3) return { fill: `rgba(177,202,137,${0.90 * fade})`, inset: 'rgba(230,235,184,.75)', scale: 0.54, stroke, width: 1.5 };
-  if (plain === 4) return { fill: `rgba(117,158,128,${0.82 * fade})`, inset: special ? 'rgba(224,218,163,.78)' : 'rgba(197,220,185,.62)', scale: special ? 0.45 : 0.62, stroke, width: 1.5 };
-  return { fill: `rgba(111,91,66,${fossil * 0.48 * fade})` };
+  const outline = selected ? 'rgba(235,248,238,.98)' : unaffordable ? 'rgba(171,185,168,.65)' : null;
+  if (locked) return { fill: `rgba(${tint},${0.76 * fade})`, outerStroke:outline, outerWidth:1.2 };
+  if (unaffordable) return { fill:`rgba(104,119,105,${0.52 * fade})`, inset:'rgba(38,43,41,.62)', scale:.62,
+    outerStroke:outline, outerWidth:1 };
+  const breath = selectedReady && pulse ? .86 + .14 * Math.sin(time * 2.2) : 1;
+  if (unlockReady) return { fill:`rgba(${tint},${Math.min(.98, .84 * breath) * fade})`, inset:'rgba(239,244,194,.90)', scale:selectedReady ? .42 : .54,
+    stroke:'rgba(31,48,38,.95)', width:1.2, outerStroke:outline ?? 'rgba(221,238,205,.88)', outerWidth:selectedReady?2.5:1.5,
+    dash:selectedReady?[4,2]:[] };
+  if(owned)return{fill:`rgba(${tint},${(ownedReady ? .94 : .78)*breath*fade})`,
+    inset:ownedReady?`rgba(244,226,153,${(.82+.10*breath).toFixed(3)})`:special?'rgba(224,218,163,.78)':'rgba(197,220,185,.62)',
+    scale:selectedReady ? .40 : special ? .45 : .62, stroke:ownedReady?'rgba(54,48,24,.94)':null, width:1.2,
+    outerStroke:outline ?? (ownedReady?'rgba(236,220,158,.82)':null), outerWidth:selectedReady?2.5:1.5,
+    dash:selectedReady?[4,2]:[] };
+  return { fill:`rgba(111,91,66,${fossil * .48 * fade})` };
 }
 
 function resourceColor(base, state, richness, water) {

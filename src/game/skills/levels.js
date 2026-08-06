@@ -11,6 +11,8 @@ import {
 
 /** Canonical sparse Evolution level-vector schema. */
 export const EVOLUTION_LEVEL_VECTOR_VERSION = 1;
+/** Malformed-document guard chosen so quartic Potential remains within the shared 4,096-digit boundary. */
+export const EVOLUTION_LEVEL_DOCUMENT_DIGIT_LIMIT = 1019;
 
 /**
  * Normalize against a caller-supplied stable catalog order. Duplicate entries
@@ -24,7 +26,7 @@ export function normalizeEvolutionLevelVector(meta, orderedIds) {
     for (const candidate of meta.evolutionLevels) {
       if (!candidate || !recognized.has(candidate.id)) continue;
       let level;
-      try { level = parseProgressionInteger(candidate.level); } catch { continue; }
+      try { level = parseEvolutionLevel(candidate.level); } catch { continue; }
       if (level === '0') continue;
       const previous = byId.get(candidate.id);
       if (!previous || compareProgressionIntegers(level, previous) > 0) byId.set(candidate.id, level);
@@ -56,7 +58,7 @@ export function canonicalLevelVectorKey(vector) {
 
 /** Return a new stable sparse vector with exactly one recognized level replaced. */
 export function replaceEvolutionLevel(vector, orderedIds, id, level) {
-  const canonical = parseProgressionInteger(level);
+  const canonical = parseEvolutionLevel(level);
   const source = new Map(vector.map((entry) => [entry.id, entry.level]));
   if (canonical === '0') source.delete(id); else source.set(id, canonical);
   return Object.freeze(orderedIds.filter((candidate) => source.has(candidate))
@@ -100,7 +102,7 @@ export function summarizeEvolutionLevelVector(vector, nodes, affinityIds) {
  * complete (possibly thousand-digit) level is never converted to Number.
  */
 export function boundedEvolutionLevelRefinement(level) {
-  const canonical = parseProgressionInteger(level);
+  const canonical = parseEvolutionLevel(level);
   if (canonical === '0' || canonical === '1') return 0;
   const magnitude = progressionIntegerMagnitude(canonical, 6);
   const leading = magnitude.mantissa / magnitude.mantissaScale;
@@ -110,4 +112,9 @@ export function boundedEvolutionLevelRefinement(level) {
 
 export function normalizedMetaRevision(meta) {
   return normalizeProgressionInteger(meta?.revision, '0');
+}
+function parseEvolutionLevel(value) {
+  const canonical = parseProgressionInteger(value);
+  if (canonical.length > EVOLUTION_LEVEL_DOCUMENT_DIGIT_LIMIT) throw new RangeError('Evolution level document field is too wide');
+  return canonical;
 }

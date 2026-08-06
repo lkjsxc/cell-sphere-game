@@ -32,6 +32,18 @@ export function hashString(state, str) {
 /** @param {string} str @returns {number} u32 */
 export function hashStringU32(str) { return hashString(FNV_OFFSET, str); }
 
+/** Stable 128-bit non-cryptographic digest for bounded idempotency keys. */
+export function digestString128(str){const seeds=[FNV_OFFSET,0x9e3779b9,0x85ebca6b,0xc2b2ae35];
+ return seeds.map((seed,index)=>hexU32(hashString(hashString(seed,`${index}:${str.length}:`),str))).join('')}
+
+/** Length-framed transaction tuple; large material never crosses persistence boundaries. */
+export function boundedTransactionKey(namespace,parts,maxLength=128){
+ const scope=String(namespace).replace(/[^a-z0-9-]/gi,'-').slice(0,32)||'transaction';
+ const material=parts.map((part)=>{const text=String(part??'');return`${text.length}:${text}`}).join('|');
+ const direct=`${scope}:${material}`;if(direct.length<=maxLength)return direct;
+ return`${scope}:h128:${digestString128(material)}:${parts.length}`;
+}
+
 /**
  * Fold a Float32Array into a running hash after quantizing each value to
  * 1/quant precision. Quantization hides irrelevant float noise while keeping

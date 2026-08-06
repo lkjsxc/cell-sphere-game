@@ -8,7 +8,7 @@ import { RunController } from '../../src/simulation/simulator.js';
 import { scoreResult } from '../../src/game/scoring.js';
 import { createRecentRuns, migrateRecentRunRecords, validateRecentRun } from '../../src/platform/recent-runs.js';
 import { createHistoryLoadGuard, createHistoryPlayback } from '../../src/interface/history-playback.js';
-import { loadHistory, normalizeHistoryEvents, validateHistory } from '../../src/platform/history.js';
+import { loadHistory, normalizeHistoryEvents, serializeHistory, validateHistory } from '../../src/platform/history.js';
 
 function frame(tick, flags = 0, cells = 32) {
   const data = new Uint8Array(cells); data[tick % cells] = 0b10111001;
@@ -69,9 +69,17 @@ test('semantic schema 2 migrates cellId to bounded unique primaryCells', () => {
   assert.deepEqual(events[1].primaryCells, [4, 5, 6, 7, 8, 9, 10, 11]);
   const migrated = validateHistory({ schema: 1, worlds: [{ seed: 1, tick: 3, score: 0,
     events: [{ tick: 1, type: 'inoculation', cellId: 2 }] }], memory: [] });
-  assert.equal(migrated.schema, 5); assert.deepEqual(migrated.worlds[0].events[0].primaryCells, [2]);
+  assert.equal(migrated.schema, 6); assert.deepEqual(migrated.worlds[0].events[0].primaryCells, [2]);
   globalThis.localStorage = { getItem: (key) => key.endsWith(':v1') ? JSON.stringify(migrated) : null };
-  try { assert.equal(loadHistory().schema, 5); } finally { delete globalThis.localStorage; }
+  try { assert.equal(loadHistory().schema, 6); } finally { delete globalThis.localStorage; }
+});
+
+test('semantic History enforces its byte bound even with maximum-width exact fields',()=>{
+  const huge='9'.repeat(4000),evolution=Array.from({length:128},(_,seq)=>({seq,nodeId:'ecology-tempered-scars',oldLevel:huge,newLevel:huge,
+    cost:huge,balanceBefore:huge,balanceAfter:huge,run:huge,environmentLevel:'0',transactionKey:`wide-${seq}`}));
+  const archive=validateHistory({schema:6,worlds:[],evolution,trophies:[]},32),serialized=serializeHistory(archive);
+  assert.ok(new TextEncoder().encode(serialized).byteLength<=700000);assert.ok(archive.evolution.length>0&&archive.evolution.length<128);
+  assert.equal(archive.evolution.at(-1).newLevel,huge);
 });
 
 test('recent-runs validates buffers and gracefully degrades without IndexedDB', async () => {

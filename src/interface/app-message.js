@@ -1,7 +1,7 @@
 /** Route versioned run-driver messages without growing the composition root. */
 import { focusCamera } from '../rendering/camera.js';
 import { identityFields, sameWorldIdentity } from '../core/world-session.js';
-import { markWorldStarted, recoverPreAuthorityFailure } from './policies/run-session.js';
+import {markWorldStarted,recoverAuthorityLossDuringReplacement,recoverPreAuthorityFailure} from './policies/run-session.js';
 import * as ui from './surfaces.js';
 
 export function handleRunMessage(app, message) {
@@ -22,7 +22,8 @@ export function handleRunMessage(app, message) {
   if (message.t === 'extinct') return app.finishRun({ ...message.summary, ...identityFields(message) });
   if (message.t === 'aborted') return app.finishAbandoned({ ...message.summary, ...identityFields(message) });
   if (message.t === 'worker-failed' && message.recoverable && message.phase === 'pre-authority') return recoverPreAuthorityFailure(app, message);
-  if (message.t === 'worker-failed') return app.failRun(message.message);
+  if(message.t==='worker-failed'&&recoverAuthorityLossDuringReplacement(app,message))return true;
+  if(message.t==='worker-failed')return app.failRun(message.message);
   if (message.t === 'error') ui.announce(app.el, `The world reported a recoverable error: ${message.message}`);
 }
 

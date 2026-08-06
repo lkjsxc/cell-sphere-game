@@ -1,5 +1,6 @@
 /** Monotonic Trophy evaluation; callers choose explicit transaction timing. */
-import { getMemoryNode } from '../skills/index.js';
+import { getMemoryNode, ownedEvolutionIds } from '../skills/index.js';
+import { normalizeProgressionInteger, projectProgressionInteger } from '../../core/progression-integer.js';
 import { HABITAT_TROPHIES } from './habitat.js'; import { ENDURANCE_TROPHIES } from './endurance.js';
 import { EVOLUTION_TROPHIES } from './evolution.js'; import { FORM_TROPHIES } from './form.js';
 import { MASTERY_TROPHIES } from './mastery.js'; import { REACH_TROPHIES } from './reach.js';
@@ -35,11 +36,11 @@ export function reconcileTrophies(meta, archive, newFacts = null) {
 }
 
 export function baseAggregate(meta) {
-  const skills = Array.isArray(meta.memoryNodes) ? meta.memoryNodes : []; const branches = new Set();
+  const skills = ownedEvolutionIds(meta); const branches = new Set();
   for (const id of skills) { const branch = getMemoryNode(id)?.branch; if (branch) branches.add(branch); }
   const progress = meta.trophyProgress ?? {}; const aggregate = Object.fromEntries([...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS].map((key) => [key, 0]));
   for (const key of [...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS]) aggregate[key] = finite(progress.aggregate?.[key]);
-  Object.assign(aggregate, { runs: finite(meta.runs), bestScore: finite(meta.bestScore), totalEchoes: finite(meta.totalEchoes),
+  Object.assign(aggregate, { runs: exactFinite(meta.runs), bestScore: exactFinite(meta.bestScore), totalEchoes: exactFinite(meta.totalEchoes),
     skillCount: skills.length, skillBranchCount: branches.size, imprintCount: meta.imprints?.length ?? 0,
     geographyMask: finite(progress.geographyMask), crisisMask: finite(progress.crisisMask),
     lakeTypeMask: finite(progress.lakeTypeMask), lakeSalinityMask: finite(progress.lakeSalinityMask) });
@@ -90,4 +91,5 @@ function serializeProgress(a) { const aggregate = {};
 function bitCount(value){let count=0;for(let bits=value;bits;bits>>>=1)count+=bits&1;return count;}
 function meets(values, thresholds) { return thresholds.every((threshold, index) => values[index] >= threshold); }
 function finite(value) { return Number.isFinite(value) && value >= 0 ? Math.floor(value) : 0; }
+function exactFinite(value) { return projectProgressionInteger(normalizeProgressionInteger(value, '0'), 10_000_000); }
 function uniqueIds(ids) { return [...new Set(ids.filter((id) => typeof id === 'string'))]; }

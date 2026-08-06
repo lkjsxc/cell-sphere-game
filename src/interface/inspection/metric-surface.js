@@ -1,5 +1,6 @@
 /** Stable shared projection and surface for SCORE, ENTROPY, and REACH. */
-import { RANKS, rankFor } from '../../game/scoring.js';
+import { rankFor } from '../../game/scoring.js';
+import { formatProgressionEngineering, normalizeProgressionInteger } from '../../core/progression-integer.js';
 
 const MAX_MILESTONES = 5;
 export function createMetricSurface(options) {
@@ -45,8 +46,8 @@ export function metricProjection(kind, model) {
 }
 function scoreProjection({ snapshot, result, score, history = [] }) {
   const final = Boolean(result && score); const projection = score ?? snapshot?.metrics?.scoreProjection;
-  const total = projection?.total ?? snapshot?.metrics?.score ?? 0; const rank = projection?.rank ?? rankFor(total);
-  const next = RANKS.find((item) => item.min > total); const remaining = next ? next.min - total : 0;
+  const total = projection?.total ?? snapshot?.metrics?.score ?? '0'; const rank = projection?.rank ?? rankFor(total);
+  const next = projection?.nextRank ?? null;
   const milestones = history.filter((event) => event.key?.includes('milestone') || event.key?.startsWith('run.phase.')).slice(-MAX_MILESTONES);
   const direct = (projection?.breakdown ?? []).map((part) => ({
     label: `${part.en} · ${Math.round((part.q ?? 0) * 100)}% axis${part.weight != null ? ` · ${Math.round(part.weight * 100)}% weight` : ''}`,
@@ -56,7 +57,7 @@ function scoreProjection({ snapshot, result, score, history = [] }) {
     { label: final ? 'Final authority' : 'Live projection', value: final ? 'Final' : 'Updating' },
     { label: 'Run Quality', value: `${Math.round((projection?.quality ?? 0) * 100)}%` },
     { label: 'World Potential', value: number(projection?.worldPotential ?? result?.worldPotential ?? 0) },
-    { label: 'Challenge multiplier', value: `${(projection?.mult ?? 1).toFixed(2)}×` },
+    { label: 'Environment credit', value: `${Math.round((projection?.environmentCredit?.bonus ?? 0) * 100)}% · exposure gated` },
     { label: 'SCORE model', value: `v${projection?.modelVersion ?? result?.scoreModelVersion ?? 2}` },
     ...milestones.map((event) => ({ label: eventTitle(event), value: gameTime(event.tick) })),
   ];
@@ -78,11 +79,11 @@ function entropyProjection({ snapshot, result, entropyRate = null, history = [] 
   const conditions = reachLimits.map((item) => ({ label: humanize(item.label), value: `${Math.round(item.score * 100)}%` }));
   return { eyebrow: result ? 'TERMINAL WORLD PRESSURE' : 'LIVE WORLD PRESSURE', heading: 'ENTROPY', primary: `${Math.round(entropy * 100)}%`,
     summary: result ? 'Terminal context from the final preserved world snapshot.' : 'Global collapse pressure, derived from authoritative snapshots and active events.',
-    counts: [{ label: 'Era', value: `World ${snapshot?.worldOrdinal ?? result?.worldOrdinal ?? 1}` }, { label: 'Recent rate', value: entropyRate == null ? 'Gathering' : `${entropyRate > 0 ? '+' : ''}${entropyRate} pp / 10s` },
+    counts:[{label:'Environment',value:`Level ${number(snapshot?.environmentLevel??result?.environmentLevel??'0')}`}, { label: 'Recent rate', value: entropyRate == null ? 'Gathering' : `${entropyRate > 0 ? '+' : ''}${entropyRate} pp / 10s` },
       { label: 'Active events', value: String(active.length) }],
     directHeading: 'Active event contribution', direct: nonempty(direct, 'No active event contribution.'),
     conditionsHeading: 'Global effects and seasonal context', conditions: nonempty(conditions, result ? 'World pressure reached its terminal context.' : 'No strong limiting condition.'),
-    footer: `Era ${snapshot?.worldEra ?? result?.worldEra ?? 1} · finite local reserves are separate from global Entropy · tick ${snapshot?.tick ?? result?.tick ?? 0}.`,
+    footer: `Profile ${snapshot?.challengeProfileHash ?? result?.challengeProfileHash ?? 'unrecorded'} · finite local reserves are separate from global Entropy · tick ${snapshot?.tick ?? result?.tick ?? 0}.`,
   };
 }
 function reachProjection({ snapshot, result }) {
@@ -112,6 +113,7 @@ function line(tag, text) { const node = document.createElement(tag); node.textCo
 function eventTitle(event) { return humanize(event.key?.replace(/^run\./, '') ?? 'milestone'); }
 function humanize(value) { return String(value).replaceAll(/[._-]/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()); }
 function gameTime(tick = 0) { const seconds = Math.floor(tick / 10); return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
-function number(value) { return new Intl.NumberFormat('en').format(Math.round(value)); }
+function number(value) { const exact=normalizeProgressionInteger(value, '0');
+  return exact.length <= 15 ? exact.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : formatProgressionEngineering(exact, 6); }
 function signed(value) { return `${value > 0 ? '+' : ''}${value ?? 0}`; }
 function byId(id) { return document.getElementById(id); }
