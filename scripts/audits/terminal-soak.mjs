@@ -1,33 +1,46 @@
 #!/usr/bin/env node
-/** Deep deterministic terminal-completion soak using production authority. */
-import { performance } from 'node:perf_hooks';
-import { BALANCE as B } from '../../src/game/balance.js';
-import { RunController } from '../../src/simulation/simulator.js';
+/** Parallel production terminal + result/persistence/history/memory soak. */
+import {mkdirSync,writeFileSync} from 'node:fs';
+import {cpus} from 'node:os';
+import {isMainThread,parentPort,workerData,Worker} from 'node:worker_threads';
+import {performance} from 'node:perf_hooks';
+import {BALANCE as B} from '../../src/game/balance.js';
+import {createAgentEnvironment} from '../../src/agent/environment.js';
+import {defaultAgentSave} from '../../src/agent/schema.js';
+import {applyRunResult} from '../../src/interface/policies/run-result.js';
+import {serializeHistory} from '../../src/platform/history.js';
 
-const count = Number(process.argv.find((arg) => arg.startsWith('--count='))?.split('=')[1] ?? 1000);
-if (!Number.isInteger(count) || count < 1 || count > 100_000) throw new Error('count must be 1..100000');
-const started = performance.now(); const causes = {}; const terminals = {}; const ticks = [];
-let duplicates = 0; let invalid = 0; let repairs = 0;
-for (let index = 0; index < count; index++) {
-  const events = [];
-  const run = new RunController({ seed: (0x5f3759df + index * 2654435761) >>> 0,
-    worldOrdinal: index % 12 + 1, worldPotential: 16000 }, (message) => { if (message.t === 'extinct') events.push(message); });
-  run.start();
-  while (run.state.status !== 'extinct') run.advance(64);
-  const result = run.buildResult(); const exact = run.state.alive.reduce((sum, value) => sum + value, 0);
-  duplicates += Math.max(0, events.length - 1); repairs += result.diagnostics.livenessRepairs;
-  if (events.length !== 1 || exact !== 0 || result.finalLivingCount !== 0
-      || result.tick > B.RUN_HARD_MAX_TICKS || !/^[0-9a-f]{8}$/i.test(result.hash)) invalid++;
-  causes[result.cause] = (causes[result.cause] ?? 0) + 1;
-  terminals[result.terminalCause] = (terminals[result.terminalCause] ?? 0) + 1;
-  ticks.push(result.tick);
+if(!isMainThread)parentPort.postMessage(executeRange(workerData.start,workerData.count));
+else{
+ const count=intArg('--count=',10000,1,100000),concurrency=intArg('--concurrency=',Math.min(8,cpus().length),1,32);
+ const started=performance.now(),ranges=split(count,concurrency),rows=await Promise.all(ranges.map((range)=>runWorker(range)));
+ const total=rows.reduce((sum,row)=>sum+row.worlds,0),tickCounts=rows.flatMap((row)=>row.tickCounts);
+ const report={schema:2,productionSimulation:true,productionPersistence:true,worlds:total,concurrency:ranges.length,
+  ticks:{min:Math.min(...tickCounts),max:Math.max(...tickCounts),average:Math.round(tickCounts.reduce((a,b)=>a+b,0)/total)},
+  maxHeapUsedMB:Number(Math.max(...rows.map((row)=>row.maxHeapUsedMB)).toFixed(2)),historyEntriesMax:Math.max(...rows.map((row)=>row.historyEntries)),
+  historyBytesMax:Math.max(...rows.map((row)=>row.historyBytes)),receiptKeysMax:Math.max(...rows.map((row)=>row.receiptKeys)),
+  duplicateTransactionsRejected:rows.reduce((sum,row)=>sum+row.duplicatesRejected,0),
+  uniqueCampaignSeeds:new Set(rows.map((row)=>row.campaignSeed)).size,uniqueRunSeedsWithinWorkers:rows.reduce((sum,row)=>sum+row.uniqueRunSeeds,0),elapsedMs:Number((performance.now()-started).toFixed(1)),
+  valid:total===count&&new Set(rows.map((row)=>row.campaignSeed)).size===rows.length&&rows.every((row)=>row.valid)};
+ mkdirSync('reports',{recursive:true});writeFileSync(`reports/terminal-soak-${count}.json`,`${JSON.stringify(report,null,2)}\n`);
+ if(count>=10000)writeFileSync('reports/terminal-soak.json',`${JSON.stringify(report,null,2)}\n`);
+ console.log(JSON.stringify(report,null,2));if(!report.valid)process.exitCode=1;
 }
-ticks.sort((a, b) => a - b);
-const report = {
-  worlds: count, elapsedMs: Number((performance.now() - started).toFixed(1)), invalid,
-  duplicateTerminalMessages: duplicates, livenessRepairs: repairs,
-  ticks: { min: ticks[0], median: ticks[Math.floor(count / 2)], p95: ticks[Math.floor(count * .95)], max: ticks.at(-1) },
-  causes, terminalCauses: terminals,
-};
-console.log(JSON.stringify(report, null, 2));
-if (invalid || duplicates) process.exitCode = 1;
+
+function executeRange(start,count){
+ const campaignSeed=((0x5f3759df+start*2654435761)>>>0)%0x40000000,env=createAgentEnvironment(defaultAgentSave(campaignSeed));
+ let maxHeap=0,duplicatesRejected=0,valid=true;const tickCounts=[],runSeeds=new Set();
+ for(let offset=0;offset<count;offset++){
+  const observation=env.observe(),response=env.act({type:'run-world',expectedRevision:observation.metaRevision,expectedWorldOrdinal:observation.worldOrdinal}),save=env.exportSave(),record=save.history.worlds.at(-1);tickCounts.push(record?.tick??0);runSeeds.add(record?.seed);
+  valid&&=response.accepted&&record.tick<=B.RUN_HARD_MAX_TICKS&&save.history.worlds.length<=32&&save.meta.resultKeys.length<=16;
+  const duplicate=applyRunResult(save.meta,save.history,{resultTransactionKey:record.resultTransactionKey,worldOrdinal:record.worldOrdinal},32,new Set(save.meta.resultKeys));
+  duplicatesRejected+=Number(!duplicate.applied);valid&&=!duplicate.applied;
+  if(offset%25===0)maxHeap=Math.max(maxHeap,process.memoryUsage().heapUsed/1048576);
+ }
+ const save=env.exportSave(),encoded=serializeHistory(save.history);valid&&=encoded.length<=700000&&save.meta.runs===String(count);
+ return{worlds:count,tickCounts,maxHeapUsedMB:maxHeap,historyEntries:save.history.worlds.length,historyBytes:encoded.length,
+  receiptKeys:save.meta.resultKeys.length,duplicatesRejected,campaignSeed,uniqueRunSeeds:runSeeds.size,valid};
+}
+function runWorker(range){return new Promise((resolve,reject)=>{const worker=new Worker(new URL(import.meta.url),{workerData:range});worker.once('message',resolve);worker.once('error',reject);worker.once('exit',(code)=>{if(code)reject(new Error(`terminal soak worker exited ${code}`))})})}
+function split(count,limit){const workers=Math.min(count,limit),base=Math.floor(count/workers),extra=count%workers;let start=0;return Array.from({length:workers},(_,index)=>{const size=base+Number(index<extra),row={start,count:size};start+=size;return row})}
+function intArg(prefix,fallback,min,max){const raw=process.argv.find((arg)=>arg.startsWith(prefix))?.slice(prefix.length),value=Number(raw);return Number.isInteger(value)?Math.max(min,Math.min(max,value)):fallback}

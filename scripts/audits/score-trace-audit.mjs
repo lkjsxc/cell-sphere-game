@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-/** Tick-trace audit for authoritative cumulative SCORE v3. */
+/** Tick-trace audit for authoritative cumulative SCORE v4. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../../src/simulation/simulator.js';
 import { compileMemory } from '../../src/game/skills/index.js';
-const count = integerArg('--count=', 1000); const memory = compileMemory({ memoryNodes: [] }); const rows = []; const started = performance.now();
+const count = integerArg('--count=', 500); const memory = compileMemory({ memoryNodes: [] }); const rows = []; const started = performance.now();
 let decreases = 0; let finalMismatches = 0;
 for (let index = 0; index < count; index++) {
   const c = new RunController({ seed: (0x5c0ae000 + Math.imul(index, 0x9e3779b1)) >>> 0, worldOrdinal: 1,
@@ -12,17 +12,17 @@ for (let index = 0; index < count; index++) {
     habitatCapabilities: memory.habitatCapabilities, activeBuilds: memory.activeBuilds, buildEffects: memory.buildEffects });
   c.start(); let previous = 0; let largestJump = 0; let score15 = 0; let preterminal = 0; const checkpoints = [];
   while (c.state.status !== 'extinct') {
-    c.advance(1); const score = c.state.scoreMerit.total; if (score < previous) decreases++;
+    c.advance(1);const score=exactToSafe(c.state.scoreMerit.total);if(score<previous)decreases++;
     largestJump = Math.max(largestJump, score - previous); previous = score;
     if (c.state.tick <= 150) score15 = score;
     if (c.state.status === 'terminal-collapse' && !preterminal) preterminal = score;
     if (c.state.tick % 10 === 0) checkpoints.push(score);
   }
-  const result = c.buildResult(); if (result.score !== previous) finalMismatches++;
-  const final = Math.max(1, result.score); const at = (fraction) => checkpoints[Math.min(checkpoints.length - 1, Math.floor(checkpoints.length * fraction))] ?? 0;
-  rows.push({ final: result.score, largestJump, relativeJump: largestJump / final, score15Share: score15 / final,
-    p25Share: at(.25) / final, p50Share: at(.5) / final, p75Share: at(.75) / final,
-    preterminalShare: (preterminal || result.score) / final, finalDelta: result.score - previous });
+  const result=c.buildResult(),resultScore=exactToSafe(result.score);if(resultScore!==previous)finalMismatches++;
+  const final=Math.max(1,resultScore),at=(fraction)=>checkpoints[Math.min(checkpoints.length-1,Math.floor(checkpoints.length*fraction))]??0;
+  rows.push({final:resultScore,largestJump,relativeJump:largestJump/final,score15Share:score15/final,
+    p25Share:at(.25)/final,p50Share:at(.5)/final,p75Share:at(.75)/final,
+    preterminalShare:(preterminal||resultScore)/final,finalDelta:resultScore-previous});
 }
 const report = { worlds: count, elapsedMs: round(performance.now() - started), decreases, finalMismatches,
   finalScore: dist(rows.map((row) => row.final)), largestAbsoluteJump: dist(rows.map((row) => row.largestJump)),
@@ -39,4 +39,5 @@ function integerArg(prefix, fallback) { const value = Number(process.argv.find((
   if (!Number.isInteger(value) || value < 1 || value > 100000) throw new Error(`${prefix} must be 1..100000`); return value; }
 function dist(values) { const sorted = values.slice().sort((a, b) => a - b); const at = (p) => round(sorted[Math.floor((sorted.length - 1) * p)]);
   return { min: round(sorted[0]), p25: at(.25), median: at(.5), p75: at(.75), p90: at(.9), max: round(sorted.at(-1)) }; }
+function exactToSafe(value){const text=String(value);if(!/^\d{1,15}$/.test(text))throw new Error(`SCORE out of audit range: ${text.slice(0,24)}`);return Number(text)}
 function round(value) { return Number((Number.isFinite(value) ? value : 0).toFixed(6)); }

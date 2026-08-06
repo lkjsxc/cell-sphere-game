@@ -17,8 +17,9 @@ else {
 function single(command) {
   const env = loadEnvironment(savePath); let response;
   if (command === 'observe') response = env.act({ type: 'observe' });
-  else if (command === 'buy') response = env.act({ type: 'buy-skill', skillId: option('--skill') });
-  else if (command === 'run') response = env.act({ type: 'run-world' });
+  else if(command==='buy'){const observation=env.observe(),cellId=option('--cell')??option('--skill'),cell=observation.evolutionCells.find((entry)=>entry.id===cellId);
+    response=env.act({type:'buy-evolution-level',cellId,expectedLevel:cell?.currentLevel,expectedRevision:observation.metaRevision})}
+  else if(command==='run')response=env.act(guardedRun(env.observe()));
   else if (command === 'reset') response = env.act({ type: 'reset', seed: numberOption('--seed', 0) });
   else response = { accepted: false, reason: 'unknown-command' };
   if (savePath && response.accepted) atomicWrite(savePath, env.exportSave());
@@ -40,7 +41,7 @@ async function stdio() {
 }
 
 function campaign() {
-  const worlds = Math.max(1, Math.min(20, numberOption('--worlds', 2)));
+  const worlds = Math.max(1, Math.min(100, numberOption('--worlds', 2)));
   const seed = Math.max(0, Math.min(0x3fffffff, numberOption('--seed', 0))); const selected = (option('--policies')?.split(',') ?? AGENT_POLICIES)
     .map(normalizePolicy).filter((policy, index, all) => all.indexOf(policy) === index);
   const started = performance.now(); const summaries = [];
@@ -52,23 +53,23 @@ function campaign() {
       let completed = false;
       for (let decisionCount = 0; decisionCount < 5 && !completed; decisionCount++) {
         const before = env.observe(); const decision = choosePolicyAction(before, policy); reasons.push(decision.rationale);
-        if (decision.action.type === 'buy-skill') {
+        if (decision.action.type === 'buy-evolution-level' || decision.action.type === 'buy-skill') {
           const bought = env.act(decision.action); trace.push(traceEntry(before, decision, bought));
           if (!bought.accepted) break; purchases++;
           continue;
         }
-        const runDecision = { action: { type: 'run-world' }, rationale: decision.rationale };
-        latest = env.act(runDecision.action); trace.push(traceEntry(before, runDecision, latest)); completed = latest.accepted;
+        latest=env.act(decision.action);trace.push(traceEntry(before,decision,latest));completed=latest.accepted;
       }
-      if (!completed) { const before = env.observe(); const decision = { action: { type: 'run-world' }, rationale: 'Decision budget reached.' };
-        latest = env.act(decision.action); trace.push(traceEntry(before, decision, latest)); completed = latest.accepted; }
+      if(!completed){const before=env.observe(),decision={action:guardedRun(before),rationale:'Decision budget reached.'};
+        latest=env.act(decision.action);trace.push(traceEntry(before,decision,latest));completed=latest.accepted}
       if (!completed) throw new Error(`${policy} world ${world + 1}: ${latest.reason}`);
       scores.push(latest.result.score);
     }
     const observation = env.observe(); summaries.push({ policy, worlds, purchases,
-      finalSkillCount: observation.ownedSkills.length, finalEchoBalance: observation.echoBalance,
-      evolutionPower: observation.evolutionPower, worldPotential: observation.worldPotential,
-      bestScore: observation.bestScore, scores, activeBuilds: observation.activeBuilds.map((build) => build.id),
+      finalEvolutionCellCount:observation.ownedEvolutionCells.length, finalEchoBalance:observation.echoBalance,
+      evolutionPower:observation.evolutionSummary.breadthPower,worldPotential:observation.worldPotential,
+      bestScore:observation.bestScore,scores,activeBuilds:observation.activeBuilds.map((build)=>build.id),
+      finalAffinities:observation.affinities.map((entry)=>({affinity:entry.affinity,breadth:entry.breadth,totalLevels:entry.totalLevels})),
       trophies: observation.trophySummary.earned,
       lastResult: { score: observation.lastResult.score, cause: observation.lastResult.cause,
         survivalSeconds: observation.lastResult.survivalSeconds, peakReach: observation.lastResult.peakReach,
@@ -77,14 +78,18 @@ function campaign() {
       rationales: reasons.slice(-4), trace: trace.slice(-12), stateHash: env.exportSave().stateHash });
     if (savePath && selected.length === 1) atomicWrite(savePath, env.exportSave());
   }
-  process.stdout.write(`${JSON.stringify({ schema: 1, seed, worldsPerPolicy: worlds,
-    policies: summaries, elapsedMs: Math.round(performance.now() - started) })}\n`);
+  const traceBounded=summaries.every((row)=>row.trace.length<=12),valid=selected.length>0&&summaries.every((row)=>row.worlds===worlds&&/^\d+$/.test(row.bestScore))&&traceBounded;
+  const report={schema:2,productionAuthority:true,fairObservation:true,seed,worldsPerPolicy:worlds,policyCount:summaries.length,
+    policies:summaries,traceBounded,elapsedMs:Math.round(performance.now()-started),valid};
+  const reportPath=option('--report');if(reportPath)atomicWrite(reportPath,report);
+  process.stdout.write(`${JSON.stringify(report)}\n`);if(!valid)process.exitCode=1;
 }
 
+function guardedRun(observation){return{type:'run-world',expectedRevision:observation.metaRevision,expectedWorldOrdinal:observation.worldOrdinal}}
 function traceEntry(observation, decision, response) { return Object.freeze({ observation: Object.freeze({
   worldOrdinal: observation.worldOrdinal, echoBalance: observation.echoBalance,
   evolutionPower: observation.evolutionPower, worldPotential: observation.worldPotential,
-  availableSkills: Object.freeze(observation.availableSkills.map((skill) => skill.id)),
+  availableEvolutionCells:Object.freeze(observation.availableEvolutionCells.map((cell)=>cell.id)),
   activeBuilds: Object.freeze(observation.activeBuilds.map((build) => build.id)) }),
   action: decision.action, rationale: decision.rationale, accepted: response.accepted,
   reason: response.reason, responseHash: response.hash }); }
@@ -101,7 +106,7 @@ function atomicWrite(path, value) {
   renameSync(temporary, target);
 }
 function positionalCommand() {
-  const valued = new Set(['--save', '--skill', '--seed', '--worlds', '--policies']);
+  const valued = new Set(['--save', '--report', '--cell', '--skill', '--seed', '--worlds', '--policies']);
   for (let index = 0; index < args.length; index++) {
     if (valued.has(args[index])) { index++; continue; }
     if (!args[index].startsWith('--')) return args[index];

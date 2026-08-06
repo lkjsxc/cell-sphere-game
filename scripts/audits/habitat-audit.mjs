@@ -2,10 +2,10 @@
 /** Production habitat lock, unlock, occupancy, and marine-bounds audit. */
 import { mkdirSync, writeFileSync } from 'node:fs';import { RunController } from '../../src/simulation/simulator.js';
 import { compileMemory, MEMORY_NODES, MEMORY_NODE_IDS } from '../../src/game/skills/index.js';import { BIOME } from '../../src/world/constants.js';
-const count=Number(process.argv.find((arg)=>arg.startsWith('--count='))?.split('=')[1]??60);const fresh=compileMemory({memoryNodes:[]}),full=compileMemory({memoryNodes:MEMORY_NODE_IDS});
+const count=Number(process.argv.find((arg)=>arg.startsWith('--count='))?.split('=')[1]??60);const fresh=compileMemory({memoryNodes:[]}),breadth=compileMemory({memoryNodes:MEMORY_NODE_IDS});
 const keys=['LAKE_ACCESS','TUNDRA_ACCESS','SNOW_ICE_ACCESS','SHALLOW_OCEAN_EDGE_ACCESS','SHALLOW_OCEAN_ACCESS','DEEP_OCEAN_ACCESS'];
 const unlockIds=Object.fromEntries(keys.map((key)=>[key,MEMORY_NODES.find((node)=>node.effect.type==='unlock'&&node.effect.key===key)?.id]));
-const configs={fresh,full};for(const [key,id] of Object.entries(unlockIds)) { const ids=[id];
+const configs={fresh,breadth};for(const [key,id] of Object.entries(unlockIds)) { const ids=[id];
  if(key==='SNOW_ICE_ACCESS')ids.unshift(unlockIds.TUNDRA_ACCESS);if(key==='SHALLOW_OCEAN_ACCESS')ids.unshift(unlockIds.SHALLOW_OCEAN_EDGE_ACCESS);
  if(key==='DEEP_OCEAN_ACCESS')ids.unshift(unlockIds.SHALLOW_OCEAN_EDGE_ACCESS,unlockIds.SHALLOW_OCEAN_ACCESS);configs[key]=compileMemory({memoryNodes:ids}); }
 const rows=Object.fromEntries(Object.keys(configs).map((key)=>[key,[]]));let uniqueOccupancyViolations=0;for(const [label,memory] of Object.entries(configs))for(let index=0;index<count;index++){
@@ -18,7 +18,7 @@ const rows=Object.fromEntries(Object.keys(configs).map((key)=>[key,[]]));let uni
 const gated=['lake','tundra','snowIce','shallow','deep'];const report={worldsPerConfiguration:count,unlockIds,uniqueOccupancyViolations,configurations:Object.fromEntries(Object.entries(rows).map(([label,values])=>[label,
  Object.fromEntries([...gated,'marineShare','peak','blocked'].map((key)=>[key,dist(values.map((row)=>row[key]))]))])),valid:false};
 report.valid=!uniqueOccupancyViolations&&Object.values(unlockIds).every(Boolean)&&gated.every((key)=>report.configurations.fresh[key].max===0)&&report.configurations.fresh.blocked.median>0
- &&gated.every((key)=>report.configurations.full[key].median>0)&&report.configurations.full.marineShare.median<.7&&report.configurations.full.peak.median<=1
+ &&gated.every((key)=>report.configurations.breadth[key].median>0)&&report.configurations.breadth.marineShare.median<.7&&report.configurations.breadth.peak.median<=1
  &&report.configurations.LAKE_ACCESS.lake.max>0&&report.configurations.TUNDRA_ACCESS.tundra.max>0&&report.configurations.SNOW_ICE_ACCESS.snowIce.max>0
  &&report.configurations.SHALLOW_OCEAN_ACCESS.shallow.max>0&&report.configurations.DEEP_OCEAN_ACCESS.deep.max>0;
 mkdirSync('reports',{recursive:true});writeFileSync('reports/habitat-audit.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));if(!report.valid)process.exitCode=1;

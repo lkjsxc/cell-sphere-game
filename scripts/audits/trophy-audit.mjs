@@ -6,8 +6,11 @@ import { validateTrophyAtlas } from '../../src/game/trophies/atlas.js';
 import { baseAggregate, reconcileTrophies, trophyConditionMet } from '../../src/game/trophies/evaluator.js';
 import { TROPHY_MAX_KEYS, TROPHY_SUM_KEYS } from '../../src/game/trophies/keys.js';
 import { validateTrophyFacts } from '../../src/game/trophies/facts.js';
-import { MEMORY_BRANCHES, MEMORY_NODE_IDS, availableMemoryNodes, compileMemory, purchaseMemory } from '../../src/game/skills/index.js';
-import { RunController } from '../../src/simulation/simulator.js'; import { runHeadless } from '../pilot.mjs';
+import { MEMORY_BRANCHES, availableMemoryNodes, compileEvolution, purchaseEvolutionLevel } from '../../src/game/skills/index.js';
+import { RunController } from '../../src/simulation/simulator.js';
+import { resolveEnvironmentAttempt } from '../../src/game/environment-level.js';
+import { compileChallengeProfile } from '../../src/simulation/challenge-profile.js';
+import { compareProgressionIntegers, incrementProgressionInteger } from '../../src/core/progression-integer.js';
 import { applyRunResult } from '../../src/interface/policies/run-result.js';
 import { defaultHistory } from '../../src/platform/history.js'; import { defaultMeta, validateMeta } from '../../src/platform/storage.js';
 import { hashStringU32, hexU32 } from '../../src/core/hash.js';
@@ -27,8 +30,8 @@ const report = { catalog: { count: catalog.count, families: catalog.families, un
     combinators: ruleCounts() }, topology: { cells: 162, trophyCells: atlas.cells, neutralCells: atlas.neutral, mappingHash: atlas.hash },
   productionFirstWorldCohort: { worlds: firstWorldCohort.length, min: cohortCounts[0], median: cohortCounts[Math.floor(cohortCounts.length / 2)],
     max: cohortCounts.at(-1), distribution: frequencies(cohortCounts), automaticNonOnboardingAtLeastHalf: trivial },
-  modeledCampaign: { policy: 'production authority; alternating Automatic and deterministic Manual policies; one affordable adjacent Skill purchase per world',
-    horizons: targetResults, newlyByHorizon: campaign.horizons, finalOwnedSkills: campaign.meta.memoryNodes.length,
+  modeledCampaign: { policy:'production autonomous authority; one affordable adjacent Evolution level per world',
+    horizons: targetResults, newlyByHorizon: campaign.horizons, finalOwnedCells: campaign.meta.evolutionLevels.length,
     finalEchoes: campaign.meta.totalEchoes, finalTrophies: campaign.meta.trophyIds.length, remaining: 96 - campaign.meta.trophyIds.length,
     familyTotals: familyTotals(campaign.meta.trophyIds) },
   integrity: { impossible, duplicateConditions, duplicateCriteria, dominatedPairs: dominance, oneTimeRewards: campaign.oneTime,
@@ -43,8 +46,8 @@ console.log(JSON.stringify(report, null, 2)); if (!report.valid) process.exitCod
 function firstWorld(seed) { const result = automaticRun(seed, defaultMeta()); const tx = applyRunResult(defaultMeta(), defaultHistory(),
     { ...result, resultTransactionKey: `fresh:${seed}` }, 32, new Set()); return { seed, ids: tx.trophyIds }; }
 function modeledCampaign(worlds) { let meta = defaultMeta(); let archive = defaultHistory(); const keys = new Set(); const horizons = {}; let prior = new Set(); let firstTx = null;
-  for (let run = 1; run <= worlds; run++) { const seed = (20260731 + (run - 1) * 104729) & 0x3fffffff; const result = run % 2
-      ? automaticRun(seed, meta) : manualRun(seed, meta, ['balanced','expansion','resilience','efficiency'][(run / 2 - 1) % 4]);
+  for (let run = 1; run <= worlds; run++) { const seed = (20260731 + (run - 1) * 104729) & 0x3fffffff;
+    const result = automaticRun(seed, meta);
     const tx = applyRunResult(meta, archive, { ...result, resultTransactionKey: `campaign:${run}:${seed}` }, 32, keys);
     if (run === 1) firstTx = { before: { meta, archive }, result: { ...result, resultTransactionKey: `campaign:${run}:${seed}` }, tx };
     keys.add(tx.key); meta = tx.meta; archive = tx.archive; const bought = buyOne(meta, run); meta = bought.meta;
@@ -59,16 +62,17 @@ function modeledCampaign(worlds) { let meta = defaultMeta(); let archive = defau
     firstHistoryEntries: awardEvents.length, firstQueueEntries: firstTx.tx.meta.trophyQueue.length,
     valid: !duplicate.applied && !duplicate.trophyIds.length && awardEvents.length === firstTx.tx.trophyIds.length } };
 }
-function automaticRun(seed, meta) { const memory = compileMemory(meta); const rc = new RunController({ seed, strainId: 'pioneer', worldOrdinal: meta.runs + 1,
-    worldPotential: memory.worldPotential, potentialVersion: memory.potentialVersion, memoryEffects: memory.effects,
-    memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks, habitatCapabilities: memory.habitatCapabilities }); rc.start();
-  while (rc.state.status !== 'extinct') rc.advance(20); return rc.buildResult(); }
-function manualRun(seed, meta, policy) { const memory = compileMemory(meta); return runHeadless({ RunController }, { seed, strainId: 'pioneer', worldOrdinal: meta.runs + 1,
-    worldPotential: memory.worldPotential, potentialVersion: memory.potentialVersion, memoryEffects: memory.effects,
-    memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks, habitatCapabilities: memory.habitatCapabilities }, policy).result; }
-function buyOne(meta, run) { const preferred = MEMORY_BRANCHES[(run - 1) % MEMORY_BRANCHES.length]; const options = availableMemoryNodes(meta).slice()
-    .sort((a, b) => (a.branch === preferred ? -1 : 0) - (b.branch === preferred ? -1 : 0) || a.tier - b.tier || a.cost - b.cost || a.id.localeCompare(b.id));
-  return options.length ? purchaseMemory(meta, options[0].id) : { ok: false, meta }; }
+function automaticRun(seed, meta) { const evolution=compileEvolution(meta),attempt=resolveEnvironmentAttempt(meta),profile=compileChallengeProfile({environmentLevel:attempt.environmentLevel,evolution});
+  const rc=new RunController({seed,strainId:'pioneer',worldOrdinal:incrementProgressionInteger(meta.runs),environmentLevel:attempt.environmentLevel,challengeProfile:profile,
+    worldPotential:evolution.worldPotential,evolutionPower:evolution.evolutionPower,evolutionDepth:evolution.evolutionDepth,potentialVersion:evolution.potentialVersion,
+    memoryEffects:evolution.effects,memoryConditionals:evolution.conditionals,memoryUnlocks:evolution.unlocks,habitatCapabilities:evolution.habitatCapabilities,
+    activeBuilds:evolution.activeBuilds,buildEffects:evolution.buildEffects,electricityMastery:evolution.electricityMastery});rc.start();
+  while(rc.state.status!=='extinct')rc.advance(20);return rc.buildResult();}
+function buyOne(meta,run){const preferred=MEMORY_BRANCHES[(run-1)%MEMORY_BRANCHES.length],options=availableMemoryNodes(meta).slice()
+    .sort((a,b)=>(a.affinity===preferred?-1:0)-(b.affinity===preferred?-1:0)||Number(a.owned)-Number(b.owned)||a.tier-b.tier
+      ||compareProgressionIntegers(a.nextCost,b.nextCost)||a.id.localeCompare(b.id));
+  if(!options.length)return{ok:false,meta};const state=options[0];return purchaseEvolutionLevel(meta,state.id,{expectedLevel:state.currentLevel,expectedRevision:meta.revision,
+    transactionKey:`trophy-audit:${run}:${state.id}:${state.currentLevel}`});}
 function impossibleCriteria() { const aggregate = Object.fromEntries([...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS].map((key) => [key, 10_000_000]));
   Object.assign(aggregate, { runs: 10000, bestScore: 2_000_000, totalEchoes: 1_000_000, skillCount: 252, skillBranchCount: 6,
     imprintCount: 8, geographyMask: 63, crisisMask: 127, adaptationCategoryMask: 63, adaptationCardCount: 24,

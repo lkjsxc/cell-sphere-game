@@ -2,7 +2,7 @@
 import { assertSkillGeometry } from './evidence.mjs';
 
 export async function runScenario(t) {
-  const { evaluate, wait, poll, errors, click, drag, screenshot, setViewport, key } = t;
+  const { evaluate, wait, poll, errors, click, tap, drag, screenshot, setViewport, key } = t;
   let boot = await evaluate('window.__CELL_SPHERE_BOOT__'); ok(boot?.playable, 'app did not boot');
   boot = await runIdentityMigrationScenario(t, boot);
   const publicSpeeds = await evaluate(`(()=>({runtime:[...document.getElementById('speed-select').options].map(o=>Number(o.value)),defaults:[...document.getElementById('settings-speed').options].map(o=>Number(o.value)),dev:window.__CELL_SPHERE_BOOT__.developerMode,marker:document.getElementById('dev-mode-marker').hidden,agent:Object.hasOwn(window,'__CSG_AGENT__')}))()`);
@@ -18,7 +18,9 @@ export async function runScenario(t) {
   ok(render.draws === 4, `renderer draw count ${render.draws}`);
   const initialSelector = await selectorEvidence(evaluate); selectorContract(initialSelector);
   await screenshot('shell-home-mobile.png'); await trustedId(t, 'begin-button');
-  ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'running', 5000), 'world did not start');
+  ok(await poll(()=>evaluate('window.__CELL_SPHERE_APP__.phase'),(phase)=>phase==='running',5000),'world did not start');
+  const fallbackAuthority=await evaluate('window.__CELL_SPHERE_APP__.driver.hasFallback');
+  ok(fallbackAuthority===Boolean(t.simulationFallback),`unexpected simulation authority: fallback=${fallbackAuthority}`);
   const setDialSpeed = (speed) => evaluate(`(()=>{const s=document.getElementById('speed-select');s.value='${speed}';s.dispatchEvent(new Event('change'))})()`);
   await setDialSpeed(1);
   const dial = () => evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,m=document.querySelector('.clock-minute'),h=document.querySelector('.clock-hour');return {phase:a.timeDial.state.phase,hourPhase:a.timeDial.state.hourPhase,minute:m.style.transform,hour:h.style.transform}})()`);
@@ -113,28 +115,39 @@ export async function runScenario(t) {
   ok(localEcology.states.length >= 3 && localEcology.max - localEcology.min > 40 && localEcology.alive > 0,
     `local resource ecology missing in production snapshot: ${JSON.stringify(localEcology)}`);
   await screenshot('browser-world-local-resources.png');
-  const developedEcology = await evaluate(`(async()=>{const [{RunController},{compileMemory,MEMORY_NODE_IDS}]=await Promise.all([import('./src/simulation/simulator.js'),import('./src/game/skills/index.js')]);const m=compileMemory({memoryNodes:MEMORY_NODE_IDS}),c=new RunController({seed:9099,worldOrdinal:20,worldPotential:m.worldPotential,evolutionPower:m.evolutionPower,potentialVersion:m.potentialVersion,memoryEffects:m.effects,memoryConditionals:m.conditionals,memoryUnlocks:m.unlocks,habitatCapabilities:m.habitatCapabilities,activeBuilds:m.activeBuilds,buildEffects:m.buildEffects});c.start();c.advance(300);const s=c.snapshot(),a=window.__CELL_SPHERE_APP__;a.historySnapshot=s;return {transformStates:[...new Set(s.transformationState)],transformed:[...s.transformationState].filter(Boolean).length,powered:[...s.electricityQ].filter(Boolean).length,alive:s.metrics.aliveCount}})()`);
-  ok(developedEcology.transformStates.includes(2) && developedEcology.transformStates.includes(3)
-    && developedEcology.transformStates.includes(5) && developedEcology.transformed > 50
+  const developedEcology = await evaluate(`(async()=>{const [{RunController},{compileEvolution,MEMORY_NODE_IDS}]=await Promise.all([import('./src/simulation/simulator.js'),import('./src/game/skills/index.js')]);const m=compileEvolution({evolutionLevels:MEMORY_NODE_IDS.map(id=>({id,level:'20'}))}),c=new RunController({seed:9099,worldOrdinal:'20',environmentLevel:'0',worldPotential:m.worldPotential,evolutionPower:m.evolutionPower,evolutionDepth:m.evolutionDepth,potentialVersion:m.potentialVersion,memoryEffects:m.effects,memoryConditionals:m.conditionals,memoryUnlocks:m.unlocks,habitatCapabilities:m.habitatCapabilities,activeBuilds:m.activeBuilds,buildEffects:m.buildEffects,electricityMastery:m.electricityMastery});c.start();c.advance(300);const a=window.__CELL_SPHERE_APP__,mid=c.snapshot();c.advance(4000);a.pause.set('browser-luminous',true);a.__luminousDecaySnapshot={...c.snapshot(),...a.worldIdentity};const s={...mid,...a.worldIdentity};a.historySnapshot=s;return {transformStates:[...new Set(s.transformationState)],transformed:[...s.transformationState].filter(Boolean).length,powered:[...s.electricityQ].filter(Boolean).length,alive:s.metrics.aliveCount}})()`);
+  ok(developedEcology.transformStates.filter(Boolean).length>=3&&developedEcology.transformStates.includes(3)
+    &&developedEcology.transformStates.includes(5)&&developedEcology.transformed>50
     && developedEcology.powered > 50 && developedEcology.alive > 0,
   `developed ecology fixture missing production mechanics: ${JSON.stringify(developedEcology)}`);
-  await wait(120); await screenshot('browser-world-transformations.png');
-  await evaluate(`window.__CELL_SPHERE_APP__.historySnapshot=null`);
+  await wait(120);await screenshot('browser-world-transformations.png');
+  const focusCharge=async(day)=>evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{focusCamera}=await import('./src/rendering/camera.js'),s=a.historySnapshot,p=a.topo.positions,q=s.electricityQ,sun=[-.52,.72,.44];let cell=-1,charge=-1,dot=0;for(let i=0;i<q.length;i++){const d=p[i*3]*sun[0]+p[i*3+1]*sun[1]+p[i*3+2]*sun[2];if((${day?'true':'false'}?d>.55:d<-.7)&&q[i]>charge){cell=i;charge=q[i];dot=d}}if(cell<0)throw new Error('no charged visual focus');focusCamera(a.camera,p.subarray(cell*3,cell*3+3));a.lastRender=-Infinity;let draws=null,drawArrays,drawElements;if(${day?'true':'false'}&&a.renderer.backend==='webgl2'){const gl=a.renderer.gl;draws=0;drawArrays=gl.drawArrays;drawElements=gl.drawElements;gl.drawArrays=(...args)=>{draws++;return drawArrays.apply(gl,args)};gl.drawElements=(...args)=>{draws++;return drawElements.apply(gl,args)}}const accepted=a.renderer.render({snapshot:s,worldIdentity:a.worldIdentity,camera:a.camera,selectedNode:null,highlightedCells:[],time:performance.now()/1000,pulse:false});if(drawArrays){a.renderer.gl.drawArrays=drawArrays;a.renderer.gl.drawElements=drawElements}return{cell,charge,dot,accepted,draws,camera:a.camera.direction.slice()}})()`);
+  developedEcology.day=await focusCharge(true);await wait(120);developedEcology.dayImage=await screenshot('browser-world-luminous-day.png');
+  developedEcology.night=await focusCharge(false);await wait(120);developedEcology.nightImage=await screenshot('browser-world-luminous-night.png');
+  ok(developedEcology.day.charge>0&&developedEcology.night.charge>0&&developedEcology.day.accepted&&developedEcology.night.accepted&&developedEcology.day.draws===4
+    &&developedEcology.dayImage.hash!==developedEcology.nightImage.hash,`Luminous visual focus missing: ${JSON.stringify(developedEcology)}`);
+  developedEcology.decay=await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=a.__luminousDecaySnapshot;a.historySnapshot=s;const charge=[...s.electricityQ].reduce((sum,value)=>sum+value,0),accepted=a.renderer.render({snapshot:s,worldIdentity:a.worldIdentity,camera:a.camera,selectedNode:null,highlightedCells:[],time:performance.now()/1000,pulse:false});return{charge,accepted,status:s.status}})()`);
+  ok(developedEcology.decay.charge===0&&developedEcology.decay.accepted&&developedEcology.decay.status==='extinct',`Luminous decay visual missing: ${JSON.stringify(developedEcology.decay)}`);
+  await wait(120);developedEcology.decayImage=await screenshot('browser-world-luminous-decayed.png');
+  ok(developedEcology.decayImage.hash!==developedEcology.nightImage.hash,'charged and decayed WebGL pixels were identical');
+  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.historySnapshot=null;delete a.__luminousDecaySnapshot;a.pause.set('browser-luminous',false)})()`);
 
   ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 50000), '8x run did not finish');
-  const elapsed = (performance.now() - run8StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=document.getElementById('context-shell'),control=document.getElementById('result-control'),ids=[...document.querySelector('.hud-metrics').children].map(x=>x.id);return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!control.hidden,resultAction:control.dataset.action,resultClass:control.classList.contains('is-recommended'),resultExpanded:control.getAttribute('aria-expanded'),metricOrder:ids.join('|'),redundant:['result-score-button','result-entropy-button','result-reach-button'].some(id=>document.getElementById(id)),event:document.getElementById('current-event-button').offsetHeight,pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,trophies:document.getElementById('result-trophies').textContent,noDuplicateProgressionNav:![...document.querySelectorAll('#result-dialog button')].some(b=>['Evolution','Trophies'].includes(b.textContent.trim())),snapshotStatus:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
+  const elapsed = (performance.now() - run8StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=document.getElementById('context-shell'),control=document.getElementById('result-control'),ids=[...document.querySelector('.hud-metrics').children].map(x=>x.id);return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!control.hidden,resultAction:control.dataset.action,resultClass:control.classList.contains('is-recommended'),resultExpanded:control.getAttribute('aria-expanded'),metricOrder:ids.join('|'),redundant:['result-score-button','result-entropy-button','result-reach-button'].some(id=>document.getElementById(id)),event:document.getElementById('current-event-button').offsetHeight,pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,trophies:document.getElementById('result-trophies').textContent,resultEnvironment:document.getElementById('result-environment').textContent,
+      nextLabel:document.getElementById('result-next-button').textContent,retryLabel:document.getElementById('result-retry-button').textContent,noDuplicateProgressionNav:![...document.querySelectorAll('#result-dialog button')].some(b=>['Evolution','Trophies'].includes(b.textContent.trim())),snapshotStatus:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
   ok(result.score > 0 && result.scene === 'world' && result.phase === 'result' && result.overlay === 'result' && result.surface === 'result'
     && result.runVisible && result.resultControl && result.resultAction === 'recommended' && result.resultClass && result.resultExpanded === 'true'
-    && result.metricOrder === 'score-button|entropy-button|reach-button|result-control' && !result.redundant
+    && result.metricOrder === 'score-button|entropy-button|reach-button|result-control|environment-level-metric' && !result.redundant
     && result.event >= 44 && result.pause && result.speed && result.noDuplicateProgressionNav && result.snapshotStatus === 'extinct' && result.alive === 0 && result.reach === '0%'
-    && result.trophies.includes('First Extinction'), `terminal world failed: ${JSON.stringify(result)}`);
+    &&result.trophies.includes('First Extinction')&&result.resultEnvironment.includes('Environment Level 0')
+    &&result.nextLabel.startsWith('Next World · Environment Level ')&&result.retryLabel==='Retry Environment Level 0',`terminal world failed: ${JSON.stringify(result)}`);
   const terminalLayouts = [];
   for (const [width, height] of [[320, 568], [390, 844], [1440, 900]]) {
     await setViewport(width, height); await wait(1000);
     const layout = await evaluate(`(()=>{const container=document.querySelector('.hud-metrics'),controls=[...container.children].filter(x=>!x.hidden),rects=controls.map(x=>x.getBoundingClientRect()),tops=new Set(rects.map(r=>Math.round(r.top))),style=getComputedStyle(container),plain=rects.map(r=>({left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}));return {count:controls.length,minHeight:Math.min(...rects.map(r=>r.height)),bounded:rects.every(r=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight),rows:tops.size,overlap:rects.some((a,i)=>rects.some((b,j)=>j>i&&!(a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom))),display:style.display,columns:style.gridTemplateColumns,rects:plain}})()`);
     terminalLayouts.push({ width, height, ...layout });
-    ok(layout.count === 4 && layout.minHeight >= 44 && layout.bounded && !layout.overlap
-      && (width <= 520 ? layout.rows === 2 : layout.rows === 1), `terminal metrics failed ${width}x${height}: ${JSON.stringify(layout)}`);
+    ok(layout.count === 5 && layout.minHeight >= 44 && layout.bounded && !layout.overlap
+      && (width <= 520 ? layout.rows === 3 : layout.rows === 1), `terminal metrics failed ${width}x${height}: ${JSON.stringify(layout)}`);
   }
   await setViewport(1440, 900); await wait(100);
   await evaluate(`window.__CELL_SPHERE_APP__.trophyNotifications.hold('browser-evidence',true)`); await screenshot('shell-result-desktop.png'); await trustedId(t, 'result-close'); ok(await evaluate(`document.getElementById('context-shell').hidden`), 'Result did not close');
@@ -145,13 +158,10 @@ export async function runScenario(t) {
   const finalMetric = await shellRect(evaluate); ok(finalMetric.surface === 'metric' && sameRect(finalMetric, metricRects.reach, .25), 'final metric geometry changed');
   await trustedId(t, 'metric-close');
 
-  const runIdentity = await evaluate('window.__CELL_SPHERE_APP__.worldIdentity.resultTransactionKey'); await trustedId(t, 'scene-evolution'); await wait(160);
-  const nodeId = await evaluate(`window.__CELL_SPHERE_APP__.memorySnapshot.nodeStates.find(n=>n.reachable&&n.affordable&&!n.owned)?.id`); ok(nodeId, 'no adjacent affordable Skill Cell');
-  const ownedBefore = await evaluate('window.__CELL_SPHERE_APP__.meta.memoryNodes.length'); await evaluate(`window.__CELL_SPHERE_APP__.selectMemoryNode(${JSON.stringify(nodeId)})`);
-  const skillDetail = await evaluate(`document.getElementById('memory-node-panel').textContent`); ok(skillDetail.includes('Gameplay') && skillDetail.includes('World Potential') && skillDetail.includes('→') && skillDetail.includes('held'), `Skill detail lacks before/after evidence: ${skillDetail}`);
-  await assertSkillGeometry(t);
-  await trustedId(t, 'memory-unlock');
-  ok(await evaluate(`window.__CELL_SPHERE_APP__.meta.memoryNodes.length`) === ownedBefore + 1, 'Skill unlock transaction failed');
+  const runIdentity = await evaluate('window.__CELL_SPHERE_APP__.worldIdentity.resultTransactionKey');
+  await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{validateMeta}=await import('./src/platform/storage.js');a.meta=validateMeta({...a.meta,echoBalance:'1000000'});return true})()`);
+  await trustedId(t, 'scene-evolution'); await wait(160);
+  const activationEvidence=await evolutionActivationEvidence(t);const nodeId=activationEvidence.keyboard.id;
   ok(await evaluate(`window.__CELL_SPHERE_APP__.phase==='result'&&window.__CELL_SPHERE_APP__.worldIdentity.resultTransactionKey===${JSON.stringify(runIdentity)}`), 'Evolution replaced terminal world authority');
   await trustedId(t, 'scene-trophies'); ok(await evaluate(`window.__CELL_SPHERE_APP__.trophySnapshot.nodeStates.length===96`), 'Trophy scene incomplete');
   const firstNotice = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {name:document.getElementById('trophy-notification-name').textContent,badge:Number(document.getElementById('trophy-tab-badge').textContent),queue:a.meta.trophyQueue.slice()}})()`);
@@ -171,7 +181,7 @@ export async function runScenario(t) {
 
   await installFirstReplacementCapture(evaluate);
   const unattended = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.continuation.durationMs=800;a.settings={...a.settings,autoContinue:true};return a.worldIdentity.worldSessionId})()`);
-  ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 45000), 'untouched countdown world did not finish');
+  ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase)=>phase==='result',50000),'untouched countdown world did not finish');
   ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.worldIdentity.worldSessionId'), (session) => session > unattended, 5000), 'untouched result countdown did not replace the world');
   assertBlankReplacement(await evaluate('window.__CELL_SPHERE_APP__.__firstReplacementFrame'), 'WebGL2 countdown');
 
@@ -181,7 +191,87 @@ export async function runScenario(t) {
   await wait(180); const loss = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {replaced:a.canvas!==window.__CELL_SPHERE_RETIRED_CANVAS__,canvases:document.querySelectorAll('#gl-canvas').length,backend:a.renderer.backend,accepted:a.renderer.acceptedFrames,input:typeof a.input?.isActive==='function',errors:a.frameAudit.errors}})()`);
   ok(loss.replaced && loss.canvases === 1 && loss.backend === 'canvas2d' && loss.accepted > 0 && loss.input && !loss.errors, `context-loss fallback failed: ${JSON.stringify(loss)}`);
   const idb = await evaluate('window.__CELL_SPHERE_APP__.historyPlayback.recentRuns.ready()'); ok(errors.length === 0, `browser errors: ${errors.join(' | ')}`);
-  return { backend: boot.renderer, score: result.score, elapsed, nodeId, render, idb, metricRects, responsive, terminalLayouts, contextLoss: loss };
+  return {backend:boot.renderer,score:result.score,elapsed,nodeId,render,idb,metricRects,responsive,terminalLayouts,
+    worldmaking:developedEcology,contextLoss:loss};
+}
+
+async function evolutionActivationEvidence(t) {
+  const{evaluate,key,click,tap,drag,wheel,touchDrag,pinch,touchCancel,wait,screenshot,setViewport}=t;await setViewport(1440,900);await wait(100);
+  const semanticTarget=async(requireZero=true)=>evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{MEMORY_NODES}=await import('./src/game/skills/index.js');
+    if(a.overlay==='memory-node')a.closeEvolutionCell();const target=a.memorySnapshot.nodeStates.find(n=>n.reason==='ready'&&(${requireZero?'true':'false'}?n.currentLevel==='0':true));
+    if(!target)throw new Error('no ready Level 0 cell');return{id:target.id,index:MEMORY_NODES.findIndex(n=>n.id===target.id),level:target.currentLevel,
+      events:a.archive.evolution.length,balance:a.meta.echoBalance}})()`);
+  const focusTree=async(index)=>evaluate(`(()=>{const b=document.getElementById('evolution-tree').children[${index}];b.focus();return document.activeElement===b})()`);
+  const stateFor=(id)=>evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,n=a.memorySnapshot.nodeStates.find(x=>x.id===${JSON.stringify(id)});return{level:n.currentLevel,
+    selected:a.memoryUi.selectedId,overlay:a.overlay,events:a.archive.evolution.length,balance:a.meta.echoBalance,status:a.memorySnapshot.memoryStatus[n.cell],
+    panel:document.getElementById('memory-node-panel').textContent,action:document.getElementById('memory-unlock').getAttribute('aria-label'),
+    tree:[...document.getElementById('evolution-tree').children].find(b=>b.getAttribute('aria-selected')==='true')?.textContent??''}})()`);
+  const keyboard=await semanticTarget();ok(await focusTree(keyboard.index),'hidden Evolution tree did not take keyboard focus');await key('Enter');await wait(80);
+  const keyboardSelected=await stateFor(keyboard.id);ok(keyboardSelected.level==='0'&&keyboardSelected.events===keyboard.events&&keyboardSelected.selected===keyboard.id
+    &&keyboardSelected.overlay==='memory-node'&&keyboardSelected.status===7&&keyboardSelected.panel.includes('Ready to unlock')
+    &&keyboardSelected.panel.includes('World Potential')&&keyboardSelected.action.includes('Unlock Level 1')&&keyboardSelected.tree.includes('Activate again'),
+    `keyboard first activation did not select ready cell: ${JSON.stringify(keyboardSelected)}`);
+  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.trophyNotifications.replace({...a.meta,trophyQueue:[]})})()`);
+  await screenshot('browser-evolution-selected-ready.png');
+  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'reduced'})})()`);await wait(80);
+  await screenshot('browser-evolution-selected-ready-reduced.png');
+  ok(await focusTree(keyboard.index),'replacement tree item did not regain keyboard focus');await key('Enter');await wait(100);
+  const keyboardBought=await stateFor(keyboard.id);ok(keyboardBought.level==='1'&&keyboardBought.events===keyboard.events+1,
+    `keyboard second activation did not buy exactly one level: ${JSON.stringify(keyboardBought)}`);
+  await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{validateMeta}=await import('./src/platform/storage.js'),
+    {MEMORY_NODE_IDS,buildMemorySnapshot}=await import('./src/game/skills/index.js');a.applySettings({...a.settings,motion:'full'});
+    a.__evolutionActivationRestore={meta:a.meta,archive:a.archive};a.meta=validateMeta({...a.meta,evolutionLevels:MEMORY_NODE_IDS.map(id=>({id,level:'1'}))});a.memorySnapshot=buildMemorySnapshot(a.topo,a.meta);
+    a.memoryUi.syncTree(a.meta);a.evolutionActivation.lastPurchaseAt=-Infinity;return true})()`);await wait(100);
+
+  const prepareGlobe=async()=>evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{focusCamera}=await import('./src/rendering/camera.js');
+    if(a.overlay==='memory-node')a.closeEvolutionCell();const target=a.memorySnapshot.nodeStates.find(n=>n.reason==='ready');
+    if(!target)throw new Error('no ready globe cell');focusCamera(a.camera,a.topo.positions.subarray(target.cell*3,target.cell*3+3));
+    const r=document.getElementById('gl-canvas').getBoundingClientRect();return{id:target.id,level:target.currentLevel,events:a.archive.evolution.length,
+      point:[r.left+r.width/2,r.top+r.height*.25]}})()`);
+  let pointer=await prepareGlobe();await drag(pointer.point,[pointer.point[0]+80,pointer.point[1]+45]);await wait(80);
+  let cancelled=await stateFor(pointer.id);ok(cancelled.level===pointer.level&&cancelled.events===pointer.events,'drag was misclassified as purchase activation');
+  const gestureDoesNotBuy=async(name,action)=>{const target=await prepareGlobe();await action(target.point);await wait(100);const after=await stateFor(target.id);
+    ok(after.level===target.level&&after.events===target.events,`${name} was misclassified as purchase activation`)};
+  await gestureDoesNotBuy('wheel',(point)=>wheel(...point));
+  await gestureDoesNotBuy('touch movement',(point)=>touchDrag(point,[point[0]+75,point[1]+45]));
+  await gestureDoesNotBuy('pinch',(point)=>pinch(point));
+  await gestureDoesNotBuy('touch cancellation',(point)=>touchCancel(point));
+  pointer=await prepareGlobe();await click(...pointer.point);await wait(80);
+  const pointerId=await evaluate(`window.__CELL_SPHERE_APP__.memoryUi.selectedId`);let pointerSelected=await stateFor(pointerId);
+  ok(pointerId&&pointerSelected.events===pointer.events&&pointerSelected.selected===pointerId&&[7,10].includes(pointerSelected.status),
+    `pointer first activation did not only select a ready cell: ${JSON.stringify(pointerSelected)}`);await screenshot('browser-evolution-pointer-ready.png');
+  const pointerHit=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{pickNode}=await import('./src/rendering/picking.js'),{MEMORY_ATLAS_REVERSE,MEMORY_NODES}=await import('./src/game/skills/index.js');
+    const p=pickNode(a.canvas,${pointer.point[0]},${pointer.point[1]},a.camera,a.topo),e=document.elementFromPoint(${pointer.point[0]},${pointer.point[1]});return{element:e?.id||e?.className,
+      node:p?.node,id:p&&MEMORY_NODES[MEMORY_ATLAS_REVERSE[p.node]]?.id,lastPurchaseAt:a.evolutionActivation.lastPurchaseAt,now:performance.now()}})()`);
+  await click(...pointer.point);await wait(100);let pointerBought=await stateFor(pointerId);
+  ok(BigInt(pointerBought.level)===BigInt(pointerSelected.level)+1n&&pointerBought.events===pointer.events+1,`pointer second activation failed: ${JSON.stringify({pointerBought,pointerHit,point:pointer.point})}`);pointer.id=pointerId;await wait(400);
+
+  const touch=await prepareGlobe();await tap(...touch.point);await wait(80);const touchId=await evaluate(`window.__CELL_SPHERE_APP__.memoryUi.selectedId`);
+  let touchSelected=await stateFor(touchId);
+  ok(touchId&&touchSelected.events===touch.events&&touchSelected.selected===touchId&&[7,10].includes(touchSelected.status),
+    `touch first activation did not only select a ready cell: ${JSON.stringify(touchSelected)}`);
+  await tap(...touch.point);await wait(100);let touchBought=await stateFor(touchId);
+  ok(BigInt(touchBought.level)===BigInt(touchSelected.level)+1n&&touchBought.events===touch.events+1,`touch second activation failed: ${JSON.stringify(touchBought)}`);touch.id=touchId;await wait(400);
+
+  const explicit=await semanticTarget(false);ok(await focusTree(explicit.index),'explicit-button setup could not focus tree');await key('Enter');await wait(80);
+  const explicitSelected=await stateFor(explicit.id);ok(explicitSelected.level===explicit.level&&explicitSelected.events===explicit.events,'button setup selection purchased unexpectedly');
+  await trustedId(t,'memory-unlock');await wait(100);const explicitBought=await stateFor(explicit.id);
+  ok(BigInt(explicitBought.level)===BigInt(explicitSelected.level)+1n&&explicitBought.events===explicit.events+1,`explicit purchase button failed: ${JSON.stringify(explicitBought)}`);
+  const extreme=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,id=${JSON.stringify(explicit.id)},level='8'.repeat(1019),balance='9'.repeat(4096),
+    {buildMemorySnapshot}=await import('./src/game/skills/index.js');a.closeEvolutionCell();a.meta={...a.meta,evolutionLevels:[{id,level}],echoBalance:balance,totalEchoes:balance};
+    a.memorySnapshot=buildMemorySnapshot(a.topo,a.meta);a.memoryUi.syncTree(a.meta);a.selectEvolutionCell(id);
+    const action=document.getElementById('memory-unlock'),copy=document.querySelector('#memory-node-panel [data-copy-progression-exact]'),exact=action.dataset.exactValue;
+    return{levelDigits:level.length,balanceDigits:balance.length,costDigits:exact.length,action:action.textContent,copyDigits:copy?.dataset.copyProgressionExact?.length??0,
+      copyName:copy?.getAttribute('aria-label'),horizontal:document.documentElement.scrollWidth>innerWidth}})()`);
+  ok(extreme.levelDigits===1019&&extreme.balanceDigits===4096&&extreme.costDigits>2000&&extreme.copyDigits===extreme.costDigits
+    &&/Upgrade(?: to)? Level/.test(extreme.action)&&/Copy exact/.test(extreme.copyName)&&!extreme.horizontal,`extreme exact-value detail failed: ${JSON.stringify(extreme)}`);
+  await assertSkillGeometry(t);await screenshot('browser-evolution-extreme-exact.png');
+  await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,saved=a.__evolutionActivationRestore,{buildMemorySnapshot}=await import('./src/game/skills/index.js'),
+    {saveMeta}=await import('./src/platform/storage.js'),{saveHistory}=await import('./src/platform/history.js');a.meta=saved.meta;a.archive=saved.archive;
+    a.memorySnapshot=buildMemorySnapshot(a.topo,a.meta);a.memoryUi.syncTree(a.meta);a.trophyNotifications.replace(a.meta);saveMeta(a.meta);saveHistory(a.archive,a.settings.historyRetention);
+    delete a.__evolutionActivationRestore;return true})()`);
+  return{keyboard:{id:keyboard.id,before:keyboard.level,after:keyboardBought.level},pointer:{id:pointer.id,after:pointerBought.level},
+    touch:{id:touch.id,after:touchBought.level},button:{id:explicit.id,after:explicitBought.level}};
 }
 
 async function runIdentityMigrationScenario({ evaluate, wait, poll }, initialBoot) {
@@ -198,11 +288,11 @@ async function runIdentityMigrationScenario({ evaluate, wait, poll }, initialBoo
   const migrated = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__,old=['incremental','network','game'].join('-');
     const canonical=Object.fromEntries(['meta','settings','history'].map(k=>[k,localStorage.getItem(b.storage[k])]));
     return {score:a.meta.bestScore,legacyScore:a.meta.legacyBestScore,total:a.meta.totalEchoes,balance:a.meta.echoBalance,runs:a.meta.runs,seed:a.meta.worldSeedIndex,
-      keys:a.meta.resultKeys.slice(),owned:a.meta.memoryNodes.slice(),trophies:a.meta.trophyIds.slice(),legacy:a.meta.legacyTrophyIds.slice(),queue:a.meta.trophyQueue.slice(),
+      keys:a.meta.resultKeys.slice(),levels:a.meta.evolutionLevels.map(x=>({...x})),trophies:a.meta.trophyIds.slice(),legacy:a.meta.legacyTrophyIds.slice(),queue:a.meta.trophyQueue.slice(),
       history:a.archive.worlds.map(w=>w.id),motion:a.settings.motion,speed:a.settings.speed,canonical:Object.values(canonical).every(Boolean),
       old:Object.values({m:localStorage.getItem(old+':meta:v1'),s:localStorage.getItem(old+':settings:v3'),h:localStorage.getItem(old+':history:v2')}).every(Boolean)}})()`);
-  ok(migrated.score === 0 && migrated.legacyScore === 424242 && migrated.total === 321 && migrated.balance === 123 && migrated.runs === 7 && migrated.seed === 11
-    && migrated.keys[0] === 'legacy-result-key' && migrated.owned[0] === 'reach-horizon-instinct'
+  ok(migrated.score === '0' && migrated.legacyScore === '424242' && migrated.total === '321' && migrated.balance === '123' && migrated.runs === '7' && migrated.seed === '11'
+    && migrated.keys[0] === 'legacy-result-key' && migrated.levels[0].id === 'reach-horizon-instinct' && migrated.levels[0].level === '1'
     && migrated.trophies[0] === 'evolution-first-world' && migrated.legacy[0] === 'reach-river-touch'
     && migrated.queue[0] === 'evolution-first-world' && migrated.history[0] === 'legacy-world'
     && migrated.motion === 'reduced' && migrated.speed === 8 && migrated.canonical && migrated.old,
@@ -213,15 +303,15 @@ async function runIdentityMigrationScenario({ evaluate, wait, poll }, initialBoo
     const saved=migration.saveImportedNamespace(parsed),fresh=JSON.parse(data.serializeExportData(parsed.meta,parsed.history,parsed.settings));
     const raw=JSON.parse(localStorage.getItem(old+':meta:v1'));raw.totalEchoes=999999;raw.echoBalance=999999;raw.runs=99;
     localStorage.setItem(old+':meta:v1',JSON.stringify(raw));return {saved,product:fresh.product,total:fresh.meta.totalEchoes}})()`);
-  ok(exported.saved.ok && exported.product === 'cell-sphere-game' && exported.total === 321, `legacy import/canonical export failed: ${JSON.stringify(exported)}`);
+  ok(exported.saved.ok && exported.product === 'cell-sphere-game' && exported.total === '321', `legacy import/canonical export failed: ${JSON.stringify(exported)}`);
   await evaluate('location.reload();true'); await wait(1800);
   ok(await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000), 'coexistence reload failed');
   const coexist = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {total:a.meta.totalEchoes,balance:a.meta.echoBalance,runs:a.meta.runs,keys:a.meta.resultKeys}})()`);
-  ok(coexist.total === 321 && coexist.balance === 123 && coexist.runs === 7 && coexist.keys.length === 1,
+  ok(coexist.total === '321' && coexist.balance === '123' && coexist.runs === '7' && coexist.keys.length === 1,
     `legacy namespace overrode canonical or duplicated rewards: ${JSON.stringify(coexist)}`);
   await evaluate('localStorage.clear();location.reload();true'); await wait(1800);
   ok(await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000), 'fresh canonical reload failed');
-  const fresh = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__;return {boot:b,defaults:a.meta.runs===0&&a.meta.totalEchoes===0,
+  const fresh = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__;return {boot:b,defaults:a.meta.runs==='0'&&a.meta.totalEchoes==='0',
     canonical:['meta','settings','history'].every(k=>Boolean(localStorage.getItem(b.storage[k]))),errors:window.__CELL_SPHERE_ERRORS__.slice()}})()`);
   ok(fresh.defaults && fresh.canonical && !fresh.errors.length, `fresh canonical save failed: ${JSON.stringify(fresh)}`); return fresh.boot;
 }

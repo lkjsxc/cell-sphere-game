@@ -67,7 +67,7 @@ export async function assertSkillGeometry(t) {
   const scaled = await skillGeometry(evaluate);
   assert(scaled.unlock[0] >= scaled.p[0] && scaled.unlock[2] <= scaled.p[2]
     && scaled.unlock[1] >= scaled.p[1] && scaled.unlock[3] <= Math.min(scaled.p[3], 568)
-    && scaled.unlock[3] - scaled.unlock[1] >= 43, `200% Skill unlock geometry: ${JSON.stringify(scaled)}`);
+    && scaled.unlock[3] - scaled.unlock[1] >= 43, `200% Evolution unlock geometry: ${JSON.stringify(scaled)}`);
   await screenshot('browser-skill-text-200.png'); await evaluate("document.documentElement.style.fontSize=''");
   await setViewport(390,844); await wait(100);
 }

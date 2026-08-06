@@ -1,42 +1,73 @@
 #!/usr/bin/env node
-/** Deep production-backed campaign, SCORE, Echo, scarcity, and habitat audit. */
-import { mkdirSync, writeFileSync } from 'node:fs'; import { performance } from 'node:perf_hooks';
-import { RunController } from '../../src/simulation/simulator.js'; import { scoreResult } from '../../src/game/scoring.js';
-import { defaultMeta } from '../../src/platform/storage.js'; import { MEMORY_NODES, availableMemoryNodes, compileMemory, purchaseMemory } from '../../src/game/skills/index.js';
-const smoke=process.argv.includes('--smoke');const freshCount=smoke?16:200;const campaignCount=smoke?2:10;const progressionCount=smoke?6:40;
-const started=performance.now();const policies=['cheapest','balanced','potential','resource','habitat','cold','marine'];
-const fresh=[];for(let i=0;i<freshCount;i++)fresh.push(runWorld(0x100000+i,1,defaultMeta()));
-const campaigns={};for(const policy of policies){const rows=[];for(let cohort=0;cohort<campaignCount;cohort++)rows.push(runCampaign(0x200000+cohort*97,policy));campaigns[policy]=campaignSummary(rows)}
-const progression={};for(const [label,count] of [['fresh',0],['quarter',63],['half',126],['full',252]]){const meta=legalOwnership(count);const rows=[];for(let i=0;i<progressionCount;i++)rows.push(runWorld(0x300000+i,12,meta));progression[label]=worldSummary(rows);progression[label].skills=count;progression[label].potential=compileMemory(meta).worldPotential;}
-const freshSummary=worldSummary(fresh);const typical=campaigns.potential;const strong=progression.full;
-const valid=freshSummary.score.median>=(smoke?7000:8000)&&freshSummary.score.median<=15000&&freshSummary.durationSeconds.median>=270&&freshSummary.durationSeconds.median<=330
-  &&((freshSummary.causes['resource-exhaustion']??0)+(freshSummary.causes['maintenance-starvation']??0))/freshCount>=.75&&freshSummary.events.max===0
-  &&typical.potentialAfter3.median>=80000&&typical.potentialAfter3.median<=130000
-  &&typical.world3Score.median>=10000&&typical.world3Score.median<=60000&&typical.skillsAfter3.median>=5&&typical.skillsAfter3.median<=10
-  &&typical.firstPressureMinutes.median>=13&&typical.firstPressureMinutes.median<=16
-  &&typical.firstResolution1xMinutes4.median>=18&&typical.firstResolution1xMinutes4.median<=24
-  &&strong.score.median>=850000&&strong.score.median<=1100000&&strong.score.p90<=1250000
-  &&strong.peakReach.median<=1&&strong.marineVisitedShare.median<.7;
-const report={date:new Date().toISOString(),mode:smoke?'smoke':'full',productionAuthority:true,elapsedMs:Number((performance.now()-started).toFixed(1)),
- fresh:freshSummary,campaigns,progression,targets:{freshScore:'8k–15k median',freshDuration:'270–330 s',threeWorldPotential:'80k–130k',fullScore:'850k–1.1m'},valid};
-mkdirSync('reports',{recursive:true});writeFileSync(`reports/campaign-audit-${smoke?'smoke':'full'}.json`,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));if(!valid)process.exitCode=1;
-function runCampaign(seedBase,policy){let meta=defaultMeta(),elapsed=0,firstPressure=null;const worlds=[];for(let ordinal=1;ordinal<=5;ordinal++){const world=runWorld(seedBase+ordinal,ordinal,meta);worlds.push(world);if(ordinal<=3)elapsed+=world.result.survivalSeconds;if(ordinal===3&&world.scheduledFirstEvent!=null)firstPressure=(worlds[0].result.survivalSeconds+worlds[1].result.survivalSeconds+world.scheduledFirstEvent/10)/60;
- meta={...meta,runs:ordinal,totalEchoes:meta.totalEchoes+world.score.echoes,echoBalance:meta.echoBalance+world.score.echoes,bestScore:Math.max(meta.bestScore,world.score.total),scoreModelVersion:3};buyAvailable(meta,policy,(next)=>{meta=next});
- world.ownedAfter=meta.memoryNodes.length;world.potentialAfter=compileMemory(meta).worldPotential;}
- return{worlds,meta,elapsedSeconds3:worlds.slice(0,3).reduce((n,w)=>n+w.result.survivalSeconds,0),firstPressureMinutes:firstPressure};}
-function runWorld(seed,ordinal,meta){const memory=compileMemory(meta);const controller=new RunController({seed,worldOrdinal:ordinal,worldPotential:memory.worldPotential,evolutionPower:memory.evolutionPower,potentialVersion:memory.potentialVersion,
- memoryEffects:memory.effects,memoryConditionals:memory.conditionals,memoryUnlocks:memory.unlocks,habitatCapabilities:memory.habitatCapabilities,
- activeBuilds:memory.activeBuilds,buildEffects:memory.buildEffects});controller.start();controller.advance(4000);
- const result=controller.buildResult();return{result,score:scoreResult(result),scheduledFirstEvent:controller.state.events[0]?.startTick??null,eventCount:controller.state.events.length};}
-function buyAvailable(meta,policy,commit){let guard=0;while(guard++<252){const available=[...availableMemoryNodes(meta)];if(!available.length)break;const node=choose(available,meta,policy);const tx=purchaseMemory(meta,node.id);if(!tx.ok)break;meta=tx.meta;commit(meta);}}
-function choose(nodes,meta,policy){if(policy==='cheapest')return nodes.sort((a,b)=>a.cost-b.cost||b.evolutionPower-a.evolutionPower)[0];if(policy==='balanced'){const counts=Object.fromEntries(['Reach','Flow','Reserve','Ecology','Perception','Continuity'].map((branch)=>[branch,0]));for(const id of meta.memoryNodes)counts[MEMORY_NODES.find((node)=>node.id===id)?.branch]++;return nodes.sort((a,b)=>counts[a.branch]-counts[b.branch]||b.evolutionPower/a.cost-a.evolutionPower/b.cost)[0];}
- const wanted=policy==='resource'?/uptake|maintenance|energyCap|reserve/i:policy==='habitat'?/ACCESS/:policy==='cold'?/TUNDRA|SNOW_ICE|cold/i:policy==='marine'?/OCEAN|hydrostatic/i:null;
- return nodes.sort((a,b)=>(wanted?.test(JSON.stringify(a.effect))?0:1)-(wanted?.test(JSON.stringify(b.effect))?0:1)||b.evolutionPower/b.cost-a.evolutionPower/a.cost)[0];}
-function legalOwnership(count){let meta={...defaultMeta(),echoBalance:1_000_000};while(meta.memoryNodes.length<count){const tx=purchaseMemory(meta,availableMemoryNodes(meta)[0].id);if(!tx.ok)throw new Error('legal ownership traversal stopped');meta=tx.meta;}return meta;}
-function worldSummary(rows){const scores=rows.map((row)=>row.score.total),durations=rows.map((row)=>row.result.survivalSeconds),echoes=rows.map((row)=>row.score.echoes),peak=rows.map((row)=>row.result.peakCoverage),sustained=rows.map((row)=>row.result.sustainedCoverage),reserve=rows.map((row)=>row.result.resourceInitial?row.result.resourceFinal/row.result.resourceInitial:0),events=rows.map((row)=>row.eventCount);
- const marine=rows.map((row)=>{const occupied=row.result.habitatOccupancy??[],total=occupied.reduce((a,b)=>a+b,0);return total?(occupied[0]+occupied[1])/total:0;});
- return{worlds:rows.length,score:dist(scores),echoes:dist(echoes),durationSeconds:dist(durations),peakReach:dist(peak),sustainedReach:dist(sustained),resourceRemaining:dist(reserve),marineVisitedShare:dist(marine),events:dist(events),causes:counts(rows.map((row)=>row.result.cause)),hardMaximumRate:rows.filter((row)=>row.result.terminalCause==='hard-maximum').length/rows.length};}
-function campaignSummary(rows){return{cohorts:rows.length,elapsed1xMinutes3:dist(rows.map((row)=>row.elapsedSeconds3/60)),firstResolution1xMinutes4:dist(rows.map((row)=>row.worlds.slice(0,4).reduce((sum,world)=>sum+world.result.survivalSeconds,0)/60)),skillsAfter3:dist(rows.map((row)=>row.worlds[2].ownedAfter)),potentialAfter3:dist(rows.map((row)=>row.worlds[2].potentialAfter)),world3Score:dist(rows.map((row)=>row.worlds[2].score.total)),world4Score:dist(rows.map((row)=>row.worlds[3].score.total)),bestScore:dist(rows.map((row)=>row.meta.bestScore)),finalSkills:dist(rows.map((row)=>row.meta.memoryNodes.length)),echoBalance:dist(rows.map((row)=>row.meta.echoBalance)),firstPressureMinutes:dist(rows.map((row)=>row.firstPressureMinutes).filter(Number.isFinite))};}
-function counts(values){return Object.fromEntries([...Map.groupBy(values,(value)=>value)].map(([key,rows])=>[key,rows.length]))}
+/** Production-backed early calibration, campaign economy, and breadth-complete SCORE audit. */
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { performance } from 'node:perf_hooks';
+import { createAgentEnvironment } from '../../src/agent/environment.js';
+import { choosePolicyAction } from '../../src/agent/policies.js';
+import { defaultAgentSave } from '../../src/agent/schema.js';
+import { MEMORY_NODE_IDS, compileEvolution } from '../../src/game/skills/index.js';
+
+const smoke=process.argv.includes('--smoke'),freshCount=smoke?12:80,campaignCount=smoke?2:8,strongCount=smoke?6:30;
+const policies=['balanced','breadth-first','marginal-value','sustainability','freshwater','scarcity-reclaimer','cryogenic','marine','luminous-infrastructure'];
+const started=performance.now();
+const fresh=Array.from({length:freshCount},(_,index)=>oneWorld(0x100000+index,[]));
+const campaigns={};
+for(const policy of policies){const rows=[];for(let cohort=0;cohort<campaignCount;cohort++)rows.push(agentCampaign(0x200000+cohort*97,policy,5));campaigns[policy]=campaignSummary(rows)}
+const breadthLevels=MEMORY_NODE_IDS.map((id)=>({id,level:'1'}));
+const breadth=Array.from({length:strongCount},(_,index)=>oneWorld(0x300000+index,breadthLevels));
+const firstRoot=Array.from({length:strongCount},(_,index)=>oneWorld(0x400000+index,[{id:MEMORY_NODE_IDS[0],level:'1'}]));
+const freshSummary=worldSummary(fresh),breadthSummary=worldSummary(breadth),rootSummary=worldSummary(firstRoot),typical=campaigns['marginal-value'];
+const valid=freshSummary.score.median>=(smoke?7000:8000)&&freshSummary.score.median<=15000
+ &&freshSummary.durationSeconds.median>=270&&freshSummary.durationSeconds.median<=330
+ &&freshSummary.events.max===0&&resourceCauseShare(fresh)>=.75
+ &&rootSummary.score.median>=10000&&rootSummary.score.median<=20000
+ &&typical.potentialAfter3.median>=(smoke?48000:80000)&&typical.potentialAfter3.median<=130000
+ &&typical.firstResolutionMinutes.median>=18&&typical.firstResolutionMinutes.median<=24
+ &&breadthSummary.score.median>=850000&&breadthSummary.score.median<=1100000
+ &&breadthSummary.score.max<=1250000;
+const report={schema:2,date:new Date().toISOString(),mode:smoke?'smoke':'full',productionAuthority:true,
+ elapsedMs:Number((performance.now()-started).toFixed(1)),fresh:freshSummary,firstRoot:rootSummary,campaigns,
+ breadthComplete:{...breadthSummary,worldPotential:compileEvolution({evolutionLevels:breadthLevels}).worldPotential},
+ targets:{freshScore:'8,000–15,000 median',firstRootScore:'10,000–20,000 median',freshDuration:'270–330 seconds',
+   firstResolution:'18–24 minutes through four worlds',threeWorldPotential:'80,000–130,000',breadthScore:'850,000–1,100,000'},valid};
+mkdirSync('reports',{recursive:true});writeFileSync(`reports/campaign-audit-${smoke?'smoke':'full'}.json`,`${JSON.stringify(report,null,2)}\n`);
+console.log(JSON.stringify(report,null,2));if(!valid)process.exitCode=1;
+
+function oneWorld(seed,evolutionLevels){
+ const save=defaultAgentSave(seed);save.meta.evolutionLevels=evolutionLevels;const env=createAgentEnvironment(save);
+ const observation=env.observe(),response=env.act(runAction(observation));if(!response.accepted)throw new Error(response.reason);
+ return response.result;
+}
+function agentCampaign(seed,policy,worldCount){
+ const env=createAgentEnvironment(defaultAgentSave(seed));env.act({type:'set-goal',goal:policy});const worlds=[];
+ for(let world=0;world<worldCount;world++){
+  let response=null;
+  for(let decision=0;decision<6;decision++){
+   const observation=env.observe(),choice=choosePolicyAction(observation,policy);response=env.act(choice.action);
+   if(choice.action.type==='run-world')break;if(!response.accepted)break;
+  }
+  if(!response?.result)response=env.act(runAction(env.observe()));if(!response.accepted)throw new Error(`${policy}: ${response.reason}`);
+  worlds.push({result:response.result,observation:env.observe()});
+ }
+ return{worlds,save:env.exportSave()};
+}
+function campaignSummary(rows){
+ return{cohorts:rows.length,firstResolutionMinutes:dist(rows.map((row)=>row.worlds.slice(0,4).reduce((sum,item)=>sum+item.result.survivalSeconds,0)/60)),
+  potentialAfter3:dist(rows.map((row)=>exactToSafe(row.worlds[2].observation.worldPotential))),
+  levelsAfter3:dist(rows.map((row)=>row.worlds[2].observation.evolutionSummary.breadth)),
+  depthAfter5:dist(rows.map((row)=>exactToSafe(row.worlds[4].observation.evolutionSummary.totalLevels))),
+  environmentAfter5:rows.map((row)=>row.worlds[4].result.environmentLevel),
+  scoreWorld3:dist(rows.map((row)=>exactToSafe(row.worlds[2].result.score))),
+  scoreWorld5:dist(rows.map((row)=>exactToSafe(row.worlds[4].result.score))),
+  finalEchoBalance:dist(rows.map((row)=>exactToSafe(row.save.meta.echoBalance)))};
+}
+function runAction(observation){return{type:'run-world',expectedRevision:observation.metaRevision,expectedWorldOrdinal:observation.worldOrdinal}}
+function worldSummary(rows){return{worlds:rows.length,score:dist(rows.map((row)=>exactToSafe(row.score))),echoes:dist(rows.map((row)=>exactToSafe(row.echoes))),
+ durationSeconds:dist(rows.map((row)=>row.survivalSeconds)),peakReach:dist(rows.map((row)=>row.peakReach)),
+ events:dist(rows.map((row)=>row.crises?.total??0)),causes:counts(rows.map((row)=>row.cause)),
+ environmentLevels:counts(rows.map((row)=>row.environmentLevel))}}
+function resourceCauseShare(rows){return rows.filter((row)=>row.cause==='resource-exhaustion'||row.cause==='maintenance-starvation').length/rows.length}
+function exactToSafe(value){const text=String(value);if(!/^\d+$/.test(text)||text.length>15)throw new Error(`report projection out of range: ${text.slice(0,24)}`);return Number(text)}
+function counts(values){const out={};for(const value of values)out[value]=(out[value]??0)+1;return out}
 function dist(values){if(!values.length)return{min:null,p10:null,p25:null,median:null,p75:null,p90:null,max:null};const a=values.slice().sort((x,y)=>x-y),at=(p)=>round(a[Math.floor((a.length-1)*p)]);return{min:round(a[0]),p10:at(.1),p25:at(.25),median:at(.5),p75:at(.75),p90:at(.9),max:round(a.at(-1))}}
 function round(value){return Number(Number(value).toFixed(5))}

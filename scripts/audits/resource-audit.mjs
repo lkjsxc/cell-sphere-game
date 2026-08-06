@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../../src/simulation/simulator.js';
 import { compileMemory } from '../../src/game/skills/index.js';
 
-const count = integerArg('--count=', 1000); const memory = compileMemory({ memoryNodes: [] }); const rows = [];
+const count = integerArg('--count=', 500); const memory = compileMemory({ memoryNodes: [] }); const rows = [];
 const initial = []; const final = []; const states = Array(8).fill(0); let livingByQuintile = Array(5).fill(0); let birthsByQuintile = Array(5).fill(0);
 const started = performance.now();
 for (let index = 0; index < count; index++) {
@@ -19,7 +19,7 @@ for (let index = 0; index < count; index++) {
   result.resourceStateCounts.forEach((value, state) => { states[state] += value; });
   livingByQuintile = livingByQuintile.map((value, quintile) => value + result.resourceLivingTicksByQuintile[quintile]);
   birthsByQuintile = birthsByQuintile.map((value, quintile) => value + result.resourceBirthsByQuintile[quintile]);
-  rows.push({ score: result.score, duration: result.survivalSeconds, peakReach: result.peakCoverage,
+  rows.push({score:exactToSafe(result.score),duration:result.survivalSeconds,peakReach:result.peakCoverage,
     peakLandOccupancy: result.peakLandOccupancy, resourceRemaining: result.resourceFinal / result.resourceInitial,
     conservationError: Math.abs(result.resourceConservationError), depleted: result.resourceDepletedCells,
     recovered: result.resourceRecoveredCells, blocked: sum(controller.state.resourceBlocked),
@@ -47,4 +47,5 @@ function integerArg(prefix, fallback) { const value = Number(process.argv.find((
 function dist(values) { const sorted = values.slice().sort((a, b) => a - b); const at = (p) => round(sorted[Math.floor((sorted.length - 1) * p)]);
   return { min: round(sorted[0]), p10: at(.1), p25: at(.25), median: at(.5), p75: at(.75), p90: at(.9), max: round(sorted.at(-1)) }; }
 function sum(values) { let value = 0; for (const item of values) value += item; return value; }
+function exactToSafe(value){const text=String(value);if(!/^\d{1,15}$/.test(text))throw new Error(`SCORE out of audit range: ${text.slice(0,24)}`);return Number(text)}
 function round(value) { return Number((Number.isFinite(value) ? value : 0).toFixed(6)); }

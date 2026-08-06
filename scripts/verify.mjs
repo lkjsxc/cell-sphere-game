@@ -10,12 +10,13 @@
  *   4. showcase:check      generated title data matches production sources
  *   5. test:unit           node:test unit suites
  *   6. test:integration    deterministic golden + speed-invariance suites
- *   7. ecology audits      resource, freshwater, SCORE, transformations, REACH 100
- *   8. audit:lakes         500-seed whole-cell lake distribution
- *   9. agent:campaign      fair production-backed campaign smoke
- *  10. balance:smoke       bounded headless balance simulation
- *  11. benchmark           performance checkpoint
- *  12. check:links         static asset/import/deployment path checks
+ *   7. endless audits      exact numbers, Environment, Evolution, and Luminous
+ *   8. ecology audits      resources, freshwater, SCORE, transformations, REACH 100
+ *   9. audit:lakes         500-seed whole-cell lake distribution
+ *  10. agent tournament    fair production-backed deterministic smoke cohort
+ *  11. balance:smoke       bounded headless balance simulation
+ *  12. benchmark           fresh/deep/extreme performance checkpoint
+ *  13. check:links         static asset/import/deployment path checks
  *
  * Browser tests (scripts/browser-test.mjs) need Chrome and are run
  * separately via `npm run test:browser`.
@@ -27,7 +28,9 @@ const gates = [
   ['audit:identity', 'node scripts/audits/identity-audit.mjs'],
   ['audit:cell-visuals', 'node scripts/audits/cell-visual-audit.mjs'],
   ['audit:adaptations', 'node scripts/audits/adaptation-removal-audit.mjs'],
-  ['audit:skills', 'node scripts/audits/skill-audit.mjs'],
+  ['audit:evolution-levels', 'node scripts/audits/skill-audit.mjs'],
+  ['audit:progression-numbers', 'node scripts/audits/progression-number-audit.mjs'],
+  ['audit:environment-levels', 'node scripts/audits/environment-level-audit.mjs --smoke'],
   ['audit:events', 'node scripts/audits/event-audit.mjs --count=70'],
   ['audit:habitats', 'node scripts/audits/habitat-audit.mjs --count=12'],
   ['audit:trophies', 'node scripts/audits/trophy-audit.mjs'],
@@ -36,13 +39,15 @@ const gates = [
   ['audit:freshwater:smoke', 'node scripts/audits/freshwater-audit.mjs --count=24'],
   ['audit:score-trace:smoke', 'node scripts/audits/score-trace-audit.mjs --count=24'],
   ['audit:transformations:smoke', 'node scripts/audits/transformation-audit.mjs --count=12'],
+  ['audit:luminous', 'node scripts/audits/luminous-audit.mjs'],
   ['audit:reach100', 'node scripts/audits/reach100-audit.mjs --count=100'],
-  ['agent:campaign:smoke', 'node scripts/agent-play.mjs campaign --worlds 2 > /dev/null'],
+  ['agent:tournament:smoke', 'node scripts/agent-tournament.mjs --smoke > /dev/null'],
   ['showcase:check', 'node scripts/generate-title-showcase.mjs --check'],
   ['test:unit', 'node --test tests/unit/*.test.js tests/unit/simulation/*.test.js'],
   ['test:integration', 'node --test tests/integration/*.test.js'],
   ['audit:lakes', 'node scripts/audits/lake-audit.mjs --count=500'],
   ['balance:smoke', 'node scripts/balance.mjs --smoke'],
+  ['terminal:smoke', 'node scripts/audits/terminal-soak.mjs --count=100 > /dev/null'],
   ['benchmark', 'node scripts/benchmark.mjs'],
   ['check:links', 'node scripts/check-links.mjs'],
 ];
