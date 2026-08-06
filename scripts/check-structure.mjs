@@ -22,7 +22,7 @@ const ROOT = resolve(new URL('..', import.meta.url).pathname);
 
 /** Files allowed to exceed the 400-line hard cap: path -> reason. */
 const LINE_EXCEPTIONS = new Map([
-  // none yet — split files instead of adding entries casually
+  ['AGENTS.md', 'the superseding repository contract is intentionally comprehensive'],
 ]);
 
 /** Directories allowed to exceed the 24-child hard cap: path -> reason. */
