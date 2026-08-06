@@ -60,8 +60,9 @@ export function runMetabolism(state) {
     if (active.has('rich-rush')) domainMaintenance *= 1.07;
     const gardenerStability = active.has('world-gardener') && state.coverage > .8 ? .40 : 1;
     if (gardenerStability < 1) domainMaintenance *= .74;
+    const environmentMaintenance = state.challengeProfile?.coefficients?.maintenanceScale ?? 1;
     const maintDemand = B.MAINTENANCE_RATE * state.biomass[i]
-      * (1 + e * B.MAINTENANCE_ENTROPY) * traits.maintenance * biomeMaintenance * domainMaintenance;
+      * (1 + e * B.MAINTENANCE_ENTROPY) * traits.maintenance * biomeMaintenance * domainMaintenance * environmentMaintenance;
     const catchmentEnergy = consumeFreshwaterCatchment(state, i, maintDemand * freshwater * .62);
     const remainingDemand = Math.max(0, maintDemand - catchmentEnergy);
     const founderEnergy = consumeFounderFreshwater(state,

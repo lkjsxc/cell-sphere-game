@@ -45,7 +45,7 @@ export function runSummary(state, emit) {
 }
 
 function announceEvents(state, emit) {
-  const lead = telegraphLead(state.traits);
+  const lead = telegraphLead(state.traits, state.challengeProfile);
   for (const ev of state.events) {
     if (!(ev.announced & 1) && state.tick >= ev.startTick - lead) {
       ev.announced |= 1;

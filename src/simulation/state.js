@@ -7,8 +7,10 @@ import { BALANCE as B } from '../game/balance.js';
 import { createRng } from '../core/prng.js';
 import { createTopology } from '../world/icosphere.js';
 import { createFields } from '../world/fields.js';
-import { buildEntropyLut, buildSeasonLut, buildNodeSeasonOffsets, environmentPressureForEra } from './environment.js';
+import { buildEntropyLut, buildSeasonLut, buildNodeSeasonOffsets } from './environment.js';
 import { scheduleEvents } from './events.js';
+import { normalizeEnvironmentLevel } from '../game/environment-level.js';
+import { compileChallengeProfile, validateChallengeProfile } from './challenge-profile.js';
 import { recordHistory } from './replay.js';
 import { birthCell, killCell } from './lifecycle/cell-lifecycle.js';
 import { createReachLedger, REACH_CAUSE } from './lifecycle/reach-ledger.js';
@@ -30,7 +32,11 @@ const STREAM = Object.freeze({
 export function createRunState(cfg) {
   const seed = cfg.seed >>> 0;
   const worldOrdinal = Number.isInteger(cfg.worldOrdinal) && cfg.worldOrdinal > 0 ? cfg.worldOrdinal : 1;
-  const worldEra = Number.isInteger(cfg.worldEra) && cfg.worldEra > 0 ? cfg.worldEra : eraForOrdinal(worldOrdinal);
+  const environmentLevel = normalizeEnvironmentLevel(cfg.environmentLevel, legacyEnvironmentLevel(worldOrdinal));
+  const challengeProfile = cfg.challengeProfile
+    ? validateChallengeProfile(cfg.challengeProfile)
+    : compileChallengeProfile({ environmentLevel, evolution: cfg.evolutionDefense });
+  const worldEra = legacyEraForEnvironmentLevel(challengeProfile.environmentLevel);
   const topo = createTopology(4);
   const fields = createFields(createRng(seed ^ STREAM.world), topo);
   const simRng = createRng(seed ^ STREAM.growth);
@@ -40,7 +46,7 @@ export function createRunState(cfg) {
   const E = topo.edgeCount;
   const traits = traitsFor(cfg.strainId ?? 'pioneer', cfg.memoryEffects ?? {});
   const habitatCapabilities = Array.isArray(cfg.habitatCapabilities) ? [...new Set(cfg.habitatCapabilities)] : [];
-  const resource = createResourceAuthority(fields);
+  const resource = createResourceAuthority(fields, challengeProfile.coefficients.initialResourceScale);
   const activeBuilds = Array.isArray(cfg.activeBuilds) ? cfg.activeBuilds.map((build) => typeof build === 'string' ? build : build?.id).filter(Boolean) : [];
   const worldmaking = createWorldmakingState(fields);
 
@@ -54,7 +60,9 @@ export function createRunState(cfg) {
     worldPotential: Number.isFinite(cfg.worldPotential) && cfg.worldPotential >= 0 ? Math.round(cfg.worldPotential) : 16000,
     evolutionPower: Number.isFinite(cfg.evolutionPower) ? Math.max(0, Math.round(cfg.evolutionPower)) : 0,
     potentialVersion: Number.isInteger(cfg.potentialVersion) ? cfg.potentialVersion : 1,
-    worldOrdinal, worldEra, environmentPressure: environmentPressureForEra(worldEra),
+    worldOrdinal, worldEra, environmentLevel: challengeProfile.environmentLevel,
+    challengeProfile, challengeProfileVersion: challengeProfile.version,
+    challengeProfileHash: challengeProfile.hash, environmentPressure: challengeProfile.score.pressure,
     challenge: cfg.challenge ?? null, seed, runId: Number.isInteger(cfg.runId) ? cfg.runId : 0,
     simRng, eventRng, inoculationRng,
     tick: 0, entropy: 0, status: 'idle', extinction: null,
@@ -73,9 +81,9 @@ export function createRunState(cfg) {
     pressure: new Float32Array(N), nextEnergy: new Float32Array(N),
     expansions: new Uint8Array(N), bfsVisited: new Uint8Array(N), bfsQueue: new Uint32Array(N),
 
-    entropyLut: buildEntropyLut(worldEra), seasonLut: buildSeasonLut(),
+    entropyLut: buildEntropyLut(challengeProfile), seasonLut: buildSeasonLut(),
     nodeSeasonOffset: buildNodeSeasonOffsets(topo),
-    events: scheduleEvents(eventRng, topo, fields, cfg.challenge ?? null, worldOrdinal),
+    events: scheduleEvents(eventRng, topo, fields, challengeProfile),
     crisesEndured: 0, crisesTotal: 0, trophyProof: createTrophyProof(topo, fields),
 
     habitatBlocked: new Uint16Array(N), resourceBlocked: new Uint16Array(N),
@@ -213,7 +221,10 @@ export function beginTerminalCollapse(state, reason) {
   return true;
 }
 
-function eraForOrdinal(ordinal) { return ordinal <= 2 ? 1 : ordinal === 3 ? 2 : ordinal <= 5 ? 3 : ordinal <= 10 ? 4 : 5; }
+function legacyEnvironmentLevel(ordinal) { return ordinal <= 2 ? '0' : ordinal === 3 ? '1' : ordinal <= 5 ? '2' : ordinal <= 10 ? '3' : '4'; }
+function legacyEraForEnvironmentLevel(level) {
+  if (level === '0') return 1; if (level === '1') return 2; if (level === '2') return 3; if (level === '3') return 4; return 5;
+}
 function sumMask(values) { let total = 0; for (const value of values ?? []) total += value ? 1 : 0; return total; }
 
 function isLand(fields, i) {

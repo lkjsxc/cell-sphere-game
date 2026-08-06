@@ -12,8 +12,9 @@ export const RESOURCE_STATE_LABELS = Object.freeze([
 export const RESOURCE_THRESHOLDS = Object.freeze({ abundant: .72, fertile: .56, strained: .42, poor: .28, depleted: .12 });
 const HYSTERESIS = .018;
 
-export function createResourceAuthority(fields) {
-  const initialAvailableNutrient = fields.baseNutrient.slice();
+export function createResourceAuthority(fields, initialScale = 1) {
+  const scale = Number.isFinite(initialScale) ? Math.max(0.72, Math.min(1, initialScale)) : 1;
+  const initialAvailableNutrient = Float32Array.from(fields.baseNutrient, (value) => Math.fround(value * scale));
   const staticFreshwaterSupport = new Float64Array(initialAvailableNutrient.length);
   const resourceCapacity = new Float64Array(initialAvailableNutrient.length);
   const resourceRenewalSuitability = new Float64Array(initialAvailableNutrient.length);
@@ -37,7 +38,7 @@ export function createResourceAuthority(fields) {
   const resourceQuintile = assignQuintiles(initialResourceRichness);
   const initialFreshwaterCatchmentReserve = Float32Array.from(fields.lakes ?? [], (lake) => {
     const quality = lake.salinity === 'fresh' ? 1 : lake.salinity === 'brackish' ? .48 : .08;
-    return Math.fround((lake.area * 1.4 + Math.min(120, lake.catchment) * .42 + lake.meanDepth * 24) * quality);
+    return Math.fround((lake.area * 1.4 + Math.min(120, lake.catchment) * .42 + lake.meanDepth * 24) * quality * scale);
   });
   const freshwaterCatchmentReserve = initialFreshwaterCatchmentReserve.slice();
   return {

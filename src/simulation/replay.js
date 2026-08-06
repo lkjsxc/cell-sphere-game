@@ -1,5 +1,5 @@
 /** Compact replay, semantic history, and terminal authority hash. */
-import { hashF32, hashU8, hexU32 } from '../core/hash.js';
+import { hashF32, hashString, hashU8, hexU32 } from '../core/hash.js';
 export const REPLAY_VERSION = 4;
 export const REPLAY = Object.freeze({ STRAIN: 0, INOCULATE: 1, SPEED: 2 });
 
@@ -80,17 +80,19 @@ export function finalStateHash(state) {
   h = hashF32(h, new Float32Array([
     state.tick, state.totalUptake, state.totalMaintenance,
     state.peakCoverage, state.peakConnectedShare, state.inoculationCell,
-    state.replayVersion, state.worldOrdinal, state.worldEra, state.worldPotential,
+    state.replayVersion, state.worldEra,
     state.resourceTransferred, state.initialResourceStock, state.resourceExternalAdditions,
     state.resourceReclaimed, state.resourceConsumed, state.resourceLost,
     state.initialFounderFreshwaterReserve, state.founderFreshwaterReserve,
-    state.scoreMerit.total, ...Object.values(state.scoreMerit.raw),
+    ...Object.values(state.scoreMerit.raw),
     state.transformedCells, state.electrifiedCells, state.reach100Tick,
     proof.lakeCellsReached, proof.shoreCellsReached, proof.distinctLakesReached, proof.completeShores,
     proof.ecologyMask, proof.lakeTypeMask, proof.lakeSalinityMask, proof.lakeLivingSamples,
     proof.largeLakeLivingSamples, proof.lakeRegionPeak, proof.droughtLakeSurvivals,
     proof.freezeLakeSurvivals, proof.loopSurplusPeak, proof.loopLivingSamples,
   ]), 1000);
+  h = hashString(h, [state.worldOrdinal, state.environmentLevel, state.challengeProfileVersion,
+    state.challengeProfileHash, state.worldPotential, state.scoreMerit.total].join('|'));
   const replayValues = [];
   for (const entry of state.replay) replayValues.push(entry.length, ...entry);
   h = hashF32(h, Float32Array.from(replayValues), 1);

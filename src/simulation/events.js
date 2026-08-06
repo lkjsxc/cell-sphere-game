@@ -5,36 +5,35 @@ import { GRAPH_UNREACHABLE, weightedGraphField } from '../core/graph-field.js';
 import { smootherstep } from '../core/math.js';
 export const EVENT_FIELD_VERSION = 2; export const EVENT_UNREACHABLE = 0xffff;
 const LAND_BOUND = new Set(['drought', 'bloom', 'blight']); const MAX_ARRIVAL_TICKS = 15;
-export function scheduleEvents(rng, topo, fields, challenge, worldOrdinal = 1) {
-  const ordinal = Math.max(1, Math.floor(worldOrdinal));
-  if (ordinal <= 2) return [];
-  const volatile = challenge?.id === 'volatile';
-  let count; let windowStart; let intensityRange;
-  if (ordinal === 3) { count = 1; windowStart = 2400; intensityRange = [.50, .70]; }
-  else if (ordinal <= 5) { count = 1 + rng.intBelow(2); windowStart = 1800; intensityRange = [.58, .82]; }
-  else if (ordinal <= 10) { count = 2 + rng.intBelow(3); windowStart = 1400; intensityRange = [.66, .98]; }
-  else { count = 3 + rng.intBelow(4); windowStart = 1100; intensityRange = [.72, 1.15]; }
-  if (volatile) count += ordinal >= 4 ? 1 : 0;
-  const intensityMod = (volatile ? 1.15 : 1) * (challenge?.eventIntensity ?? 1);
+export function scheduleEvents(rng, topo, fields, challengeProfile = null) {
+  const profile = challengeProfile?.events ?? {}; const environmentLevel = challengeProfile?.environmentLevel ?? '0';
+  const count = Math.max(0, Math.min(6, Number.isInteger(profile.count) ? profile.count : 0));
+  if (count === 0) return [];
+  const windowStart = Math.max(1100, Math.min(2520, Math.round(profile.earliestStartTick ?? 2400)));
+  const intensityRange = [Math.max(.5, Math.min(.72, profile.intensityMin ?? .5)),
+    Math.max(.7, Math.min(1.15, profile.intensityMax ?? .7))];
+  const footprintScale = Math.max(1, Math.min(1.35, profile.footprintScale ?? 1));
+  const overlap = Math.max(0, Math.min(1, profile.overlap ?? 0));
   const byVuln = Array.from({ length: topo.nodeCount }, (_, cell) => cell)
     .sort((a, b) => fields.eventVuln[b] - fields.eventVuln[a] || a - b).slice(0, 180);
-  const events = []; let lastFamily = ''; const windowEnd = 2920;
+  const events = []; let lastFamily = ''; const windowEnd = Math.max(windowStart, 2920 - Math.round(overlap * 650));
   const step = count > 1 ? (windowEnd - windowStart) / count : 0;
-  const familyPool = ordinal === 3
+  const familyPool = environmentLevel === '1'
     ? EVENT_FAMILIES.filter((family) => family.crisis && ['drought', 'heat', 'freeze'].includes(family.id))
-    : EVENT_FAMILIES;
+    : EVENT_FAMILIES.filter((family) => family.crisis);
   for (let index = 0; index < count; index++) {
     const family = drawFamily(rng, lastFamily, familyPool); lastFamily = family.id;
-    const jitter = count > 1 ? rng.range(-.18, .18) * step : rng.range(0, 120);
+    const jitter = count > 1 ? rng.range(-.18, .18) * Math.max(1, step) : rng.range(0, 120);
     const startTick = Math.max(windowStart, Math.round(windowStart + index * step + jitter));
     const peakTick = startTick + 60; const releaseEndTick = peakTick + 120 + rng.intBelow(90);
-    const center = chooseCenter(byVuln, fields, family.id, rng); const travelBudget = 720 + rng.intBelow(241);
+    const center = chooseCenter(byVuln, fields, family.id, rng);
+    const travelBudget = Math.min(1296, Math.round((720 + rng.intBelow(241)) * footprintScale));
     const field = computeEventField(topo, fields, family.id, center, travelBudget, index);
     const maxArrival = field.arrivalTicks.length ? Math.max(...field.arrivalTicks) : 0;
     events.push({ id: index, family: family.id, nameJa: family.nameJa, descJa: family.descJa,
       kind: family.kind, amount: family.amount, crisis: family.crisis, startTick, peakTick,
       releaseEndTick, endTick: releaseEndTick + maxArrival, center, travelBudget,
-      intensity: Math.fround(rng.range(...intensityRange) * intensityMod), ...field, announced: 0 });
+      intensity: Math.fround(rng.range(...intensityRange)), ...field, announced: 0 });
   }
   events.sort((a, b) => a.startTick - b.startTick || a.id - b.id); return events;
 }
@@ -64,7 +63,10 @@ export function buildEventCellState(state) {
       if (value > strength[cell]) { strength[cell] = value; family[cell] = familyIndex; } } }
   return { strength, family };
 }
-export function telegraphLead(traits) { return traits.distributedSensing ? 200 : 100; }
+export function telegraphLead(traits, challengeProfile = null) {
+  const minimum = Math.max(100, Math.round(challengeProfile?.events?.telegraphTicks ?? 100));
+  return traits.distributedSensing ? Math.max(200, minimum) : minimum;
+}
 function drawFamily(rng, lastFamily, pool = EVENT_FAMILIES) { const candidates = pool.filter((family) => family.id !== lastFamily);
   let total = candidates.reduce((sum, family) => sum + family.weight, 0); let roll = rng.float() * total;
   for (const family of candidates) { roll -= family.weight; if (roll <= 0) return family; } return candidates.at(-1); }

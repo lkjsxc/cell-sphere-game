@@ -22,6 +22,8 @@ export function buildRunResult(s) {
     diagnostics: { ...s.diagnostics },
     inoculationCell: s.inoculationCell,
     worldOrdinal: s.worldOrdinal, worldEra: s.worldEra,
+    environmentLevel: s.environmentLevel, challengeProfileVersion: s.challengeProfileVersion,
+    challengeProfileHash: s.challengeProfileHash, pressureProfile: s.challengeProfile,
     scoreModelVersion: SCORE_MODEL_VERSION, score: s.scoreMerit.total,
     scoreProjection: { ...scoreProjection, total: s.scoreMerit.total }, scoreMerit: copyMerit(s.scoreMerit),
     worldPotential: s.worldPotential, evolutionPower: s.evolutionPower, potentialVersion: s.potentialVersion,
@@ -73,6 +75,8 @@ export function buildAbandonedRun(s) {
     elapsedSeconds: s.tick / B.TICKS_PER_SECOND, livingCount: s.aliveCount,
     coverage: s.coverage, score: liveScore(s), archetype: s.fields.archetypeName,
     inoculationCell: s.inoculationCell, worldOrdinal: s.worldOrdinal, worldEra: s.worldEra,
+    environmentLevel: s.environmentLevel, challengeProfileVersion: s.challengeProfileVersion,
+    challengeProfileHash: s.challengeProfileHash, pressureProfile: s.challengeProfile,
     scoreModelVersion: SCORE_MODEL_VERSION, worldPotential: s.worldPotential, evolutionPower: s.evolutionPower,
     potentialVersion: s.potentialVersion, scoreMerit: copyMerit(s.scoreMerit),
     history: serializeHistory(s), reach: { ...buildReachResult(s), goal: reachGoalSummary(s) }, cause: 'abandoned' };

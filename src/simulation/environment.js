@@ -13,8 +13,10 @@ import { REACH_CAUSE } from './lifecycle/reach-ledger.js';
 import { addExternalNutrient, freshwaterSupportAt, loseNutrient, transferReserve } from './resource-ecology.js';
 
 /** Global deterioration curve, indexed by tick. 0 until rise start, 1 at end. */
-export function buildEntropyLut(worldEra = 1) {
-  const len = B.RUN_CEILING_TICKS + 600; const pressure = environmentPressureForEra(worldEra);
+export function buildEntropyLut(profile = null) {
+  const len = B.RUN_CEILING_TICKS + 600;
+  const pressure = profile && typeof profile === 'object'
+    ? Math.max(0, Math.min(1, profile.score?.pressure ?? 0)) : environmentPressureForEra(profile ?? 1);
   const start = B.ENTROPY_RISE_START - Math.round(pressure * 250);
   const lut = new Float32Array(len);
   for (let t = 0; t < len; t++) {
@@ -67,10 +69,10 @@ export function updateEnvironment(state) {
   state.entropy = e;
 
   const period = B.SEASON_PERIOD_TICKS;
-  const pressure = state.environmentPressure;
-  const seasonAmp = B.SEASON_AMPLITUDE * (0.25 + 0.75 * pressure) * (0.6 + 0.8 * e);
+  const coefficients = state.challengeProfile?.coefficients ?? {};
+  const seasonAmp = B.SEASON_AMPLITUDE * (coefficients.seasonScale ?? 0.25) * (0.6 + 0.8 * e);
   const symbiotic = traits.symbioticFilm > 0;
-  const challengeNutrient = state.challenge?.nutrientRenewal ?? 1;
+  const renewalScale = coefficients.renewalScale ?? 1;
 
   for (let i = 0; i < N; i++) {
     const phase = (t + state.nodeSeasonOffset[i]) % period;
@@ -81,22 +83,22 @@ export function updateEnvironment(state) {
     const freshwater = freshwaterSupportAt(state, i);
     state.moisture[i] = Math.fround(clamp01(
       fields.baseMoisture[i] + state.dynamicFreshwaterSupport[i] * .12
-        + seasonAmp * season - e * 0.22 * pressure * (1 - freshwater * .50)));
+        + seasonAmp * season - e * (coefficients.dryingScale ?? 0) * (1 - freshwater * .50)));
 
     // Temperature: seasonal + slow entropy heat drift.
     state.temperature[i] = Math.fround(clamp01(
-      fields.baseTemp[i] + seasonAmp * 0.7 * season2 + e * 0.08 * pressure));
+      fields.baseTemp[i] + seasonAmp * 0.7 * season2 + e * (coefficients.heatDriftScale ?? 0)));
 
     // Toxins accumulate with entropy, decay slowly.
     const tox = state.toxicity[i]
-      + B.TOXIN_ACCUMULATION * e * pressure * fields.toxVuln[i]
+      + B.TOXIN_ACCUMULATION * e * (coefficients.toxinScale ?? 0) * fields.toxVuln[i]
       - B.TOXIN_DECAY * state.toxicity[i];
     state.toxicity[i] = Math.fround(clamp01(tox));
 
     // Nutrient regeneration fails as entropy rises; occupied cells with
     // symbiotic film renew better.
     const occupied = symbiotic && state.alive[i] === 1 ? 1.5 : 1;
-    const regen = B.NUTRIENT_REGEN * (1 - e * 0.92) * occupied * challengeNutrient
+    const regen = B.NUTRIENT_REGEN * (1 - e * 0.92) * occupied * renewalScale
       * (fields.resourceRenewal?.[i] ?? 1) * (1 + freshwater * .35);
     const localTarget = Math.min(1, fields.baseNutrient[i] * (1 + freshwater * .08));
     const requested = Math.max(0, regen * (localTarget - state.nutrient[i]));

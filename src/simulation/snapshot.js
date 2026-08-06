@@ -16,6 +16,8 @@ export function buildSnapshot(state) {
     entropy: state.entropy,
     status: state.status,
     worldOrdinal: state.worldOrdinal, worldEra: state.worldEra,
+    environmentLevel: state.environmentLevel, challengeProfileVersion: state.challengeProfileVersion,
+    challengeProfileHash: state.challengeProfileHash, pressureProfile: state.challengeProfile,
     biomass: state.biomass.slice(),
     stress: state.stress.slice(),
     alive: state.alive.slice(),

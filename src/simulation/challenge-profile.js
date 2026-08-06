@@ -111,18 +111,21 @@ function profileFromDimensions(environmentLevel, publicRating, dimensions) {
   const qClimate = dimensions.climate.pressure; const qToxicity = dimensions.toxicity.pressure;
   const qMaintenance = dimensions.maintenance.pressure; const qEvents = dimensions.events.pressure;
   const eventRamp = clamp01((qEvents - 0.35) / 0.65);
+  const scarcityRamp = clamp01((qScarcity - 0.35) / 0.65);
+  const renewalRamp = clamp01((qRenewal - 0.35) / 0.65);
+  const maintenanceRamp = clamp01((qMaintenance - 0.35) / 0.65);
   const eventCount = environmentLevel === '0' ? 0 : Math.min(MAX_EVENTS_PER_WORLD, 1 + Math.floor(eventRamp * 5 + 1e-9));
   const profile = {
     version: CHALLENGE_PROFILE_VERSION, environmentLevel, publicRating, dimensions,
     coefficients: Object.freeze({
-      initialResourceScale: finite(1 - 0.28 * qScarcity, 0.72, 1),
-      renewalScale: finite(1 - 0.55 * qRenewal, 0.45, 1),
+      initialResourceScale: finite(1 - 0.28 * scarcityRamp, 0.72, 1),
+      renewalScale: finite(1 - 0.55 * renewalRamp, 0.45, 1),
       seasonScale: finite(0.25 + 0.75 * qClimate, 0.25, 1),
       dryingScale: finite(0.22 * qClimate, 0, 0.22),
       heatDriftScale: finite(0.08 * qClimate, 0, 0.08),
       toxinScale: finite(qToxicity, 0, 1),
-      maintenanceScale: finite(1 + 0.30 * qMaintenance, 1, 1.30),
-      transportStressScale: finite(1 + 0.25 * qMaintenance, 1, 1.25),
+      maintenanceScale: finite(1 + 0.30 * maintenanceRamp, 1, 1.30),
+      transportStressScale: finite(1 + 0.25 * maintenanceRamp, 1, 1.25),
     }),
     events: Object.freeze({ count: eventCount,
       earliestStartTick: environmentLevel === '0' ? 2400 : Math.max(1100, Math.round(2400 - 1300 * eventRamp)),

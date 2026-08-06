@@ -7,17 +7,24 @@ import { createTopology } from '../../src/world/icosphere.js';
 import { createFields } from '../../src/world/fields.js';
 import { computeEventField, EVENT_UNREACHABLE, scheduleEvents, telegraphLead } from '../../src/simulation/events.js';
 import { baseTraits } from '../../src/game/strains.js';
-import { environmentPressureForEra } from '../../src/simulation/environment.js';
+import { compileChallengeProfile } from '../../src/simulation/challenge-profile.js';
 
 const topo = createTopology(4);
 
-function scheduleFor(seed, worldOrdinal = 12) {
+function scheduleFor(seed, environmentLevel = '4') {
   const fields = createFields(createRng(seed ^ 0x51ab3d71), topo);
-  return scheduleEvents(createRng(seed ^ 0x0e7e17a1), topo, fields, null, worldOrdinal);
+  const profile = compileChallengeProfile({ environmentLevel });
+  return scheduleEvents(createRng(seed ^ 0x0e7e17a1), topo, fields, profile);
 }
 
-test('environment pressure maps every reachable era directly',()=>{
-  assert.deepEqual([1,2,3,4,5].map(environmentPressureForEra),[0,.35,.55,.8,1]);
+test('Environment Levels compile directly to monotone bounded event pressure',()=>{
+  const profiles = ['0','1','2','3','4','1000'].map((environmentLevel) => compileChallengeProfile({ environmentLevel }));
+  assert.deepEqual(profiles.slice(0, 2).map((profile) => profile.events.count), [0, 1]);
+  for (let index = 1; index < profiles.length; index++) {
+    assert.ok(profiles[index].dimensions.events.pressure >= profiles[index - 1].dimensions.events.pressure);
+    assert.ok(profiles[index].events.count >= profiles[index - 1].events.count);
+    assert.ok(profiles[index].events.count <= 6);
+  }
 });
 
 test('schedule is deterministic per seed', () => {
@@ -35,8 +42,8 @@ test('schedule is deterministic per seed', () => {
 test('different seeds differ', () => {
   const a = scheduleFor(1);
   const b = scheduleFor(2);
-  const same = a.filter((ev, i) => b[i] && b[i].family === ev.family).length;
-  assert.ok(same < a.length, 'schedules identical across seeds');
+  assert.notDeepEqual(a.map((event) => [event.family, event.startTick, event.center]),
+    b.map((event) => [event.family, event.startTick, event.center]), 'schedules identical across seeds');
 });
 
 test('no immediate family repeats; sorted; well-formed', () => {
@@ -75,20 +82,12 @@ test('land-bound graph fields stop at ocean and terrain breaks radial symmetry',
   }
 });
 
-test('campaign eras suppress early events and allow bounded mature positive events', () => {
-  assert.equal(scheduleFor(1, 1).length, 0); assert.equal(scheduleFor(2, 2).length, 0);
-  const third = scheduleFor(3, 3); assert.equal(third.length, 1); assert.ok(third[0].startTick >= 2100); assert.ok(third[0].crisis);
-
-  let blooms = 0;
-  let total = 0;
-  for (let seed = 1; seed <= 40; seed++) {
-    for (const ev of scheduleFor(seed)) {
-      total++;
-      if (!ev.crisis) blooms++;
-    }
-  }
-  assert.ok(blooms > 0, 'no positive events in 40 seeds');
-  assert.ok(blooms / total < 0.3, `too many positive events: ${blooms}/${total}`);
+test('protected Level 0 suppresses events and Level 1 is one late mild telegraphed pressure', () => {
+  assert.equal(scheduleFor(1, '0').length, 0); assert.equal(scheduleFor(2, '0').length, 0);
+  const third = scheduleFor(3, '1'); assert.equal(third.length, 1);
+  assert.ok(third[0].startTick >= 2400); assert.ok(third[0].crisis);
+  assert.ok(['drought', 'heat', 'freeze'].includes(third[0].family));
+  assert.ok(third[0].intensity >= .5 && third[0].intensity <= .7);
 });
 
 test('telegraph lead extends with distributed sensing', () => {

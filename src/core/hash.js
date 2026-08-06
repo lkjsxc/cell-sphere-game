@@ -16,9 +16,9 @@ export function fnv1aBytes(bytes, state = FNV_OFFSET) {
   return h >>> 0;
 }
 
-/** @param {string} str @returns {number} u32 */
-export function hashStringU32(str) {
-  let h = FNV_OFFSET;
+/** Fold a UTF-16 string into a running FNV-1a hash. */
+export function hashString(state, str) {
+  let h = state >>> 0;
   for (let i = 0; i < str.length; i++) {
     const c = str.charCodeAt(i);
     h = (h ^ (c & 0xff)) >>> 0;
@@ -28,6 +28,9 @@ export function hashStringU32(str) {
   }
   return h >>> 0;
 }
+
+/** @param {string} str @returns {number} u32 */
+export function hashStringU32(str) { return hashString(FNV_OFFSET, str); }
 
 /**
  * Fold a Float32Array into a running hash after quantizing each value to
