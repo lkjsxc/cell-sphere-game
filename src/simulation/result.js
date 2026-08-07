@@ -10,9 +10,13 @@ import { reachGoalSummary } from './lifecycle/reach-goal.js';
 import { environmentExposureSummary } from '../game/environment-exposure.js';
 import { environmentPressureSummary } from './challenge-profile.js';
 
+/** v7: explicit terminal evidence for the corrected pressure authority. */
+export const RUN_RESULT_SCHEMA_VERSION = 7;
+
 export function buildRunResult(s) {
   const scoreProjection = evaluate(metricsFromState(s), { environmentBonusQ: s.scoreMerit.environmentBonusQ }); const conservation = resourceConservation(s);
   return {
+    resultSchemaVersion: RUN_RESULT_SCHEMA_VERSION,
     runId: s.runId,
     seed: s.seed,
     archetype: s.fields.archetypeName,
@@ -28,6 +32,7 @@ export function buildRunResult(s) {
     environmentScheduleVersion: s.environmentScheduleVersion,
     environmentScheduleHash: s.environmentScheduleHash,
     environmentProfileVersion: s.currentEnvironmentProfileVersion,
+    eventDirectorVersion: s.eventDirector?.version ?? 0,
     currentEnvironmentProfileHash: s.currentEnvironmentProfileHash,
     startEnvironmentLevel: '0',
     finalEnvironmentLevel: s.currentEnvironmentLevel,
@@ -93,13 +98,13 @@ export function buildRunResult(s) {
 }
 
 export function buildAbandonedRun(s) {
-  return { runId: s.runId, seed: s.seed, tick: s.tick,
+  return { resultSchemaVersion: RUN_RESULT_SCHEMA_VERSION, runId: s.runId, seed: s.seed, tick: s.tick,
     elapsedSeconds: s.tick / B.TICKS_PER_SECOND, livingCount: s.aliveCount,
     coverage: s.coverage, score: liveScore(s), archetype: s.fields.archetypeName,
     inoculationCell: s.inoculationCell, worldOrdinal: s.worldOrdinal,
     environmentModelVersion: s.environmentModelVersion, environmentScheduleVersion: s.environmentScheduleVersion,
     environmentScheduleHash: s.environmentScheduleHash, environmentProfileVersion: s.currentEnvironmentProfileVersion,
-    currentEnvironmentProfileHash: s.currentEnvironmentProfileHash,
+    eventDirectorVersion: s.eventDirector?.version ?? 0, currentEnvironmentProfileHash: s.currentEnvironmentProfileHash,
     startEnvironmentLevel: '0', finalEnvironmentLevel: s.currentEnvironmentLevel,
     peakEnvironmentLevel: s.peakEnvironmentLevel, environmentTransitionCount: s.environmentTransitionCount,
     environmentExposure: environmentExposureSummary(s.environmentExposure),

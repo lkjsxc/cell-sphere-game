@@ -5,7 +5,7 @@
 A production world is determined by immutable Level-0 start facts: seed, world
 ordinal, compiled Evolution/start configuration, schedule/profile versions, and
 the explicit onboarding modifier. It does **not** have a selected Environment
-Level. Worker and fallback consume the same run-protocol-v6 configuration and
+Level. Worker and fallback consume the same run-protocol-v7 configuration and
 execute the same authoritative tick sequence.
 
 RNG streams are isolated by subsystem. Presentation has no authority RNG.
@@ -71,6 +71,6 @@ Finite Evolution builds eventually lose to escalating pressure. Extinction
 records truthful causal evidence: start/final/peak Environment Level, transition
 count, time at peak, bounded exposure, pressure summary with current/next
 profile hashes, interpolation Q, and effective coefficients, powered ecology,
-resources, Reach, SCORE v5, bounded History, replay v6, and final hash. SCORE
+resources, Reach, SCORE v5, bounded History, replay v7, and final hash. SCORE
 is monotone before Result and rewards sustained exposure/quality rather than a
 threshold touch.

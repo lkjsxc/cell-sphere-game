@@ -11,8 +11,8 @@ schedule; Evolution changes effective pressure but never public time. The first
 two worlds use an explicit event-onboarding modifier only; World 3 may receive
 mild telegraphed events under the same clock.
 
-SCORE authority is v5. Meta schema 12, History schema 8, agent save schema 3 / observation schema 4, and
-replay/run protocol 6 carry dynamic result evidence. Old static
+SCORE authority is v5. Meta schema 13, History schema 8, agent save / observation schemas 4, and
+result/replay/run protocol 7 carry dynamic result evidence. Old static
 `highestEnvironmentLevel` is inert `legacyEnvironmentFrontier`; legacy History
 levels remain attempted-level evidence. Active Adaptations are retired. Luminous
 is authoritative whole-cell charge with decay and no wires. Any conflicting claim

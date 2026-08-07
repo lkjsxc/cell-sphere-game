@@ -7,7 +7,10 @@ import { reconcileTrophies } from '../../game/trophies/evaluator.js';
 import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_HASH, ENVIRONMENT_SCHEDULE_VERSION,
   environmentScheduleAtTick, normalizeEnvironmentLevel } from '../../game/environment-level.js';
 import { ENVIRONMENT_EXPOSURE_VERSION } from '../../game/environment-exposure.js';
-import { compileChallengeProfile } from '../../simulation/challenge-profile.js';
+import { LEGACY_CHALLENGE_PROFILE_VERSION,
+  compileChallengeProfile, compileLegacyChallengeProfileV2 } from '../../simulation/challenge-profile.js';
+import { EVENT_DIRECTOR_VERSION } from '../../simulation/events.js';
+import { RUN_RESULT_SCHEMA_VERSION } from '../../simulation/result.js';
 import {addProgressionIntegers,compareProgressionIntegers,incrementProgressionInteger,
   maxProgressionInteger,multiplyProgressionIntegers,normalizeProgressionInteger} from '../../core/progression-integer.js';
 import {boundedTransactionKey} from '../../core/hash.js';
@@ -52,7 +55,10 @@ export function applyRunResult(meta,archive,result,retention,lastKey=null){
     trophyIds:trophies.awardedIds,trophiesBackfilled:trophies.backfilled});
 }
 function validDynamicEnvironmentResult(result, evolution) {
-  if (!result || result.environmentModelVersion !== ENVIRONMENT_MODEL_VERSION
+  const legacyProfile = result?.environmentProfileVersion === LEGACY_CHALLENGE_PROFILE_VERSION
+    && !Object.hasOwn(result, 'resultSchemaVersion');
+  if (!result || (!legacyProfile && result.resultSchemaVersion !== RUN_RESULT_SCHEMA_VERSION)
+    || result.environmentModelVersion !== ENVIRONMENT_MODEL_VERSION
     || result.environmentScheduleVersion !== ENVIRONMENT_SCHEDULE_VERSION
     || result.environmentScheduleHash !== ENVIRONMENT_SCHEDULE_HASH
     || result.startEnvironmentLevel !== '0') return false;
@@ -69,10 +75,12 @@ function validDynamicEnvironmentResult(result, evolution) {
     || result.environmentLevelStartTick !== schedule.environmentLevelStartTick
     || result.nextEnvironmentLevelTick !== schedule.nextEnvironmentLevelTick
     || !exposure || exposure.version !== ENVIRONMENT_EXPOSURE_VERSION) return false;
-  const profile = compileChallengeProfile({ environmentLevel: final, evolution: {
+  const compile = legacyProfile ? compileLegacyChallengeProfileV2 : compileChallengeProfile;
+  const profile = compile({ environmentLevel: final, evolution: {
     affinityDefense: evolution?.affinityDefense, pressureDefense: evolution?.pressureDefense,
   } });
-  if (result.environmentProfileVersion !== profile.version || result.currentEnvironmentProfileHash !== profile.hash) return false;
+  if (result.environmentProfileVersion !== profile.version || result.currentEnvironmentProfileHash !== profile.hash
+    || (!legacyProfile && result.eventDirectorVersion !== EVENT_DIRECTOR_VERSION)) return false;
   for (const key of ['totalTicks', 'pressureTicksQ', 'qualityPressureTicksQ', 'timeAtPeakTicks']) {
     if (normalizeProgressionInteger(exposure[key], '0') !== exposure[key]) return false;
   }
@@ -85,20 +93,20 @@ function validDynamicEnvironmentResult(result, evolution) {
   if (!Array.isArray(result.recentEnvironmentTransitions) || result.recentEnvironmentTransitions.length > 8) return false;
   let previousLevel = '0'; let previousTick = '0';
   return result.recentEnvironmentTransitions.every((transition) => {
-    if (!validTransition(transition, final, evolution)) return false;
+    if (!validTransition(transition, final, evolution, compile)) return false;
     const level = transition.level; const tick = transition.tick;
     if (compareProgressionIntegers(level, previousLevel) <= 0 || compareProgressionIntegers(tick, previousTick) <= 0) return false;
     previousLevel = level; previousTick = tick; return true;
   });
 }
-function validTransition(transition, finalLevel, evolution) {
+function validTransition(transition, finalLevel, evolution, compile = compileChallengeProfile) {
   if (!transition || typeof transition !== 'object') return false;
   const level = normalizeEnvironmentLevel(transition.level, '0');
   if (level === '0' || level !== transition.level || compareProgressionIntegers(level, finalLevel) > 0) return false;
   const tick = normalizeProgressionInteger(transition.tick, '0');
   const schedule = environmentScheduleAtTick(tick);
   if (schedule.currentEnvironmentLevel !== level || tick !== transition.tick || tick !== schedule.environmentLevelStartTick) return false;
-  const profile = compileChallengeProfile({ environmentLevel: level, evolution: {
+  const profile = compile({ environmentLevel: level, evolution: {
     affinityDefense: evolution?.affinityDefense, pressureDefense: evolution?.pressureDefense,
   } });
   return transition.profileHash === profile.hash && transition.pressure === profile.score.pressure;

@@ -2,6 +2,8 @@
 import { createWorldIdentity, identityFields } from '../core/world-session.js';
 import { environmentScheduleAtTick } from '../game/environment-level.js';
 import { createEnvironmentExposure, environmentExposureSummary } from '../game/environment-exposure.js';
+import { ENVIRONMENT_PROFILE_VERSION } from '../simulation/challenge-profile.js';
+import { EVENT_DIRECTOR_VERSION } from '../simulation/events.js';
 
 export function createBlankSnapshot(nodeCount, identity) {
   if (!Number.isInteger(nodeCount) || nodeCount <= 0) throw new Error('invalid blank snapshot node count');
@@ -15,6 +17,9 @@ export function createBlankSnapshot(nodeCount, identity) {
     environmentModelVersion: schedule.environmentModelVersion,
     environmentScheduleVersion: schedule.environmentScheduleVersion,
     environmentScheduleHash: schedule.environmentScheduleHash,
+    environmentProfileVersion: ENVIRONMENT_PROFILE_VERSION,
+    eventDirector: Object.freeze({ version: EVENT_DIRECTOR_VERSION, activeCount: 0, futureCount: 0, recentCount: 0,
+      harmfulEventsDisabled: false }),
     currentEnvironmentLevel: '0', peakEnvironmentLevel: '0', environmentLevelStartTick: '0',
     nextEnvironmentLevelTick: schedule.nextEnvironmentLevelTick, environmentLevelProgressQ: 0,
     environmentTransitionCount: '0', environmentExposure: environmentExposureSummary(createEnvironmentExposure('0')),

@@ -6,7 +6,7 @@ import { ENVIRONMENT_EXPOSURE_VERSION } from '../game/environment-exposure.js';
 import { defaultMeta, validateMeta } from '../platform/storage.js';
 import { defaultHistory, validateHistory } from '../platform/history.js';
 
-export const AGENT_SAVE_SCHEMA = 3;
+export const AGENT_SAVE_SCHEMA = 4;
 export const AGENT_GOALS = Object.freeze([
   'balanced', 'breadth-first', 'depth-first', 'cheapest', 'marginal-value', 'diversity', 'weak',
   'sustainability', 'freshwater', 'rich-rush', 'scarcity-reclaimer', 'cryogenic', 'marine',
@@ -22,7 +22,7 @@ export function defaultAgentSave(seed = 0) {
 }
 
 export function validateAgentSave(raw) {
-  if (!raw || typeof raw !== 'object' || ![1, 2, AGENT_SAVE_SCHEMA].includes(raw.schema)) return defaultAgentSave();
+  if (!raw || typeof raw !== 'object' || ![1, 2, 3, AGENT_SAVE_SCHEMA].includes(raw.schema)) return defaultAgentSave();
   return canonical({ campaignSeed: validSeed(raw.campaignSeed) ? raw.campaignSeed : 0,
     meta: validateMeta(raw.meta), history: validateHistory(raw.history, 32),
     goal: GOALS.has(raw.goal) ? raw.goal : 'balanced', lastResult: validateLastResult(raw.lastResult) });
@@ -55,13 +55,15 @@ function validateLastResult(raw) {
   for (const key of ['lake', 'tundra', 'snowIce', 'shallowOcean', 'deepOcean'])
     habitats[key] = integer(raw.habitats?.[key]) ?? 0;
   const dynamic = raw.startEnvironmentLevel === '0' && raw.finalEnvironmentLevel !== undefined;
-  return Object.freeze({ worldOrdinal,
+  return Object.freeze({ resultSchemaVersion: integer(raw.resultSchemaVersion, 1) ?? 0, worldOrdinal,
     startEnvironmentLevel: dynamic ? '0' : '0',
     finalEnvironmentLevel: dynamic ? normalizeEnvironmentLevel(raw.finalEnvironmentLevel, '0') : '0',
     peakEnvironmentLevel: dynamic ? normalizeEnvironmentLevel(raw.peakEnvironmentLevel, raw.finalEnvironmentLevel ?? '0') : '0',
     bestEnvironmentLevelReached: normalizeEnvironmentLevel(raw.bestEnvironmentLevelReached, '0'),
     legacyAttemptedEnvironmentLevel: dynamic ? null : normalizeEnvironmentLevel(raw.environmentLevel, '0'),
     environmentScheduleVersion: integer(raw.environmentScheduleVersion, 1) ?? 0,
+    environmentProfileVersion: integer(raw.environmentProfileVersion, 1) ?? 0,
+    eventDirectorVersion: integer(raw.eventDirectorVersion, 1) ?? 0,
     environmentExposure: validateExposure(raw.environmentExposure),
     timeAtPeakTicks: normalizeProgressionInteger(raw.timeAtPeakTicks, '0'),
     onboardingEnvironmentModifier: validateOnboarding(raw.onboardingEnvironmentModifier),

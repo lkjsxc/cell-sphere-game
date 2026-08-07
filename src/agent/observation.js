@@ -76,6 +76,8 @@ function publicActiveWorld(active) {
   return Object.freeze({ worldOrdinal: active.worldOrdinal, tick: active.tick, status: active.status,
     currentEnvironmentLevel: active.currentEnvironmentLevel, peakEnvironmentLevel: active.peakEnvironmentLevel,
     environmentScheduleVersion: active.environmentScheduleVersion,
+    environmentProfileVersion: Number.isInteger(active.environmentProfileVersion) ? active.environmentProfileVersion : 0,
+    eventDirectorVersion: Number.isInteger(active.eventDirector?.version) ? active.eventDirector.version : 0,
     environmentLevelStartTick: active.environmentLevelStartTick,
     nextEnvironmentLevelTick: active.nextEnvironmentLevelTick,
     environmentLevelProgressQ: active.environmentLevelProgressQ,

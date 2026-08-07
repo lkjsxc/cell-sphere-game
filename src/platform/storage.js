@@ -22,7 +22,7 @@ export const LEGACY_MEMORY_MAP = Object.freeze({
 });
 
 export function defaultMeta() {
-  return { schema: 12, revision: '0', memoryGraphVersion: MEMORY_GRAPH_VERSION,
+  return { schema: 13, revision: '0', memoryGraphVersion: MEMORY_GRAPH_VERSION,
     memoryMigrationVersion: MEMORY_GRAPH_VERSION, evolutionLevelVectorVersion: EVOLUTION_LEVEL_VECTOR_VERSION,
     trophyVersion: TROPHY_CATALOG_VERSION,
     scoreModelVersion: SCORE_MODEL_VERSION, bestScore: '0', legacyBestScore: '0', legacyBestScores: {},

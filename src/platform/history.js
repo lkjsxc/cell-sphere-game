@@ -101,6 +101,8 @@ function validateWorld(raw) {
     world.environmentScheduleVersion = finiteInt(raw.environmentScheduleVersion) ?? 0;
     world.environmentScheduleHash = validHash(raw.environmentScheduleHash);
     world.environmentProfileVersion = finiteInt(raw.environmentProfileVersion) ?? 0;
+    world.eventDirectorVersion = finiteInt(raw.eventDirectorVersion) ?? 0;
+    world.resultSchemaVersion = finiteInt(raw.resultSchemaVersion) ?? 0;
     world.startEnvironmentLevel = '0';
     world.finalEnvironmentLevel = normalizeEnvironmentLevel(raw.finalEnvironmentLevel, '0');
     world.peakEnvironmentLevel = normalizeEnvironmentLevel(raw.peakEnvironmentLevel, world.finalEnvironmentLevel);
@@ -204,6 +206,7 @@ export function appendWorld(history,result,score,runIndex,retention=24){
     evolutionPower: result.evolutionPower, evolutionDepth: result.evolutionDepth, worldOrdinal: result.worldOrdinal,
     environmentModelVersion: result.environmentModelVersion, environmentScheduleVersion: result.environmentScheduleVersion,
     environmentScheduleHash: result.environmentScheduleHash, environmentProfileVersion: result.environmentProfileVersion,
+    eventDirectorVersion: result.eventDirectorVersion, resultSchemaVersion: result.resultSchemaVersion,
     startEnvironmentLevel: result.startEnvironmentLevel, finalEnvironmentLevel: result.finalEnvironmentLevel,
     peakEnvironmentLevel: result.peakEnvironmentLevel, environmentTransitionCount: result.environmentTransitionCount,
     timeAtPeakTicks: result.timeAtPeakTicks, environmentExposure: result.environmentExposure,
@@ -233,6 +236,7 @@ export function appendAbandonedWorld(history,result,retention=24){
     evolutionDepth: result.evolutionDepth, worldOrdinal: result.worldOrdinal,
     environmentModelVersion: result.environmentModelVersion, environmentScheduleVersion: result.environmentScheduleVersion,
     environmentScheduleHash: result.environmentScheduleHash, environmentProfileVersion: result.environmentProfileVersion,
+    eventDirectorVersion: result.eventDirectorVersion, resultSchemaVersion: result.resultSchemaVersion,
     startEnvironmentLevel: result.startEnvironmentLevel ?? '0', finalEnvironmentLevel: result.finalEnvironmentLevel ?? '0',
     peakEnvironmentLevel: result.peakEnvironmentLevel ?? '0', environmentTransitionCount: result.environmentTransitionCount ?? '0',
     environmentExposure: result.environmentExposure, currentEnvironmentProfileHash: result.currentEnvironmentProfileHash,

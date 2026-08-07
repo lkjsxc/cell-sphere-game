@@ -209,10 +209,12 @@ function agentEvolutionTransactionKey(revision, id, currentLevel, nextLevel) {
 }
 function curateResult(result, transaction) {
   const habitats = result.habitatOccupancy ?? [];
-  return Object.freeze({ worldOrdinal: result.worldOrdinal, startEnvironmentLevel: result.startEnvironmentLevel,
+  return Object.freeze({ resultSchemaVersion: result.resultSchemaVersion, worldOrdinal: result.worldOrdinal,
+    startEnvironmentLevel: result.startEnvironmentLevel,
     finalEnvironmentLevel: result.finalEnvironmentLevel, peakEnvironmentLevel: result.peakEnvironmentLevel,
     bestEnvironmentLevelReached: transaction.meta.bestEnvironmentLevelReached,
     environmentScheduleVersion: result.environmentScheduleVersion,
+    environmentProfileVersion: result.environmentProfileVersion, eventDirectorVersion: result.eventDirectorVersion,
     environmentExposure: result.environmentExposure, timeAtPeakTicks: result.timeAtPeakTicks,
     onboardingEnvironmentModifier: result.onboardingEnvironmentModifier,
     archetype: result.archetype, survivalSeconds: result.survivalSeconds, cause: result.cause,

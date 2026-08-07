@@ -79,7 +79,7 @@ not compared as identity.
 Atomic replacement is first-wins: abandon/retire old authority, clear renderer
 state, render one static blank Level-0 frame, reserve immutable identity, then
 start one Level-0 controller. Stale Worker/fallback messages are rejected by
-identity and protocol v6.
+identity and protocol v7.
 
 ## Persistence and result transaction
 
@@ -88,7 +88,7 @@ final/peak/transition/exposure consistency, exact World Potential, and SCORE
 before atomically applying Echoes, best records, History, Trophies, and seed
 cursor. Re-delivery returns the prior transaction outcome.
 
-Meta schema 12 stores `bestEnvironmentLevelReached`, `bestEnvironmentExposure`,
+Meta schema 13 stores `bestEnvironmentLevelReached`, `bestEnvironmentExposure`,
 and `longestWorldTicks`. Older `highestEnvironmentLevel` is retained only as
 inert `legacyEnvironmentFrontier`; it cannot select a new start level. History
 schema 8 tags old static attempts as model 1 and records new model-2 start,

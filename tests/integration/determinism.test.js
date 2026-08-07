@@ -55,8 +55,8 @@ test('strain and permanent Evolution remain authoritative start inputs', () => {
   assert.notEqual(evolved.hash, pioneer.hash); assert.equal(evolved.worldPotential, memory.worldPotential);
 });
 
-test('replay schema 6 contains only stable run creation inputs', () => {
-  const result = runFull({ seed: 8888 }); assert.equal(result.replayVersion, REPLAY_VERSION); assert.equal(REPLAY_VERSION, 6);
+test('replay schema 7 contains only stable run creation inputs', () => {
+  const result = runFull({ seed: 8888 }); assert.equal(result.replayVersion, REPLAY_VERSION); assert.equal(REPLAY_VERSION, 7);
   assert.deepEqual(result.replay.map((entry) => entry[1]), [REPLAY.STRAIN, REPLAY.INOCULATE]);
   assert.ok(result.replay.flat().every(Number.isInteger));
 });

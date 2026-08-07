@@ -6,7 +6,8 @@ import { smootherstep } from '../core/math.js';
 import { incrementProgressionInteger, normalizeProgressionInteger } from '../core/progression-integer.js';
 import { hashStringU32 } from '../core/hash.js';
 export const EVENT_FIELD_VERSION = 2; export const EVENT_UNREACHABLE = 0xffff;
-export const EVENT_DIRECTOR_VERSION = 2;
+// v3 reserves summary-cadence slack for the visible telegraph contract.
+export const EVENT_DIRECTOR_VERSION = 3;
 export const MAX_EVENT_DIRECTOR_EVENTS = 6;
 export const MAX_EVENT_DIRECTOR_RECENT = 8;
 const LAND_BOUND = new Set(['drought', 'bloom', 'blight']); const MAX_ARRIVAL_TICKS = 15;

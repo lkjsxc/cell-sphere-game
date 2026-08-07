@@ -11,7 +11,7 @@ frontier authority are rejected.
 
 Canonical decimal progression arithmetic lives at schedule/compiler/persistence
 boundaries. Current/next compiled profiles and interpolated finite coefficients
-are the only live pressure state. Profile v2 retains an asymptotic attrition
+are the only live pressure state. Profile v3 retains an asymptotic attrition
 dimension after ordinary ramps saturate, so no finite Evolution is immortal.
 
 ## 2026-08-07 — D3: Onboarding is explicit and separate
@@ -35,8 +35,9 @@ Neither is a v2 best record or reward/Trophy input.
 
 ## 2026-08-07 — D6: Semantic boundary versions
 
-The implementation bumps Environment model/schedule/profile and exposure to 2,
-SCORE to 5, protocol/replay to 6, meta/History to 12/8, WAL to 3, agent save/observation schemas
+The implementation keeps Environment model/schedule and exposure at 2, bumps
+profile/event-director to 3, SCORE to 5, result/protocol/replay to 7,
+meta/History to 13/8, WAL to 4, and agent save/observation schemas
 to 3, and Trophy facts to 6. These versions travel with validation rather than
 compatibility aliases in live authority.
 

@@ -64,11 +64,11 @@ action is **Next World**, which always resets to Level 0.
 - Normal speeds are 1×, 2×, 4×, and 8×. `?dev=1` visibly enables session-only
   16×–256× diagnostics; every authoritative tick still executes.
 - WebGL2 uses four world draw calls. Canvas 2D is a semantic fallback.
-- Meta schema 12 preserves old static `highestEnvironmentLevel` only as inert
+- Meta schema 13 preserves old static `highestEnvironmentLevel` only as inert
   `legacyEnvironmentFrontier`; new achieved records are
   `bestEnvironmentLevelReached` and bounded pressure exposure. History schema 8
   explicitly distinguishes legacy static attempts from dynamic worlds.
-- Run protocol/replay are v6; agent save schema is v3 and observation schema is v4.
+- Result/run protocol/replay are v7; agent save and observation schemas are v4.
 
 ## Run locally
 

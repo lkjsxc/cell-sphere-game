@@ -31,6 +31,8 @@ test('agent save schema validates exact browser subdocuments and hashes canonica
   const clean = exportAgentSave(defaultAgentSave(123));
   assert.equal(clean.schema, AGENT_SAVE_SCHEMA); assert.equal(clean.campaignSeed, 123);
   assert.equal(clean.worldOrdinal, '1'); assert.equal(clean.stateHash, hashAgentSave(clean));
+  const migrated = validateAgentSave({ ...clean, schema: 3 });
+  assert.equal(migrated.schema, 4); assert.equal(migrated.meta.schema, 13); assert.equal(migrated.history.schema, 8);
   const repaired = validateAgentSave({ ...clean, campaignSeed:-2, goal:'secret-goal',
     worldOrdinal:'999', meta:{ ...clean.meta, echoBalance:'-5' }, history:{ worlds:'bad' } });
   assert.equal(repaired.campaignSeed, 0); assert.equal(repaired.goal, 'balanced');

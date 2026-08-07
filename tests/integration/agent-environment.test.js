@@ -5,8 +5,8 @@ import { createAgentEnvironment } from '../../src/agent/environment.js';
 import { defaultAgentSave } from '../../src/agent/schema.js';
 
 const REQUIRED_RESULT_KEYS = ['archetype', 'bestEnvironmentLevelReached', 'builds', 'cause', 'crises', 'echoes',
-  'environmentExposure', 'finalEnvironmentLevel', 'peakEnvironmentLevel', 'pressure', 'rank', 'resources',
-  'score', 'scoreModelVersion', 'startEnvironmentLevel', 'stateHash', 'survivalSeconds', 'terminalCause',
+  'environmentExposure', 'environmentProfileVersion', 'eventDirectorVersion', 'finalEnvironmentLevel', 'peakEnvironmentLevel',
+  'pressure', 'rank', 'resources', 'resultSchemaVersion', 'score', 'scoreModelVersion', 'startEnvironmentLevel', 'stateHash', 'survivalSeconds', 'terminalCause',
   'timeAtPeakTicks', 'trophiesAwarded', 'worldOrdinal', 'worldPotential', 'worldmaking'];
 
 test('all fair action shapes use production exact transactions and Level-0 authority', { timeout: 30_000 }, () => {
@@ -24,6 +24,8 @@ test('all fair action shapes use production exact transactions and Level-0 autho
   for (const key of REQUIRED_RESULT_KEYS) assert.ok(key in completed.result, key);
   assert.ok(BigInt(completed.result.score) > 0n);
   assert.equal(completed.result.startEnvironmentLevel, '0');
+  assert.equal(completed.result.resultSchemaVersion, 7); assert.equal(completed.result.environmentProfileVersion, 3);
+  assert.equal(completed.result.eventDirectorVersion, 3);
   assert.ok(BigInt(completed.result.peakEnvironmentLevel) >= 1n); assert.ok(completed.result.stateHash);
   const after = env.exportSave(); assert.equal(after.meta.runs, '1'); assert.equal(after.worldOrdinal, '2');
   assert.equal(after.history.worlds.length, 1); assert.equal(after.meta.resultKeys.length, 1);
@@ -37,7 +39,7 @@ test('all fair action shapes use production exact transactions and Level-0 autho
   const repeat = env.act({ type: 'buy-evolution-level', cellId: option.id });
   assert.equal(repeat.reason, 'missing-precondition'); assert.equal(env.exportSave().history.evolution.length, 1);
   assert.equal(env.act({ type: 'inspect-last-result' }).accepted, true); assert.equal(env.act({ type: 'inspect-builds' }).accepted, true);
-  assert.equal(env.act({ type: 'export' }).save.schema, 3);
+  assert.equal(env.act({ type: 'export' }).save.schema, 4);
   assert.equal(env.act({ type: 'reset', seed: -1 }).reason, 'invalid-seed'); assert.equal(env.act({ type: 'reset', seed: 77 }).accepted, true);
   assert.equal(env.exportSave().meta.runs, '0'); assert.equal(env.observe().lastResult, null);
 });

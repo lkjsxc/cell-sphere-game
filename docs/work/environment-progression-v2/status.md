@@ -15,8 +15,8 @@ No unrelated work was reset or discarded.
   current/next profile installation before ecology, and bounded rolling events.
 - Natural terminal authority; SCORE v5 with sustained exposure plus
   low-Potential calibration that preserves breadth-complete anchors; dynamic
-  result, immutable identity, protocol/replay v6, and neutral Level-0 frame.
-- Meta 12, History 8, WAL 3, agent save schema 3 / observation schema 4, inert legacy frontier/attempt
+  result, immutable identity, result/protocol/replay v7, and neutral Level-0 frame.
+- Meta 13, History 8, WAL 4, agent save/observation schemas 4, profile/event-director v3, inert legacy frontier/attempt
   migration, and dynamic HUD/Result/History/agent interfaces.
 
 ## Follow-up authority hardening
@@ -35,13 +35,16 @@ snapshot, Result, History schema 8, the ENTROPY detail, and fair-agent
 observation schema 4. A Node `worker_threads` bridge exercises the actual
 browser Worker module and matches its terminal hash, transitions, event History,
 and exposure against the production fallback. The title showcase was regenerated
-from those production bytes.
+from those production bytes. The unchanged public schedule/model remains v2;
+the affected pressure/event contract is v3 and result/protocol/replay is v7.
+Meta 12, WAL 3, and agent-save 3 documents upgrade field-locally to 13, 4, and
+4; a narrow v2 profile compiler reads only an in-flight legacy result transaction.
 
 ## Evidence actually run on this worktree
 
 | Evidence | Result |
 | --- | --- |
-| `npm run verify` | exit 0; all 26 local gates passed (unit 194/194, integration 78/78, audits, smoke balance, benchmark, links, structure). |
+| `npm run verify` | exit 0; all 26 local gates passed (unit 198/198, integration 78/78, audits, smoke balance, benchmark, links, structure). |
 | `npm run test:browser:file` | pass: WebGL2 Worker path, score 12,429, 4 draws, 8×/256×, Evolution interaction, visual IDB, Luminous evidence. |
 | `npm run test:browser:canvas` | pass: Canvas fallback, unified shell/History/Evolution/Trophies, score 12,429. |
 | `npm run test:browser:fallback` | pass: WebGL2 fallback simulation, 4 draws and the same dynamic shell evidence. |

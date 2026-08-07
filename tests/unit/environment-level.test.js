@@ -15,10 +15,12 @@ import {
 } from '../../src/game/environment-level.js';
 import {
   CHALLENGE_PROFILE_VERSION,
+  LEGACY_CHALLENGE_PROFILE_VERSION,
   MAX_EVENTS_PER_WORLD,
   MIN_TELEGRAPH_TICKS,
   environmentProfileHash,
   compileChallengeProfile,
+  compileLegacyChallengeProfileV2,
   pressureForNetRating,
   validateChallengeProfile,
 } from '../../src/simulation/challenge-profile.js';
@@ -139,6 +141,15 @@ test('matched multi-affinity defense mitigates a public level without changing i
   assert.equal(environmentLevelAtTick(environmentTickForLevel('1000')), '1000');
 });
 
+test('legacy profile reader preserves v2 event eligibility for in-flight migration only', () => {
+  const evolution = { affinityDefense: Object.fromEntries(Object.keys(undefended.affinityDefense).map((key) => [key, '1000'])) };
+  const legacy = compileLegacyChallengeProfileV2({ environmentLevel: '1', evolution });
+  const current = compileChallengeProfile({ environmentLevel: '1', evolution });
+  assert.equal(legacy.version, LEGACY_CHALLENGE_PROFILE_VERSION); assert.equal(legacy.events.count, 1);
+  assert.equal(current.version, CHALLENGE_PROFILE_VERSION); assert.equal(current.events.count, 0);
+  assert.notEqual(legacy.hash, current.hash);
+});
+
 test('compiler hashes are deterministic, defense-sensitive, and validation rejects tampering', () => {
   const a = compileChallengeProfile({ environmentLevel: '10', evolution: undefended });
   const b = compileChallengeProfile({ environmentLevel: '10', evolution: undefended });
@@ -149,7 +160,7 @@ test('compiler hashes are deterministic, defense-sensitive, and validation rejec
   assert.notEqual(a.hash, defended.hash);
   assert.deepEqual(validateChallengeProfile(a), a);
   assert.equal(validateChallengeProfile({ ...a, hash: '00000000' }).environmentLevel, '0');
-  assert.equal(CHALLENGE_PROFILE_VERSION, 2);
+  assert.equal(CHALLENGE_PROFILE_VERSION, 3);
 });
 
 test('rating projection is bounded and never requires Number conversion of a huge decimal', () => {

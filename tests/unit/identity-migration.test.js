@@ -62,6 +62,16 @@ test('full legacy namespace migration preserves every schema-8 progression and s
   assert.deepEqual([STORAGE_KEYS.meta, STORAGE_KEYS.settings, STORAGE_KEYS.history].map((key) => storage.getItem(key)), canonicalBefore);
 });
 
+test('schema-12 dynamic Environment records upgrade to meta schema 13 without frontier inference', () => {
+  const prior = { ...defaultMeta(), schema: 12, bestEnvironmentLevelReached: '7', longestWorldTicks: '4321',
+    bestEnvironmentExposure: { ...defaultMeta().bestEnvironmentExposure, totalTicks: '4321', currentLevel: '7' },
+    legacyEnvironmentFrontier: '99' };
+  const upgraded = validateMeta(prior);
+  assert.equal(upgraded.schema, 13); assert.equal(upgraded.bestEnvironmentLevelReached, '7');
+  assert.equal(upgraded.longestWorldTicks, '4321'); assert.equal(upgraded.bestEnvironmentExposure.totalTicks, '4321');
+  assert.equal(upgraded.legacyEnvironmentFrontier, '99');
+});
+
 test('valid canonical wins coexistence and corrupt canonical degrades field-by-field without legacy rollback', () => {
   const canonical = { ...legacyMeta, schema: 9, scoreModelVersion: 2, memoryGraphVersion: 5,
     bestScore: 900001, totalEchoes: 700, echoBalance: 'broken', runs: 9,

@@ -7,6 +7,8 @@ import {
   ENVIRONMENT_SCHEDULE_VERSION,
   environmentOnboardingModifierForWorld,
 } from '../../game/environment-level.js';
+import { ENVIRONMENT_PROFILE_VERSION } from '../../simulation/challenge-profile.js';
+import { EVENT_DIRECTOR_VERSION } from '../../simulation/events.js';
 import { incrementProgressionInteger, maxProgressionInteger, normalizeProgressionInteger } from '../../core/progression-integer.js';
 import { hashStringU32, hexU32 } from '../../core/hash.js';
 import { identityFields, sameWorldIdentity } from '../../core/world-session.js';
@@ -158,6 +160,7 @@ function expectedMatches(app, expected) {
 function immutableStartConfigurationHash(seed, worldOrdinal, evolution, onboarding) {
   const material = stableStartJson({ seed, worldOrdinal, environmentModelVersion: ENVIRONMENT_MODEL_VERSION,
     environmentScheduleVersion: ENVIRONMENT_SCHEDULE_VERSION, environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH,
+    environmentProfileVersion: ENVIRONMENT_PROFILE_VERSION, eventDirectorVersion: EVENT_DIRECTOR_VERSION,
     onboarding, evolution });
   return hexU32(hashStringU32(material));
 }

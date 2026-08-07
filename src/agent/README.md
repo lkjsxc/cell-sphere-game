@@ -12,7 +12,7 @@ History, Trophy, and result transaction authority used by the browser.
   coefficients, exposure, achieved best, builds, resources, Reach, charge,
   active events, and exact Evolution state; never future events/seeds,
   RNG, raw arrays, or hidden maps.
-- `schema.js`: bounded agent-save v3 validation and deterministic save hash.
+- `schema.js`: bounded agent-save v4 validation and deterministic save hash.
 - `policies.js`: deterministic policies that consume observations only.
 
 `incomplete-budget` is reward-free and does not create a completed world record.

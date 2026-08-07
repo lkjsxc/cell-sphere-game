@@ -1,6 +1,7 @@
 /** Compact replay, semantic history, and terminal authority hash. */
 import { hashF32, hashString, hashU8, hexU32 } from '../core/hash.js';
-export const REPLAY_VERSION = 6;
+// v7 captures the terminal-clock and rolling-event authority correction.
+export const REPLAY_VERSION = 7;
 export const REPLAY = Object.freeze({ STRAIN: 0, INOCULATE: 1, SPEED: 2 });
 
 /** @param {object} state @param {number} type @param {...number} args */
@@ -95,6 +96,7 @@ export function finalStateHash(state) {
   h = hashString(h, [state.worldOrdinal, state.environmentModelVersion, state.environmentScheduleVersion,
     state.environmentScheduleHash, state.currentEnvironmentLevel,
     state.peakEnvironmentLevel, state.environmentTransitionCount,
+    state.currentEnvironmentProfileVersion, state.eventDirector?.version ?? 0,
     state.currentEnvironmentProfileHash, state.worldPotential, state.evolutionDepth,
     state.scoreMerit.total, exposure.totalTicks ?? '0', exposure.pressureTicksQ ?? '0',
     exposure.qualityPressureTicksQ ?? '0', exposure.timeAtPeakTicks ?? '0', exposure.pendingTicks ?? 0,

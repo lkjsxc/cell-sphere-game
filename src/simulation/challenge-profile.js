@@ -1,5 +1,5 @@
 /**
- * Environment Profile v2 compiler. Exact public ratings compile directly at
+ * Environment Profile v3 compiler. Exact public ratings compile directly at
  * Level transitions into finite bounded coefficients consumed by simulation.
  */
 import {
@@ -14,7 +14,9 @@ import {
 import { hashStringU32, hexU32 } from '../core/hash.js';
 import { normalizeEnvironmentLevel } from '../game/environment-level.js';
 
-export const CHALLENGE_PROFILE_VERSION = 2;
+export const LEGACY_CHALLENGE_PROFILE_VERSION = 2;
+// v3: effective zero event pressure defers rolling harmful events.
+export const CHALLENGE_PROFILE_VERSION = 3;
 export const ENVIRONMENT_PROFILE_VERSION = CHALLENGE_PROFILE_VERSION;
 export const ENVIRONMENT_RATING_PER_LEVEL = '1000';
 export const MAX_EVENTS_PER_WORLD = 6;
@@ -30,7 +32,14 @@ const DIMENSIONS = Object.freeze({
 });
 
 /** Direct O(1)-by-level-magnitude compiler; work is bounded by six dimensions. */
-export function compileChallengeProfile(input = {}) {
+export function compileChallengeProfile(input = {}) { return compileProfileVersion(input, CHALLENGE_PROFILE_VERSION); }
+
+/** Narrow migration reader for an in-flight v2 result transaction only. */
+export function compileLegacyChallengeProfileV2(input = {}) {
+  return compileProfileVersion(input, LEGACY_CHALLENGE_PROFILE_VERSION);
+}
+
+function compileProfileVersion(input, version) {
   const environmentLevel = normalizeEnvironmentLevel(input.environmentLevel, '0');
   const publicRating = multiplyProgressionIntegers(environmentLevel, ENVIRONMENT_RATING_PER_LEVEL);
   const evolution = input.evolution && typeof input.evolution === 'object' ? input.evolution : {};
@@ -44,7 +53,7 @@ export function compileChallengeProfile(input = {}) {
     dimensions[name] = Object.freeze({ environmentRating: publicRating, defenseRating,
       netRating, pressure: pressureForNetRating(netRating) });
   }
-  return profileFromDimensions(environmentLevel, publicRating, Object.freeze(dimensions));
+  return profileFromDimensions(environmentLevel, publicRating, Object.freeze(dimensions), version);
 }
 
 export function validateChallengeProfile(raw) {
@@ -146,7 +155,7 @@ function minimumAffinityDefense(evolution, affinities) {
   return minimum ?? '0';
 }
 
-function profileFromDimensions(environmentLevel, publicRating, dimensions) {
+function profileFromDimensions(environmentLevel, publicRating, dimensions, version = CHALLENGE_PROFILE_VERSION) {
   const qScarcity = dimensions.scarcity.pressure; const qRenewal = dimensions.renewal.pressure;
   const qClimate = dimensions.climate.pressure; const qToxicity = dimensions.toxicity.pressure;
   const qMaintenance = dimensions.maintenance.pressure; const qEvents = dimensions.events.pressure;
@@ -157,11 +166,11 @@ function profileFromDimensions(environmentLevel, publicRating, dimensions) {
   // Events are an effective-pressure dimension: complete relevant finite
   // defense can defer them, while any positive net event pressure retains a
   // mild telegraphed candidate and later levels eventually exceed that defense.
-  const eventCount = environmentLevel === '0' || qEvents <= 0
+  const eventCount = environmentLevel === '0' || (version !== LEGACY_CHALLENGE_PROFILE_VERSION && qEvents <= 0)
     ? 0 : Math.min(MAX_EVENTS_PER_WORLD, 1 + Math.floor(eventRamp * 5 + 1e-9));
   const maxNetMagnitude = Math.max(...Object.values(dimensions).map((dimension) => pressureMagnitude(dimension.netRating)));
   const profile = {
-    version: CHALLENGE_PROFILE_VERSION, environmentLevel, publicRating, dimensions,
+    version, environmentLevel, publicRating, dimensions,
     coefficients: Object.freeze({
       // World generation is intentionally outside this live pressure object.
       renewalScale: finite(1 - 0.55 * renewalRamp, 0.45, 1),

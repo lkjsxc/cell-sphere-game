@@ -5,9 +5,9 @@ API is unavailable.
 
 | Module | Authority |
 |---|---|
-| `storage.js` | Meta schema 12: exact progression, Evolution, Trophies, dynamic achieved Environment records, and inert legacy frontier. |
+| `storage.js` | Meta schema 13: exact progression, Evolution, Trophies, dynamic achieved Environment records, and inert legacy frontier. |
 | `history.js` | Bounded History schema 8: legacy static attempts versus dynamic start/final/peak/exposure worlds with interpolation evidence. |
-| `run-transaction-store.js` | WAL schema 3 coupling validated result, reward, records, History, Trophies, and idempotency. |
+| `run-transaction-store.js` | WAL schema 4 coupling validated result, reward, records, History, Trophies, and idempotency. |
 | `settings.js` | Durable player preferences; developer mode/speeds excluded. |
 | `namespace-store.js` / `namespace-migration.js` | Field-safe validation, verified writes, and transactional browser import/migration. |
 | `recent-runs.js` | Optional bounded IndexedDB visual checkpoints, never authority. |
@@ -21,4 +21,4 @@ Schema migration preserves old `highestEnvironmentLevel` as
 `legacyEnvironmentFrontier` only. It never derives a dynamic achieved peak,
 starts a new world above Level 0, changes pressure, grants rewards/Trophies, or
 changes purchase eligibility. Storage failure leaves the session playable and
-truthfully temporary. Browser saves never import agent-save v3 documents.
+truthfully temporary. Browser saves never import agent-save v4 documents.

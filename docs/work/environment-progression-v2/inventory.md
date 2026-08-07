@@ -9,7 +9,7 @@
 | Events | `src/simulation/events.js`, `summary.js` | Bounded deterministic rolling director, telegraphs, reclamation. |
 | Identity/protocol | `src/core/world-session.js`, `run-protocol.js`, Worker/fallback drivers | Immutable start identity; live level only in snapshots/results. |
 | Results/transactions | `result.js`, `policies/run-result.js`, `run-transaction-store.js` | Dynamic result validation and exactly-once commit. |
-| Persistence/History | `storage.js`, `history.js` | Meta 12/History 8 dynamic records, interpolation evidence, and inert legacy migration. |
+| Persistence/History | `storage.js`, `history.js` | Meta 13/History 8 dynamic records, interpolation evidence, and inert legacy migration. |
 | UI | `surfaces.js`, `run-session.js`, `run-result.js`, `index.html` | Live HUD/progress, blank Level-0 frame, `Next World`. |
 | Agents | `src/agent/{environment,observation,schema,policies}.js` | Fair dynamic observations; bounded Level-0 run control; selection/retry rejection. |
 | Verification | environment/event/terminal/number/trophy audits, balance, benchmark, browser scripts | Production-module checks rather than copied models. |

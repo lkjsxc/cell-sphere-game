@@ -10,15 +10,15 @@ and survivability, never the public clock.
 
 Schedule v2 (`src/game/environment-level.js`) has Level 0 at tick 0, Level 1
 at tick 1200, and later levels every 600 ticks. It evaluates/inverts directly
-with canonical exact values and has no designed maximum. Profile/exposure v2,
-SCORE v5, protocol/replay v6, meta 12, History 8, WAL 3, agent save schema 3 / observation schema 4, and
-Trophy facts 6 share this boundary. Old static `highestEnvironmentLevel` is
+with canonical exact values and has no designed maximum. Profile/event-director v3,
+exposure v2, SCORE v5, result/protocol/replay v7, meta 13, History 8, WAL 4,
+agent save/observation schemas v4, and Trophy facts 6 share this boundary. Old static `highestEnvironmentLevel` is
 inert `legacyEnvironmentFrontier`; old History levels are static-attempt
 records, not dynamic peaks.
 
 ## Verification
 
-The reviewed v2 source passed `npm run verify` (all 26 local gates; 194/194
+The reviewed v2 source passed `npm run verify` (all 26 local gates; 198/198
 unit and 78/78 integration), WebGL2 Worker/fallback and Canvas browser suites,
 strict 30-run-per-policy balance, full campaign audit, REACH 100 audit, agent
 smoke/campaign/long, and untouched holdout cohorts.
