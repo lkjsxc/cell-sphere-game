@@ -16,9 +16,9 @@ Trophy facts 6 share this boundary. Old static `highestEnvironmentLevel` is
 inert `legacyEnvironmentFrontier`; old History levels are static-attempt
 records, not dynamic peaks.
 
-## Local verification
+## Verification
 
-The uncommitted worktree passed `npm run verify` (all 26 local gates), WebGL2
+The reviewed v2 source passed `npm run verify` (all 26 local gates), WebGL2
 Worker/fallback and Canvas browser suites, strict 30-run-per-policy balance,
 full campaign audit, REACH 100 audit, agent smoke/campaign/long, and untouched
 holdout cohorts.
@@ -39,10 +39,22 @@ Browser evidence used a dynamic reference SCORE of 12,429, exactly four WebGL
 world draws, Worker/fallback equality paths, Canvas fallback, charged-cell
 Luminous evidence, and Evolution interaction.
 
-## Release boundary
+## Release evidence
+
+Commit `35d5b8ec161cade16932e50102b2b1653f59ae08` passed GitHub Actions
+[`verify` run 31147509396](https://github.com/lkjsxc/cell-sphere-game/actions/runs/31147509396)
+in 32m05s, including Benchmark. Its GitHub Pages deployment
+`5789047543` completed successfully at
+<https://lkjsxc.github.io/cell-sphere-game/>.
+
+A cache-busted deployed HTML/source-byte check returned HTTP 200 and confirmed
+`Next World`, Level-0 copy, schedule model 2 (1200/600), SCORE v5 calibration,
+and derived result validation; the deployment API records the same commit SHA.
+A remote Chrome interaction attempt was blocked by that browser process's
+`ERR_INTERNET_DISCONNECTED`, so this record does **not** claim a deployed
+interactive reset/progression browser session. Local browser reset/progression
+coverage is recorded above.
 
 The active work package at
 [`docs/work/environment-progression-v2/`](work/environment-progression-v2/)
-contains current matrices and command evidence. CI, Pages, and cache-busted
-deployed bytes have **not** yet been checked for this uncommitted revision; do
-not treat baseline deployment reports as v2 evidence.
+contains matrices and full command evidence.

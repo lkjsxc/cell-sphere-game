@@ -2,9 +2,9 @@
 
 ## Active state
 
-The cross-layer v2 migration is locally integrated and verified in the
-uncommitted worktree on `main` after baseline package commits `6155236` and
-`0774056`. No unrelated work was reset or discarded.
+The cross-layer v2 migration is integrated on `main` after package commits
+`6155236`/`0774056`, implementation commit `05e37ac`, and the hosted-CI
+benchmark-floor correction `35d5b8e`. No unrelated work was reset or discarded.
 
 ## Implemented locally
 
@@ -38,8 +38,15 @@ At `2454b6d`, old frontier/retry tests passed, smoke exposed an approximately
 362-second normal cap, benchmark measured 7,042 ticks/s, and deployed Pages
 contained static frontier copy. This is historical evidence, not v2 proof.
 
-## Remaining release work
+## Release evidence and limitation
 
-Commit/push the reviewed change; inspect GitHub Actions, Pages, and cache-busted
-deployed bytes after the revision exists remotely. No CI, Pages, deployed-byte,
-or physical-device claim is made before those checks occur.
+`35d5b8ec161cade16932e50102b2b1653f59ae08` passed GitHub Actions verify run
+[31147509396](https://github.com/lkjsxc/cell-sphere-game/actions/runs/31147509396)
+in 32m05s; its Pages deployment `5789047543` succeeded. Cache-busted deployed
+HTML and source bytes returned HTTP 200 with Level-0/Next World copy, schedule
+v2, SCORE v5, and derived result validation; the deployment API confirms the
+same SHA.
+
+A remote Chrome run could not load the public site because that browser process
+reported `ERR_INTERNET_DISCONNECTED`. Therefore local browser evidence is real,
+but no deployed interactive browser reset/progression claim is made.

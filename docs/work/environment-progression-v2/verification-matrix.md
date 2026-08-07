@@ -17,7 +17,7 @@ worktree. CI, Pages, and deployment remain separate evidence.
 | Agents | fair observations, no static actions, training/holdout cohorts | pass: smoke/campaign/long/holdout |
 | Balance/terminal | fresh/breadth anchors, REACH rarity, finite deaths, no cap | pass: strict balance, campaign, reach, terminal soak |
 | Performance/bounds | benchmark, events/history/cache/soak | pass: benchmark and verify audits |
-| Release | commit/push, CI, Pages, cache-busted deployed bytes | pending |
+| Release | commit/push, CI, Pages, cache-busted deployed bytes | pass: `35d5b8e` pushed; Actions 31147509396 and Pages deployment 5789047543 succeeded; deployed bytes inspected |
 
 ## Key measured results
 
@@ -33,7 +33,10 @@ worktree. CI, Pages, and deployment remain separate evidence.
 - Long agent: 8 policies × 12 worlds. Holdout: four untouched seeds, 22
   policies, six worlds each, no failures.
 
-## Still required before release claim
+## Deployment limitation
 
-Create/push a coherent commit, check remote CI, then verify Pages and
-cache-busted deployed bytes for that commit.
+The Pages deployment API confirms SHA `35d5b8ec161cade16932e50102b2b1653f59ae08`
+and cache-busted bytes expose the v2 schedule/UI/source. A remote Chrome
+interaction attempt was blocked by that browser's `ERR_INTERNET_DISCONNECTED`;
+there is no claim of a deployed interactive browser session beyond the local
+browser acceptance evidence.
