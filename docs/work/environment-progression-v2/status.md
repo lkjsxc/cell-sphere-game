@@ -3,8 +3,9 @@
 ## Active state
 
 The cross-layer v2 migration is integrated on `main` after package commits
-`6155236`/`0774056`, implementation commit `05e37ac`, and the hosted-CI
-benchmark-floor correction `35d5b8e`. No unrelated work was reset or discarded.
+`6155236`/`0774056`, implementation commit `05e37ac`, the hosted-CI
+benchmark-floor correction `35d5b8e`, and authority-hardening commit `cd533e3`.
+No unrelated work was reset or discarded.
 
 ## Implemented locally
 
@@ -59,6 +60,12 @@ At `2454b6d`, old frontier/retry tests passed, smoke exposed an approximately
 contained static frontier copy. This is historical evidence, not v2 proof.
 
 ## Release evidence and limitation
+
+`cd533e39db3dea51ab5bed6a96bb3c415b9363fe` passed GitHub Actions verify run
+[31158862198](https://github.com/lkjsxc/cell-sphere-game/actions/runs/31158862198)
+in 32m00s; its GitHub Pages deployment `5791190693` succeeded. Cache-busted
+HTTP-200 bytes confirm the hardened simulator/event/profile/History source and
+Level-0/Next World HTML copy without static retry/frontier wording.
 
 `35d5b8ec161cade16932e50102b2b1653f59ae08` passed GitHub Actions verify run
 [31147509396](https://github.com/lkjsxc/cell-sphere-game/actions/runs/31147509396)

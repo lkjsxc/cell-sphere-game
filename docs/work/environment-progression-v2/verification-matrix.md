@@ -17,7 +17,7 @@ worktree. CI, Pages, and deployment remain separate evidence.
 | Agents | fair observations, no static actions, training/holdout cohorts | pass: smoke/campaign/long/holdout |
 | Balance/terminal | fresh/breadth anchors, REACH rarity, finite deaths, no cap | pass: strict balance, campaign, reach, terminal soak |
 | Performance/bounds | benchmark, events/history/cache/soak | pass: benchmark and verify audits |
-| Release | commit/push, CI, Pages, cache-busted deployed bytes | pass: `35d5b8e` pushed; Actions 31147509396 and Pages deployment 5789047543 succeeded; deployed bytes inspected |
+| Release | commit/push, CI, Pages, cache-busted deployed bytes | pass: `cd533e3` pushed; Actions 31158862198 and Pages deployment 5791190693 succeeded; deployed bytes inspected |
 
 ## Key measured results
 

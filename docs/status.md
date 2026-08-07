@@ -47,7 +47,17 @@ Luminous evidence, and Evolution interaction.
 
 ## Release evidence
 
-Commit `35d5b8ec161cade16932e50102b2b1653f59ae08` passed GitHub Actions
+Follow-up authority commit `cd533e39db3dea51ab5bed6a96bb3c415b9363fe`
+passed GitHub Actions [`verify` run 31158862198](https://github.com/lkjsxc/cell-sphere-game/actions/runs/31158862198)
+in 32m00s. GitHub Pages deployment `5791190693` succeeded at
+<https://lkjsxc.github.io/cell-sphere-game/>. Cache-busted deployed bytes
+returned HTTP 200 for the updated simulator, event director, profile, and
+History modules; they contain the terminal-fade clock, summary-cadence
+telegraph allowance, zero-net event handling, and History 8 interpolation
+projection. The deployed HTML contains `Next World` and Level-0 copy with no
+static retry/next-level wording.
+
+The preceding migration commit `35d5b8ec161cade16932e50102b2b1653f59ae08` passed GitHub Actions
 [`verify` run 31147509396](https://github.com/lkjsxc/cell-sphere-game/actions/runs/31147509396)
 in 32m05s, including Benchmark. Its GitHub Pages deployment
 `5789047543` completed successfully at
