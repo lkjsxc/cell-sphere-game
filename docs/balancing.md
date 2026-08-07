@@ -60,6 +60,9 @@ inside its explicitly reward-free 10,000-tick external audit budget.
 
 `balance:smoke`, `balance`, `balance:holdout`, `audit:environment-levels`,
 `agent:campaign`, `agent:long`, and `terminal:soak` use production authority.
+Benchmark comparison uses same-host medians; the separate hosted-CI throughput
+floor is only an infrastructure-health guard because shared runners are not a
+same-host regression baseline.
 Reports must identify training versus untouched holdout seeds, policy, cohort
 size, medians/percentiles, causes, peak-level distributions, SCORE/Echoes, and
 any external incomplete budgets. Old static-frontier/360-second reports are

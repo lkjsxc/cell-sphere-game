@@ -11,7 +11,10 @@ import { compileChallengeProfile } from '../src/simulation/challenge-profile.js'
 import { environmentLevelAtTick, environmentTickForLevel } from '../src/game/environment-level.js';
 
 const SEED = 20260731;
-const MIN_TICKS_PER_SECOND = 3000;
+// Hosted CI has a materially different shared CPU budget from same-host
+// regression measurements. Keep a conservative infrastructure floor there;
+// compare release performance against recorded same-host medians instead.
+const MIN_TICKS_PER_SECOND = process.env.CI ? 2400 : 3000;
 const samples = Array.from({ length: 3 }, () => runHeadless({ RunController }, { seed: SEED, strainId: 'pioneer' }, 'balanced',
   { budgetTicks: 10_000 }));
 if (!samples.every((sample) => sample.complete && sample.result?.hash === samples[0].result?.hash && sample.ticks === samples[0].ticks)) {
@@ -34,7 +37,7 @@ resetEvolutionCompileCache(); const compileAt = performance.now();
 for (let index = 0; index < 1000; index++) compileEvolution({ evolutionLevels: [{ id: MEMORY_NODE_IDS[index % MEMORY_NODE_IDS.length], level: String(index + 1) }] });
 const compileCache = { elapsedMs: Number((performance.now() - compileAt).toFixed(2)), ...evolutionCompileCacheDiagnostics() };
 const checkpoint = { date: new Date().toISOString().slice(0, 10), node: process.version, platform: process.platform,
-  arch: process.arch, cpus: cpus().length, seed: SEED, ticks, elapsedMs: Math.round(ms),
+  arch: process.arch, cpus: cpus().length, seed: SEED, minTicksPerSecond: MIN_TICKS_PER_SECOND, ticks, elapsedMs: Math.round(ms),
   samplesMs: samples.map((sample) => Math.round(sample.ms)), ticksPerSecond, extinctionTick: result.tick,
   peakEnvironmentLevel: result.peakEnvironmentLevel, cause: result.cause, peakCoverage: Number(result.peakCoverage.toFixed(4)),
   hash: result.hash, profiles, compileCache, heapUsedMB: Math.round(process.memoryUsage().heapUsed / 1e6), valid: false };
