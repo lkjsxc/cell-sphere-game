@@ -1,29 +1,30 @@
-# src/simulation/
+# `src/simulation/`
 
-Deterministic fixed-tick ecology. No DOM, audio, storage, WebGL, camera, or
-wall-clock presentation imports.
+Deterministic fixed-tick ecology. It imports no DOM, storage, WebGL, camera, or
+wall-clock presentation authority.
 
 | Module | Responsibility |
-|---|---|
-| `state.js` | Typed-array authority, isolated RNG, local ecology, world era. |
-| `resource-ecology.js` | Baselines, finite stocks, state, conservation, presentation. |
-| `environment.js` | Entropy/season LUTs, renewal, toxins, event effects. |
-| `metabolism.js` | Local uptake, conversion, maintenance, stress, freshwater. |
-| `transport.js` | Flow, reinforcement, decay, pruning, reconnection. |
-| `habitats.js` | Capability requirements and pre-RNG access checks. |
-| `lifecycle/` | Pre-RNG access, birth/death/growth, Reach, exact REACH 100. |
-| `worldmaking.js` | Build-gated whole-cell transformations and electricity. |
-| `events.js` | World-ordinal deterministic graph event fields. |
-| `summary.js` | Metrics and semantic milestones. |
-| `snapshot.js` / `result.js` | Plain presentation and terminal projections. |
-| `replay.js` | Versioned command evidence and authority hash. |
-| `protocol/` | Versioned Worker entry with explicit rejection. |
+| --- | --- |
+| `state.js` | Typed-array world authority, isolated RNG, Level-0 setup, schedule transition state. |
+| `simulator.js` | Shared Worker/fallback tick controller and natural terminal authority. |
+| `challenge-profile.js` | Exact Environment rating/defense compiler and finite current/next runtime profile. |
+| `environment.js` / `metabolism.js` / `transport.js` | Prospective pressure, ecology, maintenance, and flow. |
+| `events.js` | Bounded rolling deterministic whole-cell event director. |
+| `summary.js` | Metrics, event notices/reclamation, exact exposure/SCORE sampling, semantic History. |
+| `snapshot.js` / `result.js` / `replay.js` | Presentation projections, dynamic result evidence, versioned hash/replay. |
+| `resource-ecology.js`, `worldmaking.js`, `lifecycle/` | Finite conservation, transformations/electricity, growth/death/REACH. |
 
-Tick order is environment → local renewal/metabolism → transport → pre-RNG
-ecological growth → death → worldmaking/electricity → Reach/SCORE summaries →
-terminal detection.
+Authoritative order is:
 
-The same `RunController` runs under Worker, fallback, tests, balance tools, and
-audits. Speed changes request more fixed ticks but never change tick content.
-Worlds 1–2 schedule no harmful event fields; later schedules derive from the
-persisted world ordinal. Active mid-run choice commands do not exist.
+```text
+increment tick → schedule transition/profile installation → event director
+→ conditionals → environment → metabolism → transport → worldmaking → growth
+→ death/liveness → connectivity/summary/SCORE/History → terminal evaluation
+```
+
+Every new world begins at Environment Level 0. The public clock derives only
+from authoritative ticks; Evolution changes effective pressure, never the
+clock. Worlds one and two have an explicit onboarding event modifier only.
+The director owns bounded active/future/recent evidence; it does not precompute
+a whole-world event schedule. Speed changes only how many exact ticks are
+executed, never their content.

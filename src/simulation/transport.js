@@ -55,7 +55,8 @@ export function runTransport(state) {
 
   // Reinforcement, decay, pruning.
   const reinforce = B.REINFORCE_K * traits.reinforce * (traits.redundantLoops ? 1.3 : 1);
-  const transportStress = state.challengeProfile?.coefficients?.transportStressScale ?? 1;
+  const environmentCoefficients = state.environmentCoefficients ?? state.currentEnvironmentProfile?.coefficients ?? {};
+  const transportStress = environmentCoefficients.transportStressScale ?? 1;
   const decay = B.CONDUCTANCE_DECAY * (traits.redundantLoops ? 0.6 : 1) * transportStress;
   for (let e = 0; e < edgeCount; e++) {
     if (edgeActive[e] !== 1) continue;

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Tick-trace audit for authoritative cumulative SCORE v4. */
+/** Tick-trace audit for authoritative cumulative SCORE v5. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../../src/simulation/simulator.js';
 import { compileMemory } from '../../src/game/skills/index.js';

@@ -1,23 +1,38 @@
 /** Renderer snapshot construction from canonical authority. */
 import { evaluate, metricsFromState } from '../game/scoring.js';
 import { writeLifeStates } from '../core/life-state.js';
-import { buildEventCellState } from './events.js';
+import { buildEventCellState, eventDirectorSummary } from './events.js';
 import { buildReachSummary } from './lifecycle/reach-ledger.js';
 import { packResourcePresentation, resourceConservation } from './resource-ecology.js';
 import { reachGoalSummary } from './lifecycle/reach-goal.js';
+import { environmentExposureSummary } from '../game/environment-exposure.js';
+import { environmentPressureSummary } from './challenge-profile.js';
 
 export function buildSnapshot(state) {
   const lifeState = writeLifeStates(state.topo, state.alive, state.biomass, state.stress,
     new Uint8Array(state.topo.nodeCount)); const eventCells = buildEventCellState(state);
   const resource = packResourcePresentation(state);
-  const scoreProjection = evaluate(metricsFromState(state));
+  const scoreProjection = evaluate(metricsFromState(state), { environmentBonusQ: state.scoreMerit.environmentBonusQ });
   return {
     tick: state.tick,
     entropy: state.entropy,
     status: state.status,
-    worldOrdinal: state.worldOrdinal, worldEra: state.worldEra,
-    environmentLevel: state.environmentLevel, challengeProfileVersion: state.challengeProfileVersion,
-    challengeProfileHash: state.challengeProfileHash, pressureProfile: state.challengeProfile,
+    worldOrdinal: state.worldOrdinal,
+    environmentModelVersion: state.environmentModelVersion,
+    environmentScheduleVersion: state.environmentScheduleVersion,
+    environmentScheduleHash: state.environmentScheduleHash,
+    currentEnvironmentLevel: state.currentEnvironmentLevel,
+    peakEnvironmentLevel: state.peakEnvironmentLevel,
+    environmentLevelStartTick: state.environmentLevelStartTick,
+    nextEnvironmentLevelTick: state.nextEnvironmentLevelTick,
+    environmentLevelProgressQ: state.environmentLevelProgressQ,
+    environmentTransitionCount: state.environmentTransitionCount,
+    environmentExposure: environmentExposureSummary(state.environmentExposure),
+    recentEnvironmentTransitions: state.recentEnvironmentTransitions.map((transition) => ({ ...transition })),
+    onboardingEnvironmentModifier: { ...state.onboardingEnvironmentModifier },
+    environmentPressureSummary: environmentPressureSummary(state.currentEnvironmentProfile),
+    environmentProfileVersion: state.currentEnvironmentProfileVersion,
+    currentEnvironmentProfileHash: state.currentEnvironmentProfileHash,
     biomass: state.biomass.slice(),
     stress: state.stress.slice(),
     alive: state.alive.slice(),
@@ -48,6 +63,7 @@ export function buildSnapshot(state) {
       scoreProjection,
       vitality: vitality(state),
     },
+    eventDirector: eventDirectorSummary(state),
     events: state.events
       .filter((event) => event.announced & 2 && state.tick <= event.endTick)
       .map((event) => ({ id: event.id, family: event.family, center: event.center,

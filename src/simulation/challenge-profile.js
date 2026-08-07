@@ -1,19 +1,21 @@
 /**
- * Environment Level v1 compiler. Exact public ratings are reduced once at the
- * run boundary to finite, bounded coefficients consumed by simulation ticks.
+ * Environment Profile v2 compiler. Exact public ratings compile directly at
+ * Level transitions into finite bounded coefficients consumed by simulation.
  */
 import {
   addProgressionIntegers,
   compareProgressionIntegers,
   multiplyProgressionIntegers,
   normalizeProgressionInteger,
+  progressionIntegerMagnitude,
   projectProgressionInteger,
   subtractProgressionIntegers,
 } from '../core/progression-integer.js';
 import { hashStringU32, hexU32 } from '../core/hash.js';
 import { normalizeEnvironmentLevel } from '../game/environment-level.js';
 
-export const CHALLENGE_PROFILE_VERSION = 1;
+export const CHALLENGE_PROFILE_VERSION = 2;
+export const ENVIRONMENT_PROFILE_VERSION = CHALLENGE_PROFILE_VERSION;
 export const ENVIRONMENT_RATING_PER_LEVEL = '1000';
 export const MAX_EVENTS_PER_WORLD = 6;
 export const MIN_TELEGRAPH_TICKS = 100;
@@ -67,7 +69,7 @@ export function validateChallengeProfile(raw) {
   } catch { return compileChallengeProfile(); }
 }
 
-export function challengeProfileHash(profile) {
+export function environmentProfileHash(profile) {
   const canonical = JSON.stringify({
     version: profile.version,
     environmentLevel: profile.environmentLevel,
@@ -93,6 +95,31 @@ export function pressureForNetRating(netRating) {
 
 export function challengeDimensions() { return DIMENSIONS; }
 
+/** Deterministically interpolate prospective runtime coefficients only. */
+export function interpolateEnvironmentCoefficients(current, next, progressQ = 0) {
+  const q = Math.max(0, Math.min(1_000_000, Number.isInteger(progressQ) ? progressQ : 0)) / 1_000_000;
+  const from = current?.coefficients ?? {};
+  const to = next?.coefficients ?? from;
+  const result = {};
+  for (const key of new Set([...Object.keys(from), ...Object.keys(to)])) {
+    const a = Number.isFinite(from[key]) ? from[key] : 0;
+    const b = Number.isFinite(to[key]) ? to[key] : a;
+    result[key] = finite(a + (b - a) * q, Math.min(a, b), Math.max(a, b));
+  }
+  return Object.freeze(result);
+}
+
+/** Compact player-visible finite projection; exact ratings remain in profile. */
+export function environmentPressureSummary(profile) {
+  const source = profile && typeof profile === 'object' ? profile : compileChallengeProfile();
+  return Object.freeze({ level: source.environmentLevel, publicRating: source.publicRating,
+    pressure: finite(source.score?.pressure ?? 0, 0, 1),
+    severityQ: Math.max(0, Math.min(1_000_000, Math.round((source.score?.severity ?? 0) * 1_000_000))),
+    dimensions: Object.freeze(Object.fromEntries(Object.entries(source.dimensions ?? {}).map(([name, dimension]) => [name,
+      Object.freeze({ netRating: dimension.netRating, pressure: dimension.pressure })]))),
+  });
+}
+
 function minimumAffinityDefense(evolution, affinities) {
   let minimum = null;
   for (const affinity of affinities) {
@@ -115,10 +142,11 @@ function profileFromDimensions(environmentLevel, publicRating, dimensions) {
   const renewalRamp = difficultyRamp(qRenewal);
   const maintenanceRamp = difficultyRamp(qMaintenance);
   const eventCount = environmentLevel === '0' ? 0 : Math.min(MAX_EVENTS_PER_WORLD, 1 + Math.floor(eventRamp * 5 + 1e-9));
+  const maxNetMagnitude = Math.max(...Object.values(dimensions).map((dimension) => pressureMagnitude(dimension.netRating)));
   const profile = {
     version: CHALLENGE_PROFILE_VERSION, environmentLevel, publicRating, dimensions,
     coefficients: Object.freeze({
-      initialResourceScale: finite(1 - 0.28 * scarcityRamp, 0.72, 1),
+      // World generation is intentionally outside this live pressure object.
       renewalScale: finite(1 - 0.55 * renewalRamp, 0.45, 1),
       seasonScale: finite(0.25 + 0.75 * qClimate, 0.25, 1),
       dryingScale: finite(0.22 * qClimate, 0, 0.22),
@@ -126,17 +154,29 @@ function profileFromDimensions(environmentLevel, publicRating, dimensions) {
       toxinScale: finite(qToxicity, 0, 1),
       maintenanceScale: finite(1 + 0.30 * maintenanceRamp, 1, 1.30),
       transportStressScale: finite(1 + 0.25 * maintenanceRamp, 1, 1.25),
+      recoveryScale: finite(1 - 0.50 * maintenanceRamp, 0.50, 1),
+      // Exact rating magnitude remains an asymptotically worsening bounded
+      // dimension after ordinary pressure ramps have saturated.
+      attritionScale: finite(1 + 0.45 * (maxNetMagnitude / (maxNetMagnitude + 64)), 1, 1.45),
     }),
-    events: Object.freeze({ count: eventCount,
-      earliestStartTick: environmentLevel === '0' ? 2400 : Math.max(1100, Math.round(2400 - 1300 * eventRamp)),
+    events: Object.freeze({ count: eventCount, maxConcurrent: Math.max(0, Math.min(MAX_EVENTS_PER_WORLD, eventCount)),
+      cadenceTicks: environmentLevel === '0' ? 900 : Math.max(180, Math.round(840 - 580 * eventRamp)),
       intensityMin: finite(0.50 + 0.22 * eventRamp, 0.50, 0.72),
       intensityMax: finite(0.70 + 0.45 * eventRamp, 0.70, 1.15),
       footprintScale: finite(1 + 0.35 * eventRamp, 1, 1.35), overlap: finite(eventRamp, 0, 1),
       telegraphTicks: MIN_TELEGRAPH_TICKS }),
     score: Object.freeze({ pressure: finite(averagePressure(dimensions), 0, 1),
+      // A bounded severity projection is used by hot loops. Exact net ratings
+      // remain in dimensions for diagnostics and finite-defense comparisons.
+      severity: finite(maxNetMagnitude / (maxNetMagnitude + 64), 0, 0.999999),
       minimumExposureTicks: 900, fullExposureTicks: 2400 }),
   };
-  return Object.freeze({ ...profile, hash: challengeProfileHash(profile) });
+  return Object.freeze({ ...profile, hash: environmentProfileHash(profile) });
+}
+function pressureMagnitude(netRating) {
+  const magnitude = progressionIntegerMagnitude(netRating, 6);
+  if (magnitude.mantissa === 0) return 0;
+  return Math.max(0, magnitude.exponent10 + magnitude.mantissa / magnitude.mantissaScale / 10);
 }
 function averagePressure(dimensions) {
   const values = Object.values(dimensions); return values.length

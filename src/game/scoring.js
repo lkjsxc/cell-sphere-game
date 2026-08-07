@@ -1,4 +1,4 @@
-/** SCORE v4: exact endless progression × bounded cumulative authoritative merit. */
+/** SCORE v5: exact merit × sustained dynamic Environment exposure. */
 import { BALANCE as B } from './balance.js';
 import { clamp01 } from '../core/math.js';
 import {
@@ -11,15 +11,17 @@ import {
   multiplyDivideProgressionInteger,
   multiplyProgressionIntegers,
   normalizeProgressionInteger,
+  projectProgressionInteger,
   sqrtProgressionInteger,
 } from '../core/progression-integer.js';
 
-export const SCORE_MODEL_VERSION = 4;
-export const SCORE_FORMULA_VERSION = 4;
+export const SCORE_MODEL_VERSION = 5;
+export const SCORE_FORMULA_VERSION = 5;
 const QUALITY_SCALE = '1000000000';
 const MULTIPLIER_SCALE = '1000000';
 const COMBINED_SCALE = '1000000000000000';
-const ENVIRONMENT_BONUS_LIMIT = 0.20;
+// Dynamic pressure is meaningful but cannot overturn established breadth SCORE anchors.
+const ENVIRONMENT_BONUS_LIMIT = 0.005;
 const W = B.SCORE_WEIGHTS;
 const TARGET = Object.freeze({ survival: 300, exploration: 800, presence: 44,
   coherence: 40, stewardship: 780, worldmaking: 220 });
@@ -62,7 +64,7 @@ export function createScoreMerit() {
   return { modelVersion: SCORE_MODEL_VERSION,
     raw: { survival: 0, exploration: 0, presence: 0, coherence: 0, stewardship: 0, worldmaking: 0 },
     normalized: { survival: 0, exploration: 0, presence: 0, coherence: 0, stewardship: 0, worldmaking: 0 },
-    total: '0', quality: 0, lastUpdateTick: 0 };
+    total: '0', quality: 0, environmentBonusQ: 0, lastUpdateTick: 0 };
 }
 
 /** Called once per authoritative summary second. All source counters are monotone. */
@@ -86,7 +88,11 @@ export function recordScoreExploration(state, cell, weight = 1) {
 }
 
 export function refreshScoreMerit(state) {
-  const projection = evaluate(metricsFromState(state));
+  const current = evaluate(metricsFromState(state));
+  const currentBonusQ = Math.max(0, Math.min(Number(MULTIPLIER_SCALE) - 1,
+    Math.round(current.environmentCredit.bonus * Number(MULTIPLIER_SCALE))));
+  state.scoreMerit.environmentBonusQ = Math.max(state.scoreMerit.environmentBonusQ ?? 0, currentBonusQ);
+  const projection = evaluate(metricsFromState(state), { environmentBonusQ: state.scoreMerit.environmentBonusQ });
   state.scoreMerit.normalized = Object.fromEntries(projection.breakdown.map((part) => [part.key, part.q]));
   state.scoreMerit.quality = projection.quality;
   state.scoreMerit.total = maxProgressionInteger(state.scoreMerit.total, projection.total);
@@ -105,22 +111,30 @@ export function componentValues(metrics) {
 }
 
 export function metricsFromState(state) { return { scoreMerit: state.scoreMerit, worldPotential: state.worldPotential,
-  challengeProfile: state.challengeProfile, survivalTicks: state.tick }; }
+  environmentExposure: state.environmentExposure, peakEnvironmentLevel: state.peakEnvironmentLevel,
+  environmentPressureSummary: state.currentEnvironmentProfile?.score,
+  survivalTicks: state.tick }; }
 export function metricsFromResult(result) { return { scoreMerit: result.scoreMerit, raw: result.scoreMerit?.raw,
-  worldPotential: result.worldPotential, challengeProfile: result.pressureProfile,
+  worldPotential: result.worldPotential, environmentExposure: result.environmentExposure,
+  peakEnvironmentLevel: result.peakEnvironmentLevel ?? result.finalEnvironmentLevel,
+  environmentPressureSummary: result.environmentPressureSummary,
   survivalTicks:Number.isFinite(result.scoreMerit?.lastUpdateTick)?Math.max(0,result.scoreMerit.lastUpdateTick)
     :Math.max(0,Math.round((result.survivalSeconds??0)*B.TICKS_PER_SECOND)),
   survivalSeconds: result.survivalSeconds, uniqueColonized: sum(result.habitatOccupancy ?? []),
   sustainedCoverage: result.sustainedCoverage, peakConnectedShare: result.peakConnectedShare,
   totalUptake: result.totalUptake, worldmaking: result.worldmakingMerit ?? 0 }; }
 
-export function evaluate(metrics) {
+export function evaluate(metrics, options = {}) {
   const values = componentValues(metrics); const potential = normalizeProgressionInteger(metrics.worldPotential, '0');
   let quality = 0;
   for (const component of COMPONENTS) quality += W[component.key] * values[component.key];
   quality = clamp01(quality);
-  const environmentCredit = environmentCreditFor(metrics, quality);
-  const multiplier = 1 + environmentCredit.bonus;
+  const environmentCredit = environmentCreditFor(metrics, quality, options.environmentBonusQ);
+  // Preserve the established early SCORE anchors without perturbing the
+  // breadth-complete 1,200,000 Potential calibration. This is fixed by
+  // permanent starting Potential, not live difficulty or result timing.
+  const earlyCalibration = earlyScoreCalibration(potential);
+  const multiplier = (1 + environmentCredit.bonus) * earlyCalibration;
   const multiplierQ = String(Math.max(1, Math.round(multiplier * Number(MULTIPLIER_SCALE))));
   const qualityQ = String(Math.max(0, Math.floor(quality * Number(QUALITY_SCALE))));
   const breakdown = COMPONENTS.map((component) => {
@@ -134,12 +148,12 @@ export function evaluate(metrics) {
     potential, multiplyProgressionIntegers(qualityQ, multiplierQ), COMBINED_SCALE);
   const rank = rankFor(total);
   return Object.freeze({ modelVersion: SCORE_MODEL_VERSION, formulaVersion: SCORE_FORMULA_VERSION,
-    total, quality, worldPotential: potential, mult: multiplier, environmentCredit,
+    total, quality, worldPotential: potential, mult: multiplier, earlyCalibration, environmentCredit,
     rank, nextRank: nextRankFor(total, rank), echoes: echoesFor(total), breakdown: Object.freeze(breakdown) });
 }
 
 export function liveScore(state) { return state.scoreMerit?.total ?? evaluate(metricsFromState(state)).total; }
-export function scoreResult(result){return evaluate(metricsFromResult(result))}
+export function scoreResult(result){return evaluate(metricsFromResult(result), { environmentBonusQ: result.scoreMerit?.environmentBonusQ })}
 export function scoreResultMatchesAuthority(result){const authoritative=scoreResult(result);
  const supplied=result.scoreProjection?.modelVersion===SCORE_MODEL_VERSION?result.scoreProjection.total
    :result.scoreModelVersion===SCORE_MODEL_VERSION?result.score:null;
@@ -152,16 +166,44 @@ export function echoesFor(total) {
   return addProgressionIntegers(String(B.ECHO_BASE), sqrtProgressionInteger(quotient));
 }
 
-function environmentCreditFor(metrics, quality) {
-  const profile = metrics.challengeProfile; const pressure = Number.isFinite(profile?.score?.pressure)
-    ? clamp01(profile.score.pressure) : 0;
-  const ticks = Number.isFinite(metrics.survivalTicks) ? Math.max(0, metrics.survivalTicks) : 0;
-  const start = profile?.score?.minimumExposureTicks ?? 900;
-  const full = Math.max(start + 1, profile?.score?.fullExposureTicks ?? 2400);
-  const exposure = clamp01((ticks - start) / (full - start));
-  const performance = clamp01(quality);
-  const bonus = Math.min(ENVIRONMENT_BONUS_LIMIT, ENVIRONMENT_BONUS_LIMIT * pressure * exposure * performance);
-  return Object.freeze({ pressure, exposure, performance, bonus });
+function earlyScoreCalibration(potential) {
+  const projected = projectProgressionInteger(potential, 100_000);
+  const remaining = Math.max(0, Math.min(84_000, 100_000 - projected));
+  return 1 + 0.16 * remaining / 84_000;
+}
+
+function environmentCreditFor(metrics, quality, bonusOverrideQ = null) {
+  const exposure = metrics.environmentExposure && typeof metrics.environmentExposure === 'object'
+    ? metrics.environmentExposure : null;
+  if (!exposure) return Object.freeze({ pressure: 0, exposure: 0, performance: 0, peakDwell: 0, bonus: 0 });
+  const totalTicks = normalizeProgressionInteger(exposure.totalTicks, '0');
+  const pressureTicksQ = normalizeProgressionInteger(exposure.pressureTicksQ, '0');
+  const qualityPressureTicksQ = normalizeProgressionInteger(exposure.qualityPressureTicksQ, '0');
+  const timeAtPeakTicks = normalizeProgressionInteger(exposure.timeAtPeakTicks, '0');
+  if (totalTicks === '0' || pressureTicksQ === '0') {
+    return Object.freeze({ pressure: 0, exposure: 0, performance: 0, peakDwell: 0, bonus: 0 });
+  }
+  // Exact division occurs at summary/result boundaries, never inside cell/edge loops.
+  const pressureQ = projectProgressionInteger(divideProgressionIntegers(pressureTicksQ, totalTicks), 1_000_000);
+  const qualityQ = projectProgressionInteger(multiplyDivideProgressionInteger(
+    qualityPressureTicksQ, '1000000', pressureTicksQ,
+  ), 1_000_000);
+  const pressure = clamp01(pressureQ / 1_000_000);
+  const qualityUnderPressure = clamp01(qualityQ / 1_000_000);
+  const pressureTimeTicks = projectProgressionInteger(divideProgressionIntegers(pressureTicksQ, '1000000'), 100_000);
+  const sustained = clamp01((pressureTimeTicks - 300) / 2100);
+  const peakTicks = projectProgressionInteger(timeAtPeakTicks, 2400);
+  const peakDwell = clamp01(peakTicks / 600);
+  const performance = clamp01(quality) * qualityUnderPressure;
+  // Peak only modulates sustained ecological pressure evidence. A threshold
+  // touch has zero sustained exposure and cannot farm the bonus.
+  const evidence = sustained * (0.75 + 0.25 * peakDwell);
+  const currentBonus = Math.min(ENVIRONMENT_BONUS_LIMIT,
+    ENVIRONMENT_BONUS_LIMIT * pressure * evidence * performance);
+  const override = Number.isInteger(bonusOverrideQ) && bonusOverrideQ >= 0
+    ? Math.min(ENVIRONMENT_BONUS_LIMIT, bonusOverrideQ / Number(MULTIPLIER_SCALE)) : null;
+  const bonus = override === null ? currentBonus : Math.max(currentBonus, override);
+  return Object.freeze({ pressure, exposure: sustained, performance, peakDwell, currentBonus, bonus });
 }
 function nextRankFor(total, rank) {
   const namedIndex = RANKS.indexOf(rank);

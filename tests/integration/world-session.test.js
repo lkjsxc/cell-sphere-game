@@ -6,7 +6,13 @@ import { createWorldIdentity, sameWorldIdentity } from '../../src/core/world-ses
 import {createContinuation} from '../../src/interface/policies/continuation.js';
 import {defaultHistory} from '../../src/platform/history.js';
 import {createWorldReplacementState,markWorldStarted,recoverAuthorityLossDuringReplacement,requestWorldReplacement} from '../../src/interface/policies/run-session.js';
+import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
+  ENVIRONMENT_SCHEDULE_HASH, ENVIRONMENT_SCHEDULE_VERSION } from '../../src/game/environment-level.js';
 
+function identity(value) { return createWorldIdentity({ environmentModelVersion: ENVIRONMENT_MODEL_VERSION,
+  environmentScheduleVersion: ENVIRONMENT_SCHEDULE_VERSION, environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH,
+  immutableStartConfigurationHash: 'abcdef12', onboardingEnvironmentModifierVersion: ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
+  ...value }); }
 function node() { return { textContent: '', hidden: false, disabled: false, dataset: {}, classList: { toggle() {}, add() {}, remove() {} },
   setAttribute() {}, removeAttribute() {}, replaceChildren() {} }; }
 function elements() { const value = {}; for (const name of ['title','run','memory','trophies','countdown','event','live',
@@ -29,7 +35,7 @@ function harness() {
     lastInspect: 9, lastRender: 9,
     driver: { outcome: null, starts: [], stop() { hit('driver-stop'); this.snapshot = null; }, installSnapshot(value) { this.snapshot = value; },
       abort() { hit('driver-abort'); return true; },
-      reserveIdentity(value) { const identity = createWorldIdentity({ ...value, runId: ++runId }); this.identity = identity; return identity; },
+      reserveIdentity(value) { const reserved = identity({ ...value, runId: ++runId }); this.identity = reserved; return reserved; },
       start(config, speed, identity) { this.starts.push({ config, speed, identity }); return identity.runId; } },
     flow: { send(event) { hit(`flow-${event}`); app.phase = 'starting'; }, select(scene) { app.scene = scene; } }, sceneSelector: { update() {} }, pause: { clear() { hit('pause-clear'); } },
     historyPlayback: { retire() { hit('history-retire'); } },
@@ -63,7 +69,7 @@ test('replacement teardown clears every current-world field before one static bl
 
 test('every in-run replacement request waits for authoritative abandonment', () => {
   const { app, counts } = harness(); app.phase = 'running';
-  app.worldIdentity = createWorldIdentity({ worldSessionId: 1, runId: 1, seed: 7, presentationGeneration: 1 });
+  app.worldIdentity = identity({ worldSessionId: 1, runId: 1, seed: 7, presentationGeneration: 1 });
   assert.equal(requestWorldReplacement(app, 'requested-restart'), true);
   assert.equal(app.worldReplacement.status, 'awaiting-authority'); assert.equal(counts.get('driver-abort'), 1);
   assert.equal(app.driver.starts.length, 0); assert.equal(requestWorldReplacement(app, 'same-frame-race'), false);
@@ -71,7 +77,7 @@ test('every in-run replacement request waits for authoritative abandonment', () 
 
 test('fatal authority loss after accepted abort records no reward and continues replacement',()=>{
  const oldLocation=globalThis.location;globalThis.location={search:''};const{app}=harness();app.phase='running';app.meta={...app.meta,worldSeedIndex:'1'};
- app.worldIdentity=createWorldIdentity({worldSessionId:1,runId:1,seed:7,presentationGeneration:1});app.snapshot={...app.worldIdentity,tick:50,worldOrdinal:'1',score:'0'};
+ app.worldIdentity=identity({worldSessionId:1,runId:1,seed:7,presentationGeneration:1});app.snapshot={...app.worldIdentity,tick:50,worldOrdinal:'1',score:'0'};
  try{assert.equal(requestWorldReplacement(app,'authority-loss'),true);const failed={...app.worldIdentity,t:'worker-failed'};
   assert.equal(recoverAuthorityLossDuringReplacement(app,failed),true);assert.equal(app.worldReplacement.status,'starting');assert.equal(app.driver.starts.length,1);
   assert.equal(app.archive.worlds.length,1);assert.equal(app.archive.worlds[0].cause,'abandoned');assert.equal(app.meta.totalEchoes,'0');

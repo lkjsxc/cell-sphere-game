@@ -6,8 +6,9 @@ import { LEGACY_TROPHY_IDS, TROPHY_CATALOG_VERSION, TROPHY_IDS } from '../game/t
 import { TROPHY_MAX_KEYS, TROPHY_SUM_KEYS } from '../game/trophies/keys.js';
 import { createGeodesicTopology, createTopology } from '../world/icosphere.js';
 import { SCORE_MODEL_VERSION } from '../game/scoring.js';
-import {attainableEnvironmentFrontierForRuns,legacyEnvironmentFrontierForRuns,normalizeEnvironmentLevel} from '../game/environment-level.js';
-import { addProgressionIntegers, compareProgressionIntegers, maxProgressionInteger,
+import { ENVIRONMENT_MODEL_VERSION, legacyEnvironmentFrontierForRuns, normalizeEnvironmentLevel } from '../game/environment-level.js';
+import { ENVIRONMENT_EXPOSURE_VERSION } from '../game/environment-exposure.js';
+import { addProgressionIntegers, maxProgressionInteger,
   normalizeProgressionInteger } from '../core/progression-integer.js';
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 const VALID_MEMORY_IDS = new Set(MEMORY_NODE_IDS);
@@ -21,11 +22,14 @@ export const LEGACY_MEMORY_MAP = Object.freeze({
 });
 
 export function defaultMeta() {
-  return { schema: 11, revision: '0', memoryGraphVersion: MEMORY_GRAPH_VERSION,
+  return { schema: 12, revision: '0', memoryGraphVersion: MEMORY_GRAPH_VERSION,
     memoryMigrationVersion: MEMORY_GRAPH_VERSION, evolutionLevelVectorVersion: EVOLUTION_LEVEL_VECTOR_VERSION,
     trophyVersion: TROPHY_CATALOG_VERSION,
     scoreModelVersion: SCORE_MODEL_VERSION, bestScore: '0', legacyBestScore: '0', legacyBestScores: {},
-    totalEchoes: '0', echoBalance: '0', runs: '0', worldSeedIndex: '0', highestEnvironmentLevel: '0',
+    totalEchoes: '0', echoBalance: '0', runs: '0', worldSeedIndex: '0',
+    environmentRecordVersion: ENVIRONMENT_MODEL_VERSION, bestEnvironmentLevelReached: '0',
+    bestEnvironmentExposure: defaultEnvironmentExposureRecord(), longestWorldTicks: '0',
+    legacyEnvironmentFrontier: '0',
     resultKeys: [], evolutionTransactionKeys: [], evolutionLevels: [],
     legacyMemoryNodes: [], quarantinedMemoryNodes: [], imprints: [], trophyIds: [], legacyTrophyIds: [], trophyQueue: [], trophyBackfillVersion: 0,
     trophyProgress: { version: 4, geographyMask: 0, geographyVersion: 3,
@@ -57,11 +61,20 @@ export function validateMeta(raw) {
   out.echoBalance = normalizeProgressionInteger(raw.echoBalance, sourceSchema === 1 ? out.totalEchoes : '0');
   out.runs = normalizeProgressionInteger(raw.runs, '0');
   out.worldSeedIndex = maxProgressionInteger(out.runs, normalizeProgressionInteger(raw.worldSeedIndex, out.runs));
-  const migratedFrontier = sourceSchema >= 11
-    ? normalizeEnvironmentLevel(raw.highestEnvironmentLevel, '0') : legacyEnvironmentFrontierForRuns(out.runs);
-  const normalizedFrontier=compareProgressionIntegers(out.runs,'2')>=0?maxProgressionInteger('1',migratedFrontier):migratedFrontier;
-  const attainableFrontier=attainableEnvironmentFrontierForRuns(out.runs);
-  out.highestEnvironmentLevel=compareProgressionIntegers(normalizedFrontier,attainableFrontier)>0?attainableFrontier:normalizedFrontier;
+  // Schema ≤11 treated highestEnvironmentLevel as an unlocked static frontier.
+  // Preserve it as inert evidence; never infer a dynamic achieved peak from it.
+  const explicitLegacyFrontier = normalizeEnvironmentLevel(raw.legacyEnvironmentFrontier, '0');
+  const formerHighestEnvironmentLevel = normalizeEnvironmentLevel(raw.highestEnvironmentLevel, '0');
+  out.legacyEnvironmentFrontier = explicitLegacyFrontier !== '0'
+    ? explicitLegacyFrontier
+    : (formerHighestEnvironmentLevel !== '0' ? formerHighestEnvironmentLevel
+      : (sourceSchema >= 11 ? '0' : legacyEnvironmentFrontierForRuns(out.runs)));
+  if (sourceSchema >= 12) {
+    out.bestEnvironmentLevelReached = normalizeEnvironmentLevel(raw.bestEnvironmentLevelReached, '0');
+    out.bestEnvironmentExposure = validateEnvironmentExposureRecord(raw.bestEnvironmentExposure);
+    out.longestWorldTicks = normalizeProgressionInteger(raw.longestWorldTicks, '0');
+    out.environmentRecordVersion = ENVIRONMENT_MODEL_VERSION;
+  }
   if (Array.isArray(raw.resultKeys)) out.resultKeys = uniqueTransactionKeys(raw.resultKeys, 16);
   if (Array.isArray(raw.evolutionTransactionKeys)) out.evolutionTransactionKeys = uniqueTransactionKeys(raw.evolutionTransactionKeys, 32);
   const sourceGraphVersion = boundedInteger(raw.memoryGraphVersion, sourceSchema >= 4 ? LEGACY_MEMORY_GRAPH_VERSION : 3);
@@ -198,6 +211,20 @@ function uniqueTransactionKeys(values,limit){return[...new Set(values.slice(-lim
 function quarantinedEvolutionIds(raw) { if (!Array.isArray(raw)) return [];
   return raw.map((entry) => entry?.id).filter((id) => typeof id === 'string'
     && /^[a-z][a-z-]{0,63}$/.test(id) && !VALID_MEMORY_IDS.has(id)); }
+function defaultEnvironmentExposureRecord() {
+  return Object.freeze({ version: ENVIRONMENT_EXPOSURE_VERSION, totalTicks: '0', pressureTicksQ: '0',
+    qualityPressureTicksQ: '0', timeAtPeakTicks: '0', peakPressureQ: 0, currentLevel: '0' });
+}
+function validateEnvironmentExposureRecord(raw) {
+  if (!raw || typeof raw !== 'object' || raw.version !== ENVIRONMENT_EXPOSURE_VERSION) return defaultEnvironmentExposureRecord();
+  return Object.freeze({ version: ENVIRONMENT_EXPOSURE_VERSION,
+    totalTicks: normalizeProgressionInteger(raw.totalTicks, '0'),
+    pressureTicksQ: normalizeProgressionInteger(raw.pressureTicksQ, '0'),
+    qualityPressureTicksQ: normalizeProgressionInteger(raw.qualityPressureTicksQ, '0'),
+    timeAtPeakTicks: normalizeProgressionInteger(raw.timeAtPeakTicks, '0'),
+    peakPressureQ: Math.max(0, Math.min(1_000_000, boundedInteger(raw.peakPressureQ, 0))),
+    currentLevel: normalizeEnvironmentLevel(raw.currentLevel, '0') });
+}
 function boundedInteger(value, fallback) { return Number.isFinite(value) && value >= 0 ? Math.floor(value) : fallback; }
 function mergeQuarantine(found,raw){const ids=[...new Set(found)];if(Array.isArray(raw))for(const id of raw.slice(0,64))
   if (typeof id === 'string' && /^[a-z][a-z-]{0,63}$/.test(id) && !ids.includes(id)) ids.push(id); return ids.slice(0, 32); }

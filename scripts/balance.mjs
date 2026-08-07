@@ -42,12 +42,14 @@ for (const policy of POLICIES) {
   for (let r = 0; r < runsPerPolicy; r++) {
     const seed = seedCounter++;
     const strain = STRAINS[r % STRAINS.length];
-    const { result, state } = runHeadless(
-      { RunController }, { seed, strainId: strain, worldOrdinal: 1, worldPotential: 16000 }, policy);
+    const { result, state, complete } = runHeadless(
+      { RunController }, { seed, strainId: strain, worldOrdinal: 1, worldPotential: 16000 }, policy,
+      { budgetTicks: smoke ? 10_000 : 20_000 });
 
-    // Invalid-state gate: always enforced.
+    // Invalid-state gate: always enforced. A harness budget is not a scored world.
     if (stateHasNaN(state)) nanRuns++;
-    if (result.tick > 4200) violations.push(`${policy}/${seed}: run exceeded ceiling (${result.tick})`);
+    if (!complete || !result) { violations.push(`${policy}/${seed}: incomplete external budget at ${state.tick} ticks`); continue; }
+    if (result.startEnvironmentLevel !== '0') violations.push(`${policy}/${seed}: nonzero Environment start`);
     if (result.peakCoverage < 0 || result.peakCoverage > 1) violations.push(`${policy}/${seed}: impossible coverage`);
 
     times.push(result.tick / 10);

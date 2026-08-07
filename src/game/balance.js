@@ -7,9 +7,9 @@
 export const BALANCE = Object.freeze({
   // --- time ----------------------------------------------------------------
   TICKS_PER_SECOND: 10,      // canonical simulation rate
-  RUN_TARGET_TICKS: 3000,    // 300 game s median run
-  RUN_CEILING_TICKS: 3600,   // ordinary authority enters terminal collapse
-  RUN_HARD_MAX_TICKS: 3620,  // every run has finalized by this tick
+  RUN_TARGET_TICKS: 3000,    // 300 game s fresh-world median target
+  // No normal world-duration ceiling: causal terminal fade only begins after
+  // ecological liveness establishes a genuine terminal stall.
   TERMINAL_COLLAPSE_TICKS: 20, // at most two game seconds of causal fade
   TERMINAL_STALL_TICKS: 10,  // bounded unchanged/spent-state observation
   TERMINAL_BIOMASS_THRESHOLD: 0.2,

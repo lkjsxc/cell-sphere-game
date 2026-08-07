@@ -23,7 +23,7 @@ import { advanceContinuation, cancelContinuation, completeContinuation, continua
 import { sameWorldIdentity } from '../core/world-session.js';
 import { isStandardSpeed, renderIntervalForSpeed, validateRuntimeSpeed } from '../core/runtime-speed.js';
 import { createWorldReplacementState, finishAbandoned, finishRun, requestWorldReplacement,
-  retryEnvironmentLevel, startRun } from './policies/run-session.js';
+  startRun } from './policies/run-session.js';
 import { createNewWorldSurface } from './policies/new-world-surface.js'; import { createHistorySurface } from './history-surface.js'; import { createHistoryPlayback } from './history-playback.js';
 import { createInspectorSurface } from './inspection/inspector-surface.js';
 import { createMemorySurface } from './panel-surfaces.js';
@@ -131,8 +131,7 @@ class GameApp {
   bindUi() {
     this.el.begin.addEventListener('click', () => this.phase === 'idle' ? this.requestWorldReplacement('title-grow') : this.selectScene('world'));
     this.el.restart.addEventListener('click', () => ['idle', 'result'].includes(this.phase) ? this.requestWorldReplacement('evolution-restart', this.phase === 'result' ? this.lastResultIdentity : null) : this.selectScene('world'));
-    this.el.resultNext.addEventListener('click', () => this.requestWorldReplacement('manual-next', this.lastResultIdentity));
-    this.el.resultRetry.addEventListener('click', () => retryEnvironmentLevel(this));
+    this.el.resultNext.addEventListener('click', () => this.requestWorldReplacement('manual-next-world', this.lastResultIdentity));
     document.getElementById('trophy-next-button')?.addEventListener('click', () => ['idle', 'result'].includes(this.phase) ? this.requestWorldReplacement('trophy-restart', this.phase === 'result' ? this.lastResultIdentity : null) : this.selectScene('world'));
     document.getElementById('trophy-focus')?.addEventListener('click', () => this.focusTrophy());
     this.el.pause.addEventListener('click', () => { if (this.phase === 'running') this.pause.set('manual', !this.pause.has('manual')); });

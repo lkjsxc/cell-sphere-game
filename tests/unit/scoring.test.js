@@ -1,18 +1,17 @@
-/** SCORE v4 exact, cumulative, exposure-gated, and presentation-independent. */
+/** SCORE v5 exact, cumulative dynamic-exposure-gated, and presentation-independent. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compareProgressionIntegers } from '../../src/core/progression-integer.js';
 import {componentValues,echoesFor,evaluate,rankFor,scoreResultMatchesAuthority,SCORE_MODEL_VERSION} from '../../src/game/scoring.js';
-import { compileChallengeProfile } from '../../src/simulation/challenge-profile.js';
 
 const LOW = Object.freeze({ scoreMerit: { raw: { survival: 40, exploration: 60, presence: 4,
   coherence: 3, stewardship: 40, worldmaking: 0 } }, worldPotential: '16000' });
 const HIGH = Object.freeze({ scoreMerit: { raw: { survival: 300, exploration: 800, presence: 44,
   coherence: 40, stewardship: 780, worldmaking: 220 } }, worldPotential: '16000' });
 
-test('SCORE v4 improves exactly for cumulative authoritative merit', () => {
+test('SCORE v5 improves exactly for cumulative authoritative merit', () => {
   const low = evaluate(LOW); const high = evaluate(HIGH);
-  assert.equal(low.modelVersion, SCORE_MODEL_VERSION); assert.equal(SCORE_MODEL_VERSION, 4);
+  assert.equal(low.modelVersion, SCORE_MODEL_VERSION); assert.equal(SCORE_MODEL_VERSION, 5);
   assert.ok(compareProgressionIntegers(high.total, low.total) > 0, `${high.total} <= ${low.total}`);
   assert.equal(high.breakdown.length, 6); assert.ok(high.breakdown.every((part) => BigInt(part.points) >= 0n));
   assert.deepEqual(high.rank, rankFor(high.total));
@@ -57,14 +56,18 @@ test('Echoes retain early anchors and remain exact for huge SCORE', () => {
   assert.ok(echoesFor(huge).length > 400);
 });
 
-test('Environment credit requires meaningful exposure and demonstrated quality', () => {
-  const profile = compileChallengeProfile({ environmentLevel: '100' });
-  const instant = evaluate({ ...HIGH, survivalTicks: 20, challengeProfile: profile });
-  const exposed = evaluate({ ...HIGH, survivalTicks: 3000, challengeProfile: profile });
+test('Environment credit requires meaningful sustained dynamic exposure and demonstrated quality', () => {
+  const instant = evaluate({ ...HIGH, environmentExposure: exposure('20', '20000000', '20000000', '20') });
+  const exposed = evaluate({ ...HIGH, environmentExposure: exposure('3000', '3000000000', '3000000000', '900') });
   assert.equal(instant.environmentCredit.bonus, 0);
   assert.ok(exposed.environmentCredit.bonus > 0 && exposed.environmentCredit.bonus <= .2);
   assert.ok(compareProgressionIntegers(exposed.total, instant.total) > 0);
 });
+
+function exposure(totalTicks, pressureTicksQ, qualityPressureTicksQ, timeAtPeakTicks) {
+  return { version: 2, totalTicks, pressureTicksQ, qualityPressureTicksQ, timeAtPeakTicks,
+    peakPressureQ: 1_000_000, currentLevel: '4' };
+}
 
 test('ranks continue procedurally after named onboarding ranks', () => {
   assert.equal(rankFor('999999').en, 'World Gardener');

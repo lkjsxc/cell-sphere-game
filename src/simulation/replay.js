@@ -1,6 +1,6 @@
 /** Compact replay, semantic history, and terminal authority hash. */
 import { hashF32, hashString, hashU8, hexU32 } from '../core/hash.js';
-export const REPLAY_VERSION = 5;
+export const REPLAY_VERSION = 6;
 export const REPLAY = Object.freeze({ STRAIN: 0, INOCULATE: 1, SPEED: 2 });
 
 /** @param {object} state @param {number} type @param {...number} args */
@@ -80,7 +80,7 @@ export function finalStateHash(state) {
   h = hashF32(h, new Float32Array([
     state.tick, state.totalUptake, state.totalMaintenance,
     state.peakCoverage, state.peakConnectedShare, state.inoculationCell,
-    state.replayVersion, state.worldEra,
+    state.replayVersion,
     state.resourceTransferred, state.initialResourceStock, state.resourceExternalAdditions,
     state.resourceReclaimed, state.resourceConsumed, state.resourceLost,
     state.initialFounderFreshwaterReserve, state.founderFreshwaterReserve,
@@ -91,8 +91,14 @@ export function finalStateHash(state) {
     proof.largeLakeLivingSamples, proof.lakeRegionPeak, proof.droughtLakeSurvivals,
     proof.freezeLakeSurvivals, proof.loopSurplusPeak, proof.loopLivingSamples,
   ]), 1000);
-  h = hashString(h, [state.worldOrdinal, state.environmentLevel, state.challengeProfileVersion,
-    state.challengeProfileHash, state.worldPotential, state.evolutionDepth, state.scoreMerit.total].join('|'));
+  const exposure = state.environmentExposure ?? {};
+  h = hashString(h, [state.worldOrdinal, state.environmentModelVersion, state.environmentScheduleVersion,
+    state.environmentScheduleHash, state.currentEnvironmentLevel,
+    state.peakEnvironmentLevel, state.environmentTransitionCount,
+    state.currentEnvironmentProfileHash, state.worldPotential, state.evolutionDepth,
+    state.scoreMerit.total, exposure.totalTicks ?? '0', exposure.pressureTicksQ ?? '0',
+    exposure.qualityPressureTicksQ ?? '0', exposure.timeAtPeakTicks ?? '0', exposure.pendingTicks ?? 0,
+    exposure.pendingPressureTicksQ ?? 0, exposure.pendingQualityPressureTicksQ ?? 0].join('|'));
   const replayValues = [];
   for (const entry of state.replay) replayValues.push(entry.length, ...entry);
   h = hashF32(h, Float32Array.from(replayValues), 1);

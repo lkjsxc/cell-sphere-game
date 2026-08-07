@@ -4,7 +4,7 @@ export const ENDURANCE_TROPHIES = family('endurance', [
   ['three-minutes', 'Weathered Root', 'Survive 300 seconds after enduring ten crises across worlds.', all(n('survivalSeconds', 300), n('totalCrisesEndured', 10))],
   ['four-minutes', 'Lakebound Root', 'Survive 320 seconds with 120 seconds of lake living.', all(n('survivalSeconds', 320), n('lakeLivingSeconds', 120))],
   ['five-minutes', 'Stable Canopy', 'Survive 330 seconds with at least 80% Stability.', all(n('survivalSeconds', 330), n('stabilityAxisBp', 8000))],
-  ['six-minutes', 'Ceiling Garden', 'Reach the 360-second authority ceiling after substantial progression.', all(n('survivalSeconds', 360), n('skillCount', 84))],
+  ['six-minutes', 'Long Garden', 'Endure at least 360 seconds after substantial progression.', all(n('survivalSeconds', 360), n('skillCount', 84))],
   ['drought-endured', 'Lake Through Drought', 'Survive drought beside a lake region after twenty total crises.', all(n('droughtLakeSurvivals', 1), n('totalCrisesEndured', 20))],
   ['heat-endured', 'After Heat', 'Endure heat after at least thirty total crises.', all(bits('crisisMask', 2), n('totalCrisesEndured', 30))],
   ['freeze-endured', 'Lake Through Freeze', 'Survive freeze beside a lake region after forty total crises.', all(n('freezeLakeSurvivals', 1), n('totalCrisesEndured', 40))],

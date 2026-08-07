@@ -2,15 +2,16 @@
 import { hashStringU32, hexU32 } from '../core/hash.js';
 import {incrementProgressionInteger,maxProgressionInteger,normalizeProgressionInteger} from '../core/progression-integer.js';
 import { normalizeEnvironmentLevel } from '../game/environment-level.js';
+import { ENVIRONMENT_EXPOSURE_VERSION } from '../game/environment-exposure.js';
 import { defaultMeta, validateMeta } from '../platform/storage.js';
 import { defaultHistory, validateHistory } from '../platform/history.js';
 
-export const AGENT_SAVE_SCHEMA = 2;
+export const AGENT_SAVE_SCHEMA = 3;
 export const AGENT_GOALS = Object.freeze([
   'balanced', 'breadth-first', 'depth-first', 'cheapest', 'marginal-value', 'diversity', 'weak',
   'sustainability', 'freshwater', 'rich-rush', 'scarcity-reclaimer', 'cryogenic', 'marine',
   'luminous', 'luminous-infrastructure', 'cryolake', 'littoral-forest', 'terraforming',
-  'reach-100', 'harshness-push', 'conservative-retry', 'random-legal',
+  'reach-100', 'harshness-push', 'conservative', 'random-legal',
 ]);
 const GOALS = new Set(AGENT_GOALS);
 const SEED_LIMIT = 0x40000000;
@@ -21,7 +22,7 @@ export function defaultAgentSave(seed = 0) {
 }
 
 export function validateAgentSave(raw) {
-  if (!raw || typeof raw !== 'object' || ![1, AGENT_SAVE_SCHEMA].includes(raw.schema)) return defaultAgentSave();
+  if (!raw || typeof raw !== 'object' || ![1, 2, AGENT_SAVE_SCHEMA].includes(raw.schema)) return defaultAgentSave();
   return canonical({ campaignSeed: validSeed(raw.campaignSeed) ? raw.campaignSeed : 0,
     meta: validateMeta(raw.meta), history: validateHistory(raw.history, 32),
     goal: GOALS.has(raw.goal) ? raw.goal : 'balanced', lastResult: validateLastResult(raw.lastResult) });
@@ -53,8 +54,18 @@ function validateLastResult(raw) {
   const habitats = {};
   for (const key of ['lake', 'tundra', 'snowIce', 'shallowOcean', 'deepOcean'])
     habitats[key] = integer(raw.habitats?.[key]) ?? 0;
-  return Object.freeze({ worldOrdinal, environmentLevel:normalizeEnvironmentLevel(raw.environmentLevel, '0'),
-    highestEnvironmentLevel:normalizeEnvironmentLevel(raw.highestEnvironmentLevel,'0'),archetype: text(raw.archetype, 40, 'Living World'), survivalSeconds: finite(raw.survivalSeconds),
+  const dynamic = raw.startEnvironmentLevel === '0' && raw.finalEnvironmentLevel !== undefined;
+  return Object.freeze({ worldOrdinal,
+    startEnvironmentLevel: dynamic ? '0' : '0',
+    finalEnvironmentLevel: dynamic ? normalizeEnvironmentLevel(raw.finalEnvironmentLevel, '0') : '0',
+    peakEnvironmentLevel: dynamic ? normalizeEnvironmentLevel(raw.peakEnvironmentLevel, raw.finalEnvironmentLevel ?? '0') : '0',
+    bestEnvironmentLevelReached: normalizeEnvironmentLevel(raw.bestEnvironmentLevelReached, '0'),
+    legacyAttemptedEnvironmentLevel: dynamic ? null : normalizeEnvironmentLevel(raw.environmentLevel, '0'),
+    environmentScheduleVersion: integer(raw.environmentScheduleVersion, 1) ?? 0,
+    environmentExposure: validateExposure(raw.environmentExposure),
+    timeAtPeakTicks: normalizeProgressionInteger(raw.timeAtPeakTicks, '0'),
+    onboardingEnvironmentModifier: validateOnboarding(raw.onboardingEnvironmentModifier),
+    archetype: text(raw.archetype, 40, 'Living World'), survivalSeconds: finite(raw.survivalSeconds),
     cause: text(raw.cause, 32, 'unknown'), terminalCause: text(raw.terminalCause, 32, 'unknown'),
     score, scoreModelVersion: integer(raw.scoreModelVersion, 1) ?? 1,
     rank: text(raw.rank, 64, 'Seed'), echoes:normalizeProgressionInteger(raw.echoes, '0'),
@@ -80,6 +91,22 @@ function validateLastResult(raw) {
     trophiesAwarded: strings(raw.trophiesAwarded, 96),
   });
 }
+function validateExposure(raw) {
+  if (!raw || typeof raw !== 'object' || raw.version !== ENVIRONMENT_EXPOSURE_VERSION) {
+    return Object.freeze({ version: ENVIRONMENT_EXPOSURE_VERSION, totalTicks: '0', pressureTicksQ: '0',
+      qualityPressureTicksQ: '0', timeAtPeakTicks: '0', peakPressureQ: 0, currentLevel: '0' });
+  }
+  return Object.freeze({ version: ENVIRONMENT_EXPOSURE_VERSION,
+    totalTicks: normalizeProgressionInteger(raw.totalTicks, '0'), pressureTicksQ: normalizeProgressionInteger(raw.pressureTicksQ, '0'),
+    qualityPressureTicksQ: normalizeProgressionInteger(raw.qualityPressureTicksQ, '0'),
+    timeAtPeakTicks: normalizeProgressionInteger(raw.timeAtPeakTicks, '0'),
+    peakPressureQ: Math.max(0, Math.min(1_000_000, integer(raw.peakPressureQ) ?? 0)),
+    currentLevel: normalizeEnvironmentLevel(raw.currentLevel, '0') });
+}
+function validateOnboarding(raw) {
+  return Object.freeze({ version: integer(raw?.version, 0) ?? 0, harmfulEventsDisabled: raw?.harmfulEventsDisabled === true,
+    label: text(raw?.label, 48, '') });
+}
 function validatePressure(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const dimensions = {};
@@ -91,6 +118,8 @@ function validatePressure(raw) {
     });
   }
   return Object.freeze({ version:integer(raw.version, 1) ?? 1, hash:text(raw.hash, 16, ''),
+    level: normalizeEnvironmentLevel(raw.level ?? raw.environmentLevel, '0'),
+    pressure: fraction(raw.pressure), severityQ: Math.max(0, Math.min(1_000_000, integer(raw.severityQ) ?? 0)),
     dimensions:Object.freeze(dimensions) });
 }
 function validSeed(value) { return Number.isInteger(value) && value >= 0 && value < SEED_LIMIT; }

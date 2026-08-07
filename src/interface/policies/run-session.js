@@ -1,9 +1,14 @@
 /** Atomic first-wins world replacement and exactly-once result transactions. */
 import { compileEvolution } from '../../game/skills/index.js';
-import {highestEnvironmentLevel,recommendedEnvironmentLevel,resolveEnvironmentAttempt} from '../../game/environment-level.js';
-import { compileChallengeProfile } from '../../simulation/challenge-profile.js';
-import {compareProgressionIntegers,formatProgressionEngineering,incrementProgressionInteger,maxProgressionInteger,
-  normalizeProgressionInteger} from '../../core/progression-integer.js';
+import {
+  ENVIRONMENT_MODEL_VERSION,
+  ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
+  ENVIRONMENT_SCHEDULE_HASH,
+  ENVIRONMENT_SCHEDULE_VERSION,
+  environmentOnboardingModifierForWorld,
+} from '../../game/environment-level.js';
+import { incrementProgressionInteger, maxProgressionInteger, normalizeProgressionInteger } from '../../core/progression-integer.js';
+import { hashStringU32, hexU32 } from '../../core/hash.js';
 import { identityFields, sameWorldIdentity } from '../../core/world-session.js';
 import { createBlankSnapshot } from '../../rendering/blank-snapshot.js';
 import { normalizeHistoryEvents, appendAbandonedWorld, saveHistory } from '../../platform/history.js';
@@ -15,13 +20,13 @@ import { disableContinuation, resetContinuation, setContinuationHidden, startCon
 import * as ui from '../surfaces.js';
 
 export function createWorldReplacementState() {
-  return { status: 'idle', reason: null, expectedIdentity: null, attemptOptions: null, requestSequence: 0,
+  return { status: 'idle', reason: null, expectedIdentity: null, requestSequence: 0,
     recoveryAttempts: 0, accepted: 0, rejected: 0 };
 }
-export function requestWorldReplacement(app, reason, expectedIdentity = null, attemptOptions = null) {
+export function requestWorldReplacement(app, reason, expectedIdentity = null) {
   const state = app.worldReplacement;
   if (state.status !== 'idle' || !expectedMatches(app, expectedIdentity)) { state.rejected++; return false; }
-  state.status = 'requested'; state.reason = reason; state.expectedIdentity = expectedIdentity; state.attemptOptions = attemptOptions;
+  state.status = 'requested'; state.reason = reason; state.expectedIdentity = expectedIdentity;
   state.requestSequence++; state.accepted++;
   if (phaseOf(app) === 'running' && app.driver.outcome == null) {
     state.status = 'awaiting-authority'; app.newWorld?.pending?.();
@@ -30,20 +35,13 @@ export function requestWorldReplacement(app, reason, expectedIdentity = null, at
   }
   return performWorldReplacement(app);
 }
-export function startRun(app, reason = null, attemptOptions = null) {
-  const phase = phaseOf(app); const selectedReason = reason ?? (phase === 'idle' ? 'title-grow' : phase === 'result' ? 'manual-next' : 'requested-restart');
+export function startRun(app, reason = null) {
+  const phase = phaseOf(app); const selectedReason = reason ?? (phase === 'idle' ? 'title-grow' : phase === 'result' ? 'manual-next-world' : 'requested-restart');
   const expected = phase === 'result' ? app.lastResultIdentity : null;
-  return requestWorldReplacement(app, selectedReason, expected, attemptOptions);
-}
-export function retryEnvironmentLevel(app) {
-  if (phaseOf(app) !== 'result' || !app.lastResult) return false;
-  return requestWorldReplacement(app, 'retry-environment-level', app.lastResultIdentity,
-    { mode:'retry', environmentLevel:app.lastResult.environmentLevel, lastResult:app.lastResult });
+  return requestWorldReplacement(app, selectedReason, expected);
 }
 export function performWorldReplacement(app) {
   const replacement = app.worldReplacement; if (!['requested', 'awaiting-authority'].includes(replacement.status)) return false;
-  const attempt = resolveEnvironmentAttempt(app.meta, replacement.attemptOptions ?? { mode:'recommended', lastResult:app.lastResult });
-  if (!attempt.ok) { replacement.status = 'idle'; replacement.rejected++; ui.announce(app.el, 'That Environment Level is not unlocked.'); return false; }
   replacement.status = 'replacing'; retireWorldPresentation(app); replacement.status = 'preparing';
   const seedIndex = maxProgressionInteger(normalizeProgressionInteger(app.meta.runs, '0'),
     normalizeProgressionInteger(app.meta.worldSeedIndex, app.meta.runs)); const seed = seedForRun(seedIndex);
@@ -51,11 +49,15 @@ export function performWorldReplacement(app) {
     revision: incrementProgressionInteger(normalizeProgressionInteger(app.meta.revision, '0')) };
   if (!saveMeta(app.meta)) ui.announce(app.el, 'The world seed sequence is session-only because storage is unavailable.');
   const evolution = compileEvolution(app.meta);
-  const challengeProfile = compileChallengeProfile({ environmentLevel:attempt.environmentLevel, evolution });
-  const worldOrdinal=incrementProgressionInteger(seedIndex);
+  const worldOrdinal = incrementProgressionInteger(seedIndex);
+  const onboardingEnvironmentModifier = environmentOnboardingModifierForWorld(worldOrdinal);
   const identity = app.driver.reserveIdentity({ worldSessionId: ++app.worldSessionSequence, seed,
-    presentationGeneration: ++app.presentationGeneration, environmentLevel:attempt.environmentLevel,
-    challengeProfileHash:challengeProfile.hash });
+    presentationGeneration: ++app.presentationGeneration,
+    environmentModelVersion: ENVIRONMENT_MODEL_VERSION,
+    environmentScheduleVersion: ENVIRONMENT_SCHEDULE_VERSION,
+    environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH,
+    immutableStartConfigurationHash: immutableStartConfigurationHash(seed, worldOrdinal, evolution, onboardingEnvironmentModifier),
+    onboardingEnvironmentModifierVersion: ENVIRONMENT_ONBOARDING_MODIFIER_VERSION });
   app.worldIdentity = identity; app.activeRunId = identity.runId; app.runSeed = seed;
   app.makeRenderer(seed, 'world', identity); const blank = createBlankSnapshot(app.topo4.nodeCount, identity);
   app.snapshot = blank; app.driver.installSnapshot(blank); app.flow.send(transitionFor(phaseOf(app))); app.flow.select?.('world');
@@ -65,11 +67,10 @@ export function performWorldReplacement(app) {
     selectedNode: null, highlightedCells: [], time: performance.now() / 1000, pulse: false });
   app.presentationAudit.blankFrames++; app.presentationAudit.lastBlank = Object.freeze({ ...identityFields(identity), rendered,
     renderer: app.renderer.backend, audit: app.renderer.lastFrameAudit });
-  const environmentLabel=attempt.environmentLevel.length<=15?attempt.environmentLevel:formatProgressionEngineering(attempt.environmentLevel,6);
-  ui.announce(app.el,`Environment Level ${environmentLabel} is choosing a suitable place to begin.`);
+  ui.announce(app.el, 'Environment Level 0 is choosing a suitable place to begin.');
   replacement.status = 'starting';
-  app.driver.start({ seed, strainId: 'pioneer', worldOrdinal, environmentLevel:attempt.environmentLevel,
-    challengeProfile, evolutionDefense:{ affinityDefense:evolution.affinityDefense, pressureDefense:evolution.pressureDefense },
+  app.driver.start({ seed, strainId: 'pioneer', worldOrdinal,
+    evolutionDefense:{ affinityDefense:evolution.affinityDefense, pressureDefense:evolution.pressureDefense },
     memoryEffects: evolution.effects, memoryConditionals: evolution.conditionals, memoryUnlocks: evolution.unlocks,
     habitatCapabilities: evolution.habitatCapabilities, worldPotential: evolution.worldPotential,
     evolutionPower: evolution.evolutionPower ?? 0, evolutionDepth:evolution.evolutionDepth,
@@ -93,7 +94,7 @@ export function retireWorldPresentation(app) {
 export function markWorldStarted(app, identity) {
   if (!sameWorldIdentity(identity, app.worldIdentity) || app.worldReplacement.status !== 'starting') return false;
   app.worldReplacement.status = 'idle'; app.worldReplacement.reason = null; app.worldReplacement.expectedIdentity = null;
-  app.worldReplacement.attemptOptions = null; app.worldReplacement.recoveryAttempts = 0; return true;
+  app.worldReplacement.recoveryAttempts = 0; return true;
 }
 export function recoverPreAuthorityFailure(app, identity) {
   if (!sameWorldIdentity(identity, app.worldIdentity)) return false;
@@ -101,12 +102,12 @@ export function recoverPreAuthorityFailure(app, identity) {
     app.worldReplacement.status = 'idle'; app.flow.send?.('fail'); app.failRun?.('The simulation could not start after a recovery attempt.');
     app.selectScene?.('home'); return false;
   }
-  const sequence = app.worldReplacement.requestSequence; const attemptOptions = app.worldReplacement.attemptOptions;
+  const sequence = app.worldReplacement.requestSequence;
   app.worldReplacement.recoveryAttempts++;
   app.worldReplacement.status = 'recovering'; queueMicrotask(() => {
     if (app.worldReplacement.status !== 'recovering' || app.worldReplacement.requestSequence !== sequence
       || !sameWorldIdentity(identity, app.worldIdentity)) return;
-    app.worldReplacement.status = 'idle'; requestWorldReplacement(app, 'recoverable-pre-authority-failure', identity, attemptOptions);
+    app.worldReplacement.status = 'idle'; requestWorldReplacement(app, 'recoverable-pre-authority-failure', identity);
   }); return true;
 }
 export function recoverAuthorityLossDuringReplacement(app,message){
@@ -114,13 +115,13 @@ export function recoverAuthorityLossDuringReplacement(app,message){
   const snapshot=app.snapshot??{},identity=identityFields(app.worldIdentity);
   app.archive=appendAbandonedWorld(app.archive,{...snapshot,...identity,runId:identity.runId,seed:identity.seed,tick:snapshot.tick??0,
     score:'0',worldOrdinal:snapshot.worldOrdinal??normalizeProgressionInteger(app.meta.worldSeedIndex,'0'),
-    environmentLevel:identity.environmentLevel,challengeProfileHash:identity.challengeProfileHash,history:app.currentHistory??[]},app.settings.historyRetention);
+    startEnvironmentLevel:'0',finalEnvironmentLevel:snapshot.currentEnvironmentLevel??'0',
+    peakEnvironmentLevel:snapshot.peakEnvironmentLevel??'0',history:app.currentHistory??[]},app.settings.historyRetention);
   saveHistory(app.archive,app.settings.historyRetention);ui.announce(app.el,'The retiring world authority was lost; its reward-free abandonment was recorded.');
   return performWorldReplacement(app);
 }
 export function finishRun(app,result){
   if(!sameWorldIdentity(result,app.worldIdentity))return false;
-  const priorFrontier=highestEnvironmentLevel(app.meta);
   const identified={...result,resultTransactionKey:app.worldIdentity.resultTransactionKey};
   const transaction=applyRunResult(app.meta,app.archive,identified,
     app.settings.historyRetention, app.resultKeys); if (!transaction.applied) return false;
@@ -134,9 +135,7 @@ export function finishRun(app,result){
     ui.announce(app.el, 'Progress is temporary because browser storage is unavailable.');
   const record = app.archive.worlds.at(-1);
   app.historyPlayback.save(record && { id: record.id, seed: record.seed, completedAt: app.meta.runs });
-  const nextEnvironmentLevel=recommendedEnvironmentLevel(transaction.meta),frontier=highestEnvironmentLevel(transaction.meta);
-  ui.showResult(app.el,transaction.score,{...result,trophyIds:transaction.trophyIds,campaignResolvedNow:transaction.meta.runs==='5',
-    nextEnvironmentLevel,frontierLevel:frontier,frontierAdvanced:compareProgressionIntegers(frontier,priorFrontier)>0});
+  ui.showResult(app.el,transaction.score,{...result,trophyIds:transaction.trophyIds,campaignResolvedNow:transaction.meta.runs==='5'});
   if (app.worldReplacement.status === 'awaiting-authority') return performWorldReplacement(app);
   app.selectScene('world');
   if (app.settings.autoContinue) {
@@ -155,6 +154,18 @@ function expectedMatches(app, expected) {
   if (!expected) return true;
   if (typeof expected === 'string') return expected === app.lastResultIdentity?.resultTransactionKey;
   return sameWorldIdentity(expected, app.worldIdentity) || sameWorldIdentity(expected, app.lastResultIdentity);
+}
+function immutableStartConfigurationHash(seed, worldOrdinal, evolution, onboarding) {
+  const material = stableStartJson({ seed, worldOrdinal, environmentModelVersion: ENVIRONMENT_MODEL_VERSION,
+    environmentScheduleVersion: ENVIRONMENT_SCHEDULE_VERSION, environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH,
+    onboarding, evolution });
+  return hexU32(hashStringU32(material));
+}
+function stableStartJson(value) {
+  if (Array.isArray(value)) return `[${value.map(stableStartJson).join(',')}]`;
+  if (value && typeof value === 'object') return `{${Object.keys(value).sort().map((key) =>
+    `${JSON.stringify(key)}:${stableStartJson(value[key])}`).join(',')}}`;
+  return JSON.stringify(value);
 }
 function phaseOf(app) { return app.phase ?? (app.state === 'title' ? 'idle' : app.state); }
 function transitionFor(phase) {

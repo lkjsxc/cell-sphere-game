@@ -19,6 +19,10 @@ export function runMetabolism(state) {
   const tempW = 0.42 * traits.heatTol;
   const reserveBonus = traits.coldReserve && state.tick < 1650 ? 1.5 : 1;
   const energyCap = B.ENERGY_CAP * traits.energyCap * reserveBonus;
+  const environmentCoefficients = state.environmentCoefficients ?? state.currentEnvironmentProfile?.coefficients ?? {};
+  const environmentMaintenance = environmentCoefficients.maintenanceScale ?? 1;
+  const recoveryScale = environmentCoefficients.recoveryScale ?? 1;
+  const attritionScale = environmentCoefficients.attritionScale ?? 1;
 
   for (let i = 0; i < N; i++) {
     if (state.alive[i] !== 1) continue;
@@ -60,9 +64,8 @@ export function runMetabolism(state) {
     if (active.has('rich-rush')) domainMaintenance *= 1.07;
     const gardenerStability = active.has('world-gardener') && state.coverage > .8 ? .40 : 1;
     if (gardenerStability < 1) domainMaintenance *= .74;
-    const environmentMaintenance = state.challengeProfile?.coefficients?.maintenanceScale ?? 1;
     const maintDemand = B.MAINTENANCE_RATE * state.biomass[i]
-      * (1 + e * B.MAINTENANCE_ENTROPY) * traits.maintenance * biomeMaintenance * domainMaintenance * environmentMaintenance;
+      * (1 + e * B.MAINTENANCE_ENTROPY) * traits.maintenance * biomeMaintenance * domainMaintenance * environmentMaintenance * attritionScale;
     const catchmentEnergy = consumeFreshwaterCatchment(state, i, maintDemand * freshwater * .62);
     const remainingDemand = Math.max(0, maintDemand - catchmentEnergy);
     const founderEnergy = consumeFounderFreshwater(state,
@@ -74,12 +77,12 @@ export function runMetabolism(state) {
     state.totalMaintenance += maint;
 
     const resist = traits.stressResist;
-    const gainRate = germinating ? B.STRESS_GAIN * 0.3 : B.STRESS_GAIN;
+    const gainRate = (germinating ? B.STRESS_GAIN * 0.3 : B.STRESS_GAIN) * attritionScale;
     const founderWater = state.initialFounderFreshwaterReserve > 0
       ? state.inoculationFreshwaterSupport * Math.min(1, state.founderFreshwaterReserve / state.initialFounderFreshwaterReserve) : 0;
     const next = state.stress[i]
       + (gainRate * (1 - suit) * (1 - freshwater * .40) * (1 - founderWater * .72) * gardenerStability) / resist
-      - B.STRESS_RECOVER * suit * (1 + freshwater * .25 + founderWater * .12);
+      - B.STRESS_RECOVER * recoveryScale * suit * (1 + freshwater * .25 + founderWater * .12);
     state.stress[i] = Math.fround(clamp01(next));
 
     // Maturity: surplus energy thickens living tissue (capped), which in

@@ -7,11 +7,12 @@ import { TROPHY_IDS } from '../../src/game/trophies/index.js';
 import { reconcileTrophies } from '../../src/game/trophies/evaluator.js';
 import { buildTrophyFacts, deriveLegacyTrophyFacts, validateTrophyFacts } from '../../src/game/trophies/facts.js';
 import { applyRunResult } from '../../src/interface/policies/run-result.js';
+import { RunController } from '../../src/simulation/simulator.js';
 
 test('schema-5 migration preserves progression and grants no trophies on load', () => {
   const loaded = validateMeta({ schema: 5, runs: 12, bestScore: 90000, totalEchoes: 70, echoBalance: 17,
     worldSeedIndex: 12, memoryNodes: ['reach-horizon-instinct'], imprints: [] });
-  assert.equal(loaded.schema, 11); assert.equal(loaded.runs, '12'); assert.equal(loaded.bestScore, '0'); assert.equal(loaded.legacyBestScore, '90000');
+  assert.equal(loaded.schema, 12); assert.equal(loaded.runs, '12'); assert.equal(loaded.bestScore, '0'); assert.equal(loaded.legacyBestScore, '90000');
   assert.deepEqual(loaded.trophyIds, []); assert.deepEqual(loaded.trophyQueue, []); assert.equal(loaded.trophyBackfillVersion, 0);
 });
 
@@ -54,7 +55,7 @@ test('legacy choice-era worlds cannot satisfy current autonomous or quiet-world 
 });
 
 test('habitat classes union, depleted cells sum, and reclamation uses one-world proof', () => {
-  let meta={...defaultMeta(),trophyBackfillVersion:3};const facts=(mask,depleted,recovered=0)=>validateTrophyFacts({version:5,autonomous:1,habitatMask:mask,habitatClassCount:1,habitat:Array(5).fill(0),resourceDepletedCells:depleted,resourceRecoveredCells:recovered,reach:[],morph:[],scoreAxesBp:[],lake:[]});
+  let meta={...defaultMeta(),trophyBackfillVersion:3};const facts=(mask,depleted,recovered=0)=>validateTrophyFacts({version:6,autonomous:1,habitatMask:mask,habitatClassCount:1,habitat:Array(5).fill(0),resourceDepletedCells:depleted,resourceRecoveredCells:recovered,reach:[],morph:[],scoreAxesBp:[],lake:[]});
   meta=reconcileTrophies(meta,defaultHistory(),facts(1,800,20)).meta;const second=reconcileTrophies(meta,defaultHistory(),facts(2,800,30));
   assert.equal(second.aggregate.habitatClassCount,2);assert.equal(second.aggregate.resourceDepletedCells,1600);
   assert.ok(!second.meta.trophyIds.includes('habitat-spent-landscape'));assert.ok(!second.meta.trophyIds.includes('habitat-three-habitats'));
@@ -65,7 +66,7 @@ test('habitat classes union, depleted cells sum, and reclamation uses one-world 
 
 test('exact REACH 100 and whole-cell worldmaking award current mastery criteria', () => {
   const meta={...defaultMeta(),trophyBackfillVersion:3};
-  const facts=validateTrophyFacts({version:5,autonomous:1,reach100:1,transformedCells:50,electrifiedCells:50,
+  const facts=validateTrophyFacts({version:6,autonomous:1,reach100:1,transformedCells:50,electrifiedCells:50,
     reach:[],morph:[],scoreAxesBp:[],lake:[],habitat:[]});
   const result=reconcileTrophies(meta,defaultHistory(),facts);
   assert.ok(result.meta.trophyIds.includes('mastery-reach-form-vector'));
@@ -80,11 +81,11 @@ test('SCORE mastery requires its score and quality evidence in the same world', 
 
 test('v1 river bit and ownership never create current lake proof or award', () => {
   const migrated = validateTrophyFacts({ version: 1, geographyMask: 2 });
-  assert.equal(migrated.version, 5); assert.equal(migrated.geographyMask & 2, 0); assert.deepEqual(migrated.lake, Array(11).fill(0));
+  assert.equal(migrated.version, 6); assert.equal(migrated.geographyMask & 2, 0); assert.deepEqual(migrated.lake, Array(11).fill(0));
   const legacy = deriveLegacyTrophyFacts({ tick: 20, events: [{ key: 'geo.river.reached' }] }); assert.equal(legacy.geographyMask & 2, 0);
   const current = buildTrophyFacts({ history: [{ type: 'geo-lake' }], offers: [], reach: {}, lakeProof: {
     lakeCellsReached: 1, shoreCellsReached: 1, distinctLakesReached: 1 } }, { breakdown: [] });
-  assert.equal(current.geographyMask & 2, 2); assert.equal(current.version, 5);
+  assert.equal(current.geographyMask & 2, 2); assert.equal(current.version, 6);
   const outcome = reconcileTrophies(defaultMeta(), { worlds: [{ seed: 1, tick: 20, score: 0, trophyFacts: legacy }] });
   assert.equal(outcome.awardedIds.includes('reach-lake-network'), false);
 });
@@ -118,9 +119,5 @@ test('abandoned worlds carry no Trophy proof and do not advance run awards', () 
   assert.equal('trophyFacts' in archive.worlds[0], false);
   const outcome = reconcileTrophies(defaultMeta(), archive); assert.deepEqual(outcome.awardedIds, []);
 });
-function completedResult() { return { runId: 1, seed: 9, hash: 'abcd', tick: 1200, survivalSeconds: 120,
-  cause: 'starvation', archetype: 'Test World', peakCoverage: .1, sustainedCoverage: .03,
-  peakConnectedShare: 1, minConnectedWhileMajority: 1, totalUptake: 100, totalMaintenance: 100,
-  scoreModelVersion: 2, worldPotential: 16000, challengeMult: 1, crisesTotal: 0, crisesEndured: 0, history: [], lakeProof: {},
-  worldOrdinal: 1, resourceInitial: 1, resourceFinal: .2, resourceDepletedCells: 1, habitatOccupancy: [],
-  reach: { gained: 20, positive: [{ id: 'frontier-expansion', count: 19 }] }, imprint: null }; }
+function completedResult() { const run = new RunController({ runId: 1, seed: 9, worldOrdinal: '1' });
+  run.start(); while (run.state.status !== 'extinct') run.advance(128); return run.buildResult(); }

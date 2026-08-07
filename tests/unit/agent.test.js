@@ -21,7 +21,9 @@ test('fair observation uses explicit nested public allowlists and no hidden auth
     assert.match(cell.currentLevel, /^\d+$/); assert.match(cell.nextCost, /^\d+$/);
   }
   assert.ok(observation.availableEvolutionCells.some((cell) => cell.buildProgress.some((build) => build.progress > 0)));
-  assert.equal(Object.keys(observation.nextWorldPressure.dimensions).length, 6);
+  assert.equal(observation.environmentSchedule.idleStartEnvironmentLevel, '0');
+  assert.equal(observation.activeWorld, null);
+  assert.equal(observation.bestEnvironmentLevelReached, '0');
   rejectPrivateKeys(observation);
 });
 
@@ -35,7 +37,7 @@ test('agent save schema validates exact browser subdocuments and hashes canonica
   assert.equal(repaired.worldOrdinal,'1');assert.equal(repaired.meta.echoBalance,'0');
   const retried=validateAgentSave({...clean,meta:{...clean.meta,runs:'2',worldSeedIndex:'7'}});
   assert.equal(retried.worldOrdinal,'8','agent persistence uses the attempt cursor after retries');
-  assert.deepEqual(repaired.history.worlds, []); assert.equal(repaired.history.schema, 6);
+  assert.deepEqual(repaired.history.worlds, []); assert.equal(repaired.history.schema, 7);
 });
 
 test('build-goal policy prioritizes visible recipe progress', () => {
@@ -51,10 +53,10 @@ test('every deterministic policy chooses a legal fair action deterministically',
   const save=defaultAgentSave(); const observation=createAgentEnvironment({ ...save, meta:{ ...save.meta, echoBalance:'1000' } }).observe();
   for (const policy of AGENT_POLICIES) {
     const copy=JSON.parse(JSON.stringify(observation)); const decision=choosePolicyAction(copy,policy);
-    assert.equal(decision.policy,policy); assert.match(decision.rationale,/Unlocked|Upgraded|Ran|declined|Retried/);
+    assert.equal(decision.policy,policy); assert.match(decision.rationale,/Unlocked|Upgraded|Started|declined/);
     if(decision.action.type==='buy-evolution-level') assert.ok(observation.availableEvolutionCells.some((cell)=>
       cell.id===decision.action.cellId&&cell.reason==='ready'&&cell.affordable));
-    else assert.ok(['run-world','retry-environment-level'].includes(decision.action.type));
+    else { assert.equal(decision.action.type, 'run-world'); assert.equal(decision.action.budgetTicks, 10_000); }
     assert.deepEqual(choosePolicyAction(observation,policy),decision);
   }
 });

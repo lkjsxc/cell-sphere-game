@@ -1,16 +1,15 @@
 /**
  * Versioned, exact Environment Level schedule boundary.
  *
- * Environment Level is a live within-world clock.  Legacy frontier helpers at
- * the end of this module exist only while old persistence readers migrate;
- * production authority must use the schedule functions below.
+ * Environment Level is a live within-world clock. The single legacy frontier
+ * reader at the end exists only for schema migration; production authority
+ * uses the schedule functions below.
  */
 import {
   addProgressionIntegers,
   compareProgressionIntegers,
   divideProgressionIntegers,
   incrementProgressionInteger,
-  maxProgressionInteger,
   multiplyProgressionIntegers,
   normalizeProgressionInteger,
   parseProgressionInteger,
@@ -29,6 +28,7 @@ export const ENVIRONMENT_TICK_DOCUMENT_DIGIT_LIMIT = 4096;
 export const ENVIRONMENT_LEVEL_OPENING_TICKS = '1200';
 export const ENVIRONMENT_LEVEL_INTERVAL_TICKS = '600';
 export const ENVIRONMENT_LEVEL_PROGRESS_SCALE = 1_000_000;
+export const ENVIRONMENT_ONBOARDING_MODIFIER_VERSION = 2;
 export const ENVIRONMENT_SCHEDULE_HASH = hexU32(hashStringU32([
   'environment-schedule', ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_VERSION,
   ENVIRONMENT_LEVEL_OPENING_TICKS, ENVIRONMENT_LEVEL_INTERVAL_TICKS,
@@ -101,6 +101,15 @@ export function environmentProgressAtTick(tick) {
   });
 }
 
+/** Explicit first-two-world event protection; never changes the public clock. */
+export function environmentOnboardingModifierForWorld(worldOrdinal) {
+  const canonicalWorldOrdinal = normalizeProgressionInteger(worldOrdinal, '1') === '0'
+    ? '1' : normalizeProgressionInteger(worldOrdinal, '1');
+  const harmfulEventsDisabled = compareProgressionIntegers(canonicalWorldOrdinal, '3') < 0;
+  return Object.freeze({ version: ENVIRONMENT_ONBOARDING_MODIFIER_VERSION, worldOrdinal: canonicalWorldOrdinal,
+    harmfulEventsDisabled, label: harmfulEventsDisabled ? 'establishment-protection' : 'standard-events' });
+}
+
 /**
  * Canonical immutable schedule state for one authoritative tick.  External
  * callers receive exact strings; simulation hot loops keep only the bounded
@@ -148,15 +157,8 @@ export function compareEnvironmentLevels(left, right) {
   return compareProgressionIntegers(parseProgressionInteger(left), parseProgressionInteger(right));
 }
 
-// ---------------------------------------------------------------------------
-// Legacy read-only frontier helpers. These are deliberately isolated so old
-// browser documents can be tagged during migration. New production authority
-// must not call them and they will be removed after all legacy readers move.
-// ---------------------------------------------------------------------------
-
-export const PROTECTED_WORLD_COUNT = '2';
-
-/** Conservative schema-10 legacy frontier projection; never a v2 start level. */
+// Narrow explicit legacy reader for schema ≤11 documents only. It cannot
+// participate in a new world's authority, reward, record, or start state.
 export function legacyEnvironmentFrontierForRuns(runs) {
   const value = normalizeProgressionInteger(runs, '0');
   if (compareProgressionIntegers(value, '1') <= 0) return '0';
@@ -164,64 +166,4 @@ export function legacyEnvironmentFrontierForRuns(runs) {
   if (compareProgressionIntegers(value, '5') <= 0) return '2';
   if (compareProgressionIntegers(value, '10') <= 0) return '3';
   return '4';
-}
-
-/** @deprecated migration-only static frontier reader. */
-export function isProtectedWorld(meta) {
-  return compareProgressionIntegers(normalizeProgressionInteger(meta?.runs, '0'), PROTECTED_WORLD_COUNT) < 0;
-}
-
-/** @deprecated migration-only static frontier reader. */
-export function highestEnvironmentLevel(meta) {
-  const stored = normalizeEnvironmentLevel(meta?.highestEnvironmentLevel, '0');
-  return isProtectedWorld(meta) ? stored : maxProgressionInteger('1', stored);
-}
-
-/** @deprecated migration-only static frontier reader. */
-export function recommendedEnvironmentLevel(meta) {
-  if (isProtectedWorld(meta)) return '0';
-  return maxProgressionInteger('1', highestEnvironmentLevel(meta));
-}
-
-/** @deprecated migration-only static attempt resolver. */
-export function resolveEnvironmentAttempt(meta, options = {}) {
-  const recommended = recommendedEnvironmentLevel(meta);
-  if (isProtectedWorld(meta)) {
-    return Object.freeze({ ok: true, reason: 'protected-onboarding', mode: 'protected',
-      environmentLevel: '0', highestEnvironmentLevel: highestEnvironmentLevel(meta) });
-  }
-  const mode = options.mode ?? 'recommended';
-  let requested = recommended;
-  if (mode === 'retry') requested = normalizeEnvironmentLevel(
-    options.environmentLevel ?? options.lastResult?.environmentLevel, recommended,
-  );
-  else if (mode === 'select') requested = normalizeEnvironmentLevel(options.environmentLevel, recommended);
-  else if (!['recommended', 'advance'].includes(mode)) {
-    return Object.freeze({ ok: false, reason: 'invalid-environment-mode', mode,
-      environmentLevel: recommended, highestEnvironmentLevel: highestEnvironmentLevel(meta) });
-  }
-  const frontier = highestEnvironmentLevel(meta);
-  if (compareProgressionIntegers(requested, frontier) > 0) {
-    return Object.freeze({ ok: false, reason: 'environment-level-locked', mode,
-      environmentLevel: requested, highestEnvironmentLevel: frontier });
-  }
-  return Object.freeze({ ok: true, reason: mode === 'retry' ? 'environment-retry' : mode === 'select' ? 'environment-selected' : 'environment-advance',
-    mode, environmentLevel: requested, highestEnvironmentLevel: frontier });
-}
-
-/** @deprecated migration-only static frontier advancement. */
-export function frontierAfterEnvironmentCompletion(meta, environmentLevel) {
-  const attempted = normalizeEnvironmentLevel(environmentLevel, '0');
-  const current = highestEnvironmentLevel(meta);
-  if (compareProgressionIntegers(attempted, current) !== 0) return current;
-  const next = incrementProgressionInteger(current);
-  return next.length <= ENVIRONMENT_LEVEL_DOCUMENT_DIGIT_LIMIT ? next : current;
-}
-
-/** @deprecated migration-only static frontier projection. */
-export function attainableEnvironmentFrontierForRuns(runs) {
-  const value = normalizeProgressionInteger(runs, '0');
-  if (value === '0') return '0';
-  if (compareProgressionIntegers(value, '2') <= 0) return '1';
-  return subtractProgressionIntegers(value, '1');
 }

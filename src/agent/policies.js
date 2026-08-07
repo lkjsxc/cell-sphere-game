@@ -11,6 +11,7 @@ const PREFERENCES = Object.freeze({
   cryolake:['Cryogenic','Freshwater'], 'littoral-forest':['Marine','Fertility','Freshwater'],
   terraforming:['Scarcity','Luminous','Freshwater'],
   'reach-100':['Marine','Cryogenic','Freshwater','Scarcity','Fertility','Luminous'],
+  conservative:['Freshwater','Fertility','Scarcity'],
 });
 const TARGET_BUILDS = Object.freeze({ sustainability:['circular-biosphere','lake-garden'],
   freshwater:['lake-garden','bioelectric-wetland'], 'rich-rush':['rich-rush'],
@@ -33,15 +34,12 @@ export function normalizePolicy(policy) {
 
 export function choosePolicyAction(observation, requestedPolicy = observation?.goals?.selected ?? 'balanced') {
   const policy = normalizePolicy(requestedPolicy);
-  if(policy==='weak')return runDecision(observation,policy,false,'Deliberately weak control declined permanent Evolution.');
+  if(policy==='weak')return runDecision(observation,policy,'Deliberately weak control declined permanent Evolution.');
   const legal = (observation?.availableEvolutionCells ?? observation?.availableSkills ?? [])
     .filter((cell) => cell.reason === 'ready' && cell.affordable);
   if (!legal.length) {
-    const retry = policy === 'conservative-retry' && observation.lastResult
-      && observation.lastResult.survivalSeconds < 240 && observation.environmentLevel !== '0';
-    return runDecision(observation,policy,retry,retry
-      ? `Retried Environment Level ${observation.lastResult.environmentLevel} after a short exposed world.`
-      : `Ran Environment Level ${observation.environmentLevel} because no Evolution level was affordable.`);
+    return runDecision(observation, policy,
+      `Started a new Level-0 world because no Evolution level was affordable; harshness rises within that world.`);
   }
   const cell = selectCell(legal, observation, policy);
   return Object.freeze({ action:Object.freeze({ type:'buy-evolution-level', cellId:cell.id,
@@ -49,8 +47,9 @@ export function choosePolicyAction(observation, requestedPolicy = observation?.g
     rationale:rationale(cell, policy), policy });
 }
 
-function runDecision(observation,policy,retry,rationale){const guard={expectedRevision:observation.metaRevision,expectedWorldOrdinal:observation.worldOrdinal};
- return Object.freeze({action:Object.freeze(retry?{type:'retry-environment-level',...guard}:{type:'run-world',...guard}),rationale,policy})}
+function runDecision(observation, policy, rationale) { const guard = { expectedRevision: observation.metaRevision,
+  expectedWorldOrdinal: observation.worldOrdinal, budgetTicks: 10_000 };
+ return Object.freeze({ action: Object.freeze({ type: 'run-world', ...guard }), rationale, policy }); }
 function selectCell(legal, observation, policy) {
   if (policy === 'random-legal') return deterministicChoice(legal, observation);
   if (policy === 'cheapest') return legal.slice().sort(costThenId)[0];
@@ -91,7 +90,7 @@ function policyTerms(policy) { return ({ sustainability:['renew','maintenance','
   'reach-100':['permit','access','reach','colonization'] })[policy] ?? []; }
 function deterministicChoice(legal, observation) {
   const ordered=legal.slice().sort((a,b)=>a.id.localeCompare(b.id));
-  const visible=`${observation.worldOrdinal}:${observation.environmentLevel}:${observation.echoBalance}:${observation.bestScore}:${ordered.map((cell)=>`${cell.id}@${cell.currentLevel}`).join('|')}`;
+  const visible=`${observation.worldOrdinal}:${observation.bestEnvironmentLevelReached}:${observation.echoBalance}:${observation.bestScore}:${ordered.map((cell)=>`${cell.id}@${cell.currentLevel}`).join('|')}`;
   return ordered[hashStringU32(visible)%ordered.length];
 }
 function costThenId(a,b){return compareProgressionIntegers(a.nextCost,b.nextCost)||a.id.localeCompare(b.id)}

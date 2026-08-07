@@ -26,7 +26,8 @@ export function buildTrophyFacts(result, score) {
   if (atLeast(total, '500000') && (flags & 1)) masteryFlags |= 4;
   if (atLeast(total, '750000') && habitatClassCount >= 3) masteryFlags |= 8;
   if (atLeast(total, '1000000') && meetsAxes(axes, [9000,6500,5000,9000,5500,7500])) masteryFlags |= 16;
-  return validateTrophyFacts({ version: 5, scoreModelVersion: score?.modelVersion ?? result.scoreModelVersion,
+  const exposure = result.environmentExposure ?? {};
+  return validateTrophyFacts({ version: 6, scoreModelVersion: score?.modelVersion ?? result.scoreModelVersion,
     survivalSeconds: result.survivalSeconds, peakCoverageBp: bp(result.peakCoverage),
     sustainedCoverageBp: bp(result.sustainedCoverage), geographyMask, crisisMask,
     crisesEndured: result.crisesEndured, crisesTotal: result.crisesTotal,
@@ -44,13 +45,17 @@ export function buildTrophyFacts(result, score) {
     glacialLakeCells: result.glacialLakeCells, maritimeForestCells: result.maritimeForestCells,
     reach100: result.reach100?.achieved ? 1 : 0,
     worldOrdinal: projectProgressionInteger(normalizeProgressionInteger(result.worldOrdinal, '1'), 1_000_000), eventCount: result.crisesTotal,
+    environmentPeakLevel: projectProgressionInteger(normalizeProgressionInteger(result.peakEnvironmentLevel, '0'), 1_000_000),
+    environmentTimeAtPeakTicks: projectProgressionInteger(normalizeProgressionInteger(exposure.timeAtPeakTicks, '0'), 1_000_000),
+    environmentPressureTicksQ: projectProgressionInteger(normalizeProgressionInteger(exposure.pressureTicksQ, '0'), 1_000_000_000),
+    onboardingHarmfulEventsDisabled: result.onboardingEnvironmentModifier?.harmfulEventsDisabled ? 1 : 0,
     scarcityCause: ['resource-exhaustion', 'maintenance-starvation'].includes(result.cause) ? 1 : 0 });
 }
 
 /** Old worlds remain readable; retired choice evidence never satisfies current criteria. */
 export function deriveLegacyTrophyFacts(world) {
   const events = Array.isArray(world?.events) ? world.events : [];
-  return validateTrophyFacts({ version: 5, scoreModelVersion: world?.scoreModelVersion ?? 1,
+  return validateTrophyFacts({ version: 6, scoreModelVersion: world?.scoreModelVersion ?? 1,
     survivalSeconds: (world?.tick ?? 0) / 10,
     peakCoverageBp: events.some((event) => event.key === 'geo.coverage.milestone') ? 1000 : 0,
     geographyMask: eventMask(events, GEO), crisisMask: crisisEventMask(events), crisesEndured: crisisCount(events),
@@ -58,13 +63,14 @@ export function deriveLegacyTrophyFacts(world) {
     lakeTypeMask: 0, lakeSalinityMask: 0, lake: [], habitat: [], habitatMask:0, habitatClassCount: 0, autonomous:0,
     resourceDepletedCells: 0, resourceRemainingBp: 0,
     worldOrdinal: projectProgressionInteger(normalizeProgressionInteger(world?.worldOrdinal, '1'), 1_000_000),
-    eventCount: crisisCount(events), scarcityCause: 0 });
+    eventCount: crisisCount(events), environmentPeakLevel: 0, environmentTimeAtPeakTicks: 0,
+    environmentPressureTicksQ: 0, onboardingHarmfulEventsDisabled: 0, scarcityCause: 0 });
 }
 
 export function validateTrophyFacts(raw) {
-  if (!raw || typeof raw !== 'object') return null; const sourceVersion = integer(raw.version, 5);
+  if (!raw || typeof raw !== 'object') return null; const sourceVersion = integer(raw.version, 6);
   const array = (value, length, max = 1_000_000) => Object.freeze(Array.from({ length }, (_, index) => integer(value?.[index], max)));
-  return Object.freeze({ version: 5, scoreModelVersion: integer(raw.scoreModelVersion, 16),
+  return Object.freeze({ version: 6, scoreModelVersion: integer(raw.scoreModelVersion, 16),
     survivalSeconds: integer(raw.survivalSeconds, 100_000),
     peakCoverageBp: integer(raw.peakCoverageBp, 10_000), sustainedCoverageBp: integer(raw.sustainedCoverageBp, 10_000),
     geographyMask: integer(raw.geographyMask, 63) & (sourceVersion === 1 ? 61 : 63), crisisMask: integer(raw.crisisMask, 127),
@@ -81,7 +87,12 @@ export function validateTrophyFacts(raw) {
     glacialLakeCells: sourceVersion >= 5 ? integer(raw.glacialLakeCells, 2562) : 0,
     maritimeForestCells: sourceVersion >= 5 ? integer(raw.maritimeForestCells, 2562) : 0,
     reach100: sourceVersion >= 5 ? integer(raw.reach100, 1) : 0,
-    worldOrdinal: integer(raw.worldOrdinal, 1_000_000), eventCount: integer(raw.eventCount, 64), scarcityCause: integer(raw.scarcityCause, 1) });
+    worldOrdinal: integer(raw.worldOrdinal, 1_000_000), eventCount: integer(raw.eventCount, 64),
+    environmentPeakLevel: sourceVersion >= 6 ? integer(raw.environmentPeakLevel, 1_000_000) : 0,
+    environmentTimeAtPeakTicks: sourceVersion >= 6 ? integer(raw.environmentTimeAtPeakTicks, 1_000_000) : 0,
+    environmentPressureTicksQ: sourceVersion >= 6 ? integer(raw.environmentPressureTicksQ, 1_000_000_000) : 0,
+    onboardingHarmfulEventsDisabled: sourceVersion >= 6 ? integer(raw.onboardingHarmfulEventsDisabled, 1) : 0,
+    scarcityCause: integer(raw.scarcityCause, 1) });
 }
 function morphology(events) { return ['morph.loop.first', 'morph.component.split', 'morph.component.reconnected'].map((key) => events.filter((event) => eventKey(event) === key).length); }
 function eventMask(events, map) { let mask = 0; for (const event of events) mask |= map[eventKey(event)] ?? 0; return mask; }

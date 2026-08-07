@@ -1,37 +1,56 @@
 # Decisions
 
-## 2026-08-07 — D1: Replace static frontier semantics
+## 2026-08-07 — D1: Environment is a within-world public clock
 
-**Decision.** Environment Level is an unlimited per-world deterministic time progression. Every new production world starts at Level 0; Evolution changes effective pressure and survivability rather than the public schedule; Result records evidence; `Next World` starts at 0.
+Every production world begins at Level 0. Schedule v2 derives Level 1 at tick
+1200 and later rungs each 600 ticks. Evolution influences effective pressure,
+not the displayed clock. Static selection, retry, unlock, run-count start, and
+frontier authority are rejected.
 
-**Rejected.** Selected/unlocked/attempted/retry/next static levels, run-count starts, static profile-for-whole-run authority, and a persistent `highestEnvironmentLevel` unlock state.
+## 2026-08-07 — D2: Exact boundary, finite runtime
 
-**Reason.** The user correction and root contract supersede the previous cross-world interpretation.
+Canonical decimal progression arithmetic lives at schedule/compiler/persistence
+boundaries. Current/next compiled profiles and interpolated finite coefficients
+are the only live pressure state. Profile v2 retains an asymptotic attrition
+dimension after ordinary ramps saturate, so no finite Evolution is immortal.
 
-## 2026-08-07 — D2: Preserve historical evidence without authority
+## 2026-08-07 — D3: Onboarding is explicit and separate
 
-**Decision.** Old frontier values and static-attempt History retain explicit legacy labels/readers only. They cannot become v2 best peaks, Rewards, Trophies, start levels, or pressure inputs without trustworthy equivalent dynamic evidence.
+On worlds one and two, onboarding v2 disables harmful event candidates without
+changing level, thresholds, pressure compiler, seed, resources, or scores.
+World three uses the same clock with standard telegraphed events.
 
-## 2026-08-07 — D3: Avoid a rewarded normal timeout
+## 2026-08-07 — D4: Natural terminal, bounded director
 
-**Decision.** The observed old approximately 362-second normal cap is a baseline defect, not a v2 terminal. A technical watchdog or agent external budget is error/incomplete and reward-free; escalating finite dynamic pressure naturally defeats finite builds.
+The old normal approximately-360-second terminal is removed. Natural ecology
+failure ends rewarded worlds; external agent budgets return `incomplete-budget`
+without a result. A fixed-capacity rolling event director replaces a static
+whole-run event list.
 
-## 2026-08-07 — D4: Bounded exact boundary / finite hot-path split
+## 2026-08-07 — D5: Legacy is evidence, never authority
 
-**Decision.** Canonical exact strings and bigint-like arithmetic live at schedule/profile/persistence/result boundaries. Simulation cell/edge loops consume finite projected coefficients only. Runtime profile/event/history caches have fixed bounds.
+Migration preserves old `highestEnvironmentLevel` as inert
+`legacyEnvironmentFrontier` and old History level as static attempted evidence.
+Neither is a v2 best record or reward/Trophy input.
 
-## 2026-08-07 — D5: Initial schedule candidate
+## 2026-08-07 — D6: Semantic boundary versions
 
-**Decision.** Implement schedule v2 with exact integer thresholds: Level 0 starts at tick 0; Level 1 starts at tick 1200; each later level starts 600 ticks later. At the current authoritative 10 ticks/second this yields a 120-second calm opening and 60-second later rungs. The formula has direct exact inverse evaluation and no threshold table.
+The implementation bumps Environment model/schedule/profile and exposure to 2,
+SCORE to 5, protocol/replay to 6, meta/History to 12/7, WAL to 3, agent schemas
+to 3, and Trophy facts to 6. These versions travel with validation rather than
+compatibility aliases in live authority.
 
-**Reason.** It aligns the old observed entropy onset with a visible mild Level 1, places levels 3–4 near the current ordinary 270–330-second balance window, and preserves ample nonzero transition duration. Production cohorts may retune the constants only through the versioned source.
+## 2026-08-07 — D7: Early SCORE anchor calibration
 
-## Pending evidence-backed choices
+SCORE v5 applies a bounded multiplier that tapers from 1.16 at fresh 16,000
+Potential to 1.0 at 100,000 Potential. It is fixed by permanent starting
+Potential, not current pressure, timing, or result state; breadth-complete
+1,200,000 Potential remains unchanged. This restored the fresh/first-root
+anchors while preserving sustained dynamic Environment credit as the only live
+pressure reward.
 
-- Exact schedule formula/constants/version.
-- Exact profile/exposure/SCORE formula versions and calibration.
-- Existing protocol/schema version numbers to bump.
-- Rolling event director capacities/cadence and onboarding version.
-- Browser/CI/Pages availability and deployed revision.
+## Pending release evidence
 
-These choices must be recorded here with measured source evidence before final release claims.
+Local tests, audits, browser checks, long-agent cohorts, benchmark, and soak
+are recorded in `status.md`. CI, Pages, and deployed-byte checks remain pending
+until the reviewed commit exists remotely.

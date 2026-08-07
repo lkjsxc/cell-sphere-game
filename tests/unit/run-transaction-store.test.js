@@ -3,7 +3,7 @@ import { STORAGE_KEYS } from '../../src/core/identity.js';import { defaultMeta }
 import { appendEvolutionEvent, defaultHistory } from '../../src/platform/history.js';
 import { recoverRunTransaction, saveProgressionTransaction, saveRunTransaction } from '../../src/platform/run-transaction-store.js';
 import {applyRunResult} from '../../src/interface/policies/run-result.js';
-import {evaluate,SCORE_MODEL_VERSION} from '../../src/game/scoring.js';
+import { RunController } from '../../src/simulation/simulator.js';
 function memoryStorage(){const values=new Map();return{fail:null,getItem:key=>values.get(key)??null,setItem(key,value){if(key===this.fail)throw new Error('quota');values.set(key,String(value))},removeItem:key=>values.delete(key),values};}
 function committed(){const key='world:7:7:77:7:4:abcdef12';const meta={...defaultMeta(),runs:'7',resultKeys:[key],totalEchoes:'50',echoBalance:'20'};
  const history={...defaultHistory(),worlds:[{id:'7-77-proof',seed:77,tick:2700,score:'10000',rank:'Rooted',cause:'resource-exhaustion',echo:'14',hash:'abcdef',archetype:'Living World',inoculationCell:4,events:[]}]};return{key,meta,history};}
@@ -22,12 +22,15 @@ test('Evolution level, exact debit, and History recover from the same WAL',()=>{
  storage.fail=STORAGE_KEYS.history;assert.equal(saveProgressionTransaction(meta,history,{kind:'evolution',key,retention:24},storage),false);
  storage.fail=null;const recovered=recoverRunTransaction(24,storage);assert.equal(recovered.kind,'evolution');assert.equal(recovered.meta.echoBalance,'92');
  assert.deepEqual(recovered.history.evolution[0],history.evolution[0]);});
-test('forged SCORE and skipped world ordinals cannot mint Echoes',()=>{const merit={raw:{survival:300,exploration:10,presence:5,coherence:4,stewardship:8,worldmaking:0},lastUpdateTick:3000};
- const score=evaluate({scoreMerit:merit,worldPotential:'16000'}),base={worldOrdinal:'1',worldPotential:'16000',scoreModelVersion:SCORE_MODEL_VERSION,
-  score:score.total,scoreProjection:score,scoreMerit:merit,survivalSeconds:300,resultTransactionKey:'forgery-test',environmentLevel:'0',seed:1,tick:3000,hash:'abc'};
- const meta={...defaultMeta(),worldSeedIndex:'1'};
- assert.equal(applyRunResult(meta,defaultHistory(),{...base,scoreProjection:{...score,total:`9${'8'.repeat(1000)}`}},24).reason,'invalid-score-projection');
- assert.equal(applyRunResult({...meta,worldSeedIndex:'999'},defaultHistory(),{...base,worldOrdinal:'999',scoreProjection:{...score,total:`9${'8'.repeat(1000)}`}},24).reason,'invalid-score-projection');
+test('forged SCORE, schedule evidence, profile hash, and skipped world ordinals cannot mint Echoes',()=>{
+ const controller = new RunController({ seed: 1, runId: 1, worldOrdinal: '1', worldPotential: '16000' }); controller.start();
+ while (controller.state.status !== 'extinct') controller.advance(64);
+ const base = { ...controller.buildResult(), resultTransactionKey: 'forgery-test' };
+ const meta={...defaultMeta(),worldSeedIndex:'0'};
+ assert.equal(applyRunResult(meta,defaultHistory(),{...base,scoreProjection:{...base.scoreProjection,total:`9${'8'.repeat(1000)}`}},24).reason,'invalid-score-projection');
+ assert.equal(applyRunResult(meta,defaultHistory(),{...base,environmentExposure:{...base.environmentExposure,totalTicks:'2999'}},24).reason,'invalid-environment-result');
+ assert.equal(applyRunResult(meta,defaultHistory(),{...base,peakEnvironmentLevel:'999999'},24).reason,'invalid-environment-result');
+ assert.equal(applyRunResult(meta,defaultHistory(),{...base,currentEnvironmentProfileHash:'deadbeef'},24).reason,'invalid-environment-result');
  assert.equal(applyRunResult(meta,defaultHistory(),{...base,worldOrdinal:'999'},24).reason,'unexpected-world-ordinal');
  assert.equal(meta.echoBalance,'0');
 });

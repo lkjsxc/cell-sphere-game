@@ -15,7 +15,7 @@ const arithmetic={safePlusOne:addProgressionIntegers(safe,'1'),hugePlusCredit:ad
 const canonical={leadingZero:normalizeProgressionInteger('00042','7'),negative:normalizeProgressionInteger('-1','7'),scientific:normalizeProgressionInteger('1e9','7'),
  unsafeNumber:normalizeProgressionInteger(Number(unsafe),'7'),tooLong:normalizeProgressionInteger(`1${'0'.repeat(4096)}`,'7')};
 const meta=validateMeta({...defaultMeta(),echoBalance:huge,totalEchoes:huge,bestScore:huge,legacyBestScore:huge,runs:unsafe,worldSeedIndex:credit,
- highestEnvironmentLevel:huge,revision:unsafe});
+ legacyEnvironmentFrontier:huge,revision:unsafe});
 const serialized=JSON.stringify(meta),roundTrip=validateMeta(JSON.parse(serialized));
 const root=MEMORY_NODES.find((node)=>node.kind==='root');
 const purchase=purchaseEvolutionLevel(meta,root.id,{expectedLevel:'0',expectedRevision:unsafe,transactionKey:'number-audit'});

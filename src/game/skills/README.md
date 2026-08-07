@@ -95,9 +95,9 @@ multi-affinity breadth.
 `policies/progression-spheres.js` supplies selected cell, expected level, and meta
 revision. First activation only selects/opens detail; a later activation of the
 same selected ready cell may transact. Stale, repeated, moved, cancelled, blank,
-or non-ready activations cannot debit. Meta schema 11 persists the sparse vector
-and History schema 6 records old/new level, exact cost/balance, Environment Level,
-and compiler versions as canonical decimal strings.
+or non-ready activations cannot debit. Meta schema 12 persists the sparse vector
+and History schema 7 records old/new level, exact cost/balance, achieved Environment
+record, and compiler versions as canonical decimal strings.
 
 Canonical focused gates are `audit:evolution-levels`,
 `audit:progression-numbers`, agent long/holdout campaigns, transaction unit/

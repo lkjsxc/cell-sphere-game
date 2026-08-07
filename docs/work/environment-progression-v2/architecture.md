@@ -1,65 +1,66 @@
-# Target architecture
+# Implemented architecture
 
-## Ownership
+## Canonical boundaries
 
-Create a focused production Environment Progression boundary (directory layout may adapt to existing conventions):
+`src/game/environment-level.js` is the sole public schedule source. It maps
+canonical exact ticks to Level 0/current level, threshold, next threshold, and
+fixed-point progress, and directly inverts a level to its tick. Schedule v2 is:
+Level 0 at tick 0, Level 1 at tick 1200, then one rung per 600 ticks.
 
-```text
-src/game/environment-progression/
-  schedule.js  # canonical tick ↔ level/progress/threshold source
-  profile.js   # direct exact level → finite dynamic pressure compiler
-  exposure.js  # bounded cumulative authoritative evidence
-  schema.js    # canonical external validation/hash input
-  README.md
-```
+`src/simulation/challenge-profile.js` compiles the current exact level and
+Evolution defense to finite runtime dimensions. It retains exact ratings for
+comparison/hash boundaries and only finite coefficients in hot loops. State
+retains current and next profiles, never a historical-level table. An
+asymptotic bounded attrition dimension continues worsening after ordinary ramps
+saturate, so a finite defense is eventually exceeded.
 
-No UI/test/audit copies schedule formulas. Existing `src/game/environment-level.js` becomes a narrow compatibility reader only during migration and is deleted or reduced once all production imports move.
+`src/game/environment-exposure.js` accumulates exact bounded result evidence:
+total ticks, pressure-time, quality-pressure-time, time at final peak, and peak
+finite pressure. SCORE v5 consumes this authority; it does not award a
+threshold-touch correction at Result.
 
-## Schedule and profile contract
+## Authoritative tick order
 
-- The schedule accepts canonical non-negative tick/level input and returns current level, level start, next threshold, and fixed-point progress.
-- It evaluates directly with integer/fixed-point math and exact threshold-neighborhood tests; it does not enumerate past levels.
-- The profile compiler accepts a huge canonical level plus immutable Evolution/start defense and returns finite bounded runtime dimensions, event parameters, exact public ratings, and a deterministic canonical hash.
-- Runtime state retains only current and next profiles. Arbitrary precision remains outside per-cell/per-edge loops.
-- Selected coefficients interpolate by schedule progress only; immutable world-generation fields never interpolate.
-
-**Selected schedule for the first production v2 slice.** `tickForLevel(0) = 0`; for `L ≥ 1`, `tickForLevel(L) = 1200 + (L − 1) × 600` at the canonical 10 ticks/second. Thus the calm Level-0 opening lasts 120 seconds and Levels 1/2/3/4 begin at 120/180/240/300 seconds. The inverse uses one exact subtract/divide operation. These constants are versioned source data and will be calibrated through production training/holdout cohorts; they are not copied into tests or prose formulas.
-
-## Dynamic authority data flow
+`RunController.step()` performs:
 
 ```text
-immutable Level-0 start configuration
- + authoritative tick + schedule version
- + compiled Evolution/onboarding modifier
-       ↓
-schedule state → transition detection → current/next profile installation
-       ↓                          ↘ rolling bounded event director
-finite effective pressure → ecology consumers → exposure/summary/SCORE/result
+increment tick
+→ derive/install schedule transition and current/next profiles
+→ advance rolling event director
+→ apply conditionals
+→ environment → metabolism → transport → worldmaking → growth
+→ death → liveness → connectivity/summary/SCORE/History
+→ natural terminal evaluation
 ```
 
-The event director derives candidates from immutable world identity and cadence/transition indices, not wall clock or `Math.random()`. It holds fixed-capacity active, telegraphed, and recent evidence queues. A presentation layer may coalesce notices but cannot skip authority.
+The same controller is used by Worker and fallback. Frame cadence, speed, UI,
+renderer, and tab visibility do not alter this order or skip ticks.
 
-## Session and protocol
+## State, events, and reset
 
-`WORLD_IDENTITY_FIELDS` retain seed, run/session identifiers, presentation generation, schedule/profile/model versions, immutable start-config hash, onboarding modifier, and result transaction key. Snapshot/result fields carry mutable current/peak level and current profile hash. World replacement is first-wins: retire old authority/presentation, show a static Level-0 blank frame, reserve identity, then start one Level-0 authority.
+`createRunState()` ignores old selected-level/profile input and creates a
+Level-0 topology/resource baseline. It initializes current/peak level,
+transition count, start tick, and exposure to zero. The visible onboarding
+modifier suppresses harmful events only for worlds one and two; it never
+changes the public clock.
 
-## Result and transaction boundary
+`events.js` owns a deterministic isolated-RNG rolling director with at most six
+active/future geometry records and eight recent summaries. Each generated
+whole-cell event has a minimum telegraph and expired geometry is reclaimed.
+No full-run schedule is precomputed or exposed.
 
-The authoritative result validates schedule/profile/exposure consistency before the transaction layer atomically applies SCORE/Echoes, best-achieved records, bounded History, Trophies, and seed cursor. Duplicate/stale/reordered result delivery returns the existing transaction outcome.
+Atomic replacement retires old authority, installs a typed Level-0 blank
+snapshot, reserves immutable identity, then starts the replacement world.
+Mutable level/profile state is absent from `WORLD_IDENTITY_FIELDS`.
 
-## Recovery and rollback
+## Result, protocol, and migration
 
-- Migration is field-by-field and idempotent; legacy static frontier/history values remain tagged and inert.
-- A malformed new progression field degrades to safe Level-0/new-model defaults, not an inferred unlocked start.
-- Storage unavailability retains playable session-only authority.
-- Rollback remains possible by retaining versioned readers for old result/history/replay payloads; it must never reactivate static selection for new worlds.
+Run protocol/replay v6, meta 12, History 7, transaction WAL 3, agent schemas
+3, Environment model/schedule/profile 2, exposure 2, SCORE 5, and Trophy facts
+6 carry the v2 semantic boundary. Result validation requires start Level 0,
+derived transition count, valid exposure, and matching profile/schedule data
+before the exactly-once transaction commits records, Echoes, History, and
+Trophies.
 
-## Risks to measure
-
-1. threshold inversion at huge values and schema digit limits;
-2. static profile consumers accidentally rewriting Level-0 start resources;
-3. event determinism across Worker/fallback and high-speed stepping;
-4. SCORE/Echo balance and instant-death farming;
-5. long-world memory / old ceiling remnants;
-6. stale identity comparisons and exactly-once transaction recovery;
-7. HUD blank-frame flashes and accessibility announcement backlog.
+Legacy readers preserve static frontier/attempt evidence explicitly and inertly;
+new authority never consumes it.

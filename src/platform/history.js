@@ -1,7 +1,8 @@
-/** Bounded semantic History schema 6. Visual detail is stored separately. */
+/** Bounded semantic History schema 7 with explicit dynamic Environment evidence. */
 import { buildTrophyFacts, validateTrophyFacts } from '../game/trophies/facts.js';
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
-import { normalizeEnvironmentLevel } from '../game/environment-level.js';
+import { ENVIRONMENT_MODEL_VERSION, normalizeEnvironmentLevel } from '../game/environment-level.js';
+import { ENVIRONMENT_EXPOSURE_VERSION } from '../game/environment-exposure.js';
 import { addProgressionIntegers, compareProgressionIntegers, incrementProgressionInteger,
   normalizeProgressionInteger } from '../core/progression-integer.js';
 const MAX_BYTES = 700_000;
@@ -10,7 +11,7 @@ const MAX_MEMORY_EVENTS = 128;
 const MAX_TROPHY_EVENTS = 128;
 const CELL_COUNT = 2562;
 
-export function defaultHistory() { return { schema: 6, worlds: [], evolution: [], trophies: [] }; }
+export function defaultHistory() { return { schema: 7, worlds: [], evolution: [], trophies: [] }; }
 function finiteInt(value, min = 0) { return Number.isFinite(value) && value >= min ? Math.floor(value) : null; }
 
 const SIM_EVENT = Object.freeze({
@@ -23,7 +24,8 @@ const SIM_EVENT = Object.freeze({
   'adaptation-selected': ['adaptation', 'adaptation.selected.manual'],
   'adaptation-unresolved': ['adaptation', 'adaptation.unresolved'],
   'adaptation-mode': ['adaptation', 'adaptation.mode.changed'], 'run-extinct': ['life', 'run.extinct'],
-  'run-abandoned': ['life', 'run.abandoned'], 'resource-reserve': ['resource', 'resource.reserve.threshold'],
+  'run-abandoned': ['life', 'run.abandoned'], 'environment-transition': ['environment', 'environment.level.transition'],
+  'resource-reserve': ['resource', 'resource.reserve.threshold'],
   'resource-recovered': ['resource', 'resource.cell.recovered'], 'glacial-lake': ['world', 'world.glacial_lake.formed'],
   'wetland-succession': ['world', 'world.wetland_succession.formed'], 'maritime-forest': ['world', 'world.maritime_forest.formed'],
   'powered-cell': ['life', 'life.cell.powered'], 'reach-100': ['world', 'world.reach_100.sustained'],
@@ -81,9 +83,6 @@ function validateWorld(raw) {
     evolutionPower: finiteInt(raw.evolutionPower) ?? 0,
     evolutionDepth: normalizeProgressionInteger(raw.evolutionDepth, '0'),
     worldOrdinal: normalizeProgressionInteger(raw.worldOrdinal, '1'),
-    environmentLevel: normalizeEnvironmentLevel(raw.environmentLevel, legacyEnvironmentLevel(raw.worldOrdinal)),
-    challengeProfileVersion: finiteInt(raw.challengeProfileVersion) ?? 0,
-    challengeProfileHash: typeof raw.challengeProfileHash === 'string' && /^[0-9a-f]{8}$/.test(raw.challengeProfileHash) ? raw.challengeProfileHash : '',
     resourceInitial: Number.isFinite(raw.resourceInitial) ? Math.max(0, raw.resourceInitial) : 0,
     resourceFinal: Number.isFinite(raw.resourceFinal) ? Math.max(0, raw.resourceFinal) : 0,
     resourceRecoveredCells: finiteInt(raw.resourceRecoveredCells) ?? 0,
@@ -97,10 +96,74 @@ function validateWorld(raw) {
     reach100:raw.reach100===true,activeBuilds:Array.isArray(raw.activeBuilds)
       ?[...new Set(raw.activeBuilds.slice(0,64).filter((id)=>typeof id==='string'&&/^[a-z][a-z0-9-]{1,47}$/.test(id)))].slice(0,16):[],
     inoculationCell: Number.isInteger(raw.inoculationCell) ? raw.inoculationCell : null, events };
+  if (isDynamicEnvironmentWorld(raw)) {
+    world.environmentModelVersion = ENVIRONMENT_MODEL_VERSION;
+    world.environmentScheduleVersion = finiteInt(raw.environmentScheduleVersion) ?? 0;
+    world.environmentScheduleHash = validHash(raw.environmentScheduleHash);
+    world.environmentProfileVersion = finiteInt(raw.environmentProfileVersion) ?? 0;
+    world.startEnvironmentLevel = '0';
+    world.finalEnvironmentLevel = normalizeEnvironmentLevel(raw.finalEnvironmentLevel, '0');
+    world.peakEnvironmentLevel = normalizeEnvironmentLevel(raw.peakEnvironmentLevel, world.finalEnvironmentLevel);
+    if (compareProgressionIntegers(world.peakEnvironmentLevel, world.finalEnvironmentLevel) < 0) world.peakEnvironmentLevel = world.finalEnvironmentLevel;
+    world.environmentTransitionCount = normalizeProgressionInteger(raw.environmentTransitionCount, '0');
+    world.environmentExposure = validateEnvironmentExposure(raw.environmentExposure);
+    world.timeAtPeakTicks = normalizeProgressionInteger(raw.timeAtPeakTicks, world.environmentExposure.timeAtPeakTicks);
+    world.recentEnvironmentTransitions = validateRecentTransitions(raw.recentEnvironmentTransitions);
+    world.currentEnvironmentProfileHash = validHash(raw.currentEnvironmentProfileHash);
+    world.onboardingEnvironmentModifier = validateOnboardingModifier(raw.onboardingEnvironmentModifier);
+    world.environmentPressureSummary = validatePressureSummary(raw.environmentPressureSummary);
+  } else {
+    // Old `environmentLevel` is a static attempted level, never a v2 peak.
+    world.environmentModelVersion = 1;
+    world.attemptedEnvironmentLevel = normalizeEnvironmentLevel(raw.attemptedEnvironmentLevel ?? raw.environmentLevel,
+      legacyEnvironmentLevel(raw.worldOrdinal));
+    world.legacyChallengeProfileVersion = finiteInt(raw.challengeProfileVersion ?? raw.legacyChallengeProfileVersion) ?? 0;
+    world.legacyChallengeProfileHash = validHash(raw.challengeProfileHash ?? raw.legacyChallengeProfileHash);
+  }
   if (typeof raw.resultTransactionKey === 'string' && raw.resultTransactionKey.length <= 128) world.resultTransactionKey = raw.resultTransactionKey;
   const legacyAdaptations=Array.isArray(raw.adaptations)?raw.adaptations.slice(0,48).filter((id)=>typeof id==='string').slice(0,24):[];
   if (legacyAdaptations.length) world.adaptations = legacyAdaptations;
   const trophyFacts = validateTrophyFacts(raw.trophyFacts); if (trophyFacts) world.trophyFacts = trophyFacts; return world;
+}
+
+function isDynamicEnvironmentWorld(raw) {
+  return raw?.environmentModelVersion === ENVIRONMENT_MODEL_VERSION && raw?.startEnvironmentLevel === '0';
+}
+function validHash(value) { return typeof value === 'string' && /^[0-9a-f]{8}$/.test(value) ? value : ''; }
+function validateEnvironmentExposure(raw) {
+  if (!raw || typeof raw !== 'object' || raw.version !== ENVIRONMENT_EXPOSURE_VERSION) {
+    return Object.freeze({ version: ENVIRONMENT_EXPOSURE_VERSION, totalTicks: '0', pressureTicksQ: '0',
+      qualityPressureTicksQ: '0', timeAtPeakTicks: '0', peakPressureQ: 0, currentLevel: '0' });
+  }
+  return Object.freeze({ version: ENVIRONMENT_EXPOSURE_VERSION,
+    totalTicks: normalizeProgressionInteger(raw.totalTicks, '0'),
+    pressureTicksQ: normalizeProgressionInteger(raw.pressureTicksQ, '0'),
+    qualityPressureTicksQ: normalizeProgressionInteger(raw.qualityPressureTicksQ, '0'),
+    timeAtPeakTicks: normalizeProgressionInteger(raw.timeAtPeakTicks, '0'),
+    peakPressureQ: Math.max(0, Math.min(1_000_000, finiteInt(raw.peakPressureQ) ?? 0)),
+    currentLevel: normalizeEnvironmentLevel(raw.currentLevel, '0') });
+}
+function validateRecentTransitions(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.slice(-8).map((entry) => {
+    if (!entry || typeof entry !== 'object') return null;
+    const tick = normalizeProgressionInteger(entry.tick, '0');
+    const level = normalizeEnvironmentLevel(entry.level, '0');
+    const profileHash = validHash(entry.profileHash);
+    const pressure = Number.isFinite(entry.pressure) ? Math.max(0, Math.min(1, entry.pressure)) : 0;
+    return { tick, level, profileHash, pressure };
+  }).filter(Boolean);
+}
+function validateOnboardingModifier(raw) {
+  if (!raw || typeof raw !== 'object') return Object.freeze({ version: 0, harmfulEventsDisabled: false });
+  return Object.freeze({ version: finiteInt(raw.version) ?? 0, harmfulEventsDisabled: raw.harmfulEventsDisabled === true,
+    label: typeof raw.label === 'string' ? raw.label.slice(0, 48) : '' });
+}
+function validatePressureSummary(raw) {
+  if (!raw || typeof raw !== 'object') return Object.freeze({ level: '0', pressure: 0, severityQ: 0 });
+  return Object.freeze({ level: normalizeEnvironmentLevel(raw.level, '0'),
+    pressure: Number.isFinite(raw.pressure) ? Math.max(0, Math.min(1, raw.pressure)) : 0,
+    severityQ: Math.max(0, Math.min(1_000_000, finiteInt(raw.severityQ) ?? 0)) });
 }
 
 export function validateHistory(raw, retention = 24) {
@@ -131,8 +194,15 @@ export function appendWorld(history,result,score,runIndex,retention=24){
     hash: result.hash, archetype: result.archetype, inoculationCell: result.inoculationCell,
     scoreModelVersion: score.modelVersion, worldPotential: result.worldPotential, potentialVersion: result.potentialVersion,
     evolutionPower: result.evolutionPower, evolutionDepth: result.evolutionDepth, worldOrdinal: result.worldOrdinal,
-    environmentLevel: result.environmentLevel, challengeProfileVersion: result.challengeProfileVersion,
-    challengeProfileHash: result.challengeProfileHash, resultTransactionKey: result.resultTransactionKey,
+    environmentModelVersion: result.environmentModelVersion, environmentScheduleVersion: result.environmentScheduleVersion,
+    environmentScheduleHash: result.environmentScheduleHash, environmentProfileVersion: result.environmentProfileVersion,
+    startEnvironmentLevel: result.startEnvironmentLevel, finalEnvironmentLevel: result.finalEnvironmentLevel,
+    peakEnvironmentLevel: result.peakEnvironmentLevel, environmentTransitionCount: result.environmentTransitionCount,
+    timeAtPeakTicks: result.timeAtPeakTicks, environmentExposure: result.environmentExposure,
+    recentEnvironmentTransitions: result.recentEnvironmentTransitions,
+    currentEnvironmentProfileHash: result.currentEnvironmentProfileHash,
+    onboardingEnvironmentModifier: result.onboardingEnvironmentModifier,
+    environmentPressureSummary: result.environmentPressureSummary, resultTransactionKey: result.resultTransactionKey,
     resourceInitial: result.resourceInitial, resourceFinal: result.resourceFinal,
     resourceRecoveredCells: result.resourceRecoveredCells,
     freshwaterSupportedCellSeconds: result.freshwaterSupportedCellSeconds,
@@ -153,8 +223,12 @@ export function appendAbandonedWorld(history,result,retention=24){
     scoreModelVersion: result.scoreModelVersion, worldPotential: result.worldPotential,
     potentialVersion: result.potentialVersion, evolutionPower: result.evolutionPower,
     evolutionDepth: result.evolutionDepth, worldOrdinal: result.worldOrdinal,
-    environmentLevel: result.environmentLevel, challengeProfileVersion: result.challengeProfileVersion,
-    challengeProfileHash:result.challengeProfileHash,events:normalizeHistoryEvents(result.history)});
+    environmentModelVersion: result.environmentModelVersion, environmentScheduleVersion: result.environmentScheduleVersion,
+    environmentScheduleHash: result.environmentScheduleHash, environmentProfileVersion: result.environmentProfileVersion,
+    startEnvironmentLevel: result.startEnvironmentLevel ?? '0', finalEnvironmentLevel: result.finalEnvironmentLevel ?? '0',
+    peakEnvironmentLevel: result.peakEnvironmentLevel ?? '0', environmentTransitionCount: result.environmentTransitionCount ?? '0',
+    environmentExposure: result.environmentExposure, currentEnvironmentProfileHash: result.currentEnvironmentProfileHash,
+    onboardingEnvironmentModifier: result.onboardingEnvironmentModifier, events:normalizeHistoryEvents(result.history)});
   return validateHistory({...source,worlds:[...source.worlds,record]},retention);
 }
 export function appendEvolutionEvent(history,evidence){
@@ -193,7 +267,7 @@ function validateEvolutionEvent(raw, index) {
   const event = { seq: finiteInt(raw.seq) ?? index, kind: 'evolution-level', nodeId: raw.nodeId,
     oldLevel, newLevel, cost, balanceBefore, balanceAfter,
     run: normalizeProgressionInteger(raw.run, '0'),
-    environmentLevel: normalizeEnvironmentLevel(raw.environmentLevel, '0') };
+    bestEnvironmentLevelReached: normalizeEnvironmentLevel(raw.bestEnvironmentLevelReached, '0') };
   if (typeof raw.transactionKey === 'string' && raw.transactionKey.length > 0 && raw.transactionKey.length <= 128)
     event.transactionKey = raw.transactionKey;
   if (raw.compilerVersions && typeof raw.compilerVersions === 'object') event.compilerVersions = Object.freeze(

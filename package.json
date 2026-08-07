@@ -45,7 +45,7 @@
     "agent:play": "node scripts/agent-play.mjs",
     "agent:smoke": "node --test tests/unit/agent.test.js tests/integration/agent-environment.test.js && node scripts/agent-tournament.mjs --smoke",
     "agent:campaign": "node scripts/agent-play.mjs campaign --worlds 5",
-    "agent:long": "node scripts/agent-play.mjs campaign --worlds 12 --policies balanced,breadth-first,depth-first,sustainability,luminous-infrastructure,harshness-push,conservative-retry,random-legal --report reports/agent-long.json",
+    "agent:long": "node scripts/agent-play.mjs campaign --worlds 12 --policies balanced,breadth-first,depth-first,sustainability,luminous-infrastructure,harshness-push,conservative,random-legal --report reports/agent-long.json",
     "balance:holdout": "node scripts/agent-tournament.mjs --holdout --worlds 6",
     "benchmark": "node scripts/benchmark.mjs",
     "verify": "node scripts/verify.mjs"

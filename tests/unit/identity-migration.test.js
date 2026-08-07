@@ -46,7 +46,8 @@ test('full legacy namespace migration preserves every schema-8 progression and s
   assert.equal(report.complete, true); assert.deepEqual(Object.values(report.documents).map((item) => item.status), ['migrated', 'migrated', 'migrated']);
   const meta = JSON.parse(storage.getItem(STORAGE_KEYS.meta)); const expectedMeta = validateMeta(legacyMeta);
   assert.equal(meta.bestScore, '0'); assert.equal(meta.legacyBestScore, '812345'); assert.equal(meta.totalEchoes, '987'); assert.equal(meta.echoBalance, '444');
-  assert.equal(meta.runs, '37'); assert.equal(meta.worldSeedIndex, '52'); assert.equal(meta.highestEnvironmentLevel, '4');
+  assert.equal(meta.runs, '37'); assert.equal(meta.worldSeedIndex, '52');
+  assert.equal(meta.legacyEnvironmentFrontier, '4'); assert.equal(meta.bestEnvironmentLevelReached, '0');
   assert.deepEqual(meta.resultKeys, ['result-a', 'result-b']);
   assert.equal(meta.evolutionLevels.length, 252); assert.equal(meta.legacyMemoryNodes.length, 642); assert.deepEqual(meta.evolutionLevels, expectedMeta.evolutionLevels);
   assert.deepEqual(meta.imprints, expectedMeta.imprints); assert.deepEqual(meta.trophyIds, expectedMeta.trophyIds);
@@ -95,14 +96,16 @@ test('a verified legacy receipt permits safe malformed-canonical recovery, while
   const unavailable = migrateStorageNamespace(throwing); assert.equal(unavailable.available, false); assert.equal(unavailable.complete, false);
 });
 
-test('schema-11 import rejects impossible Environment frontier evidence',()=>{
- assert.equal(validateMeta({...defaultMeta(),runs:'2',worldSeedIndex:'2',highestEnvironmentLevel:'999'}).highestEnvironmentLevel,'1');
- assert.equal(validateMeta({...defaultMeta(),runs:'10',worldSeedIndex:'10',highestEnvironmentLevel:'999'}).highestEnvironmentLevel,'9');
+test('legacy static frontier is preserved inertly and never becomes a dynamic best record',()=>{
+ const early=validateMeta({...defaultMeta(),runs:'2',worldSeedIndex:'2',highestEnvironmentLevel:'999'});
+ const late=validateMeta({...defaultMeta(),runs:'10',worldSeedIndex:'10',highestEnvironmentLevel:'999'});
+ assert.equal(early.legacyEnvironmentFrontier,'999'); assert.equal(late.legacyEnvironmentFrontier,'999');
+ assert.equal(early.bestEnvironmentLevelReached,'0'); assert.equal(late.bestEnvironmentLevelReached,'0');
 });
 
 test('schema-11 exact values survive repeated browser export/import above 2^53',()=>{
   const huge=`9${'8'.repeat(999)}`,raw={...defaultMeta(),revision:'9007199254740992',runs:'9007199254740993',worldSeedIndex:'9007199254740994',
-    bestScore:huge,totalEchoes:huge,echoBalance:huge,highestEnvironmentLevel:huge,evolutionLevels:[{id:MEMORY_NODE_IDS[0],level:huge}]};
+    bestScore:huge,totalEchoes:huge,echoBalance:huge,legacyEnvironmentFrontier:huge,evolutionLevels:[{id:MEMORY_NODE_IDS[0],level:huge}]};
   const first=validateMeta(raw),second=validateMeta(JSON.parse(JSON.stringify(first)));
   assert.deepEqual(second,first);assert.equal(first.evolutionLevels[0].level,huge);assert.equal(first.bestScore,huge);
   const exported=serializeExportData(first,defaultHistory(),defaultSettings()),imported=parseImportedData(exported);

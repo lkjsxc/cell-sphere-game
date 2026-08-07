@@ -1,6 +1,6 @@
 import { allOf as all, atLeast as n, defineTrophyFamily as family } from './definition.js';
 export const MASTERY_TROPHIES = family('mastery', [
-  ['score-forty', 'Rooted SCORE', 'Reach a current-model SCORE of 12,000.', n('bestScore', 12000)],
+  ['score-forty', 'Rooted SCORE', 'Reach a current-model SCORE of 13,000.', n('bestScore', 13000)],
   ['score-ninety', 'Cartographer SCORE', 'Reach a current-model SCORE of 100,000 with at least 45% Reach quality in that world.', n('scoreReachWorld', 1)],
   ['score-one-eighty', 'Worldweaver SCORE', 'Reach a current-model SCORE of 250,000 with balanced Run Quality in that world.', n('scoreBalancedWorld', 1)],
   ['score-three-twenty', 'Planetary SCORE', 'Reach a current-model SCORE of 500,000 while enduring every started crisis.', n('scoreCrisisWorld', 1)],

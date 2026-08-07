@@ -10,7 +10,7 @@ import { appendWorld, defaultHistory, loadHistory, normalizeHistoryEvents, saveH
 function runFull(cfg, chunk = 50) { const controller = new RunController({ worldOrdinal: 1, worldPotential: 16000, ...cfg }); controller.start();
   while (controller.state.status !== 'extinct') controller.advance(chunk); return controller.buildResult(); }
 function semantic(result) { return { hash: result.hash, tick: result.tick, cause: result.cause, terminalCause: result.terminalCause,
-  inoculationCell: result.inoculationCell, worldOrdinal: result.worldOrdinal, worldEra: result.worldEra,
+  inoculationCell: result.inoculationCell, worldOrdinal: result.worldOrdinal,
   worldPotential: result.worldPotential, replay: result.replay, reach: result.reach, lakeProof: result.lakeProof,
   resourceFinal: result.resourceFinal, resourceTransferred: result.resourceTransferred, habitatOccupancy: result.habitatOccupancy } }
 
@@ -25,7 +25,7 @@ test('same start configuration reproduces authority, History, Imprint, and SCORE
   assert.deepEqual(a.history, b.history); assert.deepEqual(a.imprint, b.imprint); assert.deepEqual(scoreResult(a), scoreResult(b));
 });
 
-test('different seeds and world eras produce distinct intentional authority', () => {
+test('different seeds and explicit onboarding worlds produce distinct intentional authority', () => {
   assert.notEqual(runFull({ seed: 1 }).hash, runFull({ seed: 2 }).hash);
   const scarcity = runFull({ seed: 9, worldOrdinal: 1 }); const mature = runFull({ seed: 9, worldOrdinal: 12 });
   assert.notEqual(scarcity.hash, mature.hash); assert.equal(scarcity.crisesTotal, 0); assert.ok(mature.crisesTotal > 0);
@@ -55,8 +55,8 @@ test('strain and permanent Evolution remain authoritative start inputs', () => {
   assert.notEqual(evolved.hash, pioneer.hash); assert.equal(evolved.worldPotential, memory.worldPotential);
 });
 
-test('replay schema 5 contains only stable run creation inputs', () => {
-  const result = runFull({ seed: 8888 }); assert.equal(result.replayVersion, REPLAY_VERSION); assert.equal(REPLAY_VERSION, 5);
+test('replay schema 6 contains only stable run creation inputs', () => {
+  const result = runFull({ seed: 8888 }); assert.equal(result.replayVersion, REPLAY_VERSION); assert.equal(REPLAY_VERSION, 6);
   assert.deepEqual(result.replay.map((entry) => entry[1]), [REPLAY.STRAIN, REPLAY.INOCULATE]);
   assert.ok(result.replay.flat().every(Number.isInteger));
 });

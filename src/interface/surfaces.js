@@ -2,7 +2,6 @@
 import { getTrophy } from '../game/trophies/index.js';
 import { createTimedPresentationQueue, PRESENTATION_DURATION } from './policies/presentation-timing.js';
 import { formatProgressionEngineering, normalizeProgressionInteger } from '../core/progression-integer.js';
-import { recommendedEnvironmentLevel } from '../game/environment-level.js';
 const TOAST_QUEUES = new WeakMap();
 const CAUSE = Object.freeze({
   'resource-exhaustion': 'The reachable reserves were consumed faster than they could renew.',
@@ -35,7 +34,7 @@ export function elements() {
     trophyBadge: byId('trophy-tab-badge'), trophyLegacy: byId('trophy-legacy'),
     memoryAvailable: byId('memory-available'), countdown: byId('result-countdown'), resultFirstCycle: byId('result-first-cycle'),
     resultNext: /** @type {HTMLButtonElement} */ (byId('result-next-button')),
-    resultRetry: /** @type {HTMLButtonElement} */ (byId('result-retry-button')), resultControl: byId('result-control'),
+    resultControl: byId('result-control'),
     live: byId('live-region'), toast: byId('toast-root'), eventTime: byId('hud-event-time'), eventButton: byId('current-event-button'),
     resultHistory: byId('result-history-button'),
   };
@@ -51,7 +50,13 @@ export function updateHud(el, snap) {
   const metrics = snap.metrics ?? {};
   el.score.textContent = number(metrics.score ?? 0);
   el.pressure.textContent = `${Math.round((snap.entropy ?? 0) * 100)}%`;
-  el.environmentLevel.textContent=number(snap.environmentLevel);
+  const currentEnvironmentLevel = snap.currentEnvironmentLevel ?? '0';
+  el.environmentLevel.textContent = number(currentEnvironmentLevel);
+  const nextTick = snap.nextEnvironmentLevelTick;
+  const progress = Number.isInteger(snap.environmentLevelProgressQ) ? Math.round(snap.environmentLevelProgressQ / 10_000) : 0;
+  el.environmentLevel.setAttribute('aria-label', nextTick
+    ? `Environment Level ${number(currentEnvironmentLevel)}; ${progress}% to the next level`
+    : `Environment Level ${number(currentEnvironmentLevel)}`);
   const aliveCount = Math.max(0, Math.floor(metrics.aliveCount ?? 0));
   el.reach.textContent = formatCoverage(metrics.coverage ?? 0, aliveCount, snap.alive?.length ?? 2562);
   el.trace.hidden = aliveCount === 0 || aliveCount > 3;
@@ -59,7 +64,7 @@ export function updateHud(el, snap) {
 }
 
 export function resetWorldPresentation(el, snapshot = null) {
-  updateHud(el, snapshot ?? { entropy: 0, status: 'starting', alive: { length: 2562 },
+  updateHud(el, snapshot ?? { entropy: 0, status: 'starting', currentEnvironmentLevel: '0', alive: { length: 2562 },
     metrics: { score: 0, coverage: 0, aliveCount: 0 }, reach: null });
   el.eventTime.textContent = '00:00 · STARTING'; el.event.textContent = 'Preparing a new world.'; el.eventButton.dataset.read = 'true';
   el.live.textContent = ''; el.resultRank.textContent = ''; el.resultScore.textContent = '0';
@@ -94,9 +99,12 @@ export function showResult(el, score, result) {
   el.resultRank.textContent = result.campaignResolvedNow ? `FIRST CYCLE RESOLVED · +${number(score.echoes)} Echoes`
     : `${score.rank.en.toUpperCase()} · +${number(score.echoes)} Echoes`;
   el.resultScore.textContent = number(score.total);
-  const attempted=number(result.environmentLevel),frontier=number(result.frontierLevel??result.nextEnvironmentLevel);
-  el.resultEnvironment.textContent=result.frontierAdvanced?`Environment Level ${attempted} complete · Level ${frontier} unlocked`
-    :`Environment Level ${attempted} complete · frontier remains Level ${frontier}`;
+  const peak = number(result.peakEnvironmentLevel ?? result.finalEnvironmentLevel ?? '0');
+  const final = number(result.finalEnvironmentLevel ?? '0');
+  const atPeakTicks = normalizeProgressionInteger(result.timeAtPeakTicks ?? result.environmentExposure?.timeAtPeakTicks, '0');
+  const atPeakSeconds = Number(atPeakTicks.length <= 12 ? atPeakTicks : '0') / 10;
+  const exposure = result.environmentExposure?.pressureTicksQ ?? '0';
+  el.resultEnvironment.textContent = `Peak Environment Level ${peak} · Final ${final} · ${atPeakSeconds.toFixed(1)} seconds at peak · pressure exposure ${number(exposure)}`;
   const powered = Math.max(0, result.everPoweredCells ?? result.electrifiedCells ?? 0);
   el.resultPower.textContent = powered
     ? `Powered ecology · ${powered} cells ever charged · ${Math.round(result.poweredCellSeconds ?? 0)} powered-cell seconds.`
@@ -112,9 +120,8 @@ export function showResult(el, score, result) {
     row.textContent = `${part.en}  ${number(part.points)}`; return row;
   }));
   el.resultControl.hidden = false; el.resultControl.classList.add('is-recommended', 'result-enter');
-  el.resultControl.dataset.action = 'recommended';
-  el.resultNext.textContent=`Next World · Environment Level ${number(result.nextEnvironmentLevel)}`;
-  el.resultRetry.textContent=`Retry Environment Level ${attempted}`;
+  el.resultControl.dataset.action = 'next-world';
+  el.resultNext.textContent = 'Next World';
   el.pause.disabled = true; el.pause.classList.add('is-complete'); el.pause.setAttribute('aria-label', 'World time complete');
   el.speed.disabled = true; el.speed.setAttribute('aria-label', 'Game speed, next-world preference');
 }
@@ -130,7 +137,7 @@ export function formatCoverage(coverage, aliveCount, totalCells = 2562) {
 
 export function showMemory(el, meta, available = 0) { el.memoryBalance.textContent = number(meta.echoBalance);
   el.memoryAvailable.textContent = `${available} ${available === 1 ? 'level' : 'levels'} ready`;
-  el.memoryEnvironment.textContent=`Next · Environment Level ${number(recommendedEnvironmentLevel(meta))}`;}
+  el.memoryEnvironment.textContent = `Every world begins at Environment Level 0. Evolution helps life endure farther. Best reached: Level ${number(meta.bestEnvironmentLevelReached)}`;}
 export function showTrophies(el, meta) { const count = meta.trophyIds?.length ?? 0; el.trophyCount.textContent = `${count} / 96 earned`;
   const legacy = meta.legacyTrophyIds?.length ?? 0; if (el.trophyLegacy) { el.trophyLegacy.hidden = legacy === 0;
     el.trophyLegacy.textContent = legacy ? `Legacy · ${legacy} retired river-era Trophy preserved separately; it supplies no current lake proof.` : ''; } }

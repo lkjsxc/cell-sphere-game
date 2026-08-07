@@ -14,9 +14,11 @@ import { addExternalNutrient, freshwaterSupportAt, loseNutrient, transferReserve
 
 /** Global deterioration curve, indexed by tick. 0 until rise start, 1 at end. */
 export function buildEntropyLut(profile = null) {
-  const len = B.RUN_CEILING_TICKS + 600;
+  // Presentation-compatible finite LUT only; live authority uses
+  // environmentEntropyAt() and has no world-duration ceiling.
+  const len = B.ENTROPY_RISE_END + B.SEASON_PERIOD_TICKS;
   const pressure = profile && typeof profile === 'object'
-    ? Math.max(0, Math.min(1, profile.score?.pressure ?? 0)) : environmentPressureForEra(profile ?? 1);
+    ? Math.max(0, Math.min(1, profile.score?.pressure ?? 0)) : 0;
   const start = B.ENTROPY_RISE_START - Math.round(pressure * 250);
   const lut = new Float32Array(len);
   for (let t = 0; t < len; t++) {
@@ -27,7 +29,19 @@ export function buildEntropyLut(profile = null) {
   return lut;
 }
 
-export function environmentPressureForEra(era) { return era <= 1 ? 0 : era === 2 ? .35 : era === 3 ? .55 : era === 4 ? .8 : 1; }
+/**
+ * Finite live entropy projection. It blends the established early curve with
+ * the transition-installed public pressure; it never rewrites world start
+ * data and is independent of rendering or simulation speed.
+ */
+export function environmentEntropyAt(state) {
+  const tick = Math.max(0, Number.isSafeInteger(state?.tick) ? state.tick : 0);
+  const profile = state?.currentEnvironmentProfile;
+  const pressure = clamp01(profile?.score?.pressure ?? 0);
+  const severity = clamp01(profile?.score?.severity ?? pressure);
+  const early = smootherstep((tick - B.ENTROPY_RISE_START) / (B.ENTROPY_RISE_END - B.ENTROPY_RISE_START));
+  return Math.fround(clamp01(early * (0.72 + pressure * 0.28) + pressure * 0.12 + severity * 0.08));
+}
 
 /** Seasonal oscillation in [-1, 1], indexed by (tick + nodeOffset) % period. */
 export function buildSeasonLut() {
@@ -65,11 +79,11 @@ export function updateEnvironment(state) {
   const { topo, fields } = state; const traits = state.activeTraits ?? state.traits;
   const N = topo.nodeCount;
   const t = state.tick;
-  const e = state.entropyLut[Math.min(t, state.entropyLut.length - 1)];
+  const e = environmentEntropyAt(state);
   state.entropy = e;
 
   const period = B.SEASON_PERIOD_TICKS;
-  const coefficients = state.challengeProfile?.coefficients ?? {};
+  const coefficients = state.environmentCoefficients ?? state.currentEnvironmentProfile?.coefficients ?? {};
   const seasonAmp = B.SEASON_AMPLITUDE * (coefficients.seasonScale ?? 0.25) * (0.6 + 0.8 * e);
   const symbiotic = traits.symbioticFilm > 0;
   const renewalScale = coefficients.renewalScale ?? 1;

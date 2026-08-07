@@ -2,143 +2,79 @@
 
 ## North star
 
-A calm, legible incremental roguelite where the player observes autonomous
-ecology, learns why a finite world ended, and makes one meaningful permanent
-choice between worlds. The world asks for attention, not repetitive clicking.
+A calm, legible incremental roguelite where autonomous whole-cell ecology grows,
+struggles, becomes extinct, and leaves permanent memory. The player makes
+meaningful choices between worlds through Evolution, not repetitive mid-run
+clicking.
 
-## Loop
+## Core loop
 
 ```text
-observe an autonomous finite ecology
-→ local reserves, pressure, and maintenance create ecological limits
-→ inspect SCORE, Reach, Environment Level, cells, and History
-→ extinction awards Echoes
-→ buy one permanent Evolution level
-→ advance the Environment frontier or retry it
-→ begin a changed world
+start a new autonomous world at Environment Level 0
+→ observe resources, geography, pressure, growth, and collapse
+→ Environment Level rises during that same world
+→ extinction records how far and how well ecology endured
+→ SCORE converts quality into Echoes
+→ buy permanent Evolution
+→ Next World starts again at Environment Level 0
 ```
 
-There are no mandatory mid-run decisions. Active Adaptation offers and modes are
-retired. This keeps speed changes equivalent and lets environmental events be
-world conditions rather than prompts.
+Environment Level is neither a difficulty selector nor an unlocked frontier.
+Every world uses the same public schedule. Evolution changes effective pressure,
+not displayed level/time. The first two worlds suppress harmful events only via
+an explicit onboarding modifier; World 3 may introduce a mild late telegraphed
+event under the same clock.
 
-## Early campaign
+Ordinary fresh worlds target roughly 270–330 game seconds through ecology and
+escalating pressure, not a rewarded timeout. Every finite build eventually dies;
+stronger matched builds reach higher levels and longer survival distributions.
 
-Worlds 1 and 2 teach growth, local consumption, renewal, overextension, and
-maintenance under protected Environment Level 0 with no harmful events. World 3
-attempts Environment Level 1 and introduces exactly one mild pressure late in
-the run. Later unlimited levels increase visible deterministic pressure; world
-ordinal remains run-history order and never doubles as difficulty.
+## Ecology
 
-Ordinary worlds aim for 270–330 game seconds with a near-360-second bound. The
-first meaningful campaign resolution should emerge after roughly 18–24 minutes
-at 1×; a strongly learning save reaches roughly 80k–130k World Potential after
-12–18 minutes without a first-purchase SCORE explosion.
+The world is whole-cell geography: land, coast, ocean, lakes, shores, wetlands,
+forest, tundra, snow, ice, resources, life, stress, remains, transformations,
+and charge. There are no sub-cell rivers, roads, paths, ribbons, or wires.
 
-## Finite ecology
-
-Each whole cell has an immutable resource baseline plus available nutrient,
-reserve, renewal, recyclable stock, terrain/climate suitability, uptake,
-maintenance, and route cost. Birth and continued life spend local resources;
-poor cells reject fresh colonization before RNG. Networks may move support but
-cannot create stock. Whole-cell colors distinguish rich, strained, depleted,
-exhausted, recovering, and reclaimed state. Freshwater offers a finite local
-advantage through conservation-accounted catchments, not magic energy.
-
-## Habitats
-
-Cold and water are permanent strategic frontiers:
-
-- lakes require lacustrine access;
-- tundra requires cold proteins;
-- snow/ice requires a cryogenic matrix and practical traversal through tundra;
-- shallow-ocean edges and general shallow ocean unlock separately;
-- deep ocean requires expensive pressure adaptation and an ecological route
-  through shallow water.
-
-All habitats are whole-cell states. Deep ocean has very low growth suitability,
-high maintenance, low renewal, and high route cost. Access expands possibility
-without turning ocean into free coverage.
+Local finite resources, renewal, depletion, exhaustion, recovery, reclamation,
+and freshwater catchments remain authoritative and visible. ENTROPY does not
+wash out local resource meaning. Luminous cells glow only from actual
+whole-cell charge, which decays with upkeep.
 
 ## Evolution
 
-The Evolution Globe is a frequency-5 sphere with exactly 252 cells in six
-connected 42-cell affinities: Fertility, Freshwater, Scarcity, Cryogenic, Marine,
-and Luminous. Its canonical exact level vector is sparse: omitted cells are Level
-0 (locked), Level 1 is each cell's authored identity, and Level 2+ is unlimited.
+The Evolution Globe has 252 cells across Fertility, Freshwater, Scarcity,
+Cryogenic, Marine, and Luminous affinities. Level 0 is locked, Level 1 is the
+authored identity, and later levels are exact unlimited upgrades. A Level-0-to-1
+purchase needs Echoes plus one adjacent owned Level-1 cell; six roots bootstrap
+a fresh save. Later purchases need ownership and Echoes.
 
-Level 0 → 1 requires enough Echoes and at least one directly adjacent Level-1+
-cell; the six roots may bootstrap only a fresh vector. Once owned, every later
-upgrade requires ownership and Echoes only. No run count, observed-world count,
-all-parent, Trophy, random, or hidden experience gate exists. Each transaction
-raises one cell by one level and debits one exact cost.
+The rendered cell is a select-then-second-activation control. First activation
+opens detail; only a later discrete activation of the same selected ready cell
+buys one level. Dragging, cancellation, inertia, blank taps, and stale commands
+never buy.
 
-The 252 authored Level-1 purchases cost 17,820 Echoes and yield World Potential
-v3 value 1,200,000. That is level-one breadth, not completion. Repeat costs use a
-direct exact monotone superlinear curve. Later levels refine authored effects
-through bounded mechanics while exact depth, defense, Build mastery, Potential,
-and SCORE continue without a gameplay ceiling. Multi-affinity mastery uses
-multiple distinct cells; one deeply upgraded cell cannot satisfy a recipe.
+Breadth and depth both matter. Multi-affinity recipes need distinct relevant
+cells; one deeply upgraded cell cannot replace a complete build. All 252
+Level-1 cells are breadth-complete, not final Evolution.
 
-Levels, costs, Echoes, Potential, SCORE, and Environment Levels use `bigint`
-operations internally and canonical decimal strings at JSON, storage, History,
-agent, diagnostic, and hash boundaries. Details and purchase feedback show:
+## SCORE, Echoes, and recognition
 
-- current → next level and exact cost/balance;
-- gameplay and World Potential before → after;
-- affinity, text/pattern identity, Build/mastery progress, and tradeoffs;
-- capability/rule unlocks and newly reachable neighbors.
+SCORE v5 is monotone and shared by HUD, Result, History, audits, and agents. It
+combines cumulative ecological quality, exact World Potential, and sustained
+dynamic pressure exposure. Peak level alone is insufficient; instant death is
+not a farm. Echoes follow the exact continuation curve and support ongoing
+purchases.
 
-## Environment Levels, SCORE, and Echoes
+REACH 100% requires every authoritative world cell alive simultaneously for the
+documented interval. It is rare, possible in late builds, and never permanent.
+The 96-cell Trophy Sphere consumes completed evidence only; it never changes
+simulation, pressure, costs, rewards, or eligibility.
 
-Environment Levels have no maximum. Completing the highest unlocked level opens
-exactly the next one; the recommended action advances and the secondary action
-retries the same level with the next deterministic seed. A versioned direct
-compiler compares exact public pressure with exact Evolution defense across six
-dimensions, then emits bounded finite runtime coefficients. It computes any
-level without iterating through prior levels or increasing world size/event bounds.
+## Interface
 
-SCORE v4 combines bounded cumulative run quality, exact World Potential v3, and
-bounded Environment credit. Its visible monotone axes are Survival, Exploration,
-Presence, Coherence, Stewardship, and Worldmaking. Credit needs meaningful
-exposure and performance, so instant high-level extinction is not a reward farm.
-Final SCORE is visible before extinction; Result performs no correction. Named
-ranks continue through procedural cycles rather than ending at a final tier.
-
-Echo rewards continue the exact square-root curve. Early rewards retain familiar
-purchase cadence while exact balances and superlinear repeat costs let long fair
-campaigns continue without one spike trivializing breadth or depth.
-
-## Trophies
-
-The Trophy Sphere has 96 read-only cells across Reach, Form, Endurance, Habitat,
-Evolution, and Mastery. Criteria consume completed authoritative facts. One
-onboarding Trophy is normal on the first world; later families require multiple
-worlds, explicit habitat access, event eras, large Evolution ownership, or
-high-quality SCORE, level-one breadth, or explicit mastery. Trophy recognition
-never changes simulation, Environment pressure, Potential, purchase eligibility,
-or SCORE.
-
-Retired IDs and archived records remain legacy ownership but do not satisfy new
-criteria by alias or by obsolete proof bits.
-
-## Luminous and interaction
-
-Luminous ownership alone never paints light. Production authority generates,
-stores, and decays whole-cell charge; only nonzero charged cells glow, more
-strongly on the night side. Mastery can improve bounded generation, retention,
-and viable domains, but upkeep remains real and neither renderer draws wires.
-
-The player can rotate and inspect at any time. Opening a pane never moves the
-globe. Another detail replaces the current one; Close and Escape always work.
-Evolution is the deliberate exception to same-trigger dismissal: first activation
-selects and opens detail without buying, and a later activation of that same
-selected ready cell buys exactly one level. Blank taps, changed selection, and
-any drag/pinch/wheel/inertia/cancellation never buy. Pointer, touch, keyboard,
-semantic tree, and detail button share the same transaction authority.
-
-SCORE, ENTROPY, REACH, and terminal RESULT look clickable at rest; RESULT sits
-immediately after REACH and is the recommended extinction action. A capable late
-configuration may earn REACH 100 by keeping every authoritative cell alive for
-25 ticks, but the world still ends. Notifications are bounded, queued,
-nonblocking, and accessible.
+Primary scenes are Home, World, Evolution, and Trophies. The World HUD displays
+live Environment Level and optional schedule progress separately from ENTROPY.
+Result displays final/peak level, exposure, time at peak, SCORE, Echoes, causal
+extinction, powered ecology, and Trophies. Its primary action is **Next World**.
+Evolution truthfully states that every world begins at Level 0 and shows the
+best actually reached record without implying it is a future start level.

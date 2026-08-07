@@ -15,7 +15,7 @@ function run(seed = 4242, cfg = {}, emit = () => {}) {
   const controller = new RunController({ seed, worldOrdinal: 1, worldPotential: 16000, ...cfg }, emit);
   controller.start(); return controller;
 }
-function finish(controller) { controller.advance(B.RUN_HARD_MAX_TICKS + 50); assert.equal(controller.state.status, 'extinct'); return controller.buildResult(); }
+function finish(controller, budget = 10_000) { controller.advance(budget); assert.equal(controller.state.status, 'extinct'); return controller.buildResult(); }
 
 test('resource authority remains finite and bounded through growth', () => {
   const controller = run(); controller.advance(500); const state = controller.state; let alive = 0;
@@ -38,11 +38,19 @@ test('presentation snapshot remains observational and compact', () => {
   assert.equal(transfers.reduce((sum, buffer) => sum + buffer.byteLength, 0), state.topo.nodeCount * 17);
 });
 
-test('fresh worlds have no harmful events and world three schedules one late mild pressure', () => {
-  assert.equal(run(8, { worldOrdinal: 1 }).state.events.length, 0);
-  assert.equal(run(8, { worldOrdinal: 2 }).state.events.length, 0);
-  const events = run(8, { worldOrdinal: 3 }).state.events;
-  assert.equal(events.length, 1); assert.equal(events[0].crisis, true); assert.ok(events[0].startTick >= 2100);
+test('public clock advances in every world while onboarding suppresses only harmful events', () => {
+  const one = run(8, { worldOrdinal: 1 }); const two = run(8, { worldOrdinal: 2 }); const three = run(8, { worldOrdinal: 3 });
+  one.advance(1200); two.advance(1200); three.advance(1200);
+  for (const controller of [one, two, three]) {
+    assert.equal(controller.state.currentEnvironmentLevel, '1');
+    assert.equal(controller.state.peakEnvironmentLevel, '1');
+  }
+  assert.equal(one.state.onboardingEnvironmentModifier.harmfulEventsDisabled, true);
+  assert.equal(two.state.onboardingEnvironmentModifier.harmfulEventsDisabled, true);
+  assert.equal(one.state.events.length, 0); assert.equal(two.state.events.length, 0);
+  const events = three.state.events;
+  assert.equal(three.state.onboardingEnvironmentModifier.harmfulEventsDisabled, false);
+  assert.equal(events.length, 1); assert.equal(events[0].crisis, true); assert.ok(events[0].startTick >= 1300);
   assert.ok(events[0].intensity >= .5 && events[0].intensity <= .7);
 });
 
@@ -89,7 +97,7 @@ test('history cap coalesces deterministically and reserves extinction', () => {
   recordHistory(state, 'run-extinct', { cause: 'test' }); assert.equal(state.history.length, 80); assert.equal(state.history.at(-1).type, 'run-extinct');
 });
 
-test('final hash folds finite reserves and world era', () => {
+test('final hash folds finite reserves', () => {
   const controller = run(15); controller.advance(100); const before = finalStateHash(controller.state);
   controller.state.resourceReserve[0] = Math.fround(controller.state.resourceReserve[0] + .1);
   assert.notEqual(finalStateHash(controller.state), before);

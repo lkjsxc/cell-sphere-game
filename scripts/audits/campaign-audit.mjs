@@ -20,7 +20,7 @@ const freshSummary=worldSummary(fresh),breadthSummary=worldSummary(breadth),root
 const valid=freshSummary.score.median>=(smoke?7000:8000)&&freshSummary.score.median<=15000
  &&freshSummary.durationSeconds.median>=270&&freshSummary.durationSeconds.median<=330
  &&freshSummary.events.max===0&&resourceCauseShare(fresh)>=.75
- &&rootSummary.score.median>=10000&&rootSummary.score.median<=20000
+ &&rootSummary.score.median>=(smoke?9000:10000)&&rootSummary.score.median<=20000
  &&typical.potentialAfter3.median>=(smoke?48000:80000)&&typical.potentialAfter3.median<=130000
  &&typical.firstResolutionMinutes.median>=18&&typical.firstResolutionMinutes.median<=24
  &&breadthSummary.score.median>=850000&&breadthSummary.score.median<=1100000
@@ -56,7 +56,7 @@ function campaignSummary(rows){
   potentialAfter3:dist(rows.map((row)=>exactToSafe(row.worlds[2].observation.worldPotential))),
   levelsAfter3:dist(rows.map((row)=>row.worlds[2].observation.evolutionSummary.breadth)),
   depthAfter5:dist(rows.map((row)=>exactToSafe(row.worlds[4].observation.evolutionSummary.totalLevels))),
-  environmentAfter5:rows.map((row)=>row.worlds[4].result.environmentLevel),
+  peakEnvironmentAfter5:rows.map((row)=>row.worlds[4].result.peakEnvironmentLevel),
   scoreWorld3:dist(rows.map((row)=>exactToSafe(row.worlds[2].result.score))),
   scoreWorld5:dist(rows.map((row)=>exactToSafe(row.worlds[4].result.score))),
   finalEchoBalance:dist(rows.map((row)=>exactToSafe(row.save.meta.echoBalance)))};
@@ -65,7 +65,7 @@ function runAction(observation){return{type:'run-world',expectedRevision:observa
 function worldSummary(rows){return{worlds:rows.length,score:dist(rows.map((row)=>exactToSafe(row.score))),echoes:dist(rows.map((row)=>exactToSafe(row.echoes))),
  durationSeconds:dist(rows.map((row)=>row.survivalSeconds)),peakReach:dist(rows.map((row)=>row.peakReach)),
  events:dist(rows.map((row)=>row.crises?.total??0)),causes:counts(rows.map((row)=>row.cause)),
- environmentLevels:counts(rows.map((row)=>row.environmentLevel))}}
+ peakEnvironmentLevels:counts(rows.map((row)=>row.peakEnvironmentLevel))}}
 function resourceCauseShare(rows){return rows.filter((row)=>row.cause==='resource-exhaustion'||row.cause==='maintenance-starvation').length/rows.length}
 function exactToSafe(value){const text=String(value);if(!/^\d+$/.test(text)||text.length>15)throw new Error(`report projection out of range: ${text.slice(0,24)}`);return Number(text)}
 function counts(values){const out={};for(const value of values)out[value]=(out[value]??0)+1;return out}

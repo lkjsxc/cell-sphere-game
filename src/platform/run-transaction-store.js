@@ -3,7 +3,7 @@ import { STORAGE_KEYS } from '../core/identity.js';
 import { validateHistory } from './history.js';
 import { validateMeta } from './storage.js';
 
-export const PROGRESSION_TRANSACTION_SCHEMA = 2;
+export const PROGRESSION_TRANSACTION_SCHEMA = 3;
 
 export function saveProgressionTransaction(meta, history, options = {}, storage = browserStorage()) {
   if (!storage?.getItem || !storage?.setItem) return false;
@@ -45,7 +45,7 @@ export function recoverRunTransaction(retention = 24, storage = browserStorage()
 }
 
 function normalize(raw, retention) {
-  if (!raw || ![1, PROGRESSION_TRANSACTION_SCHEMA].includes(raw.schema)
+  if (!raw || ![1, 2, PROGRESSION_TRANSACTION_SCHEMA].includes(raw.schema)
     || typeof raw.key !== 'string' || !raw.key) return null;
   const kind = raw.schema === 1 ? 'run' : raw.kind;
   if (!['run', 'evolution'].includes(kind)) return null;

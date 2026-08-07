@@ -2,41 +2,44 @@
 
 ## Active state
 
-- **Phase A: complete; Phase B: beginning.** Repository, branch, upstream, instruction, package-script, source/version inventory, and baseline behavior inspection completed.
-- The supplied root `AGENTS.md` revision 2026-08-07 is intentionally present as an uncommitted update and must be included with the completed coherent change; no unrelated work was reset/discarded.
-- This work package is created before invasive implementation.
+The cross-layer v2 migration is locally integrated and verified in the
+uncommitted worktree on `main` after baseline package commits `6155236` and
+`0774056`. No unrelated work was reset or discarded.
 
-## Baseline evidence actually run
+## Implemented locally
 
-| Command | Result |
+- Exact schedule v2: Level 0 at tick 0, Level 1 at 1200, then 600-tick rungs;
+  direct inversion/progress/hash and separate onboarding modifier.
+- Level-0-only creation, dynamic current/peak/transition/exposure state,
+  current/next profile installation before ecology, and bounded rolling events.
+- Natural terminal authority; SCORE v5 with sustained exposure plus
+  low-Potential calibration that preserves breadth-complete anchors; dynamic
+  result, immutable identity, protocol/replay v6, and neutral Level-0 frame.
+- Meta 12, History 7, WAL 3, agent schemas 3, inert legacy frontier/attempt
+  migration, and dynamic HUD/Result/History/agent interfaces.
+
+## Evidence actually run on this worktree
+
+| Evidence | Result |
 | --- | --- |
-| `node --test tests/unit/environment-level.test.js` | pass: 9/9; suite explicitly validates static frontier/retry/completion advancement semantics. |
-| `node scripts/audits/environment-level-audit.mjs` | exit 0; audits static independently selected levels including huge decimal input. |
-| `npm run benchmark` | exit 0; 3,176 ticks / 451 ms = 7,042 ticks/s; reported heap used 24 MB. Per-sample environment level digit cases were 1/1/513. |
-| `npm run balance:smoke` | exit 0; balanced: median 321 s (304.1–361.9); expansion: 361.9 s; resilience: 361.9 s. This exposes the rejected normal ceiling. |
-| GitHub Actions baseline | `verify` run `31131847628` for `2454b6d` failed only at Benchmark; all preceding structure, unit, integration, balance, audit, agent, and terminal transaction steps passed; Pages was skipped. |
-| Cache-busted deployed HTML | `https://lkjsxc.github.io/cell-sphere-game/?baseline=2454b6d…` returned 200 (21,133 bytes) and contained static `Next · Environment Level 0` copy, confirming deployed old semantics. |
+| `npm run verify` | exit 0; all 26 local gates passed (unit, integration, audits, smoke balance, benchmark, links, structure). |
+| `npm run test:browser:file` | pass: WebGL2 Worker path, score 12,429, 4 draws, 8×/256×, Evolution interaction, visual IDB, Luminous evidence. |
+| `npm run test:browser:canvas` | pass: Canvas fallback, unified shell/History/Evolution/Trophies, score 12,429. |
+| `npm run test:browser:fallback` | pass: WebGL2 fallback simulation, 4 draws and the same dynamic shell evidence. |
+| `npm run balance -- --strict` | exit 0; 30 runs each across six policies; balanced median 296.7 s (268.2–372.9), fresh anchors healthy. |
+| `npm run audit:campaign` | exit 0; fresh median SCORE 10,504/duration 284.7 s, root median 11,368, breadth median 1,099,367, marginal-value first resolution 20.12 min. |
+| `npm run audit:reach100` | exit 0; 19/300 breadth worlds achieved REACH 100, no fresh success, all tested breadth worlds naturally extinct within an explicit 10,000-tick external budget (median 3,256, max 4,019 ticks). |
+| `npm run agent:smoke`, `agent:campaign`, `agent:long`, `balance:holdout` | all exit 0; long: 8 policies × 12 worlds; untouched holdout: 4 seeds × 22 policies × 6 worlds, no failures. |
+| Benchmark | seven same-host runs: 6,026–6,690 ticks/s, median 6,346 versus 7,042 baseline (9.88% lower, inside 10% target); deterministic hash `02190894`. |
 
-## Immediate next steps
+## Baseline contrast
 
-1. Implement pure schedule/profile/exposure boundary with direct huge-value tests.
-2. Replace static simulation authority/event schedule/normal cap with dynamic bounded authority.
-3. Propagate coherent changes through result, session/protocol, persistence, UI, agents, audits, docs, and verification.
+At `2454b6d`, old frontier/retry tests passed, smoke exposed an approximately
+362-second normal cap, benchmark measured 7,042 ticks/s, and deployed Pages
+contained static frontier copy. This is historical evidence, not v2 proof.
 
-## External state
+## Remaining release work
 
-- Remote: `origin` → `https://github.com/lkjsxc/cell-sphere-game`.
-- Branch was synchronized with `origin/main` at baseline.
-- Baseline CI and cache-busted deployed HTML were inspected; final revision CI/Pages/deployed-byte/browser verification remains required and must not be claimed early.
-
-## Source-inspection evidence
-
-- Profile initialization in `createRunState()` currently scales immutable resource state and pre-schedules all events from a selected static level.
-- `RunController.step()` increments tick and then runs conditionals/environment/metabolism/transport/worldmaking/growth; it needs live schedule derivation before consumers.
-- `world-session`, Worker/fallback driver, snapshot/result/replay all currently commit a mutable level/profile hash as identity.
-- Meta schema 11 and History schema 6 interpret `highestEnvironmentLevel`/`environmentLevel` as frontier/attempt evidence.
-- Agent actions/observations and Result UI retain retry/selection behavior; browser tests assert the old labels.
-
-## Known blockers
-
-None identified locally. Credentials/infrastructure access for final GitHub Actions/Pages verification remains to be checked later.
+Commit/push the reviewed change; inspect GitHub Actions, Pages, and cache-busted
+deployed bytes after the revision exists remotely. No CI, Pages, deployed-byte,
+or physical-device claim is made before those checks occur.

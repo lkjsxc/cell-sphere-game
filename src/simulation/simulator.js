@@ -1,7 +1,8 @@
 /** Authoritative deterministic run controller shared by Worker and fallback. */
 import { BALANCE as B } from '../game/balance.js';
 import { applyMemoryConditionals } from '../game/skills/index.js';
-import { beginTerminalCollapse, createRunState, reconcileLiveness, terminalCollapseReason } from './state.js';
+import { beginTerminalCollapse, createRunState, finalizeEnvironmentProgression, reconcileLiveness, terminalCollapseReason, updateEnvironmentProgression } from './state.js';
+import { advanceEventDirector } from './events.js';
 import { updateEnvironment } from './environment.js';
 import { runMetabolism } from './metabolism.js';
 import { runTransport } from './transport.js';
@@ -18,6 +19,7 @@ import { runWorldmaking } from './worldmaking.js';
 import { RESOURCE_STATE_LABELS, freshwaterSupportAt, reserveFractionAt, updateResourceEcology } from './resource-ecology.js';
 import { ecologicalAccessForInspection } from './lifecycle/ecological-access.js';
 import { updateReachGoal } from './lifecycle/reach-goal.js';
+import { refreshScoreMerit } from '../game/scoring.js';
 
 export class RunController {
   constructor(cfg, emit = () => {}) {
@@ -52,6 +54,13 @@ export class RunController {
     const historyLength = s.history.length; const collapsing = s.status === 'terminal-collapse';
     s.tick++;
     if (!collapsing) {
+      // Environment clock/profile authority precedes every ecological consumer.
+      const transition = updateEnvironmentProgression(s);
+      if (transition.changed) {
+        this.emit({ t: 'environment-transition', tick: s.tick,
+          environmentLevel: s.currentEnvironmentLevel, profileHash: s.currentEnvironmentProfileHash });
+      }
+      advanceEventDirector(s);
       applyMemoryConditionals(s);
       if (s.tick % B.ENV_EVERY === 0) updateEnvironment(s);
       runMetabolism(s); runTransport(s); runWorldmaking(s); runGrowth(s);
@@ -78,6 +87,8 @@ export class RunController {
   finishExtinction() {
     const s = this.state; if (s.status === 'extinct') return false;
     const historyStart = s.history.length;
+    finalizeEnvironmentProgression(s);
+    refreshScoreMerit(s);
     s.status = 'extinct'; s.aliveCount = 0; s.coverage = 0;
     s.connectedShare = 0; s.largestComponent = 0;
     s.extinction = { tick: s.tick, cause: dominantCause(s), terminalCause: s.terminalCause ?? 'natural' };
@@ -93,7 +104,7 @@ export class RunController {
   abort() {
     const s = this.state;
     if (s.status !== 'running' && s.status !== 'terminal-collapse') return false;
-    const historyStart = s.history.length; s.status = 'aborted';
+    const historyStart = s.history.length; finalizeEnvironmentProgression(s); refreshScoreMerit(s); s.status = 'aborted';
     recordHistory(s, 'run-abandoned', { value: s.aliveCount });
     this.historyRecorder.observe(s, true, true);
     this.emit({ t: 'history-batch', events: s.history.slice(historyStart).map((event) => ({ ...event })) });

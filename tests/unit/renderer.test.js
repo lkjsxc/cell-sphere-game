@@ -26,6 +26,8 @@ import { createBlankSnapshot } from '../../src/rendering/blank-snapshot.js';
 import { GLRenderer } from '../../src/rendering/renderer.js';
 import { Canvas2DRenderer } from '../../src/rendering/fallback2d.js';
 import { WorldPass } from '../../src/rendering/world-pass.js';
+import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
+  ENVIRONMENT_SCHEDULE_HASH, ENVIRONMENT_SCHEDULE_VERSION } from '../../src/game/environment-level.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(here, p), 'utf8');
@@ -138,8 +140,11 @@ test('every declared uniform is uploaded by the renderer modules', () => {
 });
 
 test('renderers bind exact world identity and reject an old snapshot before drawing', () => {
-  const current = createWorldIdentity({ worldSessionId: 2, runId: 3, seed: 4, presentationGeneration: 5 });
-  const old = createWorldIdentity({ worldSessionId: 1, runId: 2, seed: 3, presentationGeneration: 4 });
+  const environment = { environmentModelVersion: ENVIRONMENT_MODEL_VERSION,
+    environmentScheduleVersion: ENVIRONMENT_SCHEDULE_VERSION, environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH,
+    immutableStartConfigurationHash: 'abcdef12', onboardingEnvironmentModifierVersion: ENVIRONMENT_ONBOARDING_MODIFIER_VERSION };
+  const current = createWorldIdentity({ worldSessionId: 2, runId: 3, seed: 4, presentationGeneration: 5, ...environment });
+  const old = createWorldIdentity({ worldSessionId: 1, runId: 2, seed: 3, presentationGeneration: 4, ...environment });
   const currentScene = { worldIdentity: current, snapshot: createBlankSnapshot(8, current) };
   const oldScene = { worldIdentity: current, snapshot: createBlankSnapshot(8, old) };
   for (const prototype of [GLRenderer.prototype, Canvas2DRenderer.prototype]) {

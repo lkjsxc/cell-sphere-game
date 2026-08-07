@@ -1,163 +1,66 @@
 # Balance model
 
-> Current endless-progression authority. The collapsed 2026-08-04 production
-> cohort is preserved below as a historical level-one/local-ecology baseline; its
-> Potential v2, SCORE v3, and finite-progression wording are not current formulas.
+## Current Environment Progression v2 targets
 
-## Compatibility targets, not caps
-
-| Checkpoint | Target |
+| Checkpoint | Target / invariant |
 |---|---:|
-| Fresh SCORE | roughly 8,000–15,000 |
-| First-root next-world SCORE | roughly 10,000–20,000 |
-| World Potential after 12–18 minutes at 1× | roughly 80,000–130,000 |
-| Strong level-one-breadth SCORE | roughly 850,000–1,100,000 |
-| Ordinary world duration | approximately 270–330 game seconds |
-| Bounded terminal | near 360 game seconds |
+| Fresh duration | approximately 270–330 game seconds, through ecology not a timeout |
+| Fresh SCORE | approximately 8,000–15,000 |
+| First-root SCORE | approximately 10,000–20,000 |
+| Early learning Potential | approximately 80,000–130,000 after 12–18 minutes at 1× |
+| Level-one breadth Potential | 1,200,000 |
+| Strong breadth SCORE | approximately 850,000–1,100,000 |
 | First campaign resolution | approximately 18–24 minutes at 1× |
 
-## Current endless formulas and invariants
+These are measured regression anchors, not gameplay caps.
 
-- The frequency-5 Evolution sphere has 252 cells. Level 0 is locked, Level 1 is
-  authored identity, and Level 2+ is unlimited. Six roots bootstrap a fresh exact
-  sparse vector; other Level 0 → 1 purchases require a directly adjacent Level-1+
-  cell. Repeat levels require ownership and Echoes only.
-- Level-one breadth costs 17,820 Echoes and yields Potential v3 `"1200000"`.
-  It is a compatibility anchor, not completion. Fresh and first-root anchors stay
-  `"16000"` and `"19000"`; exact weighted excess depth continues Potential.
-- For target level `n`, authored base cost `b`, and cell breadth power `e`, cost
-  v1 is `b*n^2 + e*n*(n-1)`. It is direct, exact, monotone, superlinear, and has
-  no gameplay maximum; Level 1 remains exactly the authored base cost.
-- SCORE v4 applies bounded six-axis cumulative quality to exact Potential v3 and
-  bounded exposure/performance-gated Environment credit. It is monotone, shared
-  by HUD/Result/History/audits/agents, has no terminal correction, and cannot be
-  farmed by immediate high-level death. Ranks continue procedurally.
-- Exact levels, costs, Echoes, Potential, SCORE, and Environment Levels use
-  `bigint` operations internally and canonical base-10 strings at boundaries.
-- Environment Levels are unlimited. Worlds 1–2 use protected Level 0 and World 3
-  Level 1. Challenge-profile v1 directly reduces six exact public-rating/defense
-  comparisons to bounded runtime scarcity, renewal, climate, toxicity,
-  maintenance, and event coefficients. Work and world/event bounds are independent
-  of level magnitude.
-- For a fixed finite Evolution vector, higher Environment Levels must be no easier
-  on matched seeds. Upgraded vectors must remain able to contest later levels;
-  extinction and the near-360-second terminal remain.
-- Build rank 1 retains authored level-one breadth behavior. Higher exact mastery
-  requires the relevant distinct cells and changes only bounded mechanics. One
-  deeply upgraded cell cannot satisfy a multi-cell or multi-affinity recipe.
-- Luminous balance is measured from authoritative whole-cell charge, production,
-  retention, decay, powered-cell exposure, and zero-charge absence—never ownership
-  alone or wire geometry.
+## Environment clock and pressure
 
-<details>
-<summary>Historical 2026-08-04 measured local-ecology and level-one-breadth baseline</summary>
+Every world begins Level 0. The versioned exact schedule begins Level 1 at tick
+1200 and later levels every 600 ticks. It has no final level. The same tick
+always displays the same public level regardless of Evolution, seed, score,
+renderer, speed, or prior worlds.
 
-## Historical measured distributions
+Profiles compile exact public rating minus relevant Evolution/build defense into
+finite pressure dimensions. Current/next profiles interpolate only prospective
+coefficients. All world generation uses the Level-0 baseline. The bounded rolling
+event director increases challenge by finite cadence/overlap/intensity dimensions
+and reclaims expired event fields; it never grows with world age or level.
 
-### Fresh local ecology
+The first two worlds use a visible event-onboarding modifier, not a different
+clock. World 3 may receive the first mild late telegraphed event. Finite builds
+must eventually die under escalating pressure. A technical budget/fault is not a
+normal extinction and grants no reward.
 
-`audit:resources -- --count=500` produced:
+## SCORE and economy
 
-| Metric | p25 | median | p75 | p90 |
-|---|---:|---:|---:|---:|
-| SCORE | 6,699 | 8,782 | 10,036 | 10,732 |
-| Duration (seconds) | 291.4 | 312.0 | 359.5 | 361.9 |
-| Peak whole-world Reach | 8.7% | 13.3% | 17.1% | 20.5% |
-| Peak land occupancy | 17.7% | 27.5% | 34.5% | 40.7% |
-| Resource stock remaining | 59.0% | 66.3% | 76.6% | 88.1% |
+SCORE v5 combines six monotone authoritative quality axes, exact World Potential,
+a bounded low-Potential calibration that preserves early anchors without changing
+the breadth-complete anchor, and sustained pressure-time/quality exposure. It has
+an Environment bonus high-water mark so live SCORE never decreases if the current
+exposure mix changes. Threshold-touch death has no meaningful credit. Result uses
+the same authority and introduces no correction.
 
-The 500 worlds had zero conservation error at six-decimal reporting precision.
-Living-cell time was confined almost entirely to the top two initial-resource
-quintiles, with 73.5% in the richest quintile. Median births occurred at 0.719
-local richness. The median world left 72.5% of land unoccupied: new saves follow ecological
-niches rather than painting ordinary land.
+Evolution levels/costs/Echoes/Potential/SCORE are exact canonical decimals at
+boundaries. Repeat Evolution costs are direct monotone superlinear curves;
+breadth and depth remain viable without a permanent economy stall. Multi-affinity
+builds require breadth, and Luminous value depends on authoritative live charge.
 
-### Monotone SCORE trace
+## Latest local evidence (2026-08-07)
 
-A 500-world tick trace recorded zero decreases and zero Result mismatches. Median
-live SCORE shares were 8.4% at 15 seconds, 47.6% at one-quarter duration, 78.7%
-at half duration, 92.5% at three-quarter duration, and 100% before the terminal
-Result. The largest median tick jump was 112 SCORE.
+A strict 30-run cohort for each of six production policies passed: median
+extinction ranged from 287.4 to 311.2 seconds (balanced 296.7). The full
+campaign audit measured fresh median SCORE 10,504 / 284.7 seconds, first-root
+median SCORE 11,368, breadth-complete median SCORE 1,099,367, and first campaign
+resolution 20.12 minutes. The REACH audit found 19 successes in 300 breadth
+worlds and none in fresh worlds; all tested breadth worlds later naturally died
+inside its explicitly reward-free 10,000-tick external audit budget.
 
-### Finite freshwater advantage
+## Evidence discipline
 
-A 300-world matched-start cohort produced 294 same-biome pairs. Median duration
-ratio was 1.175, median resource-exhaustion delay was 5.5 seconds, and near
-starts won 93.9% rather than 100%. Median near duration was 340.3 seconds versus
-284.1 seconds far from freshwater.
-Finite catchment/founder stock is included in resource conservation; local
-moisture buffering does not create energy.
-
-### First Skill and progression
-
-World Potential version 2 uses bounded monotone Evolution Power anchors:
-
-- fresh: 16,000;
-- first root: 19,000 (+3,000);
-- power 4: 80,000;
-- power 6: 105,000;
-- full power 384: 1,200,000.
-
-A paired 60-seed production check measured median SCORE 8,892 fresh and 10,676
-with one root. The first purchase therefore remains in the requested normal
-10,000–20,000 next-world range. The deep campaign audit's ten potential-policy
-cohorts reached median 105,000 potential after three worlds / 15.565 minutes.
-Their first four-world resolution was 20.197 minutes (18.252–22.500 range), with
-median world-3 SCORE 28,951 and best five-world SCORE 91,108.
-
-### Full builds, transformations, and REACH 100
-
-The compiler exposes sixteen mechanically distinct recipes. A 24-seed full-build
-cohort produced median 107 transformed cells, 20 reclaimed cells, 24 bounded
-cryolakes, 5 maritime forests, and 100 ever-powered cells. Fresh controls
-produced no transformations or powered cells. Full SCORE is bounded at about
-1.099 million.
-
-The final deep production checkpoints measured median SCORE 519,393 at 63 Skills
-/ 580,000 potential, 776,768 at 126 / 848,000, and 1,099,200 at full 252 /
-1,200,000. Full median duration was 358.5 seconds and median peak Reach 98.7%;
-exact coverage remains rare because it must persist for the full interval.
-
-A deterministic 300-seed full-build cohort achieved exact all-2,562-cell living
-coverage for the required 25 consecutive ticks in 8 seeds (2.67%). Every
-achieved world later became extinct by the normal terminal bound. One hundred fresh controls
-had zero achievements and median peak coverage 13.4%. `REACH 100%` is therefore
-possible, rare, exact, late-build-only, and not immortality.
-
-## Evolution economy and builds
-
-The frequency-5 Evolution Globe has 252 cells, 750 direct boundaries, and six
-42-cell environmental affinities: Fertility, Freshwater, Scarcity, Cryogenic,
-Marine, and Luminous. Total cost remains 17,820 Echoes (8–800; median 41). Skill
-eligibility is enough Echoes plus one directly adjacent owned cell.
-
-Build recipes combine affinities and tags into visible mechanics and tradeoffs,
-including lake gardens, circular metabolism, wasteland reclamation, cold
-dormancy, cryolakes, brine harvesting, pelagic colonies, littoral succession,
-bioelectric wetlands, hydrothermal power, and an illuminated biosphere. Full
-mastery remains a long-horizon modeled pursuit, not a short campaign promise.
-
-## Habitat and event bounds
-
-Capability checks run before growth RNG for lake, tundra, snow/ice, shallow-
-ocean edge, shallow ocean, and deep ocean. Ordinary marine/cold builds retain
-costs; only the full World Gardener synergy can attempt exact coverage.
-
-Worlds 1–2 suppress harmful events. World 3 schedules one mild event no earlier
-than tick 2400. Worlds 4–5 schedule one or two, worlds 6–10 two to four, and later
-eras three to six, based only on persisted ordinal and deterministic RNG.
-
-</details>
-
-## Current gates
-
-- ecology/SCORE: `audit:resources`, `audit:freshwater`, `audit:score-trace`;
-- progression: `audit:evolution-levels`, `audit:environment-levels`,
-  `audit:progression-numbers`, and `audit:campaign`;
-- worlds/presentation: `audit:transformations`, `audit:reach100`,
-  `audit:habitats`, `audit:events`, `audit:luminous`, and `audit:trophies`;
-- fair campaigns: `agent:smoke`, `agent:campaign`, `agent:long`,
-  `balance:holdout`, and `terminal:soak`.
-
-Reports must distinguish current training/holdout evidence from the archived
-baseline above. Machine-readable outputs are written under ignored `reports/`.
+`balance:smoke`, `balance`, `balance:holdout`, `audit:environment-levels`,
+`agent:campaign`, `agent:long`, and `terminal:soak` use production authority.
+Reports must identify training versus untouched holdout seeds, policy, cohort
+size, medians/percentiles, causes, peak-level distributions, SCORE/Echoes, and
+any external incomplete budgets. Old static-frontier/360-second reports are
+historical baselines only and are not v2 evidence.

@@ -17,7 +17,7 @@ import {
   CHALLENGE_PROFILE_VERSION,
   MAX_EVENTS_PER_WORLD,
   MIN_TELEGRAPH_TICKS,
-  challengeProfileHash,
+  environmentProfileHash,
   compileChallengeProfile,
   pressureForNetRating,
   validateChallengeProfile,
@@ -118,6 +118,16 @@ test('direct pressure compiler remains finite over schedule-produced huge levels
   }
 });
 
+test('post-ramp exact magnitude continues to worsen bounded attrition instead of creating a terminal cap', () => {
+  const ordinary = compileChallengeProfile({ environmentLevel: '64', evolution: undefended });
+  const high = compileChallengeProfile({ environmentLevel: '1000000', evolution: undefended });
+  const huge = compileChallengeProfile({ environmentLevel: `1${'0'.repeat(999)}`, evolution: undefended });
+  assert.equal(ordinary.dimensions.events.pressure, high.dimensions.events.pressure);
+  assert.ok(high.coefficients.attritionScale > ordinary.coefficients.attritionScale);
+  assert.ok(huge.coefficients.attritionScale >= high.coefficients.attritionScale);
+  assert.ok(huge.score.severity >= high.score.severity && huge.score.severity < 1);
+});
+
 test('matched multi-affinity defense mitigates a public level without changing its schedule', () => {
   const rating = '1000000';
   const evolution = { affinityDefense: { Fertility: rating, Freshwater: rating, Scarcity: rating,
@@ -134,11 +144,11 @@ test('compiler hashes are deterministic, defense-sensitive, and validation rejec
   const defended = compileChallengeProfile({ environmentLevel: '10', evolution: {
     affinityDefense: Object.fromEntries(Object.keys(undefended.affinityDefense).map((key) => [key, '5000'])) } });
   assert.deepEqual(a, b);
-  assert.equal(a.hash, challengeProfileHash(a));
+  assert.equal(a.hash, environmentProfileHash(a));
   assert.notEqual(a.hash, defended.hash);
   assert.deepEqual(validateChallengeProfile(a), a);
   assert.equal(validateChallengeProfile({ ...a, hash: '00000000' }).environmentLevel, '0');
-  assert.equal(CHALLENGE_PROFILE_VERSION, 1);
+  assert.equal(CHALLENGE_PROFILE_VERSION, 2);
 });
 
 test('rating projection is bounded and never requires Number conversion of a huge decimal', () => {

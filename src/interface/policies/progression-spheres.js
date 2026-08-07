@@ -50,7 +50,7 @@ function requestEvolutionPurchase(app,id,source,now=performance.now()){
   let archive = appendEvolutionEvent(app.archive, { transactionKey:key, nodeId:id,
     oldLevel:purchase.oldLevel, newLevel:purchase.newLevel, cost:purchase.cost,
     balanceBefore:purchase.balanceBefore, balanceAfter:purchase.balanceAfter, run:trophies.meta.runs,
-    environmentLevel:trophies.meta.highestEnvironmentLevel, compilerVersions:purchase.compilerVersions });
+    bestEnvironmentLevelReached:trophies.meta.bestEnvironmentLevelReached, compilerVersions:purchase.compilerVersions });
   archive = appendTrophyEvents(archive, trophies.awardedIds);
   app.meta = trophies.meta; app.archive = archive;
   const persisted = saveProgressionTransaction(app.meta, app.archive, { kind:'evolution', key, retention:app.settings.historyRetention });

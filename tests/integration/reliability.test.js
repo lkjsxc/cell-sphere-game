@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { BALANCE as B } from '../../src/game/balance.js';
 import { formatCoverage } from '../../src/interface/surfaces.js';
 import { RunController } from '../../src/simulation/simulator.js';
-import { reconcileLiveness } from '../../src/simulation/state.js';
+import { beginTerminalCollapse, reconcileLiveness } from '../../src/simulation/state.js';
 
 function controller(seed = 1, options = {}) {
   const messages = [];
@@ -52,35 +52,27 @@ test('sub-epsilon living roles and dead-owned edges are removed', () => {
   assert.equal(s.edgeActive[edge], 0);
 });
 
-test('hard ceiling enters a visible bounded collapse and emits one result', () => {
-  const { run, messages } = controller(5);
-  const s = run.state;
-  s.tick = B.RUN_CEILING_TICKS - 1;
-  s.biomass[s.inoculationCell] = 20;
-  s.energy[s.inoculationCell] = 20;
+test('a large authoritative tick is not a rewarded hard maximum; only causal collapse finalizes', () => {
+  const { run, messages } = controller(5); const s = run.state;
+  s.tick = 100_000; s.biomass[s.inoculationCell] = 20; s.energy[s.inoculationCell] = 20;
   run.advance(1);
-  assert.equal(s.status, 'terminal-collapse');
-  assert.equal(s.terminalCause, 'hard-maximum');
-  assert.equal(s.terminalDeadline, B.RUN_HARD_MAX_TICKS);
+  assert.equal(s.status, 'running'); assert.notEqual(s.terminalCause, 'hard-maximum');
+  assert.equal(beginTerminalCollapse(s, 'terminal-stall'), true);
+  assert.equal(s.terminalCause, 'terminal-stall'); assert.equal(s.terminalDeadline, s.terminalCollapseStart + B.TERMINAL_COLLAPSE_TICKS);
   run.advance(B.TERMINAL_COLLAPSE_TICKS + 5);
-  assert.equal(s.status, 'extinct');
-  assert.ok(s.tick <= B.RUN_HARD_MAX_TICKS);
-  assert.equal(s.aliveCount, 0);
-  assert.equal(s.coverage, 0);
+  assert.equal(s.status, 'extinct'); assert.equal(s.aliveCount, 0); assert.equal(s.coverage, 0);
   const terminal = messages.filter((message) => message.t === 'extinct');
-  assert.equal(terminal.length, 1);
-  assert.equal(terminal[0].summary.finalLivingCount, 0);
-  assert.equal(terminal[0].summary.terminalCause, 'hard-maximum');
-  run.advance(100);
-  assert.equal(messages.filter((message) => message.t === 'extinct').length, 1);
+  assert.equal(terminal.length, 1); assert.equal(terminal[0].summary.finalLivingCount, 0);
+  assert.equal(terminal[0].summary.terminalCause, 'terminal-stall');
+  run.advance(100); assert.equal(messages.filter((message) => message.t === 'extinct').length, 1);
 });
 
-test('sampled automatic and manual worlds finish under the authority maximum', { timeout: 30_000 }, () => {
-  for (let seed = 0; seed < 64; seed++) {
+test('sampled finite builds naturally finish within an explicit test budget, not simulation authority', { timeout: 30_000 }, () => {
+  const budget = 10_000;
+  for (let seed = 0; seed < 32; seed++) {
     const { run, messages } = controller(80_000 + seed);
-    while (run.state.status !== 'extinct') run.advance(64);
-    assert.ok(run.state.tick <= B.RUN_HARD_MAX_TICKS, `seed ${seed}`);
-    assert.equal(run.state.aliveCount, 0);
-    assert.equal(messages.filter((message) => message.t === 'extinct').length, 1);
+    while (run.state.status !== 'extinct' && run.state.tick < budget) run.advance(64);
+    assert.equal(run.state.status, 'extinct', `seed ${seed} exceeded external test budget`);
+    assert.equal(run.state.aliveCount, 0); assert.equal(messages.filter((message) => message.t === 'extinct').length, 1);
   }
 });

@@ -2,7 +2,14 @@
 import { BALANCE as B } from '../game/balance.js';
 import { RunController } from '../simulation/simulator.js';
 import { RUN_PROTOCOL_VERSION } from '../core/run-protocol.js';
-import { createWorldIdentity, identityFields, sameWorldIdentity } from '../core/world-session.js';
+import { createWorldIdentity, identityFields, sameWorldIdentity, WORLD_IDENTITY_FIELDS } from '../core/world-session.js';
+import {
+  ENVIRONMENT_MODEL_VERSION,
+  ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
+  ENVIRONMENT_SCHEDULE_HASH,
+  ENVIRONMENT_SCHEDULE_VERSION,
+} from '../game/environment-level.js';
+import { hashStringU32, hexU32 } from '../core/hash.js';
 import { MAX_TICKS_PER_SLICE, snapshotIntervalForSpeed, validateRuntimeSpeed } from '../core/runtime-speed.js';
 
 export function createRunDriver(caps, onMessage, options = {}) {
@@ -16,16 +23,24 @@ export function createRunDriver(caps, onMessage, options = {}) {
 
   function reserveIdentity(value) {
     stop(); const runId = ++runSequence;
+    const seed = value?.seed ?? 0;
+    const presentationGeneration = value?.presentationGeneration ?? ++presentationSequence;
     activeIdentity = createWorldIdentity({ worldSessionId: value?.worldSessionId ?? runId, runId,
-      seed: value?.seed ?? 0, presentationGeneration: value?.presentationGeneration ?? ++presentationSequence,
-      environmentLevel:value?.environmentLevel, challengeProfileHash:value?.challengeProfileHash,
+      seed, presentationGeneration,
+      environmentModelVersion: value?.environmentModelVersion ?? ENVIRONMENT_MODEL_VERSION,
+      environmentScheduleVersion: value?.environmentScheduleVersion ?? ENVIRONMENT_SCHEDULE_VERSION,
+      environmentScheduleHash: value?.environmentScheduleHash ?? ENVIRONMENT_SCHEDULE_HASH,
+      immutableStartConfigurationHash: value?.immutableStartConfigurationHash
+        ?? hexU32(hashStringU32(`driver-start:${seed}:${presentationGeneration}`)),
+      onboardingEnvironmentModifierVersion: value?.onboardingEnvironmentModifierVersion
+        ?? ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
       resultTransactionKey: value?.resultTransactionKey });
     presentationSequence = Math.max(presentationSequence, activeIdentity.presentationGeneration);
     return activeIdentity;
   }
   function accepts(value, identity = activeIdentity, complete = false) {
     if (!identity || value?.runId !== identity.runId) return false;
-    for (const name of ['worldSessionId', 'seed', 'presentationGeneration', 'environmentLevel', 'challengeProfileHash', 'resultTransactionKey']) {
+    for (const name of WORLD_IDENTITY_FIELDS.filter((name) => name !== 'runId')) {
       if ((complete || value?.[name] != null) && value?.[name] !== identity[name]) return false;
     }
     return true;

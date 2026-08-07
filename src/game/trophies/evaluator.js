@@ -67,7 +67,9 @@ export function mergeFacts(a, f) {
     freshwaterSupportedSeconds: f.freshwaterSupportedSeconds, transformedCells: f.transformedCells,
     electrifiedCells: f.electrifiedCells, glacialLakeCells: f.glacialLakeCells,
     maritimeForestCells: f.maritimeForestCells, reach100: f.reach100,
-    worldThreePressure: f.worldOrdinal === 3 && f.eventCount > 0 ? 1 : 0 };
+    environmentPeakLevel: f.environmentPeakLevel, environmentTimeAtPeakTicks: f.environmentTimeAtPeakTicks,
+    environmentPressureTicksQ: f.environmentPressureTicksQ,
+    worldThreePressure: !f.onboardingHarmfulEventsDisabled && f.environmentPeakLevel >= 1 && f.eventCount > 0 ? 1 : 0 };
   for (const [key, value] of Object.entries(maxima)) a[key] = Math.max(a[key] ?? 0, value ?? 0);
   a.habitatClassMask=(a.habitatClassMask??0)|f.habitatMask;a.habitatClassCount=bitCount(a.habitatClassMask);
   const axes = ['survivalAxisBp','reachAxisBp','spreadAxisBp','unityAxisBp','efficiencyAxisBp','stabilityAxisBp'];
@@ -80,7 +82,7 @@ export function mergeFacts(a, f) {
   a.totalReachGains += f.reach[0]; a.totalRegrowth += f.reach[2]; a.totalLakeLivingSeconds += f.lake[4];
   a.totalLakeCrisisSurvivals += f.lake[7] + f.lake[8]; a.balancedWorlds += meets(q, [8500, 4200, 3000, 8500, 5000, 6500]) ? 1 : 0;
   a.autonomousWorlds += f.autonomous; a.scarcityWorlds += f.scarcityCause;a.resourceDepletedCells+=f.resourceDepletedCells;
-  a.zeroEventWorlds += f.autonomous && f.worldOrdinal <= 2 && f.eventCount === 0 ? 1 : 0;
+  a.zeroEventWorlds += f.autonomous && f.onboardingHarmfulEventsDisabled && f.eventCount === 0 ? 1 : 0;
 }
 
 function serializeProgress(a) { const aggregate = {};

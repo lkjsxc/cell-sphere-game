@@ -1,15 +1,16 @@
 /** Summary metrics, semantic milestones, events, and finite-resource evidence. */
-import { telegraphLead } from './events.js';
+import { reclaimEndedEvents, telegraphLead } from './events.js';
 import { BIOME, FEATURE } from '../world/fields.js';
 import { recordHistory } from './replay.js';
 import { recordTrophyCrisisSurvival, sampleTrophyLiving } from './trophy-proof.js';
 import { recordScoreSummary } from '../game/scoring.js';
+import { sampleEnvironmentExposure } from '../game/environment-exposure.js';
 
 const PHASES = Object.freeze([
   Object.freeze({ tick: 0, id: 'abundance' }),
   Object.freeze({ tick: 600, id: 'competition' }),
   Object.freeze({ tick: 1800, id: 'instability' }),
-  Object.freeze({ tick: 3000, id: 'collapse' }),
+  Object.freeze({ tick: 3000, id: 'deep-pressure' }),
 ]);
 const COVERAGE_MILESTONES = Object.freeze([0.1, 0.25, 0.5, 0.75]);
 
@@ -38,6 +39,14 @@ export function runSummary(state, emit) {
   recordGeography(state);
   recordMorphology(state);
   recordResourceState(state);
+  sampleEnvironmentExposure(state.environmentExposure, {
+    throughTick: state.tick,
+    pressure: state.currentEnvironmentProfile?.score?.pressure ?? 0,
+    quality: state.scoreMerit.quality,
+    currentLevel: state.currentEnvironmentLevel,
+    peakLevel: state.peakEnvironmentLevel,
+    flush: true,
+  });
   recordScoreSummary(state);
   if (state.history.length > historyStart) {
     emit({ t: 'history-batch', events: state.history.slice(historyStart).map((event) => ({ ...event })) });
@@ -45,7 +54,7 @@ export function runSummary(state, emit) {
 }
 
 function announceEvents(state, emit) {
-  const lead = telegraphLead(state.traits, state.challengeProfile);
+  const lead = telegraphLead(state.traits, state.currentEnvironmentProfile);
   for (const ev of state.events) {
     if (!(ev.announced & 1) && state.tick >= ev.startTick - lead) {
       ev.announced |= 1;
@@ -65,9 +74,9 @@ function announceEvents(state, emit) {
       if (ev.crisis && state.aliveCount > 0) { state.crisesEndured++; recordTrophyCrisisSurvival(state, ev.family); }
       recordHistory(state, 'event-end', { id: ev.id, family: ev.family, cell: ev.center });
       emit({ t: 'event', phase: 'end', family: ev.family, tick: state.tick });
-      ev.nodes = new Uint16Array(0); ev.falloff = new Float32Array(0); ev.arrivalTicks = new Uint8Array(0); ev.arrivalCost = null; ev.predecessor = null;
     }
   }
+  reclaimEndedEvents(state);
 }
 
 function recordMilestones(state) {

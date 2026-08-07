@@ -17,6 +17,10 @@ export function handleRunMessage(app, message) {
   if (message.t === 'cell-inspection') { if (message.requestId === app.requestId && message.cell.node === app.selectedNode) {
     app.inspector.updateDynamic(message.cell, app.currentHistory.filter((event) => event.primaryCells.includes(app.selectedNode))); } return; }
   if (message.t === 'event') return ui.announce(app.el, `${humanize(message.family)} · ${message.phase}`);
+  if (message.t === 'environment-transition') {
+    app.lastEnvironmentAnnouncementTick = message.tick;
+    return ui.announce(app.el, `Environment Level ${message.environmentLevel} reached.`);
+  }
   if (message.t === 'terminal-collapse') { ui.announce(app.el, 'Final trace — the remaining tissue is releasing.');
     app.el.eventTime.textContent = `${app.gameTime(app.snapshot?.tick ?? 0)} · TERMINAL`; return true; }
   if (message.t === 'extinct') return app.finishRun({ ...message.summary, ...identityFields(message) });

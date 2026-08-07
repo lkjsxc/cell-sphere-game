@@ -1,28 +1,20 @@
 # `src/game/`
 
-Frozen content and pure cross-run rules. Simulation, interface, audits, and fair
-agents import these production definitions; this directory owns no DOM or storage I/O.
+Pure product rules imported by simulation, interface, audits, and fair agents.
+No DOM or storage I/O belongs here.
 
-| Module | Source-of-truth responsibility |
+| Module | Authority |
 |---|---|
-| `balance.js` | Finite tick/simulation constants with units. |
-| `environment-level.js` | Exact unlimited Environment Level/frontier/attempt rules, version 1. |
-| `scoring.js` | Monotone exact SCORE model/formula v4, Echoes, and procedural ranks. |
-| `skills/` | Frequency-5 252-cell sparse levels, costs, effects, Potential v3, Builds/mastery, transactions, and migration. |
-| `events-content.js` | Bounded whole-cell environmental pressure families. |
-| `trophies/` | 96 read-only current criteria and authority-neutral proof. |
+| `environment-level.js` | Environment model/schedule v2, exact tick↔level/progress/hash, onboarding modifier, and explicit legacy-frontier migration reader. |
+| `environment-exposure.js` | Bounded exact pressure-time/quality exposure evidence. |
+| `scoring.js` | SCORE v5, exact Echoes, ranks, and monotone exposure-bonus high-water authority. |
+| `balance.js` | Finite simulation constants; no normal world-duration ceiling. |
+| `skills/` | 252-cell exact Evolution levels/costs/effects/Potential/build mastery/transactions. |
+| `events-content.js` | Whole-cell environmental event families. |
+| `trophies/` | Read-only 96-Trophy catalog and completed-world proof. |
 
-Evolution Level 0 is locked, Level 1 is authored identity, and Level 2+ is
-unlimited. Level 0 → 1 needs Echoes and direct Level-1+ adjacency except for six
-fresh-vector roots; repeat levels need ownership and Echoes only. Level-one
-breadth costs 17,820 and yields Potential 1,200,000, but is not completion.
-
-Exact progression uses shared `bigint` operations and canonical decimal strings at
-boundaries. The challenge-profile compiler in `src/simulation/` reduces unlimited
-Environment rating minus Evolution defense to bounded finite run coefficients.
-Worlds remain autonomous; active Adaptations are retired, and Trophies never feed
-simulation, Potential, SCORE, pressure, or purchase eligibility.
-
-Focused gates: `audit:evolution-levels`, `audit:environment-levels`,
-`audit:progression-numbers`, `audit:luminous`, `agent:long`, and
-`balance:holdout`.
+Environment Level is a within-world public clock. New worlds start Level 0;
+Evolution changes finite effective pressure but never clock thresholds. Exact
+values remain canonical decimal strings at external boundaries. Legacy static
+frontier data is readable only for migration and never affects a new world,
+SCORE, eligibility, or rewards.

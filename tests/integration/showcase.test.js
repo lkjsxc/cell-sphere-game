@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { decodeVisualHistory } from '../../src/history/codec.js';
 import { createTopology } from '../../src/world/icosphere.js';
 import { TitleShowcase, TITLE_SHOWCASE } from '../../src/showcase/player.js';
+import { REPLAY_VERSION } from '../../src/simulation/replay.js';
 
 function payload() {
   const bytes = Buffer.from(TITLE_SHOWCASE.dataBase64, 'base64');
@@ -13,7 +14,7 @@ function payload() {
 
 test('showcase metadata and checked-in bytes are exact', () => {
   const { bytes, history } = payload();
-  assert.equal(TITLE_SHOWCASE.schema,1);assert.equal(TITLE_SHOWCASE.replayVersion,5);
+  assert.equal(TITLE_SHOWCASE.schema,1);assert.equal(TITLE_SHOWCASE.replayVersion, REPLAY_VERSION);
   assert.equal(TITLE_SHOWCASE.frameCount, 89); assert.equal(TITLE_SHOWCASE.durationMs, 22_250);
   assert.equal(TITLE_SHOWCASE.frameIntervalMs, 250); assert.equal(history.cellCount, 2562);
   assert.equal(history.frames.length, TITLE_SHOWCASE.frameCount);

@@ -21,7 +21,7 @@ export function qualityDpr(settings, caps) {
 }
 
 export function createExportData(meta, history, settings) {
-  return { schema: 1, product: PRODUCT, meta: validateMeta(meta),
+  return { schema: 2, product: PRODUCT, meta: validateMeta(meta),
     history: validateHistory(history, 32), settings: validateSettings(settings) };
 }
 export function serializeExportData(meta, history, settings) {

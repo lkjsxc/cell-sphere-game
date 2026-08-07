@@ -8,11 +8,15 @@ import { createRng } from '../core/prng.js';
 import { createTopology } from '../world/icosphere.js';
 import { createFields } from '../world/fields.js';
 import { buildEntropyLut, buildSeasonLut, buildNodeSeasonOffsets } from './environment.js';
-import { scheduleEvents } from './events.js';
-import { normalizeEnvironmentLevel } from '../game/environment-level.js';
-import { compileChallengeProfile, validateChallengeProfile } from './challenge-profile.js';
-import { compareProgressionIntegers, normalizeProgressionInteger } from '../core/progression-integer.js';
-import { recordHistory } from './replay.js';
+import { createEventDirector, installEventDirectorProfile } from './events.js';
+import {
+  environmentOnboardingModifierForWorld,
+  environmentScheduleAtTick,
+} from '../game/environment-level.js';
+import { createEnvironmentExposure, flushEnvironmentExposure, sampleEnvironmentExposure } from '../game/environment-exposure.js';
+import { compileChallengeProfile, interpolateEnvironmentCoefficients } from './challenge-profile.js';
+import { compareProgressionIntegers, incrementProgressionInteger, maxProgressionInteger, normalizeProgressionInteger } from '../core/progression-integer.js';
+import { REPLAY_VERSION, recordHistory } from './replay.js';
 import { birthCell, killCell } from './lifecycle/cell-lifecycle.js';
 import { createReachLedger, REACH_CAUSE } from './lifecycle/reach-ledger.js';
 import { createTrophyProof } from './trophy-proof.js';
@@ -34,11 +38,14 @@ export function createRunState(cfg) {
   const seed = cfg.seed >>> 0;
   const worldOrdinal = normalizeProgressionInteger(cfg.worldOrdinal, '1') === '0'
     ? '1' : normalizeProgressionInteger(cfg.worldOrdinal, '1');
-  const environmentLevel = normalizeEnvironmentLevel(cfg.environmentLevel, legacyEnvironmentLevel(worldOrdinal));
-  const challengeProfile = cfg.challengeProfile
-    ? validateChallengeProfile(cfg.challengeProfile)
-    : compileChallengeProfile({ environmentLevel, evolution: cfg.evolutionDefense });
-  const worldEra = legacyEraForEnvironmentLevel(challengeProfile.environmentLevel);
+  // A new authority always starts from the Level-0 world baseline. Any static
+  // selected profile in an old envelope is intentionally ignored.
+  const onboardingEnvironmentModifier = environmentOnboardingModifierForWorld(worldOrdinal);
+  const initialEnvironmentSchedule = environmentScheduleAtTick('0');
+  const environmentEvolutionDefense = cfg.evolutionDefense && typeof cfg.evolutionDefense === 'object'
+    ? cfg.evolutionDefense : {};
+  const currentEnvironmentProfile = compileChallengeProfile({ environmentLevel: '0', evolution: environmentEvolutionDefense });
+  const nextEnvironmentProfile = compileChallengeProfile({ environmentLevel: '1', evolution: environmentEvolutionDefense });
   const topo = createTopology(4);
   const fields = createFields(createRng(seed ^ STREAM.world), topo);
   const simRng = createRng(seed ^ STREAM.growth);
@@ -48,7 +55,8 @@ export function createRunState(cfg) {
   const E = topo.edgeCount;
   const traits = traitsFor(cfg.strainId ?? 'pioneer', cfg.memoryEffects ?? {});
   const habitatCapabilities = Array.isArray(cfg.habitatCapabilities) ? [...new Set(cfg.habitatCapabilities)] : [];
-  const resource = createResourceAuthority(fields, challengeProfile.coefficients.initialResourceScale);
+  // Resource stock is immutable Level-0 world-start data, never live pressure.
+  const resource = createResourceAuthority(fields, 1);
   const activeBuilds = Array.isArray(cfg.activeBuilds) ? cfg.activeBuilds.map((build) => typeof build === 'string' ? build : build?.id).filter(Boolean) : [];
   const worldmaking = createWorldmakingState(fields);
 
@@ -64,9 +72,26 @@ export function createRunState(cfg) {
     evolutionPower: Number.isFinite(cfg.evolutionPower) ? Math.max(0, Math.round(cfg.evolutionPower)) : 0,
     evolutionDepth: normalizeProgressionInteger(cfg.evolutionDepth, '0'),
     potentialVersion: Number.isInteger(cfg.potentialVersion) ? cfg.potentialVersion : 1,
-    worldOrdinal, worldEra, environmentLevel: challengeProfile.environmentLevel,
-    challengeProfile, challengeProfileVersion: challengeProfile.version,
-    challengeProfileHash: challengeProfile.hash, environmentPressure: challengeProfile.score.pressure,
+    worldOrdinal,
+    environmentModelVersion: initialEnvironmentSchedule.environmentModelVersion,
+    environmentScheduleVersion: initialEnvironmentSchedule.environmentScheduleVersion,
+    environmentScheduleHash: initialEnvironmentSchedule.environmentScheduleHash,
+    currentEnvironmentLevel: initialEnvironmentSchedule.currentEnvironmentLevel,
+    peakEnvironmentLevel: initialEnvironmentSchedule.currentEnvironmentLevel,
+    environmentLevelStartTick: initialEnvironmentSchedule.environmentLevelStartTick,
+    nextEnvironmentLevelTick: initialEnvironmentSchedule.nextEnvironmentLevelTick,
+    environmentLevelProgressQ: initialEnvironmentSchedule.environmentLevelProgressQ,
+    environmentTransitionCount: '0',
+    onboardingEnvironmentModifier,
+    environmentExposure: createEnvironmentExposure(initialEnvironmentSchedule.currentEnvironmentLevel),
+    recentEnvironmentTransitions: [],
+    environmentEvolutionDefense,
+    currentEnvironmentProfile, nextEnvironmentProfile,
+    currentEnvironmentProfileHash: currentEnvironmentProfile.hash,
+    currentEnvironmentProfileVersion: currentEnvironmentProfile.version,
+    environmentCoefficients: interpolateEnvironmentCoefficients(
+      currentEnvironmentProfile, nextEnvironmentProfile, initialEnvironmentSchedule.environmentLevelProgressQ,
+    ),
     challenge: cfg.challenge ?? null, seed, runId: Number.isInteger(cfg.runId) ? cfg.runId : 0,
     simRng, eventRng, inoculationRng,
     tick: 0, entropy: 0, status: 'idle', extinction: null,
@@ -85,9 +110,9 @@ export function createRunState(cfg) {
     pressure: new Float32Array(N), nextEnergy: new Float32Array(N),
     expansions: new Uint8Array(N), bfsVisited: new Uint8Array(N), bfsQueue: new Uint32Array(N),
 
-    entropyLut: buildEntropyLut(challengeProfile), seasonLut: buildSeasonLut(),
+    entropyLut: buildEntropyLut(currentEnvironmentProfile), seasonLut: buildSeasonLut(),
     nodeSeasonOffset: buildNodeSeasonOffsets(topo),
-    events: scheduleEvents(eventRng, topo, fields, challengeProfile),
+    eventDirector: null, events: [],
     crisesEndured: 0, crisesTotal: 0, trophyProof: createTrophyProof(topo, fields),
 
     habitatBlocked: new Uint16Array(N), resourceBlocked: new Uint16Array(N),
@@ -107,11 +132,14 @@ export function createRunState(cfg) {
 
     phaseIndex: -1, coverageMilestoneIndex: 0, loopMilestone: false, geographySeen: 0,
     wasFragmented: false, reconnectedUntil: -1,
-    replayVersion: 5, replay: [], history: [],
+    replayVersion: REPLAY_VERSION, replay: [], history: [],
     ...worldmaking, ...createReachGoalState(),
   };
   installResourceState(state, resource);
   state.initialResourceStock = resource.initialStock;
+  state.eventDirector = createEventDirector({ rng: eventRng, topo, fields, onboarding: onboardingEnvironmentModifier });
+  state.events = state.eventDirector.events;
+  installEventDirectorProfile(state, currentEnvironmentProfile);
 
   const start = cfg.inoculate ?? selectInoculation(fields, inoculationRng, resource);
   if (!Number.isInteger(start) || start < 0 || start >= N) throw new Error(`invalid inoculation cell: ${start}`);
@@ -127,6 +155,69 @@ export function createRunState(cfg) {
   recordHistory(state, 'run-created');
   recordHistory(state, 'inoculation', { cell: start });
   return state;
+}
+
+/**
+ * Install exact schedule state before environment consumers run. Transition
+ * compilation occurs once per threshold; only current/next profiles persist.
+ */
+export function updateEnvironmentProgression(state) {
+  const schedule = environmentScheduleAtTick(state.tick);
+  const changed = schedule.currentEnvironmentLevel !== state.currentEnvironmentLevel;
+  if (changed) {
+    const becameNewPeak = compareProgressionIntegers(schedule.currentEnvironmentLevel, state.peakEnvironmentLevel) > 0;
+    sampleEnvironmentExposure(state.environmentExposure, {
+      throughTick: state.tick,
+      pressure: state.currentEnvironmentProfile?.score?.pressure ?? 0,
+      quality: state.scoreMerit?.quality ?? 0,
+      currentLevel: state.currentEnvironmentLevel,
+      peakLevel: state.peakEnvironmentLevel,
+      flush: true,
+    });
+    state.currentEnvironmentLevel = schedule.currentEnvironmentLevel;
+    state.peakEnvironmentLevel = maxProgressionInteger(state.peakEnvironmentLevel, schedule.currentEnvironmentLevel);
+    if (becameNewPeak) {
+      // Result time-at-peak means time at the final highest public rung, not
+      // the sum of earlier temporary peaks.
+      state.environmentExposure.timeAtPeakTicks = '0';
+      state.environmentExposure.pendingPeakTicks = 0;
+    }
+    state.environmentTransitionCount = incrementProgressionInteger(state.environmentTransitionCount);
+    state.currentEnvironmentProfile = state.nextEnvironmentProfile?.environmentLevel === schedule.currentEnvironmentLevel
+      ? state.nextEnvironmentProfile
+      : compileChallengeProfile({ environmentLevel: schedule.currentEnvironmentLevel, evolution: state.environmentEvolutionDefense });
+    const nextLevel = incrementProgressionInteger(schedule.currentEnvironmentLevel);
+    state.nextEnvironmentProfile = compileChallengeProfile({ environmentLevel: nextLevel, evolution: state.environmentEvolutionDefense });
+    state.currentEnvironmentProfileHash = state.currentEnvironmentProfile.hash;
+    state.currentEnvironmentProfileVersion = state.currentEnvironmentProfile.version;
+    const transition = Object.freeze({ level: state.currentEnvironmentLevel, tick: schedule.tick,
+      profileHash: state.currentEnvironmentProfile.hash, pressure: state.currentEnvironmentProfile.score.pressure });
+    state.recentEnvironmentTransitions.push(transition);
+    if (state.recentEnvironmentTransitions.length > 8) state.recentEnvironmentTransitions.shift();
+    recordHistory(state, 'environment-transition', { id: state.currentEnvironmentLevel,
+      environmentLevel: state.currentEnvironmentLevel, profileHash: state.currentEnvironmentProfile.hash });
+    installEventDirectorProfile(state, state.currentEnvironmentProfile);
+  }
+  state.environmentLevelStartTick = schedule.environmentLevelStartTick;
+  state.nextEnvironmentLevelTick = schedule.nextEnvironmentLevelTick;
+  state.environmentLevelProgressQ = schedule.environmentLevelProgressQ;
+  state.environmentCoefficients = interpolateEnvironmentCoefficients(
+    state.currentEnvironmentProfile, state.nextEnvironmentProfile, schedule.environmentLevelProgressQ,
+  );
+  return Object.freeze({ changed, schedule, profile: state.currentEnvironmentProfile });
+}
+
+/** Flush exact exposure at an authoritative terminal/abandonment boundary. */
+export function finalizeEnvironmentProgression(state) {
+  sampleEnvironmentExposure(state.environmentExposure, {
+    throughTick: state.tick,
+    pressure: state.currentEnvironmentProfile?.score?.pressure ?? 0,
+    quality: state.scoreMerit?.quality ?? 0,
+    currentLevel: state.currentEnvironmentLevel,
+    peakLevel: state.peakEnvironmentLevel,
+    flush: true,
+  });
+  return flushEnvironmentExposure(state.environmentExposure);
 }
 
 /** Seeded weighted selection among plausible resource/land candidates. */
@@ -207,7 +298,6 @@ export function reconcileLiveness(state) {
 
 /** Return a truthful deterministic reason for entering bounded terminal fade. */
 export function terminalCollapseReason(state) {
-  if (state.tick >= B.RUN_CEILING_TICKS) return 'hard-maximum';
   const l = state.liveness;
   const spent = l.viableEnergyCount === 0 && l.activeFrontierCount === 0
     && l.validGrowthCandidateCount === 0;
@@ -219,20 +309,13 @@ export function beginTerminalCollapse(state, reason) {
   if (state.status !== 'running') return false;
   state.status = 'terminal-collapse'; state.terminalCause = reason;
   state.terminalCollapseStart = state.tick;
-  state.terminalDeadline = Math.min(B.RUN_HARD_MAX_TICKS,
-    state.tick + B.TERMINAL_COLLAPSE_TICKS);
+  // This bounded fade follows a causal ecological stall only; it is not a
+  // universal world-duration cap.
+  state.terminalDeadline = state.tick + B.TERMINAL_COLLAPSE_TICKS;
   recordHistory(state, 'terminal-collapse', { id: reason });
   return true;
 }
 
-function legacyEnvironmentLevel(ordinal) {
-  if (compareProgressionIntegers(ordinal, '2') <= 0) return '0'; if (ordinal === '3') return '1';
-  if (compareProgressionIntegers(ordinal, '5') <= 0) return '2';
-  if (compareProgressionIntegers(ordinal, '10') <= 0) return '3'; return '4';
-}
-function legacyEraForEnvironmentLevel(level) {
-  if (level === '0') return 1; if (level === '1') return 2; if (level === '2') return 3; if (level === '3') return 4; return 5;
-}
 function normalizeElectricityMastery(raw) { const value = raw && typeof raw === 'object' ? raw : {};
   const bounded = (input, fallback, min, max) => Number.isFinite(input) ? Math.max(min, Math.min(max, input)) : fallback;
   return Object.freeze({ rating:normalizeProgressionInteger(value.rating, '0'),

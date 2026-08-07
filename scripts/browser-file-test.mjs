@@ -132,9 +132,9 @@ async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait
   await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.historySnapshot=null;delete a.__luminousDecaySnapshot;a.pause.set('browser-luminous',false);const speed=document.getElementById('speed-select');speed.value='256';speed.dispatchEvent(new Event('change'))})()`);
   if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 50000)) throw new Error('Canvas run did not finish');
   const terminal=await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return{score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),status:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent,
-    environment:document.getElementById('result-environment').textContent,next:document.getElementById('result-next-button').textContent,retry:document.getElementById('result-retry-button').textContent}})()`);
-  const score = terminal.score; if(terminal.status!=='extinct'||terminal.alive!==0||terminal.reach!=='0%'||!terminal.environment.includes('Environment Level 0')
-    ||!terminal.next.startsWith('Next World · Environment Level ')||terminal.retry!=='Retry Environment Level 0')throw new Error(`Canvas terminal snapshot stale: ${JSON.stringify(terminal)}`);
+    environment:document.getElementById('result-environment').textContent,next:document.getElementById('result-next-button').textContent,hud:document.getElementById('hud-environment-level').textContent}})()`);
+  const score = terminal.score; if(terminal.status!=='extinct'||terminal.alive!==0||terminal.reach!=='0%'||!terminal.environment.includes('Peak Environment Level')
+    ||terminal.next!=='Next World'||terminal.hud==='0')throw new Error(`Canvas terminal snapshot stale: ${JSON.stringify(terminal)}`);
   await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-canvas-history-desktop.png');
   await evaluate("document.getElementById('scene-evolution').click()"); await wait(180); await screenshot('browser-canvas-evolution-desktop.png');
   const selectedReady=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{validateMeta}=await import('./src/platform/storage.js');a.meta=validateMeta({...a.meta,echoBalance:'1000000'});

@@ -1,30 +1,39 @@
 # Verification matrix
 
-Status legend: `baseline` = observed old behavior; `planned` = required before completion; `pass` only after a command/test actually passes.
+`pass` means an actual command completed successfully on the local uncommitted
+worktree. CI, Pages, and deployment remain separate evidence.
 
-| Area | Required evidence | Baseline / status |
+| Area | Required evidence | Status |
 | --- | --- | --- |
-| Rejected semantics | Existing frontier unit tests demonstrate wrong model; replace them with negative/absence coverage. | baseline: observed |
-| Schedule | Tick 0, exact thresholds/neighbors, monotonicity, direct inversion, huge canonical levels, hash/canonicalization, no build/seed/meta influence. | planned |
-| Dynamic pressure | Level-0 immutable baseline, transition idempotency, current/next bounded profile cache, finite coefficients, relevant Evolution mitigation, no retroactive resource rewrite. | planned |
-| Events | bounded active/future/recent queues, minimum telegraph, reclamation, deterministic candidate/footprint, onboarding separation, high-speed no skip. | planned |
-| Terminal | fresh distribution near 270–330 s, no normal ceiling, every tested finite build dies, truthful causes, no instant-death reward farm. | baseline: smoke exposes ~362 s cap; planned v2 |
-| SCORE/result | exposure arithmetic, monotone live score, peak/final/time-at-peak, forged evidence rejection, exact once-only reward. | planned |
-| Identity/protocol | live level absent from identity, stale/reordered rejects, Worker/fallback/all speed/pause equality, atomic replacement/reset. | planned |
-| Persistence | inert legacy frontier, legacy History distinction, import/export, storage unavailable, crash/duplicate recovery, bounded History. | planned |
-| UI/accessibility | live HUD/progress, blank Level-0 frame, Next World reset, no static wording, keyboard/pointer/touch, reduced motion/high contrast/200% text/viewport coverage. | planned |
-| Renderer | WebGL2 and Canvas HUD/result semantics; no stale level; Luminous charged-cell evidence remains authoritative. | planned |
-| Agents | no static selection, bounded stepping, incomplete-budget no reward, fair observations, policies, production cohorts. | planned |
-| Performance | before/after same-host throughput, schedule/profile huge benchmarks, long transition memory/event/cache/History soak, draw-count remains four. | baseline: 7,042 ticks/s; planned v2 |
-| Release | unit/integration/browser/audits/balance/agents/links/structure/verify; commit/push/CI/Pages/cache-busted check if accessible. | planned |
+| Schedule/compiler | thresholds, inversion, huge exact values, finite profile | pass: unit suite and environment audit |
+| Reset/transition | Level-0 construction, one transition, current/next profile, prior peak reset | pass: focused progression unit tests |
+| Events | deterministic rolling candidates, telegraph, bounded/reclaim, onboarding | pass: event unit tests and 210-world audit |
+| Unit/integration | production authority/migration/transaction coverage | pass: verify ran all suites; subsequent unit confirmation: 191/191; integration 76/76 |
+| SCORE/result | monotone exposure, no terminal correction/farm, exact once-only result | pass: score trace, transactions, campaign audit |
+| Identity/protocol | immutable identity, stale handling, Worker/fallback/speed/replacement | pass: unit/integration and browser Worker/fallback paths |
+| Persistence | inert legacy frontier, legacy History, import/export, recovery | pass: unit/integration, transaction/migration audits |
+| Browser/accessibility | file/Canvas/fallback shell and input evidence | pass: all three browser commands |
+| Renderer/Luminous | WebGL/Canvas charge and four-draw evidence | pass: browser commands and luminous audit |
+| Agents | fair observations, no static actions, training/holdout cohorts | pass: smoke/campaign/long/holdout |
+| Balance/terminal | fresh/breadth anchors, REACH rarity, finite deaths, no cap | pass: strict balance, campaign, reach, terminal soak |
+| Performance/bounds | benchmark, events/history/cache/soak | pass: benchmark and verify audits |
+| Release | commit/push, CI, Pages, cache-busted deployed bytes | pending |
 
-## Required execution groups
+## Key measured results
 
-1. focused unit and integration tests after each vertical slice;
-2. `npm run test:unit`, `npm run test:integration`, `npm run balance:smoke`, `npm run benchmark`, `npm run check:links`, `npm run check:structure`, `npm run verify`;
-3. browser file/Canvas/fallback tests and all listed relevant audits;
-4. fair-agent smoke/campaign/long plus fixed training and untouched holdout cohorts;
-5. long environment transition soak with deterministic hash, memory/event/cache/History bounds and replacement reset;
-6. CI/Pages/deployed byte/browser verification when credentials and infrastructure are available.
+- `npm run verify`: exit 0, all 26 local gates.
+- Browser: WebGL2 Worker and fallback plus Canvas paths pass; dynamic reference
+  run SCORE 12,429, exactly four draws, and charged-cell evidence in both
+  renderers.
+- Strict production balance: six 30-run policy cohorts; balanced median 296.7 s.
+- Full campaign audit: fresh median 10,504 SCORE/284.7 s; root 11,368; breadth
+  1,099,367; first resolution 20.12 min.
+- REACH audit: 19/300 breadth successes, zero fresh; tested breadth worlds
+  naturally finished by 4,019 ticks inside a reward-free 10,000-tick budget.
+- Long agent: 8 policies × 12 worlds. Holdout: four untouched seeds, 22
+  policies, six worlds each, no failures.
 
-Full command output and cohort distributions belong in `status.md` and canonical release documentation, not asserted here before they occur.
+## Still required before release claim
+
+Create/push a coherent commit, check remote CI, then verify Pages and
+cache-busted deployed bytes for that commit.

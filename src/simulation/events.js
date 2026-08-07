@@ -3,39 +3,118 @@ import { BALANCE as B } from '../game/balance.js';
 import { EVENT_FAMILIES } from '../game/events-content.js';
 import { GRAPH_UNREACHABLE, weightedGraphField } from '../core/graph-field.js';
 import { smootherstep } from '../core/math.js';
+import { incrementProgressionInteger, normalizeProgressionInteger } from '../core/progression-integer.js';
+import { hashStringU32 } from '../core/hash.js';
 export const EVENT_FIELD_VERSION = 2; export const EVENT_UNREACHABLE = 0xffff;
+export const EVENT_DIRECTOR_VERSION = 2;
+export const MAX_EVENT_DIRECTOR_EVENTS = 6;
+export const MAX_EVENT_DIRECTOR_RECENT = 8;
 const LAND_BOUND = new Set(['drought', 'bloom', 'blight']); const MAX_ARRIVAL_TICKS = 15;
-export function scheduleEvents(rng, topo, fields, challengeProfile = null) {
-  const profile = challengeProfile?.events ?? {}; const environmentLevel = challengeProfile?.environmentLevel ?? '0';
-  const count = Math.max(0, Math.min(6, Number.isInteger(profile.count) ? profile.count : 0));
-  if (count === 0) return [];
-  const windowStart = Math.max(1100, Math.min(2520, Math.round(profile.earliestStartTick ?? 2400)));
-  const intensityRange = [Math.max(.5, Math.min(.72, profile.intensityMin ?? .5)),
-    Math.max(.7, Math.min(1.15, profile.intensityMax ?? .7))];
-  const footprintScale = Math.max(1, Math.min(1.35, profile.footprintScale ?? 1));
-  const overlap = Math.max(0, Math.min(1, profile.overlap ?? 0));
-  const byVuln = Array.from({ length: topo.nodeCount }, (_, cell) => cell)
-    .sort((a, b) => fields.eventVuln[b] - fields.eventVuln[a] || a - b).slice(0, 180);
-  const events = []; let lastFamily = ''; const windowEnd = Math.max(windowStart, 2920 - Math.round(overlap * 650));
-  const step = count > 1 ? (windowEnd - windowStart) / count : 0;
-  const familyPool = environmentLevel === '1'
+
+/**
+ * Fixed-capacity rolling event authority. Candidate identity advances as an
+ * exact scalar while event geometry is reclaimed when it expires.
+ */
+export function createEventDirector({ rng, topo, fields, onboarding = null } = {}) {
+  if (!rng || !topo || !fields) throw new Error('event director requires deterministic rng, topology, and fields');
+  return {
+    version: EVENT_DIRECTOR_VERSION,
+    rng, topo, fields,
+    events: [], recent: [], nextEventId: '0', lastFamily: '',
+    nextCandidateTick: 0,
+    onboarding: Object.freeze({ version: Number.isInteger(onboarding?.version) ? onboarding.version : 1,
+      harmfulEventsDisabled: onboarding?.harmfulEventsDisabled === true }),
+  };
+}
+
+/** Install a transition-compiled profile without precomputing a whole-world list. */
+export function installEventDirectorProfile(state, profile) {
+  const director = state.eventDirector;
+  if (!director) return false;
+  director.profile = profile;
+  const enabled = director.onboarding?.harmfulEventsDisabled !== true && eventCapacity(profile) > 0;
+  if (!enabled) return false;
+  // A new public level becomes eligible immediately, but always retains a
+  // minimum telegraph before its first possible effect.
+  director.nextCandidateTick = Math.min(director.nextCandidateTick, state.tick);
+  return true;
+}
+
+/** Called before environment consumers on every authoritative tick. */
+export function advanceEventDirector(state) {
+  const director = state.eventDirector;
+  if (!director || director.onboarding?.harmfulEventsDisabled === true) return false;
+  const profile = state.currentEnvironmentProfile;
+  const capacity = Math.min(MAX_EVENT_DIRECTOR_EVENTS, eventCapacity(profile));
+  if (capacity <= 0 || director.events.length >= capacity || state.tick < director.nextCandidateTick) return false;
+  const event = buildRollingEvent(state, director, profile);
+  director.events.push(event);
+  const cadence = Math.max(1, Math.round(profile?.events?.cadenceTicks ?? 840));
+  director.nextCandidateTick = event.startTick + cadence;
+  return true;
+}
+
+/** Reclaim expired geometry after its semantic end has been announced. */
+export function reclaimEndedEvents(state) {
+  const director = state.eventDirector;
+  if (!director) return 0;
+  let removed = 0;
+  for (let index = director.events.length - 1; index >= 0; index--) {
+    const event = director.events[index];
+    if (state.tick <= event.endTick || !(event.announced & 4)) continue;
+    director.recent.push(Object.freeze({ id: event.id, family: event.family, center: event.center,
+      startTick: event.startTick, endTick: event.endTick, intensity: event.intensity }));
+    if (director.recent.length > MAX_EVENT_DIRECTOR_RECENT) director.recent.splice(0, director.recent.length - MAX_EVENT_DIRECTOR_RECENT);
+    director.events.splice(index, 1);
+    removed++;
+  }
+  return removed;
+}
+
+export function eventDirectorSummary(state) {
+  const director = state.eventDirector;
+  if (!director) return Object.freeze({ version: EVENT_DIRECTOR_VERSION, activeCount: 0, futureCount: 0, recentCount: 0,
+    harmfulEventsDisabled: false });
+  let activeCount = 0; let futureCount = 0;
+  for (const event of director.events) {
+    if (state.tick < event.startTick) futureCount++; else if (state.tick <= event.endTick) activeCount++;
+  }
+  return Object.freeze({ version: director.version, activeCount, futureCount, recentCount: director.recent.length,
+    harmfulEventsDisabled: director.onboarding?.harmfulEventsDisabled === true });
+}
+
+function eventCapacity(profile) {
+  const raw = profile?.events?.maxConcurrent ?? profile?.events?.count ?? 0;
+  return Number.isInteger(raw) ? Math.max(0, Math.min(MAX_EVENT_DIRECTOR_EVENTS, raw)) : 0;
+}
+function buildRollingEvent(state, director, profile) {
+  const { rng, topo, fields } = director;
+  const id = normalizeProgressionInteger(director.nextEventId, '0');
+  director.nextEventId = incrementProgressionInteger(id);
+  const level = profile?.environmentLevel ?? '0';
+  const familyPool = level === '1'
     ? EVENT_FAMILIES.filter((family) => family.crisis && ['drought', 'heat', 'freeze'].includes(family.id))
     : EVENT_FAMILIES.filter((family) => family.crisis);
-  for (let index = 0; index < count; index++) {
-    const family = drawFamily(rng, lastFamily, familyPool); lastFamily = family.id;
-    const jitter = count > 1 ? rng.range(-.18, .18) * Math.max(1, step) : rng.range(0, 120);
-    const startTick = Math.max(windowStart, Math.round(windowStart + index * step + jitter));
-    const peakTick = startTick + 60; const releaseEndTick = peakTick + 120 + rng.intBelow(90);
-    const center = chooseCenter(byVuln, fields, family.id, rng);
-    const travelBudget = Math.min(1296, Math.round((720 + rng.intBelow(241)) * footprintScale));
-    const field = computeEventField(topo, fields, family.id, center, travelBudget, index);
-    const maxArrival = field.arrivalTicks.length ? Math.max(...field.arrivalTicks) : 0;
-    events.push({ id: index, family: family.id, nameJa: family.nameJa, descJa: family.descJa,
-      kind: family.kind, amount: family.amount, crisis: family.crisis, startTick, peakTick,
-      releaseEndTick, endTick: releaseEndTick + maxArrival, center, travelBudget,
-      intensity: Math.fround(rng.range(...intensityRange)), ...field, announced: 0 });
-  }
-  events.sort((a, b) => a.startTick - b.startTick || a.id - b.id); return events;
+  const family = drawFamily(rng, director.lastFamily, familyPool);
+  director.lastFamily = family.id;
+  const candidates = Array.from({ length: topo.nodeCount }, (_, cell) => cell)
+    .sort((a, b) => fields.eventVuln[b] - fields.eventVuln[a] || a - b).slice(0, 180);
+  const center = chooseCenter(candidates, fields, family.id, rng);
+  const telegraphTicks = Math.max(100, Math.round(profile?.events?.telegraphTicks ?? 100));
+  const startTick = state.tick + telegraphTicks + rng.intBelow(121);
+  const peakTick = startTick + 60;
+  const releaseEndTick = peakTick + 120 + rng.intBelow(90);
+  const footprintScale = Math.max(1, Math.min(1.35, profile?.events?.footprintScale ?? 1));
+  const intensityMin = Math.max(.5, Math.min(.72, profile?.events?.intensityMin ?? .5));
+  const intensityMax = Math.max(.7, Math.min(1.15, profile?.events?.intensityMax ?? .7));
+  const travelBudget = Math.min(1296, Math.round((720 + rng.intBelow(241)) * footprintScale));
+  const salt = hashStringU32(`event-director:${id}`);
+  const field = computeEventField(topo, fields, family.id, center, travelBudget, salt);
+  const maxArrival = field.arrivalTicks.length ? Math.max(...field.arrivalTicks) : 0;
+  return { id, family: family.id, nameJa: family.nameJa, descJa: family.descJa, kind: family.kind,
+    amount: family.amount, crisis: family.crisis, startTick, peakTick, releaseEndTick,
+    endTick: releaseEndTick + maxArrival, center, travelBudget,
+    intensity: Math.fround(rng.range(intensityMin, intensityMax)), ...field, announced: 0 };
 }
 export function computeEventField(topo, fields, family, center, travelBudget = 840, salt = 0) {
   const wind = windVector(topo.positions, center, salt); const landBound = LAND_BOUND.has(family);

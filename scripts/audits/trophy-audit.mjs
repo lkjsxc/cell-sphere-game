@@ -8,8 +8,6 @@ import { TROPHY_MAX_KEYS, TROPHY_SUM_KEYS } from '../../src/game/trophies/keys.j
 import { validateTrophyFacts } from '../../src/game/trophies/facts.js';
 import { MEMORY_BRANCHES, availableMemoryNodes, compileEvolution, purchaseEvolutionLevel } from '../../src/game/skills/index.js';
 import { RunController } from '../../src/simulation/simulator.js';
-import { resolveEnvironmentAttempt } from '../../src/game/environment-level.js';
-import { compileChallengeProfile } from '../../src/simulation/challenge-profile.js';
 import { compareProgressionIntegers, incrementProgressionInteger } from '../../src/core/progression-integer.js';
 import { applyRunResult } from '../../src/interface/policies/run-result.js';
 import { defaultHistory } from '../../src/platform/history.js'; import { defaultMeta, validateMeta } from '../../src/platform/storage.js';
@@ -62,8 +60,9 @@ function modeledCampaign(worlds) { let meta = defaultMeta(); let archive = defau
     firstHistoryEntries: awardEvents.length, firstQueueEntries: firstTx.tx.meta.trophyQueue.length,
     valid: !duplicate.applied && !duplicate.trophyIds.length && awardEvents.length === firstTx.tx.trophyIds.length } };
 }
-function automaticRun(seed, meta) { const evolution=compileEvolution(meta),attempt=resolveEnvironmentAttempt(meta),profile=compileChallengeProfile({environmentLevel:attempt.environmentLevel,evolution});
-  const rc=new RunController({seed,strainId:'pioneer',worldOrdinal:incrementProgressionInteger(meta.runs),environmentLevel:attempt.environmentLevel,challengeProfile:profile,
+function automaticRun(seed, meta) { const evolution=compileEvolution(meta);
+  const rc=new RunController({seed,strainId:'pioneer',worldOrdinal:incrementProgressionInteger(meta.runs),
+    evolutionDefense:{affinityDefense:evolution.affinityDefense,pressureDefense:evolution.pressureDefense},
     worldPotential:evolution.worldPotential,evolutionPower:evolution.evolutionPower,evolutionDepth:evolution.evolutionDepth,potentialVersion:evolution.potentialVersion,
     memoryEffects:evolution.effects,memoryConditionals:evolution.conditionals,memoryUnlocks:evolution.unlocks,habitatCapabilities:evolution.habitatCapabilities,
     activeBuilds:evolution.activeBuilds,buildEffects:evolution.buildEffects,electricityMastery:evolution.electricityMastery});rc.start();
