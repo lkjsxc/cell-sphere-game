@@ -23,8 +23,11 @@ increment tick → schedule transition/profile installation → event director
 ```
 
 Every new world begins at Environment Level 0. The public clock derives only
-from authoritative ticks; Evolution changes effective pressure, never the
-clock. Worlds one and two have an explicit onboarding event modifier only.
-The director owns bounded active/future/recent evidence; it does not precompute
-a whole-world event schedule. Speed changes only how many exact ticks are
-executed, never their content.
+from authoritative ticks, including the bounded causal terminal-collapse fade;
+Evolution changes effective pressure, never the clock. Worlds one and two have
+an explicit onboarding event modifier only. The director owns bounded
+active/future/recent evidence, reserves summary-cadence slack for a
+player-visible minimum telegraph, and does not precompute a whole-world event
+schedule. Snapshot/result pressure summaries expose current/next profiles,
+interpolation Q, and the authority coefficients. Speed changes only how many
+exact ticks are executed, never their content.

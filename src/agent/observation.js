@@ -13,7 +13,7 @@ import { formatProgressionEngineering, incrementProgressionInteger, maxProgressi
   normalizeProgressionInteger } from '../core/progression-integer.js';
 import { AGENT_GOALS } from './schema.js';
 
-export const OBSERVATION_SCHEMA = 3;
+export const OBSERVATION_SCHEMA = 4;
 export const OBSERVATION_KEYS = Object.freeze([
   'schema', 'metaRevision', 'worldOrdinal', 'activeWorld', 'environmentSchedule',
   'bestEnvironmentLevelReached', 'bestEnvironmentExposure', 'echoBalance', 'echoBalanceFormatted',
@@ -100,7 +100,22 @@ function publicExposure(raw) {
     currentLevel: normalizeProgressionInteger(raw.currentLevel, '0') });
 }
 function publicPressure(raw) {
+  const coefficients = {}; const dimensions = {};
+  for (const [key, value] of Object.entries(raw?.effectiveCoefficients ?? {})) {
+    if (/^[a-z][A-Za-z0-9]{0,63}$/.test(key) && Number.isFinite(value)) coefficients[key] = Math.max(-1_000_000, Math.min(1_000_000, value));
+  }
+  for (const [key, value] of Object.entries(raw?.dimensions ?? {})) {
+    if (/^[a-z][a-z-]{0,31}$/.test(key) && value && typeof value === 'object') dimensions[key] = Object.freeze({
+      netRating: normalizeProgressionInteger(value.netRating, '0'),
+      pressure: Number.isFinite(value.pressure) ? Math.max(0, Math.min(1, value.pressure)) : 0,
+    });
+  }
   return Object.freeze({ level: normalizeProgressionInteger(raw?.level, '0'),
+    profileHash: typeof raw?.profileHash === 'string' ? raw.profileHash : null,
+    nextLevel: normalizeProgressionInteger(raw?.nextLevel, '0'),
+    nextProfileHash: typeof raw?.nextProfileHash === 'string' ? raw.nextProfileHash : null,
+    interpolationQ: Number.isInteger(raw?.interpolationQ) ? Math.max(0, Math.min(1_000_000, raw.interpolationQ)) : 0,
+    effectiveCoefficients: Object.freeze(coefficients), dimensions: Object.freeze(dimensions),
     pressure: Number.isFinite(raw?.pressure) ? Math.max(0, Math.min(1, raw.pressure)) : 0,
     severityQ: Number.isInteger(raw?.severityQ) ? Math.max(0, Math.min(1_000_000, raw.severityQ)) : 0 });
 }

@@ -6,7 +6,7 @@ framing, result actions, and atomic world replacement.
 - `progression-spheres.js`: shared select-then-second-activation Evolution
   purchase authority across rendered cells, semantic tree, and button paths.
 - `run-result.js`: validates dynamic v2 Environment result evidence and couples
-  SCORE v5, Echoes, best records, History 7, Trophies, and idempotency.
+  SCORE v5, Echoes, best records, History 8, Trophies, and idempotency.
 - `run-session.js`: first-wins retirement, typed Level-0 blank frame, immutable
   v6 start identity, and Level-0 authority startup.
 - `surface-coordinator.js`, `scene-selector.js`, and `layout-policy.js`: shell,

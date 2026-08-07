@@ -75,15 +75,23 @@ function entropyProjection({ snapshot, result, entropyRate = null, history = [] 
   const phaseEvent = [...history].reverse().find((event) => event.key?.startsWith('run.phase.'));
   const phase = result ? 'Complete' : phaseEvent ? eventTitle(phaseEvent) : humanize(snapshot?.status ?? 'opening');
   const reachLimits = snapshot?.reach?.negativeConditions ?? [];
+  const pressure = snapshot?.environmentPressureSummary ?? result?.environmentPressureSummary ?? {};
+  const interpolationQ = Number.isInteger(pressure.interpolationQ) ? Math.max(0, Math.min(1_000_000, pressure.interpolationQ)) : 0;
+  const effective = pressure.effectiveCoefficients ?? {};
   const direct = active.map((event) => ({ label: `${humanize(event.family)} event`, value: `${Math.round((event.intensity ?? 0) * 100)}%`, cells: [event.center] }));
-  const conditions = reachLimits.map((item) => ({ label: humanize(item.label), value: `${Math.round(item.score * 100)}%` }));
+  const conditions = [
+    { label: 'Environment interpolation', value: `Level ${number(pressure.level ?? snapshot?.currentEnvironmentLevel ?? '0')} → ${number(pressure.nextLevel ?? '0')} · ${Math.round(interpolationQ / 10_000)}%` },
+    { label: 'Effective renewal', value: `${Math.round((effective.renewalScale ?? 1) * 100)}%` },
+    { label: 'Effective maintenance', value: `${Math.round((effective.maintenanceScale ?? 1) * 100)}%` },
+    ...reachLimits.map((item) => ({ label: humanize(item.label), value: `${Math.round(item.score * 100)}%` })),
+  ];
   return { eyebrow: result ? 'TERMINAL WORLD PRESSURE' : 'LIVE WORLD PRESSURE', heading: 'ENTROPY', primary: `${Math.round(entropy * 100)}%`,
     summary: result ? 'Terminal context from the final preserved world snapshot.' : 'Global collapse pressure, derived from authoritative snapshots and active events.',
     counts:[{label:'Environment',value:`Level ${number(snapshot?.currentEnvironmentLevel ?? result?.finalEnvironmentLevel ?? '0')}`}, { label: 'Recent rate', value: entropyRate == null ? 'Gathering' : `${entropyRate > 0 ? '+' : ''}${entropyRate} pp / 10s` },
       { label: 'Active events', value: String(active.length) }],
     directHeading: 'Active event contribution', direct: nonempty(direct, 'No active event contribution.'),
-    conditionsHeading: 'Global effects and seasonal context', conditions: nonempty(conditions, result ? 'World pressure reached its terminal context.' : 'No strong limiting condition.'),
-    footer: `Profile ${snapshot?.currentEnvironmentProfileHash ?? result?.currentEnvironmentProfileHash ?? 'unrecorded'} · finite local reserves are separate from global Entropy · tick ${snapshot?.tick ?? result?.tick ?? 0}.`,
+    conditionsHeading: 'Global effects and seasonal context', conditions,
+    footer: `Profile ${pressure.profileHash ?? snapshot?.currentEnvironmentProfileHash ?? result?.currentEnvironmentProfileHash ?? 'unrecorded'} → ${pressure.nextProfileHash ?? 'unrecorded'} · finite local reserves are separate from global Entropy · tick ${snapshot?.tick ?? result?.tick ?? 0}.`,
   };
 }
 function reachProjection({ snapshot, result }) {

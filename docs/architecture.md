@@ -33,7 +33,9 @@ hash are immutable start configuration facts.
 `challenge-profile.js` compiles an exact public level minus compiled Evolution
 defense into finite dynamic pressure dimensions. State retains only current and
 next profiles plus fixed-point progress. It interpolates prospective coefficients
-only; topology, seed, inoculation, and Level-0 resource stock are immutable.
+only; the player-visible pressure summary carries both profile hashes, progress,
+and the same effective coefficients. Topology, seed, inoculation, and Level-0
+resource stock are immutable.
 
 `environment-exposure.js` aggregates bounded exact pressure-time and quality
 evidence at summary/transition/result boundaries, not in cell or edge loops.
@@ -44,7 +46,8 @@ SCORE v5 consumes the same exposure evidence.
 `RunController.step()` applies one deterministic order:
 
 1. increment authoritative tick;
-2. derive schedule state and install each due transition exactly once;
+2. derive schedule state and install each due transition exactly once, including
+   the bounded terminal-collapse fade;
 3. compile/install current/next pressure state and advance the bounded director;
 4. apply conditionals, environment, metabolism, transport, worldmaking, growth,
    death, resource ecology, and liveness;
@@ -58,8 +61,9 @@ fallback call this same controller.
 
 `events.js` owns a deterministic isolated-RNG rolling director with at most six
 future/active event geometries and eight recent evidence entries. It derives
-candidates only when capacity/cadence permits, enforces a 100-tick minimum
-telegraph, uses whole-cell footprints, and reclaims expired geometry. Snapshot
+candidates only when capacity/cadence permits, enforces a player-visible
+100-tick minimum telegraph despite summary cadence, uses whole-cell footprints,
+and reclaims expired geometry. Snapshot
 and agent projections expose only active player-visible events, not future
 queues. The versioned onboarding modifier suppresses harmful candidates for
 worlds one and two without changing the schedule.
@@ -87,8 +91,9 @@ cursor. Re-delivery returns the prior transaction outcome.
 Meta schema 12 stores `bestEnvironmentLevelReached`, `bestEnvironmentExposure`,
 and `longestWorldTicks`. Older `highestEnvironmentLevel` is retained only as
 inert `legacyEnvironmentFrontier`; it cannot select a new start level. History
-schema 7 tags old static attempts as model 1 and records new model-2 start,
-final, peak, exposure, onboarding, and bounded transition evidence.
+schema 8 tags old static attempts as model 1 and records new model-2 start,
+final, peak, exposure, onboarding, bounded transition evidence, and compact
+interpolation endpoints/effective coefficients.
 
 ## Rendering and interaction
 

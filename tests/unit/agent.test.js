@@ -37,7 +37,7 @@ test('agent save schema validates exact browser subdocuments and hashes canonica
   assert.equal(repaired.worldOrdinal,'1');assert.equal(repaired.meta.echoBalance,'0');
   const retried=validateAgentSave({...clean,meta:{...clean.meta,runs:'2',worldSeedIndex:'7'}});
   assert.equal(retried.worldOrdinal,'8','agent persistence uses the attempt cursor after retries');
-  assert.deepEqual(repaired.history.worlds, []); assert.equal(repaired.history.schema, 7);
+  assert.deepEqual(repaired.history.worlds, []); assert.equal(repaired.history.schema, 8);
 });
 
 test('build-goal policy prioritizes visible recipe progress', () => {

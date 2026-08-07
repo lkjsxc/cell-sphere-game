@@ -69,9 +69,20 @@ test('semantic schema 2 migrates cellId to bounded unique primaryCells', () => {
   assert.deepEqual(events[1].primaryCells, [4, 5, 6, 7, 8, 9, 10, 11]);
   const migrated = validateHistory({ schema: 1, worlds: [{ seed: 1, tick: 3, score: 0,
     events: [{ tick: 1, type: 'inoculation', cellId: 2 }] }], memory: [] });
-  assert.equal(migrated.schema, 7); assert.deepEqual(migrated.worlds[0].events[0].primaryCells, [2]);
+  assert.equal(migrated.schema, 8); assert.deepEqual(migrated.worlds[0].events[0].primaryCells, [2]);
   globalThis.localStorage = { getItem: (key) => key.endsWith(':v1') ? JSON.stringify(migrated) : null };
-  try { assert.equal(loadHistory().schema, 7); } finally { delete globalThis.localStorage; }
+  try { assert.equal(loadHistory().schema, 8); } finally { delete globalThis.localStorage; }
+});
+
+test('dynamic History retains bounded authoritative interpolation evidence', () => {
+  const history = validateHistory({ worlds: [{ seed: 8, tick: 1500, score: '4', startEnvironmentLevel: '0',
+    environmentModelVersion: 2, environmentScheduleVersion: 2, environmentScheduleHash: 'ce29fefd',
+    environmentPressureSummary: { level: '1', nextLevel: '2', profileHash: '01234567', nextProfileHash: '89abcdef',
+      interpolationQ: 500000, effectiveCoefficients: { renewalScale: .82, maintenanceScale: 1.13, ignored: Infinity },
+      pressure: .4, severityQ: 400000 } }] });
+  const pressure = history.worlds[0].environmentPressureSummary;
+  assert.equal(history.schema, 8); assert.equal(pressure.nextLevel, '2'); assert.equal(pressure.interpolationQ, 500000);
+  assert.deepEqual(pressure.effectiveCoefficients, { renewalScale: .82, maintenanceScale: 1.13 });
 });
 
 test('semantic History enforces its byte bound even with maximum-width exact fields',()=>{

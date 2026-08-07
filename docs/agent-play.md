@@ -3,7 +3,7 @@
 The development-only agent environment is a deterministic projection of the
 production simulation, not a duplicate simulator. It uses `RunController`,
 Evolution, Environment schedule/profile/exposure, SCORE v5, result transactions,
-meta schema 12, History schema 7, Trophies, and replay/run protocol v6.
+meta schema 12, History schema 8, Trophies, and replay/run protocol v6.
 
 ## Commands
 
@@ -18,7 +18,7 @@ npm run agent:long
 npm run balance:holdout
 ```
 
-Agent save/observation schemas are v3. Browser and agent saves are separate.
+Agent save schema is v3 and the observation schema is v4. Browser and agent saves are separate.
 Exact values cross JSON as canonical decimal strings.
 
 ## Fair observation

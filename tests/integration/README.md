@@ -11,7 +11,7 @@ Production-module whole-run and cross-boundary tests.
   physical frontier/root bootstrap, unlimited owned-cell upgrades, exact debit,
   stale expected-level/revision rejection, Potential v3, Builds/mastery, and
   schema-11 legacy-to-Level-1 migration.
-- `history-codec.test.js` protects bounded History schema 6, exact decimal
+- `history-codec.test.js` protects bounded History schema 8, exact decimal
   purchase/Environment records, strict visual-bundle decoding, thinning, stale
   guards, storage fallback, and recorder neutrality.
 - `agent-environment.test.js` protects observation/save schema 2, public pressure,

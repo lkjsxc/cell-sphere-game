@@ -15,14 +15,32 @@ benchmark-floor correction `35d5b8e`. No unrelated work was reset or discarded.
 - Natural terminal authority; SCORE v5 with sustained exposure plus
   low-Potential calibration that preserves breadth-complete anchors; dynamic
   result, immutable identity, protocol/replay v6, and neutral Level-0 frame.
-- Meta 12, History 7, WAL 3, agent schemas 3, inert legacy frontier/attempt
+- Meta 12, History 8, WAL 3, agent save schema 3 / observation schema 4, inert legacy frontier/attempt
   migration, and dynamic HUD/Result/History/agent interfaces.
+
+## Follow-up authority hardening
+
+A subsequent review found boundary/visibility verification gaps. The local
+follow-up closes them without changing the public schedule: schedule/profile and
+exposure now advance through a causal terminal-collapse fade; summary-cadenced
+telegraphs reserve enough authority lead to remain visible for at least 100
+ticks; zero net event defense defers harmful events until finite defense is
+exceeded; and result transition evidence must use exact schedule thresholds and
+compiled profile pressure.
+
+Pressure summaries now expose current/next profile hashes, interpolation Q, and
+the same finite effective coefficients consumed by authority. They flow through
+snapshot, Result, History schema 8, the ENTROPY detail, and fair-agent
+observation schema 4. A Node `worker_threads` bridge exercises the actual
+browser Worker module and matches its terminal hash, transitions, event History,
+and exposure against the production fallback. The title showcase was regenerated
+from those production bytes.
 
 ## Evidence actually run on this worktree
 
 | Evidence | Result |
 | --- | --- |
-| `npm run verify` | exit 0; all 26 local gates passed (unit, integration, audits, smoke balance, benchmark, links, structure). |
+| `npm run verify` | exit 0; all 26 local gates passed (unit 194/194, integration 78/78, audits, smoke balance, benchmark, links, structure). |
 | `npm run test:browser:file` | pass: WebGL2 Worker path, score 12,429, 4 draws, 8×/256×, Evolution interaction, visual IDB, Luminous evidence. |
 | `npm run test:browser:canvas` | pass: Canvas fallback, unified shell/History/Evolution/Trophies, score 12,429. |
 | `npm run test:browser:fallback` | pass: WebGL2 fallback simulation, 4 draws and the same dynamic shell evidence. |
@@ -30,7 +48,9 @@ benchmark-floor correction `35d5b8e`. No unrelated work was reset or discarded.
 | `npm run audit:campaign` | exit 0; fresh median SCORE 10,504/duration 284.7 s, root median 11,368, breadth median 1,099,367, marginal-value first resolution 20.12 min. |
 | `npm run audit:reach100` | exit 0; 19/300 breadth worlds achieved REACH 100, no fresh success, all tested breadth worlds naturally extinct within an explicit 10,000-tick external budget (median 3,256, max 4,019 ticks). |
 | `npm run agent:smoke`, `agent:campaign`, `agent:long`, `balance:holdout` | all exit 0; long: 8 policies × 12 worlds; untouched holdout: 4 seeds × 22 policies × 6 worlds, no failures. |
-| Benchmark | seven same-host runs: 6,026–6,690 ticks/s, median 6,346 versus 7,042 baseline (9.88% lower, inside 10% target); deterministic hash `02190894`. |
+| Follow-up benchmark | verify benchmark: 6,537 ticks/s (3,000 local floor), deterministic hash `02190894`. |
+| Strict/full follow-up | `npm run balance -- --strict`, `audit:campaign`, `audit:reach100`, and `terminal:soak` all exit 0; REACH 100: 19/300 breadth worlds, zero fresh; 10,000-world terminal soak bounded at 49.47 MB heap. |
+| Follow-up agent cohorts | `agent:smoke`, `agent:campaign`, `agent:long`, and `balance:holdout` all exit 0; holdout: 4 untouched seeds × 22 policies × 6 worlds, no failures. |
 
 ## Baseline contrast
 

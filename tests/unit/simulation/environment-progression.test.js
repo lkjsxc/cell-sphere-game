@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RunController } from '../../../src/simulation/simulator.js';
+import { beginTerminalCollapse } from '../../../src/simulation/state.js';
 import { compileChallengeProfile } from '../../../src/simulation/challenge-profile.js';
 import {
   createEnvironmentExposure, environmentExposureSummary, sampleEnvironmentExposure,
@@ -33,6 +34,17 @@ test('schedule transitions install current/next profiles once before ecology con
   run.advance(1); assert.equal(run.state.environmentTransitionCount, '1');
 });
 
+test('snapshots and results expose the authoritative interpolated pressure summary', () => {
+  const run = new RunController({ seed: 7105, worldOrdinal: '3' }); run.start(); run.advance(600);
+  const snapshot = run.snapshot(); const pressure = snapshot.environmentPressureSummary;
+  assert.equal(pressure.level, '0'); assert.equal(pressure.nextLevel, '1');
+  assert.equal(pressure.interpolationQ, run.state.environmentLevelProgressQ);
+  assert.equal(pressure.profileHash, run.state.currentEnvironmentProfileHash);
+  assert.equal(pressure.nextProfileHash, run.state.nextEnvironmentProfile.hash);
+  assert.deepEqual(pressure.effectiveCoefficients, run.state.environmentCoefficients);
+  assert.deepEqual(run.buildResult().environmentPressureSummary, pressure);
+});
+
 test('public schedule is build-independent while relevant defense changes only effective pressure', () => {
   const weak = new RunController({ seed: 7103, worldOrdinal: '3' });
   const strong = new RunController({ seed: 7103, worldOrdinal: '3', evolutionDefense: { affinityDefense: {
@@ -54,6 +66,20 @@ test('onboarding leaves clock intact and the rolling event director stays bounde
     activeRun.advance(100);
     assert.ok(activeRun.state.events.length <= 6);
     assert.ok(activeRun.state.eventDirector.recent.length <= 8);
+  }
+});
+
+test('terminal-collapse fade still advances each crossed public boundary and final evidence', () => {
+  for (const { boundary, level } of [{ boundary: 1200, level: '1' }, { boundary: 1800, level: '2' }]) {
+    const messages = []; const run = new RunController({ seed: 7106, worldOrdinal: '3' }, (message) => messages.push(message));
+    run.start(); run.advance(boundary - 1);
+    assert.equal(beginTerminalCollapse(run.state, 'terminal-stall'), true);
+    run.advance(1);
+    assert.equal(run.state.currentEnvironmentLevel, level);
+    assert.equal(run.state.environmentTransitionCount, level);
+    assert.equal(messages.filter((message) => message.t === 'environment-transition').at(-1)?.environmentLevel, level);
+    run.advance(30); const result = run.buildResult();
+    assert.equal(result.finalEnvironmentLevel, level); assert.equal(result.environmentTransitionCount, level);
   }
 });
 

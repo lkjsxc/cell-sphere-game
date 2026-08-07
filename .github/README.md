@@ -66,9 +66,9 @@ action is **Next World**, which always resets to Level 0.
 - WebGL2 uses four world draw calls. Canvas 2D is a semantic fallback.
 - Meta schema 12 preserves old static `highestEnvironmentLevel` only as inert
   `legacyEnvironmentFrontier`; new achieved records are
-  `bestEnvironmentLevelReached` and bounded pressure exposure. History schema 7
+  `bestEnvironmentLevelReached` and bounded pressure exposure. History schema 8
   explicitly distinguishes legacy static attempts from dynamic worlds.
-- Run protocol/replay are v6; agent save/observation schemas are v3.
+- Run protocol/replay are v6; agent save schema is v3 and observation schema is v4.
 
 ## Run locally
 

@@ -34,7 +34,8 @@ onboarding modifier; their level clock remains identical to every other world.
 Each authoritative tick performs:
 
 1. increment tick and derive exact schedule state;
-2. install each due profile transition once and update bounded exposure evidence;
+2. install each due profile transition once and update bounded exposure evidence,
+   including any short causal terminal-collapse fade;
 3. advance the bounded telegraphed event director;
 4. apply conditions, environment, resource renewal, metabolism, transport,
    worldmaking, growth, death, resource ecology, and liveness;
@@ -54,8 +55,9 @@ maintenance, transport stress, climate, toxicity, recovery, and bounded event
 parameters. They cannot recreate terrain, refill stock, or erase conservation.
 
 The event director holds at most six future/active whole-cell event fields and
-eight recent evidence entries. It uses isolated deterministic RNG, minimum
-100-tick telegraphs, capacity/cadence limits, and reclamation after expiry.
+eight recent evidence entries. It uses isolated deterministic RNG, a
+player-visible minimum 100-tick telegraph despite summary cadence,
+capacity/cadence limits, and reclamation after expiry.
 High speed never skips event authority.
 
 ## Resources, extinction, and results
@@ -67,7 +69,8 @@ states remain visible rather than being globally recolored by ENTROPY.
 
 Finite Evolution builds eventually lose to escalating pressure. Extinction
 records truthful causal evidence: start/final/peak Environment Level, transition
-count, time at peak, bounded exposure, pressure summary, powered ecology,
+count, time at peak, bounded exposure, pressure summary with current/next
+profile hashes, interpolation Q, and effective coefficients, powered ecology,
 resources, Reach, SCORE v5, bounded History, replay v6, and final hash. SCORE
 is monotone before Result and rewards sustained exposure/quality rather than a
 threshold touch.

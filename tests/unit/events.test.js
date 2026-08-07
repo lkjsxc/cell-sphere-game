@@ -13,7 +13,8 @@ import { compileChallengeProfile } from '../../src/simulation/challenge-profile.
 const topo = createTopology(4);
 
 function directorAt(seed, ticks = 1200, worldOrdinal = '3') {
-  const run = new RunController({ seed, worldOrdinal }); run.start(); run.advance(ticks); return run;
+  const messages = []; const run = new RunController({ seed, worldOrdinal }, (message) => messages.push(message));
+  run.start(); run.advance(ticks); run.testMessages = messages; return run;
 }
 
 test('Environment profiles compile direct bounded event parameters', () => {
@@ -36,6 +37,14 @@ test('rolling candidates are deterministic per seed and do not expose a static f
     assert.equal(left.center, right.center); assert.deepEqual(left.nodes, right.nodes); assert.deepEqual(left.arrivalCost, right.arrivalCost);
     assert.ok(left.startTick - 1200 >= 100, 'minimum telegraph was bypassed');
   }
+});
+
+test('summary cadence cannot shorten the player-visible minimum telegraph', () => {
+  const run = directorAt(999); const event = run.state.events[0]; assert.ok(event);
+  while (!run.testMessages.some((message) => message.t === 'event' && message.phase === 'telegraph') && run.state.status !== 'extinct') run.advance(1);
+  const telegraph = run.testMessages.find((message) => message.t === 'event' && message.phase === 'telegraph');
+  assert.ok(telegraph, 'event expired without a visible telegraph');
+  assert.ok(event.startTick - telegraph.tick >= 100, `visible lead ${event.startTick - telegraph.tick}`);
 });
 
 test('different seeds derive different rolling candidates', () => {

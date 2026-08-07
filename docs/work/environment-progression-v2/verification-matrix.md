@@ -6,11 +6,11 @@ worktree. CI, Pages, and deployment remain separate evidence.
 | Area | Required evidence | Status |
 | --- | --- | --- |
 | Schedule/compiler | thresholds, inversion, huge exact values, finite profile | pass: unit suite and environment audit |
-| Reset/transition | Level-0 construction, one transition, current/next profile, prior peak reset | pass: focused progression unit tests |
-| Events | deterministic rolling candidates, telegraph, bounded/reclaim, onboarding | pass: event unit tests and 210-world audit |
-| Unit/integration | production authority/migration/transaction coverage | pass: verify ran all suites; subsequent unit confirmation: 191/191; integration 76/76 |
+| Reset/transition | Level-0 construction, one transition, current/next profile, prior peak reset, terminal-fade boundaries | pass: focused progression unit tests at 1200/1800 |
+| Events | deterministic rolling candidates, player-visible telegraph, bounded/reclaim, onboarding, zero-net defense | pass: event unit tests and 210-world audit |
+| Unit/integration | production authority/migration/transaction coverage | pass: verify ran all suites; current unit 194/194; integration 78/78 |
 | SCORE/result | monotone exposure, no terminal correction/farm, exact once-only result | pass: score trace, transactions, campaign audit |
-| Identity/protocol | immutable identity, stale handling, Worker/fallback/speed/replacement | pass: unit/integration and browser Worker/fallback paths |
+| Identity/protocol | immutable identity, stale handling, Worker/fallback/speed/replacement | pass: real production Worker-thread/fallback terminal parity plus browser Worker/fallback paths |
 | Persistence | inert legacy frontier, legacy History, import/export, recovery | pass: unit/integration, transaction/migration audits |
 | Browser/accessibility | file/Canvas/fallback shell and input evidence | pass: all three browser commands |
 | Renderer/Luminous | WebGL/Canvas charge and four-draw evidence | pass: browser commands and luminous audit |
@@ -21,7 +21,7 @@ worktree. CI, Pages, and deployment remain separate evidence.
 
 ## Key measured results
 
-- `npm run verify`: exit 0, all 26 local gates.
+- `npm run verify`: exit 0, all 26 local gates (unit 194/194; integration 78/78).
 - Browser: WebGL2 Worker and fallback plus Canvas paths pass; dynamic reference
   run SCORE 12,429, exactly four draws, and charged-cell evidence in both
   renderers.
@@ -32,6 +32,9 @@ worktree. CI, Pages, and deployment remain separate evidence.
   naturally finished by 4,019 ticks inside a reward-free 10,000-tick budget.
 - Long agent: 8 policies × 12 worlds. Holdout: four untouched seeds, 22
   policies, six worlds each, no failures.
+- Follow-up authority hardening: real Worker/fallback parity reaches the same
+  transition/event history, exposure, and terminal hash; History 8 and agent
+  observation 4 preserve public interpolation evidence.
 
 ## Deployment limitation
 

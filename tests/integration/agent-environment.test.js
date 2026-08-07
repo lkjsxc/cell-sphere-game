@@ -48,7 +48,11 @@ test('agents cannot select/retry static levels and external budget exhaustion is
     expectedWorldOrdinal: observation.worldOrdinal, environmentLevel: '2' }).reason, 'static-environment-actions-retired');
   const started = env.act({ type: 'start-world', expectedRevision: observation.metaRevision,
     expectedWorldOrdinal: observation.worldOrdinal });
-  assert.equal(started.reason, 'world-started'); assert.equal(started.observation.activeWorld.currentEnvironmentLevel, '0');
+  assert.equal(started.reason, 'world-started'); assert.equal(started.observation.schema, 4);
+  assert.equal(started.observation.activeWorld.currentEnvironmentLevel, '0');
+  const pressure = started.observation.activeWorld.environmentPressureSummary;
+  assert.equal(pressure.level, '0'); assert.equal(pressure.nextLevel, '1'); assert.equal(pressure.interpolationQ, 0);
+  assert.ok(Number.isFinite(pressure.effectiveCoefficients.renewalScale)); assert.ok('events' in pressure.dimensions);
   const incomplete = env.act({ type: 'continue-world', budgetTicks: 1 });
   assert.equal(incomplete.accepted, true); assert.equal(incomplete.reason, 'incomplete-budget');
   assert.equal(env.exportSave().meta.runs, '0'); assert.equal(env.exportSave().meta.echoBalance, '0');

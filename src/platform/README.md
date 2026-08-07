@@ -6,7 +6,7 @@ API is unavailable.
 | Module | Authority |
 |---|---|
 | `storage.js` | Meta schema 12: exact progression, Evolution, Trophies, dynamic achieved Environment records, and inert legacy frontier. |
-| `history.js` | Bounded History schema 7: legacy static attempts versus dynamic start/final/peak/exposure worlds. |
+| `history.js` | Bounded History schema 8: legacy static attempts versus dynamic start/final/peak/exposure worlds with interpolation evidence. |
 | `run-transaction-store.js` | WAL schema 3 coupling validated result, reward, records, History, Trophies, and idempotency. |
 | `settings.js` | Durable player preferences; developer mode/speeds excluded. |
 | `namespace-store.js` / `namespace-migration.js` | Field-safe validation, verified writes, and transactional browser import/migration. |

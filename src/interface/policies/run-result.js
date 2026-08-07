@@ -83,7 +83,13 @@ function validDynamicEnvironmentResult(result, evolution) {
     || compareProgressionIntegers(exposure.pressureTicksQ, multiplyProgressionIntegers(exposure.totalTicks, '1000000')) > 0) return false;
   if (!Number.isInteger(exposure.peakPressureQ) || exposure.peakPressureQ < 0 || exposure.peakPressureQ > 1_000_000) return false;
   if (!Array.isArray(result.recentEnvironmentTransitions) || result.recentEnvironmentTransitions.length > 8) return false;
-  return result.recentEnvironmentTransitions.every((transition) => validTransition(transition, final, evolution));
+  let previousLevel = '0'; let previousTick = '0';
+  return result.recentEnvironmentTransitions.every((transition) => {
+    if (!validTransition(transition, final, evolution)) return false;
+    const level = transition.level; const tick = transition.tick;
+    if (compareProgressionIntegers(level, previousLevel) <= 0 || compareProgressionIntegers(tick, previousTick) <= 0) return false;
+    previousLevel = level; previousTick = tick; return true;
+  });
 }
 function validTransition(transition, finalLevel, evolution) {
   if (!transition || typeof transition !== 'object') return false;
@@ -91,12 +97,11 @@ function validTransition(transition, finalLevel, evolution) {
   if (level === '0' || level !== transition.level || compareProgressionIntegers(level, finalLevel) > 0) return false;
   const tick = normalizeProgressionInteger(transition.tick, '0');
   const schedule = environmentScheduleAtTick(tick);
-  if (schedule.currentEnvironmentLevel !== level || tick !== transition.tick) return false;
+  if (schedule.currentEnvironmentLevel !== level || tick !== transition.tick || tick !== schedule.environmentLevelStartTick) return false;
   const profile = compileChallengeProfile({ environmentLevel: level, evolution: {
     affinityDefense: evolution?.affinityDefense, pressureDefense: evolution?.pressureDefense,
   } });
-  return transition.profileHash === profile.hash && Number.isFinite(transition.pressure)
-    && transition.pressure >= 0 && transition.pressure <= 1;
+  return transition.profileHash === profile.hash && transition.pressure === profile.score.pressure;
 }
 function betterExposure(previous, candidate) {
   const safe = candidate && candidate.version === ENVIRONMENT_EXPOSURE_VERSION ? candidate : null;

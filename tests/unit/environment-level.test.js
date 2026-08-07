@@ -134,6 +134,7 @@ test('matched multi-affinity defense mitigates a public level without changing i
     Cryogenic: rating, Marine: rating, Luminous: rating } };
   const profile = compileChallengeProfile({ environmentLevel: '1000', evolution });
   assert.ok(Object.values(profile.dimensions).every((dimension) => dimension.netRating === '0' && dimension.pressure === 0));
+  assert.equal(profile.events.count, 0);
   assert.equal(profile.coefficients.renewalScale, 1);
   assert.equal(environmentLevelAtTick(environmentTickForLevel('1000')), '1000');
 });

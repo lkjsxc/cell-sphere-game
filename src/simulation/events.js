@@ -101,7 +101,12 @@ function buildRollingEvent(state, director, profile) {
     .sort((a, b) => fields.eventVuln[b] - fields.eventVuln[a] || a - b).slice(0, 180);
   const center = chooseCenter(candidates, fields, family.id, rng);
   const telegraphTicks = Math.max(100, Math.round(profile?.events?.telegraphTicks ?? 100));
-  const startTick = state.tick + telegraphTicks + rng.intBelow(121);
+  // Telegraph publication is summary-cadenced. Include the worst case until
+  // the next summary so a just-missed summary cannot shorten the player-visible
+  // warning below the versioned minimum; sensing can require a longer lead.
+  const visibleLead = Math.max(telegraphTicks, telegraphLead(state.activeTraits ?? state.traits, profile))
+    + B.SUMMARY_EVERY - 1;
+  const startTick = state.tick + visibleLead + rng.intBelow(121);
   const peakTick = startTick + 60;
   const releaseEndTick = peakTick + 120 + rng.intBelow(90);
   const footprintScale = Math.max(1, Math.min(1.35, profile?.events?.footprintScale ?? 1));

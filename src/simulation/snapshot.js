@@ -30,7 +30,10 @@ export function buildSnapshot(state) {
     environmentExposure: environmentExposureSummary(state.environmentExposure),
     recentEnvironmentTransitions: state.recentEnvironmentTransitions.map((transition) => ({ ...transition })),
     onboardingEnvironmentModifier: { ...state.onboardingEnvironmentModifier },
-    environmentPressureSummary: environmentPressureSummary(state.currentEnvironmentProfile),
+    environmentPressureSummary: environmentPressureSummary(state.currentEnvironmentProfile, {
+      nextProfile: state.nextEnvironmentProfile, progressQ: state.environmentLevelProgressQ,
+      coefficients: state.environmentCoefficients,
+    }),
     environmentProfileVersion: state.currentEnvironmentProfileVersion,
     currentEnvironmentProfileHash: state.currentEnvironmentProfileHash,
     biomass: state.biomass.slice(),

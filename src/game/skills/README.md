@@ -96,7 +96,7 @@ multi-affinity breadth.
 revision. First activation only selects/opens detail; a later activation of the
 same selected ready cell may transact. Stale, repeated, moved, cancelled, blank,
 or non-ready activations cannot debit. Meta schema 12 persists the sparse vector
-and History schema 7 records old/new level, exact cost/balance, achieved Environment
+and History schema 8 records old/new level, exact cost/balance, achieved Environment
 record, and compiler versions as canonical decimal strings.
 
 Canonical focused gates are `audit:evolution-levels`,

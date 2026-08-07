@@ -31,6 +31,12 @@ test('forged SCORE, schedule evidence, profile hash, and skipped world ordinals 
  assert.equal(applyRunResult(meta,defaultHistory(),{...base,environmentExposure:{...base.environmentExposure,totalTicks:'2999'}},24).reason,'invalid-environment-result');
  assert.equal(applyRunResult(meta,defaultHistory(),{...base,peakEnvironmentLevel:'999999'},24).reason,'invalid-environment-result');
  assert.equal(applyRunResult(meta,defaultHistory(),{...base,currentEnvironmentProfileHash:'deadbeef'},24).reason,'invalid-environment-result');
+ const delayed = base.recentEnvironmentTransitions.map((transition, index) => index ? transition
+   : { ...transition, tick: String(Number(transition.tick) + 1) });
+ assert.equal(applyRunResult(meta,defaultHistory(),{...base,recentEnvironmentTransitions:delayed},24).reason,'invalid-environment-result');
+ const alteredPressure = base.recentEnvironmentTransitions.map((transition, index) => index ? transition
+   : { ...transition, pressure: 0 });
+ assert.equal(applyRunResult(meta,defaultHistory(),{...base,recentEnvironmentTransitions:alteredPressure},24).reason,'invalid-environment-result');
  assert.equal(applyRunResult(meta,defaultHistory(),{...base,worldOrdinal:'999'},24).reason,'unexpected-world-ordinal');
  assert.equal(meta.echoBalance,'0');
 });

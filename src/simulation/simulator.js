@@ -53,13 +53,16 @@ export class RunController {
     if (s.status !== 'running' && s.status !== 'terminal-collapse') return false;
     const historyLength = s.history.length; const collapsing = s.status === 'terminal-collapse';
     s.tick++;
+    // The public clock advances through the short causal collapse fade too.
+    // Consumers may stop during collapse, but result/snapshot authority cannot
+    // retain a level that disagrees with the final authoritative tick.
+    const transition = updateEnvironmentProgression(s);
+    if (transition.changed) {
+      this.emit({ t: 'environment-transition', tick: s.tick,
+        environmentLevel: s.currentEnvironmentLevel, profileHash: s.currentEnvironmentProfileHash });
+    }
     if (!collapsing) {
       // Environment clock/profile authority precedes every ecological consumer.
-      const transition = updateEnvironmentProgression(s);
-      if (transition.changed) {
-        this.emit({ t: 'environment-transition', tick: s.tick,
-          environmentLevel: s.currentEnvironmentLevel, profileHash: s.currentEnvironmentProfileHash });
-      }
       advanceEventDirector(s);
       applyMemoryConditionals(s);
       if (s.tick % B.ENV_EVERY === 0) updateEnvironment(s);

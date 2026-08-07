@@ -3,7 +3,7 @@
 | Contract / payload | v2 representation | Migration rule |
 | --- | --- | --- |
 | Meta schema 12 | `bestEnvironmentLevelReached`, best exposure/longest world, inert `legacyEnvironmentFrontier` | Never copy old static frontier into a dynamic best; all new worlds start 0. |
-| History schema 7 | dynamic start/final/peak/transitions/exposure/profile evidence | Old static `environmentLevel` remains `attemptedEnvironmentLevel` under legacy model evidence. |
+| History schema 8 | dynamic start/final/peak/transitions/exposure/profile and bounded interpolation evidence | Old static `environmentLevel` remains `attemptedEnvironmentLevel` under legacy model evidence. |
 | Run protocol / replay 6 | immutable start config plus live schedule snapshot/result state | Mutable current level/profile hash is absent from identity; reject version/stale mismatch. |
 | Profile/exposure | Environment model/schedule/profile/exposure 2 | Exact strings at boundaries; validate/rederive schedule from tick; finite hot-loop projection only. |
 | Result/WAL 3 | start 0, final/peak/exposure, SCORE 5, transaction key | Validate consistency, then atomically/idempotently apply result/reward/records/History/Trophies. |

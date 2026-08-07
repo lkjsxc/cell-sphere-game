@@ -38,7 +38,10 @@ export function buildRunResult(s) {
     timeAtPeakTicks: environmentExposureSummary(s.environmentExposure).timeAtPeakTicks,
     environmentExposure: environmentExposureSummary(s.environmentExposure),
     recentEnvironmentTransitions: s.recentEnvironmentTransitions.map((transition) => ({ ...transition })),
-    environmentPressureSummary: environmentPressureSummary(s.currentEnvironmentProfile),
+    environmentPressureSummary: environmentPressureSummary(s.currentEnvironmentProfile, {
+      nextProfile: s.nextEnvironmentProfile, progressQ: s.environmentLevelProgressQ,
+      coefficients: s.environmentCoefficients,
+    }),
     onboardingEnvironmentModifier: { ...s.onboardingEnvironmentModifier },
     scoreModelVersion: SCORE_MODEL_VERSION, score: s.scoreMerit.total,
     scoreProjection: { ...scoreProjection, total: s.scoreMerit.total }, scoreMerit: copyMerit(s.scoreMerit),

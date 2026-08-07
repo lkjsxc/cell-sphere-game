@@ -1,4 +1,4 @@
-/** Bounded semantic History schema 7 with explicit dynamic Environment evidence. */
+/** Bounded semantic History schema 8 with dynamic Environment interpolation evidence. */
 import { buildTrophyFacts, validateTrophyFacts } from '../game/trophies/facts.js';
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 import { ENVIRONMENT_MODEL_VERSION, normalizeEnvironmentLevel } from '../game/environment-level.js';
@@ -11,7 +11,7 @@ const MAX_MEMORY_EVENTS = 128;
 const MAX_TROPHY_EVENTS = 128;
 const CELL_COUNT = 2562;
 
-export function defaultHistory() { return { schema: 7, worlds: [], evolution: [], trophies: [] }; }
+export function defaultHistory() { return { schema: 8, worlds: [], evolution: [], trophies: [] }; }
 function finiteInt(value, min = 0) { return Number.isFinite(value) && value >= min ? Math.floor(value) : null; }
 
 const SIM_EVENT = Object.freeze({
@@ -160,8 +160,16 @@ function validateOnboardingModifier(raw) {
     label: typeof raw.label === 'string' ? raw.label.slice(0, 48) : '' });
 }
 function validatePressureSummary(raw) {
-  if (!raw || typeof raw !== 'object') return Object.freeze({ level: '0', pressure: 0, severityQ: 0 });
-  return Object.freeze({ level: normalizeEnvironmentLevel(raw.level, '0'),
+  if (!raw || typeof raw !== 'object') return Object.freeze({ level: '0', nextLevel: '0', profileHash: '', nextProfileHash: '',
+    interpolationQ: 0, effectiveCoefficients: Object.freeze({}), pressure: 0, severityQ: 0 });
+  const coefficientKeys = ['renewalScale', 'seasonScale', 'dryingScale', 'heatDriftScale', 'toxinScale',
+    'maintenanceScale', 'transportStressScale', 'recoveryScale', 'attritionScale'];
+  const coefficients = Object.fromEntries(coefficientKeys.flatMap((key) => Number.isFinite(raw.effectiveCoefficients?.[key])
+    ? [[key, Math.max(-1_000_000, Math.min(1_000_000, raw.effectiveCoefficients[key]))]] : []));
+  return Object.freeze({ level: normalizeEnvironmentLevel(raw.level, '0'), nextLevel: normalizeEnvironmentLevel(raw.nextLevel, '0'),
+    profileHash: validHash(raw.profileHash), nextProfileHash: validHash(raw.nextProfileHash),
+    interpolationQ: Math.max(0, Math.min(1_000_000, finiteInt(raw.interpolationQ) ?? 0)),
+    effectiveCoefficients: Object.freeze(coefficients),
     pressure: Number.isFinite(raw.pressure) ? Math.max(0, Math.min(1, raw.pressure)) : 0,
     severityQ: Math.max(0, Math.min(1_000_000, finiteInt(raw.severityQ) ?? 0)) });
 }

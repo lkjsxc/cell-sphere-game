@@ -37,13 +37,18 @@ Unit and integration coverage must prove:
   begin at Level 0;
 - public level is independent of Evolution/seed/presentation while Evolution
   mitigates effective pressure;
-- transition installation is once-only, current/next profile state is bounded,
-  and no later level rewrites Level-0 resources/topology;
-- rolling events have bounded active/future/recent state, minimum telegraph,
-  onboarding separation, reclamation, and Worker/fallback/high-speed equality;
+- transition installation is once-only through terminal-collapse boundary fades,
+  current/next profile state is bounded, interpolated coefficients are exposed
+  in snapshot/result/History pressure summaries, and no later level rewrites
+  Level-0 resources/topology;
+- rolling events have bounded active/future/recent state, a player-visible
+  minimum telegraph despite summary cadence, onboarding separation, reclamation,
+  effective-defense suppression at zero event pressure, and Worker/fallback/
+  high-speed equality;
 - no normal hard terminal exists; finite builds naturally die and external agent
   budgets return `incomplete-budget` without rewards;
-- results/SCORE validate final/peak/exposure and reject forged values;
+- results/SCORE validate final/peak/exposure, exact transition thresholds/profile
+  pressure, and reject forged values;
 - immutable identity excludes live level/profile hash and replacement presents a
   neutral Level-0 blank frame;
 - meta/history migration keeps old frontier/static attempts inert, records
@@ -51,7 +56,9 @@ Unit and integration coverage must prove:
 - HUD/Result/Evolution/History contain no static-level select/retry/frontier
   controls or wording; pointer/touch/keyboard and Canvas/WebGL paths remain
   accessible;
-- fair agents cannot select/retry levels and expose no future events/seeds/RNG.
+- fair agents cannot select/retry levels and expose no future events/seeds/RNG;
+- a real production Worker transport reaches the same transition/event history,
+  exposure, and terminal hash as the fallback controller.
 
 ## Browser and release evidence
 

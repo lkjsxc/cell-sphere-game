@@ -36,7 +36,7 @@ Neither is a v2 best record or reward/Trophy input.
 ## 2026-08-07 — D6: Semantic boundary versions
 
 The implementation bumps Environment model/schedule/profile and exposure to 2,
-SCORE to 5, protocol/replay to 6, meta/History to 12/7, WAL to 3, agent schemas
+SCORE to 5, protocol/replay to 6, meta/History to 12/8, WAL to 3, agent save/observation schemas
 to 3, and Trophy facts to 6. These versions travel with validation rather than
 compatibility aliases in live authority.
 

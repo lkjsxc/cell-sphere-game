@@ -7,9 +7,10 @@ History, Trophy, and result transaction authority used by the browser.
 - `environment.js`: v3 actions. Start a Level-0 world, advance bounded ticks,
   continue under explicit external budget, buy Evolution, inspect/export/reset.
   Static Environment selection/retry actions are rejected.
-- `observation.js`: v3 player-visible projection. It includes live level,
-  schedule progress, pressure/exposure, achieved best, builds, resources, Reach,
-  charge, active events, and exact Evolution state; never future events/seeds,
+- `observation.js`: v4 player-visible projection. It includes live level,
+  schedule progress, current/next pressure profiles, interpolation/effective
+  coefficients, exposure, achieved best, builds, resources, Reach, charge,
+  active events, and exact Evolution state; never future events/seeds,
   RNG, raw arrays, or hidden maps.
 - `schema.js`: bounded agent-save v3 validation and deterministic save hash.
 - `policies.js`: deterministic policies that consume observations only.

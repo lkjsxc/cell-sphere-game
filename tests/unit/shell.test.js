@@ -36,8 +36,14 @@ test('metric projections use actual score, entropy snapshots, and Reach ledger v
   assert.match(scoreView.direct[0].label, /50% axis · 20% weight/);
   const entropy = metricProjection('entropy', { snapshot: { tick: 400, entropy: .42, status: 'running', events: [
     { family: 'heat', intensity: .6, center: 4 },
-  ], reach: { negativeConditions: [{ label: 'entropy', score: .42 }] } }, entropyRate: 3, history: [] });
+  ], environmentPressureSummary: { level: '1', nextLevel: '2', interpolationQ: 450000, profileHash: 'cur', nextProfileHash: 'next',
+    effectiveCoefficients: { renewalScale: .84, maintenanceScale: 1.12 } },
+  reach: { negativeConditions: [{ label: 'entropy', score: .42 }] } }, entropyRate: 3, history: [] });
   assert.equal(entropy.primary, '42%'); assert.equal(entropy.counts[1].value, '+3 pp / 10s'); assert.deepEqual(entropy.direct[0].cells, [4]);
+  assert.deepEqual(entropy.conditions.slice(0, 3), [
+    { label: 'Environment interpolation', value: 'Level 1 → 2 · 45%' },
+    { label: 'Effective renewal', value: '84%' }, { label: 'Effective maintenance', value: '112%' },
+  ]);
   const reach = metricProjection('reach', { snapshot: { metrics: { coverage: .125 }, reach: { current: 12, windowSeconds: 15,
     gained: 7, lost: 4, net: 3, positive: [{ label: 'regrowth', count: 7, samples: [2, 3] }], negative: [], positiveConditions: [], negativeConditions: [] } } });
   assert.equal(reach.primary, '13%'); assert.deepEqual(reach.counts.map((item) => item.value), ['+7', '−4', '+3']);

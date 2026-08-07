@@ -55,7 +55,7 @@ Mutable level/profile state is absent from `WORLD_IDENTITY_FIELDS`.
 
 ## Result, protocol, and migration
 
-Run protocol/replay v6, meta 12, History 7, transaction WAL 3, agent schemas
+Run protocol/replay v6, meta 12, History 8, transaction WAL 3, agent save/observation schemas
 3, Environment model/schedule/profile 2, exposure 2, SCORE 5, and Trophy facts
 6 carry the v2 semantic boundary. Result validation requires start Level 0,
 derived transition count, valid exposure, and matching profile/schedule data

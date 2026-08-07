@@ -1,5 +1,6 @@
 /** Summary metrics, semantic milestones, events, and finite-resource evidence. */
 import { reclaimEndedEvents, telegraphLead } from './events.js';
+import { BALANCE as B } from '../game/balance.js';
 import { BIOME, FEATURE } from '../world/fields.js';
 import { recordHistory } from './replay.js';
 import { recordTrophyCrisisSurvival, sampleTrophyLiving } from './trophy-proof.js';
@@ -54,7 +55,9 @@ export function runSummary(state, emit) {
 }
 
 function announceEvents(state, emit) {
-  const lead = telegraphLead(state.traits, state.currentEnvironmentProfile);
+  // Summary-cadenced publication needs a small authority-side allowance so
+  // the displayed warning never falls below the advertised minimum.
+  const lead = telegraphLead(state.activeTraits ?? state.traits, state.currentEnvironmentProfile) + B.SUMMARY_EVERY - 1;
   for (const ev of state.events) {
     if (!(ev.announced & 1) && state.tick >= ev.startTick - lead) {
       ev.announced |= 1;

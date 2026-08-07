@@ -109,10 +109,23 @@ export function interpolateEnvironmentCoefficients(current, next, progressQ = 0)
   return Object.freeze(result);
 }
 
-/** Compact player-visible finite projection; exact ratings remain in profile. */
-export function environmentPressureSummary(profile) {
+/**
+ * Compact player-visible finite projection. Runtime interpolation is authority,
+ * so its Q, profile endpoints, and exact finite coefficients travel with the
+ * same summary rather than presenting the current rung as a static profile.
+ */
+export function environmentPressureSummary(profile, options = {}) {
   const source = profile && typeof profile === 'object' ? profile : compileChallengeProfile();
+  const next = options.nextProfile && typeof options.nextProfile === 'object' ? options.nextProfile : source;
+  const interpolationQ = Math.max(0, Math.min(1_000_000,
+    Number.isInteger(options.progressQ) ? options.progressQ : 0));
+  const coefficients = options.coefficients && typeof options.coefficients === 'object'
+    ? options.coefficients : interpolateEnvironmentCoefficients(source, next, interpolationQ);
   return Object.freeze({ level: source.environmentLevel, publicRating: source.publicRating,
+    profileHash: source.hash, nextLevel: next.environmentLevel, nextProfileHash: next.hash,
+    interpolationQ,
+    effectiveCoefficients: Object.freeze(Object.fromEntries(Object.entries(coefficients).map(([key, value]) => [key,
+      finite(value, -1_000_000, 1_000_000)]))),
     pressure: finite(source.score?.pressure ?? 0, 0, 1),
     severityQ: Math.max(0, Math.min(1_000_000, Math.round((source.score?.severity ?? 0) * 1_000_000))),
     dimensions: Object.freeze(Object.fromEntries(Object.entries(source.dimensions ?? {}).map(([name, dimension]) => [name,
@@ -141,7 +154,11 @@ function profileFromDimensions(environmentLevel, publicRating, dimensions) {
   const scarcityRamp = difficultyRamp(qScarcity);
   const renewalRamp = difficultyRamp(qRenewal);
   const maintenanceRamp = difficultyRamp(qMaintenance);
-  const eventCount = environmentLevel === '0' ? 0 : Math.min(MAX_EVENTS_PER_WORLD, 1 + Math.floor(eventRamp * 5 + 1e-9));
+  // Events are an effective-pressure dimension: complete relevant finite
+  // defense can defer them, while any positive net event pressure retains a
+  // mild telegraphed candidate and later levels eventually exceed that defense.
+  const eventCount = environmentLevel === '0' || qEvents <= 0
+    ? 0 : Math.min(MAX_EVENTS_PER_WORLD, 1 + Math.floor(eventRamp * 5 + 1e-9));
   const maxNetMagnitude = Math.max(...Object.values(dimensions).map((dimension) => pressureMagnitude(dimension.netRating)));
   const profile = {
     version: CHALLENGE_PROFILE_VERSION, environmentLevel, publicRating, dimensions,
