@@ -51,8 +51,8 @@ Motion settings use centralized duration variables. Reduced motion preserves
 world-time meaning in the clock while removing decorative transitions. High
 contrast strengthens material boundaries and focus indicators. Text and controls
 remain bounded at 200% font scaling. Large exact progression values use compact
-engineering notation plus a 44px `Copy exact` action; a maximum-width Evolution
-level and exact balance are included in the responsive evidence. The Evolution
+engineering notation; a maximum-width Evolution level and exact balance are
+included in the responsive evidence. The Evolution
 action is geometry-tested at
 320×568, short 390×320 and 640/667 landscape viewports, tablet/desktop sizes,
 and 200% text.

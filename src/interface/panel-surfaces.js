@@ -47,7 +47,6 @@ export function createMemorySurface(options) {
       ['Habitats / transformations',[...state.habitatContributions,...state.transformationContributions].join(', ')||'No direct unlock'],
       ['Adjacent owned cell',neighbor],['Newly available neighbors',newlyAvailable.length?newlyAvailable.join(', '):'No additional adjacent cells'],
     ]);
-    if(state.nextCost!==null)rows[7].append(' ',exactCopyButton(state.nextCost,`Copy exact ${state.nameEn} upgrade cost`));
     byId('memory-node-meta').replaceChildren(...rows);unlock.hidden=false;unlock.disabled=!state.selectedReady;
     const verb=boundary?'Upgrade unavailable at document security boundary':state.owned?`Upgrade to Level ${number(state.nextLevel)}`:'Unlock Level 1';
     const compact=!boundary&&(state.nextLevel?.length>15||state.nextCost?.length>15);
@@ -108,9 +107,4 @@ function number(value) { const exact = normalizeProgressionInteger(value, '0');
 function byId(id) { return /** @type {HTMLElement} */ (document.getElementById(id)); }
 function definitionRows(rows){return rows.flatMap(([term,value])=>{const dt=document.createElement('dt');dt.textContent=term;
   const dd=document.createElement('dd');dd.textContent=value;return[dt,dd]})}
-function exactCopyButton(exact,label){const button=document.createElement('button');button.type='button';button.className='exact-copy';button.textContent='Copy exact';
- button.dataset.copyProgressionExact=exact;button.setAttribute('aria-label',label);button.addEventListener('click',async()=>{let copied=false;
-  try{await navigator.clipboard?.writeText?.(exact);copied=true}catch{copied=false}if(!copied){const area=document.createElement('textarea');area.value=exact;area.setAttribute('readonly','');
-    area.style.position='fixed';area.style.opacity='0';document.body.append(area);area.select();try{copied=document.execCommand('copy')}catch{copied=false}area.remove()}
-  button.textContent=copied?'Copied':'Copy unavailable';setTimeout(()=>{button.textContent='Copy exact'},1400)});return button}
 function humanize(value) { return String(value).replaceAll('_', ' ').replaceAll('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase()); }

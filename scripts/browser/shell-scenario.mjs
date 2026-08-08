@@ -260,11 +260,11 @@ async function evolutionActivationEvidence(t) {
   const extreme=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,id=${JSON.stringify(explicit.id)},level='8'.repeat(1019),balance='9'.repeat(4096),
     {buildMemorySnapshot}=await import('./src/game/skills/index.js');a.closeEvolutionCell();a.meta={...a.meta,evolutionLevels:[{id,level}],echoBalance:balance,totalEchoes:balance};
     a.memorySnapshot=buildMemorySnapshot(a.topo,a.meta);a.memoryUi.syncTree(a.meta);a.selectEvolutionCell(id);
-    const action=document.getElementById('memory-unlock'),copy=document.querySelector('#memory-node-panel [data-copy-progression-exact]'),exact=action.dataset.exactValue;
-    return{levelDigits:level.length,balanceDigits:balance.length,costDigits:exact.length,action:action.textContent,copyDigits:copy?.dataset.copyProgressionExact?.length??0,
-      copyName:copy?.getAttribute('aria-label'),horizontal:document.documentElement.scrollWidth>innerWidth}})()`);
-  ok(extreme.levelDigits===1019&&extreme.balanceDigits===4096&&extreme.costDigits>2000&&extreme.copyDigits===extreme.costDigits
-    &&/Upgrade(?: to)? Level/.test(extreme.action)&&/Copy exact/.test(extreme.copyName)&&!extreme.horizontal,`extreme exact-value detail failed: ${JSON.stringify(extreme)}`);
+    const action=document.getElementById('memory-unlock'),exact=action.dataset.exactValue;
+    return{levelDigits:level.length,balanceDigits:balance.length,costDigits:exact.length,action:action.textContent,noDetailAction:!document.querySelector('#memory-node-meta button'),
+      horizontal:document.documentElement.scrollWidth>innerWidth}})()`);
+  ok(extreme.levelDigits===1019&&extreme.balanceDigits===4096&&extreme.costDigits>2000&&extreme.noDetailAction
+    &&/Upgrade(?: to)? Level/.test(extreme.action)&&!extreme.horizontal,`extreme progression detail failed: ${JSON.stringify(extreme)}`);
   await assertSkillGeometry(t);await screenshot('browser-evolution-extreme-exact.png');
   await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,saved=a.__evolutionActivationRestore,{buildMemorySnapshot}=await import('./src/game/skills/index.js'),
     {saveMeta}=await import('./src/platform/storage.js'),{saveHistory}=await import('./src/platform/history.js');a.meta=saved.meta;a.archive=saved.archive;
