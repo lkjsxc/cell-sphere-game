@@ -50,6 +50,16 @@ export async function runScenario(t) {
   const cameraBefore = await evaluate(`({camera:window.__CELL_SPHERE_APP__.camera.direction.slice(),tick:window.__CELL_SPHERE_APP__.snapshot.tick})`);
   await trustedId(t, 'scene-evolution'); await wait(300);
   ok(await evaluate(`window.__CELL_SPHERE_APP__.scene==='evolution'&&window.__CELL_SPHERE_APP__.phase==='running'&&window.__CELL_SPHERE_APP__.memorySnapshot.nodeStates.length===252`), 'Evolution scene replaced authority');
+  const activeUpgrade=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{validateMeta}=await import('./src/platform/storage.js'),
+    {buildMemorySnapshot}=await import('./src/game/skills/index.js');a.__runningEvolutionMeta=a.meta;
+    a.meta=validateMeta({...a.meta,echoBalance:'1000000'});a.memorySnapshot=buildMemorySnapshot(a.topo,a.meta);
+    const target=a.memorySnapshot.nodeStates.find((node)=>node.reason==='ready');a.selectEvolutionCell(target.id);
+    const button=document.getElementById('memory-unlock');return{id:target.id,disabled:button.disabled,text:button.textContent,
+      label:button.getAttribute('aria-label'),panel:document.getElementById('memory-node-panel').textContent}})()`);
+  ok(activeUpgrade.disabled&&activeUpgrade.text==='Upgrade after this world'&&activeUpgrade.label.includes('after this world')
+    &&activeUpgrade.panel.includes('Evolution upgrades are available after this world.'),`active-world Evolution upgrade did not explain its availability: ${JSON.stringify(activeUpgrade)}`);
+  await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{buildMemorySnapshot}=await import('./src/game/skills/index.js');
+    a.meta=a.__runningEvolutionMeta;delete a.__runningEvolutionMeta;a.closeEvolutionCell();a.memorySnapshot=buildMemorySnapshot(a.topo,a.meta);return true})()`);
   await trustedId(t, 'scene-world'); await wait(120);
   const restored = await evaluate(`({camera:window.__CELL_SPHERE_APP__.camera.direction.slice(),tick:window.__CELL_SPHERE_APP__.snapshot.tick,scene:window.__CELL_SPHERE_APP__.scene})`);
   ok(restored.scene === 'world' && restored.tick > cameraBefore.tick && distance(restored.camera, cameraBefore.camera) < 1e-8,

@@ -12,6 +12,7 @@ export function createMemorySurface(options) {
 
   function renderNode() {
     const state = memoryNodeState(meta, selected, selected?.id); selected = state;
+    const purchasesOpen = options.canUnlock?.() !== false;
     const preview = previewEvolutionLevel(meta, state.id);
     byId('memory-node-branch').textContent = `${state.affinity.toUpperCase()} AFFINITY · TIER ${state.tier}`;
     byId('memory-node-heading').textContent = state.nameEn;
@@ -22,6 +23,7 @@ export function createMemorySurface(options) {
       ? state.affordable?`Level ${number(state.currentLevel)} · Ready to upgrade`:`Level ${number(state.currentLevel)} · More Echoes required`
       : state.locked?'Level 0 · Locked · one directly adjacent Level 1+ cell required'
         :state.affordable?'Level 0 · Ready to unlock':'Level 0 · Reachable · more Echoes required';
+    const visibleStatus=purchasesOpen?status:`${status} · Available after this world`;
     const neighbor = state.adjacentOwnedId ? getMemoryNode(state.adjacentOwnedId)?.nameEn ?? state.adjacentOwnedId
       : state.bootstrap ? 'Fresh-world root' : 'No adjacent owned cell';
     const gameplayParts = [...(preview?.changes?.map(formatChange) ?? []),
@@ -38,7 +40,8 @@ export function createMemorySurface(options) {
       : state.buildContributions.map(humanize).join(', ');
     const newlyAvailable = newlyAvailableAdjacentIds(meta, state.id).map((id) => getMemoryNode(id)?.nameEn ?? id);
     const rows=definitionRows([
-      ['Status',status],['Affinity',`${state.affinity} · ${affinity?.pattern??'whole-cell'} pattern · ${affinity?.color??'material palette'} · ${state.secondaryTags.join(', ')}`],
+      ['Status',visibleStatus],['Availability',purchasesOpen?'Between worlds · meet the listed purchase condition.':'Evolution upgrades are available after this world.'],
+      ['Affinity',`${state.affinity} · ${affinity?.pattern??'whole-cell'} pattern · ${affinity?.color??'material palette'} · ${state.secondaryTags.join(', ')}`],
       ['Current → next level',boundary?`Level ${number(state.currentLevel)} · next level unavailable in this document`:`Level ${number(state.currentLevel)} → Level ${number(state.nextLevel)}`],
       ['Exact cost',boundary?`Unavailable · ${number(meta.echoBalance)} Echoes held`:`${number(state.nextCost)} Echoes · ${number(meta.echoBalance)} held`],['Gameplay before → after',gameplay],
       ['Tradeoff',state.tradeoff],['Level-one breadth power',power],['World Potential',potential],
@@ -47,14 +50,15 @@ export function createMemorySurface(options) {
       ['Habitats / transformations',[...state.habitatContributions,...state.transformationContributions].join(', ')||'No direct unlock'],
       ['Adjacent owned cell',neighbor],['Newly available neighbors',newlyAvailable.length?newlyAvailable.join(', '):'No additional adjacent cells'],
     ]);
-    byId('memory-node-meta').replaceChildren(...rows);unlock.hidden=false;unlock.disabled=!state.selectedReady;
+    byId('memory-node-meta').replaceChildren(...rows);unlock.hidden=false;unlock.disabled=!state.selectedReady||!purchasesOpen;
     const verb=boundary?'Upgrade unavailable at document security boundary':state.owned?`Upgrade to Level ${number(state.nextLevel)}`:'Unlock Level 1';
     const compact=!boundary&&(state.nextLevel?.length>15||state.nextCost?.length>15);
-    unlock.textContent=boundary?verb:compact?`${state.owned?'Upgrade':'Unlock'} Level ${number(state.nextLevel)}`:`${verb} for ${number(state.nextCost)} Echoes`;
-    unlock.setAttribute('aria-label',boundary?`${state.nameEn} cannot be upgraded in this session because the document security boundary was reached`:
-      `${verb} ${state.nameEn} from Level ${number(state.currentLevel)} to Level ${number(state.nextLevel)} for ${number(state.nextCost)} Echoes`);
+    unlock.textContent=!purchasesOpen?'Upgrade after this world':boundary?verb:compact?`${state.owned?'Upgrade':'Unlock'} Level ${number(state.nextLevel)}`:`${verb} for ${number(state.nextCost)} Echoes`;
+    unlock.setAttribute('aria-label',!purchasesOpen?`${state.nameEn} upgrades are available after this world`:
+      boundary?`${state.nameEn} cannot be upgraded in this session because the document security boundary was reached`:
+        `${verb} ${state.nameEn} from Level ${number(state.currentLevel)} to Level ${number(state.nextLevel)} for ${number(state.nextCost)} Echoes`);
     if(state.nextCost===null)delete unlock.dataset.exactValue;else unlock.dataset.exactValue=state.nextCost;
-    unlock.dataset.action=state.selectedReady?'recommended':'normal';
+    unlock.dataset.action=state.selectedReady&&purchasesOpen?'recommended':'normal';
   }
 
   function renderTree() {

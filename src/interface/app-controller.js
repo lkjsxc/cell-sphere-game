@@ -87,7 +87,8 @@ class GameApp {
     this.historyUi = createHistorySurface({ onClose: () => this.panelClosed('history'),
       onWorld: (world) => this.historyPlayback.selectWorld(world), onSeek: (tick, event, world) => this.historyPlayback.seek(tick, event, world),
       onLive: () => this.historyPlayback.live() });
-    this.memoryUi = createMemorySurface({ onCloseNode: () => this.closeMemoryNode(), onUnlock: (id) => this.buyMemory(id), onSelect: (id) => this.selectMemoryNode(id) });
+    this.memoryUi = createMemorySurface({ onCloseNode: () => this.closeMemoryNode(), onUnlock: (id) => this.buyMemory(id),
+      onSelect: (id) => this.selectMemoryNode(id), canUnlock: () => !['starting', 'running'].includes(this.phase) });
     this.trophyUi = createTrophySurface({ onClose: () => this.closeTrophy(), onSelect: (id) => this.selectTrophy(id) });
     this.trophyNotifications = createTrophyNotifications({ reduced: () => this.settings.motion === 'reduced',
       announce: (text) => { this.el.live.textContent = text; }, onSelect: (id) => { if (this.scene !== 'trophies') this.selectScene('trophies'); selectTrophy(this, id); },

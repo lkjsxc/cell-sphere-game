@@ -6,7 +6,7 @@ mutates simulation arrays, consumes authoritative randomness, or changes SCORE.
 | Module | Authority boundary |
 |---|---|
 | `app-controller.js` | Home/World/Evolution/Trophies composition and persistence orchestration. |
-| `run-driver.js` | Worker-first run protocol v6 with identical fallback. |
+| `run-driver.js` | Worker-first run protocol v7 with identical fallback. |
 | `policies/run-session.js` | First-wins replacement, neutral Level-0 blank frame, immutable start identity. |
 | `policies/run-result.js` | Validated SCORE-v5/Echo/best-record/History-8/Trophy transaction. |
 | `surfaces.js` / `inspection/` | Live Environment HUD, dynamic result evidence, metrics, Inspector, Event Log. |
@@ -14,8 +14,10 @@ mutates simulation arrays, consumes authoritative randomness, or changes SCORE.
 | `history-*` / `app-data.js` | Bounded History and validated import/export. |
 
 Evolution activation is select first, then a later discrete activation purchases
-one ready selected cell. Drag, pinch, wheel, inertia, cancellation, blank taps,
-non-ready state, and stale level/revision never purchase.
+one ready selected cell. During an active world, detail states that upgrades
+become available after that world and disables the transaction control. Drag,
+pinch, wheel, inertia, cancellation, blank taps, non-ready state, and stale
+level/revision never purchase.
 
 The World HUD displays live within-world Environment Level/progress. Result shows
 final/peak/exposure and **Next World**, never static level selection/retry.
