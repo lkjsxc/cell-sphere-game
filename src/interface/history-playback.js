@@ -23,7 +23,7 @@ export function createHistoryPlayback(app) {
     if (app.historyUi.selectedWorld) seek(app.historyUi.tick, null, app.historyUi.selectedWorld); return true;
   }
   function save(record) { if (record) request('save', record); }
-  function open(scope = null, options = {}) {
+  function open(scope = null) {
     const phase = app.phase ?? app.state; const scene = app.scene ?? (app.state === 'memory' ? 'evolution' : app.state);
     seedBefore = app.visualSeed; progressionBefore = ['evolution', 'trophies'].includes(scene) ? scene : null; decoded = null; buffers = null; app.historySnapshot = null; app.historyHighlights = [];
     const worlds = [];
@@ -35,7 +35,7 @@ export function createHistoryPlayback(app) {
     if (!worlds.length) worlds.push({ id: 'empty', current: false, label: 'No completed worlds', seed: seedBefore, tick: 0, events: [] });
     const defaultId = scope === 'current' ? 'current' : scope === 'past' ? worlds.find((item) => !item.current)?.id
       : worlds.some((item) => item.id === scope) ? scope : worlds[0].id;
-    app.openFull('history'); app.historyUi.open({ worlds, liveTick: app.snapshot?.tick ?? 0 }, defaultId, options);
+    app.openFull('history'); app.historyUi.open({ worlds, liveTick: app.snapshot?.tick ?? 0 }, defaultId);
     app.activateSurface('history', app.historyUi.surface, 'history-heading');
   }
   function selectWorld(world) {

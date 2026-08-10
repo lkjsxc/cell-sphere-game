@@ -1,8 +1,11 @@
-# Product simplification v1 — status
+# Product simplification v1 — historical status
+
+> Superseded by [`../ecology-experience-v2/status.md`](../ecology-experience-v2/status.md).
+> The claims below record the prior contract and are not current product authority.
 
 ## Scope and fixed decisions
 
-This work applies the 2026-08-10 product correction in coherent vertical slices.
+This work applied an earlier 2026-08-10 correction in coherent vertical slices.
 The active contract is `AGENTS.md`.
 
 - Starting revision: `a30f2661deeed591c069a6bb3d3cfcd8e2d8d7bf`

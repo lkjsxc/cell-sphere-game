@@ -53,8 +53,8 @@ export function updateHud(el, snap) {
   const nextTick = snap.nextEnvironmentLevelTick;
   const progress = Number.isInteger(snap.environmentLevelProgressQ) ? Math.round(snap.environmentLevelProgressQ / 10_000) : 0;
   el.environmentButton.setAttribute('aria-label', nextTick
-    ? `Environment Level ${number(currentEnvironmentLevel)}; ${progress}% to the next level; activate to open History`
-    : `Environment Level ${number(currentEnvironmentLevel)}; activate to open History`);
+    ? `Environment Level ${number(currentEnvironmentLevel)}; ${progress}% to the next level; activate to view current pressure`
+    : `Environment Level ${number(currentEnvironmentLevel)}; activate to view current pressure`);
   const aliveCount = Math.max(0, Math.floor(metrics.aliveCount ?? 0));
   el.reach.textContent = formatCoverage(metrics.coverage ?? 0, aliveCount, snap.alive?.length ?? 2562);
   el.trace.hidden = aliveCount === 0 || aliveCount > 3;

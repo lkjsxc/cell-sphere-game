@@ -27,10 +27,10 @@ export function createHistorySurface(options) {
   const prev = byId('history-prev'); const next = byId('history-next'); const latest = byId('history-live');
   const time = byId('history-time-label'); const selected = byId('history-selected'); const note = byId('history-visual-note');
   const list = byId('history-list'); const filter = byId('history-filter');
-  let model = null; let world = null; let events = []; let eventIndex = -1; let raf = 0; let openOptions = {};
+  let model = null; let world = null; let events = []; let eventIndex = -1; let raf = 0;
   byId('history-close').addEventListener('click', options.onClose);
-  worldSelect.addEventListener('change', () => chooseWorld(worldSelect.value)); filter.addEventListener('change', () => {
-    openOptions = { ...openOptions, filter: filter.value }; renderSelected(); renderList(); });
+  worldSelect.addEventListener('change', () => chooseWorld(worldSelect.value));
+  filter.addEventListener('change', () => renderList());
   range.addEventListener('input', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => seek(Number(range.value))); });
   prev.addEventListener('click', () => navigate(-1)); next.addEventListener('click', () => navigate(1));
   latest.addEventListener('click', () => world?.current ? options.onLive() : seek(world?.tick ?? 0));
@@ -39,11 +39,9 @@ export function createHistorySurface(options) {
     world = model.worlds.find((item) => item.id === id) ?? model.worlds[0]; if (!world) return;
     worldSelect.value = world.id; events = world.events ?? []; range.max = String(Math.max(0, world.tick));
     const viewingTick = world.current ? Math.min(world.tick, model.liveTick) : world.tick;
-    const environmentAnchor = openOptions.filter === 'environment' && world.current
-      ? environmentHistoryAnchor(events, viewingTick) : null;
-    range.value = String(environmentAnchor?.tick ?? viewingTick); latest.textContent = world.terminal ? 'Final' : world.current ? 'Live' : 'Latest';
-    eventIndex = environmentAnchor?.index ?? nearestEvent(events, viewingTick); renderSelected(); renderList(); setAvailability(null);
-    options.onWorld(world); options.onSeek(Number(range.value), environmentAnchor?.event ?? events[eventIndex] ?? null, world);
+    range.value = String(viewingTick); latest.textContent = world.terminal ? 'Final' : world.current ? 'Live' : 'Latest';
+    eventIndex = nearestEvent(events, viewingTick); renderSelected(); renderList(); setAvailability(null);
+    options.onWorld(world); options.onSeek(Number(range.value), events[eventIndex] ?? null, world);
   }
   function seek(tick) {
     const value = Math.max(0, Math.min(world?.tick ?? 0, Math.floor(tick))); range.value = String(value);
@@ -55,10 +53,6 @@ export function createHistorySurface(options) {
   }
   function renderSelected() {
     const event = events[eventIndex]; prev.disabled = eventIndex <= 0; next.disabled = eventIndex < 0 || eventIndex >= events.length - 1;
-    if (openOptions.filter === 'environment' && world?.current && !environmentHistoryAnchor(events, world.tick)) {
-      selected.textContent = `Environment Level ${openOptions.environmentLevel ?? '0'} — this world has not reached its first Environment transition yet.`;
-      return;
-    }
     if (!event) { selected.textContent = 'No semantic History record exists at this time.'; return; }
     const [title, detail] = describeHistoryEvent(event); selected.replaceChildren(strong(title), document.createTextNode(` — ${detail}`));
   }
@@ -96,13 +90,13 @@ export function createHistorySurface(options) {
     range.value = String(frameTick); const behind = world?.current && liveTick > frameTick ? ` · ${historyGameTime(liveTick - frameTick)} behind live` : '';
     time.textContent = `${historyGameTime(frameTick)}${behind} · nearest approximate checkpoint`;
   }
-  return { surface, open(nextModel, defaultId, nextOptions = {}) { model = nextModel; openOptions = { ...nextOptions };
-      filter.value = ['all', 'world', 'life', 'environment'].includes(openOptions.filter) ? openOptions.filter : 'all';
+  return { surface, open(nextModel, defaultId) { model = nextModel;
+      filter.value = 'all';
       worldSelect.replaceChildren(...model.worlds.map((item) => {
         const option = document.createElement('option'); option.value = item.id; option.textContent = item.label; return option; }));
       surface.hidden = false; chooseWorld(model.worlds.some((item) => item.id === defaultId) ? defaultId : model.worlds[0]?.id); },
     close() { cancelAnimationFrame(raf); raf = 0; surface.hidden = true; },
-    reset() { cancelAnimationFrame(raf); raf = 0; surface.hidden = true; model = null; world = null; events = []; eventIndex = -1; openOptions = {};
+    reset() { cancelAnimationFrame(raf); raf = 0; surface.hidden = true; model = null; world = null; events = []; eventIndex = -1;
       list.replaceChildren(); selected.textContent = ''; range.value = '0'; range.max = '0'; },
     setAvailability, updateCurrentWorld, updateFrame, get worldId() { return world?.id ?? null; },
     get selectedWorld() { return world; }, get tick() { return Number(range.value); } };
@@ -114,14 +108,6 @@ export function describeHistoryEvent(event) { const base = TITLES[event.key] ?? 
 function humanize(value) { return String(value).split(/[.-]/).at(-1).replaceAll('_', ' ').replace(/^./, (c) => c.toUpperCase()); }
 export function historyEventCategory(event) { if (event.kind === 'environment') return 'environment';
   if (event.kind === 'trophy') return 'life'; if (event.key.startsWith('geo.') || event.key.startsWith('run.world')) return 'world'; return 'life'; }
-export function environmentHistoryAnchor(events, throughTick = Infinity) {
-  const limit = Number.isFinite(throughTick) ? Math.max(0, Math.floor(throughTick)) : Infinity;
-  for (let index = (events?.length ?? 0) - 1; index >= 0; index--) {
-    const event = events[index];
-    if (event?.tick <= limit && historyEventCategory(event) === 'environment') return { event, index, tick: event.tick };
-  }
-  return null;
-}
 export function historyGameTime(tick) { const seconds = Math.floor(tick / 10); return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
 function strong(text) { const node = document.createElement('strong'); node.textContent = text; return node; }
 function byId(id) { return /** @type {HTMLElement} */ (document.getElementById(id)); }

@@ -7,9 +7,9 @@
 - Touch targets are at least 44 CSS px and respect safe areas.
 - SCORE, REACH, ENV LEVEL, and terminal RESULT are native buttons with
   persistent borders, backgrounds, and disclosure marks; affordance is not
-  hover-only. ENV LEVEL opens current-world History with Environment records
-  emphasized. RESULT is last in reading/visual order and remains restrained at
-  extinction.
+  hover-only. ENV LEVEL opens a current Environment detail with level timing
+  and chronic-pressure context; History remains its own temporal surface.
+  RESULT is last in reading/visual order and remains restrained at extinction.
 - Evolution exposes a synchronized offscreen `role="tree"` with every current
   cell, exact levels, owned/reachable/affordable state, and roving keyboard focus.
 - Trophy Sphere exposes all 96 criteria in a semantic grid.

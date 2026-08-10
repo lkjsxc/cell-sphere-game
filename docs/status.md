@@ -1,39 +1,25 @@
 # Current status
 
-## Product Simplification v1
+## Ecology experience v2
 
-- World HUD and routing use SCORE → REACH → ENV LEVEL → RESULT.
-- ENV LEVEL opens current-world History with Environment records emphasized.
-- History is the sole durable temporal surface and patches live current-world
-  records while open.
-- Gameplay-disaster authority has been removed. Chronic Environment pressure is
-  profile-driven and has no director, footprints, telegraphs, onboarding event
-  exception, snapshot fields, renderer buffers, or result fields.
-- Persistence is current-only: meta 14, settings 5, History 9, agent save 5,
-  result/replay 8, and Worker protocol 8. Old or mismatched documents reset
-  instead of migrating.
-- The no-disaster audit verifies source, profile, authority, and deterministic
-  run absence of retired gameplay-disaster concepts.
+- ENV LEVEL now opens a dedicated current Environment detail in the shared metric surface. It shows current/final level, progress and game-time timing, qualitative chronic-pressure dimensions, the strongest pressure, and terminal peak context. It never opens History.
+- History remains independently reachable from its deliberate routes and retains Environment records as ordinary timeline records.
+- The detail reads immutable snapshot/result semantics, preserves metric-body scroll position, and throttles live Environment redraws to at most one game-time second unless the level or terminal state changes.
+- Gameplay-disaster authority remains removed. Chronic Environment pressure is profile-driven and current-only persistence remains meta 14, settings 5, History 9, agent save 5, result/replay 8, and Worker protocol 8.
 
-## Verification recorded in this worktree
+## Verification in this worktree
 
-- `npm run test:unit` — 184/184 passed.
-- `npm run test:integration` — 71/71 passed.
-- `npm run test:browser:file`, `test:browser:canvas`, and `test:browser:fallback` — passed.
-- `npm run check:links` — passed.
-- `npm run check:structure` — passed with existing size/count warnings.
-- `npm run audit:no-disaster -- --count=12` — passed.
-- `node scripts/audits/environment-level-audit.mjs --smoke` — passed.
-- `npm run audit:trophies` — passed; fresh cohort median was one Trophy and
-  modeled campaign horizons remained within the audit ranges.
-- `npm run balance:smoke` — passed, while still measuring the rejected long-run
-  baseline pending the resource-limited retune.
-- `npm run verify` — passed all 26 configured local gates.
-- `npm run benchmark` — passed at 6,484 ticks/s (3,000 minimum).
+- Baseline: `npm run balance:smoke` passed but records the rejected long-run distribution; `npm run benchmark` passed at 3,098 ticks/s under concurrent baseline load.
+- Phase 1: `npm run test:unit` — 185/185 passed.
+- Phase 1: `npm run test:integration` — 71/71 passed.
+- Phase 1: `npm run test:browser:file` and `npm run test:browser:canvas` — passed. The trusted browser path verifies ENV opens Environment detail, not History; live and terminal detail content; toggle/focus semantics; and 320×568 plus 844×390 usability.
+- Phase 1: `npm run check:links` — passed. `npm run check:structure` has existing size/count warnings only after the active work-note README was added.
 
 ## Remaining product work
 
-World Potential removal, realized-only SCORE reconstruction, the authored
-compact Evolution sphere, resource-limited balance retuning, and final
-Luminous/coastal evidence remain pending. No deployment, CI, or physical-device
-claim is recorded here.
+1. Stabilize HUD geometry, Result continuation visibility, and simplify the menu.
+2. Rebuild History UX and visual truth, including resource/transformation/charge checkpoints.
+3. Remove cell seams in WebGL2 and Canvas 2D.
+4. Replace the old Evolution graph, retune ecology, establish direct Luminous value, and remove World Potential through realized-only SCORE.
+
+CI, deployment, and physical-device verification have not been performed.

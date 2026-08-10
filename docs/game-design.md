@@ -24,9 +24,9 @@ terrain and cell condition rather than a permanent global meter. Whole World
 cells are the smallest geography, ecology, transformation, and electricity unit.
 
 The normal World HUD is SCORE, REACH, Environment Level, then Result. Activating
-Environment Level opens current-world History with Environment records
-emphasized. History is the only durable temporal surface; notifications are
-bounded, deduplicated, accessible, and presentation-only.
+Environment Level opens a current-state detail with level timing and chronic
+pressure; it never opens History. History is the only durable temporal surface;
+notifications are bounded, deduplicated, accessible, and presentation-only.
 
 ## Progression
 

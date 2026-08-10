@@ -75,15 +75,26 @@ export async function runScenario(t) {
   ok(sameRect(initialSelector.rect, (await selectorEvidence(evaluate)).rect, .2), 'selector moved across scenes');
 
   const environmentControl = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=document.getElementById('environment-level-button'),entropy=document.getElementById('entropy-button');return {tag:b?.tagName,height:b?.getBoundingClientRect().height,controls:b?.getAttribute('aria-controls'),label:b?.getAttribute('aria-label'),entropy:entropy===null,tick:a.snapshot.tick}})()`);
-  ok(environmentControl.tag === 'BUTTON' && environmentControl.height >= 44 && environmentControl.controls === 'history-dialog'
-    && environmentControl.label.includes('activate to open History') && environmentControl.entropy, `Environment control semantics failed: ${JSON.stringify(environmentControl)}`);
+  ok(environmentControl.tag === 'BUTTON' && environmentControl.height >= 44 && environmentControl.controls === 'metric-dialog'
+    && environmentControl.label.includes('activate to view current pressure') && environmentControl.entropy, `Environment control semantics failed: ${JSON.stringify(environmentControl)}`);
   await trustedId(t, 'environment-level-button'); await wait(120);
-  const environmentHistory = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,range=document.getElementById('history-range');return {overlay:a.overlay,world:a.historyUi.selectedWorld?.id,filter:document.getElementById('history-filter').value,context:document.getElementById('history-selected').textContent,tick:Number(range.value),snapshotTick:a.snapshot.tick}})()`);
-  ok(environmentHistory.overlay === 'history' && environmentHistory.world === 'current' && environmentHistory.filter === 'environment'
-    && environmentHistory.context.includes('Environment Level 0') && environmentHistory.tick <= environmentHistory.snapshotTick,
-    `Environment History route failed: ${JSON.stringify(environmentHistory)}`);
-  await drag([960, 360], [1080, 410]); ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='history'`), 'globe drag dismissed Environment History');
-  await trustedId(t, 'history-close');
+  const environmentDetail = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=document.getElementById('environment-level-button');return {overlay:a.overlay,kind:a.metricUi.kind,heading:document.getElementById('metric-heading').textContent,expanded:b.getAttribute('aria-expanded'),focus:document.activeElement?.id,history:document.getElementById('history-dialog').hidden,rangeInside:document.querySelector('#metric-dialog #history-range')!==null,summary:document.getElementById('metric-summary').textContent,conditions:document.getElementById('metric-conditions').textContent}})()`);
+  ok(environmentDetail.overlay === 'metric' && environmentDetail.kind === 'environment' && environmentDetail.heading === 'ENVIRONMENT LEVEL'
+    && environmentDetail.expanded === 'true' && environmentDetail.focus === 'metric-heading' && environmentDetail.history && !environmentDetail.rangeInside
+    && environmentDetail.summary.includes('Finite resources') && environmentDetail.conditions.includes('Strongest current pressure'),
+  `Environment detail route failed: ${JSON.stringify(environmentDetail)}`);
+  const environmentCadence = await evaluate(`new Promise((resolve)=>{const a=window.__CELL_SPHERE_APP__,direct=document.getElementById('metric-direct'),update=a.metricUi.update.bind(a.metricUi),replace=direct.replaceChildren.bind(direct);let updates=0,renders=0;a.metricUi.update=(...args)=>{updates++;return update(...args)};direct.replaceChildren=(...args)=>{renders++;return replace(...args)};setTimeout(()=>{a.metricUi.update=update;delete direct.replaceChildren;resolve({updates,renders,tick:a.snapshot.tick})},650)})`);
+  ok(environmentCadence.updates >= 2 && environmentCadence.renders === 0,
+    `Environment detail rendered more often than one game-time second: ${JSON.stringify(environmentCadence)}`);
+  const environmentBefore = await evaluate(`(()=>({tick:window.__CELL_SPHERE_APP__.snapshot.tick,conditions:document.getElementById('metric-conditions').textContent}))()`);
+  await setDialSpeed(8); await wait(650);
+  const environmentAfter = await evaluate(`(()=>({tick:window.__CELL_SPHERE_APP__.snapshot.tick,conditions:document.getElementById('metric-conditions').textContent}))()`);
+  await setDialSpeed(1);
+  ok(environmentAfter.tick > environmentBefore.tick && environmentAfter.conditions !== environmentBefore.conditions,
+    `Environment detail did not update from bounded authoritative snapshots: ${JSON.stringify({ environmentBefore, environmentAfter })}`);
+  await drag([960, 360], [1080, 410]); ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='metric'`), 'globe drag dismissed Environment detail');
+  await trustedId(t, 'environment-level-button'); await wait(80);
+  ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay===null&&document.getElementById('environment-level-button').getAttribute('aria-expanded')==='false'&&document.activeElement===document.getElementById('environment-level-button')`), 'Environment detail did not toggle closed and restore focus');
 
   await setViewport(1440, 900); await wait(180); const metricRects = {};
   for (const kind of ['score', 'reach']) {
@@ -108,6 +119,16 @@ export async function runScenario(t) {
     ok(evidence.noOverflow && evidence.controlsBounded && evidence.selectorMin >= 44 && evidence.metricMin >= 44
       && !evidence.metricDockOverlap && !evidence.metricShellOverlap,
     `responsive shell failed ${width}x${height}: ${JSON.stringify(evidence)}`); await trustedId(t, 'metric-close');
+  }
+  const environmentResponsive = [];
+  for (const [width, height] of [[320, 568], [844, 390]]) {
+    await setViewport(width, height); await wait(120); await trustedId(t, 'environment-level-button'); await wait(80);
+    const evidence = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,metric=document.getElementById('environment-level-button').getBoundingClientRect(),shell=document.getElementById('context-shell').getBoundingClientRect(),overlap=!(metric.right<=shell.left||metric.left>=shell.right||metric.bottom<=shell.top||metric.top>=shell.bottom);return {noOverflow:document.documentElement.scrollWidth<=innerWidth,overlay:a.overlay,kind:a.metricUi.kind,heading:document.getElementById('metric-heading').textContent,metricVisible:metric.bottom>0&&metric.top<innerHeight,metricShellOverlap:overlap,history:document.getElementById('history-dialog').hidden}})()`);
+    environmentResponsive.push({ width, height, ...evidence });
+    ok(evidence.noOverflow && evidence.overlay === 'metric' && evidence.kind === 'environment' && evidence.heading === 'ENVIRONMENT LEVEL'
+      && evidence.metricVisible && !evidence.metricShellOverlap && evidence.history,
+    `Environment detail responsive shell failed ${width}x${height}: ${JSON.stringify(evidence)}`);
+    await trustedId(t, 'environment-level-button');
   }
   await setViewport(390, 844); const accessibilityMatrix = await evaluate(`(()=>{const root=document.documentElement,tabs=[...document.querySelectorAll('#scene-selector [role=tab]')],labels=tabs.map(x=>x.firstChild.nodeValue);root.style.fontSize='32px';root.dataset.motion='reduced';root.dataset.contrast='high';tabs[2].firstChild.nodeValue='Evolution inherited ecological capabilities';const rects=tabs.map(x=>x.getBoundingClientRect()),values={noOverflow:document.documentElement.scrollWidth<=innerWidth,labelsContained:tabs.every(x=>getComputedStyle(x).overflow==='hidden')&&rects.every((r,i)=>!i||r.left>=rects[i-1].right-1),motion:getComputedStyle(root).getPropertyValue('--dur-base').trim(),border:getComputedStyle(document.getElementById('scene-selector')).borderTopWidth};tabs.forEach((x,i)=>x.firstChild.nodeValue=labels[i]);root.style.fontSize='';root.dataset.motion='full';root.dataset.contrast='normal';return values})()`);
   ok(accessibilityMatrix.noOverflow && accessibilityMatrix.labelsContained && accessibilityMatrix.motion === '0ms' && accessibilityMatrix.border !== '0px', `accessibility matrix failed: ${JSON.stringify(accessibilityMatrix)}`);
@@ -166,11 +187,11 @@ export async function runScenario(t) {
     &&result.nextLabel==='Next World',`terminal world failed: ${JSON.stringify(result)}`);
   await evaluate(`window.__CELL_SPHERE_APP__.trophyNotifications.hold('browser-evidence',true)`);
   await trustedId(t, 'environment-level-button'); await wait(120);
-  const terminalEnvironmentHistory = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,latest=[...a.currentHistory].reverse().find(e=>e.kind==='environment');return {overlay:a.overlay,world:a.historyUi.selectedWorld?.id,filter:document.getElementById('history-filter').value,selected:document.getElementById('history-selected').textContent,tick:Number(document.getElementById('history-range').value),expected:latest?.tick}})()`);
-  ok(terminalEnvironmentHistory.overlay === 'history' && terminalEnvironmentHistory.world === 'current' && terminalEnvironmentHistory.filter === 'environment'
-    && terminalEnvironmentHistory.expected != null && terminalEnvironmentHistory.tick === terminalEnvironmentHistory.expected
-    && terminalEnvironmentHistory.selected.includes('Environment Level reached'), `terminal Environment History did not anchor production transition: ${JSON.stringify(terminalEnvironmentHistory)}`);
-  await trustedId(t, 'history-close'); await trustedId(t, 'result-control');
+  const terminalEnvironment = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {overlay:a.overlay,kind:a.metricUi.kind,heading:document.getElementById('metric-heading').textContent,history:document.getElementById('history-dialog').hidden,summary:document.getElementById('metric-summary').textContent,context:document.getElementById('metric-conditions').textContent}})()`);
+  ok(terminalEnvironment.overlay === 'metric' && terminalEnvironment.kind === 'environment' && terminalEnvironment.heading === 'ENVIRONMENT LEVEL'
+    && terminalEnvironment.history && terminalEnvironment.summary.includes('ended at Environment Level') && terminalEnvironment.context.includes('Time at peak'),
+  `terminal Environment detail did not present final context: ${JSON.stringify(terminalEnvironment)}`);
+  await trustedId(t, 'environment-level-button'); await trustedId(t, 'result-control');
   const terminalLayouts = [];
   for (const [width, height] of [[320, 568], [390, 844], [1440, 900]]) {
     await setViewport(width, height); await wait(1000);

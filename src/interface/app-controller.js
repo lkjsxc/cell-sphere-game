@@ -133,7 +133,7 @@ class GameApp {
     document.getElementById('trophy-next-button')?.addEventListener('click', () => ['idle', 'result'].includes(this.phase) ? this.requestWorldReplacement('trophy-restart', this.phase === 'result' ? this.lastResultIdentity : null) : this.selectScene('world'));
     this.el.pause.addEventListener('click', () => { if (this.phase === 'running') this.pause.set('manual', !this.pause.has('manual')); });
     this.el.speed.addEventListener('change', () => this.setSpeed(Number(this.el.speed.value)));
-    this.el.environmentButton.addEventListener('click', () => this.openEnvironmentHistory());
+    this.el.environmentButton.addEventListener('click', () => this.openMetric('environment'));
     document.querySelectorAll('.menu-open').forEach((button) => button.addEventListener('click', () => this.openMenu()));
     document.querySelectorAll('.history-open').forEach((button) => button.addEventListener('click', () => this.openHistory()));
     this.el.resultHistory.addEventListener('click', () => this.openHistory('current')); this.el.resultControl.addEventListener('click', () => this.openResult());
@@ -214,14 +214,11 @@ class GameApp {
   enterTrophies(){enterTrophies(this)}
   selectEvolutionCell(id){selectEvolutionCell(this,id)}closeEvolutionCell(){closeEvolutionCell(this)}buyEvolutionLevel(id){buyEvolutionLevel(this,id)}
   selectTrophy(id) { selectTrophy(this, id); } closeTrophy() { closeTrophy(this); }
-  openHistory(scope = null, options = {}) { if (this.surfaces.toggle('history')) return;
-    this.historyPlayback.open(scope ?? (this.scene === 'world' ? 'current' : 'past'), options); }
-  openEnvironmentHistory() {
-    if (!['starting', 'running', 'result'].includes(this.phase)) return;
-    const environmentLevel = this.snapshot?.currentEnvironmentLevel ?? this.lastResult?.finalEnvironmentLevel ?? '0';
-    this.openHistory('current', { filter: 'environment', environmentLevel });
-  }
-  openMetric(kind) { if (!['running', 'result'].includes(this.phase)) return;
+  openHistory(scope = null) { if (this.surfaces.toggle('history')) return;
+    this.historyPlayback.open(scope ?? (this.scene === 'world' ? 'current' : 'past')); }
+  openMetric(kind) {
+    const allowed = kind === 'environment' ? ['starting', 'running', 'result'] : ['running', 'result'];
+    if (!allowed.includes(this.phase) || !['score', 'reach', 'environment'].includes(kind)) return;
     if (this.surfaces.active === 'metric' && this.metricUi.kind === kind) { this.surfaces.toggle('metric'); return; }
     this.openFull('metric'); this.metricUi.open(kind, this.metricModel()); this.activateSurface('metric', this.metricUi.surface, 'metric-heading');
     for (const button of document.querySelectorAll('[data-metric]')) button.setAttribute('aria-expanded', String(button.dataset.metric === kind)); }

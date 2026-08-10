@@ -20,9 +20,10 @@ pinch, wheel, inertia, cancellation, blank taps, non-ready state, and stale
 level/revision never purchase.
 
 The World HUD displays SCORE, REACH, and live within-world Environment
-Level/progress. Activating Environment Level opens current-world History with
-Environment records emphasized. Result shows final/peak/exposure and **Next
-World**, **Evolution**, and **History**, never static level selection/retry.
+Level/progress. Activating Environment Level opens a current Environment detail
+with timing and chronic-pressure context; History remains independently
+reachable. Result shows final/peak/exposure and **Next World**, **Evolution**,
+and **History**, never static level selection/retry.
 Evolution explains that every world starts at Level 0 and displays the achieved
 best record. Exact values use canonical decimal formatting. Scene/camera/speed
 changes remain authority-neutral.
