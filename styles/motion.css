@@ -47,14 +47,6 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-/* RESULT receives one bounded invitation, then remains a stable gold control. */
-.result-enter { animation: result-invite 900ms var(--ease-spring) 1 both; }
-@keyframes result-invite {
-  0% { opacity: 0; transform: scale(.88); }
-  62% { opacity: 1; transform: scale(.97); }
-  100% { opacity: 1; transform: scale(1); }
-}
-
 :root[data-motion="reduced"] *,
 :root[data-motion="reduced"] *::before,
 :root[data-motion="reduced"] *::after {

@@ -1,4 +1,4 @@
-/** Stable shared projection and surface for SCORE, ENTROPY, and REACH. */
+/** Stable shared projection and surface for SCORE and REACH. */
 import { rankFor } from '../../game/scoring.js';
 import { formatProgressionEngineering, normalizeProgressionInteger } from '../../core/progression-integer.js';
 
@@ -6,17 +6,11 @@ const MAX_MILESTONES = 5;
 export function createMetricSurface(options) {
   const surface = byId('metric-dialog'); const body = byId('metric-body');
   const buttons = [...document.querySelectorAll('[data-metric]')];
-  const samples = []; const scroll = new Map(); let kind = null; let model = null;
+  const scroll = new Map(); let kind = null; let model = null;
   byId('metric-close').addEventListener('click', options.onClose);
-  function sample(snapshot) {
-    if (!snapshot || !Number.isFinite(snapshot.tick) || !Number.isFinite(snapshot.entropy)) return;
-    if (samples.length && snapshot.tick < samples.at(-1).tick) samples.length = 0;
-    if (!samples.length || snapshot.tick > samples.at(-1).tick) samples.push({ tick: snapshot.tick, entropy: snapshot.entropy });
-    if (samples.length > 24) samples.splice(0, samples.length - 24);
-  }
   function render() {
     if (!kind || !model) return; const top = body.scrollTop;
-    const projection = metricProjection(kind, { ...model, entropyRate: entropyRate(samples) });
+    const projection = metricProjection(kind, model);
     byId('metric-eyebrow').textContent = projection.eyebrow; byId('metric-heading').textContent = projection.heading;
     byId('metric-primary').textContent = projection.primary; byId('metric-summary').textContent = projection.summary;
     byId('metric-direct-heading').textContent = projection.directHeading;
@@ -29,20 +23,18 @@ export function createMetricSurface(options) {
   }
   return {
     surface,
-    open(nextKind, nextModel) { if (kind) scroll.set(kind, body.scrollTop); kind = nextKind; model = nextModel; sample(model.snapshot);
+    open(nextKind, nextModel) { if (kind) scroll.set(kind, body.scrollTop); kind = nextKind; model = nextModel;
       buttons.forEach((button) => button.setAttribute('aria-expanded', String(button.dataset.metric === kind)));
       surface.hidden = false; render(); requestAnimationFrame(() => { body.scrollTop = scroll.get(kind) ?? 0; }); },
-    update(nextModel) { model = nextModel; sample(model.snapshot); if (!surface.hidden) render(); },
+    update(nextModel) { model = nextModel; if (!surface.hidden) render(); },
     close() { if (kind) scroll.set(kind, body.scrollTop); buttons.forEach((button) => button.setAttribute('aria-expanded', 'false')); surface.hidden = true; },
-    reset() { kind = null; model = null; samples.length = 0; scroll.clear(); this.close(); },
+    reset() { kind = null; model = null; scroll.clear(); this.close(); },
     get kind() { return kind; },
   };
 }
 
 export function metricProjection(kind, model) {
-  if (kind === 'score') return scoreProjection(model);
-  if (kind === 'entropy') return entropyProjection(model);
-  return reachProjection(model);
+  return kind === 'score' ? scoreProjection(model) : reachProjection(model);
 }
 function scoreProjection({ snapshot, result, score, history = [] }) {
   const final = Boolean(result && score); const projection = score ?? snapshot?.metrics?.scoreProjection;
@@ -70,30 +62,6 @@ function scoreProjection({ snapshot, result, score, history = [] }) {
     footer: 'SCORE = Run Quality × permanent World Potential × explicit Challenge. Speed, camera, quality, and frame rate have no effect.',
   };
 }
-function entropyProjection({ snapshot, result, entropyRate = null, history = [] }) {
-  const entropy = snapshot?.entropy ?? 0; const active = snapshot?.events ?? [];
-  const phaseEvent = [...history].reverse().find((event) => event.key?.startsWith('run.phase.'));
-  const phase = result ? 'Complete' : phaseEvent ? eventTitle(phaseEvent) : humanize(snapshot?.status ?? 'opening');
-  const reachLimits = snapshot?.reach?.negativeConditions ?? [];
-  const pressure = snapshot?.environmentPressureSummary ?? result?.environmentPressureSummary ?? {};
-  const interpolationQ = Number.isInteger(pressure.interpolationQ) ? Math.max(0, Math.min(1_000_000, pressure.interpolationQ)) : 0;
-  const effective = pressure.effectiveCoefficients ?? {};
-  const direct = active.map((event) => ({ label: `${humanize(event.family)} event`, value: `${Math.round((event.intensity ?? 0) * 100)}%`, cells: [event.center] }));
-  const conditions = [
-    { label: 'Environment interpolation', value: `Level ${number(pressure.level ?? snapshot?.currentEnvironmentLevel ?? '0')} → ${number(pressure.nextLevel ?? '0')} · ${Math.round(interpolationQ / 10_000)}%` },
-    { label: 'Effective renewal', value: `${Math.round((effective.renewalScale ?? 1) * 100)}%` },
-    { label: 'Effective maintenance', value: `${Math.round((effective.maintenanceScale ?? 1) * 100)}%` },
-    ...reachLimits.map((item) => ({ label: humanize(item.label), value: `${Math.round(item.score * 100)}%` })),
-  ];
-  return { eyebrow: result ? 'TERMINAL WORLD PRESSURE' : 'LIVE WORLD PRESSURE', heading: 'ENTROPY', primary: `${Math.round(entropy * 100)}%`,
-    summary: result ? 'Terminal context from the final preserved world snapshot.' : 'Global collapse pressure, derived from authoritative snapshots and active events.',
-    counts:[{label:'Environment',value:`Level ${number(snapshot?.currentEnvironmentLevel ?? result?.finalEnvironmentLevel ?? '0')}`}, { label: 'Recent rate', value: entropyRate == null ? 'Gathering' : `${entropyRate > 0 ? '+' : ''}${entropyRate} pp / 10s` },
-      { label: 'Active events', value: String(active.length) }],
-    directHeading: 'Active event contribution', direct: nonempty(direct, 'No active event contribution.'),
-    conditionsHeading: 'Global effects and seasonal context', conditions,
-    footer: `Profile ${pressure.profileHash ?? snapshot?.currentEnvironmentProfileHash ?? result?.currentEnvironmentProfileHash ?? 'unrecorded'} → ${pressure.nextProfileHash ?? 'unrecorded'} · finite local reserves are separate from global Entropy · tick ${snapshot?.tick ?? result?.tick ?? 0}.`,
-  };
-}
 function reachProjection({ snapshot, result }) {
   const reach = result?.reach ?? snapshot?.reach ?? {}; const final = Boolean(result); const living = final ? result.finalLivingCount ?? 0 : reach.current ?? snapshot?.metrics?.aliveCount ?? 0;
   const coverage = final ? result.coverage ?? 0 : snapshot?.metrics?.coverage ?? 0; const gained = reach.gained ?? 0; const lost = reach.lost ?? 0; const net = reach.net ?? gained - lost;
@@ -110,8 +78,6 @@ function reachProjection({ snapshot, result }) {
     footer: 'Cell transitions come from the bounded authoritative Reach ledger; selectable rows highlight real samples.',
   };
 }
-function entropyRate(samples) { if (samples.length < 2) return null; const last = samples.at(-1); const first = [...samples].reverse().find((item) => last.tick - item.tick >= 20) ?? samples[0];
-  const seconds = (last.tick - first.tick) / 10; if (seconds <= 0) return null; return Math.round(((last.entropy - first.entropy) * 100 / seconds) * 10); }
 function count(item) { const node = document.createElement('div'); node.className = 'metric-count'; node.append(line('span', item.label), line('strong', item.value)); return node; }
 function row(item, onSelect) { const node = document.createElement(item.cells?.length ? 'button' : 'div'); node.className = 'metric-row';
   if (item.cells?.length) { node.type = 'button'; node.addEventListener('click', () => onSelect(item.cells)); }

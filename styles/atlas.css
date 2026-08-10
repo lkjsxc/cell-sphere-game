@@ -33,7 +33,7 @@
 .time-dial { position: relative; display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid var(--border-strong); border-radius: 50%; background: rgba(10,13,14,.72); }
 .clock-face { position: relative; display: block; width: 26px; height: 26px; border: 1px solid currentColor; border-radius: 50%; }
 .clock-hand { position: absolute; left: 50%; bottom: 50%; width: 1.5px; height: 9px; background: currentColor; transform-origin: 50% 100%; }
-.clock-hour { width: 3px; height: 7px; color: var(--life-core); }
+.clock-hour { width: 1.5px; height: 7px; color: var(--life-core); }
 .clock-minute { z-index: 1; height: 10px; }
 .clock-play { display: none; position: absolute; right: 2px; bottom: 2px; width: 0; height: 0; opacity: .72; border-block: 3px solid transparent; border-left: 5px solid currentColor; }
 .time-dial.is-paused .clock-hand { opacity: .62; }.time-dial.is-paused .clock-play { display: block; }

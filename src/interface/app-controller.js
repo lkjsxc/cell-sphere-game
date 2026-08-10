@@ -32,8 +32,8 @@ import { createSceneSelector } from './policies/scene-selector.js';
 import { createTrophySurface } from './policies/trophy-surface.js';
 import { buildTrophySnapshot } from '../game/trophies/scene.js';
 import { createTrophyNotifications } from './policies/trophy-notifications.js';
-import {availableEvolutionLevels,buyEvolutionLevel,closeEvolutionCell,closeTrophy,enterEvolution,enterTrophies,focusAvailableEvolutionCell,
-  focusTrophy,initializeProgression,presentEvolution,presentTrophies,progressionTap,reconcileBeforeHistoryClear,selectEvolutionCell,selectTrophy} from './policies/progression-spheres.js';
+import {availableEvolutionLevels,buyEvolutionLevel,closeEvolutionCell,closeTrophy,enterEvolution,enterTrophies,
+  initializeProgression,presentEvolution,presentTrophies,progressionTap,reconcileBeforeHistoryClear,selectEvolutionCell,selectTrophy} from './policies/progression-spheres.js';
 import { createSettingsSurface } from './settings-surface.js';
 import { downloadData, parseImportedData, qualityDpr } from './app-data.js';
 import { saveImportedNamespace } from '../platform/namespace-migration.js';
@@ -133,20 +133,18 @@ class GameApp {
     this.el.begin.addEventListener('click', () => this.phase === 'idle' ? this.requestWorldReplacement('title-grow') : this.selectScene('world'));
     this.el.restart.addEventListener('click', () => ['idle', 'result'].includes(this.phase) ? this.requestWorldReplacement('evolution-restart', this.phase === 'result' ? this.lastResultIdentity : null) : this.selectScene('world'));
     this.el.resultNext.addEventListener('click', () => this.requestWorldReplacement('manual-next-world', this.lastResultIdentity));
+    this.el.resultEvolution.addEventListener('click', () => this.openResultEvolution());
     document.getElementById('trophy-next-button')?.addEventListener('click', () => ['idle', 'result'].includes(this.phase) ? this.requestWorldReplacement('trophy-restart', this.phase === 'result' ? this.lastResultIdentity : null) : this.selectScene('world'));
-    document.getElementById('trophy-focus')?.addEventListener('click', () => this.focusTrophy());
     this.el.pause.addEventListener('click', () => { if (this.phase === 'running') this.pause.set('manual', !this.pause.has('manual')); });
     this.el.speed.addEventListener('change', () => this.setSpeed(Number(this.el.speed.value)));
-    document.getElementById('evolution-focus-available')?.addEventListener('click',()=>this.focusAvailableEvolutionCell());
+    this.el.environmentButton.addEventListener('click', () => this.openEnvironmentHistory());
     document.querySelectorAll('.menu-open').forEach((button) => button.addEventListener('click', () => this.openMenu()));
     document.querySelectorAll('.history-open').forEach((button) => button.addEventListener('click', () => this.openHistory()));
     this.el.resultHistory.addEventListener('click', () => this.openHistory('current')); this.el.resultControl.addEventListener('click', () => this.openResult());
     document.getElementById('result-close')?.addEventListener('click', () => this.panelClosed('result'));
     this.el.eventButton.addEventListener('click', () => this.openEventLog()); document.getElementById('history-event-log')?.addEventListener('click', () => this.openEventLog());
-    for (const button of [this.el.scoreButton, this.el.entropyButton, this.el.reachButton]) button.addEventListener('click', () => this.openMetric(button.dataset.metric));
-    document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key === ',') { event.preventDefault(); this.openMenu(); }
-      else if(event.key==='Home'&&this.scene==='evolution'&&!event.target.closest?.('#scene-selector')){event.preventDefault();this.focusAvailableEvolutionCell();}
-      else if (event.key === 'Home' && this.scene === 'trophies' && !event.target.closest?.('#scene-selector')) { event.preventDefault(); this.focusTrophy(); } });
+    for (const button of [this.el.scoreButton, this.el.reachButton]) button.addEventListener('click', () => this.openMetric(button.dataset.metric));
+    document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key === ',') { event.preventDefault(); this.openMenu(); } });
   }
   bindCanvas() { const interrupt = () => interruptCameraPolicy(this.cameraPolicy, performance.now());
     this.input = bindGlobeInput(this.canvas, this.camera, { canInteract: () => true,
@@ -177,9 +175,9 @@ class GameApp {
   }
   updateSceneActions() {
     this.el.begin.textContent = this.phase === 'idle' ? 'Grow a world' : 'Return to World';
-    const active = ['starting', 'running'].includes(this.phase); this.el.restart.textContent = active ? 'Return to World' : 'Next World';
-    const trophyNext = document.getElementById('trophy-next-button'); if (trophyNext) trophyNext.textContent = active ? 'Return to World' : 'Next World';
-    const evolutionLine = document.getElementById('evolution-line'); if (evolutionLine) evolutionLine.textContent = active
+    const terminal = this.phase === 'result'; this.el.restart.hidden = !terminal; this.el.restart.textContent = 'Next World';
+    const trophyNext = document.getElementById('trophy-next-button'); if (trophyNext) { trophyNext.hidden = !terminal; trophyNext.textContent = 'Next World'; }
+    const evolutionLine = document.getElementById('evolution-line'); if (evolutionLine) evolutionLine.textContent = ['starting', 'running'].includes(this.phase)
       ? 'Current world unchanged; Evolution upgrades begin next world.' : 'Shape what every future world inherits.';
   }
   selectCell(node, context = null) {
@@ -220,13 +218,18 @@ class GameApp {
   finishRun(result) { finishRun(this, result); }
   finishAbandoned(summary) { finishAbandoned(this, summary); }
   failRun(message) { this.pause.set('worker-failed', true); ui.announce(this.el, `${message} Start a new world to continue.`); }
-  enterEvolution(){enterEvolution(this)}enterMemory(){this.enterEvolution()}
+  enterEvolution(){return enterEvolution(this)}enterMemory(){return this.enterEvolution()}
   enterTrophies(){enterTrophies(this)}
   selectEvolutionCell(id){selectEvolutionCell(this,id)}closeEvolutionCell(){closeEvolutionCell(this)}buyEvolutionLevel(id){buyEvolutionLevel(this,id)}
   selectMemoryNode(id){this.selectEvolutionCell(id)}closeMemoryNode(){this.closeEvolutionCell()}buyMemory(id){this.buyEvolutionLevel(id)}
-  selectTrophy(id) { selectTrophy(this, id); } closeTrophy() { closeTrophy(this); } focusTrophy() { focusTrophy(this); }
-  openHistory(scope = null) { if (this.surfaces.toggle('history')) return;
-    this.historyPlayback.open(scope ?? (this.scene === 'world' ? 'current' : 'past')); }
+  selectTrophy(id) { selectTrophy(this, id); } closeTrophy() { closeTrophy(this); }
+  openHistory(scope = null, options = {}) { if (this.surfaces.toggle('history')) return;
+    this.historyPlayback.open(scope ?? (this.scene === 'world' ? 'current' : 'past'), options); }
+  openEnvironmentHistory() {
+    if (!['starting', 'running', 'result'].includes(this.phase)) return;
+    const environmentLevel = this.snapshot?.currentEnvironmentLevel ?? this.lastResult?.finalEnvironmentLevel ?? '0';
+    this.openHistory('current', { filter: 'environment', environmentLevel });
+  }
   openHistoryEvent(world, event) { this.openHistory(world?.id ?? (world?.current ? 'current' : 'past'));
     if (event) queueMicrotask(() => this.historyPlayback.seek(event.tick, event, this.historyUi.selectedWorld ?? world)); }
   openEventLog(preferred = 'current') { if (this.surfaces.toggle('event-log')) return; this.openFull('event-log');
@@ -241,21 +244,26 @@ class GameApp {
   openSettings() { this.openMenu(); }
   openResult() { if (this.phase !== 'result' || this.surfaces.toggle('result')) return; this.openFull('result');
     this.activateSurface('result', document.getElementById('result-dialog'), 'result-heading'); }
+  openResultEvolution() {
+    if (this.phase !== 'result') return false;
+    this.closeActiveOverlay({ skipFocus: true }); const opened = this.enterEvolution();
+    if (opened !== false) requestAnimationFrame(() => document.getElementById('scene-evolution')?.focus({ preventScroll: true }));
+    return opened !== false;
+  }
   openNewWorld() { if (this.phase !== 'running' || this.surfaces.toggle('new-world')) return; this.openFull('new-world');
     this.pause.set('new-world', true); this.newWorld.open(this.snapshot); this.activateSurface('new-world', this.newWorld.surface, 'new-world-heading'); }
   confirmNewWorld() { return this.requestWorldReplacement('confirmed-new-world', this.worldIdentity); }
-  focusAvailableEvolutionCell(){focusAvailableEvolutionCell(this)}focusAvailableSkill(){this.focusAvailableEvolutionCell()}
   openFull(name) { this.closeActiveOverlay(); this.overlay = name; this.pause.set('panel', this.phase === 'running' && this.settings.pauseOnPanels); }
   activateSurface(name, element, heading) { this.surfaces.open(name, element, document.getElementById(heading), [], { dismissOnBlank: true }); this.resize(true); }
   panelClosed(name) { if (this.overlay === name) this.closeActiveOverlay(); }
-  closeActiveOverlay() { const name = this.overlay; if (!name) return;
+  closeActiveOverlay(options = {}) { const name = this.overlay; if (!name) return;
     if(name==='memory-node')return closeEvolutionCell(this);if(name==='trophy-detail')return closeTrophy(this);
     if (name === 'inspector') this.inspector.close();
     else if (name === 'history') { this.historyPlayback.close(); this.historyUi.close(); }
     else if (name === 'menu') this.settingsUi.close(); else if (name === 'new-world') this.newWorld.close();
     else if (name === 'metric') this.metricUi.close(); else if (name === 'event-log') this.eventLogUi.close();
     else if (name === 'result') document.getElementById('result-dialog').hidden = true;
-    this.surfaces.close(name); this.overlay = null; this.pause.set('panel', false); this.pause.set('new-world', false);
+    this.surfaces.close(name, options); this.overlay = null; this.pause.set('panel', false); this.pause.set('new-world', false);
     if (name === 'inspector') this.selectedNode = null; this.resize(true);
   }
   applySettings(value) { const before = this.settings;

@@ -4,6 +4,7 @@ node_modules/
 # Generated reports and artifacts (balance runs, benchmark history exports)
 reports/
 *.log
+.pi-subagents/
 
 # OS / editor noise
 .DS_Store

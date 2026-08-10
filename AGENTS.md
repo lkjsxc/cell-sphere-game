@@ -1,1672 +1,596 @@
-# AGENTS.md — Repository Contract
+# AGENTS.md — Cell Sphere Game Repository Contract
 
-> Revision: 2026-08-07  
+> Revision: 2026-08-10
 > Scope: the entire `lkjsxc/cell-sphere-game` repository unless a narrower
-> `AGENTS.md` overrides one genuinely local implementation detail.  
-> This file supersedes the 2026-08-06 contract and its cross-world Environment
-> frontier interpretation.
+> `AGENTS.md` supplies a genuinely local rule.
+> Status: this is the target contract. Current code, tests, reports, and
+> documentation may lag behind it and must be migrated toward it.
 
----
+## 1. Instruction authority
 
-## 1. Instruction authority and freshness
-
-Follow instructions in this order:
-
-1. platform and execution-environment instructions;
-2. the user’s current explicit request and corrections;
-3. this repository contract;
-4. current source, tests, schemas, deployment, and measured behavior;
-5. focused current documentation;
-6. status snapshots, old prompts, old commits, and legacy records as historical evidence only.
-
-A current user correction overrides stale implementation, tests, prose, screenshots, reports, and prior architecture.
-
-In particular, the former model in which Environment Level was selected or unlocked across worlds is rejected. Delete tests and current documentation that protect it. Preserve old data only through explicit legacy migration.
-
-`docs/status.md` is a dated evidence snapshot, not a constitution.
-
-Never claim a test, browser path, physical-device check, deployment, network check, AI play session, visual result, or performance measurement that did not actually occur.
-
----
+- Follow platform and execution-environment instructions first.
+- Follow the user's current explicit request and corrections second.
+- Follow this repository contract third.
+- Treat current source, tests, schemas, measurements, and deployment as evidence, not as
+  higher authority than a current product correction.
+- Treat old prompts, status snapshots, screenshots, migrations, and legacy records as
+  historical evidence only.
+- A later user correction overrides an earlier one. In particular, activating ENV LEVEL opens
+  History; it does not open a separate metric-detail surface.
+- Never preserve a rejected behavior merely because tests, schemas, or documentation currently
+  protect it.
+- Never report a command, browser interaction, visual result, benchmark, deployment, or
+  physical-device check that did not actually occur.
 
 ## 2. Repository identity
 
-- Product/package: `cell-sphere-game`
-- Repository: `lkjsxc/cell-sphere-game`
-- Public site: `https://lkjsxc.github.io/cell-sphere-game/`
+- Product and package name: `cell-sphere-game`.
+- Repository: `lkjsxc/cell-sphere-game`.
+- Public site: `https://lkjsxc.github.io/cell-sphere-game/`.
 - Tagline: `Every extinction becomes memory.`
-
-`incremental-network-game` is a legacy identity allowed only in isolated migration code, tests, or clearly labeled historical evidence.
-
-Use current public terms:
-
-- World
-- Environment Level
-- pressure
-- Evolution
-- mastery
-- Echoes
-- SCORE
-- REACH
-- Trophies
-- Luminous
-
-`memory` may remain only in narrow legacy schema/module boundaries until a coherent migration removes it.
-
----
+- Public scene names are `HOME`, `WORLD`, `EVOLUTION`, and `TROPHIES`.
+- Public progression terms include World, Environment Level, Evolution, Echoes, SCORE, REACH,
+  Trophies, and Luminous.
+- Do not expose `Memory`, `World Potential`, `Modeled SCORE range`, `Entropy`, crisis
+  terminology, or retired Adaptation terminology as current product concepts.
 
 ## 3. Product north star
 
-The game is a calm, legible, deterministic, browser-native incremental roguelite ecology on a living sphere.
+- Build a calm, legible, deterministic, browser-native incremental ecology on a living
+  cellular sphere.
+- The organism grows autonomously. The player observes a world, learns from extinction, spends
+  Echoes in Evolution, and starts another world.
+- Early worlds are fragile and short because reproduction is weak, accessible habitat is
+  narrow, and finite local resources run out.
+- Evolution should make later worlds measurably more capable, usually extending survival and
+  allowing life to occupy less immediately rich habitats.
+- Environment Level starts at 0 in every world, rises with authoritative time inside that
+  world, has no designed maximum, and resets to 0 for the next world.
+- Early and middle extinction should be explained primarily by finite-resource exhaustion and
+  the maintenance deficit that follows it.
+- Later extinction may increasingly reflect chronic environmental pressure, but the game has
+  no discrete natural-disaster or crisis system.
+- The world remains visually cellular. A whole world cell is the smallest authoritative
+  geography, ecology, transformation, and electricity unit.
+- The experience should communicate through the sphere, a small HUD, bounded notifications,
+  Result, Evolution, Trophies, and History rather than permanent diagnostic panels.
 
-The canonical loop is:
-
-```text
-start a new autonomous world at Environment Level 0
-→ observe growth, resources, geography, pressure, and extinction
-→ Environment Level rises with authoritative time inside that world
-→ record how far and how well the ecology endured
-→ convert demonstrated quality into Echoes
-→ broaden or deepen permanent Evolution
-→ start another world at Environment Level 0
-→ survive farther without a progression ceiling
-```
-
-The player makes meaningful between-world choices. Do not reintroduce:
-
-- active mid-run Adaptations;
-- random upgrade-card offers;
-- mandatory crisis choices;
-- repetitive resource clicking;
-- hidden auto-picks;
-- direct click-to-grow intervention;
-- a static difficulty selector disguised as Environment Level.
-
-Archived Adaptation records remain readable and inert.
-
-Camera, selected scene, open panels, History, settings, quality, frame rate, renderer, tab visibility, and speed never alter simulation authority or SCORE.
-
----
-
-## 4. AI-first work protocol
-
-### 4.1 Start with repository reality
-
-At the start of substantial work, inspect:
-
-- worktree and branch;
-- remotes and upstream;
-- current `HEAD` and recent commits;
-- intentional uncommitted/concurrent work;
-- root and nested agent instructions;
-- relevant source, tests, schemas, reports, and migrations;
-- current Actions and Pages revisions when accessible;
-- cache-busted deployed bytes when deployment is in scope.
-
-Reproduce reported behavior before assigning a cause.
-
-Never reset, discard, overwrite, force-checkout, hide, or reformat unrelated work merely to obtain a clean tree.
-
-### 4.2 Structured work packages
-
-For work crossing three or more architectural layers, create an active package:
+## 4. Canonical loop
 
 ```text
-docs/work/<descriptive-slug>/
-  README.md
-  inventory.md
-  invariants.md
-  architecture.md
-  migration-matrix.md
-  verification-matrix.md
-  decisions.md
-  status.md
+start a new world at Environment Level 0
+→ life establishes in a rich local niche
+→ finite nearby resources support a bounded expansion
+→ reachable stock thins and cells begin to starve
+→ Environment Level rises if the ecology survives long enough
+→ extinction records realized performance
+→ Result grants Echoes and recognizes Trophies
+→ the player raises one Evolution cell by one level
+→ the next world starts again at Environment Level 0
+→ stronger Evolution usually survives farther
 ```
 
-Before invasive implementation, record:
-
-- current-state dependency inventory;
-- required and forbidden semantics;
-- canonical names;
-- authority and update-order invariants;
-- schema/protocol migration plan;
-- verification and evidence plan;
-- phased implementation dependencies;
-- known risks.
-
-Do not begin a broad migration after writing only one shallow plan file.
-
-Update the work package as facts change. At completion, move durable truth into canonical docs and remove redundant temporary prose when Git history already preserves it.
-
-### 4.3 Execution cycle
-
-Use this cycle:
-
-```text
-inspect
-→ reproduce
-→ inventory
-→ model
-→ write invariants
-→ plan migration and verification
-→ implement a coherent vertical slice
-→ run focused tests
-→ integrate
-→ run full tests
-→ measure
-→ agent-play
-→ browser-play
-→ document
-→ commit
-→ push
-→ verify CI/Pages/deployed bytes
-```
-
-Revisit the plan frequently. Do not force implementation to match a disproven assumption.
-
-Do not stop at a plan, scaffold, TODO list, compatibility stub, or foundation commit when the requested behavior can be completed.
-
----
-
-## 5. Canonical Environment Level semantics
-
-### 5.1 Definition
-
-Environment Level is the current public harshness rung of one active world.
-
-It is:
-
-- derived from authoritative elapsed simulation ticks;
-- deterministic;
-- visible;
-- versioned;
-- monotone within a world;
-- reset when a new world begins;
-- unlimited in model and content.
-
-It is not:
-
-- a campaign difficulty selection;
-- an unlocked frontier;
-- a persistent starting level;
-- an “attempt” chosen before a world;
-- a reward granted by completing a world;
-- a run-count era;
-- hidden adaptive difficulty.
-
-### 5.2 Required lifecycle
-
-Every production world follows:
-
-```text
-world creation
-→ Environment Level 0
-→ authoritative ticks advance
-→ Environment Level rises according to one versioned schedule
-→ effective pressure rises
-→ finite Evolution eventually fails
-→ extinction/result
-→ next world
-→ Environment Level 0 again
-```
-
-The blank replacement frame, initial snapshot, Worker, fallback, replay, HUD, and agent observation must agree on the reset.
-
-### 5.3 Required invariants
-
-The schedule satisfies:
-
-```text
-levelAtTick(0) = 0
-levelAtTick(t + 1) >= levelAtTick(t)
-tickForLevel(L + 1) > tickForLevel(L)
-levelAtTick(tickForLevel(L)) = L
-```
-
-There is no zero-duration or Zeno transition sequence.
-
-For the same schedule version and authoritative tick, the public level is independent of:
-
-- seed;
-- Evolution;
-- score;
-- biomass;
-- renderer;
-- frame rate;
-- game speed;
-- UI state;
-- tab visibility;
-- prior worlds;
-- stored records;
-- player identity.
-
-Evolution changes effective pressure and survivability, not the public clock.
-
-### 5.4 Reset invariants
-
-A new world initializes:
-
-```text
-currentEnvironmentLevel = 0
-peakEnvironmentLevel = 0
-environmentLevelStartTick = 0
-environmentTransitionCount = 0
-environmentExposure = zero
-```
-
-No prior result, frontier, peak, selected level, retry state, or preference may change these values.
-
-### 5.5 Unlimited means no designed maximum
-
-Forbidden:
-
-- `MAX_ENVIRONMENT_LEVEL`;
-- finite content rows ending at a last level;
-- terminal named era;
-- sentinel “infinite” level;
-- UI truncation treated as a gameplay cap;
-- `Number.MAX_SAFE_INTEGER` as a progression assumption;
-- loops or allocations proportional to level magnitude;
-- one cache entry per historical level;
-- one persistent event per transition.
-
-Finite document-byte and malformed-input bounds are security protections, not gameplay maxima.
-
-A finite physical session reaches a finite prefix. That is not a designed cap.
-
-### 5.6 Forbidden legacy semantics
-
-Do not reintroduce or retain active behavior for:
-
-- `recommendedEnvironmentLevel`;
-- `resolveEnvironmentAttempt`;
-- `frontierAfterEnvironmentCompletion`;
-- `attainableEnvironmentFrontierForRuns`;
-- `highestEnvironmentLevel` as an unlock frontier;
-- “Next Environment Level”;
-- “Retry Environment Level”;
-- lower-level selection;
-- completion unlocking Level N+1;
-- world ordinal selecting the start level;
-- previous peak selecting the start level;
-- a static profile fixed for the whole world;
-- mutable live level in immutable world identity.
-
-Narrow legacy readers may recognize old fields, but current authority must not use them.
-
----
-
-## 6. Environment schedule source of truth
-
-### 6.1 Pure versioned API
-
-Keep one production source for functions equivalent to:
-
-```text
-environmentScheduleAtTick
-environmentLevelAtTick
-environmentTickForLevel
-environmentProgressAtTick
-validateEnvironmentScheduleState
-```
-
-Tests, simulation, UI, agents, audits, and documentation import or derive from this source.
-
-Do not copy formulas into tests or presentation code.
-
-### 6.2 Direct evaluation
-
-Compute level/threshold in O(1) or O(log magnitude).
-
-Do not:
-
-- iterate from Level 0 to the requested level;
-- allocate one threshold per level;
-- grow a global threshold table;
-- depend on locale formatting;
-- use unstable floating boundary comparisons.
-
-Prefer integer or fixed-point threshold math. If an inverse uses roots or logarithms, test exact thresholds and neighboring ticks.
-
-### 6.3 Calm opening and readable escalation
-
-Level 0 provides a meaningful establishment period.
-
-Level 1 is mild, late enough to be understood, and clearly telegraphed.
-
-Later levels become progressively harsher. Tune thresholds and pressure through production cohorts.
-
-Do not solve onboarding by starting later worlds above Level 0.
-
-### 6.4 Onboarding protection
-
-Retain the established first-two-world “no harmful environmental events” behavior only through an explicit, separately named, versioned onboarding modifier.
-
-It must:
-
-- leave Environment Level and its schedule unchanged;
-- be present in snapshots, results, History, and fair-agent observations;
-- never become hidden adaptive difficulty;
-- never carry into later worlds accidentally.
-
-World 3 may introduce the first mild harmful event under the same public clock.
-
----
-
-## 7. Dynamic pressure model
-
-### 7.1 Public clock versus effective pressure
-
-Use a transparent model:
-
-```text
-public Environment rating at the current time
-minus
-public/versioned Evolution defense and build mastery
-→
-finite effective pressure dimensions
-```
-
-For a fixed tick:
-
-- all builds display the same Environment Level;
-- stronger relevant defense is no worse in defended dimensions;
-- one repeatedly upgraded cell cannot replace multi-affinity breadth;
-- every finite defense is eventually exceeded;
-- runtime values remain finite.
-
-No hidden rubber-banding.
-
-### 7.2 Immutable start versus dynamic effects
-
-Every world is generated from the Level-0 start baseline.
-
-Later levels must not retroactively:
-
-- regenerate topology;
-- change immutable geography;
-- rewrite initial resource stock;
-- refill resources;
-- erase conservation;
-- move the inoculation point;
-- change the seed.
-
-Dynamic pressure may prospectively affect:
-
-- renewal;
-- maintenance;
-- transport;
-- seasonal volatility;
-- drying;
-- heat/cold drift;
-- toxicity;
-- conservation-accounted loss/access;
-- recovery;
-- event cadence/intensity/footprint;
-- electrical upkeep.
-
-### 7.3 Transition compilation
-
-Compile exact progression at level transitions, not in per-cell/per-edge loops.
-
-Keep bounded finite state, normally:
-
-- current profile;
-- next profile;
-- fixed-point progress;
-- current profile hash;
-- bounded recent transition evidence.
-
-Do not retain an unbounded profile cache.
-
-### 7.4 Smoothness
-
-The public level is discrete. Selected runtime coefficients may interpolate deterministically toward the next profile to avoid arbitrary lethal cliffs.
-
-Interpolation must be:
-
-- versioned;
-- derived only from authoritative ticks;
-- deterministic;
-- finite;
-- visible in pressure summaries;
-- independent of performance.
-
-Never interpolate by changing immutable start state.
-
-### 7.5 Extreme levels
-
-The compiler accepts huge canonical levels directly and produces:
-
-- exact ratings;
-- exact defense comparisons;
-- finite coefficients;
-- deterministic hashes.
-
-Test `2^53` boundaries and very long decimal inputs.
-
-Arbitrary-precision values remain outside per-cell/per-edge hot loops.
-
----
-
-## 8. Environment events
-
-Use a deterministic bounded rolling director.
-
-Required:
-
-- bounded active events;
-- bounded future telegraphs;
-- bounded recent evidence;
-- isolated deterministic RNG or level-keyed derivation;
-- minimum telegraph duration;
-- whole-cell footprints;
-- expired-event reclamation;
-- Worker/fallback equality;
-- no authority skipped at high speed;
-- no future schedule exposed to fair agents.
-
-Do not create an array proportional to current level, transition count, or world duration.
-
-At high levels, increase challenge through bounded finite dimensions, cadence, duty cycle, and overlap. Never allow unbounded event count or geometry.
-
-Presentation may coalesce announcements. Authority may not coalesce or skip transitions/events.
-
----
-
-## 9. World duration and extinction
-
-### 9.1 Ordinary target
-
-An ordinary fresh world should normally remain near approximately 270–330 game seconds unless measured product evidence justifies a documented change.
-
-This is a balance target, not a hard completion timer.
-
-### 9.2 No universal rewarded timeout
-
-Do not use the former approximately 360-second ceiling as a universal normal extinction.
-
-A fixed normal ceiling would make the time-based Environment ladder effectively finite for sufficiently capable builds.
-
-Instead:
-
-- unbounded pressure eventually defeats every finite Evolution configuration;
-- stronger builds survive longer and reach higher levels;
-- extinction remains causally truthful;
-- no finite build is immortal.
-
-### 9.3 Fault watchdogs
-
-A watchdog for corruption, non-progress, or infrastructure failure:
-
-- is not gameplay;
-- is far outside measured play;
-- returns an error or reward-free abandonment;
-- never masquerades as normal extinction;
-- never updates best records or awards Echoes/Trophies.
-
-CLI and CI time budgets are not simulation authority.
-
-### 9.4 Bounded long worlds
-
-Long worlds retain bounded:
-
-- topology;
-- typed arrays;
-- active events;
-- future events;
-- profile cache;
-- transition evidence;
-- History;
-- snapshots;
-- traces;
-- reports;
-- renderer resources;
-- listeners and timers.
-
----
-
-## 10. Whole-cell world language
-
-A whole world cell is the smallest visible geography, ecology, transformation, event-material, and electricity unit.
-
-Allowed whole-cell features include:
-
-- land;
-- coast;
-- ocean;
-- lakes;
-- shores;
-- wetlands;
-- forest;
-- tundra;
-- snow;
-- ice;
-- local resources;
-- depletion;
-- exhaustion;
-- recovery;
-- reclamation;
-- life;
-- stress;
-- remains;
-- transformation;
-- electric charge;
-- event material.
-
-Forbidden sub-cell features include:
-
-- rivers;
-- roads;
-- routes;
-- paths;
-- ribbons;
-- electricity wires;
-- terrain glyphs pretending to be geography;
-- decorative lines implying non-authoritative network edges.
-
-Freshwater uses lakes, shores, wetlands, catchments, local influence, and finite conservation-accounted stock.
-
-Global time or ENTROPY must not wash out all terrain. Local rich, strained, poor, depleted, exhausted, recovering, and reclaimed states remain legible.
-
-Fresh worlds spread primarily through plausible resource-rich niches.
-
----
-
-## 11. Evolution topology and levels
-
-Evolution remains a frequency-5 geodesic sphere with exactly:
-
-- 252 cells;
-- 750 boundaries;
-- 12 pentagons;
-- 240 hexagons;
-- six connected 42-cell affinities:
-  - Fertility
-  - Freshwater
-  - Scarcity
-  - Cryogenic
-  - Marine
-  - Luminous
-
-Every cell has an exact non-negative level:
-
-- Level 0: locked;
-- Level 1: first authored identity;
-- Level 2+: repeatable upgrade;
-- no gameplay maximum.
-
-The persisted level vector is:
-
-- stable-ID ordered;
-- sparse;
-- duplicate-free;
-- exact;
-- deterministic;
-- compact.
-
-Level 0 is normalized away. Compilation is O(252) plus bounded work independent of level magnitude.
-
-### 11.1 Purchase eligibility
-
-Level 0 → 1 requires:
-
-- enough Echoes;
-- at least one directly adjacent Level-1-or-higher cell.
-
-The six roots retain the fresh-save bootstrap exception.
-
-Level 1 → 2 and later require:
-
-- current positive ownership;
-- enough Echoes.
-
-No hidden run count, all-parent, Trophy, experience, random, Environment frontier, or observed-world gate.
-
-A purchase raises exactly one cell by exactly one level and charges exactly one cost.
-
-Duplicate, stale, retried, or reordered commands never double-charge or double-level.
-
-### 11.2 Level-one compatibility
-
-Where practical:
-
-- fresh World Potential remains approximately 16,000;
-- a first root remains approximately 19,000;
-- all 252 Level-1 identities remain approximately 1,200,000 World Potential;
-- current authored unlocks and habitat meaning remain recognizable.
-
-All Level-1 cells is breadth-complete, not final Evolution.
-
-### 11.3 Repeat levels
-
-Later levels remain meaningful through versioned composable curves for:
-
-- bounded direct scalar refinement;
-- pressure resistance;
-- conditional behavior;
-- habitat efficiency/reliability;
-- build mastery;
-- worldmaking capacity;
-- periodic milestones;
-- World Potential;
-- SCORE.
-
-Flags and unlocks are not duplicated blindly.
-
-No level creates:
-
-- invulnerability;
-- infinite resources;
-- negative costs;
-- immortal ecology;
-- permanent full charge;
-- immunity to unlimited Environment pressure.
-
-### 11.4 Costs and mastery
-
-Level 1 retains authored base cost.
-
-Later costs use one documented exact monotone superlinear directly computable unlimited curve.
-
-The economy must support both breadth and depth:
-
-- one cheap root cannot dominate;
-- repeated levels remain attainable;
-- no permanent economy stall;
-- no accidental geometric impossibility;
-- no flat trivial curve.
-
-Multi-affinity builds require breadth. One deeply upgraded cell cannot supply an entire multi-affinity recipe.
-
----
-
-## 12. Evolution interaction contract
-
-The rendered Evolution cell is both a selection target and a purchase control.
-
-Required state machine:
-
-1. activating an unselected cell selects it and opens/focuses detail;
-2. that same physical activation never purchases;
-3. the selected purchasable cell receives a conspicuous whole-cell ready state;
-4. a later discrete activation of the same selected ready cell purchases one level;
-5. activating the same selected non-ready cell keeps detail open and announces the stable reason;
-6. activating a different cell changes selection without purchasing the old cell;
-7. Close and Escape close detail;
-8. blank taps never purchase;
-9. drag, pinch, wheel, inertia, cancellation, or movement beyond threshold never purchases;
-10. stale expected level/meta revision is rejected;
-11. after purchase the cell remains selected and shows new level/next cost;
-12. one activation buys at most one level;
-13. pointer, touch, keyboard, semantic tree, and explicit button use one authority.
-
-Selecting the already-open cell must not close it.
-
-### 12.1 Ready presentation
-
-A selected purchasable cell is inviting without color alone:
-
-- brighter affinity material;
-- distinct inset/core;
-- outline, relief, or pattern;
-- restrained normal-motion pulse;
-- static high-contrast reduced-motion alternative;
-- explicit status text;
-- accessible action name;
-- current/next level;
-- exact/formatted cost.
-
-Distinguish all locked, reachable, affordable, owned, selected, ready, and recently upgraded states.
-
-The action button remains usable in portrait, short landscape, safe areas, and 200% text.
-
----
-
-## 13. Exact progression arithmetic
-
-No progression value may silently exceed JavaScript integer safety.
-
-Preferred boundary:
-
-- runtime `bigint` or equivalent exact representation outside hot loops;
-- canonical base-10 strings at JSON/storage/History/import/export/agent/hash boundaries;
-- bounded integer/fixed-point projections for runtime coefficients;
-- stable engineering/scientific display formatting.
-
-A different representation requires evidence and equivalent invariants.
-
-Never:
-
-- serialize raw `bigint`;
-- call `Number()` on arbitrary exact persisted values;
-- emit `NaN` or `Infinity`;
-- accept negative overflow;
-- hash locale-formatted numbers;
-- accept ambiguous leading zeros or scientific notation as canonical exact input.
-
-Finite malformed-document limits are security constraints, not gameplay caps.
-
-Tests cover canonicalization, malformed values, exact debit/credit, hashing, `2^53`, huge decimals, and repeated round trips.
-
----
-
-## 14. SCORE, Echoes, World Potential, and ranks
-
-One production implementation serves HUD, Result, History, audits, and agents.
-
-SCORE:
-
-- is monotone nondecreasing live;
-- has no surprise Result correction;
-- reflects cumulative authoritative accomplishments;
-- versions every semantic formula change;
-- resists instant high-pressure death farming;
-- ignores camera, UI, speed, renderer, quality, frame rate, developer mode, and open panels;
-- remains exact and display-safe at large values.
-
-The dynamic Environment model uses cumulative evidence such as:
-
-- pressure-time exposure;
-- peak level;
-- sustained time after transitions;
-- ecological quality under pressure;
-- stewardship;
-- exploration;
-- presence/coherence;
-- worldmaking;
-- crisis endurance;
-- powered ecology.
-
-Peak level alone is insufficient reward evidence.
-
-Avoid arbitrary-precision work per tick. Derive exact level-time segments at transitions or use another documented bounded/exact hybrid.
-
-Calibration anchors:
-
-- fresh final SCORE: approximately 8,000–15,000;
-- first-root next-world SCORE: approximately 10,000–20,000;
-- breadth-complete Level-1 strong SCORE: approximately 850,000–1,100,000.
-
-World Potential:
-
-- fresh approximately 16,000;
-- first root approximately 19,000;
-- breadth-complete Level 1 approximately 1,200,000;
-- later levels continue without a terminal anchor.
-
-Ranks continue procedurally after named onboarding ranks.
-
-Echo growth is smooth, quality-gated, exact, resistant to one-run explosions, and supports continued long-term purchases.
-
-Old SCORE models remain readable legacy records and never block current-model bests.
-
----
-
-## 15. Builds, worldmaking, and REACH 100%
-
-Maintain mechanically distinct combinable builds for:
-
-- sustainability;
-- freshwater;
-- scarcity/reclamation;
-- cryogenic survival;
-- marine use;
-- Luminous infrastructure;
-- mixed world gardening.
-
-Retain coherent recipes such as:
-
-- lake gardens;
-- circular metabolism;
-- wasteland reclamation;
-- cold dormancy;
-- cryolakes;
-- brine harvesting;
-- pelagic colonies;
-- littoral succession;
-- bioelectric wetlands;
-- hydrothermal power;
-- depletion bloom;
-- lake-to-light systems;
-- illuminated biospheres.
-
-Transformations are whole-cell, deterministic, conservation-aware, resource-consuming, visible, and bounded.
-
-`REACH 100%` means every authoritative world cell alive simultaneously for the documented minimum interval.
-
-It remains:
-
-- impossible for fresh saves;
-- possible on some late valid configurations;
-- rare;
-- followed eventually by extinction;
-- never permanent through unlimited Evolution.
-
----
-
-## 16. Trophies
-
-The Trophy Sphere remains a read-only recognition system with 96 meaningful cells unless a separate explicit product decision changes the catalog.
-
-Trophies consume completed authoritative facts. They never change:
-
-- simulation;
-- Environment clock;
-- effective pressure;
-- World Potential;
-- SCORE;
-- Echo rewards;
-- Evolution costs;
-- purchase eligibility.
-
-New criteria use explicit current concepts:
-
-- actual dynamic peak level;
-- sustained exposure;
-- quality under pressure;
-- breadth-complete Level 1;
-- mastery;
-- powered ecology.
-
-Legacy frontier or static attempted-level evidence does not automatically become a new dynamic achievement without proven semantic equivalence.
-
-Legacy IDs remain readable and inert where retired.
-
----
-
-## 17. Luminous and electricity
-
-Electricity is authoritative whole-cell charge/infrastructure, never wires.
-
-A cell glows only when production authority reports actual charge.
-
-Owning Luminous Evolution without charge does not light the world.
-
-Luminous levels and build mastery may improve bounded:
-
-- generation;
-- storage;
-- efficiency;
-- viable domains;
-- propagation through existing cell/network mechanics;
-- resistance to pressure;
-- transformation capacity.
-
-Upkeep remains real. Charge decays. Extinction remains possible.
-
-WebGL2 and Canvas 2D both show:
-
-- clear whole-cell emission;
-- stronger night-side visibility;
-- bounded daytime energized material;
-- local charge variation;
-- mastery-sensitive development;
-- no false light at zero charge;
-- no global washout;
-- no flicker or speed dependency;
-- reduced-motion compatibility.
-
-Prefer existing world-cell and atmosphere draws. Do not add wire geometry or an unmeasured unbounded post-process.
-
-Result, History, Inspector, snapshots, and agents expose powered-cell evidence.
-
-Visual claims require actual production screenshots/inspection in both renderers.
-
----
-
-## 18. Architecture and deterministic update order
-
-Default dependency direction:
-
-```text
-interface → rendering → simulation → world → core
-```
-
-Simulation imports no DOM, WebGL, storage, or wall-clock presentation state.
-
-Rendering never mutates authority.
-
-Worker and fallback use the same production simulation.
-
-### 18.1 Environment update order
-
-Define one documented causal order. A preferred order is:
-
-```text
-increment tick
-→ derive schedule state
-→ process due level transition exactly once
-→ install bounded pressure/event state
-→ environment
-→ conditionals
-→ metabolism
-→ transport
-→ worldmaking
-→ growth
-→ death
-→ liveness
-→ connectivity/summary/SCORE/History
-→ natural terminal evaluation
-```
-
-Adjust only for demonstrated simulation causality. Worker and fallback must share the exact implementation.
-
-A transition is never:
-
-- skipped at high speed;
-- applied twice;
-- presentation-only;
-- processed after consumers use stale pressure;
-- dependent on frame cadence.
-
-### 18.2 Determinism
-
-The same immutable start configuration produces the same authority under:
-
-- Worker and fallback;
-- all normal and developer speeds;
-- WebGL and Canvas;
-- different frame cadence;
-- pause/resume;
-- hidden-tab rendering throttling.
-
-Use isolated deterministic RNG streams.
-
-Never use `Math.random()` in authority or seeded content.
-
----
-
-## 19. Immutable identity, protocol, and idempotency
-
-### 19.1 Immutable world identity
-
-Mutable `environmentLevel` is not an identity field.
-
-Immutable identity contains only stable start facts such as:
-
-- world session ID;
-- run ID;
-- seed;
-- presentation generation;
-- environment schedule/model version;
-- immutable start-configuration hash;
-- result transaction key.
-
-The start-configuration hash commits to relevant topology/content/compiler/Evolution/onboarding versions.
-
-Current level/profile hash belongs in snapshots and results.
-
-### 19.2 Protocol versions
-
-Monotonically bump every semantically affected contract:
-
-- run protocol;
-- replay;
-- browser meta;
-- History;
-- agent save;
-- agent observation;
-- Environment model/schedule/profile;
-- SCORE;
-- result schema.
-
-Do not bump unrelated versions gratuitously.
-
-### 19.3 Stale-message safety
-
-Reject stale:
-
-- run ID;
-- world session;
-- presentation generation;
-- request generation;
-- expected Evolution level;
-- meta revision;
-- result transaction;
-- Worker/fallback response.
-
-Every command is acknowledged or rejected with a stable reason.
-
-### 19.4 Exactly once
-
-Make these idempotent:
-
-- extinction;
-- abandonment;
-- continuation;
-- world replacement;
-- result;
-- reward;
-- best Environment record;
-- History append;
-- Trophy recognition;
-- Evolution purchase;
-- Echo debit;
-- transformation;
-- migration.
-
-### 19.5 Atomic world replacement
-
-1. first valid request wins;
-2. live authority acknowledges abandonment/terminal state;
-3. old timers, Worker, overlays, snapshots, buffers, and renderer state retire;
-4. one static blank frame appears with Environment Level 0;
-5. one immutable seed/start identity is reserved;
-6. one new Level-0 authority starts.
-
-No stale prior Environment Level may flash.
-
----
-
-## 20. Persistence and migration
-
-Validate every loaded field. Corruption degrades field by field.
-
-### 20.1 Current browser state
-
-Persist clear records such as:
-
-- runs;
-- world seed cursor;
-- exact Echo balance/total;
-- Evolution vector;
-- score bests by model;
-- `bestEnvironmentLevelReached`;
-- best exposure/longest world where useful;
-- result keys;
-- Trophies/progress/queue;
-- Imprints;
-- bounded History;
-- inert legacy fields.
-
-### 20.2 Legacy frontier
-
-The old `highestEnvironmentLevel` was an unlocked static frontier.
-
-Migration must:
-
-- preserve it as `legacyEnvironmentFrontier` or equivalent;
-- keep it inert;
-- never use it to start a world;
-- never copy it to `bestEnvironmentLevelReached` without trustworthy new-model evidence;
-- never award new rewards/Trophies from it;
-- remain idempotent.
-
-### 20.3 Legacy History
-
-Old `environmentLevel` means static attempted level.
-
-Validate it under an explicit legacy Environment model. Do not call it a dynamic peak.
-
-New records include:
-
-- model/schedule/profile versions;
-- start Level 0;
-- final level;
-- peak level;
-- transition count;
-- bounded exposure;
-- bounded recent/milestone transitions.
-
-History is bounded by entries and bytes. Do not append an unbounded permanent transition log.
-
-### 20.4 Transactions and crash recovery
-
-Result, reward, record, History, and Trophies commit together exactly once.
-
-Import/export round-trips exact values.
-
-Browser and agent saves remain separate validated schemas.
-
-Storage-unavailable sessions remain playable and truthfully report temporary progress.
-
-Migration never charges the player and never repeats a refund.
-
----
-
-## 21. Fair agent-play contract
-
-Maintain a machine-readable deterministic production-backed fair environment.
-
-### 21.1 Observation
-
-Expose player-visible:
-
-- active current/peak Environment Level;
-- schedule/model version;
-- public progress/ticks to next level;
-- current pressure summary;
-- bounded exposure;
-- all-time best reached;
-- exact/formatted Echo balance;
-- per-Evolution-cell current/next level, cost, eligibility, preview, and neighbors;
-- affinity breadth/depth;
-- build activation/mastery;
-- World Potential and SCORE versions;
-- last Result;
-- resources;
-- REACH;
-- transformations;
-- electricity;
-- Trophies.
-
-Exclude:
-
-- future random event schedule;
-- future seeds;
-- hidden RNG;
-- raw typed arrays;
-- hidden vulnerability maps;
-- replay authority unavailable to players.
-
-### 21.2 Actions
-
-Actions include:
-
-- observe;
-- set a between-world goal;
-- buy one Evolution level;
-- start a Level-0 world;
-- advance a bounded authoritative chunk;
-- inspect a checkpoint/result/builds;
-- continue until extinction subject to an explicit external budget;
-- export;
-- reset validated agent state.
-
-Do not include:
-
-- select Environment Level;
-- unlock Environment Level;
-- retry static Environment Level;
-- skip to a frontier.
-
-Budget exhaustion returns an incomplete, reward-free status.
-
-### 21.3 Policies
-
-Maintain deterministic policies for:
-
-- balanced;
-- breadth-first;
-- depth-first;
-- cheapest;
-- marginal-value;
-- diversity;
-- weak;
-- Fertility;
-- Freshwater;
-- Scarcity;
-- Cryogenic;
-- Marine;
-- Luminous;
-- sustainability;
-- Luminous infrastructure;
-- major builds;
-- terraforming;
-- REACH 100;
-- harshness push;
-- random legal.
-
-“Harshness push” means building to survive farther into the within-world clock.
-
-Retire or redefine static-level retry policies.
-
-### 21.4 Balance tooling
-
-Use fixed training seeds and untouched holdout seeds.
-
-Provide:
-
-- deterministic ordering/parallelism;
-- bounded traces;
-- machine-readable reports;
-- before/after comparison;
-- minimized reproductions;
-- policy and seed disclosure.
-
-The coding agent should make real fair-interface decisions in several campaigns when possible.
-
-Never claim AI play that did not occur.
-
-Do not maintain a simplified duplicate simulator.
-
----
-
-## 22. Interface and accessibility
-
-Primary scenes remain:
-
-```text
-HOME | WORLD | EVOLUTION | TROPHIES
-```
-
-Globe drag/pinch/wheel preserves open detail.
-
-Opening a pane never moves or zooms the globe except an explicit focus action.
-
-A different detail replaces the current detail. Close/Escape dismisses.
-
-### 22.1 World metrics
-
-SCORE, ENTROPY, REACH, RESULT, and ENV LEVEL remain legible and truthful.
-
-- ENV LEVEL shows live time-based authority.
-- ENTROPY shows ecological deterioration.
-- Optional next-level progress/countdown is derived from the public schedule.
-- Level changes use bounded accessible announcements.
-
-### 22.2 Result
-
-Result shows:
-
-- peak/final Environment Level;
-- pressure exposure;
-- time at peak or equivalent evidence;
-- SCORE;
-- Echoes;
-- cause;
-- powered ecology;
-- Trophies.
-
-The primary action is `Next World`.
-
-No frontier-unlock or static-level retry text/control.
-
-### 22.3 Evolution
-
-Explain:
-
-```text
-Every world begins at Environment Level 0.
-Evolution helps life endure farther.
-```
-
-Show the best actually reached record without implying it is the next start level.
-
-### 22.4 Accessibility matrix
-
-Test:
-
-- keyboard-only;
-- pointer;
-- touch;
-- screen reader labels and live regions;
-- reduced motion;
-- high contrast;
-- color-vision ambiguity;
-- touch-target minimums;
-- safe areas;
-- short landscape;
-- narrow portrait;
-- 200% text;
-- WebGL2;
-- Canvas 2D.
-
-Hidden semantic structures remain synchronized with rendered cells.
-
-Notifications are queued, bounded, nonblocking, and accessible.
-
-Presentation may coalesce high-speed announcements without skipping authority.
-
----
-
-## 23. Speed and developer mode
-
-Normal player speeds are exactly:
-
-- 1×
-- 2×
-- 4×
-- 8×
-
-Explicit developer mode may expose:
-
-- 16×
-- 32×
-- 64×
-- 128×
-- 256×
-
-Developer mode is visibly marked, session-scoped or explicitly enabled, and excluded from normal preference import/export.
-
-Every speed executes every authoritative tick.
-
-Rendering, snapshots, History sampling, diagnostics, and announcements may be decimated or coalesced. Simulation may not skip work or change outcomes.
-
-Environment magnitude never changes this contract.
-
----
-
-## 24. Performance and boundedness
-
-Measure a same-host baseline before hot-path changes.
-
-Required:
-
-- fixed world resolution;
-- bounded active/future event state;
-- bounded transition evidence;
-- bounded History/traces/reports;
-- bounded profile cache;
-- direct level/profile compilation;
-- no arbitrary-precision values in per-cell/per-edge loops;
-- no unbounded per-frame object churn;
-- no per-cell DOM;
-- no cache entry per historical campaign state without eviction;
-- no listener/timer/Worker/buffer leaks;
-- hidden tabs reduce presentation work;
-- no skipped authoritative ticks;
-- the WebGL world path remains exactly four draw calls; changing this requires a separate measured product decision and contract revision;
-- Canvas remains semantically complete;
-- title showcase remains generated from production modules and hash-checked.
-
-Target:
-
-- at least the existing measured simulation throughput;
-- no more than 10% median same-host regression without documented product value;
-- bounded long-transition and long-world memory;
-- deterministic Worker/fallback;
-- repeated atomic replacement;
-- fresh, breadth-complete, deep-Luminous, and extreme-exact benchmarks.
-
-Do not gain speed by skipping ticks or authority transitions.
-
----
-
-## 25. Development structure and source of truth
-
-Prefer:
-
-- focused pure modules;
-- explicit schemas;
-- versioned formulas;
-- canonical data;
-- stable reason codes;
-- deterministic hashes;
-- small bounded caches;
-- module READMEs;
-- production imports in tests/audits.
-
-The historical 200-line file and 16-child directory limits are maintainability heuristics, not product laws.
-
-Rebalance files/directories when boundaries become confused. Update structural checks when arbitrary numbers distort architecture.
-
-Git history is the archive. Do not create graveyard directories.
-
-Production remains browser-native HTML/CSS/ES modules.
-
-Prefer JavaScript/TypeScript and Node tooling.
-
-Avoid new shipped dependencies. Preserve no-install runtime unless a dependency has compelling measured benefit.
-
-New formulas live in one production source. Tests, audits, UI, docs, and agents do not copy them.
-
-Module READMEs should let a weaker model find:
-
-- authority;
-- invariants;
-- schema;
-- compiler boundary;
-- versions;
-- interaction state machine;
-- agent protocol;
-- performance gates;
-- latest balance evidence.
-
-Delete obsolete code/tests/docs in the same workstream that replaces them.
-
----
-
-## 26. Verification
-
-Use production modules, not copied models.
-
-Retain and update applicable gates:
+## 5. Explicitly rejected product concepts
+
+- No active natural disasters, random crises, event director, crisis telegraphs, crisis
+  survival, harmful event onboarding exception, or crisis-specific upgrades.
+- No World Potential or equivalent pre-run global power index.
+- No Modeled SCORE range or any other forecast of a theoretical future score.
+- No public Entropy metric, Entropy button, Entropy detail pane, or Entropy score component.
+- No persistent in-world resource meter, reserve percentage, resource card, or resource
+  diagnostic rail in normal play.
+- No separate Event Log surface and no collapsed `Event Log preview` in History.
+- No `Focus available` control in Evolution.
+- No Evolution-scene History control.
+- No `Focus Trophy` control in Trophies.
+- No Trophy-scene History control.
+- No six-root fresh-save bootstrap.
+- No procedural filler Evolution cells whose primary purpose is to occupy topology.
+- No backward-compatibility work for old saves, old Evolution IDs, old World Potential
+  records, old crisis records, or old schemas unless the user explicitly reverses this
+  decision.
+- No hidden run-index buffs, adaptive difficulty, pity multipliers, or scripted survival
+  grants.
+- No new framework, state manager, event bus, rendering engine, dependency-injection
+  container, design-system rewrite, or generalized simulation abstraction without direct
+  measured necessity.
+
+## 6. Engineering posture
+
+- Prefer deletion and direct replacement over compatibility layers.
+- Prefer one clear authority over mirrored models.
+- Prefer existing typed arrays, pure functions, native ES modules, WebGL2, Canvas 2D, DOM, and
+  Node tooling.
+- Keep the shipped runtime dependency-free unless a new dependency has a compelling measured
+  benefit that cannot be achieved simply in the repository.
+- Do not create architecture for imagined future requirements.
+- Do not retain dead concepts under new names.
+- Do not solve a presentation complaint by introducing a cross-application framework.
+- Do not solve balance by hard-coded run numbers, fake timeouts, or result-time corrections.
+- Do not solve performance by skipping authoritative ticks or reducing deterministic
+  correctness.
+- A local straightforward edit is better than a reusable abstraction used once.
+- A shared abstraction is justified only when it removes real duplication across stable
+  semantics.
+- Optimize the measured bottleneck after profiling; do not rewrite the renderer because DOM
+  reconstruction is slow.
+
+## 7. Proportional work protocol
+
+- Inspect the worktree, branch, remotes, current HEAD, recent commits, and uncommitted work
+  before substantial changes.
+- Never reset, discard, overwrite, or reformat unrelated work.
+- Read the nearest applicable instructions and the relevant production source before editing.
+- Reproduce a reported problem when feasible before assigning a cause.
+- For a simple local change, write no planning document unless it adds real value.
+- For a medium change, keep a concise checklist in the active prompt, issue, or one work note.
+- For a cross-cutting migration, one `docs/work/<slug>/status.md` may hold scope, decisions,
+  current state, verification, and next actions.
+- Split a work note only when the content itself becomes difficult to navigate; never create a
+  quota of planning files.
+- Do not start a broad migration from an untested assumption.
+- Do not spend a turn producing only plans when a coherent verified vertical slice can be
+  completed.
+- When a multi-turn effort must stop, leave the repository buildable if practical and record
+  the exact completed slice, failures, and next command.
+- Revisit the plan when measurements disprove it.
+
+## 8. Architecture boundaries
+
+- `core/` contains deterministic primitives and must not depend on higher layers.
+- `world/` owns immutable topology and static generated geography.
+- `game/` owns durable content, formulas, Evolution, SCORE, Trophies, and balance policy.
+- `simulation/` owns authoritative run-state evolution and may consume `core/`, `world/`, and
+  `game/`.
+- `rendering/` reads immutable snapshots and never mutates simulation authority.
+- `interface/` owns DOM, navigation, input intent, presentation queues, and composition.
+- `platform/` owns storage, settings, capability, lifecycle, and deployment adapters.
+- `agent/` exposes a fair projection and actions backed by the production model.
+- Worker and fallback use the same production simulation.
+- Simulation imports no DOM, storage, WebGL, wall clock, or frame-cadence state.
+- Rendering and UI never determine SCORE, resources, Environment Level, growth, death, or
+  trophies.
+- Avoid circular imports and copied formulas.
+- Keep `main.js` and other composition roots small enough to reveal wiring.
+
+## 9. Deterministic authority
+
+- The same immutable start configuration must produce the same authoritative result under
+  Worker and fallback.
+- Normal speed, developer speed, frame cadence, rendering backend, camera, open surfaces, tab
+  visibility, and pause timing must not change the simulated outcome.
+- Every requested authoritative tick executes exactly once.
+- Use seeded isolated random streams where randomness is part of world generation or
+  autonomous ecology.
+- Never use `Math.random()` in authority.
+- Use bounded state; no array, cache, log, or queue may grow with total campaign age or
+  Environment Level without an explicit cap.
+- Commands that debit Echoes, raise Evolution, append a Result, or award a Trophy must be
+  idempotent.
+- Reject stale world identity, request generation, expected Evolution level, meta revision,
+  and result transaction keys.
+
+## 10. Environment Level
+
+- Every world begins at exact Environment Level 0.
+- Environment Level is derived only from authoritative elapsed simulation ticks and one
+  versioned schedule.
+- The level is monotone within a world and resets for the next world.
+- There is no designed maximum, finite content table ending at a last level, or per-level
+  allocation.
+- Compute the schedule directly in O(1) or O(log magnitude).
+- Evolution changes the ecology's response to pressure, not the public level clock.
+- A fixed tick shows the same public Environment Level for every build.
+- Level transitions may change bounded chronic coefficients such as renewal, maintenance,
+  recovery, temperature drift, moisture loss, toxicity, and attrition.
+- Level transitions do not spawn disasters, regenerate geography, refill stock, move life, or
+  transform ocean globally.
+- Activating ENV LEVEL opens History for the current world and emphasizes Environment records.
+- Environment transitions produce bounded accessible notifications.
+
+## 11. Chronic pressure without disasters
+
+- Challenge is continuous and spatially grounded, not a sequence of named calamities.
+- Remove production concepts for active events, future event schedules, event footprints,
+  crises, telegraphs, and crisis endurance.
+- Do not replace disasters with a differently named random incident system.
+- The opening is governed mainly by local richness, reproduction cost, maintenance, finite
+  reserves, and renewal.
+- Later pressure should alter finite coefficients smoothly enough to remain readable.
+- The world can still have semantic timeline records such as germination, Environment
+  transition, resource strain, first lake, first powered cell, Trophy earned, and extinction.
+- A semantic timeline record has no gameplay effect merely because it was recorded.
+- DOM `Event` objects and ordinary event listeners are unrelated to the rejected
+  gameplay-event concept and need no cosmetic renaming.
+
+## 12. Finite-resource ecology
+
+- Keep resources authoritative, local, finite, conservation-audited, and visible through
+  terrain and cell condition.
+- Fresh life should establish in a genuinely rich niche and should not freely cross poor
+  cells.
+- A fresh build should usually run out of reachable stock before it can colonize broadly.
+- Resource renewal remains bounded and cannot create an immortal ecology.
+- Evolution may improve uptake efficiency, maintenance, storage, recycling, recovery, and
+  access to poorer habitats.
+- Early and middle resource exhaustion must be a real causal outcome, not a Result label
+  forced by a timer.
+- Cause attribution should use accumulated evidence and reachable stock, not only an arbitrary
+  final-cell branch order.
+- Do not expose a permanent global resource percentage in normal play.
+- Keep qualitative local resource rendering and optional contextual inspection where it
+  supports understanding.
+- Use a small number of deduplicated resource notifications for meaningful thresholds; never
+  notify for every cell.
+
+## 13. Balance direction
+
+- The old approximately 270–330 second fresh-world contract is rejected.
+- Use measured cohorts rather than one universal duration constant.
+- A provisional fresh no-Evolution target is a median of approximately 45–90 game seconds,
+  with enough lower-bound protection to show germination and a visible attempt at expansion.
+- A first-root build should normally survive longer than fresh on paired seeds.
+- A canonical early-ring progression should show a statistically meaningful upward survival
+  trend.
+- Early variation is allowed, but stronger canonical generalist cohorts must not be
+  indistinguishable from fresh cohorts.
+- In fresh and early cohorts, resource exhaustion should be the dominant extinction cause,
+  with a provisional target of at least 65% unless measured causal evidence supports a nearby
+  threshold.
+- Middle progression should still have resource exhaustion as a plurality or major cause
+  before chronic Environment pressure becomes dominant.
+- No finite Evolution configuration is immortal.
+- No rewarded universal timeout is normal gameplay.
+- External audit budgets produce incomplete reward-free runs, not fake extinctions.
+
+## 14. Evolution sphere
+
+- The target Evolution sphere is a frequency-3 geodesic sphere with 92 cells unless direct
+  implementation evidence demonstrates a simpler equally legible geodesic alternative before
+  migration.
+- Do not retain 252 cells merely for compatibility.
+- Every current Evolution cell is authored and mechanically meaningful; do not generate filler
+  Resonance names to occupy space.
+- There is one fresh-save starting cell.
+- The canonical starting cell is a major establishment and reproduction ability, provisionally
+  named `First Division`.
+- A fresh save cannot begin from Marine, Luminous, Cryogenic, Freshwater, Scarcity, or another
+  independent root.
+- The cells directly adjacent to the root are major general survival abilities covering
+  reproduction, efficient uptake, maintenance, reserve, and stable local expansion.
+- Specialized affinities emerge beyond the opening neighborhood.
+- Fertility, Freshwater, Scarcity, Cryogenic, Marine, and Luminous may remain as coherent
+  content identities without each owning a bootstrap root.
+- Orient the fresh Evolution camera so the sole root and its immediate neighborhood are
+  immediately discoverable.
+- Use stable current IDs for the new graph, but do not migrate old IDs.
+
+## 15. Evolution levels and economy
+
+- Every Evolution cell has exact Level 0, Level 1, and repeatable Level 2+ semantics.
+- There is no gameplay maximum level.
+- A purchase raises exactly one cell by exactly one level and charges exactly one exact cost.
+- Level 0 to 1 requires adjacency to an owned cell, except for the one root on a fresh graph.
+- Level 1+ upgrades require ownership and enough Echoes.
+- Use a direct monotone superlinear exact cost curve.
+- Do not use World Potential, evolution power, or a predictive global rating in the cost
+  formula.
+- Repeated levels strengthen the cell's actual mechanic through documented bounded or
+  sublinear curves.
+- No level creates infinite resources, negative maintenance, invulnerability, permanent full
+  charge, or immortality.
+- Early rewards should usually afford the root after the first completed world.
+- Early progression should offer a meaningful purchase roughly every world or two without
+  forcing a fixed reward.
+- Costs should encourage opening the early neighborhood before endlessly deepening only the
+  root, without an arbitrary breadth gate.
+
+## 16. Evolution interaction
+
+- The first activation of an unselected Evolution cell selects it and opens detail.
+- The same activation never also purchases.
+- A later discrete activation of the same selected purchasable cell raises it by one level.
+- Drag, pinch, wheel, inertia, cancellation, or movement beyond the click threshold never
+  purchases.
+- A selected purchasable cell must look inviting through brightness, material, inset/core,
+  outline or pattern, and explicit text rather than color alone.
+- Normal motion may use a restrained pulse; reduced motion uses a static high-contrast state.
+- After purchase, keep the cell selected and show the new level and next cost.
+- The explicit Upgrade button and direct second activation use the same transaction authority.
+- A stale expected level or meta revision is rejected without a debit.
+- Do not rebuild the full semantic tree or compile every before/after preview for a selection
+  change.
+
+## 17. SCORE and Echoes
+
+- SCORE is based only on realized authoritative outcomes.
+- Delete World Potential and Modeled SCORE range rather than hiding their labels.
+- Do not replace them with `Build Power`, `Expected SCORE`, `Projected Strength`, or another
+  predictive aggregate.
+- Evolution affects SCORE only by changing what the ecology actually accomplishes.
+- SCORE is monotone nondecreasing while a world is live.
+- Result must not apply an unexplained correction to the live SCORE.
+- Useful components may include actual endurance, presence, exploration, coherence,
+  stewardship, quality under Environment pressure, recovery, transformations, and powered-cell
+  time.
+- Do not reward raw wasteful resource consumption as stewardship.
+- Do not reward instant high-level death farming.
+- Version every semantic formula change.
+- Keep arbitrary-precision work out of per-cell and per-edge hot loops.
+- Echo rewards should support continued purchases without one-run explosions or permanent
+  stalls.
+
+## 18. World HUD and Result
+
+- The normal World HUD order is SCORE, REACH, ENV LEVEL, and RESULT when Result exists.
+- RESULT is always last in that row.
+- Remove the public ENTROPY control and value.
+- ENV LEVEL is a real accessible button whose action opens History.
+- Do not add a permanent resource control.
+- The extinction RESULT control should use the same restrained action family as an available
+  Upgrade or other secondary action.
+- Do not style RESULT as an urgent gold primary call to action.
+- Remove oversized glow, entry pulse, or recommendation semantics from the RESULT control.
+- Result detail remains the place for SCORE, survival time, achieved Environment level, cause,
+  Echoes, Trophies, and powered ecology.
+- Result actions are ordered `Next World`, `Evolution`, `History`.
+- `Next World` is primary, `Evolution` is secondary, and `History` is quiet or secondary.
+- The Evolution action opens Evolution with post-world purchases available.
+
+## 19. Scene controls
+
+- Evolution scene actions contain only `Next World` when applicable and `Menu`; normal scene
+  selection remains available globally.
+- Remove `Focus available` from markup, JavaScript, CSS, keyboard behavior, tests, and
+  documentation.
+- Remove the Evolution-scene History button.
+- Trophy scene actions contain only `Next World` when applicable and `Menu`; normal scene
+  selection remains available globally.
+- Remove `Focus Trophy` from markup, JavaScript, CSS, keyboard behavior, tests, and
+  documentation.
+- Remove the Trophy-scene History button.
+- Do not leave hidden dead controls for compatibility.
+- Opening or closing a surface must not move or zoom the globe unless the user explicitly
+  selects a cell.
+
+## 20. History and notifications
+
+- History is the one durable temporal surface.
+- Remove the separate Event Log surface and its controller, menu action, styles, tests, and
+  source module.
+- Remove the collapsed `Event Log preview` details block.
+- An always-visible bounded History timeline may remain if it is part of History itself and is
+  not presented as a second log.
+- ENV LEVEL opens the current world in History, filters or emphasizes Environment records, and
+  seeks to the most recent relevant transition when one exists.
+- Result History opens the terminal current world.
+- History remains bounded by entries and bytes.
+- Use the existing timed presentation queue as the starting point for transient notifications.
+- Notifications are nonblocking, bounded, deduplicated, accessible, and presentation-only.
+- Notify Environment Level increases.
+- Notify newly earned Trophies, aggregating multiple awards when appropriate.
+- Notify a small number of meaningful resource-strain, transformation, Luminous, and
+  extinction milestones.
+- Do not restore a permanent current-event card after removing the gameplay-event system.
+
+## 21. Clock
+
+- The hour hand and minute hand use approximately the same stroke width.
+- They may retain different lengths and colors.
+- Both hands continue to move under full and reduced motion.
+- Their movement follows authoritative world time and selected speed.
+- A CSS-only correction is preferred unless measurement reveals a different cause.
+
+## 22. Luminous
+
+- Living cells have a subdued readable night-side presence even without Luminous.
+- Authoritative Luminous charge makes cells materially brighter than that baseline.
+- The intended impression is clustered planetary night illumination, expressed through whole
+  cells rather than roads, wires, or fake city geometry.
+- A first meaningful Luminous unlock must produce a visible production difference in an
+  attainable world.
+- Later Luminous levels may improve bounded generation, retention, efficiency, viable domains,
+  transformation support, and visual development.
+- Charge requires viable biology and real upkeep.
+- Charge decays and clears after extinction.
+- Zero charge must not display the Luminous-specific powered material.
+- Night-side contrast is strong; day-side energized material is restrained but readable.
+- WebGL2 and Canvas 2D must communicate the same semantic states.
+- Prefer the existing world-cell shader and Canvas overlay paths; do not add wire geometry or
+  a new post-processing pipeline without measured necessity.
+
+## 23. Ocean and local transformation
+
+- The first authoritative and first rendered state of every world preserves the generated
+  ocean.
+- No Evolution build may pre-transform, dry, reclaim, or recolor ocean at world creation.
+- `effectiveBiome` starts as an exact copy of static biome data and all transformation
+  progress starts at zero.
+- Biological coastal transformation requires sustained local living occupation, adjacency,
+  energy, and resources.
+- Influence spreads only through neighboring cells from active biology.
+- The visual progression should resemble local soaking or staining, with intermediate
+  whole-cell states before a final wetland or maritime-forest state.
+- Do not globally replace shallow ocean because a build is owned.
+- Do not mutate immutable base geography.
+- Test tick 0 and early visible frames across many seeds and relevant builds.
+
+## 24. Trophies
+
+- Trophies are read-only recognition and never alter simulation, SCORE, Echoes, Environment
+  Level, Evolution cost, or eligibility.
+- Remove crisis-, disaster-, and harmful-event-dependent Trophy criteria.
+- Reauthor affected cells around actual resource endurance, Environment exposure, geography,
+  transformations, Luminous, Evolution, and rare REACH outcomes.
+- Do not retain legacy Trophy IDs or migration tables solely for backward compatibility.
+- Keep the catalog meaningful; do not protect a count by filling it with trivial criteria.
+- Opening Trophies performs no redundant persistence reconciliation when authoritative data
+  has not changed.
+
+## 25. Persistence and schema changes
+
+- This project currently accepts a clean break.
+- Create one clean current storage namespace and schema.
+- Old or mismatched documents become a fresh default or a clear rejected import; they are not
+  migrated.
+- Delete old Evolution ID maps, World Potential records, crisis records, legacy Adaptation
+  migration, legacy Environment-frontier migration, refund machinery, and compatibility tests
+  that no longer serve current data.
+- Continue validating every current field and degrading corrupt current data safely.
+- Keep exact decimal strings at JSON and storage boundaries for unbounded progression values.
+- Keep Result application, Echo debit, Evolution purchase, History append, and Trophy
+  recognition exactly once.
+- Bump only contracts whose semantics actually change, but do not avoid necessary version
+  changes.
+- Current exports round-trip current data exactly; old exports may be rejected.
+
+## 26. Performance
+
+- Profile before broad optimization.
+- Evolution and Trophies should react as promptly as Home and World on warm scene entry.
+- Compile Evolution once per relevant meta revision, not once per cell preview.
+- Compute a detailed before/after preview only for the selected cell or an explicit on-demand
+  request.
+- Build hidden semantic controls once and patch state; do not replace all controls on every
+  selection.
+- Use event delegation where it simplifies hundreds of stable controls.
+- In Trophies, patch the prior and next selected cells rather than rebuilding all 96 buttons
+  for keyboard navigation.
+- Reconcile and save Trophy state when authoritative data changes, not merely because the
+  scene opened.
+- Do not cache multiple live renderer stacks or add a scene framework before the measured DOM
+  and compilation costs are fixed.
+- Keep per-frame allocations bounded.
+- Do not add draw passes for Luminous unless measured evidence demonstrates that existing
+  passes cannot satisfy the visual contract.
+- Preserve or improve simulation throughput after removing event authority.
+- Use relative same-host measurements and distributions, not one brittle CI timing assertion.
+
+## 27. Accessibility and responsive behavior
+
+- All controls meet the existing touch-target minimum.
+- Keyboard, pointer, touch, screen reader labels, high contrast, reduced motion, safe areas,
+  narrow portrait, short landscape, and 200% text remain supported.
+- Color is never the only signal for Evolution eligibility, resource condition, Luminous
+  power, or selection.
+- The selected ready Evolution cell has an explicit accessible action name and current/next
+  level.
+- Removing controls must also remove stale tab stops, ARIA relationships, shortcuts, and
+  live-region messages.
+- Notifications use a bounded polite live region and do not steal focus.
+- History opened from ENV LEVEL receives an appropriate heading or selected-record focus
+  without trapping focus.
+
+## 28. Verification strategy
+
+- Run focused tests after each coherent edit.
+- Run the full relevant unit and integration suites after each cross-layer vertical slice.
+- Run browser interaction tests for actual pointer, keyboard, scene, History, Result,
+  Evolution, and Trophy behavior.
+- A mocked function call is not evidence for a visual or pointer interaction.
+- A counter is not evidence for a visual Luminous result.
+- Use production modules in audits; do not create a simplified duplicate simulator.
+- Use fixed training seeds and untouched holdout seeds for balance.
+- Report distributions, paired-seed deltas, extinction causes, incomplete budgets, and exact
+  policies.
+- Add a no-disaster audit that verifies removed production imports, fields, UI, content, and
+  results without banning ordinary DOM events.
+- Update or remove obsolete event, potential, compatibility, crisis, and 270–330-second gates.
+- Run benchmark and bounded-memory checks after hot-path changes.
+- A skipped test is not a pass.
+
+## 29. Preferred command progression
 
 ```bash
 npm run test:unit
 npm run test:integration
 npm run balance:smoke
 npm run benchmark
-npm run check:links
 npm run check:structure
-npm run verify
+npm run check:links
 
 npm run test:browser:file
 npm run test:browser:canvas
 npm run test:browser:fallback
 
-npm run audit:cell-visuals
 npm run audit:resources
 npm run audit:freshwater
 npm run audit:score-trace
 npm run audit:transformations
 npm run audit:reach100
 npm run audit:lakes
-npm run audit:events
 npm run audit:habitats
 npm run audit:evolution-levels
 npm run audit:environment-levels
 npm run audit:luminous
 npm run audit:progression-numbers
 npm run audit:trophies
-npm run audit:adaptations
 npm run audit:campaign
-npm run terminal:soak
 
 npm run agent:smoke
 npm run agent:campaign
-npm run agent:long
 npm run balance:holdout
+npm run verify
 ```
 
-If names change, document the mapping and keep a coherent convention.
+Command names may change as rejected systems are removed. Keep `package.json`, scripts,
+documentation, and CI coherent rather than preserving obsolete names.
 
-### 26.1 Environment coverage
+## 30. Documentation
 
-Required evidence:
+- Documentation describes implemented truth, not aspirations presented as completed work.
+- Update the root README, relevant module READMEs, gameplay/design docs, balancing docs,
+  testing docs, agent docs, and dated status evidence when their claims change.
+- Delete normative claims about disasters, World Potential, Modeled SCORE range, Entropy UI,
+  six roots, 252 Evolution cells, compatibility migrations, and the 270–330-second fresh
+  target.
+- Keep historical evidence clearly labeled if it remains useful; Git history is the primary
+  archive.
+- Do not create graveyard directories or duplicate design documents.
+- A short current status note is preferable to a sprawling hierarchy of speculative plans.
 
-- every world starts Level 0;
-- exact transition boundaries;
-- monotone level/progress;
-- reset after prior high peak;
-- no frontier/selection/retry semantics;
-- fixed tick gives same public level across builds;
-- Evolution mitigation;
-- direct huge-level compilation;
-- finite coefficients;
-- bounded profile cache;
-- bounded event director;
-- minimum telegraph;
-- no retroactive world-start rewrite;
-- natural extinction;
-- stronger builds reach higher peak distributions;
-- every tested finite build dies;
-- no instant-death farm;
-- dynamic result/exposure validation;
-- legacy frontier inertness;
-- legacy History distinction;
-- immutable identity stable while level changes;
-- Worker/fallback equality;
-- all-speed equality;
-- pause/resume;
-- high-speed transition presentation;
-- repeated replacement;
-- long-transition memory soak.
+## 31. Git, CI, and deployment
 
-### 26.2 Other required evidence
+- Make coherent, bisectable commits.
+- Do not force-push unless explicitly ordered and the consequences are understood.
+- Do not include unrelated formatting or generated noise.
+- Before claiming completion, verify the pushed commit and relevant Actions.
+- When deployment is in scope, verify the exact Pages revision and cache-busted deployed
+  bytes.
+- State network, browser, CI, device, or deployment limitations honestly.
 
-- unlimited repeat Evolution upgrades;
-- exact large-number arithmetic;
-- economy/purchase cadence;
-- build diversity;
-- selected-ready second-activation behavior;
-- Luminous day/night/decay/WebGL/Canvas;
-- migration and crash recovery;
-- resource conservation;
-- REACH 100 rarity/non-immortality;
-- bounded memory/cache/History/report state;
-- training and holdout agent campaigns;
-- performance before/after.
+## 32. Definition of done
 
-A skipped test is not a pass.
+- All affected production layers agree on the same current semantics.
+- Rejected controls and concepts are deleted rather than visually hidden.
+- Every world visibly begins with intact generated ocean and Environment Level 0.
+- Fresh and early paired cohorts demonstrate the intended resource-limited progression.
+- Canonical Evolution progression demonstrates increasing survival distributions.
+- World Potential and modeled forecasts are absent from production, schemas, agents, UI,
+  tests, and current docs.
+- Natural-disaster authority and crisis-dependent content are absent.
+- History and bounded notifications cover the remaining temporal communication.
+- Evolution has one root and an authored compact graph.
+- Luminous visibly changes production cells in both renderers.
+- Evolution and Trophy scene latency is measured and materially improved.
+- Unit, integration, browser, balance, audit, benchmark, and current-schema persistence
+  evidence is recorded.
+- The final report distinguishes completed work, measured results, known limitations, and the
+  next coherent optional phase.
 
-A mocked click is not real pointer evidence.
+## 33. Final-report requirements
 
-A counter is not visual evidence.
-
-A simplified simulator is not production balance evidence.
-
-Physical-device claims require a physical device.
-
----
-
-## 27. Balance release expectations
-
-Preserve early anchors unless measured evidence justifies a documented change:
-
-- ordinary fresh duration approximately 270–330 game seconds;
-- fresh SCORE approximately 8,000–15,000;
-- first-root next-world SCORE approximately 10,000–20,000;
-- first meaningful campaign resolution approximately 18–24 minutes at 1×;
-- strongly learning early World Potential approximately 80,000–130,000 after roughly 12–18 minutes;
-- breadth-complete Level-1 strong SCORE approximately 850,000–1,100,000.
-
-Dynamic Environment goals:
-
-- Level 0 provides a calm opening;
-- Level 1 is mild and telegraphed;
-- later levels are no easier for a fixed build;
-- stronger relevant Evolution reaches higher peaks;
-- public clock is build-independent;
-- finite builds eventually become extinct;
-- no universal normal timeout fixes the peak;
-- no permanent economy stall;
-- breadth and depth both matter;
-- specialists remain distinct;
-- high-level immediate death is not optimal;
-- resources conserve;
-- Luminous creates meaningful powered ecology;
-- performance remains bounded.
-
-Use fixed training cohorts and untouched holdout cohorts.
-
-Report distributions, percentiles, causes, exact seeds, policies, and minimized failures.
-
----
-
-## 28. Git, CI, deployment, and documentation
-
-Make coherent, bisectable commits.
-
-Preserve history.
-
-Never force-push unless explicitly ordered and consequences are understood.
-
-Update:
-
-- README;
-- focused domain/module docs;
-- architecture;
-- simulation;
-- game design;
-- balancing;
-- testing;
-- agent play;
-- migration docs;
-- this contract;
-- dated `docs/status.md`.
-
-Documentation follows implemented truth.
-
-Remove current normative claims about:
-
-- unlocked Environment frontier;
-- selected/attempted level;
-- next-level Result action;
-- static level retry;
-- fixed static profile;
-- universal 360-second normal terminal;
-- finite “full Evolution”.
-
-Historical claims remain only when clearly labeled.
-
-Verify:
-
-- branch/upstream;
-- pushed commits;
-- Actions;
-- Pages;
-- cache-busted public bytes;
-- exact deployed revision;
-- deployed Level-0 reset and live progression.
-
-State limitations honestly.
-
----
-
-## 29. Definition of done
-
-A task is complete only when all affected layers agree:
-
-- domain model;
-- simulation authority;
-- dynamic pressure;
-- events;
-- natural extinction;
-- Worker/fallback;
-- immutable identity;
-- protocol;
-- replay/hash;
-- SCORE/Echo economy;
-- UI/accessibility;
-- persistence/migration;
-- History;
-- Trophies;
-- Evolution;
-- builds/worldmaking;
-- Luminous;
-- agents;
-- audits;
-- performance/memory;
-- docs;
-- Git/CI/Pages when in scope.
-
-For Environment progression specifically:
-
-```text
-new world = Level 0
-time passes = level rises
-Evolution = survives farther
-extinction = records achieved peak/exposure
-next world = Level 0
-```
-
-No active static frontier remains.
-
----
-
-## 30. Final report
-
-Final reports include:
-
-- starting/final commits;
-- root cause;
-- formulas and versions;
-- schema/protocol/replay/SCORE migrations;
-- files/modules changed;
-- exact commands/results;
-- migration and crash-recovery evidence;
-- transition/reset evidence;
-- Worker/fallback/all-speed equality;
-- browser interaction/accessibility evidence;
-- WebGL/Canvas/Luminous evidence;
-- agent cohort sizes, policies, training/holdout outcomes;
-- fresh/deep duration and peak-level distributions;
-- SCORE/Echo/purchase cadence;
-- benchmark, heap, cache, event, History, draw-count, and soak results;
-- push/CI/Pages/deployed revision;
-- honest limitations and next actions.
-
-Never report planned work as completed work.
+- Starting and final commit SHAs.
+- The verified root causes rather than only changed symptoms.
+- Important product and architecture decisions.
+- Deleted concepts, modules, fields, controls, tests, and migrations.
+- New formulas and schema versions.
+- Balance cohorts, policies, seed sets, percentiles, cause shares, and paired survival deltas.
+- SCORE and Echo distributions.
+- Evolution purchase cadence.
+- Scene-entry and interaction latency evidence.
+- WebGL2 and Canvas Luminous evidence.
+- Ocean tick-0 and gradual-local-transformation evidence.
+- Exact commands and outcomes.
+- CI, Pages, and deployed revision when performed.
+- Honest limitations and next actions.

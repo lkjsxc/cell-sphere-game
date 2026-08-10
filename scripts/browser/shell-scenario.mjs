@@ -23,12 +23,13 @@ export async function runScenario(t) {
   ok(fallbackAuthority===Boolean(t.simulationFallback),`unexpected simulation authority: fallback=${fallbackAuthority}`);
   const setDialSpeed = (speed) => evaluate(`(()=>{const s=document.getElementById('speed-select');s.value='${speed}';s.dispatchEvent(new Event('change'))})()`);
   await setDialSpeed(1);
-  const dial = () => evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,m=document.querySelector('.clock-minute'),h=document.querySelector('.clock-hour');return {phase:a.timeDial.state.phase,hourPhase:a.timeDial.state.hourPhase,minute:m.style.transform,hour:h.style.transform}})()`);
+  const dial = () => evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,m=document.querySelector('.clock-minute'),h=document.querySelector('.clock-hour');return {phase:a.timeDial.state.phase,hourPhase:a.timeDial.state.hourPhase,minute:m.style.transform,hour:h.style.transform,minuteWidth:getComputedStyle(m).width,hourWidth:getComputedStyle(h).width}})()`);
   const fullDialBefore = await dial(); await wait(300); const fullDialAfter = await dial();
   const fullDialTurn = (fullDialAfter.phase - fullDialBefore.phase + 360) % 360;
   const fullHourTurn = (fullDialAfter.hourPhase - fullDialBefore.hourPhase + 360) % 360;
-  ok(fullDialTurn > 0 && fullHourTurn > 0 && fullDialBefore.minute !== fullDialAfter.minute && fullDialBefore.hour !== fullDialAfter.hour,
-    `clock hands did not move: ${JSON.stringify({ fullDialBefore, fullDialAfter })}`);
+  ok(fullDialTurn > 0 && fullHourTurn > 0 && fullDialBefore.minute !== fullDialAfter.minute && fullDialBefore.hour !== fullDialAfter.hour
+    && fullDialBefore.minuteWidth === fullDialBefore.hourWidth,
+    `clock hands did not move or match width: ${JSON.stringify({ fullDialBefore, fullDialAfter })}`);
   await setDialSpeed(8); const fastDialBefore = await dial(); await wait(300); const fastDialAfter = await dial();
   const fastDialTurn = (fastDialAfter.phase - fastDialBefore.phase + 360) % 360;
   const fastHourTurn = (fastDialAfter.hourPhase - fastDialBefore.hourPhase + 360) % 360;
@@ -50,6 +51,8 @@ export async function runScenario(t) {
   const cameraBefore = await evaluate(`({camera:window.__CELL_SPHERE_APP__.camera.direction.slice(),tick:window.__CELL_SPHERE_APP__.snapshot.tick})`);
   await trustedId(t, 'scene-evolution'); await wait(300);
   ok(await evaluate(`window.__CELL_SPHERE_APP__.scene==='evolution'&&window.__CELL_SPHERE_APP__.phase==='running'&&window.__CELL_SPHERE_APP__.memorySnapshot.nodeStates.length===252`), 'Evolution scene replaced authority');
+  const reducedSceneActions = await evaluate(`(()=>({focus:!document.getElementById('evolution-focus-available'),trophyFocus:!document.getElementById('trophy-focus'),sceneHistory:[...document.querySelectorAll('#memory-screen .history-open,#trophy-screen .history-open')].length,activeNext:document.getElementById('restart-button').hidden&&document.getElementById('trophy-next-button').hidden}))()`);
+  ok(reducedSceneActions.focus && reducedSceneActions.trophyFocus && reducedSceneActions.sceneHistory === 0 && reducedSceneActions.activeNext, `scene controls remain: ${JSON.stringify(reducedSceneActions)}`);
   const activeUpgrade=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{validateMeta}=await import('./src/platform/storage.js'),
     {buildMemorySnapshot}=await import('./src/game/skills/index.js');a.__runningEvolutionMeta=a.meta;
     a.meta=validateMeta({...a.meta,echoBalance:'1000000'});a.memorySnapshot=buildMemorySnapshot(a.topo,a.meta);
@@ -71,8 +74,19 @@ export async function runScenario(t) {
   await key('ArrowRight'); ok(await evaluate(`window.__CELL_SPHERE_APP__.scene==='world'`), 'scene selector did not return World');
   ok(sameRect(initialSelector.rect, (await selectorEvidence(evaluate)).rect, .2), 'selector moved across scenes');
 
+  const environmentControl = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=document.getElementById('environment-level-button'),entropy=document.getElementById('entropy-button');return {tag:b?.tagName,height:b?.getBoundingClientRect().height,controls:b?.getAttribute('aria-controls'),label:b?.getAttribute('aria-label'),entropy:entropy===null,tick:a.snapshot.tick}})()`);
+  ok(environmentControl.tag === 'BUTTON' && environmentControl.height >= 44 && environmentControl.controls === 'history-dialog'
+    && environmentControl.label.includes('activate to open History') && environmentControl.entropy, `Environment control semantics failed: ${JSON.stringify(environmentControl)}`);
+  await trustedId(t, 'environment-level-button'); await wait(120);
+  const environmentHistory = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,range=document.getElementById('history-range');return {overlay:a.overlay,world:a.historyUi.selectedWorld?.id,filter:document.getElementById('history-filter').value,context:document.getElementById('history-selected').textContent,tick:Number(range.value),snapshotTick:a.snapshot.tick}})()`);
+  ok(environmentHistory.overlay === 'history' && environmentHistory.world === 'current' && environmentHistory.filter === 'environment'
+    && environmentHistory.context.includes('Environment Level 0') && environmentHistory.tick <= environmentHistory.snapshotTick,
+    `Environment History route failed: ${JSON.stringify(environmentHistory)}`);
+  await drag([960, 360], [1080, 410]); ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='history'`), 'globe drag dismissed Environment History');
+  await trustedId(t, 'history-close');
+
   await setViewport(1440, 900); await wait(180); const metricRects = {};
-  for (const kind of ['score', 'entropy', 'reach']) {
+  for (const kind of ['score', 'reach']) {
     await trustedId(t, `${kind}-button`); await wait(150); const first = await shellRect(evaluate);
     await wait(450); const second = await shellRect(evaluate); metricRects[kind] = second;
     ok(first.surface === 'metric' && sameRect(first, second, .25), `${kind} metric shell jittered`);
@@ -80,7 +94,7 @@ export async function runScenario(t) {
     ok(semantics.tag === 'BUTTON' && semantics.h >= 44 && semantics.expanded === 'true' && semantics.controls === 'metric-dialog', `${kind} semantics failed: ${JSON.stringify(semantics)}`);
     if (kind !== 'reach') await trustedId(t, `${kind}-button`);
   }
-  ok(sameRect(metricRects.score, metricRects.entropy, .25) && sameRect(metricRects.score, metricRects.reach, .25), 'metric kinds changed outer geometry');
+  ok(sameRect(metricRects.score, metricRects.reach, .25), 'metric kinds changed outer geometry');
   await evaluate(`document.getElementById('metric-body').scrollTop=40`); const scrollBefore = await evaluate(`document.getElementById('metric-body').scrollTop`);
   await drag([940, 350], [1080, 430]); await wait(100);
   ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='metric'&&!document.getElementById('metric-dialog').hidden`), 'globe drag dismissed metric');
@@ -143,24 +157,33 @@ export async function runScenario(t) {
   await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.historySnapshot=null;delete a.__luminousDecaySnapshot;a.pause.set('browser-luminous',false)})()`);
 
   ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 50000), '8x run did not finish');
-  const elapsed = (performance.now() - run8StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=document.getElementById('context-shell'),control=document.getElementById('result-control'),ids=[...document.querySelector('.hud-metrics').children].map(x=>x.id);return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!control.hidden,resultAction:control.dataset.action,resultClass:control.classList.contains('is-recommended'),resultExpanded:control.getAttribute('aria-expanded'),metricOrder:ids.join('|'),redundant:['result-score-button','result-entropy-button','result-reach-button'].some(id=>document.getElementById(id)),event:document.getElementById('current-event-button').offsetHeight,pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,trophies:document.getElementById('result-trophies').textContent,resultEnvironment:document.getElementById('result-environment').textContent,
-      nextLabel:document.getElementById('result-next-button').textContent,noRetry:!document.getElementById('result-retry-button'),noDuplicateProgressionNav:![...document.querySelectorAll('#result-dialog button')].some(b=>['Evolution','Trophies'].includes(b.textContent.trim())),snapshotStatus:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
+  const elapsed = (performance.now() - run8StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=document.getElementById('context-shell'),control=document.getElementById('result-control'),ids=[...document.querySelector('.hud-metrics').children].map(x=>x.id),actions=[...document.querySelectorAll('#result-dialog footer button')].map(x=>x.textContent.trim());return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!control.hidden,resultAction:control.dataset.action,resultClass:control.classList.contains('is-recommended'),resultExpanded:control.getAttribute('aria-expanded'),metricOrder:ids.join('|'),redundant:['result-score-button','result-entropy-button','result-reach-button'].some(id=>document.getElementById(id)),entropy:!document.getElementById('entropy-button'),event:document.getElementById('current-event-button').offsetHeight,pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,trophies:document.getElementById('result-trophies').textContent,resultEnvironment:document.getElementById('result-environment').textContent,
+      nextLabel:document.getElementById('result-next-button').textContent,actions,snapshotStatus:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
   ok(result.score > 0 && result.scene === 'world' && result.phase === 'result' && result.overlay === 'result' && result.surface === 'result'
-    && result.runVisible && result.resultControl && result.resultAction === 'next-world' && result.resultClass && result.resultExpanded === 'true'
-    && result.metricOrder === 'score-button|entropy-button|reach-button|result-control|environment-level-metric' && !result.redundant
-    && result.event >= 44 && result.pause && result.speed && result.noDuplicateProgressionNav && result.snapshotStatus === 'extinct' && result.alive === 0 && result.reach === '0%'
+    && result.runVisible && result.resultControl && result.resultAction === 'available' && !result.resultClass && result.resultExpanded === 'true'
+    && result.metricOrder === 'score-button|reach-button|environment-level-button|result-control' && !result.redundant && result.entropy
+    && result.event >= 44 && result.pause && result.speed && result.actions.join('|') === 'Next World|Evolution|History' && result.snapshotStatus === 'extinct' && result.alive === 0 && result.reach === '0%'
     &&result.trophies.includes('First Extinction')&&result.resultEnvironment.includes('Peak Environment Level')
-    &&result.nextLabel==='Next World'&&result.noRetry,`terminal world failed: ${JSON.stringify(result)}`);
+    &&result.nextLabel==='Next World',`terminal world failed: ${JSON.stringify(result)}`);
+  await evaluate(`window.__CELL_SPHERE_APP__.trophyNotifications.hold('browser-evidence',true)`);
+  await trustedId(t, 'environment-level-button'); await wait(120);
+  const terminalEnvironmentHistory = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,latest=[...a.currentHistory].reverse().find(e=>e.kind==='environment');return {overlay:a.overlay,world:a.historyUi.selectedWorld?.id,filter:document.getElementById('history-filter').value,selected:document.getElementById('history-selected').textContent,tick:Number(document.getElementById('history-range').value),expected:latest?.tick}})()`);
+  ok(terminalEnvironmentHistory.overlay === 'history' && terminalEnvironmentHistory.world === 'current' && terminalEnvironmentHistory.filter === 'environment'
+    && terminalEnvironmentHistory.expected != null && terminalEnvironmentHistory.tick === terminalEnvironmentHistory.expected
+    && terminalEnvironmentHistory.selected.includes('Environment Level reached'), `terminal Environment History did not anchor production transition: ${JSON.stringify(terminalEnvironmentHistory)}`);
+  await trustedId(t, 'history-close'); await trustedId(t, 'result-control');
   const terminalLayouts = [];
   for (const [width, height] of [[320, 568], [390, 844], [1440, 900]]) {
     await setViewport(width, height); await wait(1000);
-    const layout = await evaluate(`(()=>{const container=document.querySelector('.hud-metrics'),controls=[...container.children].filter(x=>!x.hidden),rects=controls.map(x=>x.getBoundingClientRect()),tops=new Set(rects.map(r=>Math.round(r.top))),style=getComputedStyle(container),plain=rects.map(r=>({left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}));return {count:controls.length,minHeight:Math.min(...rects.map(r=>r.height)),bounded:rects.every(r=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight),rows:tops.size,overlap:rects.some((a,i)=>rects.some((b,j)=>j>i&&!(a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom))),display:style.display,columns:style.gridTemplateColumns,rects:plain}})()`);
+    const layout = await evaluate(`(()=>{const container=document.querySelector('.hud-metrics'),controls=[...container.children].filter(x=>!x.hidden),rects=controls.map(x=>x.getBoundingClientRect()),tops=new Set(rects.map(r=>Math.round(r.top))),style=getComputedStyle(container),plain=rects.map(r=>({left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height})),actions=[...document.querySelectorAll('#result-dialog footer button')].map(x=>({label:x.textContent.trim(),...(()=>{const r=x.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}})()})),overlaps=list=>list.some((a,i)=>list.some((b,j)=>j>i&&!(a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom)));return {count:controls.length,minHeight:Math.min(...rects.map(r=>r.height)),bounded:rects.every(r=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight),rows:tops.size,overlap:overlaps(rects),display:style.display,columns:style.gridTemplateColumns,rects:plain,actions,actionsBounded:actions.every(r=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight),actionsOverlap:overlaps(actions)}})()`);
     terminalLayouts.push({ width, height, ...layout });
-    ok(layout.count === 5 && layout.minHeight >= 44 && layout.bounded && !layout.overlap
-      && (width <= 520 ? layout.rows === 3 : layout.rows === 1), `terminal metrics failed ${width}x${height}: ${JSON.stringify(layout)}`);
+    ok(layout.count === 4 && layout.minHeight >= 44 && layout.bounded && !layout.overlap
+      && layout.actions.map(action=>action.label).join('|') === 'Next World|Evolution|History' && layout.actions.length === 3
+      && layout.actions.every(action=>action.height >= 44) && layout.actionsBounded && !layout.actionsOverlap
+      && (width <= 520 ? layout.rows === 2 : layout.rows === 1), `terminal metrics/actions failed ${width}x${height}: ${JSON.stringify(layout)}`);
   }
   await setViewport(1440, 900); await wait(100);
-  await evaluate(`window.__CELL_SPHERE_APP__.trophyNotifications.hold('browser-evidence',true)`); await screenshot('shell-result-desktop.png'); await trustedId(t, 'result-close'); ok(await evaluate(`document.getElementById('context-shell').hidden`), 'Result did not close');
+  await screenshot('shell-result-desktop.png'); await trustedId(t, 'result-close'); ok(await evaluate(`document.getElementById('context-shell').hidden`), 'Result did not close');
   ok(await evaluate(`window.__CELL_SPHERE_APP__.continuation.status==='cancelled'`), 'trusted Result interaction did not permanently cancel Auto Next');
   await trustedId(t, 'result-control'); await drag([800, 330], [930, 420]); const dragState = await evaluate(`({overlay:window.__CELL_SPHERE_APP__.overlay,surface:window.__CELL_SPHERE_APP__.surfaces.active,selected:window.__CELL_SPHERE_APP__.selectedNode})`); ok(dragState.overlay === 'result', `globe drag dismissed Result: ${JSON.stringify(dragState)}`);
   await click(1000, 450); await wait(120); ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='inspector'&&document.activeElement===document.getElementById('inspector-heading')`), 'cell tap did not replace Result and focus Inspector');
@@ -170,7 +193,13 @@ export async function runScenario(t) {
 
   const runIdentity = await evaluate('window.__CELL_SPHERE_APP__.worldIdentity.resultTransactionKey');
   await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{validateMeta}=await import('./src/platform/storage.js');a.meta=validateMeta({...a.meta,echoBalance:'1000000'});return true})()`);
-  await trustedId(t, 'scene-evolution'); await wait(160);
+  const resultTransactionBefore = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {keys:a.meta.resultKeys.slice(),runs:a.meta.runs,worlds:a.archive.worlds.length,evolution:a.archive.evolution.length,balance:a.meta.echoBalance}})()`);
+  await trustedId(t, 'result-control'); await trustedId(t, 'result-evolution-button'); await wait(160);
+  const evolutionRoute = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {scene:a.scene,phase:a.phase,identity:a.worldIdentity.resultTransactionKey,focus:document.activeElement?.id,keys:a.meta.resultKeys.slice(),runs:a.meta.runs,worlds:a.archive.worlds.length,evolution:a.archive.evolution.length,balance:a.meta.echoBalance}})()`);
+  ok(evolutionRoute.scene === 'evolution' && evolutionRoute.phase === 'result' && evolutionRoute.identity === runIdentity && evolutionRoute.focus === 'scene-evolution'
+    && JSON.stringify(evolutionRoute.keys) === JSON.stringify(resultTransactionBefore.keys) && evolutionRoute.runs === resultTransactionBefore.runs
+    && evolutionRoute.worlds === resultTransactionBefore.worlds && evolutionRoute.evolution === resultTransactionBefore.evolution
+    && evolutionRoute.balance === resultTransactionBefore.balance, `Result Evolution changed authority or focus incorrectly: ${JSON.stringify({ resultTransactionBefore, evolutionRoute })}`);
   const activationEvidence=await evolutionActivationEvidence(t);const nodeId=activationEvidence.keyboard.id;
   ok(await evaluate(`window.__CELL_SPHERE_APP__.phase==='result'&&window.__CELL_SPHERE_APP__.worldIdentity.resultTransactionKey===${JSON.stringify(runIdentity)}`), 'Evolution replaced terminal world authority');
   await trustedId(t, 'scene-trophies'); ok(await evaluate(`window.__CELL_SPHERE_APP__.trophySnapshot.nodeStates.length===96`), 'Trophy scene incomplete');

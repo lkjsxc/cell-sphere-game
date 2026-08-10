@@ -10,15 +10,23 @@ test('one selector, context shell, compact dock, and ordered terminal metrics ar
   assert.deepEqual([...html.matchAll(/role="tab"[^>]*data-scene="([^"]+)"/g)].map((match) => match[1]),
     ['home', 'world', 'evolution', 'trophies']);
   assert.equal((html.match(/id="context-shell"/g) ?? []).length, 1);
-  for (const [id, label] of [['score-button', 'SCORE'], ['entropy-button', 'ENTROPY'], ['reach-button', 'REACH']]) {
+  for (const [id, label] of [['score-button', 'SCORE'], ['reach-button', 'REACH'], ['environment-level-button', 'ENV LEVEL']]) {
     assert.match(html, new RegExp(`id="${id}"[\\s\\S]{0,260}>${label}<`));
   }
-  const ordered = ['score-button', 'entropy-button', 'reach-button', 'result-control'].map((id) => html.indexOf(`id="${id}"`));
+  const ordered = ['score-button', 'reach-button', 'environment-level-button', 'result-control'].map((id) => html.indexOf(`id="${id}"`));
   assert.ok(ordered.every((offset, index) => offset > (ordered[index - 1] ?? -1)));
+  assert.match(html, /id="environment-level-button"[^>]*data-surface-trigger="history"[^>]*aria-controls="history-dialog"/);
+  assert.equal(html.includes('entropy-button'), false); assert.equal(html.includes('hud-pressure'), false);
   assert.match(html, /id="result-control"[^>]*aria-expanded="false"[^>]*hidden/);
   for (const retired of ['result-score-button', 'result-entropy-button', 'result-reach-button', 'result-summaries'])
     assert.equal(html.includes(retired), false);
   assert.doesNotMatch(html, /class="metric-summary"/);
+  const resultActions = ['result-next-button', 'result-evolution-button', 'result-history-button'].map((id) => html.indexOf(`id="${id}"`));
+  assert.ok(resultActions.every((offset, index) => offset > (resultActions[index - 1] ?? -1)));
+  for (const retired of ['evolution-focus-available', 'trophy-focus']) assert.equal(html.includes(retired), false);
+  const memoryActions = html.match(/<div class="memory-actions">[\s\S]*?<\/div>/)?.[0] ?? '';
+  const trophyActions = html.match(/<div class="trophy-actions">[\s\S]*?<\/div>/)?.[0] ?? '';
+  for (const actions of [memoryActions, trophyActions]) { assert.match(actions, /Next World/); assert.match(actions, /Menu/); assert.doesNotMatch(actions, /Focus|History/); }
   const speedOptions = [...html.matchAll(/id="speed-select"[\s\S]*?<\/select>/g)][0]?.[0] ?? '';
   assert.deepEqual([...speedOptions.matchAll(/option value="(\d+)"/g)].map((match) => Number(match[1])), [1, 2, 4, 8]);
   const rail = html.match(/<div class="command-rail[\s\S]*?<\/div>\s*<\/div>\s*<\/section>/)?.[0] ?? '';
@@ -27,39 +35,34 @@ test('one selector, context shell, compact dock, and ordered terminal metrics ar
   for (const absent of ['new-world-button', 'settings-open', 'history-open']) assert.equal(rail.includes(absent), false);
 });
 
-test('metric projections use actual score, entropy snapshots, and Reach ledger values', () => {
+test('metric projections use actual score and Reach ledger values', () => {
   const score = { total: 120000, rank: { en: 'Cartographer' }, quality: .75, worldPotential: 160000, modelVersion: 2, mult: 1, breakdown: [
     { en: 'Reach', q: .5, weight: .2, points: 10000 },
   ] };
   const scoreView = metricProjection('score', { score, result: {}, history: [] });
   assert.equal(scoreView.primary, '120,000'); assert.equal(scoreView.counts[0].value, 'Cartographer');
   assert.match(scoreView.direct[0].label, /50% axis · 20% weight/);
-  const entropy = metricProjection('entropy', { snapshot: { tick: 400, entropy: .42, status: 'running', events: [
-    { family: 'heat', intensity: .6, center: 4 },
-  ], environmentPressureSummary: { level: '1', nextLevel: '2', interpolationQ: 450000, profileHash: 'cur', nextProfileHash: 'next',
-    effectiveCoefficients: { renewalScale: .84, maintenanceScale: 1.12 } },
-  reach: { negativeConditions: [{ label: 'entropy', score: .42 }] } }, entropyRate: 3, history: [] });
-  assert.equal(entropy.primary, '42%'); assert.equal(entropy.counts[1].value, '+3 pp / 10s'); assert.deepEqual(entropy.direct[0].cells, [4]);
-  assert.deepEqual(entropy.conditions.slice(0, 3), [
-    { label: 'Environment interpolation', value: 'Level 1 → 2 · 45%' },
-    { label: 'Effective renewal', value: '84%' }, { label: 'Effective maintenance', value: '112%' },
-  ]);
   const reach = metricProjection('reach', { snapshot: { metrics: { coverage: .125 }, reach: { current: 12, windowSeconds: 15,
     gained: 7, lost: 4, net: 3, positive: [{ label: 'regrowth', count: 7, samples: [2, 3] }], negative: [], positiveConditions: [], negativeConditions: [] } } });
   assert.equal(reach.primary, '13%'); assert.deepEqual(reach.counts.map((item) => item.value), ['+7', '−4', '+3']);
   assert.deepEqual(reach.direct[0].cells, [2, 3]);
 });
 
-test('History, visible metric affordances, and compact two-control dock keep bounded geometry', () => {
+test('History, visible metric affordances, restrained Result, and compact dock keep bounded geometry', () => {
   const css = readFileSync(new URL('../../styles/shell.css', import.meta.url), 'utf8');
   assert.match(css, /\.context-result, \.context-history \{ grid-template-rows: auto minmax\(0, 1fr\) auto; \}/);
   assert.doesNotMatch(css, /adaptation|card-row/i);
   const components = readFileSync(new URL('../../styles/components.css', import.meta.url), 'utf8');
   assert.match(components, /\.metric-button \{[^}]*cursor: pointer[^}]*border: 1px solid/s);
   assert.match(components, /\.metric-button::after/); assert.match(components, /\.metric-button:active/);
-  assert.match(components, /\.result-control \{[^}]*min-height: var\(--touch-min\)[^}]*linear-gradient/s);
+  const resultRule = components.match(/\.result-control \{([\s\S]*?)\n\}/)?.[1] ?? '';
+  assert.match(resultRule, /min-height: var\(--touch-min\)/); assert.match(resultRule, /background: rgba/);
+  assert.doesNotMatch(resultRule, /linear-gradient|\.45rem 1\.8rem/);
+  const atlas = readFileSync(new URL('../../styles/atlas.css', import.meta.url), 'utf8');
+  assert.match(atlas, /\.clock-hour \{ width: 1\.5px;/);
   assert.match(css, /\.hud-metrics:has\(#result-control:not\(\[hidden\]\)\)[^}]*grid-template-columns: repeat\(2/s);
   const controller = readFileSync(new URL('../../src/interface/app-controller.js', import.meta.url), 'utf8');
+  assert.match(controller, /openEnvironmentHistory\(\)/); assert.match(controller, /resultEvolution\.addEventListener/);
   assert.match(controller, /replaceRenderCanvas\(\)/); assert.match(controller, /retired\.replaceWith\(replacement\)/);
   assert.match(controller, /storage could not save that acknowledgement/);
 });

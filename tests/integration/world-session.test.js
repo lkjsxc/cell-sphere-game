@@ -17,7 +17,7 @@ function node() { return { textContent: '', hidden: false, disabled: false, data
   setAttribute() {}, removeAttribute() {}, replaceChildren() {} }; }
 function elements() { const value = {}; for (const name of ['title','run','memory','trophies','countdown','event','live',
   'resultRank','resultScore','resultEnvironment','resultPower','resultCause','echoes','resultTrophies','resultImprint','resultFirstCycle','breakdown','score',
-  'pressure','reach','trace','environmentLevel','resultControl','resultNext','resultRetry','pause','speed',
+  'reach','trace','environmentLevel','environmentButton','resultControl','resultNext','resultEvolution','resultRetry','pause','speed',
   'eventTime','eventButton']) value[name] = node();
   return value; }
 function harness() {

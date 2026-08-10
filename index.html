@@ -52,10 +52,9 @@
       <div class="hud-top">
         <div class="hud-metrics" aria-label="Current world metrics">
           <button id="score-button" class="metric metric-button" data-metric="score" data-surface-trigger="metric" type="button" aria-expanded="false" aria-controls="metric-dialog"><span class="metric-label">SCORE</span><strong id="hud-score" class="metric-value">0</strong></button>
-          <button id="entropy-button" class="metric metric-button" data-metric="entropy" data-surface-trigger="metric" type="button" aria-expanded="false" aria-controls="metric-dialog"><span class="metric-label">ENTROPY</span><strong id="hud-pressure" class="metric-value">0%</strong></button>
           <button id="reach-button" class="metric metric-button" data-metric="reach" data-surface-trigger="metric" type="button" aria-expanded="false" aria-controls="metric-dialog"><span class="metric-label">REACH</span><strong id="hud-reach" class="metric-value">0%</strong><small id="hud-trace" class="metric-trace" hidden>FINAL TRACE</small></button>
+          <button id="environment-level-button" class="metric metric-button environment-level-metric" data-surface-trigger="history" type="button" aria-expanded="false" aria-controls="history-dialog" aria-label="Environment Level 0; activate to open History"><span class="metric-label">ENV LEVEL</span><strong id="hud-environment-level" class="metric-value">0</strong></button>
           <button id="result-control" class="metric result-control" data-surface-trigger="result" type="button" aria-expanded="false" aria-controls="result-dialog" aria-label="Open world result" hidden><span class="metric-label">RESULT</span><strong class="result-control-value">VIEW</strong></button>
-          <div id="environment-level-metric" class="metric environment-level-metric" aria-label="Current Environment Level"><span class="metric-label">ENV LEVEL</span><strong id="hud-environment-level" class="metric-value">0</strong></div>
         </div>
       </div>
       <div class="hud-bottom">
@@ -74,13 +73,13 @@
       <h2 id="memory-heading" class="sr-only">Evolution Globe</h2>
       <div class="memory-bar material-clear">
         <div class="evolution-identity"><span class="eyebrow">PERMANENT EVOLUTION</span><strong>Evolution Globe</strong><span id="evolution-line" class="evolution-line">Shape what every future world inherits.</span><span><b id="memory-balance">0</b> Echoes · <span id="memory-available">0 levels ready</span></span><span id="memory-environment">Every world begins at Environment Level 0.</span></div>
-        <div class="memory-actions"><button id="restart-button" class="btn btn-primary" data-action="recommended" type="button">Next World</button><button id="evolution-focus-available" class="btn btn-secondary" data-action="quiet" type="button">Focus available</button><button class="btn btn-secondary history-open" data-surface-trigger="history" data-action="quiet" type="button">History</button><button class="btn btn-secondary menu-open" data-surface-trigger="menu" data-action="quiet" type="button">Menu</button></div>
+        <div class="memory-actions"><button id="restart-button" class="btn btn-primary" data-action="recommended" type="button" hidden>Next World</button><button class="btn btn-secondary menu-open" data-surface-trigger="menu" data-action="quiet" type="button">Menu</button></div>
       </div>
       <div id="evolution-tree" class="sr-only" role="tree" aria-label="Evolution Globe cells"></div>
     </section>
 
     <section id="trophy-screen" class="screen" data-scene="trophies" role="tabpanel" hidden aria-labelledby="scene-trophies trophy-heading">
-      <h2 id="trophy-heading" class="sr-only">Trophy Sphere</h2><div class="trophy-bar material-clear"><div class="trophy-identity"><span class="eyebrow">PRESERVED ACHIEVEMENTS</span><strong>Trophy Sphere</strong><span>Recognition from deterministic world evidence.</span><b id="trophy-count">0 / 96 earned</b><span id="trophy-legacy" hidden></span></div><div class="trophy-actions"><button id="trophy-next-button" class="btn btn-primary" data-action="recommended" type="button">Next World</button><button id="trophy-focus" class="btn btn-secondary" data-action="quiet" type="button">Focus Trophy</button><button class="btn btn-secondary history-open" data-surface-trigger="history" data-action="quiet" type="button">History</button><button class="btn btn-secondary menu-open" data-surface-trigger="menu" data-action="quiet" type="button">Menu</button></div></div>
+      <h2 id="trophy-heading" class="sr-only">Trophy Sphere</h2><div class="trophy-bar material-clear"><div class="trophy-identity"><span class="eyebrow">PRESERVED ACHIEVEMENTS</span><strong>Trophy Sphere</strong><span>Recognition from deterministic world evidence.</span><b id="trophy-count">0 / 96 earned</b><span id="trophy-legacy" hidden></span></div><div class="trophy-actions"><button id="trophy-next-button" class="btn btn-primary" data-action="recommended" type="button" hidden>Next World</button><button class="btn btn-secondary menu-open" data-surface-trigger="menu" data-action="quiet" type="button">Menu</button></div></div>
       <div id="trophy-grid" class="sr-only" role="grid" aria-label="All 96 Trophy criteria"></div>
     </section>
 
@@ -92,7 +91,7 @@
         <h3>Score axes</h3><div id="result-breakdown" class="result-breakdown" aria-label="Score axes"></div>
         <p id="result-imprint" class="result-imprint"></p><p id="result-countdown" class="result-countdown" role="status"></p>
       </div>
-      <footer class="surface-actions result-actions"><button id="result-next-button" class="btn btn-primary" data-action="next-world" type="button">Next World</button><button id="result-history-button" class="btn btn-secondary" data-surface-trigger="history" type="button">History</button></footer>
+      <footer class="surface-actions result-actions"><button id="result-next-button" class="btn btn-primary" data-action="next-world" type="button">Next World</button><button id="result-evolution-button" class="btn btn-secondary" type="button">Evolution</button><button id="result-history-button" class="btn btn-secondary" data-surface-trigger="history" type="button">History</button></footer>
     </section>
 
     <section id="cell-inspector" class="context-surface material-regular" hidden aria-labelledby="inspector-heading">
@@ -115,7 +114,7 @@
       <div class="surface-body"><div class="history-world-row"><label for="history-world">World</label><select id="history-world"></select><p id="history-time-label" aria-live="polite">00:00 · Live</p></div>
         <div class="history-scrubber"><button id="history-prev" class="rail-btn" type="button" aria-label="Previous significant event">Previous</button><label><span class="sr-only">World time</span><input id="history-range" type="range" min="0" max="0" value="0" step="1"></label><button id="history-next" class="rail-btn" type="button" aria-label="Next significant event">Next</button><button id="history-live" class="rail-btn" type="button">Live</button></div>
         <p id="history-selected" class="history-selected">Choose a time to inspect.</p><p id="history-visual-note" class="history-note">Loading device-local approximate visual detail…</p>
-        <details class="history-expanded"><summary>Event Log preview</summary><div class="panel-toolbar"><select id="history-filter" aria-label="History category filter"><option value="all">All events</option><option value="world">World</option><option value="life">Life</option><option value="legacy-adaptation">Legacy Adaptations</option><option value="crisis">Crises</option></select></div><ol id="history-list" class="history-list"></ol></details></div>
+        <details class="history-expanded"><summary>Event Log preview</summary><div class="panel-toolbar"><select id="history-filter" aria-label="History category filter"><option value="all">All events</option><option value="world">World</option><option value="life">Life</option><option value="environment">Environment</option><option value="legacy-adaptation">Legacy Adaptations</option><option value="crisis">Crises</option></select></div><ol id="history-list" class="history-list"></ol></details></div>
       <footer class="surface-actions"><button id="history-event-log" class="btn btn-secondary" type="button">Open Event Log</button></footer>
     </section>
 

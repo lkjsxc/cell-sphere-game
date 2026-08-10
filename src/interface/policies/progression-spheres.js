@@ -18,7 +18,7 @@ export function progressionTap(app, node) {
   if (app.scene === 'trophies') { const index = TROPHY_ATLAS_REVERSE[node]; if (index >= 0) selectTrophy(app, TROPHIES[index].id); return true; }
   return false;
 }
-export function enterEvolution(app) { app.selectScene('evolution'); }
+export function enterEvolution(app) { return app.selectScene('evolution'); }
 export function presentEvolution(app, restoreCamera = false) { app.closeActiveOverlay(); app.selectedNode = null; app.makeRenderer(0, 'memory'); app.memorySnapshot = buildMemorySnapshot(app.topo3, app.meta);
   if (!restoreCamera && app.memorySnapshot.focus) focusCamera(app.camera, app.memorySnapshot.focus); app.memoryUi.syncTree(app.meta);
   ui.showMemory(app.el,app.meta,availableEvolutionLevels(app));}
@@ -76,13 +76,10 @@ function purchaseReason(state) {
 function evolutionTransactionKey(revision,id,currentLevel,nextLevel){
  return boundedTransactionKey('evolution-level',[revision,id,currentLevel,nextLevel])
 }
-export function focusAvailableEvolutionCell(app){const state=app.memorySnapshot?.nodeStates.find((node)=>!node.owned&&node.reason==='ready')
-    ??app.memorySnapshot?.nodeStates.find((node)=>node.reason==='ready')
-    ??app.memorySnapshot?.nodeStates.find((node)=>node.reachable&&!node.owned);if(state)selectEvolutionCell(app,state.id)}
 export function availableEvolutionLevels(app){return app.memorySnapshot?.nodeStates?.filter((node)=>node.reason==='ready').length??0}
-// Narrow compatibility aliases for older interface extensions and saved browser harnesses.
+// Narrow interface aliases backed by current Evolution authority.
 export const selectSkill=selectEvolutionCell,closeSkill=closeEvolutionCell,buySkill=buyEvolutionLevel,
-  focusAvailableSkill=focusAvailableEvolutionCell,availableSkills=availableEvolutionLevels;
+  availableSkills=availableEvolutionLevels;
 
 export function enterTrophies(app) { app.selectScene('trophies'); }
 export function presentTrophies(app, restoreCamera = false) { app.closeActiveOverlay();
@@ -98,8 +95,5 @@ export function selectTrophy(app, id) { const trophy = getTrophy(id); if (!troph
   app.surfaces.open('trophy-detail', app.trophyUi.panel, document.getElementById('trophy-detail-heading')); app.resize(true); }
 export function closeTrophy(app) { app.trophyUi.close(); app.surfaces.close('trophy-detail'); if (app.overlay === 'trophy-detail') app.overlay = null;
   app.selectedNode = null; app.trophySnapshot = buildTrophySnapshot(app.topo, app.meta, null, app.meta.trophyQueue); app.resize(true); interruptCameraPolicy(app.cameraPolicy, performance.now()); }
-export function focusTrophy(app) { const id = app.meta.trophyQueue.find((candidate) => getTrophy(candidate))
-    ?? TROPHIES.find((trophy) => app.meta.trophyIds.includes(trophy.id))?.id ?? TROPHIES.find((trophy) => !app.meta.trophyIds.includes(trophy.id))?.id;
-  if (id) selectTrophy(app, id); }
 export function reconcileBeforeHistoryClear(app) { const result = reconcileTrophies(app.meta, app.archive); app.meta = result.meta;
   app.archive = appendTrophyEvents(app.archive, result.awardedIds); app.trophyNotifications.sync(app.meta); saveMeta(app.meta); return result.awardedIds; }

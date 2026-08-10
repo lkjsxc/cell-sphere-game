@@ -12,7 +12,7 @@ const CAUSE = Object.freeze({
   drought: 'Drying outpaced the network’s reserves.',
   toxin: 'Toxic pressure overwhelmed the living core.',
   event: 'A planetary crisis split the last viable component.',
-  collapse: 'Terminal entropy closed the final living route.',
+  collapse: 'Terminal pressure closed the final living route.',
 });
 
 const byId = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
@@ -23,9 +23,9 @@ export function elements() {
     restart: /** @type {HTMLButtonElement} */ (byId('restart-button')),
     pause: /** @type {HTMLButtonElement} */ (byId('pause-button')),
     speed: /** @type {HTMLSelectElement} */ (byId('speed-select')),
-    boot: byId('boot-status'), score: byId('hud-score'), pressure: byId('hud-pressure'), reach: byId('hud-reach'), trace: byId('hud-trace'),
-    environmentLevel: byId('hud-environment-level'),
-    scoreButton: byId('score-button'), entropyButton: byId('entropy-button'), reachButton: byId('reach-button'),
+    boot: byId('boot-status'), score: byId('hud-score'), reach: byId('hud-reach'), trace: byId('hud-trace'),
+    environmentLevel: byId('hud-environment-level'), environmentButton: /** @type {HTMLButtonElement} */ (byId('environment-level-button')),
+    scoreButton: byId('score-button'), reachButton: byId('reach-button'),
     event: byId('hud-event-text'), resultRank: byId('result-rank'), resultScore: byId('result-score'),
     resultEnvironment: byId('result-environment'), resultPower: byId('result-power'),
     resultCause: byId('result-cause'), breakdown: byId('result-breakdown'),
@@ -34,6 +34,7 @@ export function elements() {
     trophyBadge: byId('trophy-tab-badge'), trophyLegacy: byId('trophy-legacy'),
     memoryAvailable: byId('memory-available'), countdown: byId('result-countdown'), resultFirstCycle: byId('result-first-cycle'),
     resultNext: /** @type {HTMLButtonElement} */ (byId('result-next-button')),
+    resultEvolution: /** @type {HTMLButtonElement} */ (byId('result-evolution-button')),
     resultControl: byId('result-control'),
     live: byId('live-region'), toast: byId('toast-root'), eventTime: byId('hud-event-time'), eventButton: byId('current-event-button'),
     resultHistory: byId('result-history-button'),
@@ -49,14 +50,13 @@ export function show(el, scene) {
 export function updateHud(el, snap) {
   const metrics = snap.metrics ?? {};
   el.score.textContent = number(metrics.score ?? 0);
-  el.pressure.textContent = `${Math.round((snap.entropy ?? 0) * 100)}%`;
   const currentEnvironmentLevel = snap.currentEnvironmentLevel ?? '0';
   el.environmentLevel.textContent = number(currentEnvironmentLevel);
   const nextTick = snap.nextEnvironmentLevelTick;
   const progress = Number.isInteger(snap.environmentLevelProgressQ) ? Math.round(snap.environmentLevelProgressQ / 10_000) : 0;
-  el.environmentLevel.setAttribute('aria-label', nextTick
-    ? `Environment Level ${number(currentEnvironmentLevel)}; ${progress}% to the next level`
-    : `Environment Level ${number(currentEnvironmentLevel)}`);
+  el.environmentButton.setAttribute('aria-label', nextTick
+    ? `Environment Level ${number(currentEnvironmentLevel)}; ${progress}% to the next level; activate to open History`
+    : `Environment Level ${number(currentEnvironmentLevel)}; activate to open History`);
   const aliveCount = Math.max(0, Math.floor(metrics.aliveCount ?? 0));
   el.reach.textContent = formatCoverage(metrics.coverage ?? 0, aliveCount, snap.alive?.length ?? 2562);
   el.trace.hidden = aliveCount === 0 || aliveCount > 3;
@@ -64,14 +64,14 @@ export function updateHud(el, snap) {
 }
 
 export function resetWorldPresentation(el, snapshot = null) {
-  updateHud(el, snapshot ?? { entropy: 0, status: 'starting', currentEnvironmentLevel: '0', alive: { length: 2562 },
+  updateHud(el, snapshot ?? { status: 'starting', currentEnvironmentLevel: '0', alive: { length: 2562 },
     metrics: { score: 0, coverage: 0, aliveCount: 0 }, reach: null });
   el.eventTime.textContent = '00:00 · STARTING'; el.event.textContent = 'Preparing a new world.'; el.eventButton.dataset.read = 'true';
   el.live.textContent = ''; el.resultRank.textContent = ''; el.resultScore.textContent = '0';
   el.resultEnvironment.textContent = ''; el.resultPower.textContent = ''; el.resultCause.textContent = '';
   el.echoes.textContent = ''; el.resultTrophies.textContent = '';
   el.resultImprint.textContent = ''; el.resultFirstCycle.textContent = ''; el.breakdown.replaceChildren();
-  el.resultControl.hidden = true; el.resultControl.classList.remove('is-recommended', 'result-enter');
+  el.resultControl.hidden = true;
   el.resultControl.removeAttribute('data-action'); el.resultControl.setAttribute('aria-expanded', 'false');
   el.pause.disabled = false; el.pause.classList.remove('is-complete');
   el.pause.setAttribute('aria-pressed', 'false'); el.pause.setAttribute('aria-label', 'Pause world time');
@@ -119,8 +119,8 @@ export function showResult(el, score, result) {
     const row = document.createElement('p'); row.className = 'breakdown-row';
     row.textContent = `${part.en}  ${number(part.points)}`; return row;
   }));
-  el.resultControl.hidden = false; el.resultControl.classList.add('is-recommended', 'result-enter');
-  el.resultControl.dataset.action = 'next-world';
+  el.resultControl.hidden = false;
+  el.resultControl.dataset.action = 'available';
   el.resultNext.textContent = 'Next World';
   el.pause.disabled = true; el.pause.classList.add('is-complete'); el.pause.setAttribute('aria-label', 'World time complete');
   el.speed.disabled = true; el.speed.setAttribute('aria-label', 'Game speed, next-world preference');
