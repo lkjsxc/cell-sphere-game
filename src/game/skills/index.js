@@ -29,7 +29,7 @@ export { EVOLUTION_EFFECT_VERSION, EVOLUTION_COMPILE_CACHE_LIMIT, EVOLUTION_COMP
   evolutionCompileCacheDiagnostics, getEvolutionCompileCacheDiagnostics, resetEvolutionCompileCache } from './effects.js';
 export { EVOLUTION_LEVEL_VECTOR_VERSION, EVOLUTION_LEVEL_DOCUMENT_DIGIT_LIMIT, boundedEvolutionLevelRefinement } from './levels.js';
 export { BASE_WORLD_POTENTIAL, EVOLUTION_POWER_BY_KIND, FULL_EVOLUTION_POWER, WORLD_POTENTIAL_ANCHORS,
-  WORLD_POTENTIAL_VERSION, legacyWorldPotentialV2Number, modeledScoreRange,
+  WORLD_POTENTIAL_VERSION, modeledScoreRange, worldPotentialBreadthAnchor,
   worldPotentialForBreadthAndDepth, worldPotentialForPower } from './potential.js';
 
 export const MEMORY_GRAPH_VERSION = 5;
@@ -141,11 +141,6 @@ export function evolutionCellState(meta, nodeOrId, selectedId = null) {
     selectedReady: selectedId === id && reason === 'ready' });
 }
 
-/** Legacy state alias; ownership and readiness are derived from levels. */
-export function memoryNodeState(meta, node, selectedId = null) {
-  const state = evolutionCellState(meta, node, selectedId);
-  return state.reason === 'unknown-cell' ? null : state;
-}
 export function groupAccessibleMemory(meta, selectedId = null) {
   const nodes = MEMORY_NODES.map((node) => evolutionCellState(meta, node, selectedId));
   return Object.freeze(MEMORY_BRANCHES.map((affinity) => Object.freeze({ branch: affinity, affinity,
@@ -159,8 +154,6 @@ export function availableMemoryNodes(meta) {
 export function canPurchaseEvolutionLevel(meta, id) {
   return evolutionCellState(meta, id, id).reason === 'ready';
 }
-/** Legacy eligibility alias; owned cells remain purchasable for their next level. */
-export const canPurchaseMemory = canPurchaseEvolutionLevel;
 
 export function newlyAvailableAdjacentIds(meta, id) {
   const vector = normalizeEvolutionLevels(meta); const current = levelFromVector(vector, id);
@@ -182,8 +175,6 @@ export function compileEvolution(meta) {
     summary: summarizeEvolutionLevelVector(vector, MEMORY_NODES, EVOLUTION_AFFINITY_IDS),
     contentVersion: EVOLUTION_CONTENT_VERSION, habitatCapabilities: HABITAT_CAPABILITIES });
 }
-/** Legacy compiler alias; binary ownership is never authoritative. */
-export const compileMemory = compileEvolution;
 export function worldPotential(meta) { return compileEvolution(meta).worldPotential; }
 
 export function previewEvolutionLevel(meta,id){
@@ -214,8 +205,6 @@ export function previewEvolutionLevel(meta,id){
     changes: Object.freeze(changes), unlocked: Object.freeze(unlocked),
     buildProgress: Object.freeze(buildProgress), compilerVersions: EVOLUTION_COMPILER_VERSIONS });
 }
-/** Legacy preview alias; it now previews exactly one next level. */
-export const memoryPurchasePreview = previewEvolutionLevel;
 
 export function purchaseEvolutionLevel(meta, id, command = {}) {
   const node = BY_ID.get(id); const balanceBefore = normalizeProgressionInteger(meta?.echoBalance, '0');
@@ -241,8 +230,7 @@ export function purchaseEvolutionLevel(meta, id, command = {}) {
     evolutionLevels=replaceEvolutionLevel(vector,MEMORY_NODE_IDS,id,newLevel)}
   catch(error){if(isProgressionBoundary(error))return failedPurchase(meta,node,id,'progression-security-boundary',balanceBefore,revision,transactionKey,oldLevel,state.nextCost);throw error}
   const nextReceipts = transactionKey ? [...receipts.filter((key) => key !== transactionKey), transactionKey].slice(-32) : receipts;
-  const { memoryNodes: _legacyMemoryNodes, ...canonicalInput } = meta ?? {};
-  const nextMeta = Object.freeze({ ...canonicalInput, evolutionLevels, echoBalance: balanceAfter,
+  const nextMeta = Object.freeze({ ...(meta ?? {}), evolutionLevels, echoBalance: balanceAfter,
     revision: incrementProgressionInteger(revision), evolutionTransactionKeys: Object.freeze(nextReceipts) });
   return Object.freeze({ ok: true, reason: 'ready', node, nodeId: id, oldLevel, newLevel,
     cost: state.nextCost, spent: state.nextCost, balanceBefore, balanceAfter, transactionKey,
@@ -271,10 +259,6 @@ function normalizeTransactionKeys(value) {
   return [...new Set(value.filter((key) => validTransactionKey(key)))].slice(-32);
 }
 
-/** Legacy transaction aliases backed by level authority. */
-export const purchaseMemory = purchaseEvolutionLevel;
-export const transactMemoryPurchase = purchaseEvolutionLevel;
-export function memoryEffects(meta) { return compileEvolution(meta).effects; }
 export function campaignResolved(meta) { return compareProgressionIntegers(meta?.runs ?? '0', '5') >= 0; }
 export function buildMemoryScene(meta, selectedId = null) {
   const groups = groupAccessibleMemory(meta, selectedId); const nodes = Object.freeze(groups.flatMap((group) => group.nodes));
@@ -338,7 +322,7 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
     contentVersion: EVOLUTION_CONTENT_VERSION, composition: Object.freeze(composition), branchCounts: Object.freeze(branchCounts),
     roots: Object.freeze(roots), reachable: reachable.size, physicalRelations: frontierStates / 2, frontierStates,
     minDegree: Math.min(...degrees), maxDegree: Math.max(...degrees), topologyFrequency: TOPOLOGY.frequency,
-    worldPotential: compileMemory({ memoryNodes: nodes.map((node) => node.id) }).worldPotential,
+    worldPotential: compileEvolution({ evolutionLevels: nodes.map((node) => ({ id: node.id, level: '1' })) }).worldPotential,
     mappingHash: MEMORY_ATLAS_HASH });
 }
 function connectedCells(topo, root, allowed) {

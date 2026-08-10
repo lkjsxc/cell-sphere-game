@@ -8,7 +8,7 @@ Current authority is source, tests, schemas, deployment, and the root
 | `status.md` | Exact release-candidate/deployment snapshot and evidence. |
 | `game-design.md` | Autonomous loop, scarcity, habitats, progression, SCORE, Trophies. |
 | `architecture.md` | Authority boundaries, protocols, topology, persistence. |
-| `simulation.md` | Deterministic tick, finite resources, event eras, habitats. |
+| `simulation.md` | Deterministic tick, finite resources, chronic pressure, habitats. |
 | `rendering.md` | Whole-cell WebGL2/Canvas language and bounds. |
 | `balancing.md` | Targets, measured distributions, economy model. |
 | `testing.md` | Gates, browser matrix, and deployment verification. |

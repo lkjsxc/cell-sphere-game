@@ -10,8 +10,8 @@ import { reachGoalSummary } from './lifecycle/reach-goal.js';
 import { environmentExposureSummary } from '../game/environment-exposure.js';
 import { environmentPressureSummary } from './challenge-profile.js';
 
-/** v7: explicit terminal evidence for the corrected pressure authority. */
-export const RUN_RESULT_SCHEMA_VERSION = 7;
+/** v8: chronic Environment evidence without disaster authority. */
+export const RUN_RESULT_SCHEMA_VERSION = 8;
 
 export function buildRunResult(s) {
   const scoreProjection = evaluate(metricsFromState(s), { environmentBonusQ: s.scoreMerit.environmentBonusQ }); const conservation = resourceConservation(s);
@@ -32,7 +32,6 @@ export function buildRunResult(s) {
     environmentScheduleVersion: s.environmentScheduleVersion,
     environmentScheduleHash: s.environmentScheduleHash,
     environmentProfileVersion: s.currentEnvironmentProfileVersion,
-    eventDirectorVersion: s.eventDirector?.version ?? 0,
     currentEnvironmentProfileHash: s.currentEnvironmentProfileHash,
     startEnvironmentLevel: '0',
     finalEnvironmentLevel: s.currentEnvironmentLevel,
@@ -47,7 +46,6 @@ export function buildRunResult(s) {
       nextProfile: s.nextEnvironmentProfile, progressQ: s.environmentLevelProgressQ,
       coefficients: s.environmentCoefficients,
     }),
-    onboardingEnvironmentModifier: { ...s.onboardingEnvironmentModifier },
     scoreModelVersion: SCORE_MODEL_VERSION, score: s.scoreMerit.total,
     scoreProjection: { ...scoreProjection, total: s.scoreMerit.total }, scoreMerit: copyMerit(s.scoreMerit),
     worldPotential: s.worldPotential, evolutionPower: s.evolutionPower,
@@ -63,8 +61,6 @@ export function buildRunResult(s) {
     totalMaintenance: s.totalMaintenance,
     stressBurden: s.stressBurdenSamples ? s.stressBurdenSum / s.stressBurdenSamples : 0,
     challengeMult: s.challenge?.scoreMult ?? 1,
-    crisesTotal: s.crisesTotal,
-    crisesEndured: s.crisesEndured,
     resourceInitial: s.initialResourceStock,
     resourceFinal: conservation.actual, resourceAvailableFinal: sumArray(s.nutrient),
     resourceReserveFinal: sumArray(s.resourceReserve), resourceRecyclableFinal: sumArray(s.recyclableResource),
@@ -104,11 +100,10 @@ export function buildAbandonedRun(s) {
     inoculationCell: s.inoculationCell, worldOrdinal: s.worldOrdinal,
     environmentModelVersion: s.environmentModelVersion, environmentScheduleVersion: s.environmentScheduleVersion,
     environmentScheduleHash: s.environmentScheduleHash, environmentProfileVersion: s.currentEnvironmentProfileVersion,
-    eventDirectorVersion: s.eventDirector?.version ?? 0, currentEnvironmentProfileHash: s.currentEnvironmentProfileHash,
+    currentEnvironmentProfileHash: s.currentEnvironmentProfileHash,
     startEnvironmentLevel: '0', finalEnvironmentLevel: s.currentEnvironmentLevel,
     peakEnvironmentLevel: s.peakEnvironmentLevel, environmentTransitionCount: s.environmentTransitionCount,
     environmentExposure: environmentExposureSummary(s.environmentExposure),
-    onboardingEnvironmentModifier: { ...s.onboardingEnvironmentModifier },
     scoreModelVersion: SCORE_MODEL_VERSION, worldPotential: s.worldPotential, evolutionPower: s.evolutionPower,
     evolutionDepth: s.evolutionDepth,
     potentialVersion: s.potentialVersion, scoreMerit: copyMerit(s.scoreMerit),

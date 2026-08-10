@@ -26,8 +26,8 @@ import { createBlankSnapshot } from '../../src/rendering/blank-snapshot.js';
 import { GLRenderer } from '../../src/rendering/renderer.js';
 import { Canvas2DRenderer } from '../../src/rendering/fallback2d.js';
 import { WorldPass } from '../../src/rendering/world-pass.js';
-import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
-  ENVIRONMENT_SCHEDULE_HASH, ENVIRONMENT_SCHEDULE_VERSION } from '../../src/game/environment-level.js';
+import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_HASH,
+  ENVIRONMENT_SCHEDULE_VERSION } from '../../src/game/environment-level.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(here, p), 'utf8');
@@ -108,7 +108,7 @@ function project(matrix, point) {
 test('parseUniformNames strips array brackets', () => {
   const names = parseUniformNames(SH.FS_GLOBE);
   assert.equal(names.has('uEventCenter'), false, 'renderer still reconstructs spherical caps');
-  assert.ok(names.has('uEntropy')); assert.match(SH.VS_GLOBE, /in vec2 aEvent/);
+  assert.ok(names.has('uEntropy')); assert.doesNotMatch(SH.VS_GLOBE, /aEvent/);
   assert.match(SH.VS_GLOBE, /in vec4 aEcology/);
 });
 
@@ -142,7 +142,7 @@ test('every declared uniform is uploaded by the renderer modules', () => {
 test('renderers bind exact world identity and reject an old snapshot before drawing', () => {
   const environment = { environmentModelVersion: ENVIRONMENT_MODEL_VERSION,
     environmentScheduleVersion: ENVIRONMENT_SCHEDULE_VERSION, environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH,
-    immutableStartConfigurationHash: 'abcdef12', onboardingEnvironmentModifierVersion: ENVIRONMENT_ONBOARDING_MODIFIER_VERSION };
+    immutableStartConfigurationHash: 'abcdef12' };
   const current = createWorldIdentity({ worldSessionId: 2, runId: 3, seed: 4, presentationGeneration: 5, ...environment });
   const old = createWorldIdentity({ worldSessionId: 1, runId: 2, seed: 3, presentationGeneration: 4, ...environment });
   const currentScene = { worldIdentity: current, snapshot: createBlankSnapshot(8, current) };
@@ -165,7 +165,7 @@ test('renderer teardown zeroes dynamic buffers and removes the exact context lis
   const renderer = read('../../src/rendering/renderer.js'); const world = read('../../src/rendering/world-pass.js');
   assert.match(renderer, /this\.contextLossListener/); assert.match(renderer, /removeEventListener\('webglcontextlost', this\.contextLossListener\)/);
   assert.match(renderer, /if \(this\.disposed\) return/); assert.match(world, /lifeData\.fill\(0\)/);
-  assert.match(world, /eventData\.fill\(0\)/); assert.match(world, /ecologyData\.fill\(0\)/);
+  assert.match(world, /ecologyData\.fill\(0\)/); assert.doesNotMatch(world, /eventData|aEvent/);
   assert.doesNotMatch(world, /adaptationData|aAdaptation|uAdaptation/);
   assert.match(world, /bufferSubData/);
 });

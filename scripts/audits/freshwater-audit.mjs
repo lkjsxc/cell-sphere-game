@@ -2,10 +2,10 @@
 /** Matched-world finite freshwater survival advantage audit. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../../src/simulation/simulator.js';
-import { compileMemory } from '../../src/game/skills/index.js';
+import { compileEvolution } from '../../src/game/skills/index.js';
 import { FRESH_RESOURCE_FLOOR } from '../../src/simulation/lifecycle/ecological-access.js';
 
-const count = integerArg('--count=', 300); const memory = compileMemory({ memoryNodes: [] }); const pairs = [];
+const count = integerArg('--count=', 300); const memory = compileEvolution({ evolutionLevels: [] }); const pairs = [];
 const starts = { near: 0, far: 0 }; const started = performance.now();
 for (let index = 0; index < count; index++) {
   const seed = (0x66726573 + Math.imul(index, 0x9e3779b1)) >>> 0;

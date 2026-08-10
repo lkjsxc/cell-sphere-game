@@ -42,7 +42,6 @@ export function createFields(rng, topo) {
     forestDensity: ecology.forestDensity,
     biomeId: ecology.biomeId,
     ridgeStrength: terrain.ridgeStrength,
-    hazardSusceptibility: ecology.hazardSusceptibility,
     growthSuitability: ecology.growthSuitability,
     maintenanceMultiplier: ecology.maintenanceMultiplier,
     uptakeMultiplier: ecology.uptakeMultiplier,
@@ -51,7 +50,6 @@ export function createFields(rng, topo) {
     featureFlags: hydro.featureFlags,
     regionId: ecology.regionId,
     toxVuln: ecology.toxVuln,
-    eventVuln: ecology.eventVuln,
     landmarks: features.landmarks,
     sources: features.sources,
   });

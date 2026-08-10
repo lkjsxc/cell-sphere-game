@@ -1,5 +1,7 @@
 # Environment Progression v2
 
+> **Historical record, superseded by Product Simplification v1 Phase 3.** This package documents the former event-director and migration implementation; it is not current product or persistence authority.
+
 ## Purpose
 
 Replace the rejected cross-world Environment frontier with one deterministic

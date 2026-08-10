@@ -1,16 +1,15 @@
 #!/usr/bin/env node
-/** Production Trophy calibration, catalog integrity, migration, and dominance audit. */
+/** Production Trophy calibration, catalog integrity, and dominance audit. */
 import { mkdirSync, writeFileSync } from 'node:fs'; import { performance } from 'node:perf_hooks';
 import { TROPHIES, TROPHY_IDS, validateTrophyCatalog } from '../../src/game/trophies/index.js';
 import { validateTrophyAtlas } from '../../src/game/trophies/atlas.js';
 import { baseAggregate, reconcileTrophies, trophyConditionMet } from '../../src/game/trophies/evaluator.js';
 import { TROPHY_MAX_KEYS, TROPHY_SUM_KEYS } from '../../src/game/trophies/keys.js';
-import { validateTrophyFacts } from '../../src/game/trophies/facts.js';
 import { MEMORY_BRANCHES, availableMemoryNodes, compileEvolution, purchaseEvolutionLevel } from '../../src/game/skills/index.js';
 import { RunController } from '../../src/simulation/simulator.js';
 import { compareProgressionIntegers, incrementProgressionInteger } from '../../src/core/progression-integer.js';
 import { applyRunResult } from '../../src/interface/policies/run-result.js';
-import { defaultHistory } from '../../src/platform/history.js'; import { defaultMeta, validateMeta } from '../../src/platform/storage.js';
+import { defaultHistory } from '../../src/platform/history.js'; import { defaultMeta } from '../../src/platform/storage.js';
 import { hashStringU32, hexU32 } from '../../src/core/hash.js';
 
 const started = performance.now(); const catalog = validateTrophyCatalog(); const atlas = validateTrophyAtlas();
@@ -21,7 +20,7 @@ const targetResults = Object.fromEntries(Object.entries(targets).map(([horizon, 
 const trivial = TROPHY_IDS.filter((id) => id !== 'evolution-first-world'
   && firstWorldCohort.filter((row) => row.ids.includes(id)).length >= firstWorldCohort.length / 2);
 const impossible = impossibleCriteria(); const duplicateConditions = duplicateBy((trophy) => JSON.stringify(trophy.condition));
-const duplicateCriteria = duplicateBy((trophy) => trophy.criteriaEn); const dominance = dominantPairs(); const legacy = legacyAudit();
+const duplicateCriteria = duplicateBy((trophy) => trophy.criteriaEn); const dominance = dominantPairs();
 const cohortCounts = firstWorldCohort.map((row) => row.ids.length).sort((a, b) => a - b);
 const report = { catalog: { count: catalog.count, families: catalog.families, uniqueIds: catalog.uniqueIds,
     uniqueCriteria: new Set(TROPHIES.map((trophy) => trophy.criteriaEn)).size, uniqueConditions: new Set(TROPHIES.map((trophy) => JSON.stringify(trophy.condition))).size,
@@ -32,12 +31,12 @@ const report = { catalog: { count: catalog.count, families: catalog.families, un
     horizons: targetResults, newlyByHorizon: campaign.horizons, finalOwnedCells: campaign.meta.evolutionLevels.length,
     finalEchoes: campaign.meta.totalEchoes, finalTrophies: campaign.meta.trophyIds.length, remaining: 96 - campaign.meta.trophyIds.length,
     familyTotals: familyTotals(campaign.meta.trophyIds) },
-  integrity: { impossible, duplicateConditions, duplicateCriteria, dominatedPairs: dominance, oneTimeRewards: campaign.oneTime,
-    legacyMigration: legacy }, elapsedMs: Math.round(performance.now() - started) };
+  integrity: { impossible, duplicateConditions, duplicateCriteria, dominatedPairs: dominance, oneTimeRewards: campaign.oneTime },
+  elapsedMs: Math.round(performance.now() - started) };
 report.deterministicHash = hexU32(hashStringU32(JSON.stringify({ catalog: report.catalog, cohort: report.productionFirstWorldCohort,
   campaign: report.modeledCampaign, integrity: report.integrity })));
 report.valid = catalog.valid && atlas.valid && !trivial.length && !impossible.length && !duplicateConditions.length && !duplicateCriteria.length
-  && Object.values(targetResults).every((row) => row.withinTarget) && legacy.valid && campaign.oneTime.valid && campaign.meta.trophyIds.length < 96;
+  && Object.values(targetResults).every((row) => row.withinTarget) && campaign.oneTime.valid && campaign.meta.trophyIds.length < 96;
 mkdirSync('reports', { recursive: true }); writeFileSync('reports/trophy-audit.json', `${JSON.stringify(report, null, 2)}\n`);
 console.log(JSON.stringify(report, null, 2)); if (!report.valid) process.exitCode = 1;
 
@@ -72,18 +71,11 @@ function buyOne(meta,run){const preferred=MEMORY_BRANCHES[(run-1)%MEMORY_BRANCHE
       ||compareProgressionIntegers(a.nextCost,b.nextCost)||a.id.localeCompare(b.id));
   if(!options.length)return{ok:false,meta};const state=options[0];return purchaseEvolutionLevel(meta,state.id,{expectedLevel:state.currentLevel,expectedRevision:meta.revision,
     transactionKey:`trophy-audit:${run}:${state.id}:${state.currentLevel}`});}
-function impossibleCriteria() { const aggregate = Object.fromEntries([...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS].map((key) => [key, 10_000_000]));
+function impossibleCriteria() { const aggregate = Object.fromEntries([...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS].map((key) => [key,
+  key === 'environmentPressureTicksQ' ? 1_000_000_000 : 10_000_000]));
   Object.assign(aggregate, { runs: 10000, bestScore: 2_000_000, totalEchoes: 1_000_000, skillCount: 252, skillBranchCount: 6,
-    imprintCount: 8, geographyMask: 63, crisisMask: 127, adaptationCategoryMask: 63, adaptationCardCount: 24,
-    lakeTypeMask: 31, lakeSalinityMask: 7, reachCardCount: 6, metabolismCardCount: 6, resilienceCardCount: 7,
-    transportCardCount: 5, symbiosisCardCount: 4, memoryCardCount: 2 });
+    imprintCount: 8, geographyMask: 63, lakeTypeMask: 31, lakeSalinityMask: 7 });
   return TROPHIES.filter((trophy) => !trophyConditionMet(trophy.condition, aggregate)).map((trophy) => trophy.id); }
-function legacyAudit() { const loaded = validateMeta({ ...defaultMeta(), schema: 7, trophyIds: ['reach-river-touch'], trophyBackfillVersion: 1,
-    trophyProgress: { geographyMask: 2 } }); const facts = validateTrophyFacts({ version: 1, geographyMask: 2 });
-  const outcome = reconcileTrophies(loaded, { worlds: [{ seed: 1, tick: 1, score: 0, trophyFacts: facts }] });
-  const valid = loaded.legacyTrophyIds.includes('reach-river-touch') && !loaded.trophyIds.includes('reach-lake-network')
-    && !(facts.geographyMask & 2) && !outcome.awardedIds.includes('reach-lake-network');
-  return { valid, legacyIds: loaded.legacyTrophyIds, currentLakeOwned: loaded.trophyIds.includes('reach-lake-network'), v1LakeBit: facts.geographyMask & 2 }; }
 function dominantPairs() { const singles = TROPHIES.map((trophy) => ({ trophy, leaves: allLeaves(trophy.condition) })).filter((row) => row.leaves);
   const pairs = []; for (const high of singles) for (const low of singles) { if (high === low || high.leaves.length !== low.leaves.length) continue;
     const h = new Map(high.leaves.map((leaf) => [leaf.key, leaf])); let strict = false; const dominates = low.leaves.every((leaf) => {

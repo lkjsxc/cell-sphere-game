@@ -16,7 +16,7 @@ export function buildTrophySnapshot(topo, meta, selectedId = null, emphasizedIds
     nodeIndex[trophy.cell] = index; emphasis[trophy.cell] = emphasized.has(trophy.id) ? 1 : 0;
     return Object.freeze({ ...trophy, earned, selected });
   });
-  return Object.freeze({ tick: earnedIds.size * 16 + (selectedId ? 1 : 0), entropy: .2, status: 'trophies', events: [],
+  return Object.freeze({ tick: earnedIds.size * 16 + (selectedId ? 1 : 0), entropy: .2, status: 'trophies',
     memoryStatus: status, memoryBranch: branch, memoryTier: tier, memoryKind: kind,
     memoryImprintWeight: imprint, memoryNodeIndex: nodeIndex, memoryEmphasis: emphasis,
     trophyScene: Object.freeze({ selectedId, nodes: Object.freeze(nodes) }), nodeStates: Object.freeze(nodes),

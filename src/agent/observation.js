@@ -13,7 +13,7 @@ import { formatProgressionEngineering, incrementProgressionInteger, maxProgressi
   normalizeProgressionInteger } from '../core/progression-integer.js';
 import { AGENT_GOALS } from './schema.js';
 
-export const OBSERVATION_SCHEMA = 4;
+export const OBSERVATION_SCHEMA = 5;
 export const OBSERVATION_KEYS = Object.freeze([
   'schema', 'metaRevision', 'worldOrdinal', 'activeWorld', 'environmentSchedule',
   'bestEnvironmentLevelReached', 'bestEnvironmentExposure', 'echoBalance', 'echoBalanceFormatted',
@@ -77,17 +77,13 @@ function publicActiveWorld(active) {
     currentEnvironmentLevel: active.currentEnvironmentLevel, peakEnvironmentLevel: active.peakEnvironmentLevel,
     environmentScheduleVersion: active.environmentScheduleVersion,
     environmentProfileVersion: Number.isInteger(active.environmentProfileVersion) ? active.environmentProfileVersion : 0,
-    eventDirectorVersion: Number.isInteger(active.eventDirector?.version) ? active.eventDirector.version : 0,
     environmentLevelStartTick: active.environmentLevelStartTick,
     nextEnvironmentLevelTick: active.nextEnvironmentLevelTick,
     environmentLevelProgressQ: active.environmentLevelProgressQ,
     environmentPressureSummary: publicPressure(active.environmentPressureSummary),
     environmentExposure: publicExposure(active.environmentExposure),
-    onboardingEnvironmentModifier: Object.freeze({ ...active.onboardingEnvironmentModifier }),
     resources: Object.freeze({ ...active.resources }), reach: active.reach,
     electricity: Object.freeze({ ...active.electricity }),
-    // Only already-active public events are present; no future director queue.
-    activeEvents: Object.freeze((active.activeEvents ?? []).map((event) => Object.freeze({ ...event }))),
   });
 }
 function publicExposure(raw) {

@@ -1,72 +1,33 @@
-# Testing and evidence
+# Testing
 
-## Core commands
+Run focused checks after a coherent edit, then climb to integration and browser
+coverage for cross-layer changes.
 
 ```bash
 npm run test:unit
 npm run test:integration
-npm run balance:smoke
-npm run benchmark
 npm run check:links
 npm run check:structure
-npm run verify
+npm run audit:no-disaster
+npm run audit:environment-levels
+npm run audit:resources
+npm run audit:trophies
+npm run showcase:check
 npm run test:browser:file
 npm run test:browser:canvas
 npm run test:browser:fallback
-npm run audit:environment-levels
-npm run audit:events
-npm run audit:luminous
-npm run audit:progression-numbers
-npm run audit:trophies
-npm run terminal:soak
-npm run agent:smoke
-npm run agent:campaign
-npm run agent:long
-npm run balance:holdout
 ```
 
-A skipped command is not a pass. Report only checks that actually ran.
+`audit:no-disaster` verifies deleted gameplay-disaster modules, forbidden
+production fields, chronic profile shape, deterministic runs, and the absence of
+active disaster authority. Ordinary DOM events and semantic History records are
+intentionally outside that prohibition.
 
-## Environment Progression v2 coverage
+Environment checks verify exact Level-0 starts, direct schedule inversion,
+finite chronic coefficients, Worker/fallback parity, bounded exposure evidence,
+and reset on the next World. Persistence checks use current-only schemas and
+confirm old or mismatched documents reset rather than migrate.
 
-Unit and integration coverage must prove:
-
-- tick 0/threshold-neighbor monotonicity/direct inversion/huge exact schedule
-  evaluation and finite profile compilation;
-- all new worlds, blank snapshots, Worker/fallback, replays, and agent starts
-  begin at Level 0;
-- public level is independent of Evolution/seed/presentation while Evolution
-  mitigates effective pressure;
-- transition installation is once-only through terminal-collapse boundary fades,
-  current/next profile state is bounded, interpolated coefficients are exposed
-  in snapshot/result/History pressure summaries, and no later level rewrites
-  Level-0 resources/topology;
-- rolling events have bounded active/future/recent state, a player-visible
-  minimum telegraph despite summary cadence, onboarding separation, reclamation,
-  effective-defense suppression at zero event pressure, and Worker/fallback/
-  high-speed equality;
-- no normal hard terminal exists; finite builds naturally die and external agent
-  budgets return `incomplete-budget` without rewards;
-- results/SCORE validate final/peak/exposure, exact transition thresholds/profile
-  pressure, and reject forged values;
-- immutable identity excludes live level/profile hash and replacement presents a
-  neutral Level-0 blank frame;
-- meta/history migration keeps old frontier/static attempts inert, records
-  dynamic best evidence exactly once, and survives duplicate/crash/storage cases;
-- HUD/Result/Evolution/History contain no static-level select/retry/frontier
-  controls or wording; pointer/touch/keyboard and Canvas/WebGL paths remain
-  accessible;
-- fair agents cannot select/retry levels and expose no future events/seeds/RNG;
-- a real production Worker transport reaches the same transition/event history,
-  exposure, and terminal hash as the fallback controller.
-
-## Browser and release evidence
-
-Browser commands use real CDP pointer, touch, keyboard, Worker/fallback, and
-Canvas paths. They must verify live HUD/reset/Result semantics, Evolution
-second-activation purchase behavior, and Luminous charged/uncharged whole-cell
-visual evidence. A mocked click or numeric charge counter is not visual proof.
-
-After push, record local/remote SHA, CI result, Pages deployment, cache-busted
-public bytes, and a deployed browser path when infrastructure permits. State any
-network/browser limitations honestly.
+Browser checks are evidence for real pointer, keyboard, scene, History, Result,
+Evolution, Trophy, WebGL2, and Canvas behavior; a mocked call is not visual
+proof.

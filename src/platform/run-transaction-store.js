@@ -45,9 +45,8 @@ export function recoverRunTransaction(retention = 24, storage = browserStorage()
 }
 
 function normalize(raw, retention) {
-  if (!raw || ![1, 2, 3, PROGRESSION_TRANSACTION_SCHEMA].includes(raw.schema)
-    || typeof raw.key !== 'string' || !raw.key) return null;
-  const kind = raw.schema === 1 ? 'run' : raw.kind;
+  if (!raw || raw.schema !== PROGRESSION_TRANSACTION_SCHEMA || typeof raw.key !== 'string' || !raw.key) return null;
+  const kind = raw.kind;
   if (!['run', 'evolution'].includes(kind)) return null;
   const meta = validateMeta(raw.meta), history = validateHistory(raw.history, retention);
   const receipts = kind === 'run' ? meta.resultKeys : meta.evolutionTransactionKeys;

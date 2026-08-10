@@ -9,7 +9,7 @@ import { BIOME, BIOME_EFFECTS, FEATURE, LANDMARK, WATER, createFields } from '..
 const topo = createTopology(4); const fieldsFor = (seed) => createFields(createRng(seed), topo);
 const floats = ['altitude', 'baseElevation', 'oceanDepth', 'coastDistance', 'lakeDepth',
   'freshwaterInfluence', 'baseMoisture', 'baseTemp', 'baseNutrient', 'forestDensity',
-  'ridgeStrength', 'hazardSusceptibility', 'toxVuln', 'eventVuln', 'growthSuitability',
+  'ridgeStrength', 'toxVuln', 'growthSuitability',
   'maintenanceMultiplier', 'uptakeMultiplier', 'resourceRenewal', 'routeCost'];
 const integers = ['landMask', 'waterClass', 'lakeId', 'lakeShore', 'freshwaterTier', 'freshwaterLakeId',
   'biomeId', 'featureFlags', 'regionId'];
@@ -46,7 +46,7 @@ test('world hash, lake records, and typed fields are deterministic', () => {
   const a = fieldsFor(20260731); const b = fieldsFor(20260731);
   assert.equal(worldHash(a), worldHash(b));
   // Changed intentionally with finite lake-capacity weighting and supporting-lake/tier fields.
-  assert.equal(worldHash(a), 'ce41cb69');
+  assert.equal(worldHash(a), '7f8cf3a6');
   for (const key of [...floats, ...integers]) assert.deepEqual(a[key], b[key], key);
   assert.deepEqual(a.lakes, b.lakes); assert.deepEqual(a.landmarks, b.landmarks); assert.deepEqual(a.sources, b.sources);
   assert.notEqual(worldHash(a), worldHash(fieldsFor(20260730)));

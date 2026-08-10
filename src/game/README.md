@@ -5,16 +5,14 @@ No DOM or storage I/O belongs here.
 
 | Module | Authority |
 |---|---|
-| `environment-level.js` | Environment model/schedule v2, exact tick↔level/progress/hash, onboarding modifier, and explicit legacy-frontier migration reader. |
-| `environment-exposure.js` | Bounded exact pressure-time/quality exposure evidence. |
-| `scoring.js` | SCORE v5, exact Echoes, ranks, and monotone exposure-bonus high-water authority. |
+| `environment-level.js` | Environment model/schedule v2 and exact tick↔level/progress/hash authority. |
+| `environment-exposure.js` | Bounded exact chronic-pressure time and quality evidence. |
+| `scoring.js` | Current SCORE v5 and exact Echo reward authority. |
 | `balance.js` | Finite simulation constants; no normal world-duration ceiling. |
-| `skills/` | 252-cell exact Evolution levels/costs/effects/Potential/build mastery/transactions. |
-| `events-content.js` | Whole-cell environmental event families. |
-| `trophies/` | Read-only 96-Trophy catalog and completed-world proof. |
+| `skills/` | Current exact Evolution levels, costs, effects, and transactions. |
+| `trophies/` | Read-only Trophy catalog and completed-world proof. |
 
-Environment Level is a within-world public clock. New worlds start Level 0;
-Evolution changes finite effective pressure but never clock thresholds. Exact
-values remain canonical decimal strings at external boundaries. Legacy static
-frontier data is readable only for migration and never affects a new world,
-SCORE, eligibility, or rewards.
+Environment Level is a within-world public clock. New worlds start at Level 0;
+Evolution changes effective chronic pressure but never clock thresholds. Exact
+values remain canonical decimal strings at external boundaries. There is no
+legacy-frontier reader, onboarding exception, or gameplay-event authority.

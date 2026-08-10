@@ -5,10 +5,10 @@ framing, result actions, and atomic world replacement.
 
 - `progression-spheres.js`: shared select-then-second-activation Evolution
   purchase authority across rendered cells, semantic tree, and button paths.
-- `run-result.js`: validates dynamic v2 Environment result evidence and couples
-  SCORE v5, Echoes, best records, History 8, Trophies, and idempotency.
+- `run-result.js`: validates current Environment result evidence and couples
+  SCORE v5, Echoes, best records, History, Trophies, and idempotency.
 - `run-session.js`: first-wins retirement, typed Level-0 blank frame, immutable
-  v6 start identity, and Level-0 authority startup.
+  current start identity, and Level-0 authority startup.
 - `surface-coordinator.js`, `scene-selector.js`, and `layout-policy.js`: shell,
   focus, keyboard, safe-area, and scene behavior without moving the globe.
 - `continuation.js` / `new-world-surface.js`: result continuation and explicit
@@ -16,5 +16,5 @@ framing, result actions, and atomic world replacement.
 - presentation/time policies: bounded accessible feedback and normal 1×–8× plus
   visible developer 16×–256×, with every tick executed.
 
-These policies never mutate simulation authority. Active Adaptations are retired;
-legacy Environment frontier data is not an interface control.
+These policies never mutate simulation authority. There is no Adaptation choice,
+static Environment frontier, or gameplay-event control.

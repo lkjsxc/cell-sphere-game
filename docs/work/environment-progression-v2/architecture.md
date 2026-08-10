@@ -1,5 +1,7 @@
 # Implemented architecture
 
+> **Historical record, superseded by Product Simplification v1 Phase 3.** Event-director and migration details below do not describe current authority.
+
 ## Canonical boundaries
 
 `src/game/environment-level.js` is the sole public schedule source. It maps

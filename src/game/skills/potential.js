@@ -22,7 +22,7 @@ export const EVOLUTION_POWER_BY_KIND = Object.freeze({
   capstone: 8,
 });
 
-/** Retained level-one breadth anchors from World Potential v2. */
+/** Current level-one breadth anchors. */
 export const WORLD_POTENTIAL_ANCHORS = Object.freeze([
   [0, 16000], [1, 19000], [2, 22000], [3, 48000], [4, 80000], [6, 105000],
   [8, 135000], [10, 165000], [12, 195000], [16, 240000], [24, 315000],
@@ -34,8 +34,8 @@ export function evolutionPowerForKind(kind) {
   return EVOLUTION_POWER_BY_KIND[kind] ?? 0;
 }
 
-/** Narrow compatibility projection for legacy v2 Number records only. */
-export function legacyWorldPotentialV2Number(value) {
+/** Direct finite breadth-anchor projection. */
+export function worldPotentialBreadthAnchor(value) {
   const power = Number.isFinite(value) ? Math.max(0, Math.min(FULL_EVOLUTION_POWER, value)) : 0;
   for (let index = 1; index < WORLD_POTENTIAL_ANCHORS.length; index++) {
     const upper = WORLD_POTENTIAL_ANCHORS[index];
@@ -58,7 +58,7 @@ export function worldPotentialForBreadthAndDepth(breadthPower, depth = '0') {
   const linear = multiplyProgressionIntegers(canonicalDepth, '1000');
   const quadratic = multiplyProgressionIntegers(square, '8');
   const quartic = divideProgressionIntegers(fourth, '1000000');
-  return addProgressionIntegers(String(legacyWorldPotentialV2Number(breadthPower)),
+  return addProgressionIntegers(String(worldPotentialBreadthAnchor(breadthPower)),
     addProgressionIntegers(linear, addProgressionIntegers(quadratic, quartic)));
 }
 

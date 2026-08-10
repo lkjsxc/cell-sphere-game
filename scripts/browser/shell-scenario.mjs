@@ -4,7 +4,7 @@ import { assertSkillGeometry } from './evidence.mjs';
 export async function runScenario(t) {
   const { evaluate, wait, poll, errors, click, tap, drag, screenshot, setViewport, key } = t;
   let boot = await evaluate('window.__CELL_SPHERE_BOOT__'); ok(boot?.playable, 'app did not boot');
-  boot = await runIdentityMigrationScenario(t, boot);
+  boot = await runStorageResetScenario(t, boot);
   const publicSpeeds = await evaluate(`(()=>({runtime:[...document.getElementById('speed-select').options].map(o=>Number(o.value)),defaults:[...document.getElementById('settings-speed').options].map(o=>Number(o.value)),dev:window.__CELL_SPHERE_BOOT__.developerMode,marker:document.getElementById('dev-mode-marker').hidden,agent:Object.hasOwn(window,'__CSG_AGENT__')}))()`);
   ok(publicSpeeds.runtime.join(',') === '1,2,4,8' && publicSpeeds.defaults.join(',') === '1,2,4,8'
     && !publicSpeeds.dev && publicSpeeds.marker && !publicSpeeds.agent, `public speed isolation failed: ${JSON.stringify(publicSpeeds)}`);
@@ -203,16 +203,21 @@ export async function runScenario(t) {
   ok(await evaluate(`window.__CELL_SPHERE_APP__.phase==='result'&&window.__CELL_SPHERE_APP__.worldIdentity.resultTransactionKey===${JSON.stringify(runIdentity)}`), 'Evolution replaced terminal world authority');
   await trustedId(t, 'scene-trophies'); ok(await evaluate(`window.__CELL_SPHERE_APP__.trophySnapshot.nodeStates.length===96`), 'Trophy scene incomplete');
   const firstNotice = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {name:document.getElementById('trophy-notification-name').textContent,badge:Number(document.getElementById('trophy-tab-badge').textContent),queue:a.meta.trophyQueue.slice()}})()`);
-  ok(firstNotice.badge === 2 && firstNotice.queue.length === 2, `Trophy queue did not preserve simultaneous awards: ${JSON.stringify(firstNotice)}`);
+  ok(firstNotice.badge === firstNotice.queue.length && firstNotice.queue.length >= 2,
+    `Trophy queue did not preserve simultaneous awards: ${JSON.stringify(firstNotice)}`);
   const secondNotice = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.settings={...a.settings,motion:'reduced'};a.trophyNotifications.acknowledge('browser-sequence');return {name:document.getElementById('trophy-notification-name').textContent,badge:Number(document.getElementById('trophy-tab-badge').textContent),static:document.getElementById('trophy-notification').classList.contains('is-static')}})()`);
-  ok(secondNotice.badge === 1 && secondNotice.name !== firstNotice.name && secondNotice.static, `Sequential reduced Trophy reveal failed: ${JSON.stringify({firstNotice,secondNotice})}`);
+  ok(secondNotice.badge === firstNotice.badge - 1 && secondNotice.name !== firstNotice.name && secondNotice.static,
+    `Sequential reduced Trophy reveal failed: ${JSON.stringify({firstNotice,secondNotice})}`);
   await screenshot('browser-trophy-queue-reduced.png'); await trustedId(t, 'scene-world');
 
   await installFirstReplacementCapture(evaluate); await evaluate(`window.__CELL_SPHERE_APP__.requestWorldReplacement('auto-next',window.__CELL_SPHERE_APP__.lastResultIdentity)`);
   ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'running', 6000), 'automatic replacement path did not start');
   assertBlankReplacement(await evaluate('window.__CELL_SPHERE_APP__.__firstReplacementFrame'), boot.renderer);
   ok(await evaluate(`document.getElementById('trophy-notification-name').textContent===${JSON.stringify(secondNotice.name)}`), 'Trophy notification did not survive automatic replacement');
-  await trustedId(t, 'trophy-notification-action'); ok(await evaluate(`window.__CELL_SPHERE_APP__.scene==='trophies'&&window.__CELL_SPHERE_APP__.trophyUi.selectedId!==null&&document.getElementById('trophy-tab-badge').hidden`), 'Trophy notification click did not route to detail and acknowledge');
+  await trustedId(t, 'trophy-notification-action'); const notificationRoute = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,badge=document.getElementById('trophy-tab-badge');return {scene:a.scene,selected:a.trophyUi.selectedId,queue:a.meta.trophyQueue.length,badgeHidden:badge.hidden,badge:Number(badge.textContent)}})()`);
+  ok(notificationRoute.scene === 'trophies' && notificationRoute.selected !== null && notificationRoute.queue === secondNotice.badge - 1
+    && (notificationRoute.badgeHidden || notificationRoute.badge === notificationRoute.queue),
+  `Trophy notification click did not route to detail and acknowledge: ${JSON.stringify(notificationRoute)}`);
   await evaluate(`window.__CELL_SPHERE_APP__.trophyNotifications.hold('browser-evidence',false)`);
   const bounded = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {...a.worldResourceAudit(),raf:a.frameAudit}})()`);
   ok(!bounded.historyRequests && !bounded.raf.errors, `replacement resources leaked: ${JSON.stringify(bounded)}`);
@@ -312,46 +317,44 @@ async function evolutionActivationEvidence(t) {
     touch:{id:touch.id,after:touchBought.level},button:{id:explicit.id,after:explicitBought.level}};
 }
 
-async function runIdentityMigrationScenario({ evaluate, wait, poll }, initialBoot) {
+async function runStorageResetScenario({ evaluate, wait, poll }, initialBoot) {
   ok(initialBoot.product === 'cell-sphere-game' && initialBoot.tagline === 'Every extinction becomes memory.', 'canonical boot identity missing');
   await evaluate(`(()=>{const old=['incremental','network','game'].join('-');localStorage.clear();
-    const meta={schema:8,bestScore:424242,totalEchoes:321,echoBalance:123,runs:7,worldSeedIndex:11,
-      resultKeys:['legacy-result-key'],memoryNodes:['reach-horizon-instinct'],quarantinedMemoryNodes:[],imprints:[],
-      trophyIds:['evolution-first-world'],legacyTrophyIds:['reach-river-touch'],trophyQueue:['evolution-first-world'],trophyBackfillVersion:2,
-      trophyProgress:{version:3,adaptationIds:['long-filaments'],geographyMask:1,geographyVersion:3,crisisMask:2,adaptationCategoryMask:1,lakeTypeMask:1,lakeSalinityMask:1,aggregate:{totalCrisesEndured:4}}};
-    const history={schema:4,worlds:[{id:'legacy-world',seed:17,tick:900,score:424242,rank:'Canopy',cause:'starvation',archetype:'Legacy World',echo:9,hash:'abcdef',inoculationCell:4,adaptations:[],events:[]}],memory:[{seq:0,nodeId:'reach-horizon-instinct',cost:1,balance:123,run:7}],trophies:[{seq:0,tick:900,kind:'trophy',importance:3,key:'trophy.earned',subjectId:'evolution-first-world',primaryCells:[],worldId:'legacy-world',run:7}]};
-    const settings={schema:3,motion:'reduced',contrast:'high',quality:'eco',cameraInertia:false,idleRotation:'off',adaptationMode:'manual',autoContinue:false,pauseOnPanels:true,speed:16,historyRetention:32};
-    localStorage.setItem(old+':meta:v1',JSON.stringify(meta));localStorage.setItem(old+':history:v2',JSON.stringify(history));localStorage.setItem(old+':settings:v3',JSON.stringify(settings));location.reload();return true})()`);
-  await wait(1800); ok(await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000), 'legacy namespace reload failed');
-  const migrated = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__,old=['incremental','network','game'].join('-');
-    const canonical=Object.fromEntries(['meta','settings','history'].map(k=>[k,localStorage.getItem(b.storage[k])]));
-    return {score:a.meta.bestScore,legacyScore:a.meta.legacyBestScore,total:a.meta.totalEchoes,balance:a.meta.echoBalance,runs:a.meta.runs,seed:a.meta.worldSeedIndex,
-      keys:a.meta.resultKeys.slice(),levels:a.meta.evolutionLevels.map(x=>({...x})),trophies:a.meta.trophyIds.slice(),legacy:a.meta.legacyTrophyIds.slice(),queue:a.meta.trophyQueue.slice(),
-      history:a.archive.worlds.map(w=>w.id),motion:a.settings.motion,speed:a.settings.speed,canonical:Object.values(canonical).every(Boolean),
-      old:Object.values({m:localStorage.getItem(old+':meta:v1'),s:localStorage.getItem(old+':settings:v3'),h:localStorage.getItem(old+':history:v2')}).every(Boolean)}})()`);
-  ok(migrated.score === '0' && migrated.legacyScore === '424242' && migrated.total === '321' && migrated.balance === '123' && migrated.runs === '7' && migrated.seed === '11'
-    && migrated.keys[0] === 'legacy-result-key' && migrated.levels[0].id === 'reach-horizon-instinct' && migrated.levels[0].level === '1'
-    && migrated.trophies[0] === 'evolution-first-world' && migrated.legacy[0] === 'reach-river-touch'
-    && migrated.queue[0] === 'evolution-first-world' && migrated.history[0] === 'legacy-world'
-    && migrated.motion === 'reduced' && migrated.speed === 8 && migrated.canonical && migrated.old,
-  `browser namespace migration lost state: ${JSON.stringify(migrated)}`);
-  const exported = await evaluate(`(async()=>{const old=['incremental','network','game'].join('-'),a=window.__CELL_SPHERE_APP__;
-    const data=await import('./src/interface/app-data.js'),migration=await import('./src/platform/namespace-migration.js');
-    const parsed=data.parseImportedData(JSON.stringify({schema:1,product:old,meta:a.meta,history:a.archive,settings:a.settings}));
-    const saved=migration.saveImportedNamespace(parsed),fresh=JSON.parse(data.serializeExportData(parsed.meta,parsed.history,parsed.settings));
-    const raw=JSON.parse(localStorage.getItem(old+':meta:v1'));raw.totalEchoes=999999;raw.echoBalance=999999;raw.runs=99;
-    localStorage.setItem(old+':meta:v1',JSON.stringify(raw));return {saved,product:fresh.product,total:fresh.meta.totalEchoes}})()`);
-  ok(exported.saved.ok && exported.product === 'cell-sphere-game' && exported.total === '321', `legacy import/canonical export failed: ${JSON.stringify(exported)}`);
-  await evaluate('location.reload();true'); await wait(1800);
-  ok(await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000), 'coexistence reload failed');
-  const coexist = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {total:a.meta.totalEchoes,balance:a.meta.echoBalance,runs:a.meta.runs,keys:a.meta.resultKeys}})()`);
-  ok(coexist.total === '321' && coexist.balance === '123' && coexist.runs === '7' && coexist.keys.length === 1,
-    `legacy namespace overrode canonical or duplicated rewards: ${JSON.stringify(coexist)}`);
+    localStorage.setItem(old+':meta:v1',JSON.stringify({schema:8,totalEchoes:321,runs:7}));
+    localStorage.setItem(old+':history:v2',JSON.stringify({schema:4,worlds:[{id:'old-world'}]}));
+    localStorage.setItem(old+':settings:v3',JSON.stringify({schema:3,motion:'reduced'}));location.reload();return true})()`);
+  await wait(1800); ok(await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000), 'current namespace reload failed');
+  const reset = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__,old=['incremental','network','game'].join('-');
+    return {boot:b,runs:a.meta.runs,total:a.meta.totalEchoes,levels:a.meta.evolutionLevels.length,worlds:a.archive.worlds.length,
+      canonical:['meta','settings','history'].every(k=>Boolean(localStorage.getItem(b.storage[k]))),
+      oldStillPresent:Boolean(localStorage.getItem(old+':meta:v1'))}})()`);
+  ok(reset.runs === '0' && reset.total === '0' && reset.levels === 0 && reset.worlds === 0 && reset.canonical && reset.oldStillPresent,
+    `mismatched storage was not reset cleanly: ${JSON.stringify(reset)}`);
+  await evaluate(`(()=>{const b=window.__CELL_SPHERE_BOOT__;localStorage.setItem(b.storage.settings,
+    JSON.stringify({schema:4,motion:'reduced',autoContinue:false,speed:8}));location.reload();return true})()`);
+  await wait(1800); ok(await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000), 'current settings-schema reset reload failed');
+  const settingsReset = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__;
+    return {schema:a.settings.schema,motion:a.settings.motion,autoContinue:a.settings.autoContinue,speed:a.settings.speed,
+      status:b.storageStatus?.documents?.settings?.status}})()`);
+  ok(settingsReset.schema === 5 && settingsReset.autoContinue === true && settingsReset.speed === 1 && settingsReset.status === 'reset',
+    `mismatched current settings were not reset: ${JSON.stringify(settingsReset)}`);
+  const rollback = await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,boot=window.__CELL_SPHERE_BOOT__,
+    {createExportData}=await import('./src/interface/app-data.js'),keys=boot.storage,before=Object.fromEntries(Object.entries(keys).map(([k,key])=>[k,localStorage.getItem(key)])),
+    data=createExportData({...a.meta,echoBalance:'7'},a.archive,{...a.settings,motion:'reduced',autoContinue:false}),proto=Object.getPrototypeOf(localStorage),original=proto.setItem,
+    calls=[];try{proto.setItem=function(key,value){calls.push(key);if(key===keys.settings)throw new Error('blocked settings write');return original.call(this,key,value)};
+      a.settingsAction('import',JSON.stringify(data));}finally{proto.setItem=original}const after=Object.fromEntries(Object.entries(keys).map(([k,key])=>[k,localStorage.getItem(key)]));
+    return{calls,settingsKey:keys.settings,before,after,session:{echoBalance:a.meta.echoBalance,motion:a.settings.motion,autoContinue:a.settings.autoContinue}}})()`);
+  ok(JSON.stringify(rollback.before) === JSON.stringify(rollback.after) && rollback.calls.filter(key=>key===rollback.settingsKey).length === 1
+    && rollback.session.echoBalance === '7' && rollback.session.motion === 'reduced' && rollback.session.autoContinue === false,
+  `failed import left a partial durable write or did not retain the session import: ${JSON.stringify(rollback)}`);
+  const importRejected = await evaluate(`(async()=>{const data=await import('./src/interface/app-data.js');try{
+    data.parseImportedData(JSON.stringify({schema:1,product:['incremental','network','game'].join('-')}));return false;}catch{return true}})()`);
+  ok(importRejected, 'old export was accepted');
   await evaluate('localStorage.clear();location.reload();true'); await wait(1800);
-  ok(await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000), 'fresh canonical reload failed');
+  ok(await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000), 'fresh current reload failed');
   const fresh = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__;return {boot:b,defaults:a.meta.runs==='0'&&a.meta.totalEchoes==='0',
     canonical:['meta','settings','history'].every(k=>Boolean(localStorage.getItem(b.storage[k]))),errors:window.__CELL_SPHERE_ERRORS__.slice()}})()`);
-  ok(fresh.defaults && fresh.canonical && !fresh.errors.length, `fresh canonical save failed: ${JSON.stringify(fresh)}`); return fresh.boot;
+  ok(fresh.defaults && fresh.canonical && !fresh.errors.length, `fresh current save failed: ${JSON.stringify(fresh)}`); return fresh.boot;
 }
 
 async function trustedId(t, id) { return trustedSelector(t, `#${id}`); }
@@ -362,8 +365,8 @@ async function shellRect(evaluate) { return evaluate(`(()=>{const e=document.get
 async function layoutEvidence(evaluate) { return evaluate(`(()=>{const tabs=[...document.querySelectorAll('#scene-selector [role=tab]')],m=document.getElementById('environment-level-button').getBoundingClientRect(),d=document.querySelector('.command-rail').getBoundingClientRect(),s=document.getElementById('context-shell').getBoundingClientRect(),overlap=(a,b)=>!(a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom),rect=r=>({left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height});return {noOverflow:document.documentElement.scrollWidth<=innerWidth,selectorMin:Math.min(...tabs.map(x=>x.getBoundingClientRect().height)),metricMin:m.height,controlsBounded:m.left>=0&&m.right<=innerWidth&&d.left>=0&&d.right<=innerWidth&&s.left>=0&&s.right<=innerWidth,metricDockOverlap:overlap(m,d),metricShellOverlap:overlap(m,s),metric:rect(m),dock:rect(d),shell:rect(s)}})()`); }
 function sameRect(a, b, tolerance) { return ['left','top','right','bottom','width','height'].every((key) => Math.abs(a[key] - b[key]) <= tolerance); }
 export async function installFirstReplacementCapture(evaluate) {
-  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,old=a.worldIdentity.worldSessionId,make=a.makeRenderer.bind(a);a.__firstReplacementFrame=null;a.makeRenderer=(...args)=>{make(...args);const r=a.renderer,render=r.render.bind(r);r.render=s=>{const snap=s.snapshot,target=snap?.worldSessionId!==old;if(!target)return render(s);const count=v=>v?[...v].reduce((n,x)=>n+(x!==0),0):0,before={blank:snap?.blank===true,status:snap?.status,life:count(snap?.lifeState)+count(snap?.biomass),events:count(snap?.eventStrength),highlights:s.highlightedCells?.length??0};const accepted=render(s);a.__firstReplacementFrame={backend:r.backend,accepted,before,after:r.lastFrameAudit,presentation:a.presentationAudit.lastBlank};r.render=render;a.makeRenderer=make;return accepted}}})()`);
+  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,old=a.worldIdentity.worldSessionId,make=a.makeRenderer.bind(a);a.__firstReplacementFrame=null;a.makeRenderer=(...args)=>{make(...args);const r=a.renderer,render=r.render.bind(r);r.render=s=>{const snap=s.snapshot,target=snap?.worldSessionId!==old;if(!target)return render(s);const count=v=>v?[...v].reduce((n,x)=>n+(x!==0),0):0,before={blank:snap?.blank===true,status:snap?.status,life:count(snap?.lifeState)+count(snap?.biomass),highlights:s.highlightedCells?.length??0};const accepted=render(s);a.__firstReplacementFrame={backend:r.backend,accepted,before,after:r.lastFrameAudit,presentation:a.presentationAudit.lastBlank};r.render=render;a.makeRenderer=make;return accepted}}})()`);
 }
-export function assertBlankReplacement(frame, label) { ok(frame?.accepted && frame.before.blank && frame.before.status === 'starting', `${label} first replacement was not blank`); ok(frame.before.life === 0 && frame.before.events === 0 && frame.before.highlights === 0, `${label} retained presentation`); ok(frame.after?.lifeCells === 0 && frame.after?.eventCells === 0, `${label} retained renderer buffers`); if (frame.backend === 'webgl2') ok(frame.after.dynamic?.life === 0 && frame.after.dynamic?.events === 0, 'WebGL2 dynamic buffers not clear'); }
+export function assertBlankReplacement(frame, label) { ok(frame?.accepted && frame.before.blank && frame.before.status === 'starting', `${label} first replacement was not blank`); ok(frame.before.life === 0 && frame.before.highlights === 0, `${label} retained presentation`); ok(frame.after?.lifeCells === 0, `${label} retained renderer buffers`); if (frame.backend === 'webgl2') ok(frame.after.dynamic?.life === 0, 'WebGL2 dynamic buffers not clear'); }
 function distance(a, b) { return Math.hypot(...a.map((value, index) => value - b[index])); }
 function ok(value, message) { if (!value) throw new Error(message); }

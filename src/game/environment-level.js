@@ -1,9 +1,8 @@
 /**
  * Versioned, exact Environment Level schedule boundary.
  *
- * Environment Level is a live within-world clock. The single legacy frontier
- * reader at the end exists only for schema migration; production authority
- * uses the schedule functions below.
+ * Environment Level is a live within-world clock; production authority uses
+ * the schedule functions below.
  */
 import {
   addProgressionIntegers,
@@ -28,7 +27,6 @@ export const ENVIRONMENT_TICK_DOCUMENT_DIGIT_LIMIT = 4096;
 export const ENVIRONMENT_LEVEL_OPENING_TICKS = '1200';
 export const ENVIRONMENT_LEVEL_INTERVAL_TICKS = '600';
 export const ENVIRONMENT_LEVEL_PROGRESS_SCALE = 1_000_000;
-export const ENVIRONMENT_ONBOARDING_MODIFIER_VERSION = 2;
 export const ENVIRONMENT_SCHEDULE_HASH = hexU32(hashStringU32([
   'environment-schedule', ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_VERSION,
   ENVIRONMENT_LEVEL_OPENING_TICKS, ENVIRONMENT_LEVEL_INTERVAL_TICKS,
@@ -101,15 +99,6 @@ export function environmentProgressAtTick(tick) {
   });
 }
 
-/** Explicit first-two-world event protection; never changes the public clock. */
-export function environmentOnboardingModifierForWorld(worldOrdinal) {
-  const canonicalWorldOrdinal = normalizeProgressionInteger(worldOrdinal, '1') === '0'
-    ? '1' : normalizeProgressionInteger(worldOrdinal, '1');
-  const harmfulEventsDisabled = compareProgressionIntegers(canonicalWorldOrdinal, '3') < 0;
-  return Object.freeze({ version: ENVIRONMENT_ONBOARDING_MODIFIER_VERSION, worldOrdinal: canonicalWorldOrdinal,
-    harmfulEventsDisabled, label: harmfulEventsDisabled ? 'establishment-protection' : 'standard-events' });
-}
-
 /**
  * Canonical immutable schedule state for one authoritative tick.  External
  * callers receive exact strings; simulation hot loops keep only the bounded
@@ -155,15 +144,4 @@ export function validateEnvironmentScheduleState(raw) {
 /** Canonical public Environment Level comparison. */
 export function compareEnvironmentLevels(left, right) {
   return compareProgressionIntegers(parseProgressionInteger(left), parseProgressionInteger(right));
-}
-
-// Narrow explicit legacy reader for schema ≤11 documents only. It cannot
-// participate in a new world's authority, reward, record, or start state.
-export function legacyEnvironmentFrontierForRuns(runs) {
-  const value = normalizeProgressionInteger(runs, '0');
-  if (compareProgressionIntegers(value, '1') <= 0) return '0';
-  if (compareProgressionIntegers(value, '2') <= 0) return '1';
-  if (compareProgressionIntegers(value, '5') <= 0) return '2';
-  if (compareProgressionIntegers(value, '10') <= 0) return '3';
-  return '4';
 }

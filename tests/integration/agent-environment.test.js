@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import { createAgentEnvironment } from '../../src/agent/environment.js';
 import { defaultAgentSave } from '../../src/agent/schema.js';
 
-const REQUIRED_RESULT_KEYS = ['archetype', 'bestEnvironmentLevelReached', 'builds', 'cause', 'crises', 'echoes',
-  'environmentExposure', 'environmentProfileVersion', 'eventDirectorVersion', 'finalEnvironmentLevel', 'peakEnvironmentLevel',
+const REQUIRED_RESULT_KEYS = ['archetype', 'bestEnvironmentLevelReached', 'builds', 'cause', 'echoes',
+  'environmentExposure', 'environmentProfileVersion', 'finalEnvironmentLevel', 'peakEnvironmentLevel',
   'pressure', 'rank', 'resources', 'resultSchemaVersion', 'score', 'scoreModelVersion', 'startEnvironmentLevel', 'stateHash', 'survivalSeconds', 'terminalCause',
   'timeAtPeakTicks', 'trophiesAwarded', 'worldOrdinal', 'worldPotential', 'worldmaking'];
 
@@ -24,8 +24,8 @@ test('all fair action shapes use production exact transactions and Level-0 autho
   for (const key of REQUIRED_RESULT_KEYS) assert.ok(key in completed.result, key);
   assert.ok(BigInt(completed.result.score) > 0n);
   assert.equal(completed.result.startEnvironmentLevel, '0');
-  assert.equal(completed.result.resultSchemaVersion, 7); assert.equal(completed.result.environmentProfileVersion, 3);
-  assert.equal(completed.result.eventDirectorVersion, 3);
+  assert.equal(completed.result.resultSchemaVersion, 8); assert.equal(completed.result.environmentProfileVersion, 4);
+  assert.equal('eventDirectorVersion' in completed.result, false);
   assert.ok(BigInt(completed.result.peakEnvironmentLevel) >= 1n); assert.ok(completed.result.stateHash);
   const after = env.exportSave(); assert.equal(after.meta.runs, '1'); assert.equal(after.worldOrdinal, '2');
   assert.equal(after.history.worlds.length, 1); assert.equal(after.meta.resultKeys.length, 1);
@@ -39,7 +39,7 @@ test('all fair action shapes use production exact transactions and Level-0 autho
   const repeat = env.act({ type: 'buy-evolution-level', cellId: option.id });
   assert.equal(repeat.reason, 'missing-precondition'); assert.equal(env.exportSave().history.evolution.length, 1);
   assert.equal(env.act({ type: 'inspect-last-result' }).accepted, true); assert.equal(env.act({ type: 'inspect-builds' }).accepted, true);
-  assert.equal(env.act({ type: 'export' }).save.schema, 4);
+  assert.equal(env.act({ type: 'export' }).save.schema, 5);
   assert.equal(env.act({ type: 'reset', seed: -1 }).reason, 'invalid-seed'); assert.equal(env.act({ type: 'reset', seed: 77 }).accepted, true);
   assert.equal(env.exportSave().meta.runs, '0'); assert.equal(env.observe().lastResult, null);
 });
@@ -50,11 +50,11 @@ test('agents cannot select/retry static levels and external budget exhaustion is
     expectedWorldOrdinal: observation.worldOrdinal, environmentLevel: '2' }).reason, 'static-environment-actions-retired');
   const started = env.act({ type: 'start-world', expectedRevision: observation.metaRevision,
     expectedWorldOrdinal: observation.worldOrdinal });
-  assert.equal(started.reason, 'world-started'); assert.equal(started.observation.schema, 4);
+  assert.equal(started.reason, 'world-started'); assert.equal(started.observation.schema, 5);
   assert.equal(started.observation.activeWorld.currentEnvironmentLevel, '0');
   const pressure = started.observation.activeWorld.environmentPressureSummary;
   assert.equal(pressure.level, '0'); assert.equal(pressure.nextLevel, '1'); assert.equal(pressure.interpolationQ, 0);
-  assert.ok(Number.isFinite(pressure.effectiveCoefficients.renewalScale)); assert.ok('events' in pressure.dimensions);
+  assert.ok(Number.isFinite(pressure.effectiveCoefficients.renewalScale)); assert.equal('events' in pressure.dimensions, false);
   const incomplete = env.act({ type: 'continue-world', budgetTicks: 1 });
   assert.equal(incomplete.accepted, true); assert.equal(incomplete.reason, 'incomplete-budget');
   assert.equal(env.exportSave().meta.runs, '0'); assert.equal(env.exportSave().meta.echoBalance, '0');

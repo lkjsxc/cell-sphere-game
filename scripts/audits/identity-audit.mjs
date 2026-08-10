@@ -9,8 +9,6 @@ const OLD_GLOBAL = ['__IN', ''].join('_');
 const TEXT = new Set(['.js', '.mjs', '.json', '.md', '.html', '.css', '.yml', '.yaml']);
 const problems = [];
 const allowed = [
-  ['AGENTS.md', (line) => line.includes('legacy identity allowed')],
-  ['src/core/identity.js', (line) => line.includes('LEGACY_PRODUCT')],
   ['docs/cell-sphere-release-ledger.md', (line) => line.includes('observed') && line.includes('start')],
 ];
 
@@ -39,7 +37,7 @@ if (readme !== readFileSync(join(ROOT, '.github/README.md'), 'utf8')) problems.p
 if (problems.length) {
   console.error('Identity audit failed:'); for (const problem of problems) console.error(`  - ${problem}`); process.exit(1);
 }
-console.log(`audit:identity — OK (canonical product/repo/Pages/browser/storage identity; ${allowed.length} narrow legacy allowances)`);
+console.log('audit:identity — OK (canonical product/repo/Pages/browser/storage identity)');
 
 function files(dir, out = []) {
   for (const name of readdirSync(dir)) {

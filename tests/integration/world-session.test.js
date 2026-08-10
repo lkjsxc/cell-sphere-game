@@ -6,13 +6,12 @@ import { createWorldIdentity, sameWorldIdentity } from '../../src/core/world-ses
 import {createContinuation} from '../../src/interface/policies/continuation.js';
 import {defaultHistory} from '../../src/platform/history.js';
 import {createWorldReplacementState,markWorldStarted,recoverAuthorityLossDuringReplacement,requestWorldReplacement} from '../../src/interface/policies/run-session.js';
-import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
-  ENVIRONMENT_SCHEDULE_HASH, ENVIRONMENT_SCHEDULE_VERSION } from '../../src/game/environment-level.js';
+import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_HASH,
+  ENVIRONMENT_SCHEDULE_VERSION } from '../../src/game/environment-level.js';
 
 function identity(value) { return createWorldIdentity({ environmentModelVersion: ENVIRONMENT_MODEL_VERSION,
   environmentScheduleVersion: ENVIRONMENT_SCHEDULE_VERSION, environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH,
-  immutableStartConfigurationHash: 'abcdef12', onboardingEnvironmentModifierVersion: ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
-  ...value }); }
+  immutableStartConfigurationHash: 'abcdef12', ...value }); }
 function node() { return { textContent: '', hidden: false, disabled: false, dataset: {}, classList: { toggle() {}, add() {}, remove() {} },
   setAttribute() {}, removeAttribute() {}, replaceChildren() {} }; }
 function elements() { const value = {}; for (const name of ['title','run','memory','trophies','countdown','live',
@@ -23,7 +22,7 @@ function harness() {
   const counts = new Map(); const hit = (name) => counts.set(name, (counts.get(name) ?? 0) + 1); let runId = 0;
   const renderer = { backend: 'test', lastFrameAudit: null, bindWorldSession() { hit('bind'); }, resetDynamicState() { hit('renderer-reset'); },
     render(scene) { hit('render'); const snap = scene.snapshot; this.lastFrameAudit = { lifeCells: snap.alive.reduce((a,b)=>a+b,0),
-      eventCells: snap.eventStrength.reduce((a,b)=>a+(b>0),0), highlights: scene.highlightedCells.length }; return true; } };
+      highlights: scene.highlightedCells.length }; return true; } };
   const app={phase:'idle',scene:'home',meta:defaultMeta(),archive:defaultHistory(),settings:{historyRetention:24},speed:32,
     el: elements(), topo4: { nodeCount: 32 }, worldIdentity: null, retiredWorldIdentity: null, activeRunId: 0,
     worldSessionSequence: 0, presentationGeneration: 0, worldReplacement: createWorldReplacementState(),
@@ -54,7 +53,7 @@ test('replacement teardown clears every current-world field before one static bl
   }
   assert.equal(app.worldReplacement.status, 'starting'); assert.equal(app.driver.starts.length, 1);
   assert.equal(app.meta.worldSeedIndex, '1'); assert.equal(app.presentationAudit.blankFrames, 1);
-  assert.deepEqual(app.renderer.lastFrameAudit, { lifeCells: 0, eventCells: 0, highlights: 0 });
+  assert.deepEqual(app.renderer.lastFrameAudit, { lifeCells: 0, highlights: 0 });
   assert.equal(sameWorldIdentity(app.snapshot, app.worldIdentity), true); assert.equal(app.snapshot.status, 'starting');
   assert.equal(counts.get('renderer-reset'), 2, 'old and new renderer dynamic state');
   for (const name of ['driver-stop','pause-clear','history-retire','surfaces-reset','inspector-close',

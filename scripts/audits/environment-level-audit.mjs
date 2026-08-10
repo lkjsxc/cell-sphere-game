@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-/** Production within-world Environment schedule, profile, and bounded-director audit. */
+/** Production within-world Environment schedule and chronic-pressure audit. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import { RunController } from '../../src/simulation/simulator.js';
-import { compileChallengeProfile, MAX_EVENTS_PER_WORLD, MIN_TELEGRAPH_TICKS } from '../../src/simulation/challenge-profile.js';
+import { compileChallengeProfile } from '../../src/simulation/challenge-profile.js';
 import { MEMORY_NODE_IDS, compileEvolution } from '../../src/game/skills/index.js';
 import { scoreResult } from '../../src/game/scoring.js';
 import {
@@ -51,19 +51,18 @@ const scheduleExact = scheduleRows.every((row, index) => row.inverse === row.lev
   && row.hash === ENVIRONMENT_SCHEDULE_HASH && (index === 0 || BigInt(row.tick) > BigInt(scheduleRows[index - 1].tick)));
 const defenseHelps = profileComparisons.every((row) => row.deep.pressure <= row.breadth.pressure
   && row.breadth.pressure <= row.fresh.pressure && row.matched.pressure === 0 && row.overpowered.pressure === 0);
-const bounded = compiler.every((row) => row.finite && row.events <= MAX_EVENTS_PER_WORLD && row.telegraphTicks >= MIN_TELEGRAPH_TICKS && row.compileMs < 50);
+const bounded = compiler.every((row) => row.finite && !row.hasGameplayDisasterField && row.compileMs < 50);
 const startsAtZero = cohorts.every((cohort) => cohort.runs.every((row) => row.startEnvironmentLevel === '0'));
 const finiteBuildsTerminate = cohorts.every((cohort) => cohort.runs.every((row) => row.status === 'extinct'));
-const boundedDirector = cohorts.every((cohort) => cohort.runs.every((row) => row.maxEvents <= MAX_EVENTS_PER_WORLD
-  && row.maxRecentEvents <= 8 && row.nonFinite === false));
+const chronicOnly = cohorts.every((cohort) => cohort.runs.every((row) => row.noGameplayDisasterState && row.nonFinite === false));
 const strongerReachesFarther = median(cohorts[1].runs.map((row) => row.peakLevel)) >= median(cohorts[0].runs.map((row) => row.peakLevel));
 const noInstantFarm = cohorts.every((cohort) => cohort.runs.every((row) => row.environmentBonusRate <= .005 && row.score !== '0'));
 const report = {
-  schema: 3, model: 'within-world-v2', mode: smoke ? 'smoke' : 'full', seedsPerCohort: seeds,
+  schema: 4, model: 'within-world-chronic-v4', mode: smoke ? 'smoke' : 'full', seedsPerCohort: seeds,
   externalBudgetTicks, schedule: { hash: ENVIRONMENT_SCHEDULE_HASH, rows: scheduleRows }, compiler,
   cohorts: cohorts.map(({ name, summary }) => ({ name, ...summary })), profileComparisons,
   invariants: { scheduleExact, pressureMonotone, defenseHelps, bounded, startsAtZero,
-    finiteBuildsTerminate, boundedDirector, strongerReachesFarther, noInstantFarm },
+    finiteBuildsTerminate, chronicOnly, strongerReachesFarther, noInstantFarm },
   elapsedMs: Number((performance.now() - started).toFixed(1)),
 };
 report.valid = Object.values(report.invariants).every(Boolean);
@@ -80,23 +79,20 @@ function runWorld(seed, evolution, budget) {
     memoryEffects: evolution.effects, memoryConditionals: evolution.conditionals, memoryUnlocks: evolution.unlocks,
     habitatCapabilities: evolution.habitatCapabilities, activeBuilds: evolution.activeBuilds,
     buildEffects: evolution.buildEffects, electricityMastery: evolution.electricityMastery });
-  controller.start(); let maxEvents = 0; let maxRecentEvents = 0;
-  while (controller.state.status !== 'extinct' && controller.state.tick < budget) {
-    controller.advance(100);
-    maxEvents = Math.max(maxEvents, controller.state.events.length);
-    maxRecentEvents = Math.max(maxRecentEvents, controller.state.eventDirector?.recent?.length ?? 0);
-  }
+  controller.start();
+  while (controller.state.status !== 'extinct' && controller.state.tick < budget) controller.advance(100);
   const result = controller.buildResult(); const score = scoreResult(result);
   return { status: controller.state.status, tick: result.tick, startEnvironmentLevel: result.startEnvironmentLevel,
     peakLevel: result.peakEnvironmentLevel, survivalSeconds: result.survivalSeconds, cause: result.cause,
-    score: score.total, environmentBonusRate: score.environmentCredit.bonus, maxEvents, maxRecentEvents,
+    score: score.total, environmentBonusRate: score.environmentCredit.bonus,
+    noGameplayDisasterState: ['events', 'eventDirector', 'eventRng'].every((key) => !(key in controller.state)),
     nonFinite: ![result.peakCoverage, result.survivalSeconds, result.tick, score.environmentCredit.bonus].every(Number.isFinite) };
 }
 function profileRow(profile, compileMs) { return { level: profile.environmentLevel, ratingDigits: profile.publicRating.length,
-  pressure: profile.score.pressure, events: profile.events.count, telegraphTicks: profile.events.telegraphTicks,
+  pressure: profile.score.pressure, hasGameplayDisasterField: 'events' in profile,
   compileMs: Number(compileMs.toFixed(3)), hash: profile.hash,
-  finite: [...Object.values(profile.coefficients), ...Object.values(profile.events), profile.score.pressure].every(Number.isFinite) }; }
-function profileSummary(profile) { return { pressure: profile.score.pressure, events: profile.events.count, hash: profile.hash,
+  finite: [...Object.values(profile.coefficients), profile.score.pressure].every(Number.isFinite) }; }
+function profileSummary(profile) { return { pressure: profile.score.pressure, hasGameplayDisasterField: 'events' in profile, hash: profile.hash,
   netRatings: Object.fromEntries(Object.entries(profile.dimensions).map(([key, value]) => [key, value.netRating])) }; }
 function summarizeRuns(runs) { return { runs: runs.length, medianSeconds: median(runs.map((row) => row.survivalSeconds)),
   p25Seconds: percentile(runs.map((row) => row.survivalSeconds), .25), p75Seconds: percentile(runs.map((row) => row.survivalSeconds), .75),

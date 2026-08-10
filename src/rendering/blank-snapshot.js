@@ -3,7 +3,6 @@ import { createWorldIdentity, identityFields } from '../core/world-session.js';
 import { environmentScheduleAtTick } from '../game/environment-level.js';
 import { createEnvironmentExposure, environmentExposureSummary } from '../game/environment-exposure.js';
 import { ENVIRONMENT_PROFILE_VERSION } from '../simulation/challenge-profile.js';
-import { EVENT_DIRECTOR_VERSION } from '../simulation/events.js';
 
 export function createBlankSnapshot(nodeCount, identity) {
   if (!Number.isInteger(nodeCount) || nodeCount <= 0) throw new Error('invalid blank snapshot node count');
@@ -18,17 +17,14 @@ export function createBlankSnapshot(nodeCount, identity) {
     environmentScheduleVersion: schedule.environmentScheduleVersion,
     environmentScheduleHash: schedule.environmentScheduleHash,
     environmentProfileVersion: ENVIRONMENT_PROFILE_VERSION,
-    eventDirector: Object.freeze({ version: EVENT_DIRECTOR_VERSION, activeCount: 0, futureCount: 0, recentCount: 0,
-      harmfulEventsDisabled: false }),
     currentEnvironmentLevel: '0', peakEnvironmentLevel: '0', environmentLevelStartTick: '0',
     nextEnvironmentLevelTick: schedule.nextEnvironmentLevelTick, environmentLevelProgressQ: 0,
     environmentTransitionCount: '0', environmentExposure: environmentExposureSummary(createEnvironmentExposure('0')),
     environmentPressureSummary: Object.freeze({ level: '0', publicRating: '0', profileHash: null, nextLevel: '0', nextProfileHash: null,
     interpolationQ: 0, effectiveCoefficients: Object.freeze({}), pressure: 0, severityQ: 0, dimensions: Object.freeze({}) }),
     biomass: new Float32Array(nodeCount), stress: new Float32Array(nodeCount),
-    alive: new Uint8Array(nodeCount), lifeState: new Uint8Array(nodeCount), eventStrength: new Uint8Array(nodeCount),
-    eventFamily: new Uint8Array(nodeCount), resourceRichnessQ: new Uint8Array(nodeCount),
+    alive: new Uint8Array(nodeCount), lifeState: new Uint8Array(nodeCount), resourceRichnessQ: new Uint8Array(nodeCount),
     reserveFractionQ: new Uint8Array(nodeCount), resourceState: new Uint8Array(nodeCount),
     transformationState: new Uint8Array(nodeCount), electricityQ: new Uint8Array(nodeCount),
-    reach, metrics, events: Object.freeze([]), blank: true });
+    reach, metrics, blank: true });
 }

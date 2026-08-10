@@ -1,5 +1,8 @@
 # Local-resource ecology release ledger
 
+> Historical release evidence only. It does not define current product or
+> persistence policy.
+
 Status vocabulary: **implemented**, **tested**, **measured**, **deployed**. A
 later status includes earlier stages only when its evidence is complete.
 

@@ -1,5 +1,7 @@
 # Decisions
 
+> **Historical record, superseded by Product Simplification v1 Phase 3.** Decisions about onboarding events and migration paths below are no longer current.
+
 ## 2026-08-07 — D1: Environment is a within-world public clock
 
 Every production world begins at Level 0. Schedule v2 derives Level 1 at tick

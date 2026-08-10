@@ -16,7 +16,6 @@ export function handleRunMessage(app, message) {
   if (message.t === 'history-batch') { app.mergeHistory(message.events); return true; }
   if (message.t === 'cell-inspection') { if (message.requestId === app.requestId && message.cell.node === app.selectedNode) {
     app.inspector.updateDynamic(message.cell, app.currentHistory.filter((event) => event.primaryCells.includes(app.selectedNode))); } return; }
-  if (message.t === 'event') return true;
   if (message.t === 'environment-transition') {
     app.lastEnvironmentAnnouncementTick = message.tick;
     return ui.announce(app.el, `Environment Level ${message.environmentLevel} reached.`);

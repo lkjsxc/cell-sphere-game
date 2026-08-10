@@ -3,13 +3,11 @@ import { requiredHabitatCapability } from '../habitats.js';
 import { FRESH_RESOURCE_FLOOR } from './ecological-access.js';
 export const REACH_WINDOW_SECONDS = 15; export const REACH_SAMPLE_CAP = 8;
 export const REACH_CAUSE = Object.freeze({ NONE: 0, INOCULATION: 1, EXPANSION: 2, REGROWTH: 3,
-  RECONNECTION: 4, BLOOM: 5, CRISIS_GROWTH: 6, SKILL_RECOVERY: 7,
-  RESOURCE_EXHAUSTION: 8, MAINTENANCE: 9, HEAT: 10, COLD: 11, DROUGHT: 12, TOXIN: 13, BLIGHT: 14,
-  FRAGMENTATION: 15, COLLAPSE: 16, REPAIR: 17 });
+  RECONNECTION: 4, SKILL_RECOVERY: 5, RESOURCE_EXHAUSTION: 6, MAINTENANCE: 7,
+  HEAT: 8, COLD: 9, DROUGHT: 10, TOXIN: 11, FRAGMENTATION: 12, COLLAPSE: 13, REPAIR: 14 });
 const NAMES = Object.freeze(['none', 'inoculation', 'frontier expansion', 'regrowth', 'reconnection growth',
-  'nutrient bloom', 'crisis-triggered growth', 'skill-enabled recovery', 'local resource exhaustion',
-  'maintenance starvation', 'heat stress', 'cold stress', 'drought', 'toxicity', 'blight',
-  'fragmentation loss', 'terminal collapse', 'liveness repair']); const CAUSE_COUNT = NAMES.length;
+  'skill-enabled recovery', 'local resource exhaustion', 'maintenance starvation', 'heat stress',
+  'cold stress', 'drought', 'toxicity', 'fragmentation loss', 'terminal collapse', 'liveness repair']); const CAUSE_COUNT = NAMES.length;
 const LOSS_START = REACH_CAUSE.RESOURCE_EXHAUSTION;
 export function createReachLedger() {
   const stamps = new Int32Array(REACH_WINDOW_SECONDS); stamps.fill(-1);
@@ -59,7 +57,7 @@ function reachConditions(state) {
     nutrient += state.nutrient[cell]; moisture += state.moisture[cell]; suitableTemp += 1 - Math.min(1, Math.abs(state.temperature[cell] - .6) * 2);
     freshwaterForest += Math.max(state.fields.freshwaterInfluence[cell], state.fields.forestDensity[cell]); heat += Math.max(0, state.temperature[cell] - .75) * 4;
     cold += Math.max(0, .25 - state.temperature[cell]) * 4; dry += Math.max(0, .25 - state.moisture[cell]) * 4; toxin += state.toxicity[cell]; }
-  const divisor = Math.max(1, living); const activeCrisis = state.events.some((event) => state.tick >= event.startTick && state.tick <= event.endTick) ? 1 : 0;
+  const divisor = Math.max(1, living);
   const support = Math.min(1, (state.memoryConditionals.length + state.memoryUnlocks.length) / 8);
   const positiveConditions = conditionList([['energy-surplus', 'energy surplus', energy / divisor / 3], ['available-frontier', 'available frontier', state.liveness.activeFrontierCount / divisor],
     ['rich-niche-access', 'Rich niche access', nutrient / divisor], ['resource-floor', 'Resource floor', 1 - resourceBlockedCells / state.topo.nodeCount],
@@ -69,7 +67,7 @@ function reachConditions(state) {
     ['favorable-temperature', 'favorable temperature', suitableTemp / divisor], ['freshwater-ecology', 'lake, shore, and forest affinity', freshwaterForest / divisor], ['inherited-support', 'Evolution support', support]]);
   const negativeConditions = conditionList([['entropy', 'entropy', state.entropy], ['maintenance-burden', 'maintenance burden', deficit / divisor],
     ['heat-stress', 'heat stress', heat / divisor], ['cold-stress', 'cold stress', cold / divisor], ['drought-stress', 'drought stress', dry / divisor],
-    ['toxicity', 'toxicity', toxin / divisor], ['crisis-pressure', 'active crisis pressure', activeCrisis], ['fragmentation', 'fragmentation', 1 - state.connectedShare]]);
+    ['toxicity', 'toxicity', toxin / divisor], ['fragmentation', 'fragmentation', 1 - state.connectedShare]]);
   return { positiveConditions, negativeConditions,
     exactLivingCount: state.aliveCount, totalWorldCells: state.topo.nodeCount,
     accessibleHabitatReach: capabilityAccessible ? capabilityLiving / capabilityAccessible : 0,

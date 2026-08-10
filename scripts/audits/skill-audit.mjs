@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Production-backed unlimited Evolution topology, economy, migration, and compiler audit. */
+/** Production-backed unlimited Evolution topology, economy, and compiler audit. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import { createGeodesicTopology } from '../../src/world/icosphere.js';
@@ -7,8 +7,7 @@ import { BUILD_RECIPES, EVOLUTION_COMPILER_VERSIONS, MEMORY_NODES, MEMORY_NODE_I
   availableMemoryNodes, compileEvolution, evolutionCompileCacheDiagnostics, evolutionCostForTargetLevel, evolutionLevel,
   normalizeEvolutionLevels, purchaseEvolutionLevel, validateMemoryGraph } from '../../src/game/skills/index.js';
 import { validateAtlasMapping } from '../../src/game/skills/atlas.js';
-import { LEGACY_MEMORY_MANIFEST } from '../../src/game/skills/legacy-v4-manifest.js';
-import { defaultMeta, validateMeta } from '../../src/platform/storage.js';
+import { defaultMeta } from '../../src/platform/storage.js';
 
 const started=performance.now(),topo=createGeodesicTopology(5),graph=validateMemoryGraph(),atlas=validateAtlasMapping();
 let meta={...defaultMeta(),echoBalance:'1000000'},spent=0n,guard=0;
@@ -31,8 +30,6 @@ const compileAt=performance.now(),extreme=compileEvolution(extremeMeta),extremeC
 const sampledTargets=['1','2','3','10','1000000',hugeLevel];
 const sampledCosts=sampledTargets.map((level)=>({level,cost:evolutionCostForTargetLevel(root,level)}));
 const monotone=sampledCosts.every((row,index)=>index===0||BigInt(row.cost)>BigInt(sampledCosts[index-1].cost));
-const migrated=validateMeta({schema:8,memoryGraphVersion:4,memoryNodes:LEGACY_MEMORY_MANIFEST.map((row)=>row.oldId),echoBalance:17});
-const migrationStable=validateMeta(JSON.parse(JSON.stringify(migrated)));
 const degreeCounts=Object.fromEntries([...new Set(topo.degree)].map((degree)=>[degree,[...topo.degree].filter((value)=>value===degree).length]));
 const effectsFinite=Object.values(extreme.effects).every((value)=>Number.isFinite(value)&&value>0&&value<10);
 const report={
@@ -43,14 +40,13 @@ const report={
  directExtreme:{digits:hugeLevel.length,compileMs:Number(extremeCompileMs.toFixed(3)),worldPotentialDigits:extreme.worldPotential.length,evolutionDepthDigits:extreme.evolutionDepth.length,effectsFinite,cache:evolutionCompileCacheDiagnostics()},
  costSamples:sampledCosts,costSamplesMonotone:monotone,
  builds:{recipes:BUILD_RECIPES.length,activeAtBreadth:breadth.activeBuilds.map((build)=>build.id),distinctSignatures:new Set(BUILD_RECIPES.map((build)=>JSON.stringify([build.mechanicalEffects,build.capabilities,build.transformations]))).size},
- migration:{legacyEntries:LEGACY_MEMORY_MANIFEST.length,migratedCells:migrated.evolutionLevels.length,allLevelOne:migrated.evolutionLevels.every((entry)=>entry.level==='1'),balance:migrated.echoBalance,idempotent:JSON.stringify(migrationStable)===JSON.stringify(migrated)},
  elapsedMs:Number((performance.now()-started).toFixed(1)),valid:false,
 };
 report.valid=report.topology.cells===252&&report.topology.boundaries===750&&report.topology.pentagons===12&&report.topology.hexagons===240
  &&report.topology.atlasValid&&report.topology.graphValid&&report.levelOne.cells===252&&report.levelOne.spent==='17820'
  &&report.levelOne.worldPotential==='1200000'&&report.repeat.finalLevel==='10'&&report.repeat.costsMonotone
  &&report.directExtreme.effectsFinite&&report.directExtreme.compileMs<100&&report.directExtreme.cache.bytes<=report.directExtreme.cache.byteLimit&&report.costSamplesMonotone
- &&report.builds.recipes>=16&&report.migration.migratedCells===252&&report.migration.allLevelOne&&report.migration.idempotent;
+ &&report.builds.recipes>=16;
 mkdirSync(new URL('../../reports',import.meta.url).pathname,{recursive:true});
 writeFileSync(new URL('../../reports/evolution-level-audit.json',import.meta.url),JSON.stringify(report,null,2));
 writeFileSync(new URL('../../reports/skill-audit.json',import.meta.url),JSON.stringify(report,null,2));

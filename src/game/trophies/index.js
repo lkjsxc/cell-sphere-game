@@ -1,4 +1,4 @@
-/** Canonical 96-achievement Trophy Sphere catalog plus separate legacy ownership. */
+/** Canonical 96-achievement Trophy Sphere catalog. */
 import { HABITAT_TROPHIES } from './habitat.js';
 import { ENDURANCE_TROPHIES } from './endurance.js';
 import { EVOLUTION_TROPHIES } from './evolution.js';
@@ -9,18 +9,7 @@ import { TROPHY_CONDITION_KEYS } from './keys.js';
 import { TROPHY_ATLAS_CELLS, TROPHY_ATLAS_HASH, TROPHY_FAMILIES, validateTrophyAtlas } from './atlas.js';
 export { TROPHY_ATLAS_REVERSE } from './atlas.js';
 
-export const TROPHY_CATALOG_VERSION = 3;
-const RETIRED_CHOICE_TROPHY_IDS = Object.freeze(['adaptation-first-choice','adaptation-manual-choice','adaptation-automatic-choice',
-  'adaptation-three-choices','adaptation-five-choices','adaptation-nothing-pending','adaptation-three-manual','adaptation-five-random',
-  'adaptation-reach-category','adaptation-metabolism-category','adaptation-resilience-category','adaptation-transport-category',
-  'adaptation-symbiosis-category','adaptation-memory-category','adaptation-all-categories-world','adaptation-all-cards']);
-export const LEGACY_TROPHIES = Object.freeze([
-  Object.freeze({ id: 'reach-river-touch', nameEn: 'Archived River Listener',
-    criteriaEn: 'Legacy ownership earned from retired river-era evidence; it grants no current lake proof.', family: 'Legacy' }),
-  ...RETIRED_CHOICE_TROPHY_IDS.map((id) => Object.freeze({ id, nameEn: 'Legacy Adaptation',
-    criteriaEn: 'Read-only ownership preserved from the retired mid-run choice system.', family: 'Legacy' })),
-]);
-export const LEGACY_TROPHY_IDS = Object.freeze(LEGACY_TROPHIES.map((entry) => entry.id));
+export const TROPHY_CATALOG_VERSION = 4;
 const GROUPS = Object.freeze([REACH_TROPHIES, FORM_TROPHIES, ENDURANCE_TROPHIES,
   HABITAT_TROPHIES, EVOLUTION_TROPHIES, MASTERY_TROPHIES]);
 export const TROPHIES = Object.freeze(GROUPS.flat().map((trophy, index) =>

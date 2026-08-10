@@ -2,7 +2,6 @@
 import { BALANCE as B } from '../game/balance.js';
 import { applyMemoryConditionals } from '../game/skills/index.js';
 import { beginTerminalCollapse, createRunState, finalizeEnvironmentProgression, reconcileLiveness, terminalCollapseReason, updateEnvironmentProgression } from './state.js';
-import { advanceEventDirector } from './events.js';
 import { updateEnvironment } from './environment.js';
 import { runMetabolism } from './metabolism.js';
 import { runTransport } from './transport.js';
@@ -63,7 +62,6 @@ export class RunController {
     }
     if (!collapsing) {
       // Environment clock/profile authority precedes every ecological consumer.
-      advanceEventDirector(s);
       applyMemoryConditionals(s);
       if (s.tick % B.ENV_EVERY === 0) updateEnvironment(s);
       runMetabolism(s); runTransport(s); runWorldmaking(s); runGrowth(s);

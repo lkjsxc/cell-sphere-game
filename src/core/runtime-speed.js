@@ -14,7 +14,7 @@ export function runtimeSpeedOptions(developerMode = false) {
 
 export function isStandardSpeed(value) { return STANDARD_SPEEDS.includes(Number(value)); }
 
-/** Exact options are accepted. Normal-mode legacy/high values clamp to 8; other invalid values use a safe fallback. */
+/** Exact options are accepted. Normal-mode high values clamp to 8; other invalid values use a safe fallback. */
 export function validateRuntimeSpeed(value, options = {}) {
   const developerMode = options.developerMode === true; const allowed = runtimeSpeedOptions(developerMode);
   const numeric = Number(value); if (allowed.includes(numeric)) return numeric;

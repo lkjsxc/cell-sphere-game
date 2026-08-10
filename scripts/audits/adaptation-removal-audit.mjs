@@ -8,9 +8,6 @@ const deleted = [
   'src/simulation/protocol/adaptation-command.js','src/interface/policies/adaptation-effects.js',
   'src/rendering/adaptation-propagation.js','src/game/trophies/adaptation.js',
 ];
-const allowedLegacy = new Set([
-  'src/platform/history.js','src/platform/storage.js','src/interface/history-surface.js','src/game/trophies/index.js',
-]);
 const patterns = [
   /from\s+['"][^'"]*adaptations\.js['"]/, /adaptation-offered/, /adaptation-selected/,
   /choose-adaptation/, /set-adaptation-mode/, /adaptationMode/, /adaptationOffers/, /ownedCards/,
@@ -19,14 +16,13 @@ const patterns = [
 ];
 const files = walk('src').concat(['index.html', ...walk('styles')]); const violations = [];
 for (const file of files) {
-  if (allowedLegacy.has(file)) continue; const text = readFileSync(resolve(ROOT, file), 'utf8');
+  const text = readFileSync(resolve(ROOT, file), 'utf8');
   text.split('\n').forEach((line, index) => patterns.forEach((pattern) => {
     if (pattern.test(line)) violations.push(`${file}:${index + 1}:${pattern}`);
   }));
 }
 for (const file of deleted) if (existsSync(resolve(ROOT, file))) violations.push(`${file}: deleted module still exists`);
-const report = { activeFilesScanned: files.length - allowedLegacy.size, deletedModules: deleted.length,
-  legacyFiles: [...allowedLegacy], violations, valid: violations.length === 0 };
+const report = { activeFilesScanned: files.length, deletedModules: deleted.length, violations, valid: violations.length === 0 };
 mkdirSync(resolve(ROOT, 'reports'), { recursive: true });
 writeFileSync(resolve(ROOT, 'reports/adaptation-removal-audit.json'), JSON.stringify(report, null, 2));
 console.log(JSON.stringify(report, null, 2)); if (violations.length) process.exitCode = 1;

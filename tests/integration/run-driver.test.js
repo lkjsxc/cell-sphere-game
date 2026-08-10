@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { createRunDriver } from '../../src/interface/run-driver.js';
 import { seedForRun } from '../../src/interface/app-data.js';
 import { identityFields } from '../../src/core/world-session.js';
+import { RUN_PROTOCOL_VERSION } from '../../src/core/run-protocol.js';
 
 class FakeWorker {
   static instances = [];
@@ -16,7 +17,7 @@ function withWorkers(run) {
   const prior = globalThis.Worker; globalThis.Worker = FakeWorker; FakeWorker.instances = [];
   try { return run(); } finally { if (prior) globalThis.Worker = prior; else delete globalThis.Worker; }
 }
-function deliver(worker, driver, message) { worker.deliver({ ...message, ...identityFields(driver.identity) }); }
+function deliver(worker, driver, message) { worker.deliver({ protocolVersion: RUN_PROTOCOL_VERSION, ...message, ...identityFields(driver.identity) }); }
 
 test('world seed sequence advances unless an explicit seed is present', () => {
   assert.equal(seedForRun(0, '?demo=1'), 20260731);

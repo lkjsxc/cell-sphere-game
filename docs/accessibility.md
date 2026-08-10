@@ -10,8 +10,8 @@
   hover-only. ENV LEVEL opens current-world History with Environment records
   emphasized. RESULT is last in reading/visual order and remains restrained at
   extinction.
-- Evolution exposes a synchronized offscreen `role="tree"` with all 252 cells,
-  exact levels, owned/reachable/affordable state, and roving keyboard focus.
+- Evolution exposes a synchronized offscreen `role="tree"` with every current
+  cell, exact levels, owned/reachable/affordable state, and roving keyboard focus.
 - Trophy Sphere exposes all 96 criteria in a semantic grid.
 - Inspector fields use real headings and definition lists. Locked habitats name
   the missing Evolution capability.

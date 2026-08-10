@@ -1,7 +1,7 @@
 import { BIOME, BIOME_EFFECTS, FEATURE, WATER } from './constants.js';
 import { smoothField, sphericalField } from './noise.js';
 
-/** Correlate climate, lake influence, soils, forests, biomes, and hazards. */
+/** Correlate climate, lake influence, soils, forests, and biomes. */
 export function createEcology(rng, topo, terrain, hydro) {
   const n = topo.nodeCount;
   const soil = smoothField(sphericalField(rng, topo.positions, n,
@@ -10,8 +10,8 @@ export function createEcology(rng, topo, terrain, hydro) {
     { lobes: 7, sharpness: 2, signed: true }), topo, 2);
   const baseMoisture = new Float32Array(n); const baseTemp = new Float32Array(n);
   const baseNutrient = new Float32Array(n); const forestDensity = new Float32Array(n);
-  const biomeId = new Uint8Array(n); const hazardSusceptibility = new Float32Array(n);
-  const toxVuln = new Float32Array(n); const eventVuln = new Float32Array(n);
+  const biomeId = new Uint8Array(n);
+  const toxVuln = new Float32Array(n);
   const growthSuitability = new Float32Array(n); const maintenanceMultiplier = new Float32Array(n);
   const uptakeMultiplier = new Float32Array(n); const resourceRenewal = new Float32Array(n);
   const routeCost = new Float32Array(n);
@@ -40,17 +40,15 @@ export function createEcology(rng, topo, terrain, hydro) {
     const factor = BIOME_EFFECTS[biomeId[cell]];
     growthSuitability[cell] = factor.growth; maintenanceMultiplier[cell] = factor.maintenance;
     uptakeMultiplier[cell] = factor.uptake; resourceRenewal[cell] = factor.renewal; routeCost[cell] = factor.routeCost;
-    const hazard = clamp(.12 + terrain.ridgeStrength[cell] * .28
+    const toxicityExposure = clamp(.12 + terrain.ridgeStrength[cell] * .28
       + (1 - moisture) * .25 + climate[cell] * .12 + soil[cell] * .18);
-    hazardSusceptibility[cell] = Math.fround(hazard);
-    toxVuln[cell] = Math.fround(clamp(.18 + hazard * .62 + (1 - nutrient) * .16));
-    eventVuln[cell] = Math.fround(clamp(.14 + hazard * .68 + latitude * .1));
+    toxVuln[cell] = Math.fround(clamp(.18 + toxicityExposure * .62 + (1 - nutrient) * .16));
     addFeatures(cell, height, terrain, hydro.featureFlags, forest);
   }
   const regionId = regionsFor(biomeId, topo);
   return {
     baseMoisture, baseTemp, baseNutrient, forestDensity, biomeId,
-    hazardSusceptibility, toxVuln, eventVuln, regionId, growthSuitability,
+    toxVuln, regionId, growthSuitability,
     maintenanceMultiplier, uptakeMultiplier, resourceRenewal, routeCost,
   };
 }

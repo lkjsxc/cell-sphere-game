@@ -11,9 +11,9 @@ export const HABITAT_TROPHIES = family('habitat', [
   ['ice-province', 'Ice Province', 'Colonize twenty snow or ice cells in one world.', n('snowHabitatCells', 20)],
   ['pelagic-province', 'Pelagic Province', 'Colonize fifty shallow-ocean cells in one world.', n('shallowOceanCells', 50)],
   ['abyssal-province', 'Abyssal Province', 'Colonize twenty deep-ocean cells in one world.', n('deepOceanCells', 20)],
-  ['scarcity-witness', 'Scarcity Witness', 'Complete three worlds with finite local reserve exhaustion.', n('scarcityWorlds', 3)],
+  ['scarcity-witness', 'Scarcity Witness', 'Complete six worlds with finite local reserve exhaustion.', n('scarcityWorlds', 6)],
   ['spent-landscape', 'Wasteland Reclaimed', 'Restore at least fifty depleted whole cells in one world.', n('resourceRecoveredCells', 50)],
   ['autonomous-patience', 'Autonomous Patience', 'Complete twelve worlds without any mid-run decision authority.', n('autonomousWorlds', 12)],
-  ['quiet-onboarding', 'Quiet Onboarding', 'Complete both scarcity-era worlds with zero harmful events.', n('zeroEventWorlds', 2)],
+  ['resource-lineage', 'Resource Lineage', 'Complete four resource-limited worlds with finite local reserve exhaustion.', n('scarcityWorlds', 4)],
   ['living-world-habitats', 'Illuminated Biosphere', 'Reach one million SCORE after all five habitat classes and whole-cell power.', all(n('bestScore', 1000000), n('habitatClassCount', 5), n('electrifiedCells', 50))],
 ]);

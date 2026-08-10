@@ -1,5 +1,7 @@
 # Environment Progression v2 invariants
 
+> **Historical record, superseded by Product Simplification v1 Phase 3.** It includes retired event and migration invariants and is not a current contract.
+
 ## Lifecycle
 
 ```text

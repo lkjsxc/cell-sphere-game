@@ -6,7 +6,7 @@ import { decodeVisualHistory, encodeVisualHistory, MAX_BYTES, thinFrames } from 
 import { createPreviewBuffers, nearestFrame, projectPreview } from '../../src/history/preview.js';
 import { RunController } from '../../src/simulation/simulator.js';
 import { scoreResult } from '../../src/game/scoring.js';
-import { createRecentRuns, migrateRecentRunRecords, validateRecentRun } from '../../src/platform/recent-runs.js';
+import { createRecentRuns, validateRecentRun } from '../../src/platform/recent-runs.js';
 import { createHistoryLoadGuard, createHistoryPlayback } from '../../src/interface/history-playback.js';
 import { loadHistory, normalizeHistoryEvents, serializeHistory, validateHistory } from '../../src/platform/history.js';
 
@@ -61,34 +61,32 @@ test('a detailed five-minute run stays bounded and recorder is authority-neutral
   assert.ok(decoded.frames.at(-1).flags & 2); assert.ok(decodeMs < 100); assert.ok(seekMs < 100);
 });
 
-test('semantic schema 2 migrates cellId to bounded unique primaryCells', () => {
+test('current History normalizes bounded semantic cells and rejects mismatched schemas', () => {
   const primaryCells = [4, 4, -1, 5, 6, 7, 8, 9, 10, 11, 12, 9999];
   const events = normalizeHistoryEvents([{ tick: 2, type: 'inoculation', cellId: 31 },
-    { tick: 3, type: 'event-start', family: 'heat-wave', primaryCells }]);
+    { tick: 3, type: 'resource-reserve', primaryCells }]);
   assert.deepEqual(events[0].primaryCells, [31]); assert.equal(events[0].cellId, 31);
   assert.deepEqual(events[1].primaryCells, [4, 5, 6, 7, 8, 9, 10, 11]);
-  const migrated = validateHistory({ schema: 1, worlds: [{ seed: 1, tick: 3, score: 0,
-    events: [{ tick: 1, type: 'inoculation', cellId: 2 }] }], memory: [] });
-  assert.equal(migrated.schema, 8); assert.deepEqual(migrated.worlds[0].events[0].primaryCells, [2]);
-  globalThis.localStorage = { getItem: (key) => key.endsWith(':v1') ? JSON.stringify(migrated) : null };
-  try { assert.equal(loadHistory().schema, 8); } finally { delete globalThis.localStorage; }
+  assert.deepEqual(validateHistory({ schema: 8, worlds: [] }), { schema: 9, worlds: [], evolution: [], trophies: [] });
+  globalThis.localStorage = { getItem: () => JSON.stringify({ schema: 8, worlds: [] }), setItem: () => {} };
+  try { assert.equal(loadHistory().schema, 9); } finally { delete globalThis.localStorage; }
 });
 
 test('dynamic History retains bounded authoritative interpolation evidence', () => {
-  const history = validateHistory({ worlds: [{ seed: 8, tick: 1500, score: '4', startEnvironmentLevel: '0',
+  const history = validateHistory({ schema: 9, worlds: [{ seed: 8, tick: 1500, score: '4', startEnvironmentLevel: '0',
     environmentModelVersion: 2, environmentScheduleVersion: 2, environmentScheduleHash: 'ce29fefd',
     environmentPressureSummary: { level: '1', nextLevel: '2', profileHash: '01234567', nextProfileHash: '89abcdef',
       interpolationQ: 500000, effectiveCoefficients: { renewalScale: .82, maintenanceScale: 1.13, ignored: Infinity },
       pressure: .4, severityQ: 400000 } }] });
   const pressure = history.worlds[0].environmentPressureSummary;
-  assert.equal(history.schema, 8); assert.equal(pressure.nextLevel, '2'); assert.equal(pressure.interpolationQ, 500000);
+  assert.equal(history.schema, 9); assert.equal(pressure.nextLevel, '2'); assert.equal(pressure.interpolationQ, 500000);
   assert.deepEqual(pressure.effectiveCoefficients, { renewalScale: .82, maintenanceScale: 1.13 });
 });
 
 test('semantic History enforces its byte bound even with maximum-width exact fields',()=>{
   const huge='9'.repeat(4000),evolution=Array.from({length:128},(_,seq)=>({seq,nodeId:'ecology-tempered-scars',oldLevel:huge,newLevel:huge,
     cost:huge,balanceBefore:huge,balanceAfter:huge,run:huge,environmentLevel:'0',transactionKey:`wide-${seq}`}));
-  const archive=validateHistory({schema:7,worlds:[],evolution,trophies:[]},32),serialized=serializeHistory(archive);
+  const archive=validateHistory({schema:9,worlds:[],evolution,trophies:[]},32),serialized=serializeHistory(archive);
   assert.ok(new TextEncoder().encode(serialized).byteLength<=700000);assert.ok(archive.evolution.length>0&&archive.evolution.length<128);
   assert.equal(archive.evolution.at(-1).newLevel,huge);
 });
@@ -98,42 +96,8 @@ test('recent-runs validates buffers and gracefully degrades without IndexedDB', 
   assert.ok(validateRecentRun({ id: '1-2-abcd', seed: 2, completedAt: 1, buffer }));
   assert.equal(validateRecentRun({ id: '1-2-abcd', seed: 3, completedAt: 1, buffer }), null);
   const recent = createRecentRuns(null); assert.equal(await recent.ready(), false);
-  assert.equal((await recent.migration()).status, 'unavailable');
   assert.equal(await recent.put({}), false); assert.equal(await recent.get('missing'), null); assert.deepEqual(await recent.list(), []);
 });
-
-test('recent-runs migration validates, deduplicates by ID, retains ten, and receipts only verified writes', async () => {
-  const records = Array.from({ length: 12 }, (_, index) => recentRecord(`run-${index}`, index + 1, index + 1));
-  const duplicateCanonical = recentRecord('run-11', 99, 50); const target = recentTarget([duplicateCanonical]);
-  const corrupt = { ...records[0], id: 'corrupt', seed: 999 };
-  const result = await migrateRecentRunRecords([...records, corrupt], target);
-  assert.equal(result.status, 'complete'); assert.ok(result.copied <= 10); assert.equal(result.duplicates, 1);
-  assert.equal(target.receipts.length, 1); assert.equal(target.records.size, 10);
-  assert.equal(target.records.get('run-11').seed, 99, 'valid canonical duplicate must win');
-  for (const record of target.records.values()) assert.ok(validateRecentRun(record));
-  const repeated = await migrateRecentRunRecords([...records, corrupt], target);
-  assert.equal(repeated.status, 'complete'); assert.equal(repeated.copied, 0); assert.equal(target.records.size, 10);
-});
-
-test('recent-runs migration handles unavailable and partial destinations without a receipt', async () => {
-  const record = recentRecord('run-one', 1, 1); let marked = false;
-  const unavailable = await migrateRecentRunRecords([record], { async list() { throw new Error('blocked'); } });
-  assert.equal(unavailable.status, 'unavailable');
-  const partial = await migrateRecentRunRecords([record], { async list() { return []; }, async get() { return null; },
-    async put() { return false; }, async markReceipt() { marked = true; return true; } });
-  assert.equal(partial.status, 'partial'); assert.equal(marked, false);
-});
-
-function recentRecord(id, seed, completedAt) {
-  return { id, seed, completedAt, buffer: encodeVisualHistory({ cellCount: 32, seed }, [frame(0, 3)]) };
-}
-function recentTarget(initial = []) {
-  const target = { records: new Map(initial.map((record) => [record.id, record])), receipts: [],
-    async list() { return [...this.records.values()]; }, async get(id) { return this.records.get(id) ?? null; },
-    async put(record) { this.records.set(record.id, record); return true; }, async remove(id) { this.records.delete(id); return true; },
-    async markReceipt(receipt) { this.receipts.push(receipt); return true; } };
-  return target;
-}
 
 test('past-world load guard rejects stale asynchronous completions', () => {
   const guard = createHistoryLoadGuard(); const first = guard.next(); const second = guard.next();

@@ -1,6 +1,5 @@
-/** Strict bounded codec. INHV v1 remains supported to preserve device-local legacy runs. */
-export const LEGACY_MAGIC = 'INHV';
-export const MAGIC = LEGACY_MAGIC;
+/** Strict bounded visual-History codec. */
+export const MAGIC = 'INHV';
 export const VERSION = 1;
 export const MAX_BYTES = 256 * 1024;
 export const MAX_CELLS = 8192;

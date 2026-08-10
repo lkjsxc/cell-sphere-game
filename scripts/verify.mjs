@@ -31,7 +31,7 @@ const gates = [
   ['audit:evolution-levels', 'node scripts/audits/skill-audit.mjs'],
   ['audit:progression-numbers', 'node scripts/audits/progression-number-audit.mjs'],
   ['audit:environment-levels', 'node scripts/audits/environment-level-audit.mjs --smoke'],
-  ['audit:events', 'node scripts/audits/event-audit.mjs --count=70'],
+  ['audit:no-disaster', 'node scripts/audits/no-disaster-audit.mjs --count=70'],
   ['audit:habitats', 'node scripts/audits/habitat-audit.mjs --count=12'],
   ['audit:trophies', 'node scripts/audits/trophy-audit.mjs'],
   ['audit:campaign:smoke', 'node scripts/audits/campaign-audit.mjs --smoke'],

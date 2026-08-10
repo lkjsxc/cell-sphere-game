@@ -7,14 +7,12 @@ in vec3 aCenter;
 in vec4 aMaterial;
 in vec4 aTerrain;
 in vec3 aLife;
-in vec2 aEvent;
 in vec4 aEcology;
 out vec3 vPos;
 out vec3 vCenter;
 out vec4 vMaterial;
 out vec4 vTerrain;
 out vec3 vLife;
-out vec2 vEvent;
 out vec4 vEcology;
 void main() {
   float atlasRelief = step(0.5, aLife.x) * (0.002 + step(2.5, aLife.x) * 0.006)
@@ -27,7 +25,6 @@ void main() {
   vMaterial = aMaterial;
   vTerrain = aTerrain;
   vLife = aLife;
-  vEvent = aEvent;
   vEcology = aEcology;
   gl_Position = uViewProj * vec4(vPos, 1.0);
 }`;
@@ -39,7 +36,6 @@ in vec3 vCenter;
 in vec4 vMaterial;
 in vec4 vTerrain;
 in vec3 vLife;
-in vec2 vEvent;
 in vec4 vEcology;
 out vec4 outColor;
 uniform vec3 uEye;
@@ -184,16 +180,6 @@ void main() {
     + plate * (0.22 + uElectricityDevelopment * 0.20));
   col += chargeLight * readyCore * vec3(0.28, 0.24, 0.08) * (0.18 + uElectricityDevelopment * 0.24);
   col += rim * vec3(0.08, 0.13, 0.14) * (1.0 - uEntropy * 0.5);
-  float eventFamily = floor(vEvent.x + 0.5); float eventAmount = clamp(vEvent.y / 255.0, 0.0, 1.0);
-  vec3 eventTint = vec3(0.70); if (eventFamily < 1.5) eventTint = vec3(0.85, 0.62, 0.30);
-  else if (eventFamily < 2.5) eventTint = vec3(1.0, 0.42, 0.28);
-  else if (eventFamily < 3.5) eventTint = vec3(0.55, 0.75, 1.0);
-  else if (eventFamily < 4.5) eventTint = vec3(0.62, 0.85, 0.35);
-  else if (eventFamily < 5.5) eventTint = vec3(1.0, 0.92, 0.60);
-  else if (eventFamily < 6.5) eventTint = vec3(0.55, 0.50, 0.48);
-  else if (eventFamily < 7.5) eventTint = vec3(0.45, 1.0, 0.60);
-  else eventTint = vec3(0.85, 0.45, 0.75);
-  col = mix(col, eventTint, eventAmount * 0.20 * (0.55 + inset * 0.45));
   for (int i = 0; i < 8; i++) {
     if (i < uHistoryCount) {
       float marked = step(0.99994, dot(normalize(vCenter), uHistoryCenter[i]));

@@ -2,8 +2,8 @@
 /** Tick-trace audit for authoritative cumulative SCORE v5. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../../src/simulation/simulator.js';
-import { compileMemory } from '../../src/game/skills/index.js';
-const count = integerArg('--count=', 500); const memory = compileMemory({ memoryNodes: [] }); const rows = []; const started = performance.now();
+import { compileEvolution } from '../../src/game/skills/index.js';
+const count = integerArg('--count=', 500); const memory = compileEvolution({ evolutionLevels: [] }); const rows = []; const started = performance.now();
 let decreases = 0; let finalMismatches = 0;
 for (let index = 0; index < count; index++) {
   const c = new RunController({ seed: (0x5c0ae000 + Math.imul(index, 0x9e3779b1)) >>> 0, worldOrdinal: 1,

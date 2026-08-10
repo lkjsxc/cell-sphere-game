@@ -56,16 +56,14 @@ test('public schedule is build-independent while relevant defense changes only e
   assert.ok(strong.state.currentEnvironmentProfile.score.pressure <= weak.state.currentEnvironmentProfile.score.pressure);
 });
 
-test('onboarding leaves clock intact and the rolling event director stays bounded/reclaims evidence', () => {
-  const protectedRun = new RunController({ seed: 7104, worldOrdinal: '1' });
-  const activeRun = new RunController({ seed: 7104, worldOrdinal: '3' });
-  protectedRun.start(); activeRun.start(); protectedRun.advance(1200); activeRun.advance(1200);
-  assert.equal(protectedRun.state.currentEnvironmentLevel, '1'); assert.equal(activeRun.state.currentEnvironmentLevel, '1');
-  assert.equal(protectedRun.state.events.length, 0); assert.ok(activeRun.state.events.length <= 6);
-  for (let step = 0; step < 30 && activeRun.state.status !== 'extinct'; step++) {
-    activeRun.advance(100);
-    assert.ok(activeRun.state.events.length <= 6);
-    assert.ok(activeRun.state.eventDirector.recent.length <= 8);
+test('chronic pressure leaves no onboarding or gameplay-disaster state', () => {
+  const first = new RunController({ seed: 7104, worldOrdinal: '1' });
+  const later = new RunController({ seed: 7104, worldOrdinal: '3' });
+  first.start(); later.start(); first.advance(1200); later.advance(1200);
+  assert.equal(first.state.currentEnvironmentLevel, '1'); assert.equal(later.state.currentEnvironmentLevel, '1');
+  for (const state of [first.state, later.state]) {
+    for (const key of ['events', 'eventDirector', 'eventRng', 'onboardingEnvironmentModifier']) assert.equal(key in state, false, key);
+    assert.ok(Object.values(state.environmentCoefficients).every(Number.isFinite));
   }
 });
 

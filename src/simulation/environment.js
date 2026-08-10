@@ -1,6 +1,6 @@
 /**
  * Environmental phase: global entropy curve, seasonal fields, nutrient
- * regeneration, toxin accumulation, and active-event application.
+ * regeneration, toxin accumulation, and chronic pressure.
  *
  * Curves are precomputed LUTs (built once per run) so the per-tick path uses
  * only array lookups and arithmetic. LUT construction may use Math.sin/pow —
@@ -8,9 +8,7 @@
  */
 import { BALANCE as B } from '../game/balance.js';
 import { clamp01, smootherstep } from '../core/math.js';
-import { eventEnvelopeAt } from './events.js';
-import { REACH_CAUSE } from './lifecycle/reach-ledger.js';
-import { addExternalNutrient, freshwaterSupportAt, loseNutrient, transferReserve } from './resource-ecology.js';
+import { freshwaterSupportAt, transferReserve } from './resource-ecology.js';
 
 /** Global deterioration curve, indexed by tick. 0 until rise start, 1 at end. */
 export function buildEntropyLut(profile = null) {
@@ -72,8 +70,6 @@ export function buildNodeSeasonOffsets(topo) {
 /**
  * One environment update. Called every ENV_EVERY ticks.
  * @param {object} state run state
- * @param {Array} eventEffects accumulated event deltas for this step
- *   ({nodes: Uint16Array, falloff: Float32Array, kind, amount})
  */
 export function updateEnvironment(state) {
   const { topo, fields } = state; const traits = state.activeTraits ?? state.traits;
@@ -119,42 +115,4 @@ export function updateEnvironment(state) {
     transferReserve(state, i, requested);
   }
 
-  applyEventEffects(state);
-}
-
-/** Apply active event footprints for the current tick. */
-function applyEventEffects(state) {
-  const t = state.tick;
-  for (const ev of state.events) {
-    if (t < ev.startTick || t > ev.endTick) continue;
-    const nodes = ev.nodes; const falloff = ev.falloff;
-    for (let k = 0; k < nodes.length; k++) {
-      const env = eventEnvelopeAt(t, ev, ev.arrivalTicks[k]); if (env <= 0) continue;
-      const i = nodes[k]; const w = ev.amount * ev.intensity * env * falloff[k];
-      switch (ev.kind) {
-        case 'moisture': state.moisture[i] = Math.fround(clamp01(state.moisture[i] - w)); break;
-        case 'heat': state.temperature[i] = Math.fround(clamp01(state.temperature[i] + w)); break;
-        case 'cold': state.temperature[i] = Math.fround(clamp01(state.temperature[i] - w)); break;
-        case 'toxin': state.toxicity[i] = Math.fround(clamp01(state.toxicity[i] + w)); break;
-        case 'stress':
-          if (state.alive[i] === 1) {
-            state.stress[i] = Math.fround(clamp01(state.stress[i] + w));
-          }
-          break;
-        case 'ash':
-          loseNutrient(state, i, w);
-          state.temperature[i] = Math.fround(clamp01(state.temperature[i] - w * 0.4));
-          break;
-        case 'bloom': addExternalNutrient(state, i, w); break;
-        case 'blight':
-          if (state.alive[i] === 1) {
-            const loss = Math.min(state.biomass[i], w * 0.25); state.causes.event += loss;
-            state.reachDamageCause[i] = REACH_CAUSE.BLIGHT; state.biomass[i] = Math.fround(Math.max(0, state.biomass[i] - loss));
-            state.stress[i] = Math.fround(clamp01(state.stress[i] + w * 0.5));
-          }
-          break;
-        default: break;
-      }
-    }
-  }
 }

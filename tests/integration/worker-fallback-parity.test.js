@@ -7,18 +7,16 @@ import { RUN_PROTOCOL_VERSION } from '../../src/core/run-protocol.js';
 import { createWorldIdentity, identityFields } from '../../src/core/world-session.js';
 import {
   ENVIRONMENT_MODEL_VERSION,
-  ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
   ENVIRONMENT_SCHEDULE_HASH,
   ENVIRONMENT_SCHEDULE_VERSION,
 } from '../../src/game/environment-level.js';
 
 const WORKER_TIMEOUT_MS = 15_000;
 
-test('production Worker and fallback agree through transitions, events, exposure, and extinction', { timeout: 20_000 }, async (t) => {
+test('production Worker and fallback agree through transitions, chronic exposure, and extinction', { timeout: 20_000 }, async (t) => {
   const identity = createWorldIdentity({ worldSessionId: 701, runId: 701, seed: 77, presentationGeneration: 1,
     environmentModelVersion: ENVIRONMENT_MODEL_VERSION, environmentScheduleVersion: ENVIRONMENT_SCHEDULE_VERSION,
-    environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH, onboardingEnvironmentModifierVersion: ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
-    immutableStartConfigurationHash: 'c0ffee77' });
+    environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH, immutableStartConfigurationHash: 'c0ffee77' });
   const cfg = { seed: 77, worldOrdinal: '3', ...identityFields(identity) };
   const worker = new Worker(new URL('./worker-authority-shim.mjs', import.meta.url), { type: 'module', execArgv: [] });
   t.after(() => worker.terminate());
@@ -30,7 +28,6 @@ test('production Worker and fallback agree through transitions, events, exposure
 
   assert.deepEqual(comparableResult(workerRun.result), comparableResult(fallbackResult));
   assert.deepEqual(workerRun.transitions, transitionsFrom(fallbackMessages));
-  assert.deepEqual(eventHistory(workerRun.result), eventHistory(fallbackResult));
 });
 
 function runWorker(worker, identity, cfg) {
@@ -59,15 +56,9 @@ function comparableResult(result) {
     peakEnvironmentLevel: result.peakEnvironmentLevel, environmentTransitionCount: result.environmentTransitionCount,
     environmentExposure: result.environmentExposure, recentEnvironmentTransitions: result.recentEnvironmentTransitions,
     environmentPressureSummary: result.environmentPressureSummary,
-    eventHistory: eventHistory(result),
   };
 }
 function transitionsFrom(messages) {
   return messages.filter((message) => message.t === 'environment-transition').map((message) => ({ tick: message.tick,
     environmentLevel: message.environmentLevel, profileHash: message.profileHash }));
-}
-function eventHistory(result) {
-  return (result.history ?? []).filter((event) => String(event.type).startsWith('event-')).map((event) => ({
-    tick: event.tick, type: event.type, id: event.id, family: event.family, cell: event.cell,
-  }));
 }

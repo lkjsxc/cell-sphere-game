@@ -2,22 +2,14 @@
 
 Concise architecture/product records: context → decision → consequence → evidence.
 
+> **Historical record.** Entries below describe superseded releases and may
+> mention retired migration, event, Evolution, SCORE, or persistence behavior.
+> They are not current product policy. Follow `AGENTS.md`, current source/tests,
+> and `docs/status.md` for current authority.
+
 ## D0 — 2026-08-07 Environment Progression v2 supersedes static frontier records
 
-Current authority is `cell-sphere-game` with a frequency-5, 252-cell Evolution
-Globe and exact unlimited Evolution levels. Every production world begins at
-Environment Level 0. The public level rises from the versioned within-world tick
-schedule; Evolution changes effective pressure but never public time. The first
-two worlds use an explicit event-onboarding modifier only; World 3 may receive
-mild telegraphed events under the same clock.
-
-SCORE authority is v5. Meta schema 13, History schema 8, agent save / observation schemas 4, and
-result/replay/run protocol 7 carry dynamic result evidence. Old static
-`highestEnvironmentLevel` is inert `legacyEnvironmentFrontier`; legacy History
-levels remain attempted-level evidence. Active Adaptations are retired. Luminous
-is authoritative whole-cell charge with decay and no wires. Any conflicting claim
-below is archival history, not current authority; follow source, tests, and the
-Environment Progression v2 work package.
+This entry is archived evidence, not current authority.
 
 ## D1 — Zero runtime dependencies
 

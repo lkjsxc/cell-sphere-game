@@ -188,11 +188,9 @@ export function createAgentEnvironment(raw = defaultAgentSave()) {
       environmentLevelProgressQ: snapshot.environmentLevelProgressQ,
       environmentPressureSummary: snapshot.environmentPressureSummary,
       environmentExposure: snapshot.environmentExposure,
-      onboardingEnvironmentModifier: snapshot.onboardingEnvironmentModifier,
       resources: Object.freeze({ reserveFraction: snapshot.metrics.resourceReserveFraction,
         depletedCells: snapshot.metrics.resourceDepletedCells, recoveredCells: snapshot.metrics.resourceRecoveredCells }),
       reach: snapshot.reach, electricity: Object.freeze({ electrifiedCells: snapshot.metrics.electrifiedCells }),
-      activeEvents: Object.freeze(snapshot.events.map((event) => Object.freeze({ ...event }))),
     });
   }
   return Object.freeze({ observe, act, exportSave: save });
@@ -214,15 +212,13 @@ function curateResult(result, transaction) {
     finalEnvironmentLevel: result.finalEnvironmentLevel, peakEnvironmentLevel: result.peakEnvironmentLevel,
     bestEnvironmentLevelReached: transaction.meta.bestEnvironmentLevelReached,
     environmentScheduleVersion: result.environmentScheduleVersion,
-    environmentProfileVersion: result.environmentProfileVersion, eventDirectorVersion: result.eventDirectorVersion,
+    environmentProfileVersion: result.environmentProfileVersion,
     environmentExposure: result.environmentExposure, timeAtPeakTicks: result.timeAtPeakTicks,
-    onboardingEnvironmentModifier: result.onboardingEnvironmentModifier,
     archetype: result.archetype, survivalSeconds: result.survivalSeconds, cause: result.cause,
     terminalCause: result.terminalCause, score: transaction.score.total, scoreModelVersion: transaction.score.modelVersion,
     rank: transaction.score.rank.en, echoes: transaction.score.echoes, worldPotential: result.worldPotential,
     pressure: result.environmentPressureSummary, peakReach: result.peakCoverage, sustainedReach: result.sustainedCoverage,
     peakConnectedShare: result.peakConnectedShare,
-    crises: Object.freeze({ endured: result.crisesEndured, total: result.crisesTotal }),
     resources: Object.freeze({ initial: result.resourceInitial, final: result.resourceFinal,
       depletedCells: result.resourceDepletedCells, recoveredCells: result.resourceRecoveredCells,
       freshwaterSupportedCellSeconds: result.freshwaterSupportedCellSeconds,

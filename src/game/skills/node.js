@@ -40,7 +40,7 @@ export const resonance = (branch, key, direction, cap, scale = 10) =>
 
 /** Twelve authored landmarks are interleaved with 30 bounded Resonance Skills. */
 export function defineBranch(branch, rows) {
-  if (rows.length !== 18) throw new Error(`${branch} legacy source must define 18 authored rows`);
+  if (rows.length !== 18) throw new Error(`${branch} source must define 18 authored rows`);
   const landmarkAt = new Map(LANDMARK_SLOTS.map((slot, index) => [slot, index])); let filler = 0;
   return Object.freeze(Array.from({ length: MEMORY_BRANCH_SIZE }, (_, index) => {
     const landmark = landmarkAt.get(index);
@@ -108,7 +108,6 @@ function completeUnlock(branch, kind, raw) {
   return { effect, summary: bonusSummary(bonus, label, gain), description: role };
 }
 function bonusSummary(bonus, defaultLabel, defaultGain) {
-  if (bonus.key === 'distributedSensing') return 'Crisis warnings arrive one interval earlier.';
   const label = TRAIT_LABELS[bonus.key] ?? defaultLabel;
   if (bonus.operation === 'add') return `${label} rises by ${bonus.value}.`;
   const amount = Math.round(Math.abs(bonus.value - 1) * 1000) / 10;
@@ -126,25 +125,22 @@ export function applyMemoryConditionals(state) {
   return target;
 }
 function conditionContext(state) {
-  let energy = 0; let moisture = 0; let toxin = 0; let alive = 0;
-  for (let i = 0; i < state.topo.nodeCount; i++) if (state.alive[i]) { alive++; energy += Math.max(0, state.energy[i]); moisture += state.moisture[i]; toxin += state.toxicity[i]; }
-  const active = state.events.filter((event) => state.tick >= event.startTick && state.tick <= event.endTick);
+  let energy = 0; let moisture = 0; let temperature = 0; let toxin = 0; let alive = 0;
+  for (let i = 0; i < state.topo.nodeCount; i++) if (state.alive[i]) {
+    alive++; energy += Math.max(0, state.energy[i]); moisture += state.moisture[i]; temperature += state.temperature[i]; toxin += state.toxicity[i];
+  }
   return { energy: alive ? energy / alive / 6 : 0, moisture: alive ? moisture / alive : 0,
-    toxin: alive ? toxin / alive : 0, crisis: active.some((event) => event.crisis), active };
+    temperature: alive ? temperature / alive : 0, toxin: alive ? toxin / alive : 0 };
 }
 function conditionActive(trigger, state, c) {
-  const active = c.active;
   switch (trigger) {
     case 'coverage-below-25': return state.coverage < 0.25; case 'coverage-above-70': return state.coverage > 0.70;
     case 'components-above-one': return state.aliveCount > 1 && state.connectedShare < 0.98;
     case 'connectivity-below-45': return state.connectedShare < 0.45; case 'connectivity-below-35': return state.connectedShare < 0.35;
-    case 'crisis-active': return c.crisis; case 'nutrient-bloom-active': return active.some((event) => event.family === 'bloom');
     case 'energy-below-20': return c.energy < 0.20; case 'energy-above-80': return c.energy > 0.80;
     case 'recent-biomass-loss-above-20': return state.peakCoverage - state.coverage > 0.20;
-    case 'heat-crisis-active': return active.some((event) => event.family === 'heat'); case 'moisture-below-30': return c.moisture < 0.30;
-    case 'toxin-pressure-above-50': return c.toxin > 0.50;
-    case 'crisis-recently-ended': return state.events.some((event) => state.tick > event.endTick && state.tick <= event.endTick + 200);
-    case 'crisis-telegraphed': return state.events.some((event) => (event.announced & 1) && !(event.announced & 2));
+    case 'temperature-above-75': return c.temperature > 0.75; case 'moisture-below-30': return c.moisture < 0.30;
+    case 'moisture-above-70': return c.moisture > 0.70; case 'toxin-pressure-above-50': return c.toxin > 0.50;
     case 'component-just-rejoined': return (state.reconnectedUntil ?? -1) >= state.tick; default: return false;
   }
 }

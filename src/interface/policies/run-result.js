@@ -7,9 +7,7 @@ import { reconcileTrophies } from '../../game/trophies/evaluator.js';
 import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_HASH, ENVIRONMENT_SCHEDULE_VERSION,
   environmentScheduleAtTick, normalizeEnvironmentLevel } from '../../game/environment-level.js';
 import { ENVIRONMENT_EXPOSURE_VERSION } from '../../game/environment-exposure.js';
-import { LEGACY_CHALLENGE_PROFILE_VERSION,
-  compileChallengeProfile, compileLegacyChallengeProfileV2 } from '../../simulation/challenge-profile.js';
-import { EVENT_DIRECTOR_VERSION } from '../../simulation/events.js';
+import { compileChallengeProfile } from '../../simulation/challenge-profile.js';
 import { RUN_RESULT_SCHEMA_VERSION } from '../../simulation/result.js';
 import {addProgressionIntegers,compareProgressionIntegers,incrementProgressionInteger,
   maxProgressionInteger,multiplyProgressionIntegers,normalizeProgressionInteger} from '../../core/progression-integer.js';
@@ -55,9 +53,7 @@ export function applyRunResult(meta,archive,result,retention,lastKey=null){
     trophyIds:trophies.awardedIds,trophiesBackfilled:trophies.backfilled});
 }
 function validDynamicEnvironmentResult(result, evolution) {
-  const legacyProfile = result?.environmentProfileVersion === LEGACY_CHALLENGE_PROFILE_VERSION
-    && !Object.hasOwn(result, 'resultSchemaVersion');
-  if (!result || (!legacyProfile && result.resultSchemaVersion !== RUN_RESULT_SCHEMA_VERSION)
+  if (!result || result.resultSchemaVersion !== RUN_RESULT_SCHEMA_VERSION
     || result.environmentModelVersion !== ENVIRONMENT_MODEL_VERSION
     || result.environmentScheduleVersion !== ENVIRONMENT_SCHEDULE_VERSION
     || result.environmentScheduleHash !== ENVIRONMENT_SCHEDULE_HASH
@@ -75,12 +71,10 @@ function validDynamicEnvironmentResult(result, evolution) {
     || result.environmentLevelStartTick !== schedule.environmentLevelStartTick
     || result.nextEnvironmentLevelTick !== schedule.nextEnvironmentLevelTick
     || !exposure || exposure.version !== ENVIRONMENT_EXPOSURE_VERSION) return false;
-  const compile = legacyProfile ? compileLegacyChallengeProfileV2 : compileChallengeProfile;
-  const profile = compile({ environmentLevel: final, evolution: {
+  const profile = compileChallengeProfile({ environmentLevel: final, evolution: {
     affinityDefense: evolution?.affinityDefense, pressureDefense: evolution?.pressureDefense,
   } });
-  if (result.environmentProfileVersion !== profile.version || result.currentEnvironmentProfileHash !== profile.hash
-    || (!legacyProfile && result.eventDirectorVersion !== EVENT_DIRECTOR_VERSION)) return false;
+  if (result.environmentProfileVersion !== profile.version || result.currentEnvironmentProfileHash !== profile.hash) return false;
   for (const key of ['totalTicks', 'pressureTicksQ', 'qualityPressureTicksQ', 'timeAtPeakTicks']) {
     if (normalizeProgressionInteger(exposure[key], '0') !== exposure[key]) return false;
   }
@@ -93,7 +87,7 @@ function validDynamicEnvironmentResult(result, evolution) {
   if (!Array.isArray(result.recentEnvironmentTransitions) || result.recentEnvironmentTransitions.length > 8) return false;
   let previousLevel = '0'; let previousTick = '0';
   return result.recentEnvironmentTransitions.every((transition) => {
-    if (!validTransition(transition, final, evolution, compile)) return false;
+    if (!validTransition(transition, final, evolution)) return false;
     const level = transition.level; const tick = transition.tick;
     if (compareProgressionIntegers(level, previousLevel) <= 0 || compareProgressionIntegers(tick, previousTick) <= 0) return false;
     previousLevel = level; previousTick = tick; return true;

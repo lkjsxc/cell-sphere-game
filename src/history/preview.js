@@ -32,5 +32,5 @@ export function projectPreview(frame, buffers) {
     else lifeState[cell] = LIFE_STATE.LIVING;
   }
   return { tick: frame.tick, entropy: frame.entropyQ / 255, status: 'history', alive, biomass, stress, lifeState,
-    metrics: { aliveCount: frame.aliveCount }, events: [], approximate: true };
+    metrics: { aliveCount: frame.aliveCount }, approximate: true };
 }

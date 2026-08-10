@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /** Production habitat lock, unlock, occupancy, and marine-bounds audit. */
 import { mkdirSync, writeFileSync } from 'node:fs';import { RunController } from '../../src/simulation/simulator.js';
-import { compileMemory, MEMORY_NODES, MEMORY_NODE_IDS } from '../../src/game/skills/index.js';import { BIOME } from '../../src/world/constants.js';
-const count=Number(process.argv.find((arg)=>arg.startsWith('--count='))?.split('=')[1]??60);const fresh=compileMemory({memoryNodes:[]}),breadth=compileMemory({memoryNodes:MEMORY_NODE_IDS});
+import { compileEvolution, MEMORY_NODES, MEMORY_NODE_IDS } from '../../src/game/skills/index.js';import { BIOME } from '../../src/world/constants.js';
+const count=Number(process.argv.find((arg)=>arg.startsWith('--count='))?.split('=')[1]??60);const compileIds=(ids)=>compileEvolution({evolutionLevels:ids.map((id)=>({id,level:'1'}))});const fresh=compileIds([]),breadth=compileIds(MEMORY_NODE_IDS);
 const keys=['LAKE_ACCESS','TUNDRA_ACCESS','SNOW_ICE_ACCESS','SHALLOW_OCEAN_EDGE_ACCESS','SHALLOW_OCEAN_ACCESS','DEEP_OCEAN_ACCESS'];
 const unlockIds=Object.fromEntries(keys.map((key)=>[key,MEMORY_NODES.find((node)=>node.effect.type==='unlock'&&node.effect.key===key)?.id]));
 const configs={fresh,breadth};for(const [key,id] of Object.entries(unlockIds)) { const ids=[id];
  if(key==='SNOW_ICE_ACCESS')ids.unshift(unlockIds.TUNDRA_ACCESS);if(key==='SHALLOW_OCEAN_ACCESS')ids.unshift(unlockIds.SHALLOW_OCEAN_EDGE_ACCESS);
- if(key==='DEEP_OCEAN_ACCESS')ids.unshift(unlockIds.SHALLOW_OCEAN_EDGE_ACCESS,unlockIds.SHALLOW_OCEAN_ACCESS);configs[key]=compileMemory({memoryNodes:ids}); }
+ if(key==='DEEP_OCEAN_ACCESS')ids.unshift(unlockIds.SHALLOW_OCEAN_EDGE_ACCESS,unlockIds.SHALLOW_OCEAN_ACCESS);configs[key]=compileIds(ids); }
 const rows=Object.fromEntries(Object.keys(configs).map((key)=>[key,[]]));let uniqueOccupancyViolations=0;for(const [label,memory] of Object.entries(configs))for(let index=0;index<count;index++){
  const rc=new RunController({seed:0x510000+index,worldOrdinal:8,worldPotential:memory.worldPotential,evolutionPower:memory.evolutionPower,
   potentialVersion:memory.potentialVersion,memoryEffects:memory.effects,memoryConditionals:memory.conditionals,

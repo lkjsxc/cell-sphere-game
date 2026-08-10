@@ -2,13 +2,10 @@
 import { compileEvolution } from '../../game/skills/index.js';
 import {
   ENVIRONMENT_MODEL_VERSION,
-  ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
   ENVIRONMENT_SCHEDULE_HASH,
   ENVIRONMENT_SCHEDULE_VERSION,
-  environmentOnboardingModifierForWorld,
 } from '../../game/environment-level.js';
 import { ENVIRONMENT_PROFILE_VERSION } from '../../simulation/challenge-profile.js';
-import { EVENT_DIRECTOR_VERSION } from '../../simulation/events.js';
 import { incrementProgressionInteger, maxProgressionInteger, normalizeProgressionInteger } from '../../core/progression-integer.js';
 import { hashStringU32, hexU32 } from '../../core/hash.js';
 import { identityFields, sameWorldIdentity } from '../../core/world-session.js';
@@ -52,14 +49,12 @@ export function performWorldReplacement(app) {
   if (!saveMeta(app.meta)) ui.announce(app.el, 'The world seed sequence is session-only because storage is unavailable.');
   const evolution = compileEvolution(app.meta);
   const worldOrdinal = incrementProgressionInteger(seedIndex);
-  const onboardingEnvironmentModifier = environmentOnboardingModifierForWorld(worldOrdinal);
   const identity = app.driver.reserveIdentity({ worldSessionId: ++app.worldSessionSequence, seed,
     presentationGeneration: ++app.presentationGeneration,
     environmentModelVersion: ENVIRONMENT_MODEL_VERSION,
     environmentScheduleVersion: ENVIRONMENT_SCHEDULE_VERSION,
     environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH,
-    immutableStartConfigurationHash: immutableStartConfigurationHash(seed, worldOrdinal, evolution, onboardingEnvironmentModifier),
-    onboardingEnvironmentModifierVersion: ENVIRONMENT_ONBOARDING_MODIFIER_VERSION });
+    immutableStartConfigurationHash: immutableStartConfigurationHash(seed, worldOrdinal, evolution) });
   app.worldIdentity = identity; app.activeRunId = identity.runId; app.runSeed = seed;
   app.makeRenderer(seed, 'world', identity); const blank = createBlankSnapshot(app.topo4.nodeCount, identity);
   app.snapshot = blank; app.driver.installSnapshot(blank); app.flow.send(transitionFor(phaseOf(app))); app.flow.select?.('world');
@@ -157,11 +152,10 @@ function expectedMatches(app, expected) {
   if (typeof expected === 'string') return expected === app.lastResultIdentity?.resultTransactionKey;
   return sameWorldIdentity(expected, app.worldIdentity) || sameWorldIdentity(expected, app.lastResultIdentity);
 }
-function immutableStartConfigurationHash(seed, worldOrdinal, evolution, onboarding) {
+function immutableStartConfigurationHash(seed, worldOrdinal, evolution) {
   const material = stableStartJson({ seed, worldOrdinal, environmentModelVersion: ENVIRONMENT_MODEL_VERSION,
     environmentScheduleVersion: ENVIRONMENT_SCHEDULE_VERSION, environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH,
-    environmentProfileVersion: ENVIRONMENT_PROFILE_VERSION, eventDirectorVersion: EVENT_DIRECTOR_VERSION,
-    onboarding, evolution });
+    environmentProfileVersion: ENVIRONMENT_PROFILE_VERSION, evolution });
   return hexU32(hashStringU32(material));
 }
 function stableStartJson(value) {

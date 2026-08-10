@@ -1,4 +1,4 @@
-/** Bounded semantic History schema 8 with dynamic Environment interpolation evidence. */
+/** Bounded semantic History schema 9 with dynamic chronic-Environment evidence. */
 import { buildTrophyFacts, validateTrophyFacts } from '../game/trophies/facts.js';
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 import { ENVIRONMENT_MODEL_VERSION, normalizeEnvironmentLevel } from '../game/environment-level.js';
@@ -11,19 +11,14 @@ const MAX_MEMORY_EVENTS = 128;
 const MAX_TROPHY_EVENTS = 128;
 const CELL_COUNT = 2562;
 
-export function defaultHistory() { return { schema: 8, worlds: [], evolution: [], trophies: [] }; }
+export function defaultHistory() { return { schema: 9, worlds: [], evolution: [], trophies: [] }; }
 function finiteInt(value, min = 0) { return Number.isFinite(value) && value >= min ? Math.floor(value) : null; }
 
 const SIM_EVENT = Object.freeze({
   'run-created': ['world', 'run.world.created'], inoculation: ['world', 'run.inoculation.selected'],
-  'run-start': ['life', 'run.germination'], 'event-telegraph': ['crisis', 'crisis.telegraphed'],
-  'event-start': ['crisis', 'crisis.started'], 'event-end': ['crisis', 'crisis.ended'],
-  'network-loop': ['life', 'morph.loop.first'], 'component-split': ['life', 'morph.component.split'],
+  'run-start': ['life', 'run.germination'], 'network-loop': ['life', 'morph.loop.first'], 'component-split': ['life', 'morph.component.split'],
   'component-reconnected': ['life', 'morph.component.reconnected'],
-  'adaptation-offered': ['adaptation', 'adaptation.offered'],
-  'adaptation-selected': ['adaptation', 'adaptation.selected.manual'],
-  'adaptation-unresolved': ['adaptation', 'adaptation.unresolved'],
-  'adaptation-mode': ['adaptation', 'adaptation.mode.changed'], 'run-extinct': ['life', 'run.extinct'],
+  'run-extinct': ['life', 'run.extinct'],
   'run-abandoned': ['life', 'run.abandoned'], 'environment-transition': ['environment', 'environment.level.transition'],
   'resource-reserve': ['resource', 'resource.reserve.threshold'],
   'resource-recovered': ['resource', 'resource.cell.recovered'], 'glacial-lake': ['world', 'world.glacial_lake.formed'],
@@ -31,7 +26,6 @@ const SIM_EVENT = Object.freeze({
   'powered-cell': ['life', 'life.cell.powered'], 'reach-100': ['world', 'world.reach_100.sustained'],
   coverage: ['world', 'geo.coverage.milestone'], phase: ['life', 'run.phase.abundance'],
   'geo-coast': ['world', 'geo.coast.reached'], 'geo-lake': ['world', 'geo.lake.reached'],
-  'geo-river': ['world', 'geo.river.reached'],
   'geo-forest': ['world', 'geo.forest.reached'], 'geo-mountain': ['world', 'geo.mountain.reached'],
   'geo-wetland': ['world', 'geo.wetland.reached'], 'geo-world-knot': ['world', 'geo.world_knot.reached'],
 });
@@ -52,7 +46,6 @@ function validateEvent(raw, index) {
   if (tick === null || typeof kindValue !== 'string' || !/^[a-z-]{2,32}$/.test(kindValue)) return null;
   let mappedKey = mapped?.[1];
   if (raw.type === 'phase' && typeof raw.id === 'string') mappedKey = `run.phase.${raw.id}`;
-  if (raw.type === 'adaptation-selected' && raw.mode === 'random') mappedKey = 'adaptation.selected.random';
   const key = typeof raw.key === 'string' && /^[a-z]+(?:[.-][a-z_]+)+$/.test(raw.key) ? raw.key : mappedKey;
   if (!key) return null;
   const cells = primaryCells(raw); const event = { seq: finiteInt(raw.seq) ?? index, tick, kind: kindValue,
@@ -96,40 +89,24 @@ function validateWorld(raw) {
     reach100:raw.reach100===true,activeBuilds:Array.isArray(raw.activeBuilds)
       ?[...new Set(raw.activeBuilds.slice(0,64).filter((id)=>typeof id==='string'&&/^[a-z][a-z0-9-]{1,47}$/.test(id)))].slice(0,16):[],
     inoculationCell: Number.isInteger(raw.inoculationCell) ? raw.inoculationCell : null, events };
-  if (isDynamicEnvironmentWorld(raw)) {
-    world.environmentModelVersion = ENVIRONMENT_MODEL_VERSION;
-    world.environmentScheduleVersion = finiteInt(raw.environmentScheduleVersion) ?? 0;
-    world.environmentScheduleHash = validHash(raw.environmentScheduleHash);
-    world.environmentProfileVersion = finiteInt(raw.environmentProfileVersion) ?? 0;
-    world.eventDirectorVersion = finiteInt(raw.eventDirectorVersion) ?? 0;
-    world.resultSchemaVersion = finiteInt(raw.resultSchemaVersion) ?? 0;
-    world.startEnvironmentLevel = '0';
-    world.finalEnvironmentLevel = normalizeEnvironmentLevel(raw.finalEnvironmentLevel, '0');
-    world.peakEnvironmentLevel = normalizeEnvironmentLevel(raw.peakEnvironmentLevel, world.finalEnvironmentLevel);
-    if (compareProgressionIntegers(world.peakEnvironmentLevel, world.finalEnvironmentLevel) < 0) world.peakEnvironmentLevel = world.finalEnvironmentLevel;
-    world.environmentTransitionCount = normalizeProgressionInteger(raw.environmentTransitionCount, '0');
-    world.environmentExposure = validateEnvironmentExposure(raw.environmentExposure);
-    world.timeAtPeakTicks = normalizeProgressionInteger(raw.timeAtPeakTicks, world.environmentExposure.timeAtPeakTicks);
-    world.recentEnvironmentTransitions = validateRecentTransitions(raw.recentEnvironmentTransitions);
-    world.currentEnvironmentProfileHash = validHash(raw.currentEnvironmentProfileHash);
-    world.onboardingEnvironmentModifier = validateOnboardingModifier(raw.onboardingEnvironmentModifier);
-    world.environmentPressureSummary = validatePressureSummary(raw.environmentPressureSummary);
-  } else {
-    // Old `environmentLevel` is a static attempted level, never a v2 peak.
-    world.environmentModelVersion = 1;
-    world.attemptedEnvironmentLevel = normalizeEnvironmentLevel(raw.attemptedEnvironmentLevel ?? raw.environmentLevel,
-      legacyEnvironmentLevel(raw.worldOrdinal));
-    world.legacyChallengeProfileVersion = finiteInt(raw.challengeProfileVersion ?? raw.legacyChallengeProfileVersion) ?? 0;
-    world.legacyChallengeProfileHash = validHash(raw.challengeProfileHash ?? raw.legacyChallengeProfileHash);
-  }
+  if (raw.environmentModelVersion !== ENVIRONMENT_MODEL_VERSION || raw.startEnvironmentLevel !== '0') return null;
+  world.environmentModelVersion = ENVIRONMENT_MODEL_VERSION;
+  world.environmentScheduleVersion = finiteInt(raw.environmentScheduleVersion) ?? 0;
+  world.environmentScheduleHash = validHash(raw.environmentScheduleHash);
+  world.environmentProfileVersion = finiteInt(raw.environmentProfileVersion) ?? 0;
+  world.resultSchemaVersion = finiteInt(raw.resultSchemaVersion) ?? 0;
+  world.startEnvironmentLevel = '0';
+  world.finalEnvironmentLevel = normalizeEnvironmentLevel(raw.finalEnvironmentLevel, '0');
+  world.peakEnvironmentLevel = normalizeEnvironmentLevel(raw.peakEnvironmentLevel, world.finalEnvironmentLevel);
+  if (compareProgressionIntegers(world.peakEnvironmentLevel, world.finalEnvironmentLevel) < 0) world.peakEnvironmentLevel = world.finalEnvironmentLevel;
+  world.environmentTransitionCount = normalizeProgressionInteger(raw.environmentTransitionCount, '0');
+  world.environmentExposure = validateEnvironmentExposure(raw.environmentExposure);
+  world.timeAtPeakTicks = normalizeProgressionInteger(raw.timeAtPeakTicks, world.environmentExposure.timeAtPeakTicks);
+  world.recentEnvironmentTransitions = validateRecentTransitions(raw.recentEnvironmentTransitions);
+  world.currentEnvironmentProfileHash = validHash(raw.currentEnvironmentProfileHash);
+  world.environmentPressureSummary = validatePressureSummary(raw.environmentPressureSummary);
   if (typeof raw.resultTransactionKey === 'string' && raw.resultTransactionKey.length <= 128) world.resultTransactionKey = raw.resultTransactionKey;
-  const legacyAdaptations=Array.isArray(raw.adaptations)?raw.adaptations.slice(0,48).filter((id)=>typeof id==='string').slice(0,24):[];
-  if (legacyAdaptations.length) world.adaptations = legacyAdaptations;
   const trophyFacts = validateTrophyFacts(raw.trophyFacts); if (trophyFacts) world.trophyFacts = trophyFacts; return world;
-}
-
-function isDynamicEnvironmentWorld(raw) {
-  return raw?.environmentModelVersion === ENVIRONMENT_MODEL_VERSION && raw?.startEnvironmentLevel === '0';
 }
 function validHash(value) { return typeof value === 'string' && /^[0-9a-f]{8}$/.test(value) ? value : ''; }
 function validateEnvironmentExposure(raw) {
@@ -156,11 +133,6 @@ function validateRecentTransitions(raw) {
     return { tick, level, profileHash, pressure };
   }).filter(Boolean);
 }
-function validateOnboardingModifier(raw) {
-  if (!raw || typeof raw !== 'object') return Object.freeze({ version: 0, harmfulEventsDisabled: false });
-  return Object.freeze({ version: finiteInt(raw.version) ?? 0, harmfulEventsDisabled: raw.harmfulEventsDisabled === true,
-    label: typeof raw.label === 'string' ? raw.label.slice(0, 48) : '' });
-}
 function validatePressureSummary(raw) {
   if (!raw || typeof raw !== 'object') return Object.freeze({ level: '0', nextLevel: '0', profileHash: '', nextProfileHash: '',
     interpolationQ: 0, effectiveCoefficients: Object.freeze({}), pressure: 0, severityQ: 0 });
@@ -177,9 +149,9 @@ function validatePressureSummary(raw) {
 }
 
 export function validateHistory(raw, retention = 24) {
-  const out = defaultHistory(); if (!raw || typeof raw !== 'object') return out;
+  const out = defaultHistory(); if (!raw || typeof raw !== 'object' || raw.schema !== out.schema) return out;
   if(Array.isArray(raw.worlds))out.worlds=raw.worlds.slice(-retention*2).map(validateWorld).filter(Boolean).slice(-retention);
-  const evolution=Array.isArray(raw.evolution)?raw.evolution:Array.isArray(raw.memory)?raw.memory:[];
+  const evolution=Array.isArray(raw.evolution) ? raw.evolution : [];
   out.evolution=evolution.slice(-MAX_MEMORY_EVENTS*2).map(validateEvolutionEvent).filter(Boolean).slice(-MAX_MEMORY_EVENTS);
   if(Array.isArray(raw.trophies))out.trophies=raw.trophies.slice(-MAX_TROPHY_EVENTS*2).map(validateTrophyEvent).filter(Boolean).slice(-MAX_TROPHY_EVENTS);
   return trimValidatedHistory(out).value;
@@ -206,13 +178,12 @@ export function appendWorld(history,result,score,runIndex,retention=24){
     evolutionPower: result.evolutionPower, evolutionDepth: result.evolutionDepth, worldOrdinal: result.worldOrdinal,
     environmentModelVersion: result.environmentModelVersion, environmentScheduleVersion: result.environmentScheduleVersion,
     environmentScheduleHash: result.environmentScheduleHash, environmentProfileVersion: result.environmentProfileVersion,
-    eventDirectorVersion: result.eventDirectorVersion, resultSchemaVersion: result.resultSchemaVersion,
+    resultSchemaVersion: result.resultSchemaVersion,
     startEnvironmentLevel: result.startEnvironmentLevel, finalEnvironmentLevel: result.finalEnvironmentLevel,
     peakEnvironmentLevel: result.peakEnvironmentLevel, environmentTransitionCount: result.environmentTransitionCount,
     timeAtPeakTicks: result.timeAtPeakTicks, environmentExposure: result.environmentExposure,
     recentEnvironmentTransitions: result.recentEnvironmentTransitions,
     currentEnvironmentProfileHash: result.currentEnvironmentProfileHash,
-    onboardingEnvironmentModifier: result.onboardingEnvironmentModifier,
     environmentPressureSummary: result.environmentPressureSummary, resultTransactionKey: result.resultTransactionKey,
     resourceInitial: result.resourceInitial, resourceFinal: result.resourceFinal,
     resourceRecoveredCells: result.resourceRecoveredCells,
@@ -236,11 +207,11 @@ export function appendAbandonedWorld(history,result,retention=24){
     evolutionDepth: result.evolutionDepth, worldOrdinal: result.worldOrdinal,
     environmentModelVersion: result.environmentModelVersion, environmentScheduleVersion: result.environmentScheduleVersion,
     environmentScheduleHash: result.environmentScheduleHash, environmentProfileVersion: result.environmentProfileVersion,
-    eventDirectorVersion: result.eventDirectorVersion, resultSchemaVersion: result.resultSchemaVersion,
+    resultSchemaVersion: result.resultSchemaVersion,
     startEnvironmentLevel: result.startEnvironmentLevel ?? '0', finalEnvironmentLevel: result.finalEnvironmentLevel ?? '0',
     peakEnvironmentLevel: result.peakEnvironmentLevel ?? '0', environmentTransitionCount: result.environmentTransitionCount ?? '0',
     environmentExposure: result.environmentExposure, currentEnvironmentProfileHash: result.currentEnvironmentProfileHash,
-    onboardingEnvironmentModifier: result.onboardingEnvironmentModifier, events:normalizeHistoryEvents(result.history)});
+    events:normalizeHistoryEvents(result.history)});
   return validateHistory({...source,worlds:[...source.worlds,record]},retention);
 }
 export function appendEvolutionEvent(history,evidence){
@@ -249,13 +220,6 @@ export function appendEvolutionEvent(history,evidence){
   const event=validateEvolutionEvent({...evidence,seq:source.evolution.length},source.evolution.length);
   if(!event)return source;
   return validateHistory({ ...source, evolution: [...source.evolution, event] }, 32);
-}
-/** Legacy writer alias; old binary records remain readable as Level 0 → 1. */
-export function appendMemoryEvent(history, nodeId, cost, balance, run) {
-  if (nodeId && typeof nodeId === 'object') return appendEvolutionEvent(history, nodeId);
-  const balanceAfter = normalizeProgressionInteger(balance, '0'); const exactCost = normalizeProgressionInteger(cost, '0');
-  return appendEvolutionEvent(history, { nodeId, oldLevel:'0', newLevel:'1', cost:exactCost,
-    balanceBefore:addProgressionIntegers(balanceAfter, exactCost), balanceAfter, run });
 }
 export function appendTrophyEvents(history, ids, worldId = history.worlds.at(-1)?.id) {
   if (!ids?.length) return history; const source = validateHistory(history, 32); const world = source.worlds.find((entry) => entry.id === worldId);
@@ -288,12 +252,6 @@ function validateEvolutionEvent(raw, index) {
 }
 function safeIncrement(value){try{return incrementProgressionInteger(value)}catch{return value}}
 function safeAdd(left,right){try{return addProgressionIntegers(left,right)}catch{return left}}
-function legacyEnvironmentLevel(worldOrdinal) {
-  const ordinal = normalizeProgressionInteger(worldOrdinal, '1');
-  if (compareProgressionIntegers(ordinal, '2') <= 0) return '0'; if (ordinal === '3') return '1';
-  if (compareProgressionIntegers(ordinal, '5') <= 0) return '2';
-  if (compareProgressionIntegers(ordinal, '10') <= 0) return '3'; return '4';
-}
 function validateTrophyEvent(raw, index) { if (!raw || typeof raw !== 'object' || raw.key !== 'trophy.earned'
     || typeof raw.subjectId !== 'string' || !/^[a-z][a-z-]{2,63}$/.test(raw.subjectId)) return null;
   return { seq: finiteInt(raw.seq) ?? index, tick: finiteInt(raw.tick) ?? 0, kind: 'trophy', importance: 3,

@@ -30,7 +30,7 @@
     "audit:transformations": "node scripts/audits/transformation-audit.mjs",
     "audit:reach100": "node scripts/audits/reach100-audit.mjs",
     "audit:lakes": "node scripts/audits/lake-audit.mjs",
-    "audit:events": "node scripts/audits/event-audit.mjs",
+    "audit:no-disaster": "node scripts/audits/no-disaster-audit.mjs",
     "audit:habitats": "node scripts/audits/habitat-audit.mjs",
     "audit:skills": "node scripts/audits/skill-audit.mjs",
     "audit:trophies": "node scripts/audits/trophy-audit.mjs",

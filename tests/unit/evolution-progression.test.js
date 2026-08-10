@@ -16,17 +16,16 @@ const levels = (entries) => ({ evolutionLevels: entries, echoBalance: '0', revis
 const fullLevelOne = () => MEMORY_NODE_IDS.map((id) => ({ id, level: '1' }));
 const digest = (value) => hexU32(hashStringU32(JSON.stringify(value)));
 
-test('canonical sparse vectors normalize order, duplicates, zero, unknowns, and legacy fallback', () => {
+test('canonical sparse vectors normalize order, duplicates, zero, and unknowns', () => {
   const a = MEMORY_NODE_IDS[0]; const b = MEMORY_NODE_IDS[1];
   const normalized = normalizeEvolutionLevels({ evolutionLevels: [
     { id:b, level:'0002' }, { id:a, level:'2' }, { id:b, level:'3' },
     { id:a, level:'7' }, { id:'unknown-cell', level:'9' }, { id:MEMORY_NODE_IDS[2], level:'0' },
-  ], memoryNodes: MEMORY_NODE_IDS.slice(0, 10) });
+  ] });
   assert.deepEqual(normalized, [{ id:a, level:'7' }, { id:b, level:'3' }]);
   assert.equal(Object.isFrozen(normalized), true); assert.ok(normalized.every(Object.isFrozen));
-  assert.deepEqual(normalizeEvolutionLevels({ memoryNodes:[b, a, b, 'unknown-cell'] }),
-    [{ id:a, level:'1' }, { id:b, level:'1' }]);
-  assert.deepEqual(normalizeEvolutionLevels({ evolutionLevels:[], memoryNodes:[a] }), []);
+  assert.deepEqual(normalizeEvolutionLevels({ retiredOwnership:[b, a, b, 'unknown-cell'] }), []);
+  assert.deepEqual(normalizeEvolutionLevels({ evolutionLevels:[], retiredOwnership:[a] }), []);
   assert.deepEqual(ownedEvolutionIds({ evolutionLevels:[{ id:b, level:'1' }, { id:a, level:'2' }] }), [a,b]);
   assert.equal(canonicalEvolutionKey({ evolutionLevels:[{ id:b, level:'1' }, { id:a, level:'2' }] }),
     canonicalEvolutionKey({ evolutionLevels:[{ id:a, level:'2' }, { id:b, level:'1' }] }));
@@ -79,17 +78,16 @@ test('first unlock requires a root bootstrap or direct adjacency; owned cells ar
   assert.equal(repeat.reason, 'ready'); assert.equal(repeat.selectedReady, true);
 });
 
-test('one purchase changes one level, exact-debits, canonicalizes revision, and removes binary authority', () => {
+test('one purchase changes one level, exact-debits, and canonicalizes revision', () => {
   const node = MEMORY_NODES[0]; const target = 100_000_000n; const oldLevel = String(target - 1n);
   const cost = evolutionCostForTargetLevel(node, String(target)); const balance = String(BigInt(cost) + 17n);
-  const meta = { memoryNodes:[MEMORY_NODE_IDS[1]], evolutionLevels:[{ id:node.id, level:oldLevel }],
-    echoBalance:balance, revision:7 };
+  const meta = { evolutionLevels:[{ id:node.id, level:oldLevel }], echoBalance:balance, revision:7 };
   const tx = purchaseEvolutionLevel(meta, node.id, { expectedLevel:oldLevel, expectedRevision:'7', transactionKey:'huge-1' });
   assert.equal(tx.ok, true); assert.equal(tx.reason, 'ready'); assert.equal(tx.oldLevel, oldLevel);
   assert.equal(tx.newLevel, String(target)); assert.equal(tx.spent, cost);
   assert.equal(tx.balanceBefore, balance); assert.equal(tx.balanceAfter, '17');
   assert.equal(tx.meta.echoBalance, '17'); assert.equal(tx.meta.revision, '8');
-  assert.equal('memoryNodes' in tx.meta, false); assert.equal(evolutionLevel(tx.meta, node.id), String(target));
+  assert.equal(evolutionLevel(tx.meta, node.id), String(target));
   assert.deepEqual(tx.meta.evolutionTransactionKeys, ['huge-1']);
   assert.deepEqual(tx.compilerVersions, { levels:1, cost:1, effects:2, mastery:1, potential:3 });
 });
@@ -138,15 +136,15 @@ test('all level-one effects, conditions, unlocks, resonance, habitats, and Build
   assert.equal(full.activeBuilds.length, 16); assert.equal(BUILD_RECIPES.length, 16);
   assert.deepEqual(Object.fromEntries(['effects','conditionals','unlocks','resonanceCurves','habitatCapabilities',
     'buildEffects','buildCapabilities','transformations'].map((key) => [key,digest(full[key])])), {
-    effects:'a8246deb', conditionals:'d5508e55', unlocks:'a2253633', resonanceCurves:'73457525',
+    effects:'fd1978fc', conditionals:'abeb9c5f', unlocks:'a2253633', resonanceCurves:'73457525',
     habitatCapabilities:'ca69b790', buildEffects:'3f9404ab', buildCapabilities:'ff1a7d6d', transformations:'9c2d69e1',
   });
   assert.equal(digest(full.activeBuilds.map((build) => build.id)), 'f024d0fd');
   assert.equal(digest(full.activeBuilds.map((build) => build.mechanicalEffects)), '00703d2b');
   assert.ok(full.activeBuilds.every((build) => build.masteryRank === '1' && build.masteryRefinement === 0));
-  const legacy = compileEvolution({ memoryNodes:MEMORY_NODE_IDS });
-  assert.deepEqual({ effects:legacy.effects, conditionals:legacy.conditionals, unlocks:legacy.unlocks,
-    resonance:legacy.resonanceCurves, builds:legacy.buildEffects, potential:legacy.worldPotential },
+  const canonical = compileEvolution({ evolutionLevels:fullLevelOne() });
+  assert.deepEqual({ effects:canonical.effects, conditionals:canonical.conditionals, unlocks:canonical.unlocks,
+    resonance:canonical.resonanceCurves, builds:canonical.buildEffects, potential:canonical.worldPotential },
   { effects:full.effects, conditionals:full.conditionals, unlocks:full.unlocks,
     resonance:full.resonanceCurves, builds:full.buildEffects, potential:full.worldPotential });
 });

@@ -32,14 +32,14 @@ test('agent save schema validates exact browser subdocuments and hashes canonica
   assert.equal(clean.schema, AGENT_SAVE_SCHEMA); assert.equal(clean.campaignSeed, 123);
   assert.equal(clean.worldOrdinal, '1'); assert.equal(clean.stateHash, hashAgentSave(clean));
   const migrated = validateAgentSave({ ...clean, schema: 3 });
-  assert.equal(migrated.schema, 4); assert.equal(migrated.meta.schema, 13); assert.equal(migrated.history.schema, 8);
+  assert.equal(migrated.schema, 5); assert.equal(migrated.meta.schema, 14); assert.equal(migrated.history.schema, 9);
   const repaired = validateAgentSave({ ...clean, campaignSeed:-2, goal:'secret-goal',
     worldOrdinal:'999', meta:{ ...clean.meta, echoBalance:'-5' }, history:{ worlds:'bad' } });
   assert.equal(repaired.campaignSeed, 0); assert.equal(repaired.goal, 'balanced');
   assert.equal(repaired.worldOrdinal,'1');assert.equal(repaired.meta.echoBalance,'0');
   const retried=validateAgentSave({...clean,meta:{...clean.meta,runs:'2',worldSeedIndex:'7'}});
   assert.equal(retried.worldOrdinal,'8','agent persistence uses the attempt cursor after retries');
-  assert.deepEqual(repaired.history.worlds, []); assert.equal(repaired.history.schema, 8);
+  assert.deepEqual(repaired.history.worlds, []); assert.equal(repaired.history.schema, 9);
 });
 
 test('build-goal policy prioritizes visible recipe progress', () => {

@@ -20,9 +20,9 @@ not a click-to-place game, and not a hidden-tab idle process.
 ## North stars
 
 - first visible growth under 10 game seconds;
-- median ordinary run 270–330 game seconds, ceiling about 360;
-- first campaign resolution target 18–24 minutes;
-- first trophy-scale recognition remains targeted around four hours; Evolution Globe mastery is a long-horizon modeled pursuit;
+- provisional fresh no-Evolution median of 45–90 game seconds through finite-resource ecology;
+- first-root paired cohorts should survive meaningfully longer than fresh;
+- trophy recognition and Evolution progression are based on realized worlds, not modeled forecasts;
 - same seed + world ordinal + Evolution levels produces the same result at every speed;
 - pointer-only completeness, semantic alternatives, reduced-motion safety;
 - desktop and smartphone Chrome, low allocation, restrained draw count;

@@ -1,5 +1,7 @@
 # Release ledger
 
+> Historical release evidence only. It does not define current product policy.
+
 ## 2026-08-04 — 252-cell scarcity and progression release
 
 Starting revision: `a3fa43131261a0cdf207d63e25c448646857914c`

@@ -1,7 +1,6 @@
 /** Renderer snapshot construction from canonical authority. */
 import { evaluate, metricsFromState } from '../game/scoring.js';
 import { writeLifeStates } from '../core/life-state.js';
-import { buildEventCellState, eventDirectorSummary } from './events.js';
 import { buildReachSummary } from './lifecycle/reach-ledger.js';
 import { packResourcePresentation, resourceConservation } from './resource-ecology.js';
 import { reachGoalSummary } from './lifecycle/reach-goal.js';
@@ -10,7 +9,7 @@ import { environmentPressureSummary } from './challenge-profile.js';
 
 export function buildSnapshot(state) {
   const lifeState = writeLifeStates(state.topo, state.alive, state.biomass, state.stress,
-    new Uint8Array(state.topo.nodeCount)); const eventCells = buildEventCellState(state);
+    new Uint8Array(state.topo.nodeCount));
   const resource = packResourcePresentation(state);
   const scoreProjection = evaluate(metricsFromState(state), { environmentBonusQ: state.scoreMerit.environmentBonusQ });
   return {
@@ -29,7 +28,6 @@ export function buildSnapshot(state) {
     environmentTransitionCount: state.environmentTransitionCount,
     environmentExposure: environmentExposureSummary(state.environmentExposure),
     recentEnvironmentTransitions: state.recentEnvironmentTransitions.map((transition) => ({ ...transition })),
-    onboardingEnvironmentModifier: { ...state.onboardingEnvironmentModifier },
     environmentPressureSummary: environmentPressureSummary(state.currentEnvironmentProfile, {
       nextProfile: state.nextEnvironmentProfile, progressQ: state.environmentLevelProgressQ,
       coefficients: state.environmentCoefficients,
@@ -40,8 +38,6 @@ export function buildSnapshot(state) {
     stress: state.stress.slice(),
     alive: state.alive.slice(),
     lifeState,
-    eventStrength: eventCells.strength,
-    eventFamily: eventCells.family,
     ...resource,
     transformationState: state.transformationState.slice(),
     electricityQ: state.electricityQ.slice(),
@@ -66,11 +62,6 @@ export function buildSnapshot(state) {
       scoreProjection,
       vitality: vitality(state),
     },
-    eventDirector: eventDirectorSummary(state),
-    events: state.events
-      .filter((event) => event.announced & 2 && state.tick <= event.endTick)
-      .map((event) => ({ id: event.id, family: event.family, center: event.center,
-        fieldVersion: event.fieldVersion, kind: event.kind, intensity: event.intensity })),
   };
 }
 
@@ -92,7 +83,6 @@ function vitality(state) {
 
 export function snapshotTransfers(snapshot) {
   return [snapshot.biomass.buffer, snapshot.stress.buffer, snapshot.alive.buffer,
-    snapshot.lifeState.buffer, snapshot.eventStrength.buffer, snapshot.eventFamily.buffer,
-    snapshot.resourceRichnessQ.buffer, snapshot.reserveFractionQ.buffer, snapshot.resourceState.buffer,
+    snapshot.lifeState.buffer, snapshot.resourceRichnessQ.buffer, snapshot.reserveFractionQ.buffer, snapshot.resourceState.buffer,
     snapshot.transformationState.buffer, snapshot.electricityQ.buffer];
 }

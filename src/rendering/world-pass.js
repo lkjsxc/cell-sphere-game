@@ -16,7 +16,7 @@ export class WorldPass {
       boundary: this.make(BOUNDARY.VS_BOUNDARY, BOUNDARY.FS_BOUNDARY),
       atmosphere: this.make(SHELL.VS_ATMOSPHERE, SHELL.FS_ATMOSPHERE),
     };
-    this.lifeData = new Float32Array(this.geometry.vertexCount * 3); this.eventData = new Uint8Array(this.geometry.vertexCount * 2);
+    this.lifeData = new Float32Array(this.geometry.vertexCount * 3);
     this.ecologyData = new Uint8Array(this.geometry.vertexCount * 4);
     this.lastSnapshot = null; this.boundIdentity = null; this.disposed = false;
     this.lastTick = -1;
@@ -44,8 +44,6 @@ export class WorldPass {
     this.attribute(this.programs.globe, 'aMaterial', this.buffer(gl.ARRAY_BUFFER, g.material), 4);
     this.attribute(this.programs.globe, 'aTerrain', this.buffer(gl.ARRAY_BUFFER, g.terrain), 4);
     this.attribute(this.programs.globe, 'aLife', this.lifeBuffer, 3);
-    this.eventBuffer = this.buffer(gl.ARRAY_BUFFER, this.eventData, gl.DYNAMIC_DRAW);
-    this.attribute(this.programs.globe, 'aEvent', this.eventBuffer, 2, gl.UNSIGNED_BYTE);
     this.ecologyBuffer = this.buffer(gl.ARRAY_BUFFER, this.ecologyData, gl.DYNAMIC_DRAW);
     this.attribute(this.programs.globe, 'aEcology', this.ecologyBuffer, 4, gl.UNSIGNED_BYTE);
     this.globeIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.indices);
@@ -79,28 +77,25 @@ export class WorldPass {
   accepts(snapshot) { return !this.boundIdentity || sameWorldIdentity(snapshot, this.boundIdentity); }
   resetDynamicState() {
     if (this.disposed) return false;
-    this.lifeData.fill(0); this.eventData.fill(0); this.ecologyData.fill(0);
+    this.lifeData.fill(0); this.ecologyData.fill(0);
     this.lastSnapshot = null; this.lastTick = -1; this.historyCenters.fill(0);
     const gl = this.gl;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.lifeBuffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.lifeData);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.eventBuffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.eventData);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.ecologyBuffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.ecologyData);
     return true;
   }
-  dynamicState() { return Object.freeze({ life: nonZero(this.lifeData), events: nonZero(this.eventData),
+  dynamicState() { return Object.freeze({ life: nonZero(this.lifeData),
     ecology: nonZero(this.ecologyData), tick: this.lastTick }); }
   uploadLife(snapshot) {
     if (snapshot === this.lastSnapshot && (snapshot?.tick ?? -1) === this.lastTick) return;
     this.lastSnapshot = snapshot;
     this.lastTick = snapshot?.tick ?? -1;
     const cells = this.geometry.vertexCell;
-    if (!snapshot) { this.lifeData.fill(0); this.eventData.fill(0); this.ecologyData.fill(0); }
+    if (!snapshot) { this.lifeData.fill(0); this.ecologyData.fill(0); }
     else {
       const memory = snapshot.status === 'memory' || snapshot.status === 'trophies';
       for (let vertex = 0; vertex < cells.length; vertex++) {
-        const cell = cells[vertex]; this.eventData[vertex * 2] = snapshot.eventFamily?.[cell] ?? 0;
-        this.eventData[vertex * 2 + 1] = snapshot.eventStrength?.[cell] ?? 0;
-        this.ecologyData[vertex * 4] = snapshot.resourceRichnessQ?.[cell] ?? 0;
+        const cell = cells[vertex]; this.ecologyData[vertex * 4] = snapshot.resourceRichnessQ?.[cell] ?? 0;
         this.ecologyData[vertex * 4 + 1] = snapshot.resourceState?.[cell] ?? 0;
         this.ecologyData[vertex * 4 + 2] = snapshot.transformationState?.[cell] ?? 0;
         this.ecologyData[vertex * 4 + 3] = snapshot.electricityQ?.[cell] ?? 0;
@@ -118,7 +113,6 @@ export class WorldPass {
       }
     }
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.lifeBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.lifeData);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.eventBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.eventData);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.ecologyBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.ecologyData);
   }
   draw(vp, eye, snapshot, selectedNode, highlightedCells = [], time = 0, pulse = false) {

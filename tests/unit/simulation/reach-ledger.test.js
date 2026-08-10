@@ -22,10 +22,10 @@ test('rolling buckets expire and representative samples stay bounded', () => {
   assert.equal(buildReachSummary(state).gained, 0); state.aliveCount = 0;
   for (let cell = 0; cell < 24; cell++) recordReachTransition(state, cell, REACH_CAUSE.RESOURCE_EXHAUSTION);
   const summary = buildReachSummary(state); assert.equal(summary.lost, 24); assert.equal(summary.negative[0].samples.length, REACH_SAMPLE_CAP);
-  assert.equal(state.reach.buckets.length, REACH_WINDOW_SECONDS * 18);
+  assert.equal(state.reach.buckets.length, REACH_WINDOW_SECONDS * Object.keys(REACH_CAUSE).length);
 });
 function fixture() { const count = 32; return { tick: 0, aliveCount: 1, reach: createReachLedger(), topo: { nodeCount: count },
   alive: Uint8Array.from({ length: count }, (_, index) => index === 0 ? 1 : 0), energy: new Float32Array(count), nutrient: new Float32Array(count),
   moisture: new Float32Array(count), temperature: new Float32Array(count), toxicity: new Float32Array(count),
   fields: { freshwaterInfluence: new Float32Array(count), forestDensity: new Float32Array(count) }, liveness: { activeFrontierCount: 0 },
-  events: [], memoryConditionals: [], memoryUnlocks: [], entropy: 0, connectedShare: 1 }; }
+  memoryConditionals: [], memoryUnlocks: [], entropy: 0, connectedShare: 1 }; }

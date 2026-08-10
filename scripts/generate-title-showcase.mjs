@@ -12,8 +12,7 @@ const ROOT = resolve(import.meta.dirname, '..'); const OUTPUT = resolve(ROOT, 's
 const SEED = 20260701; const FRAME_MS = 250; const LAST_FRAME_MS = 22_000;
 const DURATION_MS = 22_250; const FRAME_COUNT = LAST_FRAME_MS / FRAME_MS + 1;
 const sourceHash = hashSources(); const probe = simulate();
-const pressureEvent = probe.state.events.find((event) => event.crisis && event.startTick > probe.peakTick);
-const pressureTick = Math.max(probe.peakTick + 2, pressureEvent?.startTick ?? Math.round(probe.terminalTick * .62));
+const pressureTick = Math.max(probe.peakTick + 2, Math.round(probe.terminalTick * .62));
 const matureTick = Math.max(probe.peakTick + 1, Math.min(pressureTick - 1,
   Math.round((probe.peakTick + pressureTick) / 2)));
 const sourceTicks = Array.from({ length: FRAME_COUNT }, (_, index) => sourceTick(index * FRAME_MS));

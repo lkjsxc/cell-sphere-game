@@ -9,20 +9,20 @@ export const EVOLUTION_COMPILE_CACHE_LIMIT = 512;
 export const EVOLUTION_COMPILE_CACHE_BYTE_LIMIT = 8 * 1024 * 1024;
 
 const ADDITIVE = new Set(['growthCap', 'anastomosis', 'redundantLoops',
-  'coldReserve', 'symbioticFilm', 'distributedSensing']);
+  'coldReserve', 'symbioticFilm']);
 const EFFECT_CAPS = Object.freeze({ reach:.9, uptake:.9, maintenance:.5, conductance:1, reinforce:.8,
   stressResist:.9, heatTol:.5, droughtTol:.5, toxinTol:.5, energyCap:.9, regrow:.9, growCost:.35 });
 const CACHE=new Map();const CACHE_WEIGHTS=new Map();let cacheBytes=0;let oversizeSkips=0;
 const BUILD_PRESSURE_CHANNELS = Object.freeze({
   'rich-rush':['scarcity'], 'lake-garden':['scarcity','renewal'],
   'circular-biosphere':['scarcity','renewal','maintenance'], 'wasteland-reclaimer':['scarcity','toxicity'],
-  'cold-dormancy':['climate','maintenance','events'], 'cryolake-engineer':['climate','events'],
-  'brine-harvester':['maintenance'], 'pelagic-colony':['maintenance','events'],
+  'cold-dormancy':['climate','maintenance'], 'cryolake-engineer':['climate'],
+  'brine-harvester':['maintenance'], 'pelagic-colony':['maintenance'],
   'littoral-succession':['renewal','maintenance'], 'bioelectric-wetland':['renewal','toxicity','maintenance'],
-  'hydrothermal-grid':['maintenance','events'], 'illuminated-biosphere':['toxicity','maintenance','events'],
-  'polar-current':['climate','events'], 'depletion-bloom':['scarcity','toxicity'],
-  'world-gardener':['scarcity','renewal','climate','toxicity','maintenance','events'],
-  'lake-to-light-network':['renewal','maintenance','events'],
+  'hydrothermal-grid':['maintenance'], 'illuminated-biosphere':['toxicity','maintenance'],
+  'polar-current':['climate'], 'depletion-bloom':['scarcity','toxicity'],
+  'world-gardener':['scarcity','renewal','climate','toxicity','maintenance'],
+  'lake-to-light-network':['renewal','maintenance'],
 });
 let hits = 0; let misses = 0; let evictions = 0;
 
@@ -129,7 +129,7 @@ function compileElectricityMastery(activeBuilds) {
     visualDevelopment:development });
 }
 function compilePressureDefense(activeBuilds) {
-  const result = { scarcity:'0', renewal:'0', climate:'0', toxicity:'0', maintenance:'0', events:'0' };
+  const result = { scarcity:'0', renewal:'0', climate:'0', toxicity:'0', maintenance:'0' };
   for (const build of activeBuilds) for (const channel of BUILD_PRESSURE_CHANNELS[build.id] ?? []) {
     result[channel] = addProgressionIntegers(result[channel], multiplyProgressionIntegers(build.masteryRank, '50'));
   }

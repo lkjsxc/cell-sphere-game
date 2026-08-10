@@ -2,10 +2,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RunController } from '../../src/simulation/simulator.js';
-import { compileMemory, MEMORY_NODE_IDS } from '../../src/game/skills/index.js';
+import { compileEvolution, MEMORY_NODE_IDS } from '../../src/game/skills/index.js';
 import { REACH_100_REQUIRED_TICKS } from '../../src/simulation/lifecycle/reach-goal.js';
 
-const full = compileMemory({ memoryNodes: MEMORY_NODE_IDS }); const fresh = compileMemory({ memoryNodes: [] });
+const full = compileEvolution({ evolutionLevels: MEMORY_NODE_IDS.map((id) => ({ id, level: '1' })) });
+const fresh = compileEvolution({ evolutionLevels: [] });
 
 test('full production build can sustain exact REACH 100 and still becomes extinct', { timeout: 20_000 }, () => {
   const controller = run(2693800525, full, 20); const result = controller.buildResult();

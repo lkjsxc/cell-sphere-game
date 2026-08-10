@@ -1,5 +1,7 @@
 # Migration matrix
 
+> **Historical record, superseded by Product Simplification v1 Phase 3.** Current storage uses clean reset-only schemas rather than the migration rules below.
+
 | Contract / payload | v2 representation | Migration rule |
 | --- | --- | --- |
 | Meta schema 13 | `bestEnvironmentLevelReached`, best exposure/longest world, inert `legacyEnvironmentFrontier` | Never copy old static frontier into a dynamic best; all new worlds start 0. |

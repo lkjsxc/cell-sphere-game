@@ -1,5 +1,7 @@
 # Implemented dependency inventory
 
+> **Historical record, superseded by Product Simplification v1 Phase 3.** Removed event modules and migration readers listed below are not present in current production.
+
 | Area | Production authority | v2 responsibility |
 | --- | --- | --- |
 | Schedule/onboarding | `src/game/environment-level.js` | Exact direct tick↔level/progress API; worlds 1–2 event protection only. |

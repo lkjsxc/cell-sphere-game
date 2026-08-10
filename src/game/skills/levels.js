@@ -17,7 +17,7 @@ export const EVOLUTION_LEVEL_DOCUMENT_DIGIT_LIMIT = 1019;
 /**
  * Normalize against a caller-supplied stable catalog order. Duplicate entries
  * resolve to their greatest valid level, making normalization input-order
- * independent. A present evolutionLevels array always wins over legacy data.
+ * independent.
  */
 export function normalizeEvolutionLevelVector(meta, orderedIds) {
   const recognized = new Set(orderedIds);
@@ -31,8 +31,6 @@ export function normalizeEvolutionLevelVector(meta, orderedIds) {
       const previous = byId.get(candidate.id);
       if (!previous || compareProgressionIntegers(level, previous) > 0) byId.set(candidate.id, level);
     }
-  } else if (Array.isArray(meta?.memoryNodes)) {
-    for (const id of meta.memoryNodes) if (recognized.has(id)) byId.set(id, '1');
   }
   return Object.freeze(orderedIds.filter((id) => byId.has(id))
     .map((id) => Object.freeze({ id, level: byId.get(id) })));

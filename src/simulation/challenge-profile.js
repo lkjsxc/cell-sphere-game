@@ -1,6 +1,6 @@
 /**
- * Environment Profile v3 compiler. Exact public ratings compile directly at
- * Level transitions into finite bounded coefficients consumed by simulation.
+ * Environment Profile v4 compiler. Exact public ratings compile directly at
+ * Level transitions into finite chronic coefficients consumed by simulation.
  */
 import {
   addProgressionIntegers,
@@ -14,13 +14,9 @@ import {
 import { hashStringU32, hexU32 } from '../core/hash.js';
 import { normalizeEnvironmentLevel } from '../game/environment-level.js';
 
-export const LEGACY_CHALLENGE_PROFILE_VERSION = 2;
-// v3: effective zero event pressure defers rolling harmful events.
-export const CHALLENGE_PROFILE_VERSION = 3;
+export const CHALLENGE_PROFILE_VERSION = 4;
 export const ENVIRONMENT_PROFILE_VERSION = CHALLENGE_PROFILE_VERSION;
 export const ENVIRONMENT_RATING_PER_LEVEL = '1000';
-export const MAX_EVENTS_PER_WORLD = 6;
-export const MIN_TELEGRAPH_TICKS = 100;
 
 const DIMENSIONS = Object.freeze({
   scarcity: Object.freeze(['Fertility', 'Freshwater', 'Scarcity']),
@@ -28,18 +24,10 @@ const DIMENSIONS = Object.freeze({
   climate: Object.freeze(['Freshwater', 'Cryogenic']),
   toxicity: Object.freeze(['Scarcity', 'Luminous']),
   maintenance: Object.freeze(['Scarcity', 'Marine', 'Luminous']),
-  events: Object.freeze(['Cryogenic', 'Marine', 'Luminous']),
 });
 
-/** Direct O(1)-by-level-magnitude compiler; work is bounded by six dimensions. */
-export function compileChallengeProfile(input = {}) { return compileProfileVersion(input, CHALLENGE_PROFILE_VERSION); }
-
-/** Narrow migration reader for an in-flight v2 result transaction only. */
-export function compileLegacyChallengeProfileV2(input = {}) {
-  return compileProfileVersion(input, LEGACY_CHALLENGE_PROFILE_VERSION);
-}
-
-function compileProfileVersion(input, version) {
+/** Direct O(1)-by-level-magnitude compiler; work is bounded by five dimensions. */
+export function compileChallengeProfile(input = {}) {
   const environmentLevel = normalizeEnvironmentLevel(input.environmentLevel, '0');
   const publicRating = multiplyProgressionIntegers(environmentLevel, ENVIRONMENT_RATING_PER_LEVEL);
   const evolution = input.evolution && typeof input.evolution === 'object' ? input.evolution : {};
@@ -53,7 +41,7 @@ function compileProfileVersion(input, version) {
     dimensions[name] = Object.freeze({ environmentRating: publicRating, defenseRating,
       netRating, pressure: pressureForNetRating(netRating) });
   }
-  return profileFromDimensions(environmentLevel, publicRating, Object.freeze(dimensions), version);
+  return profileFromDimensions(environmentLevel, publicRating, Object.freeze(dimensions));
 }
 
 export function validateChallengeProfile(raw) {
@@ -86,7 +74,6 @@ export function environmentProfileHash(profile) {
     dimensions: Object.fromEntries(Object.entries(profile.dimensions).map(([key, value]) => [key,
       [value.environmentRating, value.defenseRating, value.netRating, value.pressure]])),
     coefficients: profile.coefficients,
-    events: profile.events,
     score: profile.score,
   });
   return hexU32(hashStringU32(canonical));
@@ -118,11 +105,7 @@ export function interpolateEnvironmentCoefficients(current, next, progressQ = 0)
   return Object.freeze(result);
 }
 
-/**
- * Compact player-visible finite projection. Runtime interpolation is authority,
- * so its Q, profile endpoints, and exact finite coefficients travel with the
- * same summary rather than presenting the current rung as a static profile.
- */
+/** Compact player-visible finite projection of authoritative chronic pressure. */
 export function environmentPressureSummary(profile, options = {}) {
   const source = profile && typeof profile === 'object' ? profile : compileChallengeProfile();
   const next = options.nextProfile && typeof options.nextProfile === 'object' ? options.nextProfile : source;
@@ -155,24 +138,17 @@ function minimumAffinityDefense(evolution, affinities) {
   return minimum ?? '0';
 }
 
-function profileFromDimensions(environmentLevel, publicRating, dimensions, version = CHALLENGE_PROFILE_VERSION) {
+function profileFromDimensions(environmentLevel, publicRating, dimensions) {
   const qScarcity = dimensions.scarcity.pressure; const qRenewal = dimensions.renewal.pressure;
   const qClimate = dimensions.climate.pressure; const qToxicity = dimensions.toxicity.pressure;
-  const qMaintenance = dimensions.maintenance.pressure; const qEvents = dimensions.events.pressure;
-  const eventRamp = clamp01((qEvents - 0.35) / 0.65);
+  const qMaintenance = dimensions.maintenance.pressure;
   const scarcityRamp = difficultyRamp(qScarcity);
   const renewalRamp = difficultyRamp(qRenewal);
   const maintenanceRamp = difficultyRamp(qMaintenance);
-  // Events are an effective-pressure dimension: complete relevant finite
-  // defense can defer them, while any positive net event pressure retains a
-  // mild telegraphed candidate and later levels eventually exceed that defense.
-  const eventCount = environmentLevel === '0' || (version !== LEGACY_CHALLENGE_PROFILE_VERSION && qEvents <= 0)
-    ? 0 : Math.min(MAX_EVENTS_PER_WORLD, 1 + Math.floor(eventRamp * 5 + 1e-9));
   const maxNetMagnitude = Math.max(...Object.values(dimensions).map((dimension) => pressureMagnitude(dimension.netRating)));
   const profile = {
-    version, environmentLevel, publicRating, dimensions,
+    version: CHALLENGE_PROFILE_VERSION, environmentLevel, publicRating, dimensions,
     coefficients: Object.freeze({
-      // World generation is intentionally outside this live pressure object.
       renewalScale: finite(1 - 0.55 * renewalRamp, 0.45, 1),
       seasonScale: finite(0.25 + 0.75 * qClimate, 0.25, 1),
       dryingScale: finite(0.22 * qClimate, 0, 0.22),
@@ -181,19 +157,9 @@ function profileFromDimensions(environmentLevel, publicRating, dimensions, versi
       maintenanceScale: finite(1 + 0.30 * maintenanceRamp, 1, 1.30),
       transportStressScale: finite(1 + 0.25 * maintenanceRamp, 1, 1.25),
       recoveryScale: finite(1 - 0.50 * maintenanceRamp, 0.50, 1),
-      // Exact rating magnitude remains an asymptotically worsening bounded
-      // dimension after ordinary pressure ramps have saturated.
       attritionScale: finite(1 + 0.45 * (maxNetMagnitude / (maxNetMagnitude + 64)), 1, 1.45),
     }),
-    events: Object.freeze({ count: eventCount, maxConcurrent: Math.max(0, Math.min(MAX_EVENTS_PER_WORLD, eventCount)),
-      cadenceTicks: environmentLevel === '0' ? 900 : Math.max(180, Math.round(840 - 580 * eventRamp)),
-      intensityMin: finite(0.50 + 0.22 * eventRamp, 0.50, 0.72),
-      intensityMax: finite(0.70 + 0.45 * eventRamp, 0.70, 1.15),
-      footprintScale: finite(1 + 0.35 * eventRamp, 1, 1.35), overlap: finite(eventRamp, 0, 1),
-      telegraphTicks: MIN_TELEGRAPH_TICKS }),
     score: Object.freeze({ pressure: finite(averagePressure(dimensions), 0, 1),
-      // A bounded severity projection is used by hot loops. Exact net ratings
-      // remain in dimensions for diagnostics and finite-defense comparisons.
       severity: finite(maxNetMagnitude / (maxNetMagnitude + 64), 0, 0.999999),
       minimumExposureTicks: 900, fullExposureTicks: 2400 }),
   };

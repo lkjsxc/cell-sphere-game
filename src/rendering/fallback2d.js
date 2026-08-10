@@ -2,7 +2,6 @@
 import { LIFE_STATE } from '../core/life-state.js';
 import { createDualMesh } from '../world/dual-mesh.js';
 import { cameraBasis } from './camera.js';
-import { EVENT_TINT_LIST } from './event-tints.js';
 import { sameWorldIdentity } from '../core/world-session.js';
 
 const WORLD_LIGHT = Object.freeze((() => { const value=[-.52,.72,.44]; const length=Math.hypot(...value); return value.map((axis)=>axis/length); })());
@@ -83,7 +82,7 @@ export class Canvas2DRenderer {
     }
     this.acceptedFrames++; this.lastFrameAudit = Object.freeze({ worldSessionId: snapshot?.worldSessionId ?? null,
       presentationGeneration: snapshot?.presentationGeneration ?? null, lifeCells: count(snapshot?.alive),
-      eventCells: count(snapshot?.eventStrength), highlights: scene.highlightedCells?.length ?? 0,
+      highlights: scene.highlightedCells?.length ?? 0,
       clearCount: this.clearCount }); return true;
   }
 
@@ -140,8 +139,6 @@ export class Canvas2DRenderer {
         this.cellPath(cell,.52-development*.08); ctx.fillStyle=`rgba(255,231,126,${Math.min(.78,glow*(.72+development*.28))})`; ctx.fill();
         ctx.strokeStyle=`rgba(255,239,161,${Math.min(.86,glow+.16)})`;ctx.lineWidth=1+development*.8;ctx.stroke();
       }
-      const eventAmount = (snapshot.eventStrength?.[cell] ?? 0) / 255; const tint = EVENT_TINT_LIST[(snapshot.eventFamily?.[cell] ?? 0) - 1];
-      if (eventAmount > 0 && tint) { this.cellPath(cell); ctx.fillStyle = `rgba(${tint[0] * 255 | 0},${tint[1] * 255 | 0},${tint[2] * 255 | 0},${eventAmount * .20 * fade})`; ctx.fill(); }
     }
   }
 

@@ -1,9 +1,7 @@
-/** Summary metrics, semantic milestones, events, and finite-resource evidence. */
-import { reclaimEndedEvents, telegraphLead } from './events.js';
-import { BALANCE as B } from '../game/balance.js';
+/** Summary metrics, semantic milestones, and finite-resource evidence. */
 import { BIOME, FEATURE } from '../world/fields.js';
 import { recordHistory } from './replay.js';
-import { recordTrophyCrisisSurvival, sampleTrophyLiving } from './trophy-proof.js';
+import { sampleTrophyLiving } from './trophy-proof.js';
 import { recordScoreSummary } from '../game/scoring.js';
 import { sampleEnvironmentExposure } from '../game/environment-exposure.js';
 
@@ -35,7 +33,6 @@ export function runSummary(state, emit) {
     state.minConnectedWhileMajority = state.connectedShare;
   }
   sampleTrophyLiving(state);
-  announceEvents(state, emit);
   recordMilestones(state);
   recordGeography(state);
   recordMorphology(state);
@@ -54,33 +51,6 @@ export function runSummary(state, emit) {
   }
 }
 
-function announceEvents(state, emit) {
-  // Summary-cadenced publication needs a small authority-side allowance so
-  // the displayed warning never falls below the advertised minimum.
-  const lead = telegraphLead(state.activeTraits ?? state.traits, state.currentEnvironmentProfile) + B.SUMMARY_EVERY - 1;
-  for (const ev of state.events) {
-    if (!(ev.announced & 1) && state.tick >= ev.startTick - lead) {
-      ev.announced |= 1;
-      recordHistory(state, 'event-telegraph', { id: ev.id, family: ev.family, cell: ev.center });
-      emit({ t: 'event', phase: 'telegraph', family: ev.family, nameJa: ev.nameJa,
-        descJa: ev.descJa, center: ev.center, fieldVersion: ev.fieldVersion, tick: state.tick });
-    }
-    if (!(ev.announced & 2) && state.tick >= ev.startTick) {
-      ev.announced |= 2;
-      recordHistory(state, 'event-start', { id: ev.id, family: ev.family, cell: ev.center });
-      emit({ t: 'event', phase: 'active', family: ev.family, nameJa: ev.nameJa,
-        center: ev.center, fieldVersion: ev.fieldVersion, tick: state.tick });
-      if (ev.crisis) state.crisesTotal++;
-    }
-    if (!(ev.announced & 4) && state.tick > ev.endTick) {
-      ev.announced |= 4;
-      if (ev.crisis && state.aliveCount > 0) { state.crisesEndured++; recordTrophyCrisisSurvival(state, ev.family); }
-      recordHistory(state, 'event-end', { id: ev.id, family: ev.family, cell: ev.center });
-      emit({ t: 'event', phase: 'end', family: ev.family, tick: state.tick });
-    }
-  }
-  reclaimEndedEvents(state);
-}
 
 function recordMilestones(state) {
   while (state.phaseIndex + 1 < PHASES.length

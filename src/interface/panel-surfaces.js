@@ -1,5 +1,5 @@
 /** Evolution Globe semantic tree, Evolution detail, and acquisition feedback. */
-import { EVOLUTION_AFFINITIES, MEMORY_NODES, compileEvolution, getMemoryNode, memoryNodeState,
+import { EVOLUTION_AFFINITIES, MEMORY_NODES, compileEvolution, evolutionCellState, getMemoryNode,
   previewEvolutionLevel, modeledScoreRange, newlyAvailableAdjacentIds } from '../game/skills/index.js';
 import { formatProgressionEngineering, normalizeProgressionInteger } from '../core/progression-integer.js';
 
@@ -11,7 +11,7 @@ export function createMemorySurface(options) {
   unlock.addEventListener('click', () => { if (selected) options.onUnlock(selected.id); });
 
   function renderNode() {
-    const state = memoryNodeState(meta, selected, selected?.id); selected = state;
+    const state = evolutionCellState(meta, selected, selected?.id); selected = state;
     const purchasesOpen = options.canUnlock?.() !== false;
     const preview = previewEvolutionLevel(meta, state.id);
     byId('memory-node-branch').textContent = `${state.affinity.toUpperCase()} AFFINITY · TIER ${state.tier}`;
@@ -64,7 +64,7 @@ export function createMemorySurface(options) {
   function renderTree() {
     const compiled = compileEvolution(meta);
     tree.replaceChildren(...MEMORY_NODES.map((node) => {
-      const state = memoryNodeState(meta, node, selected?.id); const button = document.createElement('button'); button.type = 'button';
+      const state = evolutionCellState(meta, node, selected?.id); const button = document.createElement('button'); button.type = 'button';
       button.setAttribute('role', 'treeitem'); button.setAttribute('aria-level', String(state.tier + 1));
       button.setAttribute('aria-selected', String(state.id === selected?.id));
       const boundary=state.reason==='progression-security-boundary';

@@ -36,14 +36,14 @@ import {availableEvolutionLevels,buyEvolutionLevel,closeEvolutionCell,closeTroph
   initializeProgression,presentEvolution,presentTrophies,progressionTap,reconcileBeforeHistoryClear,selectEvolutionCell,selectTrophy} from './policies/progression-spheres.js';
 import { createSettingsSurface } from './settings-surface.js';
 import { downloadData, parseImportedData, qualityDpr } from './app-data.js';
-import { saveImportedNamespace } from '../platform/namespace-migration.js';
+import { saveImportedNamespace } from '../platform/namespace.js';
 import { DIAGNOSTIC_GLOBALS, PAGES_URL, PRODUCT, REPOSITORY, STORAGE_KEYS, TAGLINE, VERSION } from '../core/identity.js';
 import * as ui from './surfaces.js';
 const TITLE_SEED = TITLE_SHOWCASE.seed;
 export function startGameApp(options) { const app = new GameApp(options); app.boot(); return app; }
 class GameApp {
-  constructor({ canvas, caps, settings, storageMigration = null, developerMode = false }) {
-    Object.assign(this, { canvas, caps, settings, storageMigration, developerMode }); this.el = ui.elements(); this.topo4 = createTopology(4); this.topo = this.topo4; initializeProgression(this);
+  constructor({ canvas, caps, settings, storageStatus = null, developerMode = false }) {
+    Object.assign(this, { canvas, caps, settings, storageStatus, developerMode }); this.el = ui.elements(); this.topo4 = createTopology(4); this.topo = this.topo4; initializeProgression(this);
     this.camera = createCamera(); this.runTransactionRecovery = recoverRunTransaction(settings.historyRetention);
     this.meta = this.runTransactionRecovery?.meta ?? loadMeta(); this.archive = this.runTransactionRecovery?.history ?? loadHistory(settings.historyRetention);
     this.resultKeys = new Set(this.meta.resultKeys); this.flow = createAppState();
@@ -67,15 +67,13 @@ class GameApp {
       this.topo.positions.subarray(TITLE_SHOWCASE.focusCell * 3, TITLE_SHOWCASE.focusCell * 3 + 3)); this.resize(false);
     this.showcase = new TitleShowcase(this.topo);
     this.makeSurfaces(); this.bindUi(); this.bindCanvas(); this.bindLifecycle(); this.el.speed.value = String(this.speed);
-    const temporary = (this.storageMigration && (!this.storageMigration.available || !this.storageMigration.complete))
+    const temporary = (this.storageStatus && (!this.storageStatus.available || !this.storageStatus.complete))
       || (this.runTransactionRecovery && !this.runTransactionRecovery.persisted);
     this.el.boot.textContent = `Cells ready — ${this.renderer.backend === 'webgl2' ? 'WebGL2' : 'Canvas 2D'}${temporary ? ' · progress is temporary' : ''}`;
     ui.show(this.el, 'home'); this.sceneSelector.update('home');
-    if (this.meta.migrationNotice?.pending) { ui.toast(this.el, 'Your earlier Evolution cells and Imprints were moved into the Evolution Globe.');
-      this.meta = { ...this.meta, migrationNotice: { ...this.meta.migrationNotice, pending: false } }; saveMeta(this.meta); }
     if (temporary) ui.announce(this.el, 'Browser storage is unavailable or recovery is incomplete; this session remains playable but changes may be temporary.');
     window[DIAGNOSTIC_GLOBALS.boot] = Object.freeze({ product: PRODUCT, tagline: TAGLINE, version: VERSION,
-      repository: REPOSITORY, pages: PAGES_URL, storage: STORAGE_KEYS, storageMigration: this.storageMigration,
+      repository: REPOSITORY, pages: PAGES_URL, storage: STORAGE_KEYS, storageStatus: this.storageStatus,
       renderer: this.renderer.backend, playable: true, developerMode: this.developerMode }); window[DIAGNOSTIC_GLOBALS.app] = this;
     requestAnimationFrame((now) => this.frame(now)); console.info(`boot ok: ${this.renderer.backend}; passive world ready`);
   } makeSurfaces() {
@@ -85,8 +83,8 @@ class GameApp {
     this.historyUi = createHistorySurface({ onClose: () => this.panelClosed('history'),
       onWorld: (world) => this.historyPlayback.selectWorld(world), onSeek: (tick, event, world) => this.historyPlayback.seek(tick, event, world),
       onLive: () => this.historyPlayback.live() });
-    this.memoryUi = createMemorySurface({ onCloseNode: () => this.closeMemoryNode(), onUnlock: (id) => this.buyMemory(id),
-      onSelect: (id) => this.selectMemoryNode(id), canUnlock: () => !['starting', 'running'].includes(this.phase) });
+    this.memoryUi = createMemorySurface({ onCloseNode: () => this.closeEvolutionCell(), onUnlock: (id) => this.buyEvolutionLevel(id),
+      onSelect: (id) => this.selectEvolutionCell(id), canUnlock: () => !['starting', 'running'].includes(this.phase) });
     this.trophyUi = createTrophySurface({ onClose: () => this.closeTrophy(), onSelect: (id) => this.selectTrophy(id) });
     this.trophyNotifications = createTrophyNotifications({ reduced: () => this.settings.motion === 'reduced',
       announce: (text) => { this.el.live.textContent = text; }, onSelect: (id) => { if (this.scene !== 'trophies') this.selectScene('trophies'); selectTrophy(this, id); },
@@ -212,10 +210,9 @@ class GameApp {
   finishRun(result) { finishRun(this, result); }
   finishAbandoned(summary) { finishAbandoned(this, summary); }
   failRun(message) { this.pause.set('worker-failed', true); ui.announce(this.el, `${message} Start a new world to continue.`); }
-  enterEvolution(){return enterEvolution(this)}enterMemory(){return this.enterEvolution()}
+  enterEvolution(){return enterEvolution(this)}
   enterTrophies(){enterTrophies(this)}
   selectEvolutionCell(id){selectEvolutionCell(this,id)}closeEvolutionCell(){closeEvolutionCell(this)}buyEvolutionLevel(id){buyEvolutionLevel(this,id)}
-  selectMemoryNode(id){this.selectEvolutionCell(id)}closeMemoryNode(){this.closeEvolutionCell()}buyMemory(id){this.buyEvolutionLevel(id)}
   selectTrophy(id) { selectTrophy(this, id); } closeTrophy() { closeTrophy(this); }
   openHistory(scope = null, options = {}) { if (this.surfaces.toggle('history')) return;
     this.historyPlayback.open(scope ?? (this.scene === 'world' ? 'current' : 'past'), options); }
@@ -255,10 +252,10 @@ class GameApp {
     this.surfaces.close(name, options); this.overlay = null; this.pause.set('panel', false); this.pause.set('new-world', false);
     if (name === 'inspector') this.selectedNode = null; this.resize(true);
   }
-  applySettings(value) { const before = this.settings;
+  applySettings(value, { persist = true } = {}) { const before = this.settings;
     const requestedSpeed = validateRuntimeSpeed(value?.speed, { developerMode: this.developerMode, fallback: this.speed });
     const durableSpeed = isStandardSpeed(requestedSpeed) ? requestedSpeed : before.speed;
-    this.settings = validateSettings({ ...value, speed: durableSpeed }); saveSettings(this.settings); applySettingsToDocument(this.settings);
+    this.settings = validateSettings({ ...value, speed: durableSpeed }); if (persist) saveSettings(this.settings); applySettingsToDocument(this.settings);
     if (requestedSpeed !== this.speed) { this.speed = requestedSpeed; this.el.speed.value = String(requestedSpeed); this.driver.setSpeed(requestedSpeed); }
     if (this.overlay && this.settings.pauseOnPanels !== before.pauseOnPanels) this.pause.set('panel', this.phase === 'running' && this.settings.pauseOnPanels);
     if (this.phase === 'result' && this.settings.autoContinue !== before.autoContinue && !this.settings.autoContinue) {
@@ -273,12 +270,13 @@ class GameApp {
     else if (action === 'clear-history' && confirm('Clear all preserved History?')) { const trophies = reconcileBeforeHistoryClear(this); this.archive = clearHistory(); saveHistory(this.archive); this.historyPlayback.clear(); ui.announce(this.el, `History was cleared.${trophies.length ? ` ${trophies.length} proven trophies were preserved.` : ''}`); }
     else if (action === 'reset-progress' && confirm('Reset Echoes, Evolution levels, Imprints, and Trophies? This cannot be undone.')) { this.meta = defaultMeta(); this.resultKeys = new Set(); saveMeta(this.meta); this.trophyNotifications.replace(this.meta); ui.announce(this.el, 'Progression was reset.'); }
     else if (action === 'import') { const data = parseImportedData(value); const persistence = saveImportedNamespace(data);
-      this.meta = data.meta; this.resultKeys = new Set(this.meta.resultKeys); this.archive = data.history; this.applySettings(data.settings);
+      this.meta = data.meta; this.resultKeys = new Set(this.meta.resultKeys); this.archive = data.history;
+      this.applySettings(data.settings, { persist: persistence.ok });
       this.trophyNotifications.replace(this.meta); ui.announce(this.el, persistence.ok ? 'Local data was imported.'
         : 'Local data was imported for this session, but browser storage could not commit it safely.'); }
     else if (action === 'import-error') throw new Error('invalid import');
   } catch { ui.announce(this.el, 'That local-data action could not be completed.'); } }
-  availableEvolutionLevels(){return availableEvolutionLevels(this)}availableMemory(){return this.availableEvolutionLevels()}
+  availableEvolutionLevels(){return availableEvolutionLevels(this)}
   worldResourceAudit() { return Object.freeze({ interactionListeners: this.interactionGuard.listenerCount,
     historyRequests: this.historyPlayback.pendingRequests }); }
   cancelAutoNext(reason) { if (this.phase !== 'result') return false;

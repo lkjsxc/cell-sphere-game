@@ -1,5 +1,7 @@
 # Verification matrix
 
+> **Historical record, superseded by Product Simplification v1 Phase 3.** It verifies a retired event/migration implementation, not current authority.
+
 `pass` means an actual command completed successfully on the local uncommitted
 worktree. CI, Pages, and deployment remain separate evidence.
 

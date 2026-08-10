@@ -11,7 +11,7 @@ export function createTrophyProof(topo, fields) {
     lakeCellsReached: 0, shoreCellsReached: 0, distinctLakesReached: 0, completeShores: 0,
     ecologyMask: 0, lakeTypeMask: 0, lakeSalinityMask: 0,
     lakeLivingSamples: 0, largeLakeLivingSamples: 0, lakeRegionPeak: 0,
-    lakeRegionAlive: 0, largeLakeRegionAlive: 0, droughtLakeSurvivals: 0, freezeLakeSurvivals: 0,
+    lakeRegionAlive: 0, largeLakeRegionAlive: 0,
     loopSurplusPeak: 0, loopLivingSamples: 0,
   };
 }
@@ -54,11 +54,6 @@ export function sampleTrophyLiving(state) {
   if (surplus >= 8 && proof.lakeRegionAlive >= 8) proof.loopLivingSamples++;
 }
 
-export function recordTrophyCrisisSurvival(state, family) {
-  const proof = state.trophyProof; if (proof.lakeRegionAlive < 6) return;
-  if (family === 'drought') proof.droughtLakeSurvivals++;
-  if (family === 'freeze') proof.freezeLakeSurvivals++;
-}
 
 export function buildLakeProof(state) {
   const p = state.trophyProof;
@@ -66,8 +61,7 @@ export function buildLakeProof(state) {
     distinctLakesReached: p.distinctLakesReached, completeShores: p.completeShores, ecologyMask: p.ecologyMask,
     lakeTypeMask: p.lakeTypeMask, lakeSalinityMask: p.lakeSalinityMask,
     lakeLivingSeconds: p.lakeLivingSamples, largeLakeLivingSeconds: p.largeLakeLivingSamples,
-    lakeRegionPeak: p.lakeRegionPeak, droughtLakeSurvivals: p.droughtLakeSurvivals,
-    freezeLakeSurvivals: p.freezeLakeSurvivals, loopSurplusPeak: p.loopSurplusPeak,
+    lakeRegionPeak: p.lakeRegionPeak, loopSurplusPeak: p.loopSurplusPeak,
     lakeLoopSeconds: p.loopLivingSamples });
 }
 

@@ -11,7 +11,6 @@ const CAUSE = Object.freeze({
   cold: 'The cold stopped transport between surviving cells.',
   drought: 'Drying outpaced the network’s reserves.',
   toxin: 'Toxic pressure overwhelmed the living core.',
-  event: 'A planetary crisis split the last viable component.',
   collapse: 'Terminal pressure closed the final living route.',
 });
 
@@ -31,7 +30,7 @@ export function elements() {
     resultCause: byId('result-cause'), breakdown: byId('result-breakdown'),
     echoes: byId('result-echoes'), resultImprint: byId('result-imprint'), resultTrophies: byId('result-trophies'),
     memoryBalance: byId('memory-balance'), memoryEnvironment: byId('memory-environment'), trophyCount: byId('trophy-count'),
-    trophyBadge: byId('trophy-tab-badge'), trophyLegacy: byId('trophy-legacy'),
+    trophyBadge: byId('trophy-tab-badge'),
     memoryAvailable: byId('memory-available'), countdown: byId('result-countdown'), resultFirstCycle: byId('result-first-cycle'),
     resultNext: /** @type {HTMLButtonElement} */ (byId('result-next-button')),
     resultEvolution: /** @type {HTMLButtonElement} */ (byId('result-evolution-button')),
@@ -129,8 +128,6 @@ export function formatCoverage(coverage, aliveCount, totalCells = 2562) {
 export function showMemory(el, meta, available = 0) { el.memoryBalance.textContent = number(meta.echoBalance);
   el.memoryAvailable.textContent = `${available} ${available === 1 ? 'level' : 'levels'} ready`;
   el.memoryEnvironment.textContent = `Every world begins at Environment Level 0. Evolution helps life endure farther. Best reached: Level ${number(meta.bestEnvironmentLevelReached)}`;}
-export function showTrophies(el, meta) { const count = meta.trophyIds?.length ?? 0; el.trophyCount.textContent = `${count} / 96 earned`;
-  const legacy = meta.legacyTrophyIds?.length ?? 0; if (el.trophyLegacy) { el.trophyLegacy.hidden = legacy === 0;
-    el.trophyLegacy.textContent = legacy ? `Legacy · ${legacy} retired river-era Trophy preserved separately; it supplies no current lake proof.` : ''; } }
+export function showTrophies(el, meta) { const count = meta.trophyIds?.length ?? 0; el.trophyCount.textContent = `${count} / 96 earned`; }
 export function number(value) { const exact = normalizeProgressionInteger(value, '0');
   return exact.length <= 15 ? exact.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : formatProgressionEngineering(exact, 6); }

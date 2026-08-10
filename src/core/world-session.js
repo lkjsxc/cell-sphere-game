@@ -5,8 +5,7 @@ import { boundedTransactionKey } from './hash.js';
 export const WORLD_IDENTITY_FIELDS = Object.freeze([
   'worldSessionId', 'runId', 'seed', 'presentationGeneration',
   'environmentModelVersion', 'environmentScheduleVersion', 'environmentScheduleHash',
-  'immutableStartConfigurationHash', 'onboardingEnvironmentModifierVersion',
-  'resultTransactionKey',
+  'immutableStartConfigurationHash', 'resultTransactionKey',
 ]);
 
 export function createWorldIdentity(value) {
@@ -15,14 +14,12 @@ export function createWorldIdentity(value) {
   }
   const environmentModelVersion = version(value?.environmentModelVersion, 'environmentModelVersion');
   const environmentScheduleVersion = version(value?.environmentScheduleVersion, 'environmentScheduleVersion');
-  const onboardingEnvironmentModifierVersion = version(value?.onboardingEnvironmentModifierVersion,
-    'onboardingEnvironmentModifierVersion');
   const environmentScheduleHash = hash(value?.environmentScheduleHash, 'environmentScheduleHash');
   const immutableStartConfigurationHash = hash(value?.immutableStartConfigurationHash, 'immutableStartConfigurationHash');
   const resultTransactionKey = value.resultTransactionKey ?? boundedTransactionKey('world-result', [
     value.worldSessionId, value.runId, value.seed, value.presentationGeneration,
     environmentModelVersion, environmentScheduleVersion, environmentScheduleHash,
-    immutableStartConfigurationHash, onboardingEnvironmentModifierVersion,
+    immutableStartConfigurationHash,
   ]);
   if (typeof resultTransactionKey !== 'string' || !resultTransactionKey || resultTransactionKey.length > 128) {
     throw new Error('invalid resultTransactionKey');
@@ -31,8 +28,7 @@ export function createWorldIdentity(value) {
     worldSessionId: value.worldSessionId, runId: value.runId, seed: value.seed,
     presentationGeneration: value.presentationGeneration,
     environmentModelVersion, environmentScheduleVersion, environmentScheduleHash,
-    immutableStartConfigurationHash, onboardingEnvironmentModifierVersion,
-    resultTransactionKey,
+    immutableStartConfigurationHash, resultTransactionKey,
   });
 }
 

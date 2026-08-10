@@ -1,4 +1,4 @@
-/** Environmental identities layered over stable legacy territories and cell IDs. */
+/** Environmental identities layered over stable current territories and cell IDs. */
 import { hashStringU32, hexU32 } from '../../core/hash.js';
 
 export const EVOLUTION_CONTENT_VERSION = 1;
@@ -12,11 +12,11 @@ const metadata = [
   ['Luminous', 'Continuity', '#d8ad4c', [0.847, 0.678, 0.298], 'radiant-cell', 'Bioelectric conductance and whole-cell infrastructure'],
 ];
 
-export const EVOLUTION_AFFINITIES = Object.freeze(metadata.map(([id, legacyTerritory, color, rgb, pattern, label]) => Object.freeze({
-  id, legacyTerritory, color, rgb: Object.freeze(rgb), pattern, label,
+export const EVOLUTION_AFFINITIES = Object.freeze(metadata.map(([id, territory, color, rgb, pattern, label]) => Object.freeze({
+  id, territory, color, rgb: Object.freeze(rgb), pattern, label,
 })));
 export const EVOLUTION_AFFINITY_IDS = Object.freeze(EVOLUTION_AFFINITIES.map((entry) => entry.id));
-export const AFFINITY_BY_LEGACY_TERRITORY = Object.freeze(Object.fromEntries(EVOLUTION_AFFINITIES.map((entry) => [entry.legacyTerritory, entry.id])));
+export const AFFINITY_BY_TERRITORY = Object.freeze(Object.fromEntries(EVOLUTION_AFFINITIES.map((entry) => [entry.territory, entry.id])));
 export const AFFINITY_METADATA_HASH = hexU32(hashStringU32(JSON.stringify(EVOLUTION_AFFINITIES)));
 
 const TAGS = Object.freeze({
@@ -37,7 +37,7 @@ const HABITATS = Object.freeze({ Fertility:'RICH_LAND', Freshwater:'FRESHWATER_M
 const TRANSFORMATIONS_BY_TAG = Object.freeze({ glacial:'glacial-lake', 'soil-building':'reclaimed-soil',
   'coastal-succession':'wetland-succession', infrastructure:'electrified', 'powered-transformation':'recovering', illumination:'electrified' });
 
-export function affinityForTerritory(legacyTerritory) { return AFFINITY_BY_LEGACY_TERRITORY[legacyTerritory] ?? null; }
+export function affinityForTerritory(territory) { return AFFINITY_BY_TERRITORY[territory] ?? null; }
 export function affinityMetadata(id) { return EVOLUTION_AFFINITIES.find((entry) => entry.id === id) ?? null; }
 export function secondaryTagsFor(affinity, index, effect) {
   const source = TAGS[affinity] ?? []; const tags = new Set([source[index % source.length], source[(index * 3 + 1) % source.length]]);

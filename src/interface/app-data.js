@@ -2,7 +2,7 @@
 import { validateMeta } from '../platform/storage.js';
 import { validateHistory } from '../platform/history.js';
 import { validateSettings } from '../platform/settings.js';
-import { EXPORT_FILENAME, EXPORT_PRODUCTS, PRODUCT } from '../core/identity.js';
+import { EXPORT_FILENAME, PRODUCT } from '../core/identity.js';
 import { normalizeProgressionInteger, parseProgressionIntegerRuntime } from '../core/progression-integer.js';
 
 export function seedForRun(runCount, search = location.search) {
@@ -38,6 +38,10 @@ export function parseImportedData(text){
   if(typeof text!=='string'||text.length>IMPORT_DOCUMENT_BYTE_LIMIT||new TextEncoder().encode(text).byteLength>IMPORT_DOCUMENT_BYTE_LIMIT)
     throw new Error('game export exceeds the document security boundary');
   const raw=JSON.parse(text);
-  if (!raw || !EXPORT_PRODUCTS.includes(raw.product)) throw new Error('not a game export');
-  return { meta: validateMeta(raw.meta), history: validateHistory(raw.history, 32), settings: validateSettings(raw.settings) };
+  if (!raw || raw.schema !== 2 || raw.product !== PRODUCT) throw new Error('not a current game export');
+  const meta = validateMeta(raw.meta); const history = validateHistory(raw.history, 32); const settings = validateSettings(raw.settings);
+  if (raw.meta?.schema !== meta.schema || raw.history?.schema !== history.schema || raw.settings?.schema !== settings.schema) {
+    throw new Error('export does not use the current schema');
+  }
+  return { meta, history, settings };
 }

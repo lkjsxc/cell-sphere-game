@@ -10,8 +10,8 @@ selects/opens detail and cannot buy; a later activation of that same selected
 ready cell buys exactly one level. Drag, pinch, wheel, blank, cancellation,
 non-ready activation, and stale expected state must not buy. The scenario also
 checks selected/ready/owned semantics, player 1×/2×/4×/8× versus explicit
-developer 16×–256×, meta schema 11/History 6 migration, and active-Adaptation
-absence.
+developer 16×–256×, current-only storage reset behavior, and absence of retired
+mid-run choice controls.
 
 Renderer fixtures bind production-generated deep-Luminous snapshots to the
 current presentation identity, focus comparable charged day/night cells, then

@@ -7,20 +7,11 @@ const TITLES = Object.freeze({
   'run.phase.instability': ['Instability', 'Environmental pressure began to dominate.'],
   'run.phase.collapse': ['Collapse', 'The world entered its terminal phase.'],
   'environment.level.transition': ['Environment Level reached', 'Authoritative world time increased this world’s chronic environmental pressure.'],
-  'adaptation.offered': ['Legacy Adaptation offered', 'An archived retired choice entered this old world.'],
-  'adaptation.selected.random': ['Legacy Adaptation chosen automatically', 'An archived world selected one retired option.'],
-  'adaptation.selected.manual': ['Legacy Adaptation chosen', 'An archived player choice is retained as read-only evidence.'],
-  'adaptation.unresolved': ['Legacy Adaptation left unchosen', 'The archived world ended first.'],
-  'adaptation.mode.changed': ['Legacy Adaptation mode changed', 'A retired archived choice policy changed.'],
-  'crisis.telegraphed': ['Crisis approaching', 'The network sensed a changing region.'],
-  'crisis.started': ['Crisis began', 'Spatial pressure crossed the world.'],
-  'crisis.ended': ['Crisis passed', 'Surviving cells retained the trace.'],
   'run.extinct': ['Extinction', 'The last living cell released its energy.'],
   'run.abandoned': ['World left behind', 'No Echoes, score reward, trophy, or Imprint was granted.'],
   'resource.reserve.threshold': ['Reachable reserves declined', 'Growth consumed finite local stock faster than renewal replaced it.'],
   'geo.coast.reached': ['First coast reached', 'Life encountered the ocean margin.'],
   'geo.lake.reached': ['First lake reached', 'Life entered a connected whole-cell freshwater basin.'],
-  'geo.river.reached': ['Archived freshwater reach', 'A legacy drainage milestone was preserved without lake proof.'],
   'geo.forest.reached': ['First forest reached', 'The network entered dense living ground.'],
   'geo.mountain.reached': ['First highland reached', 'Expansion climbed into costly terrain.'],
   'geo.wetland.reached': ['First wetland reached', 'Rich saturated ground joined the network.'],
@@ -106,7 +97,7 @@ export function createHistorySurface(options) {
     time.textContent = `${historyGameTime(frameTick)}${behind} · nearest approximate checkpoint`;
   }
   return { surface, open(nextModel, defaultId, nextOptions = {}) { model = nextModel; openOptions = { ...nextOptions };
-      filter.value = ['all', 'world', 'life', 'environment', 'legacy-adaptation', 'crisis'].includes(openOptions.filter) ? openOptions.filter : 'all';
+      filter.value = ['all', 'world', 'life', 'environment'].includes(openOptions.filter) ? openOptions.filter : 'all';
       worldSelect.replaceChildren(...model.worlds.map((item) => {
         const option = document.createElement('option'); option.value = item.id; option.textContent = item.label; return option; }));
       surface.hidden = false; chooseWorld(model.worlds.some((item) => item.id === defaultId) ? defaultId : model.worlds[0]?.id); },
@@ -121,7 +112,7 @@ function nearestEvent(events, tick) { let best = -1; let distance = Infinity;
 export function describeHistoryEvent(event) { const base = TITLES[event.key] ?? [humanize(event.key), 'A meaningful change was preserved.'];
   const subject = event.subjectId ? ` · ${humanize(event.subjectId)}` : ''; return [base[0] + subject, base[1]]; }
 function humanize(value) { return String(value).split(/[.-]/).at(-1).replaceAll('_', ' ').replace(/^./, (c) => c.toUpperCase()); }
-export function historyEventCategory(event) { if (event.kind === 'environment') return 'environment'; if (event.kind === 'adaptation') return 'legacy-adaptation'; if (event.kind === 'crisis') return 'crisis';
+export function historyEventCategory(event) { if (event.kind === 'environment') return 'environment';
   if (event.kind === 'trophy') return 'life'; if (event.key.startsWith('geo.') || event.key.startsWith('run.world')) return 'world'; return 'life'; }
 export function environmentHistoryAnchor(events, throughTick = Infinity) {
   const limit = Number.isFinite(throughTick) ? Math.max(0, Math.floor(throughTick)) : Infinity;

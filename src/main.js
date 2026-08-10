@@ -2,7 +2,7 @@
 import { detectCapabilities } from './platform/capabilities.js';
 import { applySettingsToDocument, loadSettings } from './platform/settings.js';
 import { startGameApp } from './interface/app-controller.js';
-import { migrateStorageNamespace } from './platform/namespace-migration.js';
+import { initializeStorageNamespace } from './platform/namespace.js';
 import { DIAGNOSTIC_GLOBALS } from './core/identity.js';
 import { developerModeFromSearch } from './core/runtime-speed.js';
 import { configureRuntimeSpeedControls } from './interface/runtime-speed-controls.js';
@@ -15,13 +15,13 @@ globalThis.addEventListener?.('unhandledrejection', (event) => recordDiagnosticE
 function boot() {
   const canvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('gl-canvas'));
   if (!canvas) throw new Error('missing game canvas');
-  const storageMigration = migrateStorageNamespace(); const settings = loadSettings();
+  const storageStatus = initializeStorageNamespace(); const settings = loadSettings();
   const developerMode = developerModeFromSearch(globalThis.location?.search ?? '');
   configureRuntimeSpeedControls(document, developerMode); applySettingsToDocument(settings);
   if (developerMode) Object.defineProperty(globalThis, '__CSG_AGENT__', {
     value: null, writable: true, configurable: true, enumerable: false,
   });
-  startGameApp({ canvas, caps: detectCapabilities(), settings, storageMigration, developerMode });
+  startGameApp({ canvas, caps: detectCapabilities(), settings, storageStatus, developerMode });
 }
 
 try { boot(); }

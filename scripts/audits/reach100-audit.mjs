@@ -2,12 +2,12 @@
 /** Exact all-authoritative-cell sustained REACH 100% feasibility and safety audit. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../../src/simulation/simulator.js';
-import { compileMemory, MEMORY_NODE_IDS } from '../../src/game/skills/index.js';
+import { compileEvolution, MEMORY_NODE_IDS } from '../../src/game/skills/index.js';
 import { REACH_100_REQUIRED_TICKS } from '../../src/simulation/lifecycle/reach-goal.js';
 
-const count=integerArg('--count=',300),breadth=compileMemory({memoryNodes:MEMORY_NODE_IDS});
+const count=integerArg('--count=',300),breadth=compileEvolution({evolutionLevels:MEMORY_NODE_IDS.map((id)=>({id,level:'1'}))});
 const EXTERNAL_FINISH_BUDGET_TICKS = 10_000;
-const fresh=compileMemory({memoryNodes:[]}),rows=[],freshRows=[];const started=performance.now();
+const fresh=compileEvolution({evolutionLevels:[]}),rows=[],freshRows=[];const started=performance.now();
 for(let index=0;index<count;index++)rows.push(run((0x72656163+Math.imul(index,0x9e3779b1))>>>0,breadth,20));
 for (let index = 0; index < Math.min(100, count); index++) freshRows.push(run((0x66726573 + Math.imul(index, 0x85ebca6b)) >>> 0, fresh, 1));
 const achieved = rows.filter((row) => row.achieved); const report = { worlds: count, freshWorlds: freshRows.length,

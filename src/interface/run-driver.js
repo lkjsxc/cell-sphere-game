@@ -5,7 +5,6 @@ import { RUN_PROTOCOL_VERSION } from '../core/run-protocol.js';
 import { createWorldIdentity, identityFields, sameWorldIdentity, WORLD_IDENTITY_FIELDS } from '../core/world-session.js';
 import {
   ENVIRONMENT_MODEL_VERSION,
-  ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
   ENVIRONMENT_SCHEDULE_HASH,
   ENVIRONMENT_SCHEDULE_VERSION,
 } from '../game/environment-level.js';
@@ -32,8 +31,6 @@ export function createRunDriver(caps, onMessage, options = {}) {
       environmentScheduleHash: value?.environmentScheduleHash ?? ENVIRONMENT_SCHEDULE_HASH,
       immutableStartConfigurationHash: value?.immutableStartConfigurationHash
         ?? hexU32(hashStringU32(`driver-start:${seed}:${presentationGeneration}`)),
-      onboardingEnvironmentModifierVersion: value?.onboardingEnvironmentModifierVersion
-        ?? ENVIRONMENT_ONBOARDING_MODIFIER_VERSION,
       resultTransactionKey: value?.resultTransactionKey });
     presentationSequence = Math.max(presentationSequence, activeIdentity.presentationGeneration);
     return activeIdentity;
@@ -68,6 +65,7 @@ export function createRunDriver(caps, onMessage, options = {}) {
       const transportToken = ++transportGeneration;
       worker.onmessage = (event) => {
         if (token !== generation || transportToken !== transportGeneration
+          || event.data?.protocolVersion !== RUN_PROTOCOL_VERSION
           || !sameWorldIdentity(session, activeIdentity) || !accepts(event.data, session, true)) return;
         if (event.data.t === 'error' && event.data.fatal) failWorker(event.data.message, session);
         else emit(event.data, session);

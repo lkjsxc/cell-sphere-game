@@ -1,5 +1,7 @@
 # Status — 2026-08-07
 
+> **Historical record, superseded by Product Simplification v1 Phase 3.** Its reported event/migration behavior and release evidence are not evidence for the current worktree.
+
 ## Active state
 
 The cross-layer v2 migration is integrated on `main` after package commits

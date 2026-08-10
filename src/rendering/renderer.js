@@ -57,6 +57,6 @@ export class GLRenderer {
 function frameAudit(scene, dynamic) {
   const snapshot = scene.snapshot; return Object.freeze({ worldSessionId: snapshot?.worldSessionId ?? null,
     presentationGeneration: snapshot?.presentationGeneration ?? null, lifeCells: count(snapshot?.alive),
-    eventCells: count(snapshot?.eventStrength), highlights: scene.highlightedCells?.length ?? 0, dynamic });
+    highlights: scene.highlightedCells?.length ?? 0, dynamic });
 }
 function count(values) { let result = 0; if (values) for (const value of values) if (value) result++; return result; }

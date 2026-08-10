@@ -39,7 +39,7 @@ export function renderMemorySnapshot(topo, meta, scene, emphasizedIds = []) {
   }
   const snapshot = Object.freeze({
     tick: scene.nodes.filter((node) => node.owned).length * 16 + (scene.selectedId ? 1 : 0),
-    entropy: 0.30, status: 'memory', events: [], memoryStatus: status, memoryBranch: branch,
+    entropy: 0.30, status: 'memory', memoryStatus: status, memoryBranch: branch,
     memoryTier: tier, memoryKind: kind, memoryImprintWeight: imprintWeight,
     memoryNodeIndex: nodeIndex, memoryEmphasis: emphasis, memoryScene: scene, nodeStates: scene.nodes,
     metrics: Object.freeze({ coverage: scene.nodes.filter((node) => node.owned).length / count,

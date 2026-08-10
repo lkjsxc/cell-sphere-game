@@ -6,11 +6,11 @@ mutates simulation arrays, consumes authoritative randomness, or changes SCORE.
 | Module | Authority boundary |
 |---|---|
 | `app-controller.js` | Home/World/Evolution/Trophies composition and persistence orchestration. |
-| `run-driver.js` | Worker-first run protocol v7 with identical fallback. |
+| `run-driver.js` | Worker-first run protocol v8 with identical fallback. |
 | `policies/run-session.js` | First-wins replacement, neutral Level-0 blank frame, immutable start identity. |
-| `policies/run-result.js` | Validated SCORE-v5/Echo/best-record/History-8/Trophy transaction. |
+| `policies/run-result.js` | Validated SCORE/Echo/best-record/History-9/Trophy transaction. |
 | `surfaces.js` / `inspection/` | SCORE/REACH/Environment HUD, dynamic result evidence, metrics, and Inspector. |
-| `panel-surfaces.js` / `progression-spheres.js` | 252-cell Evolution detail and second-activation transaction. |
+| `panel-surfaces.js` / `progression-spheres.js` | Evolution detail and second-activation transaction. |
 | `history-*` / `app-data.js` | Bounded History and validated import/export. |
 
 Evolution activation is select first, then a later discrete activation purchases

@@ -1,11 +1,13 @@
 /** Versioned, validated durable player preferences. */
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 
+export const SETTINGS_SCHEMA_VERSION = 5;
+
 export function defaultSettings() {
   const reduced = typeof matchMedia === 'function'
     && matchMedia('(prefers-reduced-motion: reduce)').matches;
   return {
-    schema: 5,
+    schema: SETTINGS_SCHEMA_VERSION,
     motion: reduced ? 'reduced' : 'full',
     contrast: 'normal',
     quality: 'auto',
@@ -30,14 +32,11 @@ const BOOLEANS = Object.freeze(['cameraInertia', 'autoContinue', 'pauseOnPanels'
 
 export function validateSettings(raw) {
   const out = defaultSettings();
-  if (!raw || typeof raw !== 'object') return out;
+  if (!raw || typeof raw !== 'object' || raw.schema !== SETTINGS_SCHEMA_VERSION) return out;
   for (const [field, allowed] of Object.entries(ENUMS)) if (allowed.has(raw[field])) out[field] = raw[field];
   if (Number.isFinite(raw.speed) && raw.speed > 8) out.speed = 8;
   for (const field of BOOLEANS) if (typeof raw[field] === 'boolean') out[field] = raw[field];
-  if (!ENUMS.idleRotation.has(raw.idleRotation) && typeof raw.autoRotate === 'boolean') {
-    out.idleRotation = raw.autoRotate ? 'calm' : 'off';
-  }
-  out.schema = 5; return out;
+  return out;
 }
 
 export function loadSettings() { return loadNamespacedDocument('settings', validateSettings, defaultSettings); }

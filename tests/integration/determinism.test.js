@@ -4,7 +4,7 @@ import { RunController } from '../../src/simulation/simulator.js';
 import { REPLAY, REPLAY_VERSION } from '../../src/simulation/replay.js';
 import { scoreResult } from '../../src/game/scoring.js';
 import { RUN_PROTOCOL_VERSION, acceptsRunProtocol } from '../../src/core/run-protocol.js';
-import { compileMemory, MEMORY_NODES } from '../../src/game/skills/index.js';
+import { compileEvolution, MEMORY_NODES } from '../../src/game/skills/index.js';
 import { appendWorld, defaultHistory, loadHistory, normalizeHistoryEvents, saveHistory, serializeHistory } from '../../src/platform/history.js';
 
 function runFull(cfg, chunk = 50) { const controller = new RunController({ worldOrdinal: 1, worldPotential: 16000, ...cfg }); controller.start();
@@ -25,10 +25,11 @@ test('same start configuration reproduces authority, History, Imprint, and SCORE
   assert.deepEqual(a.history, b.history); assert.deepEqual(a.imprint, b.imprint); assert.deepEqual(scoreResult(a), scoreResult(b));
 });
 
-test('different seeds and explicit onboarding worlds produce distinct intentional authority', () => {
+test('different seeds diverge while world ordinal does not change ecology', () => {
   assert.notEqual(runFull({ seed: 1 }).hash, runFull({ seed: 2 }).hash);
-  const scarcity = runFull({ seed: 9, worldOrdinal: 1 }); const mature = runFull({ seed: 9, worldOrdinal: 12 });
-  assert.notEqual(scarcity.hash, mature.hash); assert.equal(scarcity.crisesTotal, 0); assert.ok(mature.crisesTotal > 0);
+  const first = runFull({ seed: 9, worldOrdinal: 1 }); const later = runFull({ seed: 9, worldOrdinal: 12 });
+  const omitIdentity = ({ worldOrdinal, hash, ...result }) => result;
+  assert.deepEqual(omitIdentity(later), omitIdentity(first));
 });
 
 test('bounded 1x through 256x-equivalent execution chunks are exactly invariant', () => {
@@ -48,21 +49,21 @@ test('hundreds of inspections and snapshots remain observationally neutral', () 
 test('strain and permanent Evolution remain authoritative start inputs', () => {
   const pioneer = runFull({ seed: 31337, strainId: 'pioneer' }); const weaver = runFull({ seed: 31337, strainId: 'weaver' });
   assert.notEqual(pioneer.hash, weaver.hash);
-  const root = MEMORY_NODES[0]; const memory = compileMemory({ memoryNodes: [root.id] });
+  const root = MEMORY_NODES[0]; const memory = compileEvolution({ evolutionLevels: [{ id: root.id, level: '1' }] });
   const evolved = runFull({ seed: 31337, memoryEffects: memory.effects, memoryConditionals: memory.conditionals,
     memoryUnlocks: memory.unlocks, habitatCapabilities: memory.habitatCapabilities,
     worldPotential: memory.worldPotential, potentialVersion: memory.potentialVersion });
   assert.notEqual(evolved.hash, pioneer.hash); assert.equal(evolved.worldPotential, memory.worldPotential);
 });
 
-test('replay schema 7 contains only stable run creation inputs', () => {
-  const result = runFull({ seed: 8888 }); assert.equal(result.replayVersion, REPLAY_VERSION); assert.equal(REPLAY_VERSION, 7);
+test('replay schema 8 contains only stable run creation inputs', () => {
+  const result = runFull({ seed: 8888 }); assert.equal(result.replayVersion, REPLAY_VERSION); assert.equal(REPLAY_VERSION, 8);
   assert.deepEqual(result.replay.map((entry) => entry[1]), [REPLAY.STRAIN, REPLAY.INOCULATE]);
   assert.ok(result.replay.flat().every(Number.isInteger));
 });
 
 test('owned conditional Evolution changes only its declared runtime condition', () => {
-  const target = MEMORY_NODES.find((node) => node.effect.trigger === 'coverage-below-25'); const memory = compileMemory({ memoryNodes: [target.id] });
+  const target = MEMORY_NODES.find((node) => node.effect.trigger === 'coverage-below-25'); const memory = compileEvolution({ evolutionLevels: [{ id: target.id, level: '1' }] });
   const controller = new RunController({ seed: 9182, worldPotential: memory.worldPotential,
     memoryEffects: memory.effects, memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks });
   controller.start(); controller.advance(1); assert.ok(controller.state.activeTraits.reach > controller.state.traits.reach);

@@ -11,7 +11,7 @@ import { createMemoryFields } from '../../src/game/skills/scene.js';
 import { defaultMeta } from '../../src/platform/storage.js';
 import { createCamera } from '../../src/rendering/camera.js'; import { pickNode } from '../../src/rendering/picking.js';
 
-test('first cycle resolves in the retained 18–24 minute five-world window', () => {
+test('first cycle resolves at the exact five-world progression boundary', () => {
   assert.equal(campaignResolved({ runs:4 }), false); assert.equal(campaignResolved({ runs:5 }), true);
 });
 
@@ -33,7 +33,7 @@ test('graph retains exact level-one economy, composition, effects, and World Pot
   assert.equal(report.totalCost, 17820); assert.equal(report.totalPower, FULL_EVOLUTION_POWER); assert.equal(report.worldPotential, '1200000');
   assert.deepEqual(report.branchCounts, { Marine:42, Freshwater:42, Scarcity:42, Fertility:42, Cryogenic:42, Luminous:42 });
   assert.equal(report.affinityHash, AFFINITY_METADATA_HASH); assert.equal(report.contentHash, EVOLUTION_CONTENT_HASH);
-  assert.equal(AFFINITY_METADATA_HASH, '9e0063bd'); assert.equal(EVOLUTION_CONTENT_HASH, '938f6e87');
+  assert.equal(AFFINITY_METADATA_HASH, '969b3a6d'); assert.equal(EVOLUTION_CONTENT_HASH, 'a0546a3d');
   assert.deepEqual(report.composition, { root:6, resonance:180, major:30, conditional:12, unlock:12, keystone:6, capstone:6 });
   assert.equal(new Set(MEMORY_NODE_IDS).size, 252); assert.equal(new Set(MEMORY_NODES.map((node) => node.cell)).size, 252);
 });
@@ -108,7 +108,7 @@ test('compiled level-one Resonance, habitats, Builds, and finite effects remain 
   assert.equal(previewEvolutionLevel({ evolutionLevels:fullLevelOneVector() }, MEMORY_NODE_IDS[0]).newLevel, '2');
 });
 
-test('frequency-5 scene projects one semantic state per whole Evolution Cell from legacy input', () => {
+test('frequency-5 scene projects one semantic state per whole Evolution Cell from current level authority', () => {
   const topology = createGeodesicTopology(5); const snapshot = buildMemorySnapshot(topology, { ...defaultMeta(), echoBalance:8 });
   assert.equal(snapshot.memoryStatus.length, 252); assert.equal(snapshot.memoryNodeIndex.filter((index) => index >= 0).length, 252);
   assert.equal(snapshot.nodeStates.length, 252); assert.equal(createMemoryFields(topology).biomeId.length, 252);

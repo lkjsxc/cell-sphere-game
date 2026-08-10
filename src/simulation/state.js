@@ -8,11 +8,7 @@ import { createRng } from '../core/prng.js';
 import { createTopology } from '../world/icosphere.js';
 import { createFields } from '../world/fields.js';
 import { buildEntropyLut, buildSeasonLut, buildNodeSeasonOffsets } from './environment.js';
-import { createEventDirector, installEventDirectorProfile } from './events.js';
-import {
-  environmentOnboardingModifierForWorld,
-  environmentScheduleAtTick,
-} from '../game/environment-level.js';
+import { environmentScheduleAtTick } from '../game/environment-level.js';
 import { createEnvironmentExposure, flushEnvironmentExposure, sampleEnvironmentExposure } from '../game/environment-exposure.js';
 import { compileChallengeProfile, interpolateEnvironmentCoefficients } from './challenge-profile.js';
 import { compareProgressionIntegers, incrementProgressionInteger, maxProgressionInteger, normalizeProgressionInteger } from '../core/progression-integer.js';
@@ -29,7 +25,6 @@ import { ecologicalAccess } from './lifecycle/ecological-access.js';
 const STREAM = Object.freeze({
   world: 0x51ab3d71,
   growth: 0x9e3779b9,
-  event: 0x0e7e17a1,
   inoculation: 0x1a0c01a7,
 });
 
@@ -40,7 +35,6 @@ export function createRunState(cfg) {
     ? '1' : normalizeProgressionInteger(cfg.worldOrdinal, '1');
   // A new authority always starts from the Level-0 world baseline. Any static
   // selected profile in an old envelope is intentionally ignored.
-  const onboardingEnvironmentModifier = environmentOnboardingModifierForWorld(worldOrdinal);
   const initialEnvironmentSchedule = environmentScheduleAtTick('0');
   const environmentEvolutionDefense = cfg.evolutionDefense && typeof cfg.evolutionDefense === 'object'
     ? cfg.evolutionDefense : {};
@@ -49,7 +43,6 @@ export function createRunState(cfg) {
   const topo = createTopology(4);
   const fields = createFields(createRng(seed ^ STREAM.world), topo);
   const simRng = createRng(seed ^ STREAM.growth);
-  const eventRng = createRng(seed ^ STREAM.event);
   const inoculationRng = createRng(seed ^ STREAM.inoculation);
   const N = topo.nodeCount;
   const E = topo.edgeCount;
@@ -82,7 +75,6 @@ export function createRunState(cfg) {
     nextEnvironmentLevelTick: initialEnvironmentSchedule.nextEnvironmentLevelTick,
     environmentLevelProgressQ: initialEnvironmentSchedule.environmentLevelProgressQ,
     environmentTransitionCount: '0',
-    onboardingEnvironmentModifier,
     environmentExposure: createEnvironmentExposure(initialEnvironmentSchedule.currentEnvironmentLevel),
     recentEnvironmentTransitions: [],
     environmentEvolutionDefense,
@@ -93,7 +85,7 @@ export function createRunState(cfg) {
       currentEnvironmentProfile, nextEnvironmentProfile, initialEnvironmentSchedule.environmentLevelProgressQ,
     ),
     challenge: cfg.challenge ?? null, seed, runId: Number.isInteger(cfg.runId) ? cfg.runId : 0,
-    simRng, eventRng, inoculationRng,
+    simRng, inoculationRng,
     tick: 0, entropy: 0, status: 'idle', extinction: null,
     terminalCollapseStart: -1, terminalDeadline: -1, terminalCause: null,
     strictInvariants: cfg.strictInvariants === true,
@@ -112,8 +104,7 @@ export function createRunState(cfg) {
 
     entropyLut: buildEntropyLut(currentEnvironmentProfile), seasonLut: buildSeasonLut(),
     nodeSeasonOffset: buildNodeSeasonOffsets(topo),
-    eventDirector: null, events: [],
-    crisesEndured: 0, crisesTotal: 0, trophyProof: createTrophyProof(topo, fields),
+    trophyProof: createTrophyProof(topo, fields),
 
     habitatBlocked: new Uint16Array(N), resourceBlocked: new Uint16Array(N),
     habitatVisited: new Uint8Array(N), habitatOccupancy: new Uint32Array(14),
@@ -128,7 +119,7 @@ export function createRunState(cfg) {
     totalUptake: 0, totalMaintenance: 0, stressBurdenSum: 0, stressBurdenSamples: 0, phenotypes: [],
     everColonized: new Uint8Array(N), scoreMerit: createScoreMerit(),
     causes: { 'resource-exhaustion': 0, 'maintenance-starvation': 0, fragmentation: 0,
-      heat: 0, cold: 0, drought: 0, toxin: 0, event: 0, collapse: 0 }, reach: createReachLedger(),
+      heat: 0, cold: 0, drought: 0, toxin: 0, collapse: 0 }, reach: createReachLedger(),
 
     phaseIndex: -1, coverageMilestoneIndex: 0, loopMilestone: false, geographySeen: 0,
     wasFragmented: false, reconnectedUntil: -1,
@@ -137,9 +128,6 @@ export function createRunState(cfg) {
   };
   installResourceState(state, resource);
   state.initialResourceStock = resource.initialStock;
-  state.eventDirector = createEventDirector({ rng: eventRng, topo, fields, onboarding: onboardingEnvironmentModifier });
-  state.events = state.eventDirector.events;
-  installEventDirectorProfile(state, currentEnvironmentProfile);
 
   const start = cfg.inoculate ?? selectInoculation(fields, inoculationRng, resource);
   if (!Number.isInteger(start) || start < 0 || start >= N) throw new Error(`invalid inoculation cell: ${start}`);
@@ -196,7 +184,6 @@ export function updateEnvironmentProgression(state) {
     if (state.recentEnvironmentTransitions.length > 8) state.recentEnvironmentTransitions.shift();
     recordHistory(state, 'environment-transition', { id: state.currentEnvironmentLevel,
       environmentLevel: state.currentEnvironmentLevel, profileHash: state.currentEnvironmentProfile.hash });
-    installEventDirectorProfile(state, state.currentEnvironmentProfile);
   }
   state.environmentLevelStartTick = schedule.environmentLevelStartTick;
   state.nextEnvironmentLevelTick = schedule.nextEnvironmentLevelTick;

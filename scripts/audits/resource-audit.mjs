@@ -2,9 +2,9 @@
 /** Fresh-world local resource, niche access, conservation, and SCORE audit. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../../src/simulation/simulator.js';
-import { compileMemory } from '../../src/game/skills/index.js';
+import { compileEvolution } from '../../src/game/skills/index.js';
 
-const count = integerArg('--count=', 500); const memory = compileMemory({ memoryNodes: [] }); const rows = [];
+const count = integerArg('--count=', 500); const memory = compileEvolution({ evolutionLevels: [] }); const rows = [];
 const initial = []; const final = []; const states = Array(8).fill(0); let livingByQuintile = Array(5).fill(0); let birthsByQuintile = Array(5).fill(0);
 const started = performance.now();
 for (let index = 0; index < count; index++) {

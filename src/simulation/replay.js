@@ -1,7 +1,7 @@
 /** Compact replay, semantic history, and terminal authority hash. */
 import { hashF32, hashString, hashU8, hexU32 } from '../core/hash.js';
-// v7 captures the terminal-clock and rolling-event authority correction.
-export const REPLAY_VERSION = 7;
+// v8 captures chronic Environment authority without disaster scheduling.
+export const REPLAY_VERSION = 8;
 export const REPLAY = Object.freeze({ STRAIN: 0, INOCULATE: 1, SPEED: 2 });
 
 /** @param {object} state @param {number} type @param {...number} args */
@@ -89,15 +89,14 @@ export function finalStateHash(state) {
     state.transformedCells, state.electrifiedCells, state.reach100Tick,
     proof.lakeCellsReached, proof.shoreCellsReached, proof.distinctLakesReached, proof.completeShores,
     proof.ecologyMask, proof.lakeTypeMask, proof.lakeSalinityMask, proof.lakeLivingSamples,
-    proof.largeLakeLivingSamples, proof.lakeRegionPeak, proof.droughtLakeSurvivals,
-    proof.freezeLakeSurvivals, proof.loopSurplusPeak, proof.loopLivingSamples,
+    proof.largeLakeLivingSamples, proof.lakeRegionPeak, proof.loopSurplusPeak, proof.loopLivingSamples,
   ]), 1000);
   const exposure = state.environmentExposure ?? {};
   h = hashString(h, [state.worldOrdinal, state.environmentModelVersion, state.environmentScheduleVersion,
     state.environmentScheduleHash, state.currentEnvironmentLevel,
     state.peakEnvironmentLevel, state.environmentTransitionCount,
-    state.currentEnvironmentProfileVersion, state.eventDirector?.version ?? 0,
-    state.currentEnvironmentProfileHash, state.worldPotential, state.evolutionDepth,
+    state.currentEnvironmentProfileVersion, state.currentEnvironmentProfileHash,
+    state.worldPotential, state.evolutionDepth,
     state.scoreMerit.total, exposure.totalTicks ?? '0', exposure.pressureTicksQ ?? '0',
     exposure.qualityPressureTicksQ ?? '0', exposure.timeAtPeakTicks ?? '0', exposure.pendingTicks ?? 0,
     exposure.pendingPressureTicksQ ?? 0, exposure.pendingQualityPressureTicksQ ?? 0].join('|'));

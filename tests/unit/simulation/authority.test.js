@@ -32,26 +32,18 @@ test('presentation snapshot remains observational and compact', () => {
   for (const key of Object.keys(snapshot)) assert.doesNotMatch(key, /edgeActive|conductance|flux|nutrient|resourceReserve/);
   assert.equal(snapshot.lifeState[state.inoculationCell], LIFE_STATE.FRONTIER);
   const transfers = snapshotTransfers(snapshot); assert.deepEqual(transfers, [snapshot.biomass.buffer, snapshot.stress.buffer,
-    snapshot.alive.buffer, snapshot.lifeState.buffer, snapshot.eventStrength.buffer, snapshot.eventFamily.buffer,
-    snapshot.resourceRichnessQ.buffer, snapshot.reserveFractionQ.buffer, snapshot.resourceState.buffer,
-    snapshot.transformationState.buffer, snapshot.electricityQ.buffer]);
-  assert.equal(transfers.reduce((sum, buffer) => sum + buffer.byteLength, 0), state.topo.nodeCount * 17);
+    snapshot.alive.buffer, snapshot.lifeState.buffer, snapshot.resourceRichnessQ.buffer, snapshot.reserveFractionQ.buffer,
+    snapshot.resourceState.buffer, snapshot.transformationState.buffer, snapshot.electricityQ.buffer]);
+  assert.equal(transfers.reduce((sum, buffer) => sum + buffer.byteLength, 0), state.topo.nodeCount * 15);
 });
 
-test('public clock advances in every world while onboarding suppresses only harmful events', () => {
+test('public clock advances identically in every world without onboarding or disaster state', () => {
   const one = run(8, { worldOrdinal: 1 }); const two = run(8, { worldOrdinal: 2 }); const three = run(8, { worldOrdinal: 3 });
   one.advance(1200); two.advance(1200); three.advance(1200);
   for (const controller of [one, two, three]) {
-    assert.equal(controller.state.currentEnvironmentLevel, '1');
-    assert.equal(controller.state.peakEnvironmentLevel, '1');
+    assert.equal(controller.state.currentEnvironmentLevel, '1'); assert.equal(controller.state.peakEnvironmentLevel, '1');
+    for (const key of ['onboardingEnvironmentModifier', 'eventDirector', 'events', 'eventRng']) assert.equal(key in controller.state, false, key);
   }
-  assert.equal(one.state.onboardingEnvironmentModifier.harmfulEventsDisabled, true);
-  assert.equal(two.state.onboardingEnvironmentModifier.harmfulEventsDisabled, true);
-  assert.equal(one.state.events.length, 0); assert.equal(two.state.events.length, 0);
-  const events = three.state.events;
-  assert.equal(three.state.onboardingEnvironmentModifier.harmfulEventsDisabled, false);
-  assert.equal(events.length, 1); assert.equal(events[0].crisis, true); assert.ok(events[0].startTick >= 1300);
-  assert.ok(events[0].intensity >= .5 && events[0].intensity <= .7);
 });
 
 test('locked habitat rejection happens before growth RNG consumption', () => {
@@ -76,11 +68,11 @@ test('terminal snapshot is emitted before the extinction result', () => {
 
 test('inspection and result projections do not mutate authority or RNG', () => {
   const controller = run(14); controller.advance(100); const state = controller.state;
-  const before = { rng: [state.simRng, state.eventRng, state.inoculationRng].map((rng) => rng.state()),
+  const before = { rng: [state.simRng, state.inoculationRng].map((rng) => rng.state()),
     replay: JSON.stringify(state.replay), history: JSON.stringify(state.history), biomass: state.biomass.slice() };
   const cell = controller.inspectCell(state.inoculationCell); assert.equal(cell.node, state.inoculationCell);
   controller.snapshot(); controller.buildResult(); assert.deepEqual(state.biomass, before.biomass);
-  assert.deepEqual([state.simRng, state.eventRng, state.inoculationRng].map((rng) => rng.state()), before.rng);
+  assert.deepEqual([state.simRng, state.inoculationRng].map((rng) => rng.state()), before.rng);
   assert.equal(JSON.stringify(state.replay), before.replay); assert.equal(JSON.stringify(state.history), before.history);
 });
 

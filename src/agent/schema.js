@@ -6,7 +6,7 @@ import { ENVIRONMENT_EXPOSURE_VERSION } from '../game/environment-exposure.js';
 import { defaultMeta, validateMeta } from '../platform/storage.js';
 import { defaultHistory, validateHistory } from '../platform/history.js';
 
-export const AGENT_SAVE_SCHEMA = 4;
+export const AGENT_SAVE_SCHEMA = 5;
 export const AGENT_GOALS = Object.freeze([
   'balanced', 'breadth-first', 'depth-first', 'cheapest', 'marginal-value', 'diversity', 'weak',
   'sustainability', 'freshwater', 'rich-rush', 'scarcity-reclaimer', 'cryogenic', 'marine',
@@ -22,7 +22,7 @@ export function defaultAgentSave(seed = 0) {
 }
 
 export function validateAgentSave(raw) {
-  if (!raw || typeof raw !== 'object' || ![1, 2, 3, AGENT_SAVE_SCHEMA].includes(raw.schema)) return defaultAgentSave();
+  if (!raw || typeof raw !== 'object' || raw.schema !== AGENT_SAVE_SCHEMA) return defaultAgentSave();
   return canonical({ campaignSeed: validSeed(raw.campaignSeed) ? raw.campaignSeed : 0,
     meta: validateMeta(raw.meta), history: validateHistory(raw.history, 32),
     goal: GOALS.has(raw.goal) ? raw.goal : 'balanced', lastResult: validateLastResult(raw.lastResult) });
@@ -54,19 +54,16 @@ function validateLastResult(raw) {
   const habitats = {};
   for (const key of ['lake', 'tundra', 'snowIce', 'shallowOcean', 'deepOcean'])
     habitats[key] = integer(raw.habitats?.[key]) ?? 0;
-  const dynamic = raw.startEnvironmentLevel === '0' && raw.finalEnvironmentLevel !== undefined;
+  if (raw.startEnvironmentLevel !== '0' || raw.finalEnvironmentLevel === undefined) return null;
   return Object.freeze({ resultSchemaVersion: integer(raw.resultSchemaVersion, 1) ?? 0, worldOrdinal,
-    startEnvironmentLevel: dynamic ? '0' : '0',
-    finalEnvironmentLevel: dynamic ? normalizeEnvironmentLevel(raw.finalEnvironmentLevel, '0') : '0',
-    peakEnvironmentLevel: dynamic ? normalizeEnvironmentLevel(raw.peakEnvironmentLevel, raw.finalEnvironmentLevel ?? '0') : '0',
+    startEnvironmentLevel: '0',
+    finalEnvironmentLevel: normalizeEnvironmentLevel(raw.finalEnvironmentLevel, '0'),
+    peakEnvironmentLevel: normalizeEnvironmentLevel(raw.peakEnvironmentLevel, raw.finalEnvironmentLevel ?? '0'),
     bestEnvironmentLevelReached: normalizeEnvironmentLevel(raw.bestEnvironmentLevelReached, '0'),
-    legacyAttemptedEnvironmentLevel: dynamic ? null : normalizeEnvironmentLevel(raw.environmentLevel, '0'),
     environmentScheduleVersion: integer(raw.environmentScheduleVersion, 1) ?? 0,
     environmentProfileVersion: integer(raw.environmentProfileVersion, 1) ?? 0,
-    eventDirectorVersion: integer(raw.eventDirectorVersion, 1) ?? 0,
     environmentExposure: validateExposure(raw.environmentExposure),
     timeAtPeakTicks: normalizeProgressionInteger(raw.timeAtPeakTicks, '0'),
-    onboardingEnvironmentModifier: validateOnboarding(raw.onboardingEnvironmentModifier),
     archetype: text(raw.archetype, 40, 'Living World'), survivalSeconds: finite(raw.survivalSeconds),
     cause: text(raw.cause, 32, 'unknown'), terminalCause: text(raw.terminalCause, 32, 'unknown'),
     score, scoreModelVersion: integer(raw.scoreModelVersion, 1) ?? 1,
@@ -74,7 +71,6 @@ function validateLastResult(raw) {
     worldPotential:normalizeProgressionInteger(raw.worldPotential, '0'), peakReach: fraction(raw.peakReach),
     pressure:validatePressure(raw.pressure),
     sustainedReach: fraction(raw.sustainedReach), peakConnectedShare: fraction(raw.peakConnectedShare),
-    crises: Object.freeze({ endured: integer(raw.crises?.endured) ?? 0, total: integer(raw.crises?.total) ?? 0 }),
     resources: Object.freeze({ initial: finite(raw.resources?.initial), final: finite(raw.resources?.final),
       depletedCells: integer(raw.resources?.depletedCells) ?? 0, recoveredCells: integer(raw.resources?.recoveredCells) ?? 0,
       freshwaterSupportedCellSeconds: finite(raw.resources?.freshwaterSupportedCellSeconds),
@@ -105,14 +101,10 @@ function validateExposure(raw) {
     peakPressureQ: Math.max(0, Math.min(1_000_000, integer(raw.peakPressureQ) ?? 0)),
     currentLevel: normalizeEnvironmentLevel(raw.currentLevel, '0') });
 }
-function validateOnboarding(raw) {
-  return Object.freeze({ version: integer(raw?.version, 0) ?? 0, harmfulEventsDisabled: raw?.harmfulEventsDisabled === true,
-    label: text(raw?.label, 48, '') });
-}
 function validatePressure(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const dimensions = {};
-  for (const key of ['scarcity','renewal','climate','toxicity','maintenance','events']) {
+  for (const key of ['scarcity','renewal','climate','toxicity','maintenance']) {
     const value = raw.dimensions?.[key]; dimensions[key] = Object.freeze({
       environmentRating:normalizeProgressionInteger(value?.environmentRating, '0'),
       defenseRating:normalizeProgressionInteger(value?.defenseRating, '0'),

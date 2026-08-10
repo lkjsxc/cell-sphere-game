@@ -1,7 +1,8 @@
 # Submission
 
-Final contest submission remains pending. This file distinguishes the current
-release candidate from the later frozen submission/tag/form.
+Final contest submission remains pending. The evidence below predates Product
+Simplification v1 and is historical only; it must be rerun before any submission
+claim.
 
 ## Target
 
@@ -12,7 +13,7 @@ release candidate from the later frozen submission/tag/form.
 - The source identity is prepared locally; external repository rename and Pages
   deployment have not been executed or claimed by this migration.
 
-## Current release candidate evidence
+## Historical release-candidate evidence (superseded)
 
 - World-first implementation/evidence commit: `48fba48`; reviewed deployed
   release commit: `dba92c4dc04e0a37ce2343db09b8992bd8dc1629`.

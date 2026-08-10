@@ -28,7 +28,6 @@ export function baseTraits() {
     symbioticFilm: 0,    // improve renewal in occupied cells
     coldReserve: 0,      // store energy during abundance
     redundantLoops: 0,   // improved connectivity survival
-    distributedSensing: 0, // event telegraphs arrive earlier
   };
 }
 
@@ -72,7 +71,7 @@ export function traitsFor(strainId, memoryEffects = {}) {
   }
   // Memory effects multiply multipliers and add to additive fields/flags.
   const ADDITIVE = new Set(['anastomosis', 'symbioticFilm', 'coldReserve',
-    'redundantLoops', 'growthCap', 'distributedSensing']);
+    'redundantLoops', 'growthCap']);
   for (const [key, value] of Object.entries(memoryEffects)) {
     if (!(key in traits)) throw new Error(`unknown trait: ${key}`);
     traits[key] = ADDITIVE.has(key) ? traits[key] + value : traits[key] * value;
