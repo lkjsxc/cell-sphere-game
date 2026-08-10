@@ -56,8 +56,8 @@ void main() {
   float waterMaterial = vTerrain.z;
   float ridge = vTerrain.w;
   vec3 base = vec3(0.19, 0.31, 0.18);
-  if (biome < 0.5) base = vec3(0.025, 0.13, 0.19);
-  else if (biome < 1.5) base = vec3(0.05, 0.27, 0.33);
+  if (biome < 0.5) base = vec3(0.020, 0.075, 0.275);
+  else if (biome < 1.5) base = vec3(0.035, 0.220, 0.405);
   else if (biome < 2.5) base = vec3(0.52, 0.47, 0.30);
   else if (biome < 3.5) base = vec3(0.09, 0.27, 0.14);
   else if (biome < 4.5) base = vec3(0.055, 0.22, 0.13);
@@ -72,7 +72,8 @@ void main() {
   else base = vec3(0.055, 0.25, 0.34);
   float canopy = forest * (0.82 + 0.18 * sin(dot(vCenter, vec3(71.3, 43.7, 97.1))));
   base = mix(base, vec3(0.035, 0.16, 0.09), canopy * 0.44);
-  float lakeCell = step(12.5, biome); float lakeDepth = lakeCell * clamp(waterMaterial * 12.0, 0.0, 1.0);
+  float lakeCell = step(12.5, biome); float oceanCell = 1.0 - step(1.5, biome);
+  float lakeDepth = lakeCell * clamp(waterMaterial * 12.0, 0.0, 1.0);
   float lakeShore = (1.0 - lakeCell) * step(1.5, waterMaterial);
   base = mix(base, vec3(0.025, 0.15, 0.24), lakeDepth * 0.42);
   base = mix(base, vec3(0.20, 0.39, 0.29), lakeShore * 0.30);
@@ -82,13 +83,14 @@ void main() {
   float resourceState = floor(vEcology.y + 0.5);
   float transformState = floor(vEcology.z + 0.5);
   float powered = clamp(vEcology.w / 255.0, 0.0, 1.0);
-  if (transformState > 2.5 && transformState < 3.5) { base = vec3(0.09, 0.34, 0.48); lakeCell = 1.0; }
-  else if (transformState > 3.5 && transformState < 4.5) base = vec3(0.15, 0.43, 0.31);
-  else if (transformState > 4.5) base = vec3(0.06, 0.29, 0.18);
-  vec3 abundantTint = lakeCell > 0.5 ? vec3(0.04, 0.32, 0.43) : vec3(0.37, 0.48, 0.20);
-  vec3 poorTint = lakeCell > 0.5 ? vec3(0.13, 0.23, 0.25) : vec3(0.37, 0.31, 0.22);
-  vec3 depletedTint = lakeCell > 0.5 ? vec3(0.12, 0.19, 0.20) : vec3(0.34, 0.27, 0.17);
-  vec3 exhaustedTint = lakeCell > 0.5 ? vec3(0.08, 0.14, 0.16) : vec3(0.19, 0.19, 0.18);
+  float waterCell = max(lakeCell, oceanCell);
+  if (transformState > 2.5 && transformState < 3.5) { base = vec3(0.09, 0.34, 0.48); lakeCell = 1.0; waterCell = 1.0; }
+  else if (transformState > 3.5 && transformState < 4.5) { base = vec3(0.15, 0.43, 0.31); waterCell = 0.0; }
+  else if (transformState > 4.5) { base = vec3(0.06, 0.29, 0.18); waterCell = 0.0; }
+  vec3 abundantTint = waterCell > 0.5 ? vec3(0.030, 0.290, 0.470) : vec3(0.37, 0.48, 0.20);
+  vec3 poorTint = waterCell > 0.5 ? vec3(0.065, 0.145, 0.300) : vec3(0.37, 0.31, 0.22);
+  vec3 depletedTint = waterCell > 0.5 ? vec3(0.040, 0.100, 0.230) : vec3(0.34, 0.27, 0.17);
+  vec3 exhaustedTint = waterCell > 0.5 ? vec3(0.022, 0.055, 0.150) : vec3(0.19, 0.19, 0.18);
   float abundant = 1.0 - step(0.5, abs(resourceState - 1.0));
   float strainedResource = 1.0 - step(0.5, abs(resourceState - 3.0));
   float poorResource = 1.0 - step(0.5, abs(resourceState - 4.0));
@@ -100,7 +102,7 @@ void main() {
   base = mix(base, poorTint, poorResource * 0.55);
   base = mix(base, depletedTint, depletedResource * 0.72);
   base = mix(base, exhaustedTint, exhaustedResource * 0.82);
-  base = mix(base, lakeCell > 0.5 ? vec3(0.08,0.27,0.30) : vec3(0.25,0.35,0.23), recoveringResource * 0.52);
+  base = mix(base, waterCell > 0.5 ? vec3(0.035,0.220,0.390) : vec3(0.25,0.35,0.23), recoveringResource * 0.52);
   base = mix(base, vec3(0.22, 0.23, 0.21) + nutrient * 0.05, uMemory * 0.82);
   float life = clamp(vLife.x, 0.0, 1.0);
   float stress = clamp(vLife.y, 0.0, 1.0);

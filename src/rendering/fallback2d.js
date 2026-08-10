@@ -6,7 +6,7 @@ import { sameWorldIdentity } from '../core/world-session.js';
 
 const WORLD_LIGHT = Object.freeze((() => { const value=[-.52,.72,.44]; const length=Math.hypot(...value); return value.map((axis)=>axis/length); })());
 const BIOME_COLOR = Object.freeze([
-  [8, 42, 62], [14, 76, 88], [145, 126, 76], [35, 91, 45], [22, 73, 42],
+  [7, 29, 84], [13, 75, 126], [145, 126, 76], [35, 91, 45], [22, 73, 42],
   [83, 119, 50], [137, 116, 52], [164, 116, 53], [37, 110, 82], [96, 94, 72],
   [112, 110, 104], [113, 128, 104], [205, 218, 218], [13, 66, 88],
 ]);
@@ -185,12 +185,12 @@ function memoryStyles(status, kind, fossil, fade, branch, time, pulse) {
 }
 
 function resourceColor(base, state, richness, water) {
-  const target = state === 1 ? (water ? [12, 91, 116] : [92, 126, 45])
+  const target = state === 1 ? (water ? [10, 84, 138] : [92, 126, 45])
     : state === 3 ? [Math.round(mean(base) * .82), Math.round(mean(base) * .88), Math.round(mean(base) * .94)]
-      : state === 4 ? (water ? [38, 59, 64] : [94, 79, 56])
-        : state === 5 ? (water ? [29, 46, 49] : [88, 68, 43])
-          : state === 6 ? (water ? [20, 34, 38] : [49, 48, 45])
-            : state === 7 ? (water ? [22, 72, 77] : [65, 91, 58]) : base;
+      : state === 4 ? (water ? [21, 39, 79] : [94, 79, 56])
+        : state === 5 ? (water ? [16, 29, 63] : [88, 68, 43])
+          : state === 6 ? (water ? [10, 19, 45] : [49, 48, 45])
+            : state === 7 ? (water ? [14, 64, 109] : [65, 91, 58]) : base;
   const amount = state === 1 ? .28 + richness * .10 : state === 3 ? .30 : state === 4 ? .55
     : state === 5 ? .72 : state === 6 ? .82 : state === 7 ? .52 : 0;
   return base.map((value, index) => Math.round(value * (1 - amount) + target[index] * amount));
