@@ -16,13 +16,12 @@ export function handleRunMessage(app, message) {
   if (message.t === 'history-batch') { app.mergeHistory(message.events); return true; }
   if (message.t === 'cell-inspection') { if (message.requestId === app.requestId && message.cell.node === app.selectedNode) {
     app.inspector.updateDynamic(message.cell, app.currentHistory.filter((event) => event.primaryCells.includes(app.selectedNode))); } return; }
-  if (message.t === 'event') return ui.announce(app.el, `${humanize(message.family)} · ${message.phase}`);
+  if (message.t === 'event') return true;
   if (message.t === 'environment-transition') {
     app.lastEnvironmentAnnouncementTick = message.tick;
     return ui.announce(app.el, `Environment Level ${message.environmentLevel} reached.`);
   }
-  if (message.t === 'terminal-collapse') { ui.announce(app.el, 'Final trace — the remaining tissue is releasing.');
-    app.el.eventTime.textContent = `${app.gameTime(app.snapshot?.tick ?? 0)} · TERMINAL`; return true; }
+  if (message.t === 'terminal-collapse') { ui.announce(app.el, 'Final trace — the remaining tissue is releasing.'); return true; }
   if (message.t === 'extinct') return app.finishRun({ ...message.summary, ...identityFields(message) });
   if (message.t === 'aborted') return app.finishAbandoned({ ...message.summary, ...identityFields(message) });
   if (message.t === 'worker-failed' && message.recoverable && message.phase === 'pre-authority') return recoverPreAuthorityFailure(app, message);
@@ -30,5 +29,3 @@ export function handleRunMessage(app, message) {
   if(message.t==='worker-failed')return app.failRun(message.message);
   if (message.t === 'error') ui.announce(app.el, `The world reported a recoverable error: ${message.message}`);
 }
-
-function humanize(value) { return String(value).replaceAll('-', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()); }

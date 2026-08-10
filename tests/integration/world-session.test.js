@@ -15,10 +15,9 @@ function identity(value) { return createWorldIdentity({ environmentModelVersion:
   ...value }); }
 function node() { return { textContent: '', hidden: false, disabled: false, dataset: {}, classList: { toggle() {}, add() {}, remove() {} },
   setAttribute() {}, removeAttribute() {}, replaceChildren() {} }; }
-function elements() { const value = {}; for (const name of ['title','run','memory','trophies','countdown','event','live',
+function elements() { const value = {}; for (const name of ['title','run','memory','trophies','countdown','live',
   'resultRank','resultScore','resultEnvironment','resultPower','resultCause','echoes','resultTrophies','resultImprint','resultFirstCycle','breakdown','score',
-  'reach','trace','environmentLevel','environmentButton','resultControl','resultNext','resultEvolution','resultRetry','pause','speed',
-  'eventTime','eventButton']) value[name] = node();
+  'reach','trace','environmentLevel','environmentButton','resultControl','resultNext','resultEvolution','resultRetry','pause','speed']) value[name] = node();
   return value; }
 function harness() {
   const counts = new Map(); const hit = (name) => counts.set(name, (counts.get(name) ?? 0) + 1); let runId = 0;
@@ -40,7 +39,7 @@ function harness() {
     flow: { send(event) { hit(`flow-${event}`); app.phase = 'starting'; }, select(scene) { app.scene = scene; } }, sceneSelector: { update() {} }, pause: { clear() { hit('pause-clear'); } },
     historyPlayback: { retire() { hit('history-retire'); } },
     surfaces: { reset() { hit('surfaces-reset'); } }, inspector: { close() { hit('inspector-close'); } },
-    historyUi: { reset() { hit('history-reset'); } }, metricUi: { reset() { hit('metric-reset'); } }, eventLogUi: { reset() { hit('event-log-reset'); } },
+    historyUi: { reset() { hit('history-reset'); } }, metricUi: { reset() { hit('metric-reset'); } },
     newWorld: { close() { hit('new-world-close'); } }, settingsUi: { close() { hit('settings-close'); } },
     memoryUi: { closeNode() { hit('memory-close'); } }, trophyUi: { close() { hit('trophy-close'); } },
     timeDial: { reset() { hit('time-reset'); } }, makeRenderer() { hit('make-renderer'); this.renderer = renderer; }, updateSceneActions() {}, resize() { hit('resize'); },
@@ -59,11 +58,10 @@ test('replacement teardown clears every current-world field before one static bl
   assert.equal(sameWorldIdentity(app.snapshot, app.worldIdentity), true); assert.equal(app.snapshot.status, 'starting');
   assert.equal(counts.get('renderer-reset'), 2, 'old and new renderer dynamic state');
   for (const name of ['driver-stop','pause-clear','history-retire','surfaces-reset','inspector-close',
-    'history-reset','metric-reset','event-log-reset','new-world-close','settings-close','memory-close','trophy-close','time-reset']) assert.equal(counts.get(name), 1, name);
+    'history-reset','metric-reset','new-world-close','settings-close','memory-close','trophy-close','time-reset']) assert.equal(counts.get(name), 1, name);
   assert.deepEqual(app.currentHistory, []);
   assert.equal(app.selectedNode, null); assert.equal(app.overlay, null); assert.equal(app.historySnapshot, null); assert.deepEqual(app.historyHighlights, []);
   assert.equal(app.lastResult, null); assert.equal(app.worldFields, null); assert.equal(app.driver.snapshot, app.snapshot);
-  assert.equal(app.el.eventTime.textContent, '00:00 · STARTING'); assert.equal(app.el.eventButton.dataset.read, 'true');
   assert.equal(app.el.pause.disabled, false); assert.equal(app.el.speed.disabled, false);
 });
 

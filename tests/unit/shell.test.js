@@ -1,9 +1,8 @@
-/** Unified shell semantics and pure metric/Event Log projections. */
+/** Unified shell semantics and pure metric projections. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { metricProjection } from '../../src/interface/inspection/metric-surface.js';
-import { EVENT_LOG_ROW_CAP, eventLogWorlds } from '../../src/interface/inspection/event-log-surface.js';
 
 test('one selector, context shell, compact dock, and ordered terminal metrics are semantic', () => {
   const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
@@ -50,7 +49,8 @@ test('metric projections use actual score and Reach ledger values', () => {
 
 test('History, visible metric affordances, restrained Result, and compact dock keep bounded geometry', () => {
   const css = readFileSync(new URL('../../styles/shell.css', import.meta.url), 'utf8');
-  assert.match(css, /\.context-result, \.context-history \{ grid-template-rows: auto minmax\(0, 1fr\) auto; \}/);
+  assert.match(css, /\.context-result \{ grid-template-rows: auto minmax\(0, 1fr\) auto; \}/);
+  assert.match(css, /\.context-history \{ grid-template-rows: auto minmax\(0, 1fr\); \}/);
   assert.doesNotMatch(css, /adaptation|card-row/i);
   const components = readFileSync(new URL('../../styles/components.css', import.meta.url), 'utf8');
   assert.match(components, /\.metric-button \{[^}]*cursor: pointer[^}]*border: 1px solid/s);
@@ -67,12 +67,11 @@ test('History, visible metric affordances, restrained Result, and compact dock k
   assert.match(controller, /storage could not save that acknowledgement/);
 });
 
-test('Event Log current/archive models and rows stay bounded', () => {
-  const events = Array.from({ length: EVENT_LOG_ROW_CAP + 25 }, (_, seq) => ({ seq, tick: seq, key: 'run.germination', kind: 'life', primaryCells: [seq % 8] }));
-  const model = eventLogWorlds({ events, seed: 7, tick: 104, terminal: false }, { worlds: [
-    { id: 'archive-1', archetype: 'Temperate', seed: 6, tick: 90, events },
-  ] });
-  assert.equal(model.worlds.length, 2); assert.equal(model.worlds[0].current, true);
-  assert.equal(model.worlds[0].events.length, EVENT_LOG_ROW_CAP); assert.equal(model.worlds[1].events.length, EVENT_LOG_ROW_CAP);
-  assert.equal(model.worlds[0].events[0].seq, 25);
+test('History is the only temporal surface', () => {
+  const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+  assert.match(html, /<section class="history-timeline"/);
+  for (const retired of ['Event Log', 'event-log-dialog', 'current-event-button', 'history-event-log', 'menu-event-log'])
+    assert.equal(html.includes(retired), false, retired);
+  const interfaceDir = new URL('../../src/interface/', import.meta.url);
+  assert.equal(readdirSync(new URL('inspection/', interfaceDir)).includes('event-log-surface.js'), false);
 });

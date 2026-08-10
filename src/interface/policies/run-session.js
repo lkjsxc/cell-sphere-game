@@ -85,7 +85,7 @@ export function retireWorldPresentation(app) {
   const retired = app.worldIdentity; app.retiredWorldIdentity = retired; app.worldIdentity = null; app.activeRunId = 0;
   app.driver.stop(); app.renderer?.resetDynamicState(); app.requestId++; app.requestGeneration++; resetContinuation(app.continuation);
   app.countdownLabel = ''; app.el.countdown.textContent = ''; app.pause.clear();
-  app.historyPlayback.retire(); app.surfaces.reset?.(); app.inspector.close(); app.historyUi.reset?.(); app.metricUi?.reset?.(); app.eventLogUi?.reset?.();
+  app.historyPlayback.retire(); app.surfaces.reset?.(); app.inspector.close(); app.historyUi.reset?.(); app.metricUi?.reset?.();
   app.newWorld.close(); app.settingsUi.close(); app.memoryUi.closeNode(); app.trophyUi.close();
   app.overlay = null; app.selectedNode = null; app.currentHistory = [];
   app.lastResult = null; app.lastScore = null; app.lastResultIdentity = null; app.historySnapshot = null; app.historyHighlights = [];
@@ -132,7 +132,7 @@ export function finishRun(app,result){
   app.lastResult = identified; app.lastScore = transaction.score; app.lastResultIdentity = app.worldIdentity;
   app.meta = transaction.meta; app.archive = transaction.archive;
   app.currentHistory = app.archive.worlds.at(-1)?.events?.slice(-80) ?? normalizeHistoryEvents(result.history).slice(-80);
-  ui.updateCurrentEvent(app.el, app.currentHistory.at(-1), true); app.eventLogUi.update(app.eventLogModel()); app.trophyNotifications.sync(app.meta);
+  app.trophyNotifications.sync(app.meta);
   if (!saveRunTransaction(app.meta,app.archive,app.settings.historyRetention))
     ui.announce(app.el, 'Progress is temporary because browser storage is unavailable.');
   const record = app.archive.worlds.at(-1);

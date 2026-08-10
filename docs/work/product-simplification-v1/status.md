@@ -3,18 +3,18 @@
 ## Scope and fixed decisions
 
 This work applies the 2026-08-10 product correction in coherent vertical slices.
-The current first slice removes the public Entropy path, makes `ENV LEVEL` an
-accessible route to current-world History, simplifies scene controls, and
-restrains Result. It does not yet remove gameplay disasters, Event Log, World
-Potential, the old Evolution graph, or legacy schemas; those are explicitly
-next slices, not retained design decisions.
+The first completed slice removes the public Entropy path, makes `ENV LEVEL`
+an accessible route to current-world History, simplifies scene controls, and
+restrains Result. The second completed slice makes History the sole temporal
+surface. Gameplay disasters, World Potential, the old Evolution graph, and
+legacy schemas remain explicit next slices, not retained design decisions.
 
 - Starting revision: `a30f2661deeed591c069a6bb3d3cfcd8e2d8d7bf`
 - Branch/upstream: `main` / `origin/main`
 - Initial worktree: user-supplied replacement `AGENTS.md` only (plus ignored
   runtime subagent artifacts).
-- The user-supplied `AGENTS.md` is the active repository contract and will be
-  committed with the first coherent slice.
+- The user-supplied `AGENTS.md` is the active repository contract.
+- Completed Phase 1 commit: `2e2f63a980a4080674485ebd39feca6ee3ea424a`.
 
 ## Baseline evidence (2026-08-10, same host)
 
@@ -66,11 +66,39 @@ Implemented in the current worktree:
 - `npm run check:links` — passed (146 modules, 11 HTML refs).
 - `npm run check:structure` — passed with existing maintainability warnings. The first run correctly exposed runtime `.pi-subagents/` artifacts and the new work-note directory; `.pi-subagents/` is now ignored and the required minimal work-note README is present.
 
+## Phase 2 — one bounded History surface
+
+Implemented:
+
+- Deleted `inspection/event-log-surface.js`, its current-event HUD card, History
+  cross-link/footer, Menu action, controller model/routes, and every related
+  shell style.
+- History now owns one always-visible, bounded Timeline section instead of a
+  collapsed Event Log preview. It remains the only temporal surface and patches
+  a current-world Timeline immediately when a live History batch arrives.
+- Semantic authority records are retained for History while the next slice
+  deletes disaster authority; no event card or event-specific route remains.
+- In short landscape World layouts, the context shell begins below the HUD so
+  a metric control is never obscured; Evolution detail keeps its prior compact
+  geometry.
+
+## Verification after Phase 2
+
+- `node --test tests/unit/shell.test.js tests/unit/state-machine.test.js tests/integration/world-session.test.js` — 16/16 passed.
+- `npm run test:unit` — 199/199 passed.
+- `npm run test:integration` — 78/78 passed.
+- `npm run test:browser:file` — passed (WebGL2 Worker; responsive History,
+  live Timeline patching, and terminal shell evidence included).
+- `npm run test:browser:canvas` — passed.
+- `npm run test:browser:fallback` — passed (WebGL2 fallback simulation).
+- Independent review found and the browser suite now covers an open History
+  Timeline failing to patch a live batch; stale Event Log documentation and
+  test commentary were removed.
+
 ## Next coherent slice
 
-Remove the separate Event Log/current-event presentation and then delete the
-entire gameplay-disaster authority chain together: director/content/state,
+Delete the entire gameplay-disaster authority chain together: director/content/state,
 environment application, summary publication, snapshot/render buffers,
-crisis-dependent skills/trophies, transaction fields, and targeted audits. Do
-not remove ordinary DOM input events. The clean SCORE/schema and Evolution
-rebuild follow only after that authority boundary is coherent.
+crisis-dependent skills/trophies, transaction fields, and a targeted no-disaster
+audit. Do not remove ordinary DOM input events. The clean SCORE/schema and
+Evolution rebuild follow only after that authority boundary is coherent.

@@ -9,8 +9,8 @@ export function createSettingsSurface(options) {
   form.addEventListener('change', () => {
     options.onChange(readForm(form, settings)); settings = options.read(); render(form, settings);
   });
-  for (const [id, action] of [['menu-history', 'history'], ['menu-result', 'result'], ['menu-event-log', 'event-log'],
-    ['menu-new-world', 'new-world'], ['menu-home', 'scene-home'], ['menu-evolution', 'scene-evolution'], ['menu-trophies', 'scene-trophies']])
+  for (const [id, action] of [['menu-history', 'history'], ['menu-result', 'result'], ['menu-new-world', 'new-world'],
+    ['menu-home', 'scene-home'], ['menu-evolution', 'scene-evolution'], ['menu-trophies', 'scene-trophies']])
     byId(id)?.addEventListener('click', () => options.onAction(action));
   byId('camera-reset')?.addEventListener('click', () => options.onAction('camera-reset'));
   byId('export-data')?.addEventListener('click', () => options.onAction('export'));

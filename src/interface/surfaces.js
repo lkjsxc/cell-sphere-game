@@ -26,7 +26,7 @@ export function elements() {
     boot: byId('boot-status'), score: byId('hud-score'), reach: byId('hud-reach'), trace: byId('hud-trace'),
     environmentLevel: byId('hud-environment-level'), environmentButton: /** @type {HTMLButtonElement} */ (byId('environment-level-button')),
     scoreButton: byId('score-button'), reachButton: byId('reach-button'),
-    event: byId('hud-event-text'), resultRank: byId('result-rank'), resultScore: byId('result-score'),
+    resultRank: byId('result-rank'), resultScore: byId('result-score'),
     resultEnvironment: byId('result-environment'), resultPower: byId('result-power'),
     resultCause: byId('result-cause'), breakdown: byId('result-breakdown'),
     echoes: byId('result-echoes'), resultImprint: byId('result-imprint'), resultTrophies: byId('result-trophies'),
@@ -36,8 +36,7 @@ export function elements() {
     resultNext: /** @type {HTMLButtonElement} */ (byId('result-next-button')),
     resultEvolution: /** @type {HTMLButtonElement} */ (byId('result-evolution-button')),
     resultControl: byId('result-control'),
-    live: byId('live-region'), toast: byId('toast-root'), eventTime: byId('hud-event-time'), eventButton: byId('current-event-button'),
-    resultHistory: byId('result-history-button'),
+    live: byId('live-region'), toast: byId('toast-root'), resultHistory: byId('result-history-button'),
   };
 }
 
@@ -66,7 +65,6 @@ export function updateHud(el, snap) {
 export function resetWorldPresentation(el, snapshot = null) {
   updateHud(el, snapshot ?? { status: 'starting', currentEnvironmentLevel: '0', alive: { length: 2562 },
     metrics: { score: 0, coverage: 0, aliveCount: 0 }, reach: null });
-  el.eventTime.textContent = '00:00 · STARTING'; el.event.textContent = 'Preparing a new world.'; el.eventButton.dataset.read = 'true';
   el.live.textContent = ''; el.resultRank.textContent = ''; el.resultScore.textContent = '0';
   el.resultEnvironment.textContent = ''; el.resultPower.textContent = ''; el.resultCause.textContent = '';
   el.echoes.textContent = ''; el.resultTrophies.textContent = '';
@@ -78,14 +76,7 @@ export function resetWorldPresentation(el, snapshot = null) {
   el.speed.disabled = false; el.speed.setAttribute('aria-label', 'Game speed');
 }
 
-export function announce(el, text) { el.event.textContent = text; el.live.textContent = text; }
-export function updateCurrentEvent(el, event, terminal = false) {
-  if (!event) return;
-  const seconds = Math.floor((event.tick ?? 0) / 10); const time = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-  const title = String(event.key ?? event.family ?? 'world update').split(/[.-]/).at(-1).replaceAll('_', ' ');
-  el.eventTime.textContent = `${time} · ${terminal ? 'FINAL' : String(event.kind ?? 'WORLD').toUpperCase()}`;
-  el.event.textContent = title.replace(/^./, (letter) => letter.toUpperCase()); el.eventButton.dataset.read = 'false';
-}
+export function announce(el, text) { el.live.textContent = text; }
 
 export function toast(el, text, quiet = false) {
   if (quiet) return; let queue = TOAST_QUEUES.get(el.toast);

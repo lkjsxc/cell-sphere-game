@@ -18,7 +18,7 @@
 
 ## Shared detail shell
 
-Result, History, Event Log, Menu, metrics, Inspector, Evolution detail, Trophy
+Result, History, Menu, metrics, Inspector, Evolution detail, Trophy
 detail, and New World confirmation use one bounded nonmodal shell. The selected
 globe remains visible and draggable. Evolution detail reserves a dedicated
 intrinsic footer
@@ -61,7 +61,7 @@ and 200% text.
 
 The real-browser matrix covers 320×568, 390×844, 430×932, 768×1024, 844×390,
 and 1440×900. CDP pointer/keyboard tests verify no horizontal overflow, 44px
-selector/event targets, no dock or shell overlap, stable metric geometry, and
+selector/metric targets, no dock or shell overlap, stable metric geometry, and
 camera/detail behavior. Canvas 2D runs the same mobile-to-desktop path.
 
 ## Visibility and storage

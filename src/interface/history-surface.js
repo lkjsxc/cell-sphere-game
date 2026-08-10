@@ -68,7 +68,7 @@ export function createHistorySurface(options) {
       selected.textContent = `Environment Level ${openOptions.environmentLevel ?? '0'} — this world has not reached its first Environment transition yet.`;
       return;
     }
-    if (!event) { selected.textContent = 'No semantic events were recorded at this time.'; return; }
+    if (!event) { selected.textContent = 'No semantic History record exists at this time.'; return; }
     const [title, detail] = describeHistoryEvent(event); selected.replaceChildren(strong(title), document.createTextNode(` — ${detail}`));
   }
   function renderList() {
@@ -79,11 +79,27 @@ export function createHistorySurface(options) {
       button.append(strong(`${historyGameTime(event.tick)} · ${title}`), document.createTextNode(detail));
       button.addEventListener('click', () => { eventIndex = events.indexOf(event); seek(event.tick); }); row.append(button); return row;
     }));
-    if (!visible.length) { const empty = document.createElement('li'); empty.className = 'history-entry'; empty.textContent = 'No events in this category.'; list.append(empty); }
+    if (!visible.length) { const empty = document.createElement('li'); empty.className = 'history-entry'; empty.textContent = 'No History records in this category.'; list.append(empty); }
   }
   function setAvailability(available, message = '') {
     note.hidden = available === true; note.textContent = message || (available === false
       ? 'Approximate visual detail was not preserved for this world; semantic events remain.' : 'Loading device-local visual detail…');
+  }
+  function updateCurrentWorld(next) {
+    if (!model || surface.hidden) return false;
+    const current = model.worlds.find((item) => item.current); if (!current) return false;
+    const previousTick = Math.max(0, current.tick ?? 0); const previousLiveTick = Math.max(0, model.liveTick ?? previousTick);
+    const selectedTick = Number(range.value); const followLive = world?.current && selectedTick >= Math.min(previousTick, previousLiveTick);
+    current.events = Array.isArray(next?.events) ? next.events.slice(-80) : [];
+    current.tick = Math.max(previousTick, Math.max(0, Math.floor(next?.tick ?? previousTick)));
+    model.liveTick = Math.max(previousLiveTick, Math.max(0, Math.floor(next?.liveTick ?? current.tick)));
+    if (!world?.current) return true;
+    world = current; events = current.events; range.max = String(current.tick);
+    const targetTick = followLive ? Math.min(current.tick, model.liveTick) : Math.min(Math.max(0, selectedTick), current.tick);
+    range.value = String(targetTick); eventIndex = nearestEvent(events, targetTick);
+    latest.textContent = world.terminal ? 'Final' : 'Live'; renderSelected(); renderList();
+    if (followLive) options.onSeek(targetTick, events[eventIndex] ?? null, world);
+    return true;
   }
   function updateFrame(frameTick, liveTick = world?.tick ?? 0) {
     range.value = String(frameTick); const behind = world?.current && liveTick > frameTick ? ` · ${historyGameTime(liveTick - frameTick)} behind live` : '';
@@ -97,7 +113,7 @@ export function createHistorySurface(options) {
     close() { cancelAnimationFrame(raf); raf = 0; surface.hidden = true; },
     reset() { cancelAnimationFrame(raf); raf = 0; surface.hidden = true; model = null; world = null; events = []; eventIndex = -1; openOptions = {};
       list.replaceChildren(); selected.textContent = ''; range.value = '0'; range.max = '0'; },
-    setAvailability, updateFrame, get worldId() { return world?.id ?? null; },
+    setAvailability, updateCurrentWorld, updateFrame, get worldId() { return world?.id ?? null; },
     get selectedWorld() { return world; }, get tick() { return Number(range.value); } };
 }
 function nearestEvent(events, tick) { let best = -1; let distance = Infinity;

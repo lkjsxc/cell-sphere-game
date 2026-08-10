@@ -27,7 +27,7 @@ import { createWorldReplacementState, finishAbandoned, finishRun, requestWorldRe
 import { createNewWorldSurface } from './policies/new-world-surface.js'; import { createHistorySurface } from './history-surface.js'; import { createHistoryPlayback } from './history-playback.js';
 import { createInspectorSurface } from './inspection/inspector-surface.js';
 import { createMemorySurface } from './panel-surfaces.js';
-import { createMetricSurface } from './inspection/metric-surface.js'; import { createEventLogSurface, eventLogWorlds } from './inspection/event-log-surface.js';
+import { createMetricSurface } from './inspection/metric-surface.js';
 import { createSceneSelector } from './policies/scene-selector.js';
 import { createTrophySurface } from './policies/trophy-surface.js';
 import { buildTrophySnapshot } from '../game/trophies/scene.js';
@@ -81,9 +81,7 @@ class GameApp {
   } makeSurfaces() {
     this.sceneSelector = createSceneSelector({ onSelect: (scene) => this.selectScene(scene) });
     this.inspector = createInspectorSurface({ onClose: () => this.closeInspector(), onHistory: () => this.openHistory('current') });
-    this.metricUi = createMetricSurface({ onClose: () => this.panelClosed('metric'), onSelect: (cells) => this.focusEventCells(cells) });
-    this.eventLogUi = createEventLogSurface({ onClose: () => this.panelClosed('event-log'), onFocus: (cells) => this.focusEventCells(cells),
-      onHistory: (world, event) => this.openHistoryEvent(world, event), onTrophy: (id) => { this.selectScene('trophies'); selectTrophy(this, id); } });
+    this.metricUi = createMetricSurface({ onClose: () => this.panelClosed('metric'), onSelect: (cells) => this.focusHistoryCells(cells) });
     this.historyUi = createHistorySurface({ onClose: () => this.panelClosed('history'),
       onWorld: (world) => this.historyPlayback.selectWorld(world), onSeek: (tick, event, world) => this.historyPlayback.seek(tick, event, world),
       onLive: () => this.historyPlayback.live() });
@@ -142,7 +140,6 @@ class GameApp {
     document.querySelectorAll('.history-open').forEach((button) => button.addEventListener('click', () => this.openHistory()));
     this.el.resultHistory.addEventListener('click', () => this.openHistory('current')); this.el.resultControl.addEventListener('click', () => this.openResult());
     document.getElementById('result-close')?.addEventListener('click', () => this.panelClosed('result'));
-    this.el.eventButton.addEventListener('click', () => this.openEventLog()); document.getElementById('history-event-log')?.addEventListener('click', () => this.openEventLog());
     for (const button of [this.el.scoreButton, this.el.reachButton]) button.addEventListener('click', () => this.openMetric(button.dataset.metric));
     document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key === ',') { event.preventDefault(); this.openMenu(); } });
   }
@@ -196,16 +193,13 @@ class GameApp {
     if (!this.historyPlayback.handle(message)) return handleRunMessage(this, message); return true; }
   mergeHistory(events) { const bySeq = new Map(this.currentHistory.map((event) => [event.seq, event]));
     for (const event of normalizeHistoryEvents(events)) bySeq.set(event.seq, event); this.currentHistory = [...bySeq.values()].sort((a, b) => a.seq - b.seq).slice(-80);
-    const latest = this.currentHistory.at(-1); if (latest) ui.updateCurrentEvent(this.el, latest, this.phase === 'result');
-    this.eventLogUi.update(this.eventLogModel()); this.metricUi.update(this.metricModel()); }
-  eventLogModel() { return eventLogWorlds(this.worldIdentity ? { events: this.currentHistory, seed: this.runSeed,
-    tick: this.lastResult?.tick ?? this.snapshot?.tick ?? 0, terminal: this.phase === 'result' } : null, this.archive); }
+    const latestTick = this.currentHistory.at(-1)?.tick ?? 0; const liveTick = this.snapshot?.tick ?? latestTick;
+    this.historyUi.updateCurrentWorld({ events: this.currentHistory, tick: Math.max(liveTick, latestTick), liveTick }); this.metricUi.update(this.metricModel()); }
   metricModel() { return { snapshot: this.snapshot, result: this.phase === 'result' ? this.lastResult : null,
     score: this.phase === 'result' ? this.lastScore : null, history: this.currentHistory }; }
-  focusEventCells(cells) { if (!cells?.length) return; if (this.scene !== 'world') this.selectScene('world'); this.historyHighlights = cells.slice(0, 8);
+  focusHistoryCells(cells) { if (!cells?.length) return; if (this.scene !== 'world') this.selectScene('world'); this.historyHighlights = cells.slice(0, 8);
     const node = this.historyHighlights[0]; if (Number.isInteger(node) && node >= 0 && node < this.topo4.nodeCount) focusCamera(this.camera, this.topo4.positions.subarray(node * 3, node * 3 + 3));
-    ui.announce(this.el, `${this.historyHighlights.length} event ${this.historyHighlights.length === 1 ? 'cell' : 'cells'} highlighted.`); }
-  gameTime(tick = 0) { const seconds = Math.floor(tick / 10); return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
+    ui.announce(this.el, `${this.historyHighlights.length} History ${this.historyHighlights.length === 1 ? 'cell' : 'cells'} highlighted.`); }
   setSpeed(value) {
     const next = validateRuntimeSpeed(value, { developerMode: this.developerMode, fallback: this.speed });
     this.speed = next; this.el.speed.value = String(next);
@@ -230,11 +224,6 @@ class GameApp {
     const environmentLevel = this.snapshot?.currentEnvironmentLevel ?? this.lastResult?.finalEnvironmentLevel ?? '0';
     this.openHistory('current', { filter: 'environment', environmentLevel });
   }
-  openHistoryEvent(world, event) { this.openHistory(world?.id ?? (world?.current ? 'current' : 'past'));
-    if (event) queueMicrotask(() => this.historyPlayback.seek(event.tick, event, this.historyUi.selectedWorld ?? world)); }
-  openEventLog(preferred = 'current') { if (this.surfaces.toggle('event-log')) return; this.openFull('event-log');
-    this.eventLogUi.open(this.eventLogModel(), preferred); this.el.eventButton.dataset.read = 'true';
-    this.activateSurface('event-log', this.eventLogUi.surface, 'event-log-heading'); }
   openMetric(kind) { if (!['running', 'result'].includes(this.phase)) return;
     if (this.surfaces.active === 'metric' && this.metricUi.kind === kind) { this.surfaces.toggle('metric'); return; }
     this.openFull('metric'); this.metricUi.open(kind, this.metricModel()); this.activateSurface('metric', this.metricUi.surface, 'metric-heading');
@@ -261,7 +250,7 @@ class GameApp {
     if (name === 'inspector') this.inspector.close();
     else if (name === 'history') { this.historyPlayback.close(); this.historyUi.close(); }
     else if (name === 'menu') this.settingsUi.close(); else if (name === 'new-world') this.newWorld.close();
-    else if (name === 'metric') this.metricUi.close(); else if (name === 'event-log') this.eventLogUi.close();
+    else if (name === 'metric') this.metricUi.close();
     else if (name === 'result') document.getElementById('result-dialog').hidden = true;
     this.surfaces.close(name, options); this.overlay = null; this.pause.set('panel', false); this.pause.set('new-world', false);
     if (name === 'inspector') this.selectedNode = null; this.resize(true);
@@ -277,7 +266,7 @@ class GameApp {
     this.resize(true); interruptCameraPolicy(this.cameraPolicy, performance.now()); }
   settingsAction(action, value) { try {
     if (action === 'history') this.openHistory(this.scene === 'world' ? 'current' : 'past');
-    else if (action === 'result') this.openResult(); else if (action === 'event-log') this.openEventLog();
+    else if (action === 'result') this.openResult();
     else if (action === 'new-world') this.openNewWorld(); else if (action.startsWith('scene-')) this.selectScene(action.slice(6));
     else if (action === 'camera-reset') { Object.assign(this.camera, createCamera()); this.selectedNode = null; }
     else if (action === 'export') downloadData(this.meta, this.archive, this.settings);

@@ -73,7 +73,8 @@
 #history-range { margin: 0; accent-color: var(--life-glow); cursor: ew-resize; }
 .history-selected { margin: var(--sp-1) 0; color: var(--text-secondary); font-size: var(--fs-caption); }
 .history-selected strong { color: var(--text-primary); }.history-note { margin: 0; color: var(--state-info); font-size: var(--fs-caption); }
-.history-expanded { margin-top: var(--sp-1); }.history-expanded[open] { max-height: 9rem; overflow: auto; }
+.history-timeline { display: grid; gap: var(--sp-1); max-height: 9rem; margin-top: var(--sp-1); overflow: auto; }
+.history-timeline h3 { margin: 0; color: var(--text-secondary); font-size: var(--fs-caption); letter-spacing: .08em; text-transform: uppercase; }
 .history-list { list-style: none; padding: 0; margin: 0; }
 .history-entry { border-bottom: 1px solid var(--border-faint); }
 .history-event-btn { display: grid; width: 100%; min-height: var(--touch-min); padding: var(--sp-2) 0; color: var(--text-secondary);

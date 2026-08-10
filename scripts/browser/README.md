@@ -2,7 +2,7 @@
 
 Zero-dependency trusted-CDP helpers shared by WebGL2 and forced-Canvas harnesses.
 `shell-scenario.mjs` is the source of truth for real pointer/touch/keyboard scene,
-shell, metric, responsive, terminal Result, History/Event Log/Menu, atomic
+shell, metric, responsive, terminal Result, History/Menu, atomic
 replacement, Evolution, Environment, and Trophy acceptance.
 
 Evolution evidence must perform two separate discrete activations: the first
