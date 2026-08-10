@@ -31,8 +31,8 @@ jobs:
         run: node --test tests/integration/*.test.js
       - name: Balance smoke
         run: node scripts/balance.mjs --smoke
-      - name: World audits
-        run: node scripts/audits/lake-audit.mjs && node scripts/audits/event-audit.mjs
+      - name: World and no-disaster audits
+        run: node scripts/audits/lake-audit.mjs && node scripts/audits/no-disaster-audit.mjs --count=70
       - name: Endless progression audits
         run: node scripts/audits/skill-audit.mjs && node scripts/audits/progression-number-audit.mjs && node scripts/audits/environment-level-audit.mjs --smoke
       - name: Trophy audit
