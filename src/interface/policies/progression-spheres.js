@@ -4,7 +4,6 @@ import { buildMemorySnapshot, createMemoryFields, evolutionCellState, getMemoryN
 import { TROPHIES, TROPHY_ATLAS_REVERSE, getTrophy } from '../../game/trophies/index.js';
 import { reconcileTrophies } from '../../game/trophies/evaluator.js'; import { buildTrophySnapshot, createTrophyFields } from '../../game/trophies/scene.js';
 import { createGeodesicTopology, createTopology } from '../../world/icosphere.js'; import { focusCamera } from '../../rendering/camera.js';
-import { interruptCameraPolicy } from '../camera-policy.js';
 import { appendEvolutionEvent, appendTrophyEvents, saveHistory } from '../../platform/history.js'; import { saveMeta } from '../../platform/storage.js';
 import { saveProgressionTransaction } from '../../platform/run-transaction-store.js';
 import {boundedTransactionKey} from '../../core/hash.js';
@@ -28,7 +27,7 @@ export function selectEvolutionCell(app,id,source='cell'){const node=getMemoryNo
   app.memorySnapshot = buildMemorySnapshot(app.topo, app.meta, id); app.memoryUi.openNode(node, app.meta); app.overlay = 'memory-node';
   app.surfaces.open('memory-node', app.memoryUi.panel, document.getElementById('memory-node-heading')); app.resize(true); return true; }
 export function closeEvolutionCell(app){app.memoryUi.closeNode();app.surfaces.close('memory-node');if(app.overlay==='memory-node')app.overlay=null;
-  app.selectedNode=null;app.memorySnapshot=buildMemorySnapshot(app.topo,app.meta);app.resize(true);interruptCameraPolicy(app.cameraPolicy,performance.now());}
+  app.selectedNode=null;app.memorySnapshot=buildMemorySnapshot(app.topo,app.meta);app.resize(true);}
 export function buyEvolutionLevel(app,id,source='button'){return requestEvolutionPurchase(app,id,source)}
 function activateSelectedEvolutionCell(app,id,source){
   const state = evolutionCellState(app.meta, id, id); const now = performance.now();
@@ -53,7 +52,7 @@ function requestEvolutionPurchase(app,id,source,now=performance.now()){
     bestEnvironmentLevelReached:trophies.meta.bestEnvironmentLevelReached, compilerVersions:purchase.compilerVersions });
   archive = appendTrophyEvents(archive, trophies.awardedIds);
   app.meta = trophies.meta; app.archive = archive;
-  const persisted = saveProgressionTransaction(app.meta, app.archive, { kind:'evolution', key, retention:app.settings.historyRetention });
+  const persisted = saveProgressionTransaction(app.meta, app.archive, { kind:'evolution', key });
   app.evolutionActivation.lastPurchaseAt = now; app.trophyNotifications.sync(app.meta);
   const next = buildMemorySnapshot(app.topo, app.meta, id);
   const newly = purchase.oldLevel === '0'
@@ -84,16 +83,16 @@ export const selectSkill=selectEvolutionCell,closeSkill=closeEvolutionCell,buySk
 export function enterTrophies(app) { app.selectScene('trophies'); }
 export function presentTrophies(app, restoreCamera = false) { app.closeActiveOverlay();
   const recognition = reconcileTrophies(app.meta, app.archive); app.meta = recognition.meta;
-  app.archive = appendTrophyEvents(app.archive, recognition.awardedIds); saveHistory(app.archive, app.settings.historyRetention);
+  app.archive = appendTrophyEvents(app.archive, recognition.awardedIds); saveHistory(app.archive);
   if (!saveMeta(app.meta)) ui.announce(app.el, 'Trophy recognition is session-only because storage is unavailable.');
   app.trophyNotifications.sync(app.meta); app.selectedNode = null; app.makeRenderer(0, 'trophies'); app.trophySnapshot = buildTrophySnapshot(app.topo2, app.meta, null, app.meta.trophyQueue);
   if (!restoreCamera && app.trophySnapshot.focus) focusCamera(app.camera, app.trophySnapshot.focus); app.trophyUi.sync(app.meta); ui.showTrophies(app.el, app.meta); }
 export function selectTrophy(app, id) { const trophy = getTrophy(id); if (!trophy) return;
   if (app.overlay === 'trophy-detail' && app.trophyUi.selectedId === id) return closeTrophy(app); app.closeActiveOverlay(); app.selectedNode = trophy.cell;
-  focusCamera(app.camera, app.topo.positions.subarray(trophy.cell * 3, trophy.cell * 3 + 3)); interruptCameraPolicy(app.cameraPolicy, performance.now(), 60_000);
+  focusCamera(app.camera, app.topo.positions.subarray(trophy.cell * 3, trophy.cell * 3 + 3));
   app.trophySnapshot = buildTrophySnapshot(app.topo, app.meta, id, app.meta.trophyQueue); app.trophyUi.open(trophy, app.meta); app.overlay = 'trophy-detail';
   app.surfaces.open('trophy-detail', app.trophyUi.panel, document.getElementById('trophy-detail-heading')); app.resize(true); }
 export function closeTrophy(app) { app.trophyUi.close(); app.surfaces.close('trophy-detail'); if (app.overlay === 'trophy-detail') app.overlay = null;
-  app.selectedNode = null; app.trophySnapshot = buildTrophySnapshot(app.topo, app.meta, null, app.meta.trophyQueue); app.resize(true); interruptCameraPolicy(app.cameraPolicy, performance.now()); }
+  app.selectedNode = null; app.trophySnapshot = buildTrophySnapshot(app.topo, app.meta, null, app.meta.trophyQueue); app.resize(true); }
 export function reconcileBeforeHistoryClear(app) { const result = reconcileTrophies(app.meta, app.archive); app.meta = result.meta;
   app.archive = appendTrophyEvents(app.archive, result.awardedIds); app.trophyNotifications.sync(app.meta); saveMeta(app.meta); return result.awardedIds; }

@@ -85,8 +85,8 @@ async function runDeveloperSpeedChecks(tools, publicUrl) {
   const { evaluate, navigate, poll, wait, key, click } = tools;
   await navigate(`${publicUrl}&dev=1`);
   if (!await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000)) throw new Error('developer page did not boot');
-  const options = await evaluate(`(()=>({runtime:[...document.getElementById('speed-select').options].map(o=>Number(o.value)),defaults:[...document.getElementById('settings-speed').options].map(o=>Number(o.value)),marker:!document.getElementById('dev-mode-marker').hidden&&document.getElementById('dev-mode-marker').offsetHeight>0,dev:window.__CELL_SPHERE_BOOT__.developerMode,hook:Object.hasOwn(window,'__CSG_AGENT__')&&window.__CSG_AGENT__===null}))()`);
-  if (options.runtime.join(',') !== '1,2,4,8,16,32,64,128,256' || options.defaults.join(',') !== options.runtime.join(',')
+  const options = await evaluate(`(()=>({runtime:[...document.getElementById('speed-select').options].map(o=>Number(o.value)),menuSpeed:Boolean(document.getElementById('settings-speed')),marker:!document.getElementById('dev-mode-marker').hidden&&document.getElementById('dev-mode-marker').offsetHeight>0,dev:window.__CELL_SPHERE_BOOT__.developerMode,hook:Object.hasOwn(window,'__CSG_AGENT__')&&window.__CSG_AGENT__===null}))()`);
+  if (options.runtime.join(',') !== '1,2,4,8,16,32,64,128,256' || options.menuSpeed
       || !options.marker || !options.dev || !options.hook) throw new Error(`developer speed exposure failed: ${JSON.stringify(options)}`);
   await trustedControl(evaluate, click, '#begin-button');
   if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'running', 5000)) throw new Error('developer check world did not start');
@@ -94,7 +94,6 @@ async function runDeveloperSpeedChecks(tools, publicUrl) {
   await trustedControl(evaluate, click, '#speed-select'); for (let index = 0; index < 8; index++) await key('ArrowDown'); await key('Enter'); await wait(120);
   const runtime = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__,saved=JSON.parse(localStorage.getItem(b.storage.settings));return {selected:Number(document.getElementById('speed-select').value),runtime:a.speed,durable:a.settings.speed,saved:saved.speed}})()`);
   if (runtime.selected !== 256 || runtime.runtime !== 256 || runtime.durable > 8 || runtime.saved > 8) throw new Error(`trusted developer runtime selection failed: ${JSON.stringify(runtime)}`);
-  await trustedControl(evaluate, click, '.menu-open'); await wait(80); await trustedControl(evaluate, click, '#settings-speed'); for (let index = 0; index < 8; index++) await key('ArrowDown'); await key('Enter'); await wait(120);
   const isolated = await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,data=await import('./src/interface/app-data.js'),saved=JSON.parse(data.serializeExportData(a.meta,a.archive,{...a.settings,speed:256,developerMode:true}));return {runtime:a.speed,durable:a.settings.speed,exportSpeed:saved.settings.speed,exportDev:'developerMode' in saved.settings}})()`);
   if (isolated.runtime !== 256 || isolated.durable > 8 || isolated.exportSpeed > 8 || isolated.exportDev) throw new Error(`developer settings leaked: ${JSON.stringify(isolated)}`);
   if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 8000, 100)) throw new Error('256x developer world did not reach one result');

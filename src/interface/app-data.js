@@ -15,14 +15,14 @@ export function seedForRun(runCount, search = location.search) {
 export function qualityDpr(settings, caps) {
   if (settings.quality === 'eco') return Math.min(caps.dpr, 1.1);
   if (settings.quality === 'balanced') return Math.min(caps.dpr, 1.5);
-  if (settings.quality === 'luminous') return Math.min(caps.dpr, 2);
+  if (settings.quality === 'high') return Math.min(caps.dpr, 2);
   const constrained = caps.saveData || caps.memoryHint <= 4;
   return Math.min(caps.dpr, constrained ? 1.15 : 1.5);
 }
 
 export function createExportData(meta, history, settings) {
   return { schema: 2, product: PRODUCT, meta: validateMeta(meta),
-    history: validateHistory(history, 32), settings: validateSettings(settings) };
+    history: validateHistory(history), settings: validateSettings(settings) };
 }
 export function serializeExportData(meta, history, settings) {
   return JSON.stringify(createExportData(meta, history, settings), null, 2);
@@ -39,7 +39,7 @@ export function parseImportedData(text){
     throw new Error('game export exceeds the document security boundary');
   const raw=JSON.parse(text);
   if (!raw || raw.schema !== 2 || raw.product !== PRODUCT) throw new Error('not a current game export');
-  const meta = validateMeta(raw.meta); const history = validateHistory(raw.history, 32); const settings = validateSettings(raw.settings);
+  const meta = validateMeta(raw.meta); const history = validateHistory(raw.history); const settings = validateSettings(raw.settings);
   if (raw.meta?.schema !== meta.schema || raw.history?.schema !== history.schema || raw.settings?.schema !== settings.schema) {
     throw new Error('export does not use the current schema');
   }

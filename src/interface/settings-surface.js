@@ -1,4 +1,4 @@
-/** Unified Menu surface. The controller owns persistence and pause leases. */
+/** Small Menu surface for common preferences and secondary local-data actions. */
 const byId = (id) => document.getElementById(id);
 
 export function createSettingsSurface(options) {
@@ -9,10 +9,8 @@ export function createSettingsSurface(options) {
   form.addEventListener('change', () => {
     options.onChange(readForm(form, settings)); settings = options.read(); render(form, settings);
   });
-  for (const [id, action] of [['menu-history', 'history'], ['menu-result', 'result'], ['menu-new-world', 'new-world'],
-    ['menu-home', 'scene-home'], ['menu-evolution', 'scene-evolution'], ['menu-trophies', 'scene-trophies']])
+  for (const [id, action] of [['menu-history', 'history'], ['menu-new-world', 'new-world']])
     byId(id)?.addEventListener('click', () => options.onAction(action));
-  byId('camera-reset')?.addEventListener('click', () => options.onAction('camera-reset'));
   byId('export-data')?.addEventListener('click', () => options.onAction('export'));
   byId('clear-history')?.addEventListener('click', () => options.onAction('clear-history'));
   byId('reset-progress')?.addEventListener('click', () => options.onAction('reset-progress'));
@@ -23,11 +21,15 @@ export function createSettingsSurface(options) {
   });
   return {
     surface,
-    open(context = {}) { settings = options.read(); render(form, settings); if (note) note.hidden = !context.worldContinues;
-      const active = ['starting', 'running', 'result'].includes(context.phase); byId('menu-world-identity').textContent = active
-        ? `Seed ${context.seed} · ${context.phase === 'result' ? 'completed' : context.phase} · world ${context.worldSessionId ?? '—'}` : 'No active world. Start one from Home or Next World.';
-      byId('menu-result').hidden = context.phase !== 'result'; byId('menu-new-world').hidden = context.phase !== 'running'; surface.hidden = false; },
-    sync() { settings = options.read(); render(form, settings); }, close() { surface.hidden = true; },
+    open(context = {}) {
+      settings = options.read(); render(form, settings);
+      if (note) note.hidden = !context.worldContinues;
+      byId('menu-history').hidden = context.phase !== 'running';
+      byId('menu-new-world').hidden = context.phase !== 'running';
+      surface.hidden = false;
+    },
+    sync() { settings = options.read(); render(form, settings); },
+    close() { surface.hidden = true; },
   };
 }
 
@@ -45,9 +47,7 @@ function readForm(form, current) {
   for (const element of form.elements) {
     if (!(element instanceof HTMLInputElement || element instanceof HTMLSelectElement)) continue;
     const name = element.name; if (!name || !(name in out)) continue;
-    if (element instanceof HTMLInputElement && element.type === 'checkbox') out[name] = element.checked;
-    else if (name === 'speed' || name === 'historyRetention') out[name] = Number(element.value);
-    else out[name] = element.value;
+    out[name] = element instanceof HTMLInputElement && element.type === 'checkbox' ? element.checked : element.value;
   }
   return out;
 }

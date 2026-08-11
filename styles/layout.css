@@ -89,10 +89,12 @@
 }
 
 .hud-metrics {
-  display: flex;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(25rem, 100%);
+  gap: var(--sp-2);
 }
+.hud-metrics > .metric { min-width: 0; width: 100%; }
 
 .hud-cluster {
   display: flex;
@@ -120,7 +122,7 @@
 
 @media (max-width: 390px) {
   .hud-metrics { gap: var(--sp-1); }
-  .metric { min-width: 4rem; padding: var(--sp-1) var(--sp-2); }
+  .metric { padding: var(--sp-1) var(--sp-2); }
 }
 
 /* Evolution identity remains local context; scene navigation is global. */

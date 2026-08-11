@@ -13,7 +13,7 @@ import {addProgressionIntegers,compareProgressionIntegers,incrementProgressionIn
   maxProgressionInteger,multiplyProgressionIntegers,normalizeProgressionInteger} from '../../core/progression-integer.js';
 import {boundedTransactionKey} from '../../core/hash.js';
 
-export function applyRunResult(meta,archive,result,retention,lastKey=null){
+export function applyRunResult(meta,archive,result,lastKey=null){
   const key=result.resultTransactionKey??boundedTransactionKey('run-result',[result.runId??0,result.seed,result.hash,result.tick,result.worldOrdinal,result.environmentScheduleHash,result.currentEnvironmentProfileHash]);
   if(typeof key!=='string'||!key||key.length>128)return rejected('invalid-result-key',key,meta,archive);
   const resultOrdinal=normalizeProgressionInteger(result.worldOrdinal,'0'),runs=normalizeProgressionInteger(meta.runs,'0');
@@ -46,7 +46,7 @@ export function applyRunResult(meta,archive,result,retention,lastKey=null){
     resultKeys: [...(meta.resultKeys ?? []).filter((entry) => entry !== key), key].slice(-16),
     imprints:converted?[...(meta.imprints??[]),converted].slice(-8):(meta.imprints??[]),
   };
-  const appended = appendWorld(archive, result, score, nextRuns, retention); const record = appended.worlds.at(-1);
+  const appended = appendWorld(archive, result, score, nextRuns); const record = appended.worlds.at(-1);
   const trophies = reconcileTrophies(nextMeta, appended, record?.trophyFacts);
   const nextArchive = appendTrophyEvents(appended, trophies.awardedIds, record?.id);
   return Object.freeze({ applied: true, key, meta: trophies.meta, archive: nextArchive, score,

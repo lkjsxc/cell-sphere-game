@@ -95,12 +95,11 @@ Imprints to bounded cell weight, and retain a grouped semantic list. Consequence
 progression reads as territory without path geometry. Evidence: frozen mapping
 hash, adjacency/degree/economy/migration tests, and Chrome selection/purchases.
 
-## D12 — Optional idle rotation, default off
+## D12 — Optional idle rotation, default off (superseded)
 
-Ambient motion supports display use but can fight inspection/accessibility.
-Use the orthonormal camera frame, 55/90-second revolution options, a four-
-second idle delay, immediate interruption, fixed selection framing, and an
-effective reduced-motion veto. Evidence: camera policy unit and Chrome checks.
+This decision was superseded by Ecology experience v2. Idle rotation and camera
+inertia were removed rather than exposed as tuning preferences; direct globe
+dragging and focus framing remain.
 
 ## D13 — Cell material is the life visual
 

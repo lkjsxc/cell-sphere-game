@@ -68,6 +68,9 @@ test('current History normalizes bounded semantic cells and rejects mismatched s
   assert.deepEqual(events[0].primaryCells, [31]); assert.equal(events[0].cellId, 31);
   assert.deepEqual(events[1].primaryCells, [4, 5, 6, 7, 8, 9, 10, 11]);
   assert.deepEqual(validateHistory({ schema: 8, worlds: [] }), { schema: 9, worlds: [], evolution: [], trophies: [] });
+  const oversized = validateHistory({ schema: 9, worlds: Array.from({ length: 32 }, (_, seed) => ({ seed, tick: seed,
+    environmentModelVersion: 2, startEnvironmentLevel: '0' })) }, 32);
+  assert.equal(oversized.worlds.length, 24);
   globalThis.localStorage = { getItem: () => JSON.stringify({ schema: 8, worlds: [] }), setItem: () => {} };
   try { assert.equal(loadHistory().schema, 9); } finally { delete globalThis.localStorage; }
 });
@@ -86,7 +89,7 @@ test('dynamic History retains bounded authoritative interpolation evidence', () 
 test('semantic History enforces its byte bound even with maximum-width exact fields',()=>{
   const huge='9'.repeat(4000),evolution=Array.from({length:128},(_,seq)=>({seq,nodeId:'ecology-tempered-scars',oldLevel:huge,newLevel:huge,
     cost:huge,balanceBefore:huge,balanceAfter:huge,run:huge,environmentLevel:'0',transactionKey:`wide-${seq}`}));
-  const archive=validateHistory({schema:9,worlds:[],evolution,trophies:[]},32),serialized=serializeHistory(archive);
+  const archive=validateHistory({schema:9,worlds:[],evolution,trophies:[]}),serialized=serializeHistory(archive);
   assert.ok(new TextEncoder().encode(serialized).byteLength<=700000);assert.ok(archive.evolution.length>0&&archive.evolution.length<128);
   assert.equal(archive.evolution.at(-1).newLevel,huge);
 });

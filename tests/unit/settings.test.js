@@ -4,16 +4,19 @@ import { defaultSettings, SETTINGS_SCHEMA_VERSION, validateSettings } from '../.
 import { DEVELOPER_SPEEDS, STANDARD_SPEEDS, developerModeFromSearch, runtimeSpeedOptions,
   validateRuntimeSpeed } from '../../src/core/runtime-speed.js';
 import { defaultMeta, validateMeta } from '../../src/platform/storage.js';
+import { qualityDpr } from '../../src/interface/app-data.js';
 import { MEMORY_NODES, MEMORY_NODE_IDS, availableMemoryNodes, compileEvolution,
   normalizeEvolutionLevels, purchaseEvolutionLevel, validateMemoryGraph } from '../../src/game/skills/index.js';
 import { validateAtlasMapping } from '../../src/game/skills/atlas.js';
 import { createGeodesicTopology } from '../../src/world/icosphere.js';
 
-test('settings omit retired choice state and reject mismatched schemas', () => {
+test('settings omit retired menu choices and reject mismatched schemas', () => {
   const settings = defaultSettings(); assert.equal(settings.schema, SETTINGS_SCHEMA_VERSION); assert.equal('adaptationMode' in settings, false);
-  const current = validateSettings({ ...settings, adaptationMode: 'manual', developerMode: true, speed: 32 });
-  assert.equal('adaptationMode' in current, false); assert.equal('developerMode' in current, false);
-  assert.equal(current.speed, 8); assert.equal(current.idleRotation, 'off');
+  const current = validateSettings({ ...settings, adaptationMode: 'manual', developerMode: true, speed: 32,
+    cameraInertia: true, idleRotation: 'calm', pauseOnPanels: true, historyRetention: 32 });
+  for (const field of ['adaptationMode', 'developerMode', 'cameraInertia', 'idleRotation', 'pauseOnPanels', 'historyRetention'])
+    assert.equal(field in current, false, field);
+  assert.equal(current.speed, 8);
   assert.deepEqual(validateSettings({ ...settings, schema: SETTINGS_SCHEMA_VERSION - 1, motion: 'reduced', autoContinue: false }), defaultSettings());
 });
 
@@ -26,11 +29,13 @@ test('runtime speed policy is standard by default and developer-only by explicit
 });
 
 test('settings reject garbage and preserve independent accessibility preferences', () => {
-  const value = validateSettings({ ...defaultSettings(), motion: 'bad', contrast: 'high', quality: 'eco', speed: 7,
-    cameraInertia: false, autoContinue: false, pauseOnPanels: true, historyRetention: 32 });
-  assert.equal(value.motion, defaultSettings().motion); assert.equal(value.contrast, 'high'); assert.equal(value.quality, 'eco');
-  assert.equal(value.speed, 1); assert.equal(value.cameraInertia, false); assert.equal(value.autoContinue, false);
-  assert.equal(value.pauseOnPanels, true); assert.equal(value.historyRetention, 32);
+  const value = validateSettings({ ...defaultSettings(), motion: 'bad', contrast: 'high', quality: 'high', speed: 7,
+    autoContinue: false });
+  assert.equal(value.motion, defaultSettings().motion); assert.equal(value.contrast, 'high'); assert.equal(value.quality, 'high');
+  assert.equal(value.speed, 1); assert.equal(value.autoContinue, false);
+  assert.equal(validateSettings({ ...defaultSettings(), quality: 'luminous' }).quality, 'auto');
+  const caps = { dpr: 3, saveData: false, memoryHint: 8 };
+  assert.equal(qualityDpr({ quality: 'high' }, caps), 2); assert.equal(qualityDpr({ quality: 'luminous' }, caps), 1.5);
 });
 
 test('the current Evolution atlas has a valid stable geodesic mapping', () => {

@@ -1,7 +1,7 @@
 /** Versioned, validated durable player preferences. */
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 
-export const SETTINGS_SCHEMA_VERSION = 5;
+export const SETTINGS_SCHEMA_VERSION = 6;
 
 export function defaultSettings() {
   const reduced = typeof matchMedia === 'function'
@@ -11,24 +11,18 @@ export function defaultSettings() {
     motion: reduced ? 'reduced' : 'full',
     contrast: 'normal',
     quality: 'auto',
-    cameraInertia: !reduced,
-    idleRotation: 'off',
     autoContinue: true,
-    pauseOnPanels: false,
     speed: 1,
-    historyRetention: 24,
   };
 }
 
 const ENUMS = Object.freeze({
   motion: new Set(['full', 'reduced']),
   contrast: new Set(['normal', 'high']),
-  quality: new Set(['auto', 'eco', 'balanced', 'luminous']),
-  idleRotation: new Set(['off', 'gentle', 'calm']),
+  quality: new Set(['auto', 'eco', 'balanced', 'high']),
   speed: new Set([1, 2, 4, 8]),
-  historyRetention: new Set([24, 32]),
 });
-const BOOLEANS = Object.freeze(['cameraInertia', 'autoContinue', 'pauseOnPanels']);
+const BOOLEANS = Object.freeze(['autoContinue']);
 
 export function validateSettings(raw) {
   const out = defaultSettings();
@@ -46,8 +40,4 @@ export function saveSettings(settings) { return saveNamespacedDocument('settings
 export function applySettingsToDocument(settings) {
   const root = document.documentElement;
   root.dataset.motion = settings.motion; root.dataset.contrast = settings.contrast; root.dataset.quality = settings.quality;
-}
-
-export function autoRotationEnabled(settings) {
-  return settings.idleRotation !== 'off' && settings.motion !== 'reduced';
 }

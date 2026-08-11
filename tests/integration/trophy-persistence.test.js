@@ -44,13 +44,13 @@ test('current facts derive whole-cell lake proof without retired river evidence'
 });
 
 test('accepted terminal result stores facts, semantic awards, and persistent queue exactly once', () => {
-  const result = completedResult(); const keys = new Set(); const first = applyRunResult(defaultMeta(), defaultHistory(), result, 24, keys);
+  const result = completedResult(); const keys = new Set(); const first = applyRunResult(defaultMeta(), defaultHistory(), result, keys);
   assert.equal(first.applied, true); assert.ok(first.trophyIds.length > 0); assert.deepEqual(first.meta.trophyQueue, first.trophyIds);
   assert.ok(first.archive.worlds[0].trophyFacts); assert.equal(first.archive.worlds[0].events.filter((event) => event.key === 'trophy.earned').length, first.trophyIds.length);
   assert.equal(first.archive.trophies.length, first.trophyIds.length); assert.deepEqual(first.meta.resultKeys, [first.key]);
-  keys.add(first.key); const duplicate = applyRunResult(first.meta, first.archive, result, 24, keys);
+  keys.add(first.key); const duplicate = applyRunResult(first.meta, first.archive, result, keys);
   assert.equal(duplicate.applied, false); assert.deepEqual(duplicate.trophyIds, []); assert.equal(duplicate.archive.worlds.length, 1);
-  const afterReload = applyRunResult(validateMeta(JSON.parse(JSON.stringify(first.meta))), first.archive, result, 24, new Set());
+  const afterReload = applyRunResult(validateMeta(JSON.parse(JSON.stringify(first.meta))), first.archive, result, new Set());
   assert.equal(afterReload.applied, false); assert.equal(afterReload.meta.totalEchoes, first.meta.totalEchoes);
 });
 

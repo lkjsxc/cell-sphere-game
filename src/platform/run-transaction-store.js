@@ -7,32 +7,31 @@ export const PROGRESSION_TRANSACTION_SCHEMA = 4;
 
 export function saveProgressionTransaction(meta, history, options = {}, storage = browserStorage()) {
   if (!storage?.getItem || !storage?.setItem) return false;
-  const retention = options.retention ?? 24;
   const bundle = normalize({ schema:PROGRESSION_TRANSACTION_SCHEMA, kind:options.kind ?? 'run',
-    key:options.key ?? transactionKey(meta, options.kind), meta, history }, retention);
+    key:options.key ?? transactionKey(meta, options.kind), meta, history });
   if (!bundle) return false; const text = JSON.stringify(bundle);
   try {
     storage.setItem(STORAGE_KEYS.resultTransaction, text);
-    if (JSON.stringify(normalize(parse(storage.getItem(STORAGE_KEYS.resultTransaction)), retention)) !== text) return false;
+    if (JSON.stringify(normalize(parse(storage.getItem(STORAGE_KEYS.resultTransaction)))) !== text) return false;
     const metaText = JSON.stringify(bundle.meta), historyText = JSON.stringify(bundle.history);
     storage.setItem(STORAGE_KEYS.meta, metaText);
     const metaOk = JSON.stringify(validateMeta(parse(storage.getItem(STORAGE_KEYS.meta)))) === metaText;
     storage.setItem(STORAGE_KEYS.history, historyText);
-    const historyOk = JSON.stringify(validateHistory(parse(storage.getItem(STORAGE_KEYS.history)), retention)) === historyText;
+    const historyOk = JSON.stringify(validateHistory(parse(storage.getItem(STORAGE_KEYS.history)))) === historyText;
     if (metaOk && historyOk) storage.removeItem?.(STORAGE_KEYS.resultTransaction);
     return metaOk && historyOk;
   } catch { return false; }
 }
 
-export function saveRunTransaction(meta, history, retention = 24, storage = browserStorage()) {
-  return saveProgressionTransaction(meta, history, { kind:'run', retention }, storage);
+export function saveRunTransaction(meta, history, storage = browserStorage()) {
+  return saveProgressionTransaction(meta, history, { kind:'run' }, storage);
 }
 
 /** A surviving bundle is committed truth; mirror it before normal document loads. */
-export function recoverRunTransaction(retention = 24, storage = browserStorage()) {
+export function recoverRunTransaction(storage = browserStorage()) {
   if (!storage?.getItem) return null;
   try {
-    const bundle = normalize(parse(storage.getItem(STORAGE_KEYS.resultTransaction)), retention); if (!bundle) return null;
+    const bundle = normalize(parse(storage.getItem(STORAGE_KEYS.resultTransaction))); if (!bundle) return null;
     let persisted = false;
     try {
       const metaText = JSON.stringify(bundle.meta), historyText = JSON.stringify(bundle.history);
@@ -44,11 +43,11 @@ export function recoverRunTransaction(retention = 24, storage = browserStorage()
   } catch { return null; }
 }
 
-function normalize(raw, retention) {
+function normalize(raw) {
   if (!raw || raw.schema !== PROGRESSION_TRANSACTION_SCHEMA || typeof raw.key !== 'string' || !raw.key) return null;
   const kind = raw.kind;
   if (!['run', 'evolution'].includes(kind)) return null;
-  const meta = validateMeta(raw.meta), history = validateHistory(raw.history, retention);
+  const meta = validateMeta(raw.meta), history = validateHistory(raw.history);
   const receipts = kind === 'run' ? meta.resultKeys : meta.evolutionTransactionKeys;
   if (!receipts.includes(raw.key)) return null;
   return { schema:PROGRESSION_TRANSACTION_SCHEMA, kind, key:raw.key, meta, history };

@@ -1,12 +1,11 @@
 /** Trusted-CDP production evidence for the unified shell vertical slice. */
 import { assertSkillGeometry } from './evidence.mjs';
-
 export async function runScenario(t) {
   const { evaluate, wait, poll, errors, click, tap, drag, screenshot, setViewport, key } = t;
   let boot = await evaluate('window.__CELL_SPHERE_BOOT__'); ok(boot?.playable, 'app did not boot');
   boot = await runStorageResetScenario(t, boot);
-  const publicSpeeds = await evaluate(`(()=>({runtime:[...document.getElementById('speed-select').options].map(o=>Number(o.value)),defaults:[...document.getElementById('settings-speed').options].map(o=>Number(o.value)),dev:window.__CELL_SPHERE_BOOT__.developerMode,marker:document.getElementById('dev-mode-marker').hidden,agent:Object.hasOwn(window,'__CSG_AGENT__')}))()`);
-  ok(publicSpeeds.runtime.join(',') === '1,2,4,8' && publicSpeeds.defaults.join(',') === '1,2,4,8'
+  const publicSpeeds = await evaluate(`(()=>({runtime:[...document.getElementById('speed-select').options].map(o=>Number(o.value)),menuSpeed:Boolean(document.getElementById('settings-speed')),dev:window.__CELL_SPHERE_BOOT__.developerMode,marker:document.getElementById('dev-mode-marker').hidden,agent:Object.hasOwn(window,'__CSG_AGENT__')}))()`);
+  ok(publicSpeeds.runtime.join(',') === '1,2,4,8' && !publicSpeeds.menuSpeed
     && !publicSpeeds.dev && publicSpeeds.marker && !publicSpeeds.agent, `public speed isolation failed: ${JSON.stringify(publicSpeeds)}`);
   const retired = await evaluate(`(()=>({controls:['adaptations-button','adaptations-dialog','adaptation-cards','result-adaptations'].every(id=>!document.getElementById(id)),setting:!('adaptationMode' in window.__CELL_SPHERE_APP__.settings),pending:typeof window.__CELL_SPHERE_APP__.pendingCount==='undefined'}))()`);
   ok(retired.controls && retired.setting && retired.pending, `active Adaptations remain: ${JSON.stringify(retired)}`);
@@ -113,7 +112,7 @@ export async function runScenario(t) {
   await trustedId(t, 'metric-close');
 
   const responsive = [];
-  for (const [width, height] of [[320, 568], [390, 844], [430, 932], [768, 1024], [844, 390], [1440, 900]]) {
+  for (const [width, height] of [[320, 568], [360, 640], [390, 844], [430, 932], [768, 1024], [844, 390], [1024, 600], [1440, 900]]) {
     await setViewport(width, height); await wait(120); await trustedId(t, 'score-button'); await wait(60);
     const evidence = await layoutEvidence(evaluate); responsive.push({ width, height, ...evidence });
     ok(evidence.noOverflow && evidence.controlsBounded && evidence.selectorMin >= 44 && evidence.metricMin >= 44
@@ -130,12 +129,19 @@ export async function runScenario(t) {
     `Environment detail responsive shell failed ${width}x${height}: ${JSON.stringify(evidence)}`);
     await trustedId(t, 'environment-level-button');
   }
-  await setViewport(390, 844); const accessibilityMatrix = await evaluate(`(()=>{const root=document.documentElement,tabs=[...document.querySelectorAll('#scene-selector [role=tab]')],labels=tabs.map(x=>x.firstChild.nodeValue);root.style.fontSize='32px';root.dataset.motion='reduced';root.dataset.contrast='high';tabs[2].firstChild.nodeValue='Evolution inherited ecological capabilities';const rects=tabs.map(x=>x.getBoundingClientRect()),values={noOverflow:document.documentElement.scrollWidth<=innerWidth,labelsContained:tabs.every(x=>getComputedStyle(x).overflow==='hidden')&&rects.every((r,i)=>!i||r.left>=rects[i-1].right-1),motion:getComputedStyle(root).getPropertyValue('--dur-base').trim(),border:getComputedStyle(document.getElementById('scene-selector')).borderTopWidth};tabs.forEach((x,i)=>x.firstChild.nodeValue=labels[i]);root.style.fontSize='';root.dataset.motion='full';root.dataset.contrast='normal';return values})()`);
+  await setViewport(390, 844);
+  const metricThresholds = await evaluate(`(async()=>{const ids={score:'hud-score',reach:'hud-reach',environment:'hud-environment-level'},rect=id=>{const r=document.getElementById(id).closest('button').getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}},original=Object.fromEntries(Object.entries(ids).map(([key,id])=>[key,document.getElementById(id).textContent])),sample=(key,values)=>values.map(value=>{document.getElementById(ids[key]).textContent=value;return{value,...rect(ids[key])}}),result={score:sample('score',['0','9','10','999','1,000','99,999','1.00e6']),reach:sample('reach',['0%','<0.1% · 1 cell','9.9%','10%','100%']),environment:sample('environment',['0','9','10','999'])};for(const[key,id]of Object.entries(ids))document.getElementById(id).textContent=original[key];const a=window.__CELL_SPHERE_APP__,{updateHud}=await import('./src/interface/surfaces.js'),full='9'+'0'.repeat(30),before=rect(ids.score);updateHud(a.el,{...a.snapshot,metrics:{...a.snapshot.metrics,score:full}});const exact={full,visible:document.getElementById(ids.score).textContent,accessible:document.getElementById('score-button').getAttribute('aria-label'),before,after:rect(ids.score)};updateHud(a.el,a.snapshot);return{...result,exact,noOverflow:document.documentElement.scrollWidth<=innerWidth}})()`);
+  const stableSlot = (samples) => samples.every((sample) => Math.abs(sample.width - samples[0].width) <= .25 && Math.abs(sample.height - samples[0].height) <= .25);
+  ok(metricThresholds.noOverflow && stableSlot(metricThresholds.score) && stableSlot(metricThresholds.reach) && stableSlot(metricThresholds.environment)
+    && metricThresholds.exact.visible !== metricThresholds.exact.full && metricThresholds.exact.accessible === `SCORE ${metricThresholds.exact.full}; activate to view score details` && sameRect(metricThresholds.exact.before, metricThresholds.exact.after, .25),
+    `metric threshold geometry shifted: ${JSON.stringify(metricThresholds)}`);
+  const accessibilityMatrix = await evaluate(`(()=>{const root=document.documentElement,tabs=[...document.querySelectorAll('#scene-selector [role=tab]')],labels=tabs.map(x=>x.firstChild.nodeValue);root.style.fontSize='32px';root.dataset.motion='reduced';root.dataset.contrast='high';tabs[2].firstChild.nodeValue='Evolution inherited ecological capabilities';const rects=tabs.map(x=>x.getBoundingClientRect()),values={noOverflow:document.documentElement.scrollWidth<=innerWidth,labelsContained:tabs.every(x=>getComputedStyle(x).overflow==='hidden')&&rects.every((r,i)=>!i||r.left>=rects[i-1].right-1),motion:getComputedStyle(root).getPropertyValue('--dur-base').trim(),border:getComputedStyle(document.getElementById('scene-selector')).borderTopWidth};tabs.forEach((x,i)=>x.firstChild.nodeValue=labels[i]);root.style.fontSize='';root.dataset.motion='full';root.dataset.contrast='normal';return values})()`);
   ok(accessibilityMatrix.noOverflow && accessibilityMatrix.labelsContained && accessibilityMatrix.motion === '0ms' && accessibilityMatrix.border !== '0px', `accessibility matrix failed: ${JSON.stringify(accessibilityMatrix)}`);
 
-  await setViewport(390, 844); await wait(140); await trustedId(t, 'menu-button');
-  ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='menu'&&document.getElementById('menu-world-heading').textContent==='World'&&document.getElementById('menu-new-world').offsetHeight>=44`), 'Menu groups/actions missing');
-  await trustedId(t, 'menu-new-world');
+  await setViewport(360, 640); await evaluate(`document.documentElement.style.fontSize='32px'`); await wait(140); await trustedId(t, 'menu-button');
+  const menu = await evaluate(`(()=>({overlay:window.__CELL_SPHERE_APP__.overlay,heading:document.getElementById('menu-world-heading').textContent,newWorld:document.getElementById('menu-new-world').offsetHeight,history:document.getElementById('menu-history').offsetHeight,dataOpen:document.querySelector('.data-reset').open,noOverflow:document.documentElement.scrollWidth<=innerWidth,retired:['menu-home','menu-evolution','menu-trophies','menu-result','settings-speed','camera-reset','settings-version'].every(id=>!document.getElementById(id)),retention:!document.querySelector('[name="historyRetention"]'),pause:!document.querySelector('[name="pauseOnPanels"]'),inertia:!document.querySelector('[name="cameraInertia"]'),rotation:!document.querySelector('[name="idleRotation"]'),luminous:!document.querySelector('option[value="luminous"]')}))()`);
+  ok(menu.overlay==='menu'&&menu.heading==='World'&&menu.newWorld>=44&&menu.history>=44&&!menu.dataOpen&&menu.noOverflow&&menu.retired&&menu.retention&&menu.pause&&menu.inertia&&menu.rotation&&menu.luminous, `Menu simplification failed: ${JSON.stringify(menu)}`);
+  await evaluate(`document.documentElement.style.fontSize=''`); await trustedId(t, 'menu-new-world');
   ok(await evaluate(`window.__CELL_SPHERE_APP__.overlay==='new-world'&&!document.getElementById('new-world-dialog').hidden`), 'New World confirmation did not replace Menu');
   await wait(80); const tickBeforeConfirm = await evaluate('window.__CELL_SPHERE_APP__.snapshot.tick'); await wait(220);
   ok(await evaluate(`window.__CELL_SPHERE_APP__.snapshot.tick`) === tickBeforeConfirm, 'confirmation did not own its pause');
@@ -178,29 +184,30 @@ export async function runScenario(t) {
 
   ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 50000), '8x run did not finish');
   const elapsed = (performance.now() - run8StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=document.getElementById('context-shell'),control=document.getElementById('result-control'),ids=[...document.querySelector('.hud-metrics').children].map(x=>x.id),actions=[...document.querySelectorAll('#result-dialog footer button')].map(x=>x.textContent.trim());return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!control.hidden,resultAction:control.dataset.action,resultClass:control.classList.contains('is-recommended'),resultExpanded:control.getAttribute('aria-expanded'),metricOrder:ids.join('|'),redundant:['result-score-button','result-entropy-button','result-reach-button'].some(id=>document.getElementById(id)),entropy:!document.getElementById('entropy-button'),temporalControlsRemoved:!document.getElementById('event-log-dialog')&&!document.getElementById('current-event-button'),pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,trophies:document.getElementById('result-trophies').textContent,resultEnvironment:document.getElementById('result-environment').textContent,
-      nextLabel:document.getElementById('result-next-button').textContent,actions,snapshotStatus:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
+      nextLabel:document.getElementById('result-next-button').textContent,countdown:document.getElementById('result-countdown').textContent,actions,snapshotStatus:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent}})()`);
   ok(result.score > 0 && result.scene === 'world' && result.phase === 'result' && result.overlay === 'result' && result.surface === 'result'
     && result.runVisible && result.resultControl && result.resultAction === 'available' && !result.resultClass && result.resultExpanded === 'true'
     && result.metricOrder === 'score-button|reach-button|environment-level-button|result-control' && !result.redundant && result.entropy && result.temporalControlsRemoved
     && result.pause && result.speed && result.actions.join('|') === 'Next World|Evolution|History' && result.snapshotStatus === 'extinct' && result.alive === 0 && result.reach === '0%'
     &&result.trophies.includes('First Extinction')&&result.resultEnvironment.includes('Peak Environment Level')
-    &&result.nextLabel==='Next World',`terminal world failed: ${JSON.stringify(result)}`);
+    &&result.nextLabel==='Next World'&&result.countdown.startsWith('Next world in'),`terminal world failed: ${JSON.stringify(result)}`);
   await evaluate(`window.__CELL_SPHERE_APP__.trophyNotifications.hold('browser-evidence',true)`);
   await trustedId(t, 'environment-level-button'); await wait(120);
   const terminalEnvironment = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {overlay:a.overlay,kind:a.metricUi.kind,heading:document.getElementById('metric-heading').textContent,history:document.getElementById('history-dialog').hidden,summary:document.getElementById('metric-summary').textContent,context:document.getElementById('metric-conditions').textContent}})()`);
   ok(terminalEnvironment.overlay === 'metric' && terminalEnvironment.kind === 'environment' && terminalEnvironment.heading === 'ENVIRONMENT LEVEL'
     && terminalEnvironment.history && terminalEnvironment.summary.includes('ended at Environment Level') && terminalEnvironment.context.includes('Time at peak'),
   `terminal Environment detail did not present final context: ${JSON.stringify(terminalEnvironment)}`);
-  await trustedId(t, 'environment-level-button'); await trustedId(t, 'result-control');
+  await trustedId(t, 'environment-level-button'); await trustedId(t, 'result-control'); await trustedId(t, 'menu-button'); const resultMenu = await evaluate(`(()=>({history:document.getElementById('menu-history').hidden,newWorld:document.getElementById('menu-new-world').hidden}))()`); ok(resultMenu.history && resultMenu.newWorld, `terminal Menu exposed duplicate routes: ${JSON.stringify(resultMenu)}`); await trustedId(t, 'menu-close'); await trustedId(t, 'result-control');
   const terminalLayouts = [];
-  for (const [width, height] of [[320, 568], [390, 844], [1440, 900]]) {
-    await setViewport(width, height); await wait(1000);
-    const layout = await evaluate(`(()=>{const container=document.querySelector('.hud-metrics'),controls=[...container.children].filter(x=>!x.hidden),rects=controls.map(x=>x.getBoundingClientRect()),tops=new Set(rects.map(r=>Math.round(r.top))),style=getComputedStyle(container),plain=rects.map(r=>({left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height})),actions=[...document.querySelectorAll('#result-dialog footer button')].map(x=>({label:x.textContent.trim(),...(()=>{const r=x.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}})()})),overlaps=list=>list.some((a,i)=>list.some((b,j)=>j>i&&!(a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom)));return {count:controls.length,minHeight:Math.min(...rects.map(r=>r.height)),bounded:rects.every(r=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight),rows:tops.size,overlap:overlaps(rects),display:style.display,columns:style.gridTemplateColumns,rects:plain,actions,actionsBounded:actions.every(r=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight),actionsOverlap:overlaps(actions)}})()`);
+  for (const [width, height, fontSize] of [[320, 568, ''], [360, 640, '32px'], [390, 844, ''], [1024, 600, '32px'], [1440, 900, '']]) {
+    await setViewport(width, height); await evaluate(`document.documentElement.style.fontSize=${JSON.stringify(fontSize)}`); await wait(1000);
+    const layout = await evaluate(`(()=>{const container=document.querySelector('.hud-metrics'),controls=[...container.children].filter(x=>!x.hidden),rects=controls.map(x=>x.getBoundingClientRect()),tops=new Set(rects.map(r=>Math.round(r.top))),style=getComputedStyle(container),plain=rects.map(r=>({left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height})),actions=[...document.querySelectorAll('#result-dialog footer button')].map(x=>({label:x.textContent.trim(),...(()=>{const r=x.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}})()})),overlaps=list=>list.some((a,i)=>list.some((b,j)=>j>i&&!(a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom))),panel=document.getElementById('result-dialog'),body=panel.querySelector('.result-body'),footer=panel.querySelector('.result-actions'),countdown=document.getElementById('result-countdown'),box=e=>{const r=e.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}},panelBox=box(panel),footerBefore=box(footer),countdownText=countdown.textContent;countdown.textContent='Next world in 10';const countdownTen=box(countdown);countdown.textContent='Next world in 9';const countdownNine=box(countdown);countdown.textContent=countdownText;body.scrollTop=body.scrollHeight;const footerAfter=box(footer),countdownBox=box(countdown);return {count:controls.length,minHeight:Math.min(...rects.map(r=>r.height)),bounded:rects.every(r=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight),rows:tops.size,overlap:overlaps(rects),display:style.display,columns:style.gridTemplateColumns,rects:plain,actions,actionsBounded:actions.every(r=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight),actionsOverlap:overlaps(actions),panel:panelBox,body:box(body),footerBefore,footerAfter,countdown:countdownBox,countdownTen,countdownNine,bodyScroll:body.scrollTop}})()`);
     terminalLayouts.push({ width, height, ...layout });
     ok(layout.count === 4 && layout.minHeight >= 44 && layout.bounded && !layout.overlap
       && layout.actions.map(action=>action.label).join('|') === 'Next World|Evolution|History' && layout.actions.length === 3
       && layout.actions.every(action=>action.height >= 44) && layout.actionsBounded && !layout.actionsOverlap
-      && (width <= 520 ? layout.rows === 2 : layout.rows === 1), `terminal metrics/actions failed ${width}x${height}: ${JSON.stringify(layout)}`);
+      && layout.rows === 2 && layout.countdown.top >= layout.panel.top && layout.countdown.bottom <= layout.panel.bottom
+      && sameRect(layout.footerBefore, layout.footerAfter, .25) && sameRect(layout.countdownTen, layout.countdownNine, .25), `terminal metrics/actions failed ${width}x${height}: ${JSON.stringify(layout)}`); await evaluate(`document.documentElement.style.fontSize=''`);
   }
   await setViewport(1440, 900); await wait(100);
   await screenshot('shell-result-desktop.png'); await trustedId(t, 'result-close'); ok(await evaluate(`document.getElementById('context-shell').hidden`), 'Result did not close');
@@ -332,7 +339,7 @@ async function evolutionActivationEvidence(t) {
   await assertSkillGeometry(t);await screenshot('browser-evolution-extreme-exact.png');
   await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,saved=a.__evolutionActivationRestore,{buildMemorySnapshot}=await import('./src/game/skills/index.js'),
     {saveMeta}=await import('./src/platform/storage.js'),{saveHistory}=await import('./src/platform/history.js');a.meta=saved.meta;a.archive=saved.archive;
-    a.memorySnapshot=buildMemorySnapshot(a.topo,a.meta);a.memoryUi.syncTree(a.meta);a.trophyNotifications.replace(a.meta);saveMeta(a.meta);saveHistory(a.archive,a.settings.historyRetention);
+    a.memorySnapshot=buildMemorySnapshot(a.topo,a.meta);a.memoryUi.syncTree(a.meta);a.trophyNotifications.replace(a.meta);saveMeta(a.meta);saveHistory(a.archive);
     delete a.__evolutionActivationRestore;return true})()`);
   return{keyboard:{id:keyboard.id,before:keyboard.level,after:keyboardBought.level},pointer:{id:pointer.id,after:pointerBought.level},
     touch:{id:touch.id,after:touchBought.level},button:{id:explicit.id,after:explicitBought.level}};
@@ -357,7 +364,7 @@ async function runStorageResetScenario({ evaluate, wait, poll }, initialBoot) {
   const settingsReset = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__;
     return {schema:a.settings.schema,motion:a.settings.motion,autoContinue:a.settings.autoContinue,speed:a.settings.speed,
       status:b.storageStatus?.documents?.settings?.status}})()`);
-  ok(settingsReset.schema === 5 && settingsReset.autoContinue === true && settingsReset.speed === 1 && settingsReset.status === 'reset',
+  ok(settingsReset.schema === 6 && settingsReset.autoContinue === true && settingsReset.speed === 1 && settingsReset.status === 'reset',
     `mismatched current settings were not reset: ${JSON.stringify(settingsReset)}`);
   const rollback = await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,boot=window.__CELL_SPHERE_BOOT__,
     {createExportData}=await import('./src/interface/app-data.js'),keys=boot.storage,before=Object.fromEntries(Object.entries(keys).map(([k,key])=>[k,localStorage.getItem(key)])),
@@ -377,7 +384,6 @@ async function runStorageResetScenario({ evaluate, wait, poll }, initialBoot) {
     canonical:['meta','settings','history'].every(k=>Boolean(localStorage.getItem(b.storage[k]))),errors:window.__CELL_SPHERE_ERRORS__.slice()}})()`);
   ok(fresh.defaults && fresh.canonical && !fresh.errors.length, `fresh current save failed: ${JSON.stringify(fresh)}`); return fresh.boot;
 }
-
 async function trustedId(t, id) { return trustedSelector(t, `#${id}`); }
 async function trustedSelector({ evaluate, click }, selector) { const point = await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw new Error('missing ${selector}');e.scrollIntoView({block:'nearest'});const r=e.getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()`); await click(...point); }
 async function selectorEvidence(evaluate) { return evaluate(`(()=>{const root=document.getElementById('scene-selector'),r=root.getBoundingClientRect(),tabs=[...root.querySelectorAll('[role=tab]')];return {order:tabs.map(x=>x.textContent.trim()),selected:tabs.filter(x=>x.getAttribute('aria-selected')==='true').length,min:Math.min(...tabs.map(x=>x.getBoundingClientRect().height)),rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}}})()`); }

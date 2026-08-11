@@ -79,7 +79,7 @@ export function performWorldReplacement(app) {
 export function retireWorldPresentation(app) {
   const retired = app.worldIdentity; app.retiredWorldIdentity = retired; app.worldIdentity = null; app.activeRunId = 0;
   app.driver.stop(); app.renderer?.resetDynamicState(); app.requestId++; app.requestGeneration++; resetContinuation(app.continuation);
-  app.countdownLabel = ''; app.el.countdown.textContent = ''; app.pause.clear();
+  app.countdownLabel = ''; app.continuationStatus = 'inactive'; app.el.countdown.textContent = ''; app.pause.clear();
   app.historyPlayback.retire(); app.surfaces.reset?.(); app.inspector.close(); app.historyUi.reset?.(); app.metricUi?.reset?.();
   app.newWorld.close(); app.settingsUi.close(); app.memoryUi.closeNode(); app.trophyUi.close();
   app.overlay = null; app.selectedNode = null; app.currentHistory = [];
@@ -113,22 +113,21 @@ export function recoverAuthorityLossDuringReplacement(app,message){
   app.archive=appendAbandonedWorld(app.archive,{...snapshot,...identity,runId:identity.runId,seed:identity.seed,tick:snapshot.tick??0,
     score:'0',worldOrdinal:snapshot.worldOrdinal??normalizeProgressionInteger(app.meta.worldSeedIndex,'0'),
     startEnvironmentLevel:'0',finalEnvironmentLevel:snapshot.currentEnvironmentLevel??'0',
-    peakEnvironmentLevel:snapshot.peakEnvironmentLevel??'0',history:app.currentHistory??[]},app.settings.historyRetention);
-  saveHistory(app.archive,app.settings.historyRetention);ui.announce(app.el,'The retiring world authority was lost; its reward-free abandonment was recorded.');
+    peakEnvironmentLevel:snapshot.peakEnvironmentLevel??'0',history:app.currentHistory??[]});
+  saveHistory(app.archive);ui.announce(app.el,'The retiring world authority was lost; its reward-free abandonment was recorded.');
   return performWorldReplacement(app);
 }
 export function finishRun(app,result){
   if(!sameWorldIdentity(result,app.worldIdentity))return false;
   const identified={...result,resultTransactionKey:app.worldIdentity.resultTransactionKey};
-  const transaction=applyRunResult(app.meta,app.archive,identified,
-    app.settings.historyRetention, app.resultKeys); if (!transaction.applied) return false;
+  const transaction=applyRunResult(app.meta,app.archive,identified,app.resultKeys); if (!transaction.applied) return false;
   app.resultKeys = new Set(transaction.meta.resultKeys);
   app.closeActiveOverlay(); app.selectedNode = null; app.flow.send('extinct');
   app.lastResult = identified; app.lastScore = transaction.score; app.lastResultIdentity = app.worldIdentity;
   app.meta = transaction.meta; app.archive = transaction.archive;
   app.currentHistory = app.archive.worlds.at(-1)?.events?.slice(-80) ?? normalizeHistoryEvents(result.history).slice(-80);
   app.trophyNotifications.sync(app.meta);
-  if (!saveRunTransaction(app.meta,app.archive,app.settings.historyRetention))
+  if (!saveRunTransaction(app.meta,app.archive))
     ui.announce(app.el, 'Progress is temporary because browser storage is unavailable.');
   const record = app.archive.worlds.at(-1);
   app.historyPlayback.save(record && { id: record.id, seed: record.seed, completedAt: app.meta.runs });
@@ -143,8 +142,8 @@ export function finishRun(app,result){
 }
 export function finishAbandoned(app, summary) {
   if (!sameWorldIdentity(summary, app.worldIdentity) || app.worldReplacement.status !== 'awaiting-authority') return false;
-  app.archive = appendAbandonedWorld(app.archive, summary, app.settings.historyRetention);
-  saveHistory(app.archive, app.settings.historyRetention); app.currentHistory = normalizeHistoryEvents(summary.history);
+  app.archive = appendAbandonedWorld(app.archive, summary);
+  saveHistory(app.archive); app.currentHistory = normalizeHistoryEvents(summary.history);
   return performWorldReplacement(app);
 }
 function expectedMatches(app, expected) {

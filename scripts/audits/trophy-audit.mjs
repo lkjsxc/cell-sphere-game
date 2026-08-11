@@ -41,18 +41,18 @@ mkdirSync('reports', { recursive: true }); writeFileSync('reports/trophy-audit.j
 console.log(JSON.stringify(report, null, 2)); if (!report.valid) process.exitCode = 1;
 
 function firstWorld(seed) { const result = automaticRun(seed, defaultMeta()); const tx = applyRunResult(defaultMeta(), defaultHistory(),
-    { ...result, resultTransactionKey: `fresh:${seed}` }, 32, new Set()); return { seed, ids: tx.trophyIds }; }
+    { ...result, resultTransactionKey: `fresh:${seed}` }, new Set()); return { seed, ids: tx.trophyIds }; }
 function modeledCampaign(worlds) { let meta = defaultMeta(); let archive = defaultHistory(); const keys = new Set(); const horizons = {}; let prior = new Set(); let firstTx = null;
   for (let run = 1; run <= worlds; run++) { const seed = (20260731 + (run - 1) * 104729) & 0x3fffffff;
     const result = automaticRun(seed, meta);
-    const tx = applyRunResult(meta, archive, { ...result, resultTransactionKey: `campaign:${run}:${seed}` }, 32, keys);
+    const tx = applyRunResult(meta, archive, { ...result, resultTransactionKey: `campaign:${run}:${seed}` }, keys);
     if (run === 1) firstTx = { before: { meta, archive }, result: { ...result, resultTransactionKey: `campaign:${run}:${seed}` }, tx };
     keys.add(tx.key); meta = tx.meta; archive = tx.archive; const bought = buyOne(meta, run); meta = bought.meta;
     meta = reconcileTrophies(meta, archive).meta;
     if ([1,4,12,48,240].includes(run)) { const current = new Set(meta.trophyIds); const newly = [...current].filter((id) => !prior.has(id));
       horizons[run] = { total: current.size, newlySincePreviousHorizon: newly.length, names: newly }; prior = current; }
   }
-  const duplicate = applyRunResult(firstTx.tx.meta, firstTx.tx.archive, firstTx.result, 32, new Set([firstTx.tx.key]));
+  const duplicate = applyRunResult(firstTx.tx.meta, firstTx.tx.archive, firstTx.result, new Set([firstTx.tx.key]));
   const awardEvents = firstTx.tx.archive.worlds[0].events.filter((event) => event.key === 'trophy.earned');
   return { meta, archive, horizons, oneTime: { duplicateApplied: duplicate.applied, duplicateAwards: duplicate.trophyIds.length,
     firstAwardIdsUnique: new Set(firstTx.tx.trophyIds).size === firstTx.tx.trophyIds.length,

@@ -22,7 +22,12 @@ test('one selector, context shell, compact dock, and ordered terminal metrics ar
   assert.doesNotMatch(html, /class="metric-summary"/);
   const resultActions = ['result-next-button', 'result-evolution-button', 'result-history-button'].map((id) => html.indexOf(`id="${id}"`));
   assert.ok(resultActions.every((offset, index) => offset > (resultActions[index - 1] ?? -1)));
-  for (const retired of ['evolution-focus-available', 'trophy-focus']) assert.equal(html.includes(retired), false);
+  assert.ok(html.indexOf('id="result-countdown"') > html.indexOf('<footer class="surface-actions result-actions">'));
+  assert.doesNotMatch(html, /id="result-countdown"[^>]*role="status"/);
+  for (const retired of ['evolution-focus-available', 'trophy-focus', 'menu-home', 'menu-evolution', 'menu-trophies', 'menu-result', 'settings-speed', 'camera-reset', 'settings-version'])
+    assert.equal(html.includes(`id="${retired}"`), false, retired);
+  for (const retiredName of ['historyRetention', 'pauseOnPanels', 'cameraInertia', 'idleRotation']) assert.equal(html.includes(`name="${retiredName}"`), false, retiredName);
+  assert.equal(html.includes('option value="luminous"'), false); assert.match(html, /<details class="data-reset">/);
   const memoryActions = html.match(/<div class="memory-actions">[\s\S]*?<\/div>/)?.[0] ?? '';
   const trophyActions = html.match(/<div class="trophy-actions">[\s\S]*?<\/div>/)?.[0] ?? '';
   for (const actions of [memoryActions, trophyActions]) { assert.match(actions, /Next World/); assert.match(actions, /Menu/); assert.doesNotMatch(actions, /Focus|History/); }
@@ -39,7 +44,9 @@ test('metric projections use actual score and Reach ledger values', () => {
     { en: 'Reach', q: .5, weight: .2, points: 10000 },
   ] };
   const scoreView = metricProjection('score', { score, result: {}, history: [] });
-  assert.equal(scoreView.primary, '120,000'); assert.equal(scoreView.counts[0].value, 'Cartographer');
+  assert.equal(scoreView.primary, '120,000'); assert.equal(scoreView.primaryAccessible, 'SCORE 120000'); assert.equal(scoreView.counts[0].value, 'Cartographer');
+  const hugeScore = `9${'0'.repeat(30)}`; const hugeScoreView = metricProjection('score', { snapshot: { metrics: { score: hugeScore } } });
+  assert.match(hugeScoreView.primary, /e\+/); assert.equal(hugeScoreView.primaryAccessible, `SCORE ${hugeScore}`);
   assert.match(scoreView.direct[0].label, /50% axis · 20% weight/);
   const reach = metricProjection('reach', { snapshot: { metrics: { coverage: .125 }, reach: { current: 12, windowSeconds: 15,
     gained: 7, lost: 4, net: 3, positive: [{ label: 'regrowth', count: 7, samples: [2, 3] }], negative: [], positiveConditions: [], negativeConditions: [] } } });
@@ -99,13 +106,18 @@ test('History, visible metric affordances, restrained Result, and compact dock k
   const atlas = readFileSync(new URL('../../styles/atlas.css', import.meta.url), 'utf8');
   assert.match(atlas, /\.clock-hour \{ width: 1\.5px;/);
   assert.match(css, /\.hud-metrics:has\(#result-control:not\(\[hidden\]\)\)[^}]*grid-template-columns: repeat\(2/s);
+  assert.match(css, /\.result-actions \{[\s\S]*?display: grid;/); assert.match(css, /\.result-countdown \{/);
+  const layout = readFileSync(new URL('../../styles/layout.css', import.meta.url), 'utf8');
+  assert.match(layout, /\.hud-metrics \{\s+  display: grid;\s+  grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/);
   const controller = readFileSync(new URL('../../src/interface/app-controller.js', import.meta.url), 'utf8');
   assert.doesNotMatch(controller, /openEnvironmentHistory\(/);
   assert.match(controller, /environmentButton\.addEventListener\('click', \(\) => this\.openMetric\('environment'\)\)/);
   assert.match(controller, /kind === 'environment' \? \['starting', 'running', 'result'\]/);
   assert.match(controller, /resultEvolution\.addEventListener/);
   assert.match(controller, /replaceRenderCanvas\(\)/); assert.match(controller, /retired\.replaceWith\(replacement\)/);
-  assert.match(controller, /storage could not save that acknowledgement/);
+  assert.match(controller, /storage could not save that acknowledgement/); assert.match(controller, /Next World will begin automatically unless you interact/);
+  const menu = readFileSync(new URL('../../src/interface/settings-surface.js', import.meta.url), 'utf8');
+  assert.match(menu, /menu-history'\)\.hidden = context\.phase !== 'running'/);
 });
 
 test('History is the only temporal surface', () => {

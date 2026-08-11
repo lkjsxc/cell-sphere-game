@@ -20,10 +20,13 @@ pinch, wheel, inertia, cancellation, blank taps, non-ready state, and stale
 level/revision never purchase.
 
 The World HUD displays SCORE, REACH, and live within-world Environment
-Level/progress. Activating Environment Level opens a current Environment detail
-with timing and chronic-pressure context; History remains independently
-reachable. Result shows final/peak/exposure and **Next World**, **Evolution**,
-and **History**, never static level selection/retry.
+Level/progress on stable grid tracks. Activating Environment Level opens a
+current Environment detail with timing and chronic-pressure context; History
+remains independently reachable. Result keeps its continuation status and
+**Next World** action outside the scroll body, then offers **Evolution** and
+**History**; it never offers static level selection/retry. The Menu owns only
+common preferences and collapsed local data/reset actions; History retention is
+an internal bounded policy.
 Evolution explains that every world starts at Level 0 and displays the achieved
 best record. Exact values use canonical decimal formatting. Scene/camera/speed
 changes remain authority-neutral.

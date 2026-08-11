@@ -31,8 +31,8 @@ function executeRange(start,count){
  let maxHeap=0,duplicatesRejected=0,valid=true;const tickCounts=[],runSeeds=new Set();
  for(let offset=0;offset<count;offset++){
   const observation=env.observe(),response=env.act({type:'run-world',expectedRevision:observation.metaRevision,expectedWorldOrdinal:observation.worldOrdinal,budgetTicks:10000}),save=env.exportSave(),record=save.history.worlds.at(-1);tickCounts.push(record?.tick??0);runSeeds.add(record?.seed);
-  valid&&=response.accepted&&response.reason==='world-completed'&&record?.startEnvironmentLevel==='0'&&record?.peakEnvironmentLevel!==undefined&&save.history.worlds.length<=32&&save.meta.resultKeys.length<=16;
-  const duplicate=applyRunResult(save.meta,save.history,{resultTransactionKey:record.resultTransactionKey,worldOrdinal:record.worldOrdinal},32,new Set(save.meta.resultKeys));
+  valid&&=response.accepted&&response.reason==='world-completed'&&record?.startEnvironmentLevel==='0'&&record?.peakEnvironmentLevel!==undefined&&save.history.worlds.length<=24&&save.meta.resultKeys.length<=16;
+  const duplicate=applyRunResult(save.meta,save.history,{resultTransactionKey:record.resultTransactionKey,worldOrdinal:record.worldOrdinal},new Set(save.meta.resultKeys));
   duplicatesRejected+=Number(!duplicate.applied);valid&&=!duplicate.applied;
   if(offset%25===0)maxHeap=Math.max(maxHeap,process.memoryUsage().heapUsed/1048576);
  }

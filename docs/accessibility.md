@@ -36,10 +36,13 @@ Interaction contract:
 - drag, pinch, and wheel preserve the open detail;
 - focus moves to the new heading and returns to a sensible trigger on close.
 
-Result actions are ordered **Next World**, **Evolution**, and **History**.
-The persistent selector and metric controls remain the primary navigation for
-SCORE, REACH, Environment Level, Evolution, and Trophies; Result provides its
-own terminal-world continuation and review routes.
+Result actions are ordered **Next World**, **Evolution**, and **History**. Its
+continuation status and primary action sit outside the scrolling Result body, so
+both remain reachable on compact viewports. The countdown is visual text, not a
+one-second live-region announcement; state changes announce once. The persistent
+selector and metric controls remain the primary navigation for SCORE, REACH,
+Environment Level, Evolution, and Trophies; Result provides its own terminal-world
+continuation and review routes.
 
 ## Notifications
 
@@ -53,16 +56,16 @@ Motion settings use centralized duration variables. Reduced motion preserves
 world-time meaning in the clock while removing decorative transitions. High
 contrast strengthens material boundaries and focus indicators. Text and controls
 remain bounded at 200% font scaling. Large exact progression values use compact
-engineering notation; a maximum-width Evolution level and exact balance are
-included in the responsive evidence. The Evolution
-action is geometry-tested at
-320×568, short 390×320 and 640/667 landscape viewports, tablet/desktop sizes,
-and 200% text.
+engineering notation and expose their canonical value through an accessible label
+or detail. The Evolution action is geometry-tested at 320×568, short 390×320
+and 640/667 landscape viewports, tablet/desktop sizes, and 200% text.
 
-The real-browser matrix covers 320×568, 390×844, 430×932, 768×1024, 844×390,
-and 1440×900. CDP pointer/keyboard tests verify no horizontal overflow, 44px
-selector/metric targets, no dock or shell overlap, stable metric geometry, and
-camera/detail behavior. Canvas 2D runs the same mobile-to-desktop path.
+The real-browser matrix covers 320×568, 360×640, 390×844, 430×932, 768×1024,
+844×390, 1024×600, and 1440×900. CDP pointer/keyboard tests verify no horizontal
+overflow, 44px selector/metric targets, no dock or shell overlap, stable
+production-formatted metric geometry (including an exact accessible large SCORE),
+terminal footer visibility at 200% text, and camera/detail behavior. Canvas 2D
+runs the same mobile-to-desktop path.
 
 ## Visibility and storage
 

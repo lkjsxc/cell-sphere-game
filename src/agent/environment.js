@@ -14,7 +14,6 @@ import { AGENT_GOALS, defaultAgentSave, exportAgentSave, validateAgentSave } fro
 
 const GOALS = new Set(AGENT_GOALS);
 const SEED_LIMIT = 0x40000000;
-const RETENTION = 32;
 /** External API chunk/budget guard, never simulation terminal authority. */
 export const MAX_AGENT_ADVANCE_TICKS = 10_000;
 export const MAX_AGENT_RUN_BUDGET_TICKS = 1_000_000;
@@ -55,7 +54,7 @@ export function createAgentEnvironment(raw = defaultAgentSave()) {
       compilerVersions: purchase.compilerVersions,
     });
     history = appendTrophyEvents(history, recognition.awardedIds);
-    state = validateAgentSave({ ...state, meta: validateMeta(recognition.meta), history: validateHistory(history, RETENTION) });
+    state = validateAgentSave({ ...state, meta: validateMeta(recognition.meta), history: validateHistory(history) });
     return respond(true, 'evolution-level-purchased', { purchase: Object.freeze({ cellId,
       oldLevel: purchase.oldLevel, newLevel: purchase.newLevel, cost: purchase.cost,
       balanceAfter: purchase.balanceAfter, transactionKey, trophiesAwarded: recognition.awardedIds }) });
@@ -138,7 +137,7 @@ export function createAgentEnvironment(raw = defaultAgentSave()) {
     ) };
     const cursorMeta = { ...state.meta, worldSeedIndex: incrementProgressionInteger(seedIndex),
       revision: incrementProgressionInteger(state.meta.revision) };
-    const transaction = applyRunResult(cursorMeta, state.history, identified, RETENTION,
+    const transaction = applyRunResult(cursorMeta, state.history, identified,
       new Set(state.meta.resultKeys ?? []));
     if (!transaction.applied) return respond(false, transaction.reason ?? 'result-not-applied');
     const result = curateResult(identified, transaction);

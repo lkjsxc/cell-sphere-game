@@ -96,16 +96,24 @@ button[data-action]:disabled { opacity: .38; filter: saturate(.4); box-shadow: n
 }
 
 .metric-value {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
   font-size: var(--fs-lead);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .metric-trace {
+  overflow: hidden;
   color: var(--accent-gold);
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.1em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Speed control segmented control. */

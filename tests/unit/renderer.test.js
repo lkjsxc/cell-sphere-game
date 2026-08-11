@@ -64,7 +64,7 @@ test('grab rotation follows the pointer horizontally and vertically', () => {
     const cam = createCamera();
     const grabbed = cam.direction.slice();
     const before = project(viewProjection(cam, 1), grabbed);
-    rotate(cam, dragX, dragY, false);
+    rotate(cam, dragX, dragY);
     const after = project(viewProjection(cam, 1), grabbed);
     assert.ok((after[axis] - before[axis]) * direction > 0.1,
       `grabbed point did not follow drag ${dragX},${dragY}`);
@@ -75,7 +75,7 @@ test('vertical rotation crosses both poles and completes a full orbit', () => {
   const cam = createCamera();
   const startDirection = cam.direction.slice(); const startUp = cam.up.slice();
   for (let step = 0; step < 96; step++) {
-    rotate(cam, 0, (Math.PI * 2) / 96, false);
+    rotate(cam, 0, (Math.PI * 2) / 96);
     for (const value of viewProjection(cam, 1)) assert.ok(Number.isFinite(value));
   }
   assert.ok(Math.hypot(...cam.direction.map((value, i) => value - startDirection[i])) < 1e-6);

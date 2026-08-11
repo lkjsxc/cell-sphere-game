@@ -6,6 +6,8 @@ import { ENVIRONMENT_EXPOSURE_VERSION } from '../game/environment-exposure.js';
 import { addProgressionIntegers, compareProgressionIntegers, incrementProgressionInteger,
   normalizeProgressionInteger } from '../core/progression-integer.js';
 const MAX_BYTES = 700_000;
+/** Fixed semantic-world ceiling; byte trimming adapts the actual retained count. */
+const HISTORY_WORLD_RETENTION = 24;
 const MAX_EVENTS = 80;
 const MAX_MEMORY_EVENTS = 128;
 const MAX_TROPHY_EVENTS = 128;
@@ -148,28 +150,28 @@ function validatePressureSummary(raw) {
     severityQ: Math.max(0, Math.min(1_000_000, finiteInt(raw.severityQ) ?? 0)) });
 }
 
-export function validateHistory(raw, retention = 24) {
+export function validateHistory(raw) {
   const out = defaultHistory(); if (!raw || typeof raw !== 'object' || raw.schema !== out.schema) return out;
-  if(Array.isArray(raw.worlds))out.worlds=raw.worlds.slice(-retention*2).map(validateWorld).filter(Boolean).slice(-retention);
+  if(Array.isArray(raw.worlds))out.worlds=raw.worlds.slice(-HISTORY_WORLD_RETENTION*2).map(validateWorld).filter(Boolean).slice(-HISTORY_WORLD_RETENTION);
   const evolution=Array.isArray(raw.evolution) ? raw.evolution : [];
   out.evolution=evolution.slice(-MAX_MEMORY_EVENTS*2).map(validateEvolutionEvent).filter(Boolean).slice(-MAX_MEMORY_EVENTS);
   if(Array.isArray(raw.trophies))out.trophies=raw.trophies.slice(-MAX_TROPHY_EVENTS*2).map(validateTrophyEvent).filter(Boolean).slice(-MAX_TROPHY_EVENTS);
   return trimValidatedHistory(out).value;
 }
 
-export function loadHistory(retention = 24) {
-  return loadNamespacedDocument('history', (value) => validateHistory(value, retention), defaultHistory);
+export function loadHistory() {
+  return loadNamespacedDocument('history', validateHistory, defaultHistory);
 }
-export function saveHistory(history, retention = 24) {
+export function saveHistory(history) {
   try {
-    const { value, bytes } = boundHistoryDocument(history, retention);
+    const { value, bytes } = boundHistoryDocument(history);
     if (bytes > MAX_BYTES) return false;
-    return saveNamespacedDocument('history', value, (item) => validateHistory(item, retention));
+    return saveNamespacedDocument('history', value, validateHistory);
   } catch { return false; }
 }
 export function normalizeHistoryEvents(events) { return (Array.isArray(events) ? events : []).slice(0, MAX_EVENTS).map(validateEvent).filter(Boolean); }
-export function appendWorld(history,result,score,runIndex,retention=24){
-  const source=validateHistory(history,retention),key=result.resultTransactionKey;
+export function appendWorld(history,result,score,runIndex){
+  const source=validateHistory(history),key=result.resultTransactionKey;
   if(key&&source.worlds.some((entry)=>entry.resultTransactionKey===key))return source;
   const events=normalizeHistoryEvents(result.history);const record=validateWorld({id:`world-${result.seed}-${result.hash}-${result.tick}`,
     seed: result.seed, tick: result.tick, score: score.total, rank: score.rank.en, cause: result.cause, echo: score.echoes,
@@ -194,10 +196,10 @@ export function appendWorld(history,result,score,runIndex,retention=24){
     electricityDevelopment: result.electricityDevelopment,
     reach100: result.reach100?.achieved === true, activeBuilds: result.activeBuilds,
     trophyFacts:result.trophyFacts??buildTrophyFacts(result,score),events});
-  return validateHistory({...source,worlds:[...source.worlds,record]},retention);
+  return validateHistory({...source,worlds:[...source.worlds,record]});
 }
-export function appendAbandonedWorld(history,result,retention=24){
-  const source=validateHistory(history,retention),id=`abandoned-${result.runId}-${result.seed}-${result.tick}`;
+export function appendAbandonedWorld(history,result){
+  const source=validateHistory(history),id=`abandoned-${result.runId}-${result.seed}-${result.tick}`;
   if(source.worlds.some((entry)=>entry.id===id))return source;
   const record=validateWorld({id,
     seed: result.seed, tick: result.tick, score: result.score, rank: 'Abandoned', cause: 'abandoned',
@@ -212,17 +214,17 @@ export function appendAbandonedWorld(history,result,retention=24){
     peakEnvironmentLevel: result.peakEnvironmentLevel ?? '0', environmentTransitionCount: result.environmentTransitionCount ?? '0',
     environmentExposure: result.environmentExposure, currentEnvironmentProfileHash: result.currentEnvironmentProfileHash,
     events:normalizeHistoryEvents(result.history)});
-  return validateHistory({...source,worlds:[...source.worlds,record]},retention);
+  return validateHistory({...source,worlds:[...source.worlds,record]});
 }
 export function appendEvolutionEvent(history,evidence){
-  const source=validateHistory(history,32);
+  const source=validateHistory(history);
   if(evidence?.transactionKey&&source.evolution.some((entry)=>entry.transactionKey===evidence.transactionKey))return source;
   const event=validateEvolutionEvent({...evidence,seq:source.evolution.length},source.evolution.length);
   if(!event)return source;
-  return validateHistory({ ...source, evolution: [...source.evolution, event] }, 32);
+  return validateHistory({ ...source, evolution: [...source.evolution, event] });
 }
 export function appendTrophyEvents(history, ids, worldId = history.worlds.at(-1)?.id) {
-  if (!ids?.length) return history; const source = validateHistory(history, 32); const world = source.worlds.find((entry) => entry.id === worldId);
+  if (!ids?.length) return history; const source = validateHistory(history); const world = source.worlds.find((entry) => entry.id === worldId);
   const known = new Set(source.trophies.map((event) => event.subjectId)); const added = ids.filter((id) => !known.has(id)).map((id, index) => ({
     seq: source.trophies.length + index, tick: world?.tick ?? 0, kind: 'trophy', importance: 3, key: 'trophy.earned',
     subjectId:id, primaryCells:[], worldId:world?.id??null,
@@ -230,7 +232,7 @@ export function appendTrophyEvents(history, ids, worldId = history.worlds.at(-1)
   if (!added.length) return source; const worlds = source.worlds.map((entry) => {
     if (entry.id !== worldId) return entry; let seq = entry.events.reduce((max, event) => Math.max(max, event.seq), -1) + 1;
     return { ...entry, events: [...entry.events, ...added.map((event) => ({ ...event, seq: seq++ }))].slice(-MAX_EVENTS) };
-  }); return validateHistory({ ...source, worlds, trophies: [...source.trophies, ...added] }, 32);
+  }); return validateHistory({ ...source, worlds, trophies: [...source.trophies, ...added] });
 }
 function validateEvolutionEvent(raw, index) {
   if (!raw || typeof raw !== 'object' || typeof raw.nodeId !== 'string'
@@ -259,10 +261,10 @@ function validateTrophyEvent(raw, index) { if (!raw || typeof raw !== 'object' |
     run:normalizeProgressionInteger(raw.run, '0') };
 }
 export function clearHistory() { return defaultHistory(); }
-export function serializeHistory(history) { return boundHistoryDocument(history, 32, 2).text; }
-export function parseHistory(text, retention = 24) { return validateHistory(JSON.parse(text), retention); }
-function boundHistoryDocument(history, retention, space = 0) {
-  return trimValidatedHistory(validateHistory(history, retention), space);
+export function serializeHistory(history) { return boundHistoryDocument(history, 2).text; }
+export function parseHistory(text) { return validateHistory(JSON.parse(text)); }
+function boundHistoryDocument(history, space = 0) {
+  return trimValidatedHistory(validateHistory(history), space);
 }
 function trimValidatedHistory(value, space = 0) {
   let text=JSON.stringify(value,null,space),bytes=documentBytes(text);

@@ -4,7 +4,7 @@ import { createFields } from '../world/fields.js';
 import { GLRenderer } from '../rendering/renderer.js';
 import { Canvas2DRenderer } from '../rendering/fallback2d.js';
 import { TitleShowcase, TITLE_SHOWCASE } from '../showcase/player.js';
-import { createCamera, focusCamera, applyInertia } from '../rendering/camera.js';
+import { createCamera, focusCamera } from '../rendering/camera.js';
 import { pickNode } from '../rendering/picking.js';
 import { bindGlobeInput } from './globe-input.js';
 import { loadMeta, saveMeta, defaultMeta } from '../platform/storage.js';
@@ -15,7 +15,6 @@ import { createAppState } from './app-state.js';
 import { createRunDriver } from './run-driver.js';
 import { handleRunMessage } from './app-message.js';
 import { createPauseControl, pauseLabel } from './pause-control.js';
-import { applyAutoRotation, createCameraPolicy, interruptCameraPolicy } from './camera-policy.js';
 import { createSurfaceCoordinator } from './policies/surface-coordinator.js';
 import { applySafeLayout, safeLayout } from './policies/layout-policy.js'; import { createTimeDial } from './policies/time-dial.js';
 import { advanceContinuation, cancelContinuation, completeContinuation, continuationLabel, createContinuation,
@@ -44,8 +43,8 @@ export function startGameApp(options) { const app = new GameApp(options); app.bo
 class GameApp {
   constructor({ canvas, caps, settings, storageStatus = null, developerMode = false }) {
     Object.assign(this, { canvas, caps, settings, storageStatus, developerMode }); this.el = ui.elements(); this.topo4 = createTopology(4); this.topo = this.topo4; initializeProgression(this);
-    this.camera = createCamera(); this.runTransactionRecovery = recoverRunTransaction(settings.historyRetention);
-    this.meta = this.runTransactionRecovery?.meta ?? loadMeta(); this.archive = this.runTransactionRecovery?.history ?? loadHistory(settings.historyRetention);
+    this.camera = createCamera(); this.runTransactionRecovery = recoverRunTransaction();
+    this.meta = this.runTransactionRecovery?.meta ?? loadMeta(); this.archive = this.runTransactionRecovery?.history ?? loadHistory();
     this.resultKeys = new Set(this.meta.resultKeys); this.flow = createAppState();
     this.speed = validateRuntimeSpeed(settings.speed, { developerMode, fallback: 1 }); this.snapshot = null; this.selectedNode = null;
     this.renderer = null; this.fields = null; this.worldFields = null; this.showcase = null; this.overlay = null; this.cameraByScene = new Map();
@@ -53,10 +52,10 @@ class GameApp {
     this.runSeed = null; this.activeRunId = 0; this.worldIdentity = null; this.retiredWorldIdentity = null;
     this.worldSessionSequence = 0; this.presentationGeneration = 0; this.worldReplacement = createWorldReplacementState();
     this.visualSeed = null; this.historySnapshot = null; this.historyHighlights = [];
-    this.last = performance.now(); this.lastRender = 0; this.lastInspect = 0; this.cameraPolicy = createCameraPolicy(this.last); this.layoutClass = null; this.effectivePaused = false;
+    this.last = performance.now(); this.lastRender = 0; this.lastInspect = 0; this.layoutClass = null; this.effectivePaused = false;
     this.presentationAudit = { blankFrames: 0, lastBlank: null }; this.frameAudit = { frames: 0, scheduled: 0, errors: 0, lastError: null };
     this.driver = createRunDriver(caps, (message) => this.message(message), { developerMode }); this.pause = createPauseControl((paused, reasons) => this.applyPause(paused, reasons));
-    this.continuation = createContinuation(); this.countdownLabel = '';
+    this.continuation = createContinuation(); this.countdownLabel = ''; this.continuationStatus = 'inactive';
     this.interactionGuard = createContinuationInteractionGuard(document, (type) => this.cancelAutoNext(type));
     this.surfaces = createSurfaceCoordinator(() => this.closeActiveOverlay(), (focus) => this.interactionGuard.runProgrammaticFocus(focus));
     this.historyPlayback = createHistoryPlayback(this); this.timeDial = createTimeDial(this.el.pause);
@@ -141,10 +140,8 @@ class GameApp {
     for (const button of [this.el.scoreButton, this.el.reachButton]) button.addEventListener('click', () => this.openMetric(button.dataset.metric));
     document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key === ',') { event.preventDefault(); this.openMenu(); } });
   }
-  bindCanvas() { const interrupt = () => interruptCameraPolicy(this.cameraPolicy, performance.now());
-    this.input = bindGlobeInput(this.canvas, this.camera, { canInteract: () => true,
-      onTap: (x, y) => this.tapGlobe(x, y), onInterrupt: interrupt, onInteractionStart: interrupt,
-      onInteractionEnd: () => interruptCameraPolicy(this.cameraPolicy, performance.now()) }); }
+  bindCanvas() { this.input = bindGlobeInput(this.canvas, this.camera, { canInteract: () => true,
+    onTap: (x, y) => this.tapGlobe(x, y) }); }
   bindLifecycle() {
     const resize = () => this.resize(true);
     if (typeof ResizeObserver === 'function') { this.resizeObserver = new ResizeObserver(resize); this.resizeObserver.observe(this.canvas); }
@@ -176,7 +173,7 @@ class GameApp {
       ? 'Current world unchanged; Evolution upgrades begin next world.' : 'Shape what every future world inherits.';
   }
   selectCell(node, context = null) {
-    this.closeActiveOverlay(); this.selectedNode = node; interruptCameraPolicy(this.cameraPolicy, performance.now(), 60_000);
+    this.closeActiveOverlay(); this.selectedNode = node;
     const events = this.currentHistory.filter((event) => event.primaryCells.includes(node)); this.inspector.open({ node, world: this.fields, topo: this.topo, dynamic: null, events, context });
     this.overlay = 'inspector'; this.surfaces.open('inspector', this.inspector.panel, document.getElementById('inspector-heading')); this.resize(true);
     if (this.scene === 'world' && (this.phase === 'running' || this.phase === 'result')) this.requestInspection();
@@ -184,7 +181,7 @@ class GameApp {
   requestInspection() { if (this.selectedNode == null || !this.worldIdentity) return; this.driver.message({ t: 'inspect-cell',
     requestId: ++this.requestId, requestGeneration: this.requestGeneration, node: this.selectedNode }); this.lastInspect = performance.now(); }
   closeInspector() { this.inspector.close(); this.surfaces.close('inspector'); if (this.overlay === 'inspector') this.overlay = null;
-    this.selectedNode = null; this.resize(true); interruptCameraPolicy(this.cameraPolicy, performance.now()); }
+    this.selectedNode = null; this.resize(true); }
   requestWorldReplacement(reason, expected = null, attemptOptions = null) { return requestWorldReplacement(this, reason, expected, attemptOptions); }
   startRun(reason = null, attemptOptions = null) { return startRun(this, reason, attemptOptions); }
   message(message) { if (!sameWorldIdentity(message, this.worldIdentity)) return false;
@@ -236,7 +233,9 @@ class GameApp {
   openNewWorld() { if (this.phase !== 'running' || this.surfaces.toggle('new-world')) return; this.openFull('new-world');
     this.pause.set('new-world', true); this.newWorld.open(this.snapshot); this.activateSurface('new-world', this.newWorld.surface, 'new-world-heading'); }
   confirmNewWorld() { return this.requestWorldReplacement('confirmed-new-world', this.worldIdentity); }
-  openFull(name) { this.closeActiveOverlay(); this.overlay = name; this.pause.set('panel', this.phase === 'running' && this.settings.pauseOnPanels); }
+  openFull(name) { this.closeActiveOverlay(); this.overlay = name;
+    // Informational surfaces never stop world authority; destructive confirmation owns its own lease.
+    this.pause.set('panel', false); }
   activateSurface(name, element, heading) { this.surfaces.open(name, element, document.getElementById(heading), [], { dismissOnBlank: true }); this.resize(true); }
   panelClosed(name) { if (this.overlay === name) this.closeActiveOverlay(); }
   closeActiveOverlay(options = {}) { const name = this.overlay; if (!name) return;
@@ -254,15 +253,12 @@ class GameApp {
     const durableSpeed = isStandardSpeed(requestedSpeed) ? requestedSpeed : before.speed;
     this.settings = validateSettings({ ...value, speed: durableSpeed }); if (persist) saveSettings(this.settings); applySettingsToDocument(this.settings);
     if (requestedSpeed !== this.speed) { this.speed = requestedSpeed; this.el.speed.value = String(requestedSpeed); this.driver.setSpeed(requestedSpeed); }
-    if (this.overlay && this.settings.pauseOnPanels !== before.pauseOnPanels) this.pause.set('panel', this.phase === 'running' && this.settings.pauseOnPanels);
     if (this.phase === 'result' && this.settings.autoContinue !== before.autoContinue && !this.settings.autoContinue) {
       cancelContinuation(this.continuation, 'setting-disabled'); this.updateContinuation(); }
-    this.resize(true); interruptCameraPolicy(this.cameraPolicy, performance.now()); }
+    this.resize(true); }
   settingsAction(action, value) { try {
     if (action === 'history') this.openHistory(this.scene === 'world' ? 'current' : 'past');
-    else if (action === 'result') this.openResult();
-    else if (action === 'new-world') this.openNewWorld(); else if (action.startsWith('scene-')) this.selectScene(action.slice(6));
-    else if (action === 'camera-reset') { Object.assign(this.camera, createCamera()); this.selectedNode = null; }
+    else if (action === 'new-world') this.openNewWorld();
     else if (action === 'export') downloadData(this.meta, this.archive, this.settings);
     else if (action === 'clear-history' && confirm('Clear all preserved History?')) { const trophies = reconcileBeforeHistoryClear(this); this.archive = clearHistory(); saveHistory(this.archive); this.historyPlayback.clear(); ui.announce(this.el, `History was cleared.${trophies.length ? ` ${trophies.length} proven trophies were preserved.` : ''}`); }
     else if (action === 'reset-progress' && confirm('Reset Echoes, Evolution levels, Imprints, and Trophies? This cannot be undone.')) { this.meta = defaultMeta(); this.resultKeys = new Set(); saveMeta(this.meta); this.trophyNotifications.replace(this.meta); ui.announce(this.el, 'Progression was reset.'); }
@@ -278,7 +274,21 @@ class GameApp {
     historyRequests: this.historyPlayback.pendingRequests }); }
   cancelAutoNext(reason) { if (this.phase !== 'result') return false;
     const cancelled = cancelContinuation(this.continuation, reason); if (cancelled) this.updateContinuation(); return cancelled; }
-  updateContinuation() { const label = continuationLabel(this.continuation); if (label === this.countdownLabel) return; this.countdownLabel = label; this.el.countdown.textContent = label; }
+  updateContinuation() {
+    const status = this.continuation.status; const previous = this.continuationStatus;
+    if (status !== previous) {
+      this.continuationStatus = status;
+      if (!document.hidden) {
+        const notice = status === 'counting'
+          ? previous === 'paused-hidden' ? 'Automatic next World resumed.' : 'Next World will begin automatically unless you interact.'
+          : status === 'cancelled' ? 'Automatic next World cancelled for this Result.'
+            : status === 'firing' ? 'Starting the next World.' : '';
+        if (notice) ui.announce(this.el, notice);
+      }
+    }
+    const label = continuationLabel(this.continuation); if (label === this.countdownLabel) return;
+    this.countdownLabel = label; this.el.countdown.textContent = label;
+  }
   resize(preserveZoom = true) { const cls = this.canvas.clientWidth < 600 ? 'compact' : this.canvas.clientWidth < 900 ? 'tablet' : 'wide'; const layout = safeLayout(this.canvas.clientWidth, this.canvas.clientHeight, this.scene); preserveZoom &&= cls === this.layoutClass; this.layoutClass = cls;
     applySafeLayout(this.camera, layout, preserveZoom); this.renderer?.resize(this.canvas.clientWidth, this.canvas.clientHeight, qualityDpr(this.settings, this.caps)); }
   frame(now) { this.frameAudit.frames++;
@@ -288,9 +298,6 @@ class GameApp {
   frameStep(now) { const dt = Math.max(0, now - this.last); this.last = now;
     this.timeDial.frame(now, { running: this.phase === 'running', paused: this.pause.paused, speed: this.speed, reduced: this.settings.motion === 'reduced' }); this.driver.frame(dt, now);
     if (this.scene === 'home') this.showcase?.update(now, this.settings.motion === 'reduced', document.hidden);
-    const active = this.input?.isActive(); if (!active && this.selectedNode == null && this.settings.cameraInertia) applyInertia(this.camera);
-    applyAutoRotation(this.camera, this.settings, this.cameraPolicy, { active, selected: this.selectedNode != null,
-      overlay: Boolean(this.overlay), hidden: document.hidden }, now, dt);
     if (this.phase === 'result' && advanceContinuation(this.continuation, now)) {
       const expected = this.lastResultIdentity; const valid = sameWorldIdentity(expected, this.worldIdentity)
         && this.continuation.resultKey === expected?.resultTransactionKey && this.resultKeys.has(this.continuation.resultKey);

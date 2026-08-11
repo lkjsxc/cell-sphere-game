@@ -9,7 +9,7 @@ export function initializeStorageNamespace(storage = browserStorage()) {
   return initializeNamespacedDocuments([
     { kind: 'settings', validate: validateSettings, fallback: defaultSettings },
     { kind: 'meta', validate: validateMeta, fallback: defaultMeta },
-    { kind: 'history', validate: (value) => validateHistory(value, 32), fallback: defaultHistory },
+    { kind: 'history', validate: validateHistory, fallback: defaultHistory },
   ], storage);
 }
 
@@ -22,7 +22,7 @@ export function saveImportedNamespace(data, storage = browserStorage()) {
   const writes = [
     () => saveNamespacedDocument('meta', data.meta, validateMeta, storage),
     () => saveNamespacedDocument('settings', data.settings, validateSettings, storage),
-    () => saveNamespacedDocument('history', data.history, (value) => validateHistory(value, 32), storage),
+    () => saveNamespacedDocument('history', data.history, validateHistory, storage),
   ];
   if (writes.every((write) => write())) return Object.freeze({ ok: true, status: 'committed' });
   return Object.freeze({ ok: false, status: restore(previous, storage) ? 'rolled-back' : 'rollback-incomplete' });

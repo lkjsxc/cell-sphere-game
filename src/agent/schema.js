@@ -24,7 +24,7 @@ export function defaultAgentSave(seed = 0) {
 export function validateAgentSave(raw) {
   if (!raw || typeof raw !== 'object' || raw.schema !== AGENT_SAVE_SCHEMA) return defaultAgentSave();
   return canonical({ campaignSeed: validSeed(raw.campaignSeed) ? raw.campaignSeed : 0,
-    meta: validateMeta(raw.meta), history: validateHistory(raw.history, 32),
+    meta: validateMeta(raw.meta), history: validateHistory(raw.history),
     goal: GOALS.has(raw.goal) ? raw.goal : 'balanced', lastResult: validateLastResult(raw.lastResult) });
 }
 
@@ -39,7 +39,7 @@ export function hashAgentSave(value) {
 }
 
 function canonical(value) {
-  const meta = validateMeta(value?.meta); const history = validateHistory(value?.history, 32);
+  const meta = validateMeta(value?.meta); const history = validateHistory(value?.history);
   return Object.freeze({ schema: AGENT_SAVE_SCHEMA,
     campaignSeed:validSeed(value?.campaignSeed)?value.campaignSeed:0,
     worldOrdinal:incrementProgressionInteger(maxProgressionInteger(meta.runs,meta.worldSeedIndex)), goal: GOALS.has(value?.goal) ? value.goal : 'balanced',

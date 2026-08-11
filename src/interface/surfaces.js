@@ -46,8 +46,9 @@ export function show(el, scene) {
 }
 
 export function updateHud(el, snap) {
-  const metrics = snap.metrics ?? {};
-  el.score.textContent = number(metrics.score ?? 0);
+  const metrics = snap.metrics ?? {}; const exactScore = normalizeProgressionInteger(metrics.score ?? 0, '0');
+  el.score.textContent = number(exactScore);
+  el.scoreButton.setAttribute('aria-label', `SCORE ${exactScore}; activate to view score details`);
   const currentEnvironmentLevel = snap.currentEnvironmentLevel ?? '0';
   el.environmentLevel.textContent = number(currentEnvironmentLevel);
   const nextTick = snap.nextEnvironmentLevelTick;
@@ -86,9 +87,10 @@ export function toast(el, text, quiet = false) {
 }
 
 export function showResult(el, score, result) {
-  el.resultRank.textContent = result.campaignResolvedNow ? `FIRST CYCLE RESOLVED · +${number(score.echoes)} Echoes`
-    : `${score.rank.en.toUpperCase()} · +${number(score.echoes)} Echoes`;
-  el.resultScore.textContent = number(score.total);
+  const exactScore = normalizeProgressionInteger(score.total, '0'); const exactEchoes = normalizeProgressionInteger(score.echoes, '0');
+  el.resultRank.textContent = result.campaignResolvedNow ? `FIRST CYCLE RESOLVED · +${number(exactEchoes)} Echoes`
+    : `${score.rank.en.toUpperCase()} · +${number(exactEchoes)} Echoes`;
+  el.resultScore.textContent = number(exactScore); el.resultScore.setAttribute('aria-label', `SCORE ${exactScore}`);
   const peak = number(result.peakEnvironmentLevel ?? result.finalEnvironmentLevel ?? '0');
   const final = number(result.finalEnvironmentLevel ?? '0');
   const atPeakTicks = normalizeProgressionInteger(result.timeAtPeakTicks ?? result.environmentExposure?.timeAtPeakTicks, '0');
@@ -100,7 +102,8 @@ export function showResult(el, score, result) {
     ? `Powered ecology · ${powered} cells ever charged · ${Math.round(result.poweredCellSeconds ?? 0)} powered-cell seconds.`
     : 'Powered ecology · no authoritative whole-cell charge this world.';
   el.resultCause.textContent = CAUSE[result.cause] ?? 'The final living cell released its remaining energy.';
-  el.echoes.textContent = `${number(score.echoes)} Echoes entered permanent Evolution.`;
+  el.echoes.textContent = `${number(exactEchoes)} Echoes entered permanent Evolution.`;
+  el.echoes.setAttribute('aria-label', `${exactEchoes} Echoes entered permanent Evolution.`);
   el.resultImprint.textContent = result.imprint?.edges?.length ? 'Imprint preserved · strongest morphology retained.' : '';
   const names = (result.trophyIds ?? []).map((id) => getTrophy(id)?.nameEn).filter(Boolean);
   el.resultTrophies.textContent = names.length ? `New Trophies · ${names.join(' · ')}` : 'No new Trophy this world.';

@@ -51,7 +51,7 @@ export function metricProjection(kind, model = {}) {
 }
 function scoreProjection({ snapshot, result, score, history = [] }) {
   const final = Boolean(result && score); const projection = score ?? snapshot?.metrics?.scoreProjection;
-  const total = projection?.total ?? snapshot?.metrics?.score ?? '0'; const rank = projection?.rank ?? rankFor(total);
+  const total = canonical(projection?.total ?? snapshot?.metrics?.score ?? '0'); const rank = projection?.rank ?? rankFor(total);
   const next = projection?.nextRank ?? null;
   const milestones = history.filter((event) => event.key?.includes('milestone') || event.key?.startsWith('run.phase.')).slice(-MAX_MILESTONES);
   const direct = (projection?.breakdown ?? []).map((part) => ({
@@ -66,7 +66,7 @@ function scoreProjection({ snapshot, result, score, history = [] }) {
     { label: 'SCORE model', value: `v${projection?.modelVersion ?? result?.scoreModelVersion ?? 2}` },
     ...milestones.map((event) => ({ label: eventTitle(event), value: gameTime(event.tick) })),
   ];
-  return { eyebrow: final ? 'FINAL SCORE' : 'LIVE SCORE PROJECTION', heading: 'SCORE', primary: number(total),
+  return { eyebrow: final ? 'FINAL SCORE' : 'LIVE SCORE PROJECTION', heading: 'SCORE', primary: number(total), primaryAccessible: `SCORE ${total}`,
     summary: final ? 'The final deterministic point model for this world.' : 'A live projection from the same deterministic model used at extinction.',
     counts: [{ label: 'Rank', value: rank.en }, { label: 'Next rank', value: next?.en ?? 'Highest' },
       { label: 'Run Quality', value: `${Math.round((projection?.quality ?? 0) * 100)}%` }],

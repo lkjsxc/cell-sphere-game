@@ -73,7 +73,7 @@ test('owned conditional Evolution changes only its declared runtime condition', 
 test('semantic History remains bounded, serializable, and corruption-safe', () => {
   const result = runFull({ seed: 443322 }); const score = scoreResult(result); const events = normalizeHistoryEvents(result.history);
   assert.ok(events.length > 5 && events.length <= 80); let archive = defaultHistory();
-  for (let run = 1; run <= 35; run++) archive = appendWorld(archive, { ...result, seed: run }, score, run, 24);
+  for (let run = 1; run <= 35; run++) archive = appendWorld(archive, { ...result, seed: run }, score, run);
   assert.equal(archive.worlds.length, 24); assert.ok(serializeHistory(archive).length < 700000);
   globalThis.localStorage = { getItem: () => '{broken', setItem: () => {} };
   try { assert.deepEqual(loadHistory(), defaultHistory());

@@ -3,12 +3,11 @@ import { rotate, zoom } from '../rendering/camera.js';
 
 export function bindGlobeInput(canvas, camera, options) {
   const pointers = new Map(); let pinchDistance = 0; let pinched = false;
-  const interrupt = () => { camera.velX = 0; camera.velY = 0; options.onInterrupt?.(); };
 
   const down = (event) => {
     if (!options.canInteract() || !isPrimaryPointer(event)) return;
-    if (!pointers.size) { pinched = false; options.onInteractionStart?.(); }
-    interrupt(); pointers.set(event.pointerId, { x: event.clientX, y: event.clientY,
+    if (!pointers.size) pinched = false;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY,
       startX: event.clientX, startY: event.clientY, travel: 0, at: performance.now() });
     canvas.setPointerCapture(event.pointerId);
     if (pointers.size === 2) { pinched = true; pinchDistance = distance([...pointers.values()]); }
@@ -30,8 +29,7 @@ export function bindGlobeInput(canvas, camera, options) {
     const pointer = pointers.get(event.pointerId); const invalidTap = pinched || pointers.size > 1;
     pointers.delete(event.pointerId);
     if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
-    const moved = pointer?.travel ?? Infinity;
-    if (!pointers.size) { pinchDistance = 0; options.onInteractionEnd?.({ dragged: invalidTap || moved > 12 }); }
+    if (!pointers.size) pinchDistance = 0;
     if (!pointer || !options.canInteract()) return;
     if (isTapGesture(pointer, performance.now() - pointer.at, invalidTap)) options.onTap(event.clientX, event.clientY);
   };
@@ -39,11 +37,10 @@ export function bindGlobeInput(canvas, camera, options) {
   const cancel = (event) => {
     pointers.delete(event.pointerId); pinched = true; pinchDistance = 0;
     if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
-    if (!pointers.size) options.onInteractionEnd?.();
   };
   const wheel = (event) => {
     if (!options.canInteract()) return;
-    event.preventDefault(); interrupt(); zoom(camera, event.deltaY > 0 ? 1.08 : 0.93); options.onInteractionEnd?.();
+    event.preventDefault(); zoom(camera, event.deltaY > 0 ? 1.08 : 0.93);
   };
   canvas.addEventListener('pointerdown', down); canvas.addEventListener('pointermove', move);
   canvas.addEventListener('pointerup', finish); canvas.addEventListener('pointercancel', cancel);

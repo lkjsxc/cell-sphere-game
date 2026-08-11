@@ -23,10 +23,17 @@ Resources are local, finite, conservation-audited, and communicated through
 terrain and cell condition rather than a permanent global meter. Whole World
 cells are the smallest geography, ecology, transformation, and electricity unit.
 
-The normal World HUD is SCORE, REACH, Environment Level, then Result. Activating
-Environment Level opens a current-state detail with level timing and chronic
-pressure; it never opens History. History is the only durable temporal surface;
+The normal World HUD is SCORE, REACH, Environment Level, then Result. Its metric
+slots stay on stable grid tracks as values change. Activating Environment Level
+opens a current-state detail with level timing and chronic pressure; it never
+opens History. Result keeps its continuation status and Next World action outside
+its scrolling evidence body. History is the only durable temporal surface;
 notifications are bounded, deduplicated, accessible, and presentation-only.
+
+The Menu is deliberately small: live-world History or destructive New World,
+auto continuation, quality, motion, contrast, and a collapsed local data/reset
+area. World speed belongs to its direct in-world control; adaptive History
+retention is internal rather than a player-facing preference.
 
 ## Progression
 

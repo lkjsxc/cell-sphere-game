@@ -15,7 +15,7 @@ function identity(value) { return createWorldIdentity({ environmentModelVersion:
 function node() { return { textContent: '', hidden: false, disabled: false, dataset: {}, classList: { toggle() {}, add() {}, remove() {} },
   setAttribute() {}, removeAttribute() {}, replaceChildren() {} }; }
 function elements() { const value = {}; for (const name of ['title','run','memory','trophies','countdown','live',
-  'resultRank','resultScore','resultEnvironment','resultPower','resultCause','echoes','resultTrophies','resultImprint','resultFirstCycle','breakdown','score',
+  'resultRank','resultScore','resultEnvironment','resultPower','resultCause','echoes','resultTrophies','resultImprint','resultFirstCycle','breakdown','score','scoreButton',
   'reach','trace','environmentLevel','environmentButton','resultControl','resultNext','resultEvolution','resultRetry','pause','speed']) value[name] = node();
   return value; }
 function harness() {
@@ -23,7 +23,7 @@ function harness() {
   const renderer = { backend: 'test', lastFrameAudit: null, bindWorldSession() { hit('bind'); }, resetDynamicState() { hit('renderer-reset'); },
     render(scene) { hit('render'); const snap = scene.snapshot; this.lastFrameAudit = { lifeCells: snap.alive.reduce((a,b)=>a+b,0),
       highlights: scene.highlightedCells.length }; return true; } };
-  const app={phase:'idle',scene:'home',meta:defaultMeta(),archive:defaultHistory(),settings:{historyRetention:24},speed:32,
+  const app={phase:'idle',scene:'home',meta:defaultMeta(),archive:defaultHistory(),settings:{},speed:32,
     el: elements(), topo4: { nodeCount: 32 }, worldIdentity: null, retiredWorldIdentity: null, activeRunId: 0,
     worldSessionSequence: 0, presentationGeneration: 0, worldReplacement: createWorldReplacementState(),
     requestId: 0, requestGeneration: 0, continuation: createContinuation(), countdownLabel: '', renderer,

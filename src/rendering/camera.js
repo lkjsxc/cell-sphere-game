@@ -27,8 +27,6 @@ export function createCamera() {
     dist: 4.1,
     offsetX: 0,
     offsetY: 0,
-    velX: 0,
-    velY: 0,
   };
 }
 
@@ -48,7 +46,6 @@ export function focusCamera(cam, direction) {
   cam.direction = target;
   cam.right = norm3(right);
   cam.up = norm3(cross3(target, cam.right));
-  cam.velX = 0; cam.velY = 0;
 }
 
 /** Camera eye position on the orbit shell. @param {Camera} cam @returns {number[]} */
@@ -76,28 +73,14 @@ export function viewProjection(cam, aspect) {
  * @param {Camera} cam
  * @param {number} dragX angular horizontal pointer travel
  * @param {number} dragY angular vertical pointer travel
- * @param {boolean} [rememberVelocity=true]
  */
-export function rotate(cam, dragX, dragY, rememberVelocity = true) {
+export function rotate(cam, dragX, dragY) {
   applyDrag(cam, dragX, dragY);
-  if (rememberVelocity) {
-    cam.velX = dragX;
-    cam.velY = dragY;
-  }
 }
 
 /** Zoom by wheel/pinch factor. */
 export function zoom(cam, factor) {
   cam.dist = Math.max(MIN_DIST, Math.min(MAX_DIST, cam.dist * factor));
-}
-
-/** Inertia step; call per frame when enabled. Returns true if moving. */
-export function applyInertia(cam) {
-  if (Math.abs(cam.velX) < 1e-4 && Math.abs(cam.velY) < 1e-4) return false;
-  applyDrag(cam, cam.velX, cam.velY);
-  cam.velX *= 0.92;
-  cam.velY *= 0.92;
-  return true;
 }
 
 function applyDrag(cam, dragX, dragY) {
