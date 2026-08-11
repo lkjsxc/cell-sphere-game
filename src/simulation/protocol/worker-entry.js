@@ -55,11 +55,6 @@ self.onmessage = (event) => {
       case 'abort': if (!controller.abort()) post({ t: 'abort-rejected', status: controller.state.status }); break;
       case 'inspect-cell': post({ t: 'cell-inspection', requestId: message.requestId,
         cell: controller.inspectCell(message.node) }); break;
-      case 'history-preview': {
-        const preview = controller.historyPreview(message.tick); const cells = preview.cells.slice().buffer;
-        post({ t: 'history-preview', requestId: message.requestId, tick: preview.tick,
-          entropyQ: preview.entropyQ, flags: preview.flags, aliveCount: preview.aliveCount, cells }, [cells]); break;
-      }
       case 'history-buffer': {
         const buffer = controller.historyBuffer();
         post({ t: 'history-buffer', requestId: message.requestId, buffer }, [buffer]); break;

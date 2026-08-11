@@ -25,8 +25,10 @@ It does not schedule disasters, crises, telegraphs, or event footprints.
 
 Finite local resources are authoritative. Worlds end through causal ecological
 failure; external agent or audit budgets are incomplete and reward-free.
-History is the sole durable temporal surface, while bounded notifications remain
-presentation-only.
+History is the sole durable temporal surface. Its approximate device-local
+checkpoints preserve the renderer's life, resource, transformation, and
+Luminous state; loading or unavailable visual History remains honestly
+semantic-only. Bounded notifications remain presentation-only.
 
 ## Deterministic contracts
 
@@ -39,8 +41,9 @@ presentation-only.
 - WebGL2 uses four world draw calls; Canvas 2D communicates the same cell
   states as a semantic fallback.
 - Current-only persistence intentionally starts fresh for old or mismatched
-  documents. Meta schema is 14, History schema is 9, result/replay schema is 8,
-  and agent-save schema is 5.
+  documents. Meta schema is 14, semantic History schema is 9, result/replay
+  schema is 8, agent-save schema is 5, and visual History is a reset-only v2
+  device-local cache.
 
 ## Run locally
 
@@ -69,5 +72,5 @@ npm run test:browser:canvas
 npm run test:browser:fallback
 ```
 
-Current product-simplification status is recorded in
-[`docs/work/product-simplification-v1/status.md`](docs/work/product-simplification-v1/status.md).
+Current ecology-experience status is recorded in
+[`docs/work/ecology-experience-v2/status.md`](docs/work/ecology-experience-v2/status.md).

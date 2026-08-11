@@ -5,6 +5,7 @@
 - Starting revision: `9815c6daf35c62aef4e913cc33cb095fea353b2a`
 - Branch: `main`
 - Relevant dirty file on arrival: `AGENTS.md` (the user-supplied replacement contract; preserve and include with this initiative).
+- Current Phase 3 dirty files: the History codec/recorder/preview, History surface/playback, visual-cache namespace, Worker route, title showcase, browser/unit/integration tests, and current documentation; no unrelated user changes are present.
 - Host: Linux x64, Node `v22.22.3`, 20 CPUs; Chrome/WebGL2 and forced Canvas 2D are available through the trusted file-CDP harness.
 
 ## Confirmed root causes
@@ -12,7 +13,9 @@
 - `ENV LEVEL` was wired to `openEnvironmentHistory()` and exposed History semantics in markup and assistive text; that retired route is now deleted.
 - The current snapshot already carries the schedule and pressure-summary fields needed for a dedicated current Environment detail.
 - HUD metric slots were content-sized flex items; Result continuation text sat in the scrollable Result body.
-- History visual playback can label an unavailable historical selection while the renderer falls through to live dynamic buffers; its v1 codec omits resource, transformation, and charge channels.
+- History visual playback could label an unavailable historical selection while the renderer fell through to live dynamic buffers; its v1 codec omitted resource, transformation, charge, and Luminous-development channels. The replacement must keep past-world loading neutral rather than falling through to current authority.
+- A Worker can be retired immediately after extinction, so requesting its visual buffer only after Result handling could lose terminal visual History. Fallback delivery is synchronous, so initial current History must establish Live state before its buffer callback arrives. Stale current-world buffer replies also need a selection load token.
+- `RunController` accepts the complete unsigned 32-bit seed word while old History/cache validators only accepted player-code-sized 30-bit seeds; terminal full-word worlds therefore needed an exact visual/semantic persistence boundary.
 - Per-cell radial displacement of duplicated dual-cell boundary vertices is the likely sphere-crack cause; Canvas independently fills adjacent polygons.
 
 ## Decisions
@@ -24,6 +27,9 @@
 - Keep the Result countdown and Next World action in its non-scrolling footer; use one grid footer rather than a second scroll region.
 - Replace retired Menu settings with schema 6 instead of migrating them. Retain the existing direct speed preference internally, but remove its duplicate Menu control. Bound semantic History internally with `HISTORY_WORLD_RETENTION = 24` plus the existing byte cap.
 - Remove camera-policy and inertial/idle-rotation code instead of leaving dormant settings or handlers.
+- Replace the visual codec wholesale with current-only `INHV` v2: three bounded bytes per cell for life, resource, and worldmaking/charge channels plus frame-level Luminous development and atmospheric wear. Transform state is sufficient for the current renderer's effective-biome mapping; no v1 decoder is retained.
+- Keep History controls outside the one scrolling timeline body. During visual loading/unavailability, defer visual seeking and explicitly present live or semantic-only state; only a decoded matching frame may atomically set the historical label and renderer snapshot.
+- Carry the completed visual bundle in the terminal authority outcome and save it directly before presentation teardown; current History requests retain explicit identity and selection-load guards. The visual codec/cache/archive retain the exact unsigned 32-bit authority seed, while player-entered seed codes remain 30-bit.
 
 ## Phase 0 baseline
 
@@ -72,10 +78,29 @@
 - `npm run audit:trophies` and `npm run terminal:soak` — rerun after the retention API cleanup; passed with 24 maximum History worlds and 10,000 rejected duplicate transactions.
 - `npm run check:structure`, `npm run check:links`, and `git diff --check` — passed; structure reports only pre-existing size/count warnings.
 
+## Completed Phase 3 — truthful visual History
+
+- Replaced the v1 cell-only codec with reset-only `INHV` v2. Each bounded checkpoint carries life/biomass/stress, resource condition/richness, transformation/charge, Luminous development, and atmospheric wear; static seed geography is guarded by an explicit visual-world version.
+- Added deterministic adaptive thinning that always preserves first/final frames and samples event-heavy visual checkpoints instead of failing when major events exceed the reduced v2 frame budget; the live recorder applies the same ceiling in memory. Title playback now uses 30 complete frames within the same 256 KiB bundle bound.
+- Removed the unused Worker/fallback `history-preview` route. The explicit Worker protocol is now v10: it carries the terminal bounded visual bundle with the extinction outcome before a retiring Worker can be stopped, and `finishRun()` saves that supplied buffer directly before an immediate replacement can retire presentation. The full bounded bundle remains the only visual preview authority.
+- Guarded current buffer replies by their selection load token and established initial Live state before requesting a current bundle, so a synchronous fallback cannot leave Live History on a historical frame. Added Worker/fallback terminal-bundle parity and trusted fallback opening coverage.
+- Made the visual codec, device-local cache, and semantic archive preserve the exact unsigned 32-bit authority seed; a full-word seed now has a direct regression test.
+- Moved device-local visual History to a new current-only cache namespace and bounded it by both newest-ten records and 2.5 MiB aggregate bytes. v1 records are rejected rather than migrated.
+- Rebuilt playback state so only a matching decoded checkpoint can activate `historyPlaybackActive`; a past visual load renders neutral geography, while current loading remains live and semantic event selection never claims a historical globe. Live/close atomically restore authoritative presentation.
+- Rebuilt History layout around stable header/playback controls and one scroll-owning timeline body. Loading and semantic-only notes are explicit; range/previous/next defer visual seek until data is renderable; selected events use text, border, contrast, and semantic current state.
+
+## Verification after Phase 3
+
+- Baseline: `node --test tests/integration/history-codec.test.js tests/unit/history-surface.test.js` and `npm run showcase:check` passed against v1 before replacement.
+- `npm run test` — passed, 185/185 unit and 76/76 integration tests.
+- `npm run showcase:generate` and `npm run showcase:check` — passed with the checked-in 30-frame v2 title bundle.
+- `npm run test:browser:file`, `npm run test:browser:fallback`, and `npm run test:browser:canvas` — passed. Trusted Worker/fallback evidence verifies loading defers visual controls without a false checkpoint label, a decoded checkpoint has complete resource/transformation/charge/development arrays, terminal bundles are handed directly to History save, and Live restores authority.
+- `npm run check:links`, `npm run check:structure`, and `git diff --check` — passed; structure reports only existing size/count warnings.
+
 ## Evidence not yet obtained
 
-- Historical visual-truth, uniform-shell seam, Luminous luminance, deep cohort, physical-device, CI, and deployment evidence.
+- Uniform-shell seam, Luminous luminance, deep cohort, physical-device, CI, and deployment evidence.
 
 ## Next coherent phase
 
-Implement Phase 3: rebuild History interaction and visual truth, including truthful unavailable/loading states and resource, transformation, and charge checkpoint channels.
+Implement Phase 4: restore a continuous sphere shell in WebGL2 and Canvas 2D, with a controlled uniform-material center/limb browser fixture.

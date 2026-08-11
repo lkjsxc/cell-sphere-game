@@ -51,7 +51,7 @@ class GameApp {
     this.currentHistory = []; this.lastResult = null; this.lastScore = null; this.lastResultIdentity = null; this.requestId = 0; this.requestGeneration = 0;
     this.runSeed = null; this.activeRunId = 0; this.worldIdentity = null; this.retiredWorldIdentity = null;
     this.worldSessionSequence = 0; this.presentationGeneration = 0; this.worldReplacement = createWorldReplacementState();
-    this.visualSeed = null; this.historySnapshot = null; this.historyHighlights = [];
+    this.visualSeed = null; this.historySnapshot = null; this.historyHighlights = []; this.historyPlaybackActive = false;
     this.last = performance.now(); this.lastRender = 0; this.lastInspect = 0; this.layoutClass = null; this.effectivePaused = false;
     this.presentationAudit = { blankFrames: 0, lastBlank: null }; this.frameAudit = { frames: 0, scheduled: 0, errors: 0, lastError: null };
     this.driver = createRunDriver(caps, (message) => this.message(message), { developerMode }); this.pause = createPauseControl((paused, reasons) => this.applyPause(paused, reasons));
@@ -204,7 +204,7 @@ class GameApp {
   applyPause(paused, reasons = this.pause.values()) { if (paused !== this.effectivePaused) { this.effectivePaused = paused; this.driver.setPaused(paused); } this.timeDial.reset(performance.now());
     this.el.pause.setAttribute('aria-pressed', String(reasons.has('manual'))); this.el.pause.classList.toggle('is-paused', paused);
     this.el.pause.dataset.action = paused && reasons.size === 1 && reasons.has('manual') ? 'recommended' : 'normal'; this.el.pause.setAttribute('aria-label', pauseLabel(reasons)); }
-  finishRun(result) { finishRun(this, result); }
+  finishRun(result, visualHistoryBuffer = null) { finishRun(this, result, visualHistoryBuffer); }
   finishAbandoned(summary) { finishAbandoned(this, summary); }
   failRun(message) { this.pause.set('worker-failed', true); ui.announce(this.el, `${message} Start a new world to continue.`); }
   enterEvolution(){return enterEvolution(this)}
@@ -306,9 +306,11 @@ class GameApp {
     }
     if (this.phase === 'result') this.updateContinuation();
     if (this.inspector?.node != null && this.scene === 'world' && ['running', 'result'].includes(this.phase) && now - this.lastInspect > 333) this.requestInspection();
-    const snap = this.historySnapshot ?? (this.scene === 'home' ? this.showcase?.snapshot : this.scene === 'evolution' ? this.memorySnapshot : this.scene === 'trophies' ? this.trophySnapshot : this.snapshot);
+    const liveSnapshot = this.scene === 'home' ? this.showcase?.snapshot : this.scene === 'evolution' ? this.memorySnapshot : this.scene === 'trophies' ? this.trophySnapshot : this.snapshot;
+    const snap = this.historyPlaybackActive ? this.historySnapshot : liveSnapshot;
+    const renderIdentity = this.scene === 'world' && (!this.historyPlaybackActive || snap?.worldSessionId != null) ? this.worldIdentity : null;
     const cadence = this.scene === 'world' ? renderIntervalForSpeed(this.speed) : 0;
-    if (!cadence || now - this.lastRender >= cadence) { this.renderer.render({ snapshot: snap ?? null, worldIdentity: this.scene === 'world' ? this.worldIdentity : null,
+    if (!cadence || now - this.lastRender >= cadence) { this.renderer.render({ snapshot: snap ?? null, worldIdentity: renderIdentity,
       camera: this.camera, selectedNode: this.selectedNode,
       highlightedCells: this.historyHighlights, time: now / 1000, pulse: this.settings.motion !== 'reduced' }); this.lastRender = now; }
   }

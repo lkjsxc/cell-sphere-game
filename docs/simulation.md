@@ -4,7 +4,7 @@
 
 A production world is determined by immutable Level-0 start facts: seed, world
 ordinal, compiled Evolution/start configuration, and schedule/profile versions.
-Worker and fallback execute the same run-protocol-v8 configuration and the same
+Worker and fallback execute the same run-protocol-v10 configuration and the same
 authoritative ticks. Camera, renderer, UI, frame cadence, visibility, and speed
 never change a tick or SCORE.
 

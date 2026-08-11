@@ -83,7 +83,7 @@ export function retireWorldPresentation(app) {
   app.historyPlayback.retire(); app.surfaces.reset?.(); app.inspector.close(); app.historyUi.reset?.(); app.metricUi?.reset?.();
   app.newWorld.close(); app.settingsUi.close(); app.memoryUi.closeNode(); app.trophyUi.close();
   app.overlay = null; app.selectedNode = null; app.currentHistory = [];
-  app.lastResult = null; app.lastScore = null; app.lastResultIdentity = null; app.historySnapshot = null; app.historyHighlights = [];
+  app.lastResult = null; app.lastScore = null; app.lastResultIdentity = null; app.historySnapshot = null; app.historyHighlights = []; app.historyPlaybackActive = false;
   app.snapshot = null; app.driver.installSnapshot(null); app.worldFields = null; app.fields = null;
   app.lastInspect = 0; app.lastRender = 0; app.timeDial.reset(performance.now()); ui.resetWorldPresentation(app.el, null);
   return retired;
@@ -117,7 +117,7 @@ export function recoverAuthorityLossDuringReplacement(app,message){
   saveHistory(app.archive);ui.announce(app.el,'The retiring world authority was lost; its reward-free abandonment was recorded.');
   return performWorldReplacement(app);
 }
-export function finishRun(app,result){
+export function finishRun(app,result,visualHistoryBuffer=null){
   if(!sameWorldIdentity(result,app.worldIdentity))return false;
   const identified={...result,resultTransactionKey:app.worldIdentity.resultTransactionKey};
   const transaction=applyRunResult(app.meta,app.archive,identified,app.resultKeys); if (!transaction.applied) return false;
@@ -130,7 +130,7 @@ export function finishRun(app,result){
   if (!saveRunTransaction(app.meta,app.archive))
     ui.announce(app.el, 'Progress is temporary because browser storage is unavailable.');
   const record = app.archive.worlds.at(-1);
-  app.historyPlayback.save(record && { id: record.id, seed: record.seed, completedAt: app.meta.runs });
+  app.historyPlayback.save(record && { id: record.id, seed: record.seed, completedAt: app.meta.runs }, visualHistoryBuffer);
   ui.showResult(app.el,transaction.score,{...result,trophyIds:transaction.trophyIds,campaignResolvedNow:transaction.meta.runs==='5'});
   if (app.worldReplacement.status === 'awaiting-authority') return performWorldReplacement(app);
   app.selectScene('world');

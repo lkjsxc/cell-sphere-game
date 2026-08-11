@@ -42,7 +42,10 @@ both remain reachable on compact viewports. The countdown is visual text, not a
 one-second live-region announcement; state changes announce once. The persistent
 selector and metric controls remain the primary navigation for SCORE, REACH,
 Environment Level, Evolution, and Trophies; Result provides its own terminal-world
-continuation and review routes.
+continuation and review routes. History keeps its World selector and playback
+controls outside its sole scroll owner. While visual checkpoints load or are
+unavailable, its disabled range/step controls and explicit semantic-only copy
+prevent an assistive user from being told the live globe is historical.
 
 ## Notifications
 

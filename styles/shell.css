@@ -89,7 +89,9 @@
   touch-action: pan-y;
 }
 .context-result { grid-template-rows: auto minmax(0, 1fr) auto; }
-.context-history { grid-template-rows: auto minmax(0, 1fr); }
+.context-history { grid-template-rows: auto auto minmax(0, 1fr); }
+.context-history .history-controls { min-width: 0; padding: var(--sp-2) 2px; border-bottom: 1px solid var(--border-faint); }
+.context-history .history-body { min-height: 0; padding-top: var(--sp-2); }
 .skill-detail, .context-confirm { display: grid; grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) max-content; overflow: hidden; }
 .skill-detail > header, .skill-detail > .surface-actions { min-width: 0; }

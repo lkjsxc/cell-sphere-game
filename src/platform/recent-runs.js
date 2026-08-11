@@ -1,9 +1,10 @@
 /** Current IndexedDB visual History cache. */
-import { decodeVisualHistory } from '../history/codec.js';
+import { decodeVisualHistory, MAX_BYTES } from '../history/codec.js';
 import { RECENT_RUNS_DB } from '../core/identity.js';
 const STORE = 'runs';
 const VERSION = 1;
 const RETAIN = 10;
+const MAX_TOTAL_BYTES = MAX_BYTES * RETAIN;
 
 export function createRecentRuns(factory = browserIndexedDb()) {
   let failed = !factory; let dbPromise = null;
@@ -40,7 +41,7 @@ export function validateRecentRun(raw) { return validateRecord(raw); }
 
 function validateRecord(raw) {
   if (!raw || typeof raw !== 'object' || typeof raw.id !== 'string' || !/^[a-zA-Z0-9-]{1,48}$/.test(raw.id)
-    || !Number.isInteger(raw.seed) || raw.seed < 0 || raw.seed >= 0x40000000
+    || !Number.isInteger(raw.seed) || raw.seed < 0 || raw.seed >= 0x100000000
     || !Number.isFinite(raw.completedAt) || raw.completedAt < 0 || !(raw.buffer instanceof ArrayBuffer)) return null;
   try {
     const decoded = decodeVisualHistory(raw.buffer); if (decoded.seed !== raw.seed) return null;
@@ -60,7 +61,12 @@ function getRecord(db, id) { return request(db.transaction(STORE).objectStore(ST
 function putRecord(db, record) { return transact(db, STORE, 'readwrite', (store) => store.put(record)); }
 async function prune(db) {
   const records = (await allRecords(db)).map(validateRecord).filter(Boolean).sort(newestFirst);
-  for (const old of records.slice(RETAIN)) await transact(db, STORE, 'readwrite', (store) => store.delete(old.id));
+  let kept = 0; let bytes = 0;
+  for (const record of records) {
+    const retain = kept < RETAIN && bytes + record.buffer.byteLength <= MAX_TOTAL_BYTES;
+    if (retain) { kept++; bytes += record.buffer.byteLength; }
+    else await transact(db, STORE, 'readwrite', (store) => store.delete(record.id));
+  }
 }
 function request(req) { return new Promise((resolve, reject) => {
   req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error ?? new Error('IndexedDB request failed'));

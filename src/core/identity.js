@@ -15,7 +15,7 @@ export const STORAGE_KEYS = Object.freeze({
   history: `${PRODUCT}:history:v3`,
   resultTransaction: `${PRODUCT}:result-transaction:v2`,
 });
-export const RECENT_RUNS_DB = `${PRODUCT}:recent-runs:v2`;
+export const RECENT_RUNS_DB = `${PRODUCT}:recent-runs:v3`;
 
 export const DIAGNOSTIC_GLOBALS = Object.freeze({
   app: '__CELL_SPHERE_APP__',

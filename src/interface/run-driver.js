@@ -43,7 +43,7 @@ export function createRunDriver(caps, onMessage, options = {}) {
     return true;
   }
   function emit(message, identity = activeIdentity) {
-    const observational = ['history-buffer', 'history-preview', 'cell-inspection'].includes(message.t);
+    const observational = ['history-buffer', 'cell-inspection'].includes(message.t);
     if (!accepts(message, identity) || !sameWorldIdentity(identity, activeIdentity) || (settled && !observational)) return false;
     lastWorkerMessageAt = now(); statusRequestedAt = 0;
     const envelope = { ...message, ...identityFields(identity) };
@@ -101,15 +101,12 @@ export function createRunDriver(caps, onMessage, options = {}) {
 
   function message(value) {
     const session = activeIdentity; if (!session || !accepts({ ...identityFields(session), ...value }, session)) return false;
-    if (settled && !['history-buffer', 'history-preview', 'inspect-cell'].includes(value.t)) return false;
+    if (settled && !['history-buffer', 'inspect-cell'].includes(value.t)) return false;
     const envelope = { protocolVersion:RUN_PROTOCOL_VERSION,...value, ...identityFields(session) };
     if (worker) worker.postMessage(envelope);
     else if (fallback) try {
       if (value.t === 'inspect-cell') emit({ t: 'cell-inspection', runId: session.runId, requestId: value.requestId, cell: fallback.inspectCell(value.node) }, session);
       else if (value.t === 'snapshot-now') emit({ t: 'snapshot', runId: session.runId, ...fallback.snapshot() }, session);
-      else if (value.t === 'history-preview') { const frame = fallback.historyPreview(value.tick); emit({ t: 'history-preview', runId: session.runId,
-        requestId: value.requestId, tick: frame.tick, entropyQ: frame.entropyQ, flags: frame.flags,
-        aliveCount: frame.aliveCount, cells: frame.cells.slice().buffer }, session); }
       else if (value.t === 'history-buffer') emit({ t: 'history-buffer', runId: session.runId,
         requestId: value.requestId, buffer: fallback.historyBuffer() }, session);
     } catch (error) { emit({ t: 'error', runId: session.runId, requestId: value.requestId, message: error.message }, session); }

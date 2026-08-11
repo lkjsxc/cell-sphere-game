@@ -6,7 +6,7 @@ mutates simulation arrays, consumes authoritative randomness, or changes SCORE.
 | Module | Authority boundary |
 |---|---|
 | `app-controller.js` | Home/World/Evolution/Trophies composition and persistence orchestration. |
-| `run-driver.js` | Worker-first run protocol v8 with identical fallback. |
+| `run-driver.js` | Worker-first run protocol v10 with identical fallback. |
 | `policies/run-session.js` | First-wins replacement, neutral Level-0 blank frame, immutable start identity. |
 | `policies/run-result.js` | Validated SCORE/Echo/best-record/History-9/Trophy transaction. |
 | `surfaces.js` / `inspection/` | SCORE/REACH/Environment HUD, dynamic result evidence, metrics, and Inspector. |
@@ -26,7 +26,9 @@ remains independently reachable. Result keeps its continuation status and
 **Next World** action outside the scroll body, then offers **Evolution** and
 **History**; it never offers static level selection/retry. The Menu owns only
 common preferences and collapsed local data/reset actions; History retention is
-an internal bounded policy.
+an internal bounded policy. History keeps controls stable above its sole scroll
+owner, renders a complete v2 checkpoint atomically, and stays explicitly
+semantic-only while visual data is loading or unavailable.
 Evolution explains that every world starts at Level 0 and displays the achieved
 best record. Exact values use canonical decimal formatting. Scene/camera/speed
 changes remain authority-neutral.

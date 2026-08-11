@@ -81,7 +81,7 @@ export class RunController {
         this.emit({ t: 'history-batch', events: [{ ...s.history.at(-1) }] });
       }
     }
-    this.historyRecorder.observe(s, s.history.length !== historyLength);
+    this.historyRecorder.observe(s, s.history.length !== historyLength, false, transition.changed);
     return true;
   }
 
@@ -98,7 +98,8 @@ export class RunController {
     const terminalSnapshot = this.snapshot();
     this.emit({ t: 'snapshot', ...terminalSnapshot }, snapshotTransfers(terminalSnapshot));
     this.emit({ t: 'history-batch', events: s.history.slice(historyStart).map((event) => ({ ...event })) });
-    this.emit({ t: 'extinct', summary: this.buildResult() });
+    const visualHistoryBuffer = this.historyBuffer();
+    this.emit({ t: 'extinct', summary: this.buildResult(), visualHistoryBuffer }, [visualHistoryBuffer]);
     return true;
   }
 
@@ -157,7 +158,6 @@ export class RunController {
 
   buildResult() { return buildRunResult(this.state); }
   snapshot() { return buildSnapshot(this.state); }
-  historyPreview(tick) { return this.historyRecorder.preview(tick); }
   historyBuffer() { return this.historyRecorder.buffer(); }
 }
 

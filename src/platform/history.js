@@ -64,7 +64,7 @@ function validateEvent(raw, index) {
 function validateWorld(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const seed = finiteInt(raw.seed); const tick = finiteInt(raw.tick);
-  if (seed === null || seed >= 0x40000000 || tick === null) return null;
+  if (seed === null || seed >= 0x100000000 || tick === null) return null;
   const events = Array.isArray(raw.events) ? raw.events.slice(0, MAX_EVENTS).map(validateEvent).filter(Boolean)
     .sort((a, b) => a.seq - b.seq || a.tick - b.tick) : [];
   const world = { id: typeof raw.id === 'string' ? raw.id.slice(0, 64) : `${seed}-${tick}`, seed, tick,

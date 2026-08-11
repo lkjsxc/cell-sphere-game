@@ -1,14 +1,24 @@
 # Visual History
 
-Bounded, observational presentation data for approximate globe scrubbing.
+Bounded, observational presentation data for truthful approximate globe scrubbing.
 
 | File | Responsibility |
 | --- | --- |
-| `codec.js` | Strict `INHV` binary version 1, validation, and 256 KiB thinning. |
-| `recorder.js` | Quantizes authoritative state at tick 0, 50-tick cadence, semantic events, and extinction. |
-| `preview.js` | Nearest-frame lookup and reusable renderer projection buffers. |
+| `codec.js` | Strict current-only `INHV` v2 binary codec, visual-world compatibility check, and 256 KiB adaptive thinning. |
+| `recorder.js` | Quantizes authoritative state at tick 0, cadence, semantic events, and extinction. |
+| `preview.js` | Nearest-frame lookup and reusable complete renderer projection buffers. |
 
-A frame stores tick, quantized entropy, flags, alive count, and one byte per
-cell. It never stores edges, RNG, replay, or mutable simulation references.
-Visual bundles are approximate, device-local IndexedDB records and are not part
-of semantic JSON export/import or authority hashes.
+Each v2 frame stores tick, atmospheric wear, flags, alive count, Luminous
+development, and three bounded bytes per cell: life/biomass/stress, resource
+condition/richness, and transformation/charge. Static geography is regenerated
+from the exact unsigned 32-bit authority seed (the player-facing seed code remains
+30-bit); transformation state is sufficient for the current renderer's
+effective-biome mapping. Frames never store edges, RNG, replay, or mutable
+simulation references.
+
+Visual bundles are approximate, device-local IndexedDB records, excluded from
+semantic JSON export/import and authority hashes. The cache is current-only:
+v1 buffers and incompatible static-world versions are rejected, and the visual
+cache namespace resets rather than migrating them. While a matching bundle is
+loading or unavailable, History remains semantic-only and never labels the
+live globe as a historical checkpoint.

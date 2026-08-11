@@ -21,7 +21,7 @@ export function handleRunMessage(app, message) {
     return ui.announce(app.el, `Environment Level ${message.environmentLevel} reached.`);
   }
   if (message.t === 'terminal-collapse') { ui.announce(app.el, 'Final trace — the remaining tissue is releasing.'); return true; }
-  if (message.t === 'extinct') return app.finishRun({ ...message.summary, ...identityFields(message) });
+  if (message.t === 'extinct') return app.finishRun({ ...message.summary, ...identityFields(message) }, message.visualHistoryBuffer);
   if (message.t === 'aborted') return app.finishAbandoned({ ...message.summary, ...identityFields(message) });
   if (message.t === 'worker-failed' && message.recoverable && message.phase === 'pre-authority') return recoverPreAuthorityFailure(app, message);
   if(message.t==='worker-failed'&&recoverAuthorityLossDuringReplacement(app,message))return true;

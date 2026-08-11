@@ -71,15 +71,16 @@
 .history-scrubber { display: grid; grid-template-columns: auto minmax(8rem, 1fr) auto auto; align-items: center; gap: var(--sp-2); }
 .history-scrubber label, #history-range { width: 100%; min-height: var(--touch-min); }
 #history-range { margin: 0; accent-color: var(--life-glow); cursor: ew-resize; }
-.history-selected { margin: var(--sp-1) 0; color: var(--text-secondary); font-size: var(--fs-caption); }
-.history-selected strong { color: var(--text-primary); }.history-note { margin: 0; color: var(--state-info); font-size: var(--fs-caption); }
-.history-timeline { display: grid; gap: var(--sp-1); max-height: 9rem; margin-top: var(--sp-1); overflow: auto; }
+.history-selected { min-height: 2.6rem; margin: var(--sp-1) 0; color: var(--text-secondary); font-size: var(--fs-caption); }
+.history-selected strong { color: var(--text-primary); }.history-note { min-height: 1.3rem; margin: 0; color: var(--state-info); font-size: var(--fs-caption); }
+.history-timeline { display: grid; gap: var(--sp-1); margin: 0; }
 .history-timeline h3 { margin: 0; color: var(--text-secondary); font-size: var(--fs-caption); letter-spacing: .08em; text-transform: uppercase; }
 .history-list { list-style: none; padding: 0; margin: 0; }
 .history-entry { border-bottom: 1px solid var(--border-faint); }
-.history-event-btn { display: grid; width: 100%; min-height: var(--touch-min); padding: var(--sp-2) 0; color: var(--text-secondary);
-  background: transparent; text-align: left; font-size: var(--fs-caption); }
-.history-event-btn strong { color: var(--text-primary); }
+.history-event-btn { display: grid; width: 100%; min-height: var(--touch-min); padding: var(--sp-2); color: var(--text-secondary);
+  background: transparent; border-left: 3px solid transparent; text-align: left; font-size: var(--fs-caption); }
+.history-event-btn strong { color: var(--text-primary); }.history-event-btn.is-selected { border-left-color: var(--life-glow); background: rgba(229, 219, 149, .11); }
+.history-event-btn:focus-visible { outline: 2px solid var(--life-glow); outline-offset: -2px; }
 
 .settings-form { display: grid; gap: var(--sp-3); }.settings-form fieldset { display: grid; gap: var(--sp-2); min-width: 0;
   padding: var(--sp-3) 0; border: 0; border-top: 1px solid var(--border-faint); }

@@ -5,17 +5,18 @@ import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, relative } from 'node:path';
 import { RunController } from '../src/simulation/simulator.js';
 import { REPLAY_VERSION } from '../src/simulation/replay.js';
-import { quantizeCells, FRAME_FLAGS } from '../src/history/recorder.js';
+import { quantizeFrame, FRAME_FLAGS } from '../src/history/recorder.js';
 import { encodeVisualHistory } from '../src/history/codec.js';
 
 const ROOT = resolve(import.meta.dirname, '..'); const OUTPUT = resolve(ROOT, 'src/showcase/data.js');
-const SEED = 20260701; const FRAME_MS = 250; const LAST_FRAME_MS = 22_000;
-const DURATION_MS = 22_250; const FRAME_COUNT = LAST_FRAME_MS / FRAME_MS + 1;
+const SEED = 20260701; const FRAME_MS = 750; const LAST_FRAME_MS = 21_750;
+const DURATION_MS = 22_500; const FRAME_COUNT = LAST_FRAME_MS / FRAME_MS + 1;
 const sourceHash = hashSources(); const probe = simulate();
 const pressureTick = Math.max(probe.peakTick + 2, Math.round(probe.terminalTick * .62));
 const matureTick = Math.max(probe.peakTick + 1, Math.min(pressureTick - 1,
   Math.round((probe.peakTick + pressureTick) / 2)));
 const sourceTicks = Array.from({ length: FRAME_COUNT }, (_, index) => sourceTick(index * FRAME_MS));
+sourceTicks[Math.round(6_500 / FRAME_MS)] = probe.peakTick;
 const captures = captureTicks([...new Set(sourceTicks)].sort((a, b) => a - b));
 const frames = sourceTicks.map((tick, index) => {
   const frame = captures.get(tick); return { ...frame, tick: index,
@@ -25,7 +26,7 @@ const frames = sourceTicks.map((tick, index) => {
 const buffer = encodeVisualHistory({ cellCount: probe.state.topo.nodeCount, seed: SEED,
   cadence: FRAME_MS }, frames);
 const dataHash = sha(Buffer.from(buffer)); const base64 = Buffer.from(buffer).toString('base64');
-const metadata = { schema: 1, seed: SEED, replayVersion: REPLAY_VERSION, sourceHash,
+const metadata = { schema: 2, seed: SEED, replayVersion: REPLAY_VERSION, sourceHash,
   dataHash, cellCount: probe.state.topo.nodeCount, frameIntervalMs: FRAME_MS,
   frameCount: FRAME_COUNT, durationMs: DURATION_MS, sourceTerminalTick: probe.terminalTick,
   peakLiving: probe.peakLiving, peakTick: probe.peakTick, matureTick,
@@ -63,7 +64,7 @@ function captureTicks(ticks) {
   for (const tick of ticks) {
     if (tick > run.state.tick) run.advance(tick - run.state.tick);
     captures.set(tick, { entropyQ: Math.round(run.state.entropy * 255), aliveCount: run.state.aliveCount,
-      cells: quantizeCells(run.state) });
+      ...quantizeFrame(run.state) });
   }
   return captures;
 }

@@ -95,7 +95,8 @@ test('Environment metric projection is current-state detail with bounded compact
 test('History, visible metric affordances, restrained Result, and compact dock keep bounded geometry', () => {
   const css = readFileSync(new URL('../../styles/shell.css', import.meta.url), 'utf8');
   assert.match(css, /\.context-result \{ grid-template-rows: auto minmax\(0, 1fr\) auto; \}/);
-  assert.match(css, /\.context-history \{ grid-template-rows: auto minmax\(0, 1fr\); \}/);
+  assert.match(css, /\.context-history \{ grid-template-rows: auto auto minmax\(0, 1fr\); \}/);
+  assert.match(css, /\.context-history \.history-controls/);
   assert.doesNotMatch(css, /adaptation|card-row/i);
   const components = readFileSync(new URL('../../styles/components.css', import.meta.url), 'utf8');
   assert.match(components, /\.metric-button \{[^}]*cursor: pointer[^}]*border: 1px solid/s);
@@ -105,6 +106,8 @@ test('History, visible metric affordances, restrained Result, and compact dock k
   assert.doesNotMatch(resultRule, /linear-gradient|\.45rem 1\.8rem/);
   const atlas = readFileSync(new URL('../../styles/atlas.css', import.meta.url), 'utf8');
   assert.match(atlas, /\.clock-hour \{ width: 1\.5px;/);
+  assert.doesNotMatch(atlas, /\.history-timeline \{[^}]*overflow: auto/s);
+  assert.match(atlas, /\.history-event-btn\.is-selected/);
   assert.match(css, /\.hud-metrics:has\(#result-control:not\(\[hidden\]\)\)[^}]*grid-template-columns: repeat\(2/s);
   assert.match(css, /\.result-actions \{[\s\S]*?display: grid;/); assert.match(css, /\.result-countdown \{/);
   const layout = readFileSync(new URL('../../styles/layout.css', import.meta.url), 'utf8');

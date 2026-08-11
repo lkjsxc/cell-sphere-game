@@ -43,9 +43,10 @@ run determinism and browser Worker path.
 
 Keep separate validated localStorage documents for Settings, progression, and
 semantic History; report write failure and continue in session memory. Store
-only the newest ten strict, ≤256 KiB visual History bundles in IndexedDB because
-cell checkpoints do not belong in semantic export/import. Evidence: migration,
-corruption, quota, transaction, codec, stale-load, and browser reload tests.
+only the newest ten strict, ≤256 KiB visual History bundles (≤2.5 MiB total) in
+current-only IndexedDB because checkpoints do not belong in semantic
+export/import. Evidence: migration, corruption, quota, transaction, codec,
+stale-load, and browser reload tests.
 
 ## D6 — Fixed-step deterministic math
 
@@ -113,10 +114,15 @@ steady draws. Evidence: source-negative tests, snapshot-byte test, screenshots.
 ## D14 — Visual History is approximate and authority-neutral
 
 Semantic events alone could not show temporal change, while raw tick logs would
-violate storage bounds. Record strict quantized cell checkpoints, preserve major
-frames while thinning, associate events with bounded primary cells, and restore
-Live immediately. Keep bundles device-local and newest-ten. Evidence: neutrality,
-codec/fuzz/bounds/stale-load tests and real-Chrome scrub/reload.
+violate storage bounds. Record strict v2 quantized checkpoints with every
+renderer-semantic dynamic channel: life, resources, transformation, charge,
+Luminous development, and atmospheric wear. Keep initial/final frames and
+sample event-heavy runs deterministically within the byte cap. Switch checkpoint
+label, snapshot, and controls atomically; loading/unavailable History stays
+semantic-only, and Live restores authority immediately. Carry the terminal
+bundle with the extinction outcome so immediate continuation cannot outrun its
+save. Keep bundles current-only, device-local, newest-ten, and byte-bounded. Evidence: neutrality,
+codec/bounds/stale-load tests and real-Chrome Worker/fallback/Canvas paths.
 
 ## D15 — Results continue unless attention says otherwise
 

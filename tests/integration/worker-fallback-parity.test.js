@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Worker } from 'node:worker_threads';
 import { RunController } from '../../src/simulation/simulator.js';
+import { decodeVisualHistory } from '../../src/history/codec.js';
 import { RUN_PROTOCOL_VERSION } from '../../src/core/run-protocol.js';
 import { createWorldIdentity, identityFields } from '../../src/core/world-session.js';
 import {
@@ -28,6 +29,10 @@ test('production Worker and fallback agree through transitions, chronic exposure
 
   assert.deepEqual(comparableResult(workerRun.result), comparableResult(fallbackResult));
   assert.deepEqual(workerRun.transitions, transitionsFrom(fallbackMessages));
+  const fallbackVisual = fallbackMessages.find((message) => message.t === 'extinct')?.visualHistoryBuffer;
+  assert.ok(workerRun.visualHistoryBuffer instanceof ArrayBuffer); assert.ok(fallbackVisual instanceof ArrayBuffer);
+  assert.equal(decodeVisualHistory(workerRun.visualHistoryBuffer).terminalTick, fallbackResult.tick);
+  assert.equal(decodeVisualHistory(fallbackVisual).terminalTick, fallbackResult.tick);
 });
 
 function runWorker(worker, identity, cfg) {
@@ -44,7 +49,7 @@ function runWorker(worker, identity, cfg) {
         worker.postMessage({ t: 'speed', protocolVersion: RUN_PROTOCOL_VERSION, ...identityFields(identity), value: 256 });
         worker.postMessage({ t: 'start', protocolVersion: RUN_PROTOCOL_VERSION, ...identityFields(identity) });
       }
-      if (message.t === 'extinct') finish({ result: message.summary, transitions });
+      if (message.t === 'extinct') finish({ result: message.summary, transitions, visualHistoryBuffer: message.visualHistoryBuffer });
     });
     worker.postMessage({ t: 'init', protocolVersion: RUN_PROTOCOL_VERSION, ...identityFields(identity), cfg, developerMode: true });
   });

@@ -110,10 +110,10 @@
 
     <section id="history-dialog" class="context-surface context-history" hidden aria-labelledby="history-heading">
       <header><div><p class="eyebrow">HISTORY</p><h2 id="history-heading" tabindex="-1">World timeline</h2></div><button id="history-close" class="close-btn" type="button">Close</button></header>
-      <div class="surface-body"><div class="history-world-row"><label for="history-world">World</label><select id="history-world"></select><p id="history-time-label" aria-live="polite">00:00 · Live</p></div>
+      <div class="history-controls"><div class="history-world-row"><label for="history-world">World</label><select id="history-world"></select><p id="history-time-label">Live state · 00:00</p></div>
         <div class="history-scrubber"><button id="history-prev" class="rail-btn" type="button" aria-label="Previous significant History record">Previous</button><label><span class="sr-only">World time</span><input id="history-range" type="range" min="0" max="0" value="0" step="1"></label><button id="history-next" class="rail-btn" type="button" aria-label="Next significant History record">Next</button><button id="history-live" class="rail-btn" type="button">Live</button></div>
-        <p id="history-selected" class="history-selected">Choose a time to inspect.</p><p id="history-visual-note" class="history-note">Loading device-local approximate visual detail…</p>
-        <section class="history-timeline" aria-labelledby="history-timeline-heading"><h3 id="history-timeline-heading">Timeline</h3><div class="panel-toolbar"><select id="history-filter" aria-label="History category filter"><option value="all">All records</option><option value="world">World</option><option value="life">Life</option><option value="environment">Environment</option></select></div><ol id="history-list" class="history-list"></ol></section></div>
+        <p id="history-selected" class="history-selected">Choose a time to inspect.</p><p id="history-visual-note" class="history-note">Loading device-local visual checkpoints…</p></div>
+      <div class="surface-body history-body"><section class="history-timeline" aria-labelledby="history-timeline-heading"><h3 id="history-timeline-heading">Timeline</h3><div class="panel-toolbar"><select id="history-filter" aria-label="History category filter"><option value="all">All records</option><option value="world">World</option><option value="life">Life</option><option value="environment">Environment</option></select></div><ol id="history-list" class="history-list"></ol></section></div>
     </section>
 
     <section id="metric-dialog" class="context-surface context-metric" hidden aria-labelledby="metric-heading">
