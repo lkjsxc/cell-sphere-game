@@ -139,6 +139,20 @@ test('every declared uniform is uploaded by the renderer modules', () => {
   assert.ok(!parseUniformNames(SH.FS_GLOBE).has('uSignalCenter'));
 });
 
+test('globe keeps duplicated dual corners on one continuous position shell', () => {
+  assert.match(SH.VS_GLOBE, /vPos = aPos;/);
+  assert.doesNotMatch(SH.VS_GLOBE, /atlasRelief|\brelief\b|aPos\s*\*/);
+  const topo = createTopology(3); const geometry = createCellGeometry(topo, createFields(createRng(42), topo));
+  const first = new Map();
+  for (let cell = 0; cell < topo.nodeCount; cell++) for (let offset = geometry.dual.cellStart[cell]; offset < geometry.dual.cellStart[cell + 1]; offset++) {
+    const corner = geometry.dual.cellCorners[offset]; const vertex = cell + offset + 1;
+    const position = [...geometry.positions.subarray(vertex * 3, vertex * 3 + 3)];
+    if (first.has(corner)) assert.deepEqual(position, first.get(corner), `corner ${corner} split between cells`);
+    else first.set(corner, position);
+  }
+  assert.match(read('../../src/rendering/fallback2d.js'), /drawBaseShell\(ctx, cx, cy, radius/);
+});
+
 test('renderers bind exact world identity and reject an old snapshot before drawing', () => {
   const environment = { environmentModelVersion: ENVIRONMENT_MODEL_VERSION,
     environmentScheduleVersion: ENVIRONMENT_SCHEDULE_VERSION, environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH,

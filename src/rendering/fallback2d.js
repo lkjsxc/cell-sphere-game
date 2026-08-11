@@ -3,6 +3,7 @@ import { LIFE_STATE } from '../core/life-state.js';
 import { createDualMesh } from '../world/dual-mesh.js';
 import { cameraBasis } from './camera.js';
 import { sameWorldIdentity } from '../core/world-session.js';
+import { continuityFixture } from './continuity-fixture.js';
 
 const WORLD_LIGHT = Object.freeze((() => { const value=[-.52,.72,.44]; const length=Math.hypot(...value); return value.map((axis)=>axis/length); })());
 const BIOME_COLOR = Object.freeze([
@@ -10,10 +11,11 @@ const BIOME_COLOR = Object.freeze([
   [83, 119, 50], [137, 116, 52], [164, 116, 53], [37, 110, 82], [96, 94, 72],
   [112, 110, 104], [113, 128, 104], [205, 218, 218], [13, 66, 88],
 ]);
+const BASE_SHELL = Object.freeze([8 / 255, 28 / 255, 62 / 255]);
 
 export class Canvas2DRenderer {
-  constructor(canvas, topo, fields) {
-    this.canvas = canvas; this.topo = topo; this.fields = fields;
+  constructor(canvas, topo, fields, opts = {}) {
+    this.canvas = canvas; this.topo = topo; this.fields = fields; this.developerMode = opts.developerMode === true;
     this.ctx = canvas.getContext('2d');
     if (!this.ctx) throw new Error('Canvas 2D unavailable');
     this.backend = 'canvas2d'; this.boundIdentity = null; this.disposed = false;
@@ -48,16 +50,23 @@ export class Canvas2DRenderer {
     const cx = w * (0.5 + camera.offsetX * 0.5); const cy = h * (0.5 - camera.offsetY * 0.5);
     const sizeScale = canvas.clientWidth < 600 ? 0.76 : 0.52;
     const radius = Math.min(w, h) * sizeScale * (3.1 / camera.dist);
-    const basis = this.basis(camera); const entropy = snapshot?.entropy ?? 0;
-    const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#070b14'); bg.addColorStop(1, '#0d1421');
-    ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
-    const glow = ctx.createRadialGradient(cx, cy, radius * 0.9, cx, cy, radius * 1.25);
-    glow.addColorStop(0, `rgba(64,140,158,${0.28 - entropy * 0.12})`); glow.addColorStop(1, 'rgba(64,140,158,0)');
-    ctx.fillStyle = glow; ctx.fillRect(cx - radius * 1.3, cy - radius * 1.3, radius * 2.6, radius * 2.6);
+    const basis = this.basis(camera); const entropy = snapshot?.entropy ?? 0; const fixture = continuityFixture(scene, this.developerMode);
+    if (fixture) {
+      ctx.fillStyle = cssColor(fixture.background); ctx.fillRect(0, 0, w, h);
+    } else {
+      const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#070b14'); bg.addColorStop(1, '#0d1421');
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+      const glow = ctx.createRadialGradient(cx, cy, radius * 0.9, cx, cy, radius * 1.25);
+      glow.addColorStop(0, `rgba(64,140,158,${0.28 - entropy * 0.12})`); glow.addColorStop(1, 'rgba(64,140,158,0)');
+      ctx.fillStyle = glow; ctx.fillRect(cx - radius * 1.3, cy - radius * 1.3, radius * 2.6, radius * 2.6);
+    }
     this.project(topo.positions, this.px, this.py, this.facing, basis, cx, cy, radius);
     this.project(this.dual.corners, this.cornerX, this.cornerY, this.cornerFacing, basis, cx, cy, radius);
+    drawBaseShell(ctx, cx, cy, radius, fixture?.surface ?? BASE_SHELL);
+    if (fixture) { ctx.save(); clipDisk(ctx, cx, cy, radius); }
 
     for (let cell = 0; cell < topo.nodeCount; cell++) {
+      if (fixture) { this.cellPath(cell); ctx.fillStyle = cssColor(fixture.surface); ctx.fill(); continue; }
       if (this.facing[cell] <= .02) continue;
       let color = BIOME_COLOR[fields.biomeId?.[cell] ?? 5]; const forest = fields.forestDensity?.[cell] ?? 0;
       const transform = snapshot?.transformationState?.[cell] ?? 0;
@@ -71,15 +80,18 @@ export class Canvas2DRenderer {
         (snapshot?.resourceRichnessQ?.[cell] ?? 128) / 255, isWater);
       this.cellPath(cell); ctx.fillStyle = `rgba(${local[0]},${local[1]},${local[2]},${.58 + this.facing[cell] * .34})`; ctx.fill();
     }
-    if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1, scene.time ?? 0, scene.pulse === true);
-    this.drawBoundaries(false); this.drawBoundaries(true);
-    for (const cell of (scene.highlightedCells ?? []).slice(0, 8)) {
-      if (this.facing[cell] <= 0) continue; this.cellPath(cell, 0.82);
-      ctx.strokeStyle = 'rgba(246,186,79,.96)'; ctx.lineWidth = 2.4; ctx.stroke();
+    if (!fixture) {
+      if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1, scene.time ?? 0, scene.pulse === true);
+      this.drawBoundaries(false); this.drawBoundaries(true);
+      for (const cell of (scene.highlightedCells ?? []).slice(0, 8)) {
+        if (this.facing[cell] <= 0) continue; this.cellPath(cell, 0.82);
+        ctx.strokeStyle = 'rgba(246,186,79,.96)'; ctx.lineWidth = 2.4; ctx.stroke();
+      }
+      if (Number.isInteger(scene.selectedNode) && this.facing[scene.selectedNode] > 0) {
+        this.cellPath(scene.selectedNode, 0.84); ctx.strokeStyle = 'rgba(202,238,219,.95)'; ctx.lineWidth = 2.2; ctx.stroke();
+      }
     }
-    if (Number.isInteger(scene.selectedNode) && this.facing[scene.selectedNode] > 0) {
-      this.cellPath(scene.selectedNode, 0.84); ctx.strokeStyle = 'rgba(202,238,219,.95)'; ctx.lineWidth = 2.2; ctx.stroke();
-    }
+    if (fixture) ctx.restore();
     this.acceptedFrames++; this.lastFrameAudit = Object.freeze({ worldSessionId: snapshot?.worldSessionId ?? null,
       presentationGeneration: snapshot?.presentationGeneration ?? null, lifeCells: count(snapshot?.alive),
       highlights: scene.highlightedCells?.length ?? 0,
@@ -183,6 +195,12 @@ function memoryStyles(status, kind, fossil, fade, branch, time, pulse) {
     dash:selectedReady?[4,2]:[] };
   return { fill:`rgba(111,91,66,${fossil * .48 * fade})` };
 }
+
+function drawBaseShell(ctx, cx, cy, radius, color) {
+  ctx.beginPath(); ctx.arc(cx, cy, radius + 0.5, 0, Math.PI * 2); ctx.fillStyle = cssColor(color); ctx.fill();
+}
+function clipDisk(ctx, cx, cy, radius) { ctx.beginPath(); ctx.arc(cx, cy, radius + 0.5, 0, Math.PI * 2); ctx.clip(); }
+function cssColor([red, green, blue]) { return `rgb(${Math.round(red * 255)},${Math.round(green * 255)},${Math.round(blue * 255)})`; }
 
 function resourceColor(base, state, richness, water) {
   const target = state === 1 ? (water ? [10, 84, 138] : [92, 126, 45])

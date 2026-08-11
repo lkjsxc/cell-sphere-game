@@ -52,7 +52,8 @@ transaction applies Echoes, records, History, and Trophies.
 
 ## Rendering and interaction
 
-WebGL2 remains four world draw calls; Canvas 2D receives the same semantic cell
-states. Primary scenes are Home, World, Evolution, and Trophies. History is the
+WebGL2 remains four world draw calls and keeps duplicated cell corners on one
+continuous position shell; Canvas 2D receives the same semantic cell states over
+an opaque globe substrate. Primary scenes are Home, World, Evolution, and Trophies. History is the
 single durable temporal surface. Fair agents use production authority and see no
 future seeds, RNG, raw arrays, or hidden maps.

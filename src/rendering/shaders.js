@@ -15,12 +15,9 @@ out vec4 vTerrain;
 out vec3 vLife;
 out vec4 vEcology;
 void main() {
-  float atlasRelief = step(0.5, aLife.x) * (0.002 + step(2.5, aLife.x) * 0.006)
-    + step(3.5, fract(aLife.y) * 10.0) * 0.003;
-  float lakeCell = step(12.5, aTerrain.x);
-  float relief = (max(0.0, aMaterial.w - 0.43) * 0.022 + aTerrain.w * 0.004)
-    * (1.0 - lakeCell) + atlasRelief;
-  vPos = aPos * (1.0 + relief);
+  // Every duplicated dual-cell corner must take the same position path.
+  // Relief belongs to fragment material so the spherical shell stays closed.
+  vPos = aPos;
   vCenter = aCenter;
   vMaterial = aMaterial;
   vTerrain = aTerrain;
@@ -48,7 +45,10 @@ uniform vec3 uSelectedCenter;
 uniform float uHasSelection;
 uniform vec3 uHistoryCenter[8];
 uniform int uHistoryCount;
+uniform float uFixture;
+uniform vec3 uFixtureColor;
 void main() {
+  if (uFixture > 0.5) { outColor = vec4(uFixtureColor, 1.0); return; }
   float nutrient = vMaterial.x;
   float moisture = vMaterial.y;
   float biome = vTerrain.x;

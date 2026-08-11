@@ -13,7 +13,9 @@ The WebGL world path remains exactly four steady-state draws.
 - `shaders*.js`: cellular geography, life, event material, atmosphere, and
   charge-local emission.
 - `fallback2d.js`: matching whole-cell resource, transformation, charge, and
-  Evolution semantics without fine geometry.
+  Evolution semantics without fine geometry, over an opaque globe substrate.
+- `continuity-fixture.js`: developer-only uniform shell colors used by the
+  trusted browser seam measurement; it is never normal product presentation.
 - `cell-geometry.js`, `camera.js`, and `picking.js`: stable dual cells, orbit, and
   pointer-to-cell selection.
 - `blank-snapshot.js`: typed zero-life `starting` frame before new authority.
@@ -27,9 +29,13 @@ select-first, later-second-activation state machine.
 
 Luminous visuals come only from authoritative per-cell charge bytes. Zero charge
 emits no light; production, local variation, decay, day/night emphasis, and
-mastery development remain bounded whole-cell material in both backends. There
-are no rivers, roads/routes, ribbons, electricity wires, terrain glyph overlays,
-or ownership-only false light.
+mastery development remain bounded whole-cell material in both backends. The
+World shell never radially displaces duplicated cell corners: depth comes from
+fragment material, and Canvas establishes opaque disk coverage before its
+translucent cell materials. There are no rivers, roads/routes, ribbons,
+electricity wires, terrain glyph overlays, or ownership-only false light.
 
 Gates: renderer unit tests, `test:browser:file`, `test:browser:canvas`,
-`audit:cell-visuals`, and `audit:luminous`; WebGL evidence must retain four draws.
+`audit:cell-visuals`, and `audit:luminous`; browser runs measure a developer-only
+uniform fixture at center and limb with zero background intrusion, and normal
+WebGL evidence must retain four draws.

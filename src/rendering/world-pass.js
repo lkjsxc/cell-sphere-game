@@ -115,7 +115,7 @@ export class WorldPass {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.lifeBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.lifeData);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.ecologyBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.ecologyData);
   }
-  draw(vp, eye, snapshot, selectedNode, highlightedCells = [], time = 0, pulse = false) {
+  draw(vp, eye, snapshot, selectedNode, highlightedCells = [], time = 0, pulse = false, fixture = null) {
     if (this.disposed || !this.accepts(snapshot)) return false;
     const gl = this.gl; this.uploadLife(snapshot);
     const globe = this.programs.globe;
@@ -134,9 +134,12 @@ export class WorldPass {
     this.historyCenters.fill(0); const count = Math.min(8, highlightedCells.length);
     for (let i = 0; i < count; i++) this.historyCenters.set(this.topo.positions.subarray(highlightedCells[i] * 3, highlightedCells[i] * 3 + 3), i * 3);
     gl.uniform1i(globe.u.get('uHistoryCount'), count); gl.uniform3fv(globe.u.get('uHistoryCenter'), this.historyCenters);
+    gl.uniform1f(globe.u.get('uFixture'), fixture ? 1 : 0);
+    gl.uniform3fv(globe.u.get('uFixtureColor'), fixture?.surface ?? this.zero3);
     gl.bindVertexArray(this.globeVao);
     gl.drawElements(gl.TRIANGLES, this.geometry.indices.length, gl.UNSIGNED_SHORT, 0);
 
+    if (fixture) return true;
     const boundary = this.programs.boundary;
     gl.useProgram(boundary.program);
     gl.uniformMatrix4fv(boundary.u.get('uViewProj'), false, vp);

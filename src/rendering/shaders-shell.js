@@ -11,7 +11,10 @@ export const FS_BACKGROUND = `#version 300 es
 precision mediump float;
 in vec2 vUv;
 out vec4 outColor;
+uniform float uFixture;
+uniform vec3 uFixtureColor;
 void main() {
+  if (uFixture > 0.5) { outColor = vec4(uFixtureColor, 1.0); return; }
   vec2 p = vUv - 0.5;
   float dawn = exp(-4.8 * length(p - vec2(-0.42, -0.34)));
   float deep = smoothstep(-0.45, 0.65, p.y);

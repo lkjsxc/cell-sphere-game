@@ -6,6 +6,7 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assertBlankReplacement, installFirstReplacementCapture, runScenario } from './browser/shell-scenario.mjs';
+import { runContinuityFixture } from './browser/continuity-fixture.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROFILE = `/tmp/cell-sphere-game-browser-${process.pid}`;
@@ -64,11 +65,13 @@ try {
     setViewport: (width, height) => cdp.send('Emulation.setDeviceMetricsOverride',
       { width, height, deviceScaleFactor: 1, mobile: width < 600 }, session) };
   if (!forceCanvas) await runDeveloperSpeedChecks(tools, publicUrl);
+  else tools.continuity = await runContinuityFixture(tools);
   const evidence = forceCanvas ? await runCanvasScenario(tools) : await runScenario(tools);
-  console.log(forceCanvas?`test:browser:file — PASS (canvas2d fallback; score ${evidence.score}; ${evidence.worldmaking.powered} powered cells (day ${evidence.worldmaking.day.cell}/${evidence.worldmaking.day.charge}/${evidence.worldmaking.day.dot.toFixed(2)}, night ${evidence.worldmaking.night.cell}/${evidence.worldmaking.night.charge}/${evidence.worldmaking.night.dot.toFixed(2)}); unified shell, History, Evolution, and Trophies)`
+  console.log(forceCanvas?`test:browser:file — PASS (canvas2d fallback; score ${evidence.score}; ${evidence.worldmaking.powered} powered cells (day ${evidence.worldmaking.day.cell}/${evidence.worldmaking.day.charge}/${evidence.worldmaking.day.dot.toFixed(2)}, night ${evidence.worldmaking.night.cell}/${evidence.worldmaking.night.charge}/${evidence.worldmaking.night.dot.toFixed(2)}); continuous shell center/limb clear; unified shell, History, Evolution, and Trophies)`
     :`test:browser:file — PASS (${evidence.backend}; ${forceSimulationFallback?'fallback simulation':'Worker simulation'}; unified shell; score ${evidence.score}; `
       +`8x ${evidence.elapsed.toFixed(2)}s; developer 256x ${tools.developerEvidence.elapsed.toFixed(2)}s; 4 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
-      +`${evidence.worldmaking.powered} powered cells (day ${evidence.worldmaking.day.cell}/${evidence.worldmaking.day.charge}/${evidence.worldmaking.day.dot.toFixed(2)}, night ${evidence.worldmaking.night.cell}/${evidence.worldmaking.night.charge}/${evidence.worldmaking.night.dot.toFixed(2)}); visual IDB ${evidence.idb?'yes':'unavailable'}; adjacent Evolution purchase ${evidence.nodeId})`);
+      +`${evidence.worldmaking.powered} powered cells (day ${evidence.worldmaking.day.cell}/${evidence.worldmaking.day.charge}/${evidence.worldmaking.day.dot.toFixed(2)}, night ${evidence.worldmaking.night.cell}/${evidence.worldmaking.night.charge}/${evidence.worldmaking.night.dot.toFixed(2)}); continuous shell center/limb clear; visual IDB ${evidence.idb?'yes':'unavailable'}; adjacent Evolution purchase ${evidence.nodeId})`);
+  if (tools.continuity) console.log(`continuous shell ${JSON.stringify(tools.continuity)}`);
   if (evidence.metricRects) console.log(`metric rects ${JSON.stringify(evidence.metricRects)} responsive ${JSON.stringify(evidence.responsive)}`);
   exitCode = 0;
 } catch (error) {
@@ -100,6 +103,7 @@ async function runDeveloperSpeedChecks(tools, publicUrl) {
   const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {status:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,disabled:document.getElementById('speed-select').disabled,results:a.meta.resultKeys.length}})()`);
   if (result.status !== 'extinct' || result.alive !== 0 || !result.disabled || result.results !== 1) throw new Error(`256x terminal invalid: ${JSON.stringify(result)}`);
   tools.developerEvidence = { elapsed: (performance.now() - runStartedAt) / 1000 };
+  tools.continuity = await runContinuityFixture(tools);
   await navigate(publicUrl);
   if (!await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000)) throw new Error('public page did not return after developer check');
   const normal = await evaluate(`(()=>({options:[...document.getElementById('speed-select').options].map(o=>Number(o.value)),dev:window.__CELL_SPHERE_BOOT__.developerMode,marker:document.getElementById('dev-mode-marker').hidden,hook:Object.hasOwn(window,'__CSG_AGENT__'),speed:window.__CELL_SPHERE_APP__.settings.speed}))()`);

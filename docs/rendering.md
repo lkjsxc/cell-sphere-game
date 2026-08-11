@@ -9,8 +9,11 @@ Evolution, or Trophy state.
 ## Backends
 
 WebGL2 is primary and keeps four world draws: background, whole World cells,
-atmosphere, and boundaries. Canvas 2D consumes the same snapshot semantics and
-remains playable after WebGL context loss without replacing world authority.
+atmosphere, and boundaries. The cell shell has one position path: duplicated
+shared corners never receive owner-cell radial displacement. Canvas 2D consumes
+the same snapshot semantics, paints an opaque globe substrate before translucent
+cell material, and remains playable after WebGL context loss without replacing
+world authority.
 
 ## Whole-cell visual language
 
@@ -22,7 +25,9 @@ footprints.
 
 Local resource richness/recovery and whole-cell charge are legible in WebGL2 and
 Canvas 2D. Resource-poor cells remain visibly poor; zero charge never receives
-the Luminous powered material.
+the Luminous powered material. A developer-only uniform-material fixture checks
+both backends for zero background-colored pixels through the center and limb;
+it is evidence tooling, not a player-facing rendering mode.
 
 ## Globe scenes
 

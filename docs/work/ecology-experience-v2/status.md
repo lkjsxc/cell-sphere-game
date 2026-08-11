@@ -97,10 +97,32 @@
 - `npm run test:browser:file`, `npm run test:browser:fallback`, and `npm run test:browser:canvas` — passed. Trusted Worker/fallback evidence verifies loading defers visual controls without a false checkpoint label, a decoded checkpoint has complete resource/transformation/charge/development arrays, terminal bundles are handed directly to History save, and Live restores authority.
 - `npm run check:links`, `npm run check:structure`, and `git diff --check` — passed; structure reports only existing size/count warnings.
 
+## Phase 4 baseline — continuous sphere shell
+
+- Starting revision: `aa5afcb feat: make visual History truthful`; branch: `main`; no unrelated dirty files.
+- Confirmed root cause: duplicated dual-cell corners are assigned owner-cell radial relief in `VS_GLOBE`, so adjacent fans no longer share a transformed boundary. Canvas separately alpha-fills cells and skips center-back-facing cells, allowing background hairlines/limb holes.
+- Baseline trusted normal-art browser evidence from Phase 3 retained four WebGL draws and measured title render mean 0.86 ms / p95 1.00 ms; forced Canvas rendered the same semantic World path. No controlled uniform-shell pixel fixture existed at this revision.
+- Decision: retain the four-draw WebGL composition; flatten the globe's position transform, preserve depth through fragment material, establish a Canvas opaque substrate, and add a developer-only uniform fixture with center/limb pixel evidence before claiming continuity.
+
+## Completed Phase 4 — continuous sphere shell
+
+- Removed every owner-cell radial relief term from the WebGL globe position path. The duplicated dual corners now pass through the exact same unit-shell position, while fragment material preserves terrain/life depth and the normal world remains four draws.
+- Canvas now paints a dark opaque disk substrate before its translucent cell materials. It retains whole-cell terrain, overlays, and boundaries, but background-colored anti-aliasing gaps and center-facing limb omissions cannot expose the page field.
+- Added a developer-only uniform continuity fixture shared by both renderers. It disables normal material/boundary/atmosphere variation, renders two camera directions, reads the actual WebGL/Canvas pixels, and rejects every background-like pixel through the center and limb masks (including connected-component evidence). The normal page has no fixture route.
+- Inspected normal-art WebGL and Canvas screenshots at center and limb after the change; both retain legible cell material and no visible background holes.
+
+## Verification after Phase 4
+
+- `node --test tests/unit/renderer.test.js` — passed, 17/17; it protects shared copied corners, the flat vertex position path, Canvas substrate, uniforms, and the four-draw contract.
+- `npm run test` — passed, 186/186 unit and 76/76 integration tests.
+- Trusted `npm run test:browser:file`, `npm run test:browser:fallback`, and `npm run test:browser:canvas` — passed. The two-direction 1440×900 fixture measured zero background-like pixels and zero background components in both center and limb masks: WebGL samples 88,700 center / 67,856 limb pixels; Canvas samples 141,744 center / 108,400 limb pixels. Normal Worker/fallback/Canvas screenshots and the four normal WebGL draws remained valid.
+- `npm run audit:cell-visuals` — passed with no violations. `npm run benchmark` — passed at 5,993 ticks/s against the 3,000 floor; renderer browser timing remained around 0.85–1.20 ms mean/p95 in the final Worker path.
+- `npm run showcase:check`, `npm run check:links`, `npm run check:structure`, and `git diff --check` — passed; structure reports only existing size/count warnings.
+
 ## Evidence not yet obtained
 
-- Uniform-shell seam, Luminous luminance, deep cohort, physical-device, CI, and deployment evidence.
+- Luminous luminance, deep cohort, physical-device, CI, and deployment evidence.
 
 ## Next coherent phase
 
-Implement Phase 4: restore a continuous sphere shell in WebGL2 and Canvas 2D, with a controlled uniform-material center/limb browser fixture.
+Replace the legacy six-root Evolution graph with one authored root and direct ecological effects, then retune fragile early worlds, first-level Luminous, and realized-only SCORE as coordinated current-only authority work.

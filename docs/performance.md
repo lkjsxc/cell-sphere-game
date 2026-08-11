@@ -4,7 +4,8 @@
 
 - Simulation benchmark gate: at least 3,000 ticks/s on the audit host.
 - WebGL2 world draw count: exactly four.
-- Canvas 2D remains a semantic fallback.
+- Canvas 2D remains a semantic fallback with one opaque disk substrate; it adds
+  no simulation work or WebGL draw.
 - History, notifications, transaction receipts, visual checkpoints, and profile
   caches are bounded.
 - Hidden documents suspend rendering; replacement renders one blank frame before

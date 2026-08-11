@@ -104,16 +104,16 @@ class GameApp {
     const fallback = () => {
       if (this.renderer?.backend === 'canvas2d') return;
       this.renderer?.dispose(); this.renderer = null; let next;
-      try { next = new Canvas2DRenderer(this.canvas, this.topo, this.fields); }
+      try { next = new Canvas2DRenderer(this.canvas, this.topo, this.fields, { developerMode: this.developerMode }); }
       catch (firstError) {
         this.replaceRenderCanvas();
-        try { next = new Canvas2DRenderer(this.canvas, this.topo, this.fields); }
+        try { next = new Canvas2DRenderer(this.canvas, this.topo, this.fields, { developerMode: this.developerMode }); }
         catch { throw firstError; }
       }
       next.bindWorldSession(binding); this.renderer = next;
       ui.announce(this.el, 'WebGL was lost. The observational Canvas renderer is continuing.');
     };
-    try { const next = new GLRenderer(this.canvas, this.topo, this.fields, { onContextLoss: fallback });
+    try { const next = new GLRenderer(this.canvas, this.topo, this.fields, { onContextLoss: fallback, developerMode: this.developerMode });
       next.bindWorldSession(binding); this.renderer = next; }
     catch (error) { console.warn('WebGL2 unavailable; Canvas 2D active', error); fallback(); }
   }

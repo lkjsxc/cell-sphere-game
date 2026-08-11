@@ -4,10 +4,12 @@ import * as SHELL from './shaders-shell.js';
 import { viewProjection, cameraEye } from './camera.js';
 import { sameWorldIdentity } from '../core/world-session.js';
 import { WorldPass } from './world-pass.js';
+import { continuityFixture } from './continuity-fixture.js';
 
 export class GLRenderer {
   constructor(canvas, topo, fields, opts = {}) {
     this.canvas = canvas; this.topo = topo; this.disposed = false; this.boundIdentity = null;
+    this.developerMode = opts.developerMode === true;
     this.acceptedFrames = 0; this.rejectedFrames = 0; this.lastFrameAudit = null;
     const gl = canvas.getContext('webgl2', { antialias: true, alpha: false });
     if (!gl) throw new Error('WebGL2 unavailable');
@@ -38,11 +40,14 @@ export class GLRenderer {
   render(scene) {
     if (this.disposed || !this.accepts(scene)) { this.rejectedFrames++; return false; }
     const gl = this.gl; const aspect = this.canvas.width / Math.max(1, this.canvas.height);
-    const vp = viewProjection(scene.camera, aspect); const eye = cameraEye(scene.camera);
+    const vp = viewProjection(scene.camera, aspect); const eye = cameraEye(scene.camera); const fixture = continuityFixture(scene, this.developerMode);
     gl.viewport(0, 0, this.canvas.width, this.canvas.height); gl.clearColor(0.012, 0.016, 0.022, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); gl.enable(gl.DEPTH_TEST); gl.disable(gl.BLEND);
-    gl.depthMask(false); gl.useProgram(this.background.program); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.depthMask(true);
-    if (!this.world.draw(vp, eye, scene.snapshot, scene.selectedNode, scene.highlightedCells ?? [], scene.time, scene.pulse)) {
+    gl.depthMask(false); gl.useProgram(this.background.program);
+    gl.uniform1f(this.background.u.get('uFixture'), fixture ? 1 : 0);
+    gl.uniform3fv(this.background.u.get('uFixtureColor'), fixture?.background ?? [0, 0, 0]);
+    gl.drawArrays(gl.TRIANGLES, 0, 3); gl.depthMask(true);
+    if (!this.world.draw(vp, eye, scene.snapshot, scene.selectedNode, scene.highlightedCells ?? [], scene.time, scene.pulse, fixture)) {
       this.rejectedFrames++; return false;
     }
     gl.bindVertexArray(null); this.acceptedFrames++;
