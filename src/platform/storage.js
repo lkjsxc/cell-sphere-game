@@ -11,10 +11,10 @@ import { maxProgressionInteger, normalizeProgressionInteger } from '../core/prog
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 
 const VALID_TROPHY_IDS = new Set(TROPHY_IDS);
-const ATLAS_TOPOLOGY = Object.freeze({ kind: 'geodesic', frequency: 5, nodeCount: 252, edgeCount: 750 });
+const EVOLUTION_TOPOLOGY = Object.freeze({ kind: 'geodesic', frequency: 2, nodeCount: 42, edgeCount: 120 });
 
 export function defaultMeta() {
-  return { schema: 14, revision: '0', memoryGraphVersion: MEMORY_GRAPH_VERSION,
+  return { schema: 15, revision: '0', memoryGraphVersion: MEMORY_GRAPH_VERSION,
     evolutionLevelVectorVersion: EVOLUTION_LEVEL_VECTOR_VERSION, trophyVersion: TROPHY_CATALOG_VERSION,
     scoreModelVersion: SCORE_MODEL_VERSION, bestScore: '0', totalEchoes: '0', echoBalance: '0',
     runs: '0', worldSeedIndex: '0', environmentRecordVersion: ENVIRONMENT_MODEL_VERSION,
@@ -52,35 +52,35 @@ export function validateMeta(raw) {
   return out;
 }
 
-/** Convert a current run's world-edge imprint to the Evolution atlas. */
+/** Convert a current run's world-edge imprint to the compact Evolution sphere. */
 export function convertImprintToAtlas(imprint) {
   if (!imprint || typeof imprint !== 'object' || imprint.kind !== 'strongest-corridor') return null;
-  if (!Number.isInteger(imprint.seed) || imprint.seed < 0 || imprint.seed >= 0x40000000) return null;
-  const world = createTopology(4); const atlas = createGeodesicTopology(5);
-  const edges = uniqueCells(imprint.edges, world.edgeCount).slice(0, 28); if (!edges.length) return null;
-  const cells = morphologyCells(atlas, edges.map((edge) => nearestMidpointCell(world, atlas, edge)));
-  return cells.length >= 32 ? { kind: imprint.kind, seed: imprint.seed, cells, topology: { ...ATLAS_TOPOLOGY } } : null;
+  if (!Number.isInteger(imprint.seed) || imprint.seed < 0 || imprint.seed >= 0x100000000) return null;
+  const world = createTopology(4); const evolution = createGeodesicTopology(2);
+  const edges = uniqueCells(imprint.edges, world.edgeCount).slice(0, 20); if (!edges.length) return null;
+  const cells = morphologyCells(evolution, edges.map((edge) => nearestMidpointCell(world, evolution, edge)));
+  return cells.length >= 12 ? { kind: imprint.kind, seed: imprint.seed, cells, topology: { ...EVOLUTION_TOPOLOGY } } : null;
 }
 
 function validateImprint(raw) {
   if (!raw || typeof raw !== 'object' || raw.kind !== 'strongest-corridor') return null;
-  if (!Number.isInteger(raw.seed) || raw.seed < 0 || raw.seed >= 0x40000000) return null;
-  if (raw.topology?.frequency !== 5 || raw.topology?.nodeCount !== 252) return null;
-  const cells = uniqueCells(raw.cells, 252).slice(0, 64);
-  return cells.length >= 32 ? { kind: raw.kind, seed: raw.seed, cells, topology: { ...ATLAS_TOPOLOGY } } : null;
+  if (!Number.isInteger(raw.seed) || raw.seed < 0 || raw.seed >= 0x100000000) return null;
+  if (raw.topology?.frequency !== 2 || raw.topology?.nodeCount !== 42) return null;
+  const cells = uniqueCells(raw.cells, 42).slice(0, 20);
+  return cells.length >= 12 ? { kind: raw.kind, seed: raw.seed, cells, topology: { ...EVOLUTION_TOPOLOGY } } : null;
 }
 function morphologyCells(atlas, seeds) {
   const cells = [];
   for (const target of seeds) { if (!cells.length) cells.push(target);
     else for (const cell of shortestPath(atlas, cells.at(-1), target)) if (!cells.includes(cell)) cells.push(cell);
-    if (cells.length >= 64) break;
+    if (cells.length >= 20) break;
   }
-  const occupied = new Set(cells.slice(0, 64)); const queue = [...occupied];
-  for (let head = 0; occupied.size < 32 && head < queue.length; head++) for (let offset = atlas.nodeStart[queue[head]];
-    offset < atlas.nodeStart[queue[head] + 1] && occupied.size < 32; offset++) {
+  const occupied = new Set(cells.slice(0, 20)); const queue = [...occupied];
+  for (let head = 0; occupied.size < 12 && head < queue.length; head++) for (let offset = atlas.nodeStart[queue[head]];
+    offset < atlas.nodeStart[queue[head] + 1] && occupied.size < 12; offset++) {
     const next = atlas.nodeNeighbors[offset]; if (!occupied.has(next)) { occupied.add(next); queue.push(next); }
   }
-  return [...occupied].slice(0, 64);
+  return [...occupied].slice(0, 20);
 }
 function nearestMidpointCell(world, atlas, edge) {
   const a = world.edgeA[edge] * 3; const b = world.edgeB[edge] * 3;

@@ -5,7 +5,7 @@
 - Starting revision: `9815c6daf35c62aef4e913cc33cb095fea353b2a`
 - Branch: `main`
 - Relevant dirty file on arrival: `AGENTS.md` (the user-supplied replacement contract; preserve and include with this initiative).
-- Current Phase 3 dirty files: the History codec/recorder/preview, History surface/playback, visual-cache namespace, Worker route, title showcase, browser/unit/integration tests, and current documentation; no unrelated user changes are present.
+- Relevant Phase 5 dirty files before commit: the authored Evolution catalog/compiler, simulation/result/agent authority, History/renderer/persistence boundaries, audits/browser scenarios, showcase data, tests, and current documentation; no unrelated user changes are present.
 - Host: Linux x64, Node `v22.22.3`, 20 CPUs; Chrome/WebGL2 and forced Canvas 2D are available through the trusted file-CDP harness.
 
 ## Confirmed root causes
@@ -17,6 +17,8 @@
 - A Worker can be retired immediately after extinction, so requesting its visual buffer only after Result handling could lose terminal visual History. Fallback delivery is synchronous, so initial current History must establish Live state before its buffer callback arrives. Stale current-world buffer replies also need a selection load token.
 - `RunController` accepts the complete unsigned 32-bit seed word while old History/cache validators only accepted player-code-sized 30-bit seeds; terminal full-word worlds therefore needed an exact visual/semantic persistence boundary.
 - Per-cell radial displacement of duplicated dual-cell boundary vertices is the likely sphere-crack cause; Canvas independently fills adjacent polygons.
+- A terminal Result DTO was an untrusted projection: recomputing SCORE from its caller-controlled merit could mint Echoes. Agent actions also allowed Evolution mutation during an active World, which made settlement replay disagree with that World’s compiled configuration.
+- Terminal-collapse skips normal worldmaking, so already charged Luminous cells retained generation-era charge until extinction instead of decaying during the visible collapse.
 
 ## Decisions
 
@@ -30,6 +32,8 @@
 - Replace the visual codec wholesale with current-only `INHV` v2: three bounded bytes per cell for life, resource, and worldmaking/charge channels plus frame-level Luminous development and atmospheric wear. Transform state is sufficient for the current renderer's effective-biome mapping; no v1 decoder is retained.
 - Keep History controls outside the one scrolling timeline body. During visual loading/unavailability, defer visual seeking and explicitly present live or semantic-only state; only a decoded matching frame may atomically set the historical label and renderer snapshot.
 - Carry the completed visual bundle in the terminal authority outcome and save it directly before presentation teardown; current History requests retain explicit identity and selection-load guards. The visual codec/cache/archive retain the exact unsigned 32-bit authority seed, while player-entered seed codes remain 30-bit.
+- Reconstruct terminal authority from the original replay inputs and immutable compiled Evolution before settlement; persist only that reconstruction. Reject cyclic or over-deep caller DTOs, and reject agent Evolution purchases while a World is active.
+- During terminal collapse, skip generation and transformations but run a charge-only decay pass so renderer-visible state remains truthful.
 
 ## Phase 0 baseline
 
@@ -119,10 +123,39 @@
 - `npm run audit:cell-visuals` — passed with no violations. `npm run benchmark` — passed at 5,993 ticks/s against the 3,000 floor; renderer browser timing remained around 0.85–1.20 ms mean/p95 in the final Worker path.
 - `npm run showcase:check`, `npm run check:links`, `npm run check:structure`, and `git diff --check` — passed; structure reports only existing size/count warnings.
 
+## Phase 5 baseline — authored Evolution, ecology, Luminous, realized SCORE
+
+- Starting revision: `c905899 fix: restore continuous cell sphere shell`; branch: `main`; no unrelated dirty files.
+- Confirmed root causes: the f5/252 six-root graph contains procedural resonance filler; World Potential is still an authoritative SCORE multiplier and a visible predictive UI concept; first charge requires deep recipe ownership; fresh smoke cohorts last 282.2–367.4 seconds with peak Environment Levels 3–5, contrary to the intended fragile opening.
+- Baseline: `npm run balance:smoke` passed with the retained 12-run report above. `npm run audit:luminous` passed only because its old breadth fixture owns all 252 cells; at tick 300 it charged 2,249 cells, which does not prove first-purchase value. The next audit must use explicit authored fixtures and separate development/holdout seeds.
+- Decision: replace the old graph/current-only schema atomically with an authored frequency-2 42-cell sphere unless a durable 92-cell catalog is justified; delete World Potential authority and UI rather than hide it; retain exact transactions, physical adjacency, bounded cache, whole-cell charge, and production `RunController` cohorts.
+
+## Completed Phase 5 — authored Evolution, direct ecology, Luminous, realized SCORE
+
+- Replaced the procedural 252-cell/six-root resonance authority with the authored frequency-2 `EVOLUTION_CATALOG`: 42 durable cells, exactly one `First Division` root, real geodesic physical adjacency, named domains, authored text/effects/costs, exact level vectors, monotone quadratic refinement costs, and a bounded direct-effect compiler cache. Deleted atlas, recipe/build, potential, conditional, and filler authority rather than retaining compatibility paths.
+- The compiled run configuration now installs direct traits, habitat capabilities, ecology, worldmaking, Luminous configuration, and affinity pressure defense once at `RunController` creation. Fresh Worlds have only the root frontier and cannot enter gated lake, cold, ocean, or deep habitats; capability audit fixtures follow actual physical lineages and show each path can occupy its enabled habitat.
+- Retuned finite ecology so fresh development has a development-cohort median of 131.7 s and reaches Environment Level 1, while Foundation, Scarcity, Luminous, and mature fixtures causally improve distributional outcomes. Freshwater retains finite reserves and delayed local exhaustion but may spend faster through wider reach; its paired audit asserts that truthful tradeoff instead of a false every-seed lifetime guarantee.
+- Made `Bioelectric Spark` the first Luminous purchase. It creates authoritative whole-cell charge from living flux, carries a bounded upkeep cost, decays whenever generation stops (including terminal collapse), clears on extinction, and is preserved in History. The Luminous audit records real first-purchase powered cells on suitable seeds and stronger mature charge without false fresh emission.
+- Replaced World Potential and predictive result/Evolution UI with realized-only SCORE v6 and exact Echoes. SCORE components are monotone realized survival, exploration, presence, coherence, stewardship, and worldmaking, with bounded sustained Environment credit; settlement reconstructs terminal `RunController` authority from replay inputs before any Echoes transaction.
+- Locked agent Evolution while a World is active, made canonical result comparison reject cyclic/over-depth DTOs without throwing, and added regression coverage for forged merit, active-World mutation, hostile DTOs, and collapse charge decay.
+- Advanced current-only boundaries: meta 15, semantic History 10, agent save 6, result/replay 9, Worker protocol 11, and visual History `INHV` v3. Old documents and codecs reset/reject rather than migrate. Renderer and visual History use `luminousDevelopment`, not a presentation-only electricity field.
+- Updated agents, trophies, audits, title showcase, browser scenarios, and documentation to the compact model. Specialist agents now use visible physical neighbor routes and save for a reachable target rather than diverting their planned domain; the smoke tournament reaches the first Luminous cell on both development seeds.
+
+## Verification after Phase 5
+
+- `npm test` — passed: 178 unit and 71 integration tests; focused authority, hostile-DTO, agent-settlement, and terminal-collapse tests also passed.
+- `npm run balance:smoke` — passed. Fresh median 131.7 s; Foundation 156.1 s; Scarcity 206.3 s; Luminous 144.5 s with eight powered Worlds; mature 209.8 s.
+- `npm run audit:habitats` — passed at 60 Worlds/configuration; fresh occupancy stays zero in every gated habitat, and physical-lineage packages reach lake, tundra, snow/ice, shallow edge/full ocean, and deep ocean.
+- `npm run audit:luminous` — passed. It observes zero fresh false light, first-purchase real charge, stronger mature charge, live decay, extinction clearing, deterministic authority, and WebGL/Canvas semantic hierarchy; focused authority coverage verifies terminal-collapse decay.
+- `npm run audit:freshwater -- --count=24`, `npm run audit:trophies`, `node scripts/agent-tournament.mjs --smoke`, and `npm run showcase:generate`/`npm run showcase:check` — passed after Phase-5 calibration repairs.
+- Trusted `npm run test:browser:file`, `npm run test:browser:fallback`, and `npm run test:browser:canvas` — passed. Worker/fallback/Canvas evidence covers actual authored Evolution keyboard/pointer two-step activation, huge exact costs without overflow, real transformed/Luminous World snapshots, four normal WebGL draws, paired powered day/night luminance, and the continuous-shell pixel fixture.
+- Final `npm run verify` — passed every local gate, including deterministic/authority audits, all smoke cohorts, terminal soak, showcase check, unit/integration suites, a 9,774 ticks/s benchmark against the 3,000 floor, and link/structure checks.
+- An independent post-fix reviewer found no remaining blocker in active-World Evolution locking, hostile terminal DTO rejection, replay-backed settlement, or terminal-collapse charge decay.
+
 ## Evidence not yet obtained
 
-- Luminous luminance, deep cohort, physical-device, CI, and deployment evidence.
+- Physical-device, CI, and deployment evidence have not been obtained.
 
 ## Next coherent phase
 
-Replace the legacy six-root Evolution graph with one authored root and direct ecological effects, then retune fragile early worlds, first-level Luminous, and realized-only SCORE as coordinated current-only authority work.
+- None for ecology-experience-v2: inspect the final diff, commit the coherent Phase 5 replacement, and begin future work from the current-only authority.

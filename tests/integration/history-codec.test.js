@@ -1,4 +1,4 @@
-/** Visual History v2 codec, truthful renderer channels, bounds, and playback safety. */
+/** Visual History v3 codec, truthful renderer channels, bounds, and playback safety. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { performance } from 'node:perf_hooks';
@@ -16,18 +16,18 @@ import { loadHistory, normalizeHistoryEvents, serializeHistory, validateHistory 
 function frame(tick, flags = 0, count = 32) {
   const cells = new Uint8Array(count); const resources = new Uint8Array(count); const worldmaking = new Uint8Array(count);
   const cell = tick % count; cells[cell] = 0b10111001; resources[cell] = (21 << 3) | 5; worldmaking[cell] = (19 << 3) | 4;
-  return { tick, entropyQ: tick % 256, flags, aliveCount: 1, electricityDevelopmentQ: 153, cells, resources, worldmaking };
+  return { tick, entropyQ: tick % 256, flags, aliveCount: 1, luminousDevelopmentQ: 153, cells, resources, worldmaking };
 }
 
 function closeTo(actual, expected, tolerance, message = '') {
   assert.ok(Math.abs(actual - expected) <= tolerance, `${message} expected ${expected}, got ${actual}`);
 }
 
-test('INHV v2 round trips complete render-semantic checkpoints through reusable buffers', () => {
+test('INHV v3 round trips complete render-semantic checkpoints through reusable buffers', () => {
   const input = [frame(0, FRAME_FLAGS.INITIAL | FRAME_FLAGS.MAJOR), frame(50), frame(93, FRAME_FLAGS.TERMINAL | FRAME_FLAGS.MAJOR)];
   const buffer = encodeVisualHistory({ cellCount: 32, seed: 17, cadence: 50 }, input);
   const decoded = decodeVisualHistory(buffer);
-  assert.equal(decoded.version, 2); assert.equal(decoded.seed, 17); assert.equal(decoded.frames.length, 3);
+  assert.equal(decoded.version, 3); assert.equal(decoded.seed, 17); assert.equal(decoded.frames.length, 3);
   const fullWordSeed = 2693800525; const fullWord = decodeVisualHistory(encodeVisualHistory({ cellCount: 32, seed: fullWordSeed }, input));
   assert.equal(fullWord.seed, fullWordSeed);
   assert.deepEqual([...decoded.frames[1].cells], [...input[1].cells]);
@@ -40,11 +40,11 @@ test('INHV v2 round trips complete render-semantic checkpoints through reusable 
   assert.equal(projected.resourceState[18], 5); assert.equal(projected.transformationState[18], 4);
   closeTo(projected.resourceRichnessQ[18], 21 * 255 / 31, 1, 'richness');
   closeTo(projected.electricityQ[18], 19 * 255 / 31, 1, 'charge');
-  closeTo(projected.electricityDevelopment, 153 / 255, .001, 'development');
+  closeTo(projected.luminousDevelopment, 153 / 255, .001, 'development');
   for (const removed of ['nutrient', 'conductance', 'flux', 'edgeActive']) assert.equal(removed in projected, false);
 });
 
-test('v2 codec rejects v1, malformed, truncated, oversized, and unordered data', () => {
+test('v3 codec rejects old, malformed, truncated, oversized, and unordered data', () => {
   const valid = encodeVisualHistory({ cellCount: 32, seed: 2 }, [frame(0, FRAME_FLAGS.INITIAL), frame(5, FRAME_FLAGS.TERMINAL)]);
   const badMagic = valid.slice(0); new Uint8Array(badMagic)[0] = 0;
   const oldVersion = valid.slice(0); new Uint8Array(oldVersion)[4] = 1;
@@ -71,17 +71,17 @@ test('recorder retains historical resource, transformation, charge, and Luminous
   const run = new RunController({ seed: 20260731 }); run.start(); const state = run.state; const cell = state.inoculationCell;
   state.tick = 1; state.biomass[cell] = 1.25; state.stress[cell] = .42;
   state.resourceRichness[cell] = .68; state.resourceState[cell] = 5; state.transformationState[cell] = 4;
-  state.electricityQ[cell] = 177; state.electricityMastery = { ...state.electricityMastery, visualDevelopment: .61 };
+  state.electricityQ[cell] = 177; state.luminous = { ...state.luminous, enabled: true, visualDevelopment: .61 };
   run.historyRecorder.capture(state, FRAME_FLAGS.MAJOR);
   const history = decodeVisualHistory(run.historyBuffer()); const checkpoint = nearestFrame(history.frames, 1);
   const projected = projectPreview(checkpoint, createPreviewBuffers(state.topo.nodeCount)); const live = run.snapshot();
   assert.equal(projected.resourceState[cell], live.resourceState[cell]); assert.equal(projected.transformationState[cell], live.transformationState[cell]);
   closeTo(projected.resourceRichnessQ[cell], live.resourceRichnessQ[cell], 5, 'historical richness');
   closeTo(projected.electricityQ[cell], live.electricityQ[cell], 5, 'historical charge');
-  closeTo(projected.electricityDevelopment, live.electricityDevelopment, .01, 'historical development');
+  closeTo(projected.luminousDevelopment, live.luminousDevelopment, .01, 'historical development');
 });
 
-test('terminal authority carries the v2 visual bundle before the session can retire', () => {
+test('terminal authority carries the v3 visual bundle before the session can retire', () => {
   const messages = []; const run = new RunController({ seed: 20260733 }, (message) => messages.push(message)); run.start();
   while (run.state.status !== 'extinct') run.advance(37);
   const terminal = messages.find((message) => message.t === 'extinct');
@@ -114,29 +114,29 @@ test('current History normalizes bounded semantic cells and rejects mismatched s
     { tick: 3, type: 'resource-reserve', primaryCells }]);
   assert.deepEqual(events[0].primaryCells, [31]); assert.equal(events[0].cellId, 31);
   assert.deepEqual(events[1].primaryCells, [4, 5, 6, 7, 8, 9, 10, 11]);
-  assert.deepEqual(validateHistory({ schema: 8, worlds: [] }), { schema: 9, worlds: [], evolution: [], trophies: [] });
-  const oversized = validateHistory({ schema: 9, worlds: Array.from({ length: 32 }, (_, seed) => ({ seed, tick: seed,
+  assert.deepEqual(validateHistory({ schema: 8, worlds: [] }), { schema: 10, worlds: [], evolution: [], trophies: [] });
+  const oversized = validateHistory({ schema: 10, worlds: Array.from({ length: 32 }, (_, seed) => ({ seed, tick: seed,
     environmentModelVersion: 2, startEnvironmentLevel: '0' })) }, 32);
   assert.equal(oversized.worlds.length, 24);
   globalThis.localStorage = { getItem: () => JSON.stringify({ schema: 8, worlds: [] }), setItem: () => {} };
-  try { assert.equal(loadHistory().schema, 9); } finally { delete globalThis.localStorage; }
+  try { assert.equal(loadHistory().schema, 10); } finally { delete globalThis.localStorage; }
 });
 
 test('dynamic History retains bounded authoritative interpolation evidence', () => {
-  const history = validateHistory({ schema: 9, worlds: [{ seed: 8, tick: 1500, score: '4', startEnvironmentLevel: '0',
+  const history = validateHistory({ schema: 10, worlds: [{ seed: 8, tick: 1500, score: '4', startEnvironmentLevel: '0',
     environmentModelVersion: 2, environmentScheduleVersion: 2, environmentScheduleHash: 'ce29fefd',
     environmentPressureSummary: { level: '1', nextLevel: '2', profileHash: '01234567', nextProfileHash: '89abcdef',
       interpolationQ: 500000, effectiveCoefficients: { renewalScale: .82, maintenanceScale: 1.13, ignored: Infinity },
       pressure: .4, severityQ: 400000 } }] });
   const pressure = history.worlds[0].environmentPressureSummary;
-  assert.equal(history.schema, 9); assert.equal(pressure.nextLevel, '2'); assert.equal(pressure.interpolationQ, 500000);
+  assert.equal(history.schema, 10); assert.equal(pressure.nextLevel, '2'); assert.equal(pressure.interpolationQ, 500000);
   assert.deepEqual(pressure.effectiveCoefficients, { renewalScale: .82, maintenanceScale: 1.13 });
 });
 
 test('semantic History enforces its byte bound even with maximum-width exact fields', () => {
   const huge = '9'.repeat(4000); const evolution = Array.from({ length: 128 }, (_, seq) => ({ seq, nodeId: 'ecology-tempered-scars', oldLevel: huge, newLevel: huge,
     cost: huge, balanceBefore: huge, balanceAfter: huge, run: huge, environmentLevel: '0', transactionKey: `wide-${seq}` }));
-  const archive = validateHistory({ schema: 9, worlds: [], evolution, trophies: [] }); const serialized = serializeHistory(archive);
+  const archive = validateHistory({ schema: 10, worlds: [], evolution, trophies: [] }); const serialized = serializeHistory(archive);
   assert.ok(new TextEncoder().encode(serialized).byteLength <= 700000); assert.ok(archive.evolution.length > 0 && archive.evolution.length < 128);
   assert.equal(archive.evolution.at(-1).newLevel, huge);
 });
@@ -155,7 +155,7 @@ test('completed visual and semantic History retain an unsigned 32-bit world seed
   const seed = 2693800525;
   const buffer = encodeVisualHistory({ cellCount: 32, seed }, [frame(0, FRAME_FLAGS.INITIAL | FRAME_FLAGS.TERMINAL)]);
   assert.ok(validateRecentRun({ id: '1-2-full-word', seed, completedAt: 1, buffer }));
-  const archive = validateHistory({ schema: 9, worlds: [{ seed, tick: 5,
+  const archive = validateHistory({ schema: 10, worlds: [{ seed, tick: 5,
     environmentModelVersion: ENVIRONMENT_MODEL_VERSION, startEnvironmentLevel: '0' }] });
   assert.equal(archive.worlds[0]?.seed, seed);
 });
@@ -166,7 +166,7 @@ test('past-world load guard rejects stale asynchronous completions', () => {
   guard.invalidate(); assert.equal(guard.isCurrent(second), false);
 });
 
-test('current History only swaps to a visual checkpoint after matching v2 data is decoded', () => {
+test('current History only swaps to a visual checkpoint after matching v3 data is decoded', () => {
   const identity = createWorldIdentity({ worldSessionId: 1, runId: 1, seed: 7, presentationGeneration: 1,
     environmentModelVersion: ENVIRONMENT_MODEL_VERSION, environmentScheduleVersion: ENVIRONMENT_SCHEDULE_VERSION,
     environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH, immutableStartConfigurationHash: 'abcdef12' }); const sent = []; const world = { id: 'current', current: true, seed: 7, tick: 50, events: [] };

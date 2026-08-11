@@ -66,7 +66,7 @@ export function createInspectorSurface(options) {
       ['Reserve fraction', `${Math.round((d.reserveFraction ?? 0) * 100)}%`],
       ['Freshwater support', `${Math.round((d.freshwaterSupport ?? 0) * 100)}% · tier ${d.freshwaterTier ?? 0}`],
       ['Blocked attempts', `${d.resourceBlocked ?? 0} resource · ${d.habitatBlocked ?? 0} habitat`],
-      ['Transformation', transformationLabel(d.transformationState)], ['Bioelectric charge', `${Math.round((d.electricity ?? 0) * 100)}%`],
+      ['Transformation', transformationLabel(d.transformationState)], ['Luminous charge', `${Math.round((d.electricity ?? 0) * 100)}%`],
       ['Biomass', band(Math.min(1, d.biomass / 2.5), ['Trace', 'Thin', 'Established', 'Dense'])],
       ['Energy reserve', band(Math.min(1, Math.max(0, d.energy) / 6), ['Empty', 'Low', 'Stable', 'Full'])],
       ['Stress', band(d.stress, ['Calm', 'Watchful', 'Strained', 'Critical'])], ['Local nutrient', band(d.nutrient, ['Spent', 'Low', 'Rich', 'Abundant'])],

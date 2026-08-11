@@ -25,7 +25,7 @@ test('mismatched meta schemas start fresh without a compatibility migration', ()
   assert.deepEqual(validateMeta(old), defaultMeta());
   const current = validateMeta({ ...defaultMeta(), revision: '7', runs: '4', worldSeedIndex: '5',
     totalEchoes: '400', echoBalance: '100', bestScore: '999', evolutionLevels: [{ id: MEMORY_NODE_IDS[0], level: '2' }] });
-  assert.equal(current.schema, 14); assert.equal(current.runs, '4'); assert.equal(current.worldSeedIndex, '5');
+  assert.equal(current.schema, 15); assert.equal(current.runs, '4'); assert.equal(current.worldSeedIndex, '5');
   assert.deepEqual(current.evolutionLevels, [{ id: MEMORY_NODE_IDS[0], level: '2' }]);
 });
 

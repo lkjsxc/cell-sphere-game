@@ -4,11 +4,11 @@ Bounded, observational presentation data for truthful approximate globe scrubbin
 
 | File | Responsibility |
 | --- | --- |
-| `codec.js` | Strict current-only `INHV` v2 binary codec, visual-world compatibility check, and 256 KiB adaptive thinning. |
+| `codec.js` | Strict current-only `INHV` v3 binary codec, visual-world compatibility check, and 256 KiB adaptive thinning. |
 | `recorder.js` | Quantizes authoritative state at tick 0, cadence, semantic events, and extinction. |
 | `preview.js` | Nearest-frame lookup and reusable complete renderer projection buffers. |
 
-Each v2 frame stores tick, atmospheric wear, flags, alive count, Luminous
+Each v3 frame stores tick, atmospheric wear, flags, alive count, Luminous
 development, and three bounded bytes per cell: life/biomass/stress, resource
 condition/richness, and transformation/charge. Static geography is regenerated
 from the exact unsigned 32-bit authority seed (the player-facing seed code remains
@@ -18,7 +18,7 @@ simulation references.
 
 Visual bundles are approximate, device-local IndexedDB records, excluded from
 semantic JSON export/import and authority hashes. The cache is current-only:
-v1 buffers and incompatible static-world versions are rejected, and the visual
+older buffers and incompatible static-world versions are rejected, and the visual
 cache namespace resets rather than migrating them. While a matching bundle is
 loading or unavailable, History remains semantic-only and never labels the
 live globe as a historical checkpoint.

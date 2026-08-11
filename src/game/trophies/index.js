@@ -9,7 +9,7 @@ import { TROPHY_CONDITION_KEYS } from './keys.js';
 import { TROPHY_ATLAS_CELLS, TROPHY_ATLAS_HASH, TROPHY_FAMILIES, validateTrophyAtlas } from './atlas.js';
 export { TROPHY_ATLAS_REVERSE } from './atlas.js';
 
-export const TROPHY_CATALOG_VERSION = 4;
+export const TROPHY_CATALOG_VERSION = 5;
 const GROUPS = Object.freeze([REACH_TROPHIES, FORM_TROPHIES, ENDURANCE_TROPHIES,
   HABITAT_TROPHIES, EVOLUTION_TROPHIES, MASTERY_TROPHIES]);
 export const TROPHIES = Object.freeze(GROUPS.flat().map((trophy, index) =>

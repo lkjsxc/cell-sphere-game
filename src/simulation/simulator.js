@@ -1,6 +1,5 @@
 /** Authoritative deterministic run controller shared by Worker and fallback. */
 import { BALANCE as B } from '../game/balance.js';
-import { applyMemoryConditionals } from '../game/skills/index.js';
 import { beginTerminalCollapse, createRunState, finalizeEnvironmentProgression, reconcileLiveness, terminalCollapseReason, updateEnvironmentProgression } from './state.js';
 import { updateEnvironment } from './environment.js';
 import { runMetabolism } from './metabolism.js';
@@ -14,7 +13,7 @@ import { buildSnapshot, snapshotTransfers } from './snapshot.js';
 import { buildAbandonedRun, buildRunResult, dominantCause } from './result.js';
 import { HistoryRecorder } from '../history/recorder.js';
 import { habitatAccessForInspection, habitatLabel } from './habitats.js';
-import { runWorldmaking } from './worldmaking.js';
+import { decayWorldmakingCharge, runWorldmaking } from './worldmaking.js';
 import { RESOURCE_STATE_LABELS, freshwaterSupportAt, reserveFractionAt, updateResourceEcology } from './resource-ecology.js';
 import { ecologicalAccessForInspection } from './lifecycle/ecological-access.js';
 import { updateReachGoal } from './lifecycle/reach-goal.js';
@@ -62,11 +61,13 @@ export class RunController {
     }
     if (!collapsing) {
       // Environment clock/profile authority precedes every ecological consumer.
-      applyMemoryConditionals(s);
       if (s.tick % B.ENV_EVERY === 0) updateEnvironment(s);
       runMetabolism(s); runTransport(s); runWorldmaking(s); runGrowth(s);
     }
-    runDeath(s); updateResourceEcology(s);
+    runDeath(s);
+    // Terminal collapse deliberately skips generation and transformations, not charge decay.
+    if (collapsing) decayWorldmakingCharge(s);
+    updateResourceEcology(s);
     const living = reconcileLiveness(s);
     if (living.livingCount === 0) return this.finishExtinction();
     if (updateReachGoal(s)) this.emit({ t: 'milestone', id: 'reach-100', tick: s.tick,
@@ -91,6 +92,8 @@ export class RunController {
     finalizeEnvironmentProgression(s);
     refreshScoreMerit(s);
     s.status = 'extinct'; s.aliveCount = 0; s.coverage = 0;
+    // Charge belongs to living whole cells; terminal authority never leaves a powered corpse or renderer glow.
+    s.electricCharge.fill(0); s.electricityQ.fill(0); s.electrifiedCells = 0;
     s.connectedShare = 0; s.largestComponent = 0;
     s.extinction = { tick: s.tick, cause: dominantCause(s), terminalCause: s.terminalCause ?? 'natural' };
     recordHistory(s, 'run-extinct', { cause: s.extinction.cause });

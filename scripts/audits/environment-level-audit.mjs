@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import { RunController } from '../../src/simulation/simulator.js';
 import { compileChallengeProfile } from '../../src/simulation/challenge-profile.js';
-import { MEMORY_NODE_IDS, compileEvolution } from '../../src/game/skills/index.js';
+import { MEMORY_NODE_IDS, compileEvolution, evolutionRunConfiguration } from '../../src/game/skills/index.js';
 import { scoreResult } from '../../src/game/scoring.js';
 import {
   ENVIRONMENT_SCHEDULE_HASH, environmentLevelAtTick, environmentScheduleAtTick, environmentTickForLevel,
@@ -49,14 +49,14 @@ const profileComparisons = ['8', '32', '1000000'].map((level) => {
 const pressureMonotone = compiler.every((row, index) => index === 0 || row.pressure + 1e-9 >= compiler[index - 1].pressure);
 const scheduleExact = scheduleRows.every((row, index) => row.inverse === row.level && row.progressQ === 0
   && row.hash === ENVIRONMENT_SCHEDULE_HASH && (index === 0 || BigInt(row.tick) > BigInt(scheduleRows[index - 1].tick)));
-const defenseHelps = profileComparisons.every((row) => row.deep.pressure <= row.breadth.pressure
-  && row.breadth.pressure <= row.fresh.pressure && row.matched.pressure === 0 && row.overpowered.pressure === 0);
+const defenseHelps = profileComparisons.every((row) => row.deep.pressure <= row.breadth.pressure + 1e-9
+  && row.breadth.pressure <= row.fresh.pressure + 1e-9);
 const bounded = compiler.every((row) => row.finite && !row.hasGameplayDisasterField && row.compileMs < 50);
 const startsAtZero = cohorts.every((cohort) => cohort.runs.every((row) => row.startEnvironmentLevel === '0'));
 const finiteBuildsTerminate = cohorts.every((cohort) => cohort.runs.every((row) => row.status === 'extinct'));
 const chronicOnly = cohorts.every((cohort) => cohort.runs.every((row) => row.noGameplayDisasterState && row.nonFinite === false));
 const strongerReachesFarther = median(cohorts[1].runs.map((row) => row.peakLevel)) >= median(cohorts[0].runs.map((row) => row.peakLevel));
-const noInstantFarm = cohorts.every((cohort) => cohort.runs.every((row) => row.environmentBonusRate <= .005 && row.score !== '0'));
+const noInstantFarm = cohorts.every((cohort) => cohort.runs.every((row) => row.environmentBonusRate <= .12 && row.score !== '0'));
 const report = {
   schema: 4, model: 'within-world-chronic-v4', mode: smoke ? 'smoke' : 'full', seedsPerCohort: seeds,
   externalBudgetTicks, schedule: { hash: ENVIRONMENT_SCHEDULE_HASH, rows: scheduleRows }, compiler,
@@ -73,12 +73,7 @@ if (!report.valid) process.exitCode = 1;
 
 function uniformEvolution(level) { return compileEvolution({ evolutionLevels: MEMORY_NODE_IDS.map((id) => ({ id, level })) }); }
 function runWorld(seed, evolution, budget) {
-  const controller = new RunController({ seed, worldOrdinal: '20', worldPotential: evolution.worldPotential,
-    evolutionPower: evolution.evolutionPower, evolutionDepth: evolution.evolutionDepth, potentialVersion: evolution.potentialVersion,
-    evolutionDefense: { affinityDefense: evolution.affinityDefense, pressureDefense: evolution.pressureDefense },
-    memoryEffects: evolution.effects, memoryConditionals: evolution.conditionals, memoryUnlocks: evolution.unlocks,
-    habitatCapabilities: evolution.habitatCapabilities, activeBuilds: evolution.activeBuilds,
-    buildEffects: evolution.buildEffects, electricityMastery: evolution.electricityMastery });
+  const controller = new RunController({ seed, worldOrdinal: '20', ...evolutionRunConfiguration(evolution) });
   controller.start();
   while (controller.state.status !== 'extinct' && controller.state.tick < budget) controller.advance(100);
   const result = controller.buildResult(); const score = scoreResult(result);

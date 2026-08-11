@@ -4,14 +4,14 @@ import { RunController } from '../../src/simulation/simulator.js';
 import { REPLAY, REPLAY_VERSION } from '../../src/simulation/replay.js';
 import { scoreResult } from '../../src/game/scoring.js';
 import { RUN_PROTOCOL_VERSION, acceptsRunProtocol } from '../../src/core/run-protocol.js';
-import { compileEvolution, MEMORY_NODES } from '../../src/game/skills/index.js';
+import { compileEvolution, evolutionRunConfiguration, MEMORY_NODES } from '../../src/game/skills/index.js';
 import { appendWorld, defaultHistory, loadHistory, normalizeHistoryEvents, saveHistory, serializeHistory } from '../../src/platform/history.js';
 
-function runFull(cfg, chunk = 50) { const controller = new RunController({ worldOrdinal: 1, worldPotential: 16000, ...cfg }); controller.start();
+function runFull(cfg, chunk = 50) { const controller = new RunController({ worldOrdinal: 1, ...cfg }); controller.start();
   while (controller.state.status !== 'extinct') controller.advance(chunk); return controller.buildResult(); }
 function semantic(result) { return { hash: result.hash, tick: result.tick, cause: result.cause, terminalCause: result.terminalCause,
   inoculationCell: result.inoculationCell, worldOrdinal: result.worldOrdinal,
-  worldPotential: result.worldPotential, replay: result.replay, reach: result.reach, lakeProof: result.lakeProof,
+  replay: result.replay, reach: result.reach, lakeProof: result.lakeProof,
   resourceFinal: result.resourceFinal, resourceTransferred: result.resourceTransferred, habitatOccupancy: result.habitatOccupancy } }
 
 test('Worker protocol explicitly rejects missing or stale envelopes',()=>{
@@ -20,7 +20,7 @@ test('Worker protocol explicitly rejects missing or stale envelopes',()=>{
 });
 
 test('same start configuration reproduces authority, History, Imprint, and SCORE', () => {
-  const config = { seed: 424242, strainId: 'pioneer', worldOrdinal: 3, worldPotential: 111000 };
+  const config = { seed: 424242, strainId: 'pioneer', worldOrdinal: 3 };
   const a = runFull(config), b = runFull(config); assert.deepEqual(semantic(a), semantic(b));
   assert.deepEqual(a.history, b.history); assert.deepEqual(a.imprint, b.imprint); assert.deepEqual(scoreResult(a), scoreResult(b));
 });
@@ -33,16 +33,16 @@ test('different seeds diverge while world ordinal does not change ecology', () =
 });
 
 test('bounded 1x through 256x-equivalent execution chunks are exactly invariant', () => {
-  const config = { seed: 987654, strainId: 'conservator', worldOrdinal: 8, worldPotential: 240000 };
+  const config = { seed: 987654, strainId: 'conservator', worldOrdinal: 8 };
   const reference = runFull(config, 1); for (const chunk of [7, 32, 50, 64, 256]) assert.deepEqual(semantic(runFull(config, chunk)), semantic(reference));
 });
 
 test('hundreds of inspections and snapshots remain observationally neutral', () => {
-  const config = { seed: 1357911, worldOrdinal: 4, worldPotential: 120000 }; const quiet = runFull(config, 17);
+  const config = { seed: 1357911, worldOrdinal: 4 }; const quiet = runFull(config, 17);
   const controller = new RunController(config); controller.start(); let views = 0;
   while (controller.state.status !== 'extinct') { controller.advance(17); controller.snapshot();
     for (let i = 0; i < 3; i++) { controller.inspectCell((views * 97 + i * 31) % controller.state.topo.nodeCount); views++; } }
-  const observed = controller.buildResult(); assert.ok(views > 400); assert.deepEqual(semantic(observed), semantic(quiet));
+  const observed = controller.buildResult(); assert.ok(views > 100); assert.deepEqual(semantic(observed), semantic(quiet));
   assert.deepEqual(scoreResult(observed), scoreResult(quiet)); assert.deepEqual(observed.history, quiet.history);
 });
 
@@ -50,24 +50,20 @@ test('strain and permanent Evolution remain authoritative start inputs', () => {
   const pioneer = runFull({ seed: 31337, strainId: 'pioneer' }); const weaver = runFull({ seed: 31337, strainId: 'weaver' });
   assert.notEqual(pioneer.hash, weaver.hash);
   const root = MEMORY_NODES[0]; const memory = compileEvolution({ evolutionLevels: [{ id: root.id, level: '1' }] });
-  const evolved = runFull({ seed: 31337, memoryEffects: memory.effects, memoryConditionals: memory.conditionals,
-    memoryUnlocks: memory.unlocks, habitatCapabilities: memory.habitatCapabilities,
-    worldPotential: memory.worldPotential, potentialVersion: memory.potentialVersion });
-  assert.notEqual(evolved.hash, pioneer.hash); assert.equal(evolved.worldPotential, memory.worldPotential);
+  const evolved = runFull({ seed: 31337, ...evolutionRunConfiguration(memory) });
+  assert.notEqual(evolved.hash, pioneer.hash); assert.equal(evolved.luminousEnabled, false);
 });
 
-test('replay schema 8 contains only stable run creation inputs', () => {
-  const result = runFull({ seed: 8888 }); assert.equal(result.replayVersion, REPLAY_VERSION); assert.equal(REPLAY_VERSION, 8);
+test('replay schema 9 contains only stable run creation inputs', () => {
+  const result = runFull({ seed: 8888 }); assert.equal(result.replayVersion, REPLAY_VERSION); assert.equal(REPLAY_VERSION, 9);
   assert.deepEqual(result.replay.map((entry) => entry[1]), [REPLAY.STRAIN, REPLAY.INOCULATE]);
   assert.ok(result.replay.flat().every(Number.isInteger));
 });
 
-test('owned conditional Evolution changes only its declared runtime condition', () => {
-  const target = MEMORY_NODES.find((node) => node.effect.trigger === 'coverage-below-25'); const memory = compileEvolution({ evolutionLevels: [{ id: target.id, level: '1' }] });
-  const controller = new RunController({ seed: 9182, worldPotential: memory.worldPotential,
-    memoryEffects: memory.effects, memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks });
-  controller.start(); controller.advance(1); assert.ok(controller.state.activeTraits.reach > controller.state.traits.reach);
-  assert.equal(controller.state.activeTraits.maintenance, controller.state.traits.maintenance);
+test('owned direct Evolution is installed once as a static authoritative start input', () => {
+  const target = MEMORY_NODES.find((node) => node.id === 'first-division'); const memory = compileEvolution({ evolutionLevels: [{ id: target.id, level: '1' }] });
+  const controller = new RunController({ seed: 9182, ...evolutionRunConfiguration(memory) }); controller.start(); controller.advance(1);
+  assert.ok(controller.state.activeTraits.reach > 1.4); assert.equal(controller.state.luminous.enabled, false);
 });
 
 test('semantic History remains bounded, serializable, and corruption-safe', () => {

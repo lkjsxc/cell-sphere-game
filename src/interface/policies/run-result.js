@@ -1,6 +1,8 @@
 /** Pure, idempotent cross-run transaction; browser persistence happens outside. */
-import {scoreResult,scoreResultMatchesAuthority} from '../../game/scoring.js';
-import {compileEvolution} from '../../game/skills/index.js';
+import {scoreResult} from '../../game/scoring.js';
+import {compileEvolution, evolutionRunConfiguration} from '../../game/skills/index.js';
+import { RunController } from '../../simulation/simulator.js';
+import { REPLAY, REPLAY_VERSION } from '../../simulation/replay.js';
 import { appendTrophyEvents, appendWorld } from '../../platform/history.js';
 import { convertImprintToAtlas } from '../../platform/storage.js';
 import { reconcileTrophies } from '../../game/trophies/evaluator.js';
@@ -23,9 +25,12 @@ export function applyRunResult(meta,archive,result,lastKey=null){
   const expectedOrdinal=maxProgressionInteger(normalizeProgressionInteger(meta.worldSeedIndex,'0'),incrementProgressionInteger(runs));
   if(resultOrdinal!==expectedOrdinal)return rejected('unexpected-world-ordinal',key,meta,archive);
   let evolution;try{evolution=compileEvolution(meta)}catch{return rejected('invalid-evolution-state',key,meta,archive)}
-  if(normalizeProgressionInteger(result.worldPotential,'0')!==evolution.worldPotential)return rejected('invalid-world-potential',key,meta,archive);
   if(!validDynamicEnvironmentResult(result, evolution))return rejected('invalid-environment-result',key,meta,archive);
-  if(!scoreResultMatchesAuthority(result))return rejected('invalid-score-projection',key,meta,archive);
+  const authority = reproduceTerminalAuthority(result, evolution);
+  if (!authority || !sameTerminalAuthority(result, authority)) return rejected('invalid-authority-result',key,meta,archive);
+  // Everything persisted below comes from a replayed terminal authority, never
+  // from a message DTO whose mutable score/result fields may have been forged.
+  result = { ...authority, resultTransactionKey: key };
   const score=scoreResult(result);const converted=result.imprint?.edges?.length
     ? convertImprintToAtlas(result.imprint) : null;
   const nextRuns=incrementProgressionInteger(runs);
@@ -51,6 +56,38 @@ export function applyRunResult(meta,archive,result,lastKey=null){
   const nextArchive = appendTrophyEvents(appended, trophies.awardedIds, record?.id);
   return Object.freeze({ applied: true, key, meta: trophies.meta, archive: nextArchive, score,
     trophyIds:trophies.awardedIds,trophiesBackfilled:trophies.backfilled});
+}
+function reproduceTerminalAuthority(result, evolution) {
+  const input = replayInputs(result); if (!input) return null;
+  try {
+    const controller = new RunController({ seed: result.seed, runId: result.runId, worldOrdinal: result.worldOrdinal,
+      strainId: input.strainId, inoculate: input.inoculate, ...evolutionRunConfiguration(evolution) });
+    controller.start(); let guard = 0;
+    while (controller.state.status !== 'extinct' && guard++ < 10_000) controller.advance(64);
+    return controller.state.status === 'extinct' ? controller.buildResult() : null;
+  } catch { return null; }
+}
+function replayInputs(result) {
+  if (!Array.isArray(result?.replay) || result.replayVersion !== REPLAY_VERSION || !Number.isInteger(result.inoculationCell)) return null;
+  const strain = result.replay.find((entry) => Array.isArray(entry) && entry[0] === 0 && entry[1] === REPLAY.STRAIN);
+  const inoculate = result.replay.find((entry) => Array.isArray(entry) && entry[0] === 0 && entry[1] === REPLAY.INOCULATE);
+  const strainIds = ['pioneer', 'conservator', 'weaver'];
+  if (!strain || !inoculate || !Number.isInteger(strain[2]) || !Number.isInteger(inoculate[2]) || inoculate[2] !== result.inoculationCell) return null;
+  return { strainId: strainIds[strain[2]] ?? 'pioneer', inoculate: inoculate[2] };
+}
+function sameTerminalAuthority(input, authority) {
+  try { return canonicalTerminal(input) === canonicalTerminal(authority); } catch { return false; }
+}
+function canonicalTerminal(value, topLevel = true, depth = 0, ancestors = new Set()) {
+  if (depth > MAX_CANONICAL_TERMINAL_DEPTH) throw new Error('terminal result exceeds canonical depth');
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (ancestors.has(value)) throw new Error('terminal result contains a cycle');
+  ancestors.add(value);
+  try {
+    if (Array.isArray(value)) return `[${value.map((entry) => canonicalTerminal(entry, false, depth + 1, ancestors)).join(',')}]`;
+    return `{${Object.keys(value).filter((key) => !(topLevel && TRANSPORT_FIELDS.has(key))).sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalTerminal(value[key], false, depth + 1, ancestors)}`).join(',')}}`;
+  } finally { ancestors.delete(value); }
 }
 function validDynamicEnvironmentResult(result, evolution) {
   if (!result || result.resultSchemaVersion !== RUN_RESULT_SCHEMA_VERSION
@@ -119,4 +156,6 @@ function betterExposure(previous, candidate) {
   }
   return prior;
 }
+const TRANSPORT_FIELDS = new Set(['worldSessionId', 'presentationGeneration', 'immutableStartConfigurationHash', 'resultTransactionKey']);
+const MAX_CANONICAL_TERMINAL_DEPTH = 32;
 function rejected(reason,key,meta,archive){return Object.freeze({applied:false,reason,key,meta,archive,score:null,trophyIds:[]})}

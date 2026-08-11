@@ -20,7 +20,7 @@ The WebGL world path remains exactly four steady-state draws.
   pointer-to-cell selection.
 - `blank-snapshot.js`: typed zero-life `starting` frame before new authority.
 
-The Evolution scene is the frequency-5 252-cell topology. Its projection
+The Evolution scene is the authored frequency-2 42-cell topology. Its projection
 visually distinguishes locked/reachable, affordable, selected-ready, owned,
 owned-ready, selected-owned-ready, and recently upgraded states with material,
 inset/outline/relief, text-backed semantics, and reduced-motion-safe treatment.
@@ -29,7 +29,7 @@ select-first, later-second-activation state machine.
 
 Luminous visuals come only from authoritative per-cell charge bytes. Zero charge
 emits no light; production, local variation, decay, day/night emphasis, and
-mastery development remain bounded whole-cell material in both backends. The
+Luminous development remain bounded whole-cell material in both backends. The
 World shell never radially displaces duplicated cell corners: depth comes from
 fragment material, and Canvas establishes opaque disk coverage before its
 translucent cell materials. There are no rivers, roads/routes, ribbons,

@@ -5,7 +5,7 @@ import { cpus } from 'node:os';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../src/simulation/simulator.js';
 import { runHeadless } from './pilot.mjs';
-import { MEMORY_NODES, MEMORY_NODE_IDS, compileEvolution, evolutionCompileCacheDiagnostics,
+import { MEMORY_NODES, MEMORY_NODE_IDS, compileEvolution, evolutionCompileCacheDiagnostics, evolutionRunConfiguration,
   resetEvolutionCompileCache } from '../src/game/skills/index.js';
 import { compileChallengeProfile } from '../src/simulation/challenge-profile.js';
 import { environmentLevelAtTick, environmentTickForLevel } from '../src/game/environment-level.js';
@@ -24,7 +24,7 @@ const ordered = samples.slice().sort((a, b) => a.ms - b.ms);
 const { result, ticks, ms } = ordered[1];
 const ticksPerSecond = Math.round(ticks / (ms / 1000));
 const breadth = compileEvolution({ evolutionLevels: MEMORY_NODE_IDS.map((id) => ({ id, level: '1' })) });
-const deepLuminous = compileEvolution({ evolutionLevels: MEMORY_NODES.map((node) => ({ id: node.id, level: node.affinity === 'Luminous' ? '20' : '1' })) });
+const deepLuminous = compileEvolution({ evolutionLevels: MEMORY_NODES.map((node) => ({ id: node.id, level: node.domain === 'Luminous' ? '20' : '1' })) });
 const fresh = compileEvolution({});
 const extremeLevel = `1${'0'.repeat(512)}`;
 const profiles = {
@@ -50,12 +50,7 @@ process.exit(checkpoint.valid ? 0 : 1);
 
 function measureRun(seed, evolution) {
   const heapBefore = process.memoryUsage().heapUsed;
-  const controller = new RunController({ seed, worldOrdinal: '20', worldPotential: evolution.worldPotential,
-    evolutionPower: evolution.evolutionPower, evolutionDepth: evolution.evolutionDepth, potentialVersion: evolution.potentialVersion,
-    evolutionDefense: { affinityDefense: evolution.affinityDefense, pressureDefense: evolution.pressureDefense },
-    memoryEffects: evolution.effects, memoryConditionals: evolution.conditionals, memoryUnlocks: evolution.unlocks,
-    habitatCapabilities: evolution.habitatCapabilities, activeBuilds: evolution.activeBuilds,
-    buildEffects: evolution.buildEffects, electricityMastery: evolution.electricityMastery });
+  const controller = new RunController({ seed, worldOrdinal: '20', ...evolutionRunConfiguration(evolution) });
   const at = performance.now(); controller.start(); let remaining = 20_000;
   while (controller.state.status !== 'extinct' && remaining > 0) { controller.advance(Math.min(64, remaining)); remaining -= 64; }
   const elapsed = performance.now() - at; const complete = controller.state.status === 'extinct'; const result = controller.buildResult();

@@ -2,12 +2,9 @@
 import { BIOME, FEATURE } from '../world/fields.js';
 
 export const HABITAT_SKILLS = Object.freeze({
-  LAKE_ACCESS: 'Lacustrine Film',
-  TUNDRA_ACCESS: 'Tundra Proteins',
-  SNOW_ICE_ACCESS: 'Cryogenic Matrix',
-  SHALLOW_OCEAN_EDGE_ACCESS: 'Brackish Membrane',
-  SHALLOW_OCEAN_ACCESS: 'Pelagic Lattice',
-  DEEP_OCEAN_ACCESS: 'Abyssal Vesicles',
+  LAKE_ACCESS: 'Lake Crossing', TUNDRA_ACCESS: 'Cold Reserve', SNOW_ICE_ACCESS: 'Glacial Basins',
+  SHALLOW_OCEAN_EDGE_ACCESS: 'Tidal Tolerance', SHALLOW_OCEAN_ACCESS: 'Brackish Budding',
+  DEEP_OCEAN_ACCESS: 'Marine Bridge',
 });
 
 const LABELS = Object.freeze({

@@ -68,12 +68,8 @@ export function performWorldReplacement(app) {
   replacement.status = 'starting';
   app.driver.start({ seed, strainId: 'pioneer', worldOrdinal,
     evolutionDefense:{ affinityDefense:evolution.affinityDefense, pressureDefense:evolution.pressureDefense },
-    memoryEffects: evolution.effects, memoryConditionals: evolution.conditionals, memoryUnlocks: evolution.unlocks,
-    habitatCapabilities: evolution.habitatCapabilities, worldPotential: evolution.worldPotential,
-    evolutionPower: evolution.evolutionPower ?? 0, evolutionDepth:evolution.evolutionDepth,
-    potentialVersion: evolution.potentialVersion,
-    activeBuilds: evolution.activeBuilds ?? [], buildEffects: evolution.buildEffects ?? {},
-    electricityMastery:evolution.electricityMastery }, app.speed, identity);
+    memoryEffects: evolution.effects, habitatCapabilities: evolution.habitatCapabilities,
+    ecology: evolution.ecology, worldmaking: evolution.worldmaking, luminous: evolution.luminous }, app.speed, identity);
   return true;
 }
 export function retireWorldPresentation(app) {

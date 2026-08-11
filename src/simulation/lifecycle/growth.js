@@ -58,19 +58,14 @@ export function runGrowth(state) {
       const effectiveBiome = state.effectiveBiome[nb]; const transformed = effectiveBiome !== fields.biomeId[nb];
       const route = transformed ? BIOME_EFFECTS[effectiveBiome].routeCost : (fields.routeCost?.[nb] ?? 1);
       const growth = transformed ? BIOME_EFFECTS[effectiveBiome].growth : (fields.growthSuitability?.[nb] ?? 1);
-      const active = state.activeBuildIdSet; let buildGrowth = 1;
-      if (active.has('rich-rush') && access.resourceRichness >= .72) buildGrowth *= 1.20;
-      if (active.has('lake-garden') && access.modifiers.freshwater > .2) buildGrowth *= 1.12;
-      if (active.has('wasteland-reclaimer') && access.resourceRichness < .42) buildGrowth *= .72;
-      const gardener = active.has('world-gardener');
-      if (active.has('cold-dormancy')) buildGrowth *= state.temperature[nb] < .34 ? (gardener ? 6 : 1.55) : .82;
-      if (active.has('pelagic-colony') && effectiveBiome === 0) buildGrowth *= gardener ? 30 : .72;
-      else if (active.has('brine-harvester') && effectiveBiome === 1) buildGrowth *= gardener ? 4 : 1.25;
-      if (gardener) buildGrowth *= 1.28 * (state.coverage > .80 ? 10 : 1);
-      const routeBuild = gardener ? (state.coverage > .80 ? .72 : .82) : 1;
-      const cost = baseCost * route * routeBuild;
+      const ecology = state.ecology ?? EMPTY;
+      const freshwater = access.modifiers.freshwater ?? 0;
+      let ecologicalGrowth = 1 + Math.min(.14, freshwater * ecology.freshwaterSupport * .12);
+      if (effectiveBiome === 0 || effectiveBiome === 1) ecologicalGrowth *= 1 + Math.min(.18, ecology.marineSupport * .12);
+      if (access.reason === 'reachable-through-recycling') ecologicalGrowth *= .72;
+      const cost = baseCost * route * (access.reason === 'reachable-through-recycling' ? 1.12 : 1);
       let p = B.GROW_P_BASE * traits.reach
-        * growth * buildGrowth
+        * growth * ecologicalGrowth
         * (0.25 + 0.75 * suitNb)
         * (0.18 + 0.82 * grad)
         * (1 - B.CROWDING_PENALTY * Math.max(0, crowd - 2));
@@ -91,3 +86,4 @@ export function runGrowth(state) {
     }
   }
 }
+const EMPTY = Object.freeze({});

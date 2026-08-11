@@ -126,7 +126,7 @@ export class WorldPass {
     gl.uniform1f(globe.u.get('uMemory'), ['memory', 'trophies'].includes(snapshot?.status) ? 1 : 0);
     gl.uniform1f(globe.u.get('uTime'), Number.isFinite(time) ? time : 0);
     gl.uniform1f(globe.u.get('uPulse'), pulse ? 1 : 0);
-    gl.uniform1f(globe.u.get('uElectricityDevelopment'), Math.max(0, Math.min(1, snapshot?.electricityDevelopment ?? 0)));
+    gl.uniform1f(globe.u.get('uElectricityDevelopment'), Math.max(0, Math.min(1, snapshot?.luminousDevelopment ?? 0)));
     const selected = Number.isInteger(selectedNode) ? selectedNode : -1;
     gl.uniform1f(globe.u.get('uHasSelection'), selected >= 0 ? 1 : 0);
     gl.uniform3fv(globe.u.get('uSelectedCenter'), selected >= 0

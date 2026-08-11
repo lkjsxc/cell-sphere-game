@@ -27,7 +27,7 @@ test('world seed sequence advances unless an explicit seed is present', () => {
 
 test('fallback abort is authoritative, reward-free data, and exactly once', () => {
   const messages = []; const driver = createRunDriver({ worker: false }, (message) => messages.push(message));
-  const runId = driver.start({ seed: 42, worldOrdinal: 1, worldPotential: 16000 }, 1);
+  const runId = driver.start({ seed: 42, worldOrdinal: 1 }, 1);
   assert.ok(messages.every((message) => message.runId === runId));
   driver.frame(1000, performance.now());
   assert.equal(driver.abort(), true); assert.equal(driver.outcome, 'aborted');
@@ -70,7 +70,7 @@ test('fallback synchronous emissions occur only after the complete identity is p
     assert.deepEqual(identityFields(message), identityFields(published)); messages.push(message);
   });
   published = driver.reserveIdentity({ worldSessionId:91, seed:123, presentationGeneration:17 });
-  const runId = driver.start({ seed:123, worldOrdinal:'1', worldPotential:'16000' }, 1, published);
+  const runId = driver.start({ seed:123, worldOrdinal:'1' }, 1, published);
   assert.equal(runId, published.runId); assert.equal(messages.some((message) => message.t === 'started'), true);
   assert.equal(messages.some((message) => message.t === 'snapshot'), true);
   driver.stop(); assert.equal(driver.identity, null); assert.equal(driver.snapshot, null); assert.equal(driver.runId, 0);

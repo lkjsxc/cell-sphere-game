@@ -42,11 +42,11 @@ async function stdio() {
 
 function campaign() {
   const worlds = Math.max(1, Math.min(100, numberOption('--worlds', 2)));
-  const seed = Math.max(0, Math.min(0x3fffffff, numberOption('--seed', 0))); const selected = (option('--policies')?.split(',') ?? AGENT_POLICIES)
+  const seed = Math.max(0, Math.min(0xffffffff, numberOption('--seed', 0))); const selected = (option('--policies')?.split(',') ?? AGENT_POLICIES)
     .map(normalizePolicy).filter((policy, index, all) => all.indexOf(policy) === index);
   const started = performance.now(); const summaries = [];
   for (let index = 0; index < selected.length; index++) {
-    const policy = selected[index]; const env = createAgentEnvironment(defaultAgentSave((seed + index * 7919) % 0x40000000));
+    const policy = selected[index]; const env = createAgentEnvironment(defaultAgentSave((seed + index * 7919) % 0x100000000));
     env.act({ type: 'set-goal', goal: policy }); const scores = []; const reasons = []; const trace = []; let purchases = 0;
     let latest = null;
     for (let world = 0; world < worlds; world++) {
@@ -67,9 +67,8 @@ function campaign() {
     }
     const observation = env.observe(); summaries.push({ policy, worlds, purchases,
       finalEvolutionCellCount:observation.ownedEvolutionCells.length, finalEchoBalance:observation.echoBalance,
-      evolutionPower:observation.evolutionSummary.breadthPower,worldPotential:observation.worldPotential,
-      bestScore:observation.bestScore,scores,activeBuilds:observation.activeBuilds.map((build)=>build.id),
-      finalAffinities:observation.affinities.map((entry)=>({affinity:entry.affinity,breadth:entry.breadth,totalLevels:entry.totalLevels})),
+      totalEvolutionLevels:observation.evolutionSummary.totalLevels, bestScore:observation.bestScore,scores,
+      finalDomains:observation.evolutionSummary.domains,
       trophies: observation.trophySummary.earned,
       lastResult: { score: observation.lastResult.score, cause: observation.lastResult.cause,
         survivalSeconds: observation.lastResult.survivalSeconds, peakReach: observation.lastResult.peakReach,
@@ -88,9 +87,7 @@ function campaign() {
 function guardedRun(observation){return{type:'run-world',expectedRevision:observation.metaRevision,expectedWorldOrdinal:observation.worldOrdinal}}
 function traceEntry(observation, decision, response) { return Object.freeze({ observation: Object.freeze({
   worldOrdinal: observation.worldOrdinal, echoBalance: observation.echoBalance,
-  evolutionPower: observation.evolutionPower, worldPotential: observation.worldPotential,
-  availableEvolutionCells:Object.freeze(observation.availableEvolutionCells.map((cell)=>cell.id)),
-  activeBuilds: Object.freeze(observation.activeBuilds.map((build) => build.id)) }),
+  evolutionSummary: observation.evolutionSummary, availableEvolutionCells:Object.freeze(observation.availableEvolutionCells.map((cell)=>cell.id)) }),
   action: decision.action, rationale: decision.rationale, accepted: response.accepted,
   reason: response.reason, responseHash: response.hash }); }
 

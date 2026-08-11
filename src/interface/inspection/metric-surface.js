@@ -61,7 +61,6 @@ function scoreProjection({ snapshot, result, score, history = [] }) {
   const conditions = [
     { label: final ? 'Final authority' : 'Live projection', value: final ? 'Final' : 'Updating' },
     { label: 'Run Quality', value: `${Math.round((projection?.quality ?? 0) * 100)}%` },
-    { label: 'World Potential', value: number(projection?.worldPotential ?? result?.worldPotential ?? 0) },
     { label: 'Environment credit', value: `${Math.round((projection?.environmentCredit?.bonus ?? 0) * 100)}% · exposure gated` },
     { label: 'SCORE model', value: `v${projection?.modelVersion ?? result?.scoreModelVersion ?? 2}` },
     ...milestones.map((event) => ({ label: eventTitle(event), value: gameTime(event.tick) })),
@@ -72,7 +71,7 @@ function scoreProjection({ snapshot, result, score, history = [] }) {
       { label: 'Run Quality', value: `${Math.round((projection?.quality ?? 0) * 100)}%` }],
     directHeading: 'Axes and contributions', direct: nonempty(direct, 'No score contribution yet.'),
     conditionsHeading: 'Model and real milestones', conditions,
-    footer: 'SCORE = Run Quality × permanent World Potential × explicit Challenge. Speed, camera, quality, and frame rate have no effect.',
+    footer: 'SCORE comes only from realized ecological outcomes and bounded Environment-pressure evidence. Speed, camera, quality, and frame rate have no effect.',
   };
 }
 function environmentProjection({ snapshot, result } = {}) {

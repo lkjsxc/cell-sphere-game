@@ -51,7 +51,7 @@ function sourceTick(ms) {
 }
 function interpolate(a, b, t) { return Math.round(a + (b - a) * Math.max(0, Math.min(1, t))); }
 function simulate() {
-  const run = new RunController({ seed: SEED, worldOrdinal: 3, worldPotential: 16000 }); run.start();
+  const run = new RunController({ seed: SEED, worldOrdinal: 3 }); run.start();
   let peakLiving = run.state.aliveCount; let peakTick = 0; const living = [run.state.aliveCount];
   while (run.state.status !== 'extinct') { run.advance(1); living[run.state.tick] = run.state.aliveCount;
     if (run.state.aliveCount > peakLiving) { peakLiving = run.state.aliveCount; peakTick = run.state.tick; } }
@@ -60,7 +60,7 @@ function simulate() {
   return { state: run.state, peakLiving, peakTick, collapseTick, terminalTick: run.state.tick };
 }
 function captureTicks(ticks) {
-  const run = new RunController({ seed: SEED, worldOrdinal: 3, worldPotential: 16000 }); run.start(); const captures = new Map();
+  const run = new RunController({ seed: SEED, worldOrdinal: 3 }); run.start(); const captures = new Map();
   for (const tick of ticks) {
     if (tick > run.state.tick) run.advance(tick - run.state.tick);
     captures.set(tick, { entropyQ: Math.round(run.state.entropy * 255), aliveCount: run.state.aliveCount,

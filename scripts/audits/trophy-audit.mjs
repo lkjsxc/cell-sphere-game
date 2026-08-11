@@ -5,7 +5,7 @@ import { TROPHIES, TROPHY_IDS, validateTrophyCatalog } from '../../src/game/trop
 import { validateTrophyAtlas } from '../../src/game/trophies/atlas.js';
 import { baseAggregate, reconcileTrophies, trophyConditionMet } from '../../src/game/trophies/evaluator.js';
 import { TROPHY_MAX_KEYS, TROPHY_SUM_KEYS } from '../../src/game/trophies/keys.js';
-import { MEMORY_BRANCHES, availableMemoryNodes, compileEvolution, purchaseEvolutionLevel } from '../../src/game/skills/index.js';
+import { availableMemoryNodes, compileEvolution, evolutionRunConfiguration, purchaseEvolutionLevel } from '../../src/game/skills/index.js';
 import { RunController } from '../../src/simulation/simulator.js';
 import { compareProgressionIntegers, incrementProgressionInteger } from '../../src/core/progression-integer.js';
 import { applyRunResult } from '../../src/interface/policies/run-result.js';
@@ -14,7 +14,8 @@ import { hashStringU32, hexU32 } from '../../src/core/hash.js';
 
 const started = performance.now(); const catalog = validateTrophyCatalog(); const atlas = validateTrophyAtlas();
 const firstWorldCohort = Array.from({ length: 24 }, (_, lane) => firstWorld(20260731 + lane * 104729));
-const campaign = modeledCampaign(240); const targets = { 1: [1, 2], 4: [3, 8], 12: [8, 20], 48: [20, 45], 240: [65, 92] };
+const campaign = modeledCampaign(240); // Calibrated against the current fragile, realized-SCORE economy: early lineage proof is sparse, while the authored 42-cell sphere makes mid-campaign evidence visibly accumulate.
+const targets = { 1: [2, 4], 4: [3, 8], 12: [8, 20], 48: [45, 65], 240: [65, 92] };
 const targetResults = Object.fromEntries(Object.entries(targets).map(([horizon, range]) => { const acquired = campaign.horizons[horizon].total;
   return [horizon, { acquired, target: range, withinTarget: acquired >= range[0] && acquired <= range[1] }]; }));
 const trivial = TROPHY_IDS.filter((id) => id !== 'evolution-first-world'
@@ -61,19 +62,16 @@ function modeledCampaign(worlds) { let meta = defaultMeta(); let archive = defau
 }
 function automaticRun(seed, meta) { const evolution=compileEvolution(meta);
   const rc=new RunController({seed,strainId:'pioneer',worldOrdinal:incrementProgressionInteger(meta.runs),
-    evolutionDefense:{affinityDefense:evolution.affinityDefense,pressureDefense:evolution.pressureDefense},
-    worldPotential:evolution.worldPotential,evolutionPower:evolution.evolutionPower,evolutionDepth:evolution.evolutionDepth,potentialVersion:evolution.potentialVersion,
-    memoryEffects:evolution.effects,memoryConditionals:evolution.conditionals,memoryUnlocks:evolution.unlocks,habitatCapabilities:evolution.habitatCapabilities,
-    activeBuilds:evolution.activeBuilds,buildEffects:evolution.buildEffects,electricityMastery:evolution.electricityMastery});rc.start();
+    ...evolutionRunConfiguration(evolution)});rc.start();
   while(rc.state.status!=='extinct')rc.advance(20);return rc.buildResult();}
-function buyOne(meta,run){const preferred=MEMORY_BRANCHES[(run-1)%MEMORY_BRANCHES.length],options=availableMemoryNodes(meta).slice()
-    .sort((a,b)=>(a.affinity===preferred?-1:0)-(b.affinity===preferred?-1:0)||Number(a.owned)-Number(b.owned)||a.tier-b.tier
+function buyOne(meta,run){const preferred=['Foundation','Fertility','Freshwater','Scarcity','Cryogenic','Marine','Luminous'][(run-1)%7],options=availableMemoryNodes(meta).slice()
+    .sort((a,b)=>(a.domain===preferred?-1:0)-(b.domain===preferred?-1:0)||Number(a.owned)-Number(b.owned)||a.tier-b.tier
       ||compareProgressionIntegers(a.nextCost,b.nextCost)||a.id.localeCompare(b.id));
   if(!options.length)return{ok:false,meta};const state=options[0];return purchaseEvolutionLevel(meta,state.id,{expectedLevel:state.currentLevel,expectedRevision:meta.revision,
     transactionKey:`trophy-audit:${run}:${state.id}:${state.currentLevel}`});}
 function impossibleCriteria() { const aggregate = Object.fromEntries([...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS].map((key) => [key,
   key === 'environmentPressureTicksQ' ? 1_000_000_000 : 10_000_000]));
-  Object.assign(aggregate, { runs: 10000, bestScore: 2_000_000, totalEchoes: 1_000_000, skillCount: 252, skillBranchCount: 6,
+  Object.assign(aggregate, { runs: 10000, bestScore: 2_000_000, totalEchoes: 1_000_000, skillCount: 42, skillBranchCount: 6,
     imprintCount: 8, geographyMask: 63, lakeTypeMask: 31, lakeSalinityMask: 7 });
   return TROPHIES.filter((trophy) => !trophyConditionMet(trophy.condition, aggregate)).map((trophy) => trophy.id); }
 function dominantPairs() { const singles = TROPHIES.map((trophy) => ({ trophy, leaves: allLeaves(trophy.condition) })).filter((row) => row.leaves);

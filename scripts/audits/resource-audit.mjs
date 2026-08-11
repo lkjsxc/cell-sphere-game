@@ -2,18 +2,14 @@
 /** Fresh-world local resource, niche access, conservation, and SCORE audit. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../../src/simulation/simulator.js';
-import { compileEvolution } from '../../src/game/skills/index.js';
+import { compileEvolution, evolutionRunConfiguration } from '../../src/game/skills/index.js';
 
 const count = integerArg('--count=', 500); const memory = compileEvolution({ evolutionLevels: [] }); const rows = [];
 const initial = []; const final = []; const states = Array(8).fill(0); let livingByQuintile = Array(5).fill(0); let birthsByQuintile = Array(5).fill(0);
 const started = performance.now();
 for (let index = 0; index < count; index++) {
   const controller = new RunController({ seed: (0x72657300 + Math.imul(index, 0x9e3779b1)) >>> 0,
-    worldOrdinal: 1, worldPotential: memory.worldPotential, potentialVersion: memory.potentialVersion,
-    evolutionPower: memory.evolutionPower ?? 0, memoryEffects: memory.effects,
-    memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks,
-    habitatCapabilities: memory.habitatCapabilities, activeBuilds: memory.activeBuilds,
-    buildEffects: memory.buildEffects });
+    worldOrdinal: 1, ...evolutionRunConfiguration(memory) });
   controller.start(); controller.advance(4000); const result = controller.buildResult();
   initial.push(...controller.state.initialResourceRichness); final.push(...controller.state.resourceRichness);
   result.resourceStateCounts.forEach((value, state) => { states[state] += value; });
@@ -36,10 +32,10 @@ const report = { worlds: count, elapsedMs: round(performance.now() - started),
   livingCellTicksByResourceQuintile: livingByQuintile.map(round), livingShareByResourceQuintile: livingShare.map(round),
   birthsByResourceQuintile: birthsByQuintile, aboveMedianLivingShare: round(livingShare[2] + livingShare[3] + livingShare[4]),
   bottomQuartileLivingShare: round(livingShare[0] + livingShare[1] * .25), valid: false };
-report.valid = report.conservationError.max < 1e-5 && report.peakLandOccupancy.median >= .12
-  && report.peakLandOccupancy.median <= .30 && report.peakLandOccupancy.p90 < .45
-  && report.aboveMedianLivingShare >= .75 && report.bottomQuartileLivingShare < .03
-  && report.score.median >= 8000 && report.score.median <= 15000;
+report.valid = report.conservationError.max < 1e-5 && report.peakLandOccupancy.median >= .025
+  && report.peakLandOccupancy.median <= .18 && report.peakLandOccupancy.p90 < .30
+  && report.aboveMedianLivingShare >= .90 && report.bottomQuartileLivingShare < .03
+  && report.score.median >= 50_000 && report.score.median <= 250_000;
 mkdirSync('reports', { recursive: true }); writeFileSync('reports/resource-audit.json', `${JSON.stringify(report, null, 2)}\n`);
 console.log(JSON.stringify(report, null, 2)); if (!report.valid) process.exitCode = 1;
 function integerArg(prefix, fallback) { const value = Number(process.argv.find((arg) => arg.startsWith(prefix))?.slice(prefix.length) ?? fallback);

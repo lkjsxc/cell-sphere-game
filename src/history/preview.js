@@ -38,7 +38,7 @@ export function projectPreview(frame, buffers) {
   }
   return { tick: frame.tick, entropy: frame.entropyQ / 255, status: 'history', alive, biomass, stress, lifeState,
     resourceRichnessQ, resourceState, transformationState, electricityQ,
-    electricityDevelopment: frame.electricityDevelopmentQ / 255,
+    luminousDevelopment: frame.luminousDevelopmentQ / 255,
     metrics: { aliveCount: frame.aliveCount }, approximate: true, historyVisual: true };
 }
 

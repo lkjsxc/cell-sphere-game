@@ -5,7 +5,7 @@ export const ENDURANCE_TROPHIES = family('endurance', [
   ['three-minutes', 'Seasoned Root', 'Survive 180 seconds at Environment Level 3 after a five-world lineage.', all(n('survivalSeconds', 180), n('environmentPeakLevel', 3), n('runs', 5))],
   ['four-minutes', 'Lakebound Root', 'Survive 140 seconds with 60 seconds of lake living.', all(n('survivalSeconds', 140), n('lakeLivingSeconds', 60))],
   ['five-minutes', 'Stable Canopy', 'Survive 160 seconds with at least 80% Stability.', all(n('survivalSeconds', 160), n('stabilityAxisBp', 8000))],
-  ['six-minutes', 'Long Garden', 'Survive 180 seconds after substantial progression.', all(n('survivalSeconds', 180), n('skillCount', 84))],
+  ['six-minutes', 'Long Garden', 'Survive 180 seconds after substantial progression.', all(n('survivalSeconds', 180), n('skillCount', 42))],
   ['resource-strain', 'Thin Reserves', 'Deplete 2,500 local reserves across resource-limited worlds.', all(n('resourceDepletedCells', 2500), n('scarcityWorlds', 6))],
   ['resource-recovery', 'Returning Loam', 'Recover at least 30 depleted cells in one world.', n('resourceRecoveredCells', 30)],
   ['freshwater-endurance', 'Freshwater Thread', 'Maintain 50,000 freshwater-supported cell seconds.', n('freshwaterSupportedSeconds', 50000)],

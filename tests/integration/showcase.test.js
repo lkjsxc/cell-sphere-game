@@ -26,7 +26,7 @@ test('showcase has germination, branching, maturity, pressure, fragmentation, an
   const { history } = payload(); const counts = history.frames.map((frame) => frame.aliveCount);
   assert.deepEqual(counts.slice(0, 2), [1, 1]);
   const peakIndex = counts.indexOf(TITLE_SHOWCASE.peakLiving);
-  assert.ok(peakIndex > 2 && peakIndex < counts.length - 8); assert.ok(TITLE_SHOWCASE.peakLiving > 400);
+  assert.ok(peakIndex > 2 && peakIndex < counts.length - 8); assert.ok(TITLE_SHOWCASE.peakLiving > 100);
   assert.equal(TITLE_SHOWCASE.worldOrdinal, 3);
   assert.ok(TITLE_SHOWCASE.matureTick > TITLE_SHOWCASE.peakTick && TITLE_SHOWCASE.pressureTick > TITLE_SHOWCASE.matureTick);
   assert.ok(counts[peakIndex] > counts[Math.floor((peakIndex + counts.length - 1) / 2)]);

@@ -12,7 +12,7 @@ import { runGrowth } from '../../../src/simulation/lifecycle/growth.js';
 import { BIOME } from '../../../src/world/fields.js';
 
 function run(seed = 4242, cfg = {}, emit = () => {}) {
-  const controller = new RunController({ seed, worldOrdinal: 1, worldPotential: 16000, ...cfg }, emit);
+  const controller = new RunController({ seed, worldOrdinal: 1, ...cfg }, emit);
   controller.start(); return controller;
 }
 function finish(controller, budget = 10_000) { controller.advance(budget); assert.equal(controller.state.status, 'extinct'); return controller.buildResult(); }

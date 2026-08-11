@@ -6,15 +6,14 @@ import { ENVIRONMENT_EXPOSURE_VERSION } from '../game/environment-exposure.js';
 import { defaultMeta, validateMeta } from '../platform/storage.js';
 import { defaultHistory, validateHistory } from '../platform/history.js';
 
-export const AGENT_SAVE_SCHEMA = 5;
+export const AGENT_SAVE_SCHEMA = 6;
 export const AGENT_GOALS = Object.freeze([
-  'balanced', 'breadth-first', 'depth-first', 'cheapest', 'marginal-value', 'diversity', 'weak',
-  'sustainability', 'freshwater', 'rich-rush', 'scarcity-reclaimer', 'cryogenic', 'marine',
-  'luminous', 'luminous-infrastructure', 'cryolake', 'littoral-forest', 'terraforming',
-  'reach-100', 'harshness-push', 'conservative', 'random-legal',
+  'balanced', 'breadth-first', 'depth-first', 'cheapest', 'diversity', 'weak', 'sustainability',
+  'fertility', 'freshwater', 'scarcity', 'cryogenic', 'marine', 'luminous', 'worldmaking', 'reach-100',
+  'conservative', 'random-legal',
 ]);
 const GOALS = new Set(AGENT_GOALS);
-const SEED_LIMIT = 0x40000000;
+const SEED_LIMIT = 0x100000000;
 
 export function defaultAgentSave(seed = 0) {
   return canonical({ campaignSeed: validSeed(seed) ? seed : 0, meta: defaultMeta(),
@@ -67,15 +66,14 @@ function validateLastResult(raw) {
     archetype: text(raw.archetype, 40, 'Living World'), survivalSeconds: finite(raw.survivalSeconds),
     cause: text(raw.cause, 32, 'unknown'), terminalCause: text(raw.terminalCause, 32, 'unknown'),
     score, scoreModelVersion: integer(raw.scoreModelVersion, 1) ?? 1,
-    rank: text(raw.rank, 64, 'Seed'), echoes:normalizeProgressionInteger(raw.echoes, '0'),
-    worldPotential:normalizeProgressionInteger(raw.worldPotential, '0'), peakReach: fraction(raw.peakReach),
+    rank: text(raw.rank, 64, 'Seed'), echoes:normalizeProgressionInteger(raw.echoes, '0'), peakReach: fraction(raw.peakReach),
     pressure:validatePressure(raw.pressure),
     sustainedReach: fraction(raw.sustainedReach), peakConnectedShare: fraction(raw.peakConnectedShare),
     resources: Object.freeze({ initial: finite(raw.resources?.initial), final: finite(raw.resources?.final),
       depletedCells: integer(raw.resources?.depletedCells) ?? 0, recoveredCells: integer(raw.resources?.recoveredCells) ?? 0,
       freshwaterSupportedCellSeconds: finite(raw.resources?.freshwaterSupportedCellSeconds),
       livingTicksByQuintile: Object.freeze(Array.from({ length: 5 }, (_, index) => finite(raw.resources?.livingTicksByQuintile?.[index]))) }),
-    habitats: Object.freeze(habitats), builds: strings(raw.builds, 24),
+    habitats: Object.freeze(habitats),
     worldmaking: Object.freeze({ transformedCells: integer(raw.worldmaking?.transformedCells) ?? 0,
       glacialLakeCells: integer(raw.worldmaking?.glacialLakeCells) ?? 0,
       maritimeForestCells: integer(raw.worldmaking?.maritimeForestCells) ?? 0,

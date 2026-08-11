@@ -4,7 +4,7 @@ import { RunController } from '../../../src/simulation/simulator.js';
 import { runGrowth } from '../../../src/simulation/lifecycle/growth.js';
 import { resourceConservation, resourceRichnessAt, RESOURCE_STATE, updateResourceEcology } from '../../../src/simulation/resource-ecology.js';
 
-function run(seed = 42, cfg = {}) { const c = new RunController({ seed, worldOrdinal: 1, worldPotential: 16000, ...cfg }); c.start(); return c; }
+function run(seed = 42, cfg = {}) { const c = new RunController({ seed, worldOrdinal: 1, ...cfg }); c.start(); return c; }
 
 test('immutable per-cell baselines survive local consumption', () => {
   const c = run(); const available = c.state.initialAvailableNutrient.slice(); const reserve = c.state.initialResourceReserve.slice();

@@ -141,11 +141,15 @@ export class Canvas2DRenderer {
         if (styles.inset) { this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill();
           if (styles.stroke) { ctx.strokeStyle = styles.stroke; ctx.lineWidth = styles.width; ctx.stroke(); } }
       }
+      const at=cell*3; const lightDot=topo.positions[at]*WORLD_LIGHT[0]+topo.positions[at+1]*WORLD_LIGHT[1]+topo.positions[at+2]*WORLD_LIGHT[2];
+      const daylight=Math.max(0,Math.min(1,(lightDot+.16)/.30)); const darkness=1-daylight;
+      if (state === LIFE_STATE.LIVING || state === LIFE_STATE.FRONTIER || state === LIFE_STATE.STRESSED) {
+        this.cellPath(cell,.70); ctx.fillStyle=`rgba(154,164,74,${(.025+darkness*.075)*fade})`; ctx.fill();
+      }
       const powered = (snapshot.electricityQ?.[cell] ?? 0) / 255;
       if (powered > 0) {
-        const at=cell*3; const lightDot=topo.positions[at]*WORLD_LIGHT[0]+topo.positions[at+1]*WORLD_LIGHT[1]+topo.positions[at+2]*WORLD_LIGHT[2];
-        const day=Math.max(0,Math.min(1,(lightDot+.16)/.30)); const night=1-day;
-        const development=Math.max(0,Math.min(1,snapshot.electricityDevelopment??0));
+        const night=darkness;
+        const development=Math.max(0,Math.min(1,snapshot.luminousDevelopment??0));
         const glow=Math.pow(powered,.62)*( .24+night*.38+development*.14)*fade;
         this.cellPath(cell); ctx.fillStyle=`rgba(238,194,72,${Math.min(.72,glow)})`; ctx.fill();
         this.cellPath(cell,.52-development*.08); ctx.fillStyle=`rgba(255,231,126,${Math.min(.78,glow*(.72+development*.28))})`; ctx.fill();

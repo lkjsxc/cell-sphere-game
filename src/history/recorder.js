@@ -56,7 +56,7 @@ export function quantizeFrame(state) {
     worldmaking[cell] = (charge << 3) | transformation;
   }
   return { cells, resources, worldmaking,
-    electricityDevelopmentQ: quantize(state.electricityMastery?.visualDevelopment ?? 0, 255) };
+    luminousDevelopmentQ: quantize(state.luminous?.visualDevelopment ?? 0, 255) };
 }
 
 /** Life-only projection remains useful to non-rendering generators. */

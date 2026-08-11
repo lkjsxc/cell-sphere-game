@@ -10,8 +10,8 @@ import { reachGoalSummary } from './lifecycle/reach-goal.js';
 import { environmentExposureSummary } from '../game/environment-exposure.js';
 import { environmentPressureSummary } from './challenge-profile.js';
 
-/** v8: chronic Environment evidence without disaster authority. */
-export const RUN_RESULT_SCHEMA_VERSION = 8;
+/** v9: realized-only SCORE and direct Ecology/Luminous evidence. */
+export const RUN_RESULT_SCHEMA_VERSION = 9;
 
 export function buildRunResult(s) {
   const scoreProjection = evaluate(metricsFromState(s), { environmentBonusQ: s.scoreMerit.environmentBonusQ }); const conservation = resourceConservation(s);
@@ -48,8 +48,6 @@ export function buildRunResult(s) {
     }),
     scoreModelVersion: SCORE_MODEL_VERSION, score: s.scoreMerit.total,
     scoreProjection: { ...scoreProjection, total: s.scoreMerit.total }, scoreMerit: copyMerit(s.scoreMerit),
-    worldPotential: s.worldPotential, evolutionPower: s.evolutionPower,
-    evolutionDepth: s.evolutionDepth, potentialVersion: s.potentialVersion,
     history: serializeHistory(s),
     coverage: s.coverage,
     peakCoverage: s.peakCoverage, peakLandOccupancy: s.peakLandOccupancy,
@@ -76,13 +74,13 @@ export function buildRunResult(s) {
     averageResourceRichnessAtBirth: s.resourceBirthCount ? s.resourceBirthRichnessSum / s.resourceBirthCount : 0,
     freshwaterSupportedCellSeconds: s.freshwaterSupportedCellTicks / B.TICKS_PER_SECOND,
     habitatOccupancy: Array.from(s.habitatOccupancy), habitatCapabilities: s.habitatCapabilities.slice(),
-    activeBuilds: s.activeBuilds.slice(), transformedCells: s.transformedCells,
+    transformedCells: s.transformedCells,
     glacialLakeCells: s.glacialLakeCells, maritimeForestCells: s.maritimeForestCells,
     reclaimedCells: s.reclaimedCells, electrifiedCells: s.peakElectrifiedCells,
     finalElectrifiedCells: s.electrifiedCells, everPoweredCells: countMask(s.everPowered),
     poweredCellSeconds: s.poweredCellTicks / B.TICKS_PER_SECOND,
-    electricityMasteryRating: s.electricityMastery?.rating ?? '0',
-    electricityDevelopment: s.electricityMastery?.visualDevelopment ?? 0, reach100: reachGoalSummary(s),
+    luminousDevelopment: s.luminous?.visualDevelopment ?? 0,
+    luminousEnabled: s.luminous?.enabled === true, reach100: reachGoalSummary(s),
     imprint: deriveImprint(s),
     causes: { ...s.causes },
     reach: buildReachResult(s),
@@ -104,9 +102,7 @@ export function buildAbandonedRun(s) {
     startEnvironmentLevel: '0', finalEnvironmentLevel: s.currentEnvironmentLevel,
     peakEnvironmentLevel: s.peakEnvironmentLevel, environmentTransitionCount: s.environmentTransitionCount,
     environmentExposure: environmentExposureSummary(s.environmentExposure),
-    scoreModelVersion: SCORE_MODEL_VERSION, worldPotential: s.worldPotential, evolutionPower: s.evolutionPower,
-    evolutionDepth: s.evolutionDepth,
-    potentialVersion: s.potentialVersion, scoreMerit: copyMerit(s.scoreMerit),
+    scoreModelVersion: SCORE_MODEL_VERSION, scoreMerit: copyMerit(s.scoreMerit),
     history: serializeHistory(s), reach: { ...buildReachResult(s), goal: reachGoalSummary(s) }, cause: 'abandoned' };
 }
 

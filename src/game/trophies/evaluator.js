@@ -27,14 +27,14 @@ export function reconcileTrophies(meta, archive, newFacts = null) {
   for (const trophy of CATALOG) if (!owned.has(trophy.id) && trophyConditionMet(trophy.condition, aggregate)) { owned.add(trophy.id); awardedIds.push(trophy.id); }
   const trophyIds = [...owned].filter((id) => ORDER.has(id)).sort((a, b) => ORDER.get(a) - ORDER.get(b));
   const queued = uniqueIds([...(meta.trophyQueue ?? []), ...awardedIds]).filter((id) => ORDER.has(id));
-  const next = { ...meta, trophyVersion: 4, trophyIds, trophyQueue: queued, trophyProgress: serializeProgress(aggregate) };
+  const next = { ...meta, trophyVersion: 5, trophyIds, trophyQueue: queued, trophyProgress: serializeProgress(aggregate) };
   return Object.freeze({ meta: next, awardedIds: Object.freeze(awardedIds), backfilled: false, evaluatedWorlds,
     aggregate: Object.freeze({ ...aggregate }) });
 }
 
 export function baseAggregate(meta) {
   const skills = ownedEvolutionIds(meta); const branches = new Set();
-  for (const id of skills) { const branch = getMemoryNode(id)?.branch; if (branch) branches.add(branch); }
+  for (const id of skills) { const domain = getMemoryNode(id)?.domain; if (domain && domain !== 'Foundation') branches.add(domain); }
   const progress = meta.trophyProgress ?? {}; const aggregate = Object.fromEntries([...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS].map((key) => [key, 0]));
   for (const key of [...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS]) aggregate[key] = finite(progress.aggregate?.[key]);
   Object.assign(aggregate, { runs: exactFinite(meta.runs), bestScore: exactFinite(meta.bestScore), totalEchoes: exactFinite(meta.totalEchoes),

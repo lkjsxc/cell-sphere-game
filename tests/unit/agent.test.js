@@ -12,15 +12,14 @@ test('fair observation uses explicit nested public allowlists and no hidden auth
   const observation = createAgentEnvironment().observe();
   assert.deepEqual(sorted(Object.keys(observation)), sorted(OBSERVATION_KEYS));
   assert.equal('campaignSeed' in observation, false); assert.equal('futureSeed' in observation, false);
-  assert.equal(observation.availableEvolutionCells.length, 6); assert.equal(observation.evolutionCells.length, 252);
+  assert.equal(observation.availableEvolutionCells.length, 1); assert.equal(observation.evolutionCells.length, 42);
   for (const cell of observation.evolutionCells) {
     assert.deepEqual(sorted(Object.keys(cell)), sorted(PUBLIC_CELL_KEYS));
-    assert.deepEqual(sorted(Object.keys(cell.gameplay)), ['after', 'before', 'summary', 'unlocks']);
-    assert.deepEqual(sorted(Object.keys(cell.evolutionPower)), ['after', 'before', 'delta']);
-    assert.deepEqual(sorted(Object.keys(cell.worldPotential)), ['after', 'before', 'delta']);
+    assert.deepEqual(sorted(Object.keys(cell.gameplay)), ['after', 'before', 'unlocks']);
     assert.match(cell.currentLevel, /^\d+$/); assert.match(cell.nextCost, /^\d+$/);
+    assert.equal('predictiveMultiplier' in cell, false); assert.equal('unpublishedState' in cell, false);
   }
-  assert.ok(observation.availableEvolutionCells.some((cell) => cell.buildProgress.some((build) => build.progress > 0)));
+  assert.equal(observation.availableEvolutionCells[0].id, 'first-division');
   assert.equal(observation.environmentSchedule.idleStartEnvironmentLevel, '0');
   assert.equal(observation.activeWorld, null);
   assert.equal(observation.bestEnvironmentLevelReached, '0');
@@ -32,23 +31,21 @@ test('agent save schema validates exact browser subdocuments and hashes canonica
   assert.equal(clean.schema, AGENT_SAVE_SCHEMA); assert.equal(clean.campaignSeed, 123);
   assert.equal(clean.worldOrdinal, '1'); assert.equal(clean.stateHash, hashAgentSave(clean));
   const migrated = validateAgentSave({ ...clean, schema: 3 });
-  assert.equal(migrated.schema, 5); assert.equal(migrated.meta.schema, 14); assert.equal(migrated.history.schema, 9);
+  assert.equal(migrated.schema, 6); assert.equal(migrated.meta.schema, 15); assert.equal(migrated.history.schema, 10);
   const repaired = validateAgentSave({ ...clean, campaignSeed:-2, goal:'secret-goal',
     worldOrdinal:'999', meta:{ ...clean.meta, echoBalance:'-5' }, history:{ worlds:'bad' } });
   assert.equal(repaired.campaignSeed, 0); assert.equal(repaired.goal, 'balanced');
   assert.equal(repaired.worldOrdinal,'1');assert.equal(repaired.meta.echoBalance,'0');
   const retried=validateAgentSave({...clean,meta:{...clean.meta,runs:'2',worldSeedIndex:'7'}});
   assert.equal(retried.worldOrdinal,'8','agent persistence uses the attempt cursor after retries');
-  assert.deepEqual(repaired.history.worlds, []); assert.equal(repaired.history.schema, 9);
+  assert.deepEqual(repaired.history.worlds, []); assert.equal(repaired.history.schema, 10);
 });
 
-test('build-goal policy prioritizes visible recipe progress', () => {
-  const cell = (id, affinity, buildProgress=[]) => ({ id, name:id, affinity, tags:[], kind:'root',
-    currentLevel:'0', nextLevel:'1', nextCost:'10', owned:false, reachable:true, affordable:true, reason:'ready',
-    gameplay:{ summary:'effect', unlocks:[] }, worldPotential:{ delta:'3000' }, buildProgress });
-  const observation = { metaRevision:'0', availableEvolutionCells:[cell('generic','Scarcity'), cell('recipe','Fertility',[
-    { id:'wasteland-reclaimer', progress:.75, active:false }])] };
-  assert.equal(choosePolicyAction(observation,'scarcity').action.cellId,'recipe');
+test('domain policy prioritizes visible direct ecological effects', () => {
+  const cell = (id, domain, summary) => ({ id, name: id, domain, kind: 'specialization', currentLevel: '0', nextLevel: '1', nextCost: '10',
+    owned: false, reachable: true, affordable: true, reason: 'ready', summary, gameplay: { after: summary, unlocks: [] } });
+  const observation = { metaRevision: '0', availableEvolutionCells: [cell('generic', 'Fertility', 'reliable budding'), cell('recycling', 'Scarcity', 'recycling delays depletion')] };
+  assert.equal(choosePolicyAction(observation, 'scarcity').action.cellId, 'recycling');
 });
 
 test('every deterministic policy chooses a legal fair action deterministically', () => {

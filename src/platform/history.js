@@ -1,4 +1,4 @@
-/** Bounded semantic History schema 9 with dynamic chronic-Environment evidence. */
+/** Bounded semantic History schema 10 with realized SCORE and Luminous evidence. */
 import { buildTrophyFacts, validateTrophyFacts } from '../game/trophies/facts.js';
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 import { ENVIRONMENT_MODEL_VERSION, normalizeEnvironmentLevel } from '../game/environment-level.js';
@@ -13,7 +13,7 @@ const MAX_MEMORY_EVENTS = 128;
 const MAX_TROPHY_EVENTS = 128;
 const CELL_COUNT = 2562;
 
-export function defaultHistory() { return { schema: 9, worlds: [], evolution: [], trophies: [] }; }
+export function defaultHistory() { return { schema: 10, worlds: [], evolution: [], trophies: [] }; }
 function finiteInt(value, min = 0) { return Number.isFinite(value) && value >= min ? Math.floor(value) : null; }
 
 const SIM_EVENT = Object.freeze({
@@ -74,9 +74,6 @@ function validateWorld(raw) {
     archetype: typeof raw.archetype === 'string' ? raw.archetype.slice(0, 40) : 'Living World',
     echo: normalizeProgressionInteger(raw.echo, '0'), hash: typeof raw.hash === 'string' ? raw.hash.slice(0, 16) : '',
     scoreModelVersion: finiteInt(raw.scoreModelVersion) ?? 1,
-    worldPotential: normalizeProgressionInteger(raw.worldPotential, '0'), potentialVersion: finiteInt(raw.potentialVersion) ?? 1,
-    evolutionPower: finiteInt(raw.evolutionPower) ?? 0,
-    evolutionDepth: normalizeProgressionInteger(raw.evolutionDepth, '0'),
     worldOrdinal: normalizeProgressionInteger(raw.worldOrdinal, '1'),
     resourceInitial: Number.isFinite(raw.resourceInitial) ? Math.max(0, raw.resourceInitial) : 0,
     resourceFinal: Number.isFinite(raw.resourceFinal) ? Math.max(0, raw.resourceFinal) : 0,
@@ -86,11 +83,9 @@ function validateWorld(raw) {
     finalElectrifiedCells: finiteInt(raw.finalElectrifiedCells) ?? 0,
     everPoweredCells: finiteInt(raw.everPoweredCells) ?? 0,
     poweredCellSeconds: finiteInt(raw.poweredCellSeconds) ?? 0,
-    electricityMasteryRating: normalizeProgressionInteger(raw.electricityMasteryRating, '0'),
-    electricityDevelopment: Number.isFinite(raw.electricityDevelopment) ? Math.max(0, Math.min(1, raw.electricityDevelopment)) : 0,
-    reach100:raw.reach100===true,activeBuilds:Array.isArray(raw.activeBuilds)
-      ?[...new Set(raw.activeBuilds.slice(0,64).filter((id)=>typeof id==='string'&&/^[a-z][a-z0-9-]{1,47}$/.test(id)))].slice(0,16):[],
-    inoculationCell: Number.isInteger(raw.inoculationCell) ? raw.inoculationCell : null, events };
+    luminousDevelopment: Number.isFinite(raw.luminousDevelopment) ? Math.max(0, Math.min(1, raw.luminousDevelopment)) : 0,
+    luminousEnabled: raw.luminousEnabled === true,
+    reach100: raw.reach100 === true, inoculationCell: Number.isInteger(raw.inoculationCell) ? raw.inoculationCell : null, events };
   if (raw.environmentModelVersion !== ENVIRONMENT_MODEL_VERSION || raw.startEnvironmentLevel !== '0') return null;
   world.environmentModelVersion = ENVIRONMENT_MODEL_VERSION;
   world.environmentScheduleVersion = finiteInt(raw.environmentScheduleVersion) ?? 0;
@@ -176,8 +171,7 @@ export function appendWorld(history,result,score,runIndex){
   const events=normalizeHistoryEvents(result.history);const record=validateWorld({id:`world-${result.seed}-${result.hash}-${result.tick}`,
     seed: result.seed, tick: result.tick, score: score.total, rank: score.rank.en, cause: result.cause, echo: score.echoes,
     hash: result.hash, archetype: result.archetype, inoculationCell: result.inoculationCell,
-    scoreModelVersion: score.modelVersion, worldPotential: result.worldPotential, potentialVersion: result.potentialVersion,
-    evolutionPower: result.evolutionPower, evolutionDepth: result.evolutionDepth, worldOrdinal: result.worldOrdinal,
+    scoreModelVersion: score.modelVersion, worldOrdinal: result.worldOrdinal,
     environmentModelVersion: result.environmentModelVersion, environmentScheduleVersion: result.environmentScheduleVersion,
     environmentScheduleHash: result.environmentScheduleHash, environmentProfileVersion: result.environmentProfileVersion,
     resultSchemaVersion: result.resultSchemaVersion,
@@ -192,9 +186,9 @@ export function appendWorld(history,result,score,runIndex){
     freshwaterSupportedCellSeconds: result.freshwaterSupportedCellSeconds,
     transformedCells: result.transformedCells, electrifiedCells: result.electrifiedCells,
     finalElectrifiedCells: result.finalElectrifiedCells, everPoweredCells: result.everPoweredCells,
-    poweredCellSeconds: result.poweredCellSeconds, electricityMasteryRating: result.electricityMasteryRating,
-    electricityDevelopment: result.electricityDevelopment,
-    reach100: result.reach100?.achieved === true, activeBuilds: result.activeBuilds,
+    poweredCellSeconds: result.poweredCellSeconds, luminousDevelopment: result.luminousDevelopment,
+    luminousEnabled: result.luminousEnabled === true,
+    reach100: result.reach100?.achieved === true,
     trophyFacts:result.trophyFacts??buildTrophyFacts(result,score),events});
   return validateHistory({...source,worlds:[...source.worlds,record]});
 }
@@ -204,9 +198,7 @@ export function appendAbandonedWorld(history,result){
   const record=validateWorld({id,
     seed: result.seed, tick: result.tick, score: result.score, rank: 'Abandoned', cause: 'abandoned',
     echo: 0, hash: '', archetype: result.archetype, inoculationCell: result.inoculationCell,
-    scoreModelVersion: result.scoreModelVersion, worldPotential: result.worldPotential,
-    potentialVersion: result.potentialVersion, evolutionPower: result.evolutionPower,
-    evolutionDepth: result.evolutionDepth, worldOrdinal: result.worldOrdinal,
+    scoreModelVersion: result.scoreModelVersion, worldOrdinal: result.worldOrdinal,
     environmentModelVersion: result.environmentModelVersion, environmentScheduleVersion: result.environmentScheduleVersion,
     environmentScheduleHash: result.environmentScheduleHash, environmentProfileVersion: result.environmentProfileVersion,
     resultSchemaVersion: result.resultSchemaVersion,

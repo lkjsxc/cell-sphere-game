@@ -21,7 +21,8 @@ export function runTransport(state) {
   }
   nextEnergy.set(energy);
 
-  const k = B.TRANSPORT_K * traits.conductance;
+  const luminousTransport = state.luminous?.enabled ? state.luminous.transportScale ?? 0 : 0;
+  const k = B.TRANSPORT_K * traits.conductance * (1 + luminousTransport);
   const regrow = traits.anastomosis + Math.max(0, traits.regrow - 1) * 10;
 
   for (let e = 0; e < edgeCount; e++) {

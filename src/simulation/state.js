@@ -50,21 +50,14 @@ export function createRunState(cfg) {
   const habitatCapabilities = Array.isArray(cfg.habitatCapabilities) ? [...new Set(cfg.habitatCapabilities)] : [];
   // Resource stock is immutable Level-0 world-start data, never live pressure.
   const resource = createResourceAuthority(fields, 1);
-  const activeBuilds = Array.isArray(cfg.activeBuilds) ? cfg.activeBuilds.map((build) => typeof build === 'string' ? build : build?.id).filter(Boolean) : [];
+  const ecology = normalizeEcology(cfg.ecology);
+  const worldmakingCapabilities = normalizeWorldmakingCapabilities(cfg.worldmaking);
+  const luminous = normalizeLuminous(cfg.luminous);
   const worldmaking = createWorldmakingState(fields);
 
   const state = {
-    topo, fields, traits, activeTraits: { ...traits },
-    memoryConditionals: Array.isArray(cfg.memoryConditionals) ? cfg.memoryConditionals : [],
-    memoryUnlocks: Array.isArray(cfg.memoryUnlocks) ? cfg.memoryUnlocks : [],
+    topo, fields, traits, activeTraits: { ...traits }, ecology, worldmakingCapabilities, luminous,
     habitatCapabilities, habitatCapabilitySet: new Set(habitatCapabilities),
-    activeBuilds, activeBuildIdSet: new Set(activeBuilds),
-    buildEffects: cfg.buildEffects && typeof cfg.buildEffects === 'object' ? { ...cfg.buildEffects } : {},
-    electricityMastery: normalizeElectricityMastery(cfg.electricityMastery),
-    worldPotential: normalizeProgressionInteger(cfg.worldPotential, '16000'),
-    evolutionPower: Number.isFinite(cfg.evolutionPower) ? Math.max(0, Math.round(cfg.evolutionPower)) : 0,
-    evolutionDepth: normalizeProgressionInteger(cfg.evolutionDepth, '0'),
-    potentialVersion: Number.isInteger(cfg.potentialVersion) ? cfg.potentialVersion : 1,
     worldOrdinal,
     environmentModelVersion: initialEnvironmentSchedule.environmentModelVersion,
     environmentScheduleVersion: initialEnvironmentSchedule.environmentScheduleVersion,
@@ -133,7 +126,8 @@ export function createRunState(cfg) {
   if (!Number.isInteger(start) || start < 0 || start >= N) throw new Error(`invalid inoculation cell: ${start}`);
   state.inoculationCell = start;
   state.inoculationFreshwaterSupport = freshwaterSupportAt(state, start);
-  state.initialFounderFreshwaterReserve = state.inoculationFreshwaterSupport * 800;
+  // Founder water makes the initial rich niche legible, not a hidden long-life subsidy.
+  state.initialFounderFreshwaterReserve = state.inoculationFreshwaterSupport * 120;
   state.founderFreshwaterReserve = state.initialFounderFreshwaterReserve;
   state.initialResourceStock += state.initialFounderFreshwaterReserve;
   birthCell(state, start, REACH_CAUSE.INOCULATION);
@@ -214,9 +208,9 @@ export function selectInoculation(fields, rng, resource = null) {
   const hasLand = fields.landMask != null || fields.biome != null;
   const richness = resource?.initialResourceRichness;
   let candidates = sources.filter((i) => i >= 0 && i < count && (!hasLand || isLand(fields, i))
-    && (!richness || richness[i] >= .56));
+    && (!richness || richness[i] >= .70));
   if (candidates.length === 0 && hasLand) {
-    for (let i = 0; i < count; i++) if (isLand(fields, i) && (!richness || richness[i] >= .56)) candidates.push(i);
+    for (let i = 0; i < count; i++) if (isLand(fields, i) && (!richness || richness[i] >= .70)) candidates.push(i);
   }
   if (candidates.length === 0 && hasLand) for (let i = 0; i < count; i++) if (isLand(fields, i)) candidates.push(i);
   if (candidates.length === 0) candidates = sources.length ? sources : Array.from({ length: count }, (_, i) => i);
@@ -303,12 +297,23 @@ export function beginTerminalCollapse(state, reason) {
   return true;
 }
 
-function normalizeElectricityMastery(raw) { const value = raw && typeof raw === 'object' ? raw : {};
+function normalizeLuminous(raw) { const value = raw && typeof raw === 'object' ? raw : {};
   const bounded = (input, fallback, min, max) => Number.isFinite(input) ? Math.max(min, Math.min(max, input)) : fallback;
-  return Object.freeze({ rating:normalizeProgressionInteger(value.rating, '0'),
-    development:bounded(value.development, 0, 0, 1), generationScale:bounded(value.generationScale, 1, 1, 1.75),
-    retention:bounded(value.retention, .992, .992, .996), upkeepScale:bounded(value.upkeepScale, 1, .75, 1),
-    domainScale:bounded(value.domainScale, 1, 1, 1.25), visualDevelopment:bounded(value.visualDevelopment, 0, 0, 1) });
+  const enabled = value.enabled === true;
+  return Object.freeze({ enabled, rating: normalizeProgressionInteger(value.rating, '0'),
+    development: bounded(value.development ?? value.visualDevelopment, 0, 0, 1),
+    generationScale: bounded(value.generationScale, 0, 0, 1.7), retention: bounded(value.retention, .976, .976, .996),
+    upkeepScale: bounded(value.upkeepScale, 1, .76, 1.25), domainScale: bounded(value.domainScale, 0, 0, 1.5),
+    transportScale: bounded(value.transportScale, 0, 0, .45), recoveryScale: bounded(value.recoveryScale, 0, 0, .35),
+    visualDevelopment: bounded(value.visualDevelopment, 0, 0, 1) });
+}
+function normalizeEcology(raw) { const value = raw && typeof raw === 'object' ? raw : {};
+  const bounded = (input, max) => Number.isFinite(input) ? Math.max(0, Math.min(max, input)) : 0;
+  return Object.freeze({ resourceFloorReduction: bounded(value.resourceFloorReduction, .45), freshwaterSupport: bounded(value.freshwaterSupport, 1),
+    marineSupport: bounded(value.marineSupport, 1), recycling: bounded(value.recycling, 1) });
+}
+function normalizeWorldmakingCapabilities(raw) { const value = raw && typeof raw === 'object' ? raw : {};
+  return Object.freeze({ reclamation: value.reclamation === true, cryolake: value.cryolake === true, littoral: value.littoral === true });
 }
 function sumMask(values) { let total = 0; for (const value of values ?? []) total += value ? 1 : 0; return total; }
 

@@ -40,7 +40,7 @@ test('one selector, context shell, compact dock, and ordered terminal metrics ar
 });
 
 test('metric projections use actual score and Reach ledger values', () => {
-  const score = { total: 120000, rank: { en: 'Cartographer' }, quality: .75, worldPotential: 160000, modelVersion: 2, mult: 1, breakdown: [
+  const score = { total: 120000, rank: { en: 'Cartographer' }, quality: .75, modelVersion: 6, mult: 1, breakdown: [
     { en: 'Reach', q: .5, weight: .2, points: 10000 },
   ] };
   const scoreView = metricProjection('score', { score, result: {}, history: [] });

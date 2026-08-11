@@ -10,7 +10,7 @@ import { advanceContinuation, completeContinuation, createContinuation, setConti
   startContinuation } from '../../src/interface/policies/continuation.js';
 
 function complete(seed, worldOrdinal = 1) {
-  const run = new RunController({ seed, worldOrdinal, worldPotential:16000 }); run.start();
+  const run = new RunController({ seed, worldOrdinal }); run.start();
   let guard = 0; while (run.state.status !== 'extinct' && guard++ < 500) run.advance(50);
   assert.equal(run.state.status, 'extinct'); return run.buildResult();
 }

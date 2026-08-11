@@ -143,12 +143,12 @@ void main() {
   float ownedCell = s4 + s8 + s9 + s10;
   float ownedReadyCell = s8 + s10;
   float selectedReadyCell = s7 + s10;
-  vec3 branchColor = vec3(0.48, 0.58, 0.47);
-  if (atlasBranch < 1.5) branchColor = vec3(0.192, 0.365, 0.659); // Marine
+  vec3 branchColor = vec3(0.48, 0.58, 0.47); // Foundation
+  if (atlasBranch < 1.5) branchColor = vec3(0.412, 0.678, 0.408); // Fertility
   else if (atlasBranch < 2.5) branchColor = vec3(0.333, 0.749, 0.820); // Freshwater
   else if (atlasBranch < 3.5) branchColor = vec3(0.761, 0.545, 0.259); // Scarcity
-  else if (atlasBranch < 4.5) branchColor = vec3(0.412, 0.678, 0.408); // Fertility
-  else if (atlasBranch < 5.5) branchColor = vec3(0.843, 0.929, 0.961); // Cryogenic
+  else if (atlasBranch < 4.5) branchColor = vec3(0.843, 0.929, 0.961); // Cryogenic
+  else if (atlasBranch < 5.5) branchColor = vec3(0.192, 0.365, 0.659); // Marine
   else branchColor = vec3(0.847, 0.678, 0.298); // Luminous
   float fossil = fract(vLife.z); float emphasis = step(31.0, vLife.z);
   float broadGlyph = smoothstep(0.38, 0.60, abs(sin(dot(vPos, vec3(11.0, 7.0, 5.0)) * (1.0 + atlasKind * 0.12))));
@@ -170,15 +170,18 @@ void main() {
   vec3 n = normalize(vPos);
   vec3 light = normalize(vec3(-0.52, 0.72, 0.44) + normalize(uEye) * 0.58);
   float diffuse = max(dot(n, light), 0.0);
-  float night = smoothstep(-0.16, 0.14, dot(n, light));
+  float daylight = smoothstep(-0.16, 0.14, dot(n, light));
+  float darkness = 1.0 - daylight;
   vec3 viewDir = normalize(uEye - vPos);
   float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 2.7);
   float plate = smoothstep(0.996, 0.9998, dot(n, normalize(vCenter)));
   vec3 col = base * (0.22 + 0.90 * diffuse) + base * plate * 0.07;
-  col += vec3(0.38, 0.39, 0.20) * alive * life * (0.08 + 0.12 * plate) * night;
+  // Ordinary life is a dim biological presence, clearest on the dark hemisphere.
+  col += vec3(0.38, 0.39, 0.20) * alive * life * (0.08 + 0.12 * plate) * darkness;
   float chargeLight = pow(powered, 0.62) * ordinary;
   vec3 chargeColor = mix(vec3(0.62, 0.43, 0.12), vec3(0.72, 0.68, 0.28), uElectricityDevelopment);
-  col += chargeLight * chargeColor * (0.22 + (1.0 - night) * 0.54
+  // Powered cells retain a little day-side emission and become materially brighter in darkness.
+  col += chargeLight * chargeColor * (0.22 + darkness * 0.54
     + plate * (0.22 + uElectricityDevelopment * 0.20));
   col += chargeLight * readyCore * vec3(0.28, 0.24, 0.08) * (0.18 + uElectricityDevelopment * 0.24);
   col += rim * vec3(0.08, 0.13, 0.14) * (1.0 - uEntropy * 0.5);

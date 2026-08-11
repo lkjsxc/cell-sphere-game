@@ -41,7 +41,7 @@ export function buildSnapshot(state) {
     ...resource,
     transformationState: state.transformationState.slice(),
     electricityQ: state.electricityQ.slice(),
-    electricityDevelopment: state.electricityMastery?.visualDevelopment ?? 0,
+    luminousDevelopment: state.luminous?.visualDevelopment ?? 0,
     reach: { ...buildReachSummary(state), goal: reachGoalSummary(state) },
     metrics: {
       coverage: state.coverage,
@@ -56,7 +56,7 @@ export function buildSnapshot(state) {
       resourceDepletedCells: state.resourceDepletedCells, resourceRecoveredCells: state.resourceRecoveredCells,
       freshwaterSupportedCellSeconds: state.freshwaterSupportedCellTicks / 10,
       transformedCells: state.transformedCells, electrifiedCells: state.electrifiedCells,
-      electricityMasteryRating: state.electricityMastery?.rating ?? '0',
+      luminousDevelopment: state.luminous?.visualDevelopment ?? 0,
       conservationError: resourceConservation(state).error,
       score: state.scoreMerit.total,
       scoreProjection,

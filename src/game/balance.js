@@ -7,7 +7,7 @@
 export const BALANCE = Object.freeze({
   // --- time ----------------------------------------------------------------
   TICKS_PER_SECOND: 10,      // canonical simulation rate
-  RUN_TARGET_TICKS: 3000,    // 300 game s fresh-world median target
+  RUN_TARGET_TICKS: 1300,    // provisional 90–150 game-s fresh-world target band; upgraded cohorts are longer by causal ecology
   // No normal world-duration ceiling: causal terminal fade only begins after
   // ecological liveness establishes a genuine terminal stall.
   TERMINAL_COLLAPSE_TICKS: 20, // at most two game seconds of causal fade
@@ -21,8 +21,8 @@ export const BALANCE = Object.freeze({
   SNAPSHOT_EVERY: 2,         // visual snapshot period at 1x
 
   // --- entropy curve ---------------------------------------------------------
-  ENTROPY_RISE_START: 1200,  // scarcity pressure becomes visible after two minutes
-  ENTROPY_RISE_END: 3100,    // terminal scarcity reaches full pressure near five minutes
+  ENTROPY_RISE_START: 180,   // scarcity arrives while a fresh organism is still confined to its rich opening
+  ENTROPY_RISE_END: 1000,    // mature Ecology has time to respond, but never escapes finite deterioration
   ENTROPY_POWER: 1.35,       // curve shape: gentle open, steep close
 
   // --- environment -----------------------------------------------------------
@@ -35,9 +35,9 @@ export const BALANCE = Object.freeze({
   TOXIN_DECAY: 0.002,        // per env step
 
   // --- metabolism ------------------------------------------------------------
-  UPTAKE_RATE: 0.09,         // nutrient/biomass/tick at full suitability
-  CONVERSION: 1.65,          // nutrient -> energy conversion
-  MAINTENANCE_RATE: 0.0024,  // energy/biomass/tick
+  UPTAKE_RATE: 0.072,        // nutrient/biomass/tick at full suitability
+  CONVERSION: 1.58,          // nutrient -> energy conversion
+  MAINTENANCE_RATE: 0.0072,  // energy/biomass/tick
   MAINTENANCE_ENTROPY: 0.8,  // extra maintenance multiplier at entropy 1
   ENERGY_CAP: 6.0,           // per-node stored energy cap
   BIOMASS_MAX: 2.5,          // maturity cap per node
@@ -58,9 +58,9 @@ export const BALANCE = Object.freeze({
   START_CONDUCTANCE: 0.35,
 
   // --- growth ------------------------------------------------------------------
-  GROW_COST: 0.22,           // energy to open a new frontier node
-  GROW_P_BASE: 0.3,          // base expansion probability per candidate/tick
-  GROW_PER_NODE_CAP: 2,      // max expansions per node per tick
+  GROW_COST: 0.26,           // energy to open a new frontier node
+  GROW_P_BASE: 0.24,         // base expansion probability per candidate/tick
+  GROW_PER_NODE_CAP: 1,      // max expansions per node per tick
   NEW_BIOMASS: 0.3,          // biomass seeded into a new node
   CROWDING_PENALTY: 0.14,    // per alive neighbor beyond 2
 
@@ -73,6 +73,6 @@ export const BALANCE = Object.freeze({
     stewardship: 0.18,
     worldmaking: 0.10,
   }),
-  ECHO_BASE: 8,
-  ECHO_DIVISOR: 80,
+  ECHO_BASE: 5,
+  ECHO_DIVISOR: 1000,
 });

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RunController } from '../../../src/simulation/simulator.js';
-import { beginTerminalCollapse } from '../../../src/simulation/state.js';
+import { beginTerminalCollapse, updateEnvironmentProgression } from '../../../src/simulation/state.js';
 import { compileChallengeProfile } from '../../../src/simulation/challenge-profile.js';
 import {
   createEnvironmentExposure, environmentExposureSummary, sampleEnvironmentExposure,
@@ -50,7 +50,8 @@ test('public schedule is build-independent while relevant defense changes only e
   const strong = new RunController({ seed: 7103, worldOrdinal: '3', evolutionDefense: { affinityDefense: {
     Fertility: '1000000', Freshwater: '1000000', Scarcity: '1000000', Cryogenic: '1000000', Marine: '1000000', Luminous: '1000000',
   } } });
-  weak.start(); strong.start(); weak.advance(1800); strong.advance(1800);
+  weak.start(); strong.start();
+  weak.state.tick = 1800; strong.state.tick = 1800; updateEnvironmentProgression(weak.state); updateEnvironmentProgression(strong.state);
   assert.equal(weak.state.currentEnvironmentLevel, '2'); assert.equal(strong.state.currentEnvironmentLevel, '2');
   assert.equal(weak.state.environmentLevelStartTick, strong.state.environmentLevelStartTick);
   assert.ok(strong.state.currentEnvironmentProfile.score.pressure <= weak.state.currentEnvironmentProfile.score.pressure);
@@ -70,8 +71,9 @@ test('chronic pressure leaves no onboarding or gameplay-disaster state', () => {
 test('terminal-collapse fade still advances each crossed public boundary and final evidence', () => {
   for (const { boundary, level } of [{ boundary: 1200, level: '1' }, { boundary: 1800, level: '2' }]) {
     const messages = []; const run = new RunController({ seed: 7106, worldOrdinal: '3' }, (message) => messages.push(message));
-    run.start(); run.advance(boundary - 1);
-    assert.equal(beginTerminalCollapse(run.state, 'terminal-stall'), true);
+    run.start();
+    if (boundary === 1800) { run.state.tick = 1200; updateEnvironmentProgression(run.state); }
+    run.state.tick = boundary - 1; assert.equal(beginTerminalCollapse(run.state, 'terminal-stall'), true);
     run.advance(1);
     assert.equal(run.state.currentEnvironmentLevel, level);
     assert.equal(run.state.environmentTransitionCount, level);
@@ -79,6 +81,18 @@ test('terminal-collapse fade still advances each crossed public boundary and fin
     run.advance(30); const result = run.buildResult();
     assert.equal(result.finalEnvironmentLevel, level); assert.equal(result.environmentTransitionCount, level);
   }
+});
+
+test('terminal collapse decays whole-cell charge without resuming Luminous generation', () => {
+  const run = new RunController({ seed: 7107, worldOrdinal: '3' }); run.start();
+  const state = run.state; const cell = state.inoculationCell;
+  state.luminous = { ...state.luminous, enabled: true, retention: .976 };
+  state.electricCharge[cell] = 1; state.electricityQ[cell] = 255; state.electrifiedCells = 1;
+  const poweredTicks = state.poweredCellTicks;
+  assert.equal(beginTerminalCollapse(state, 'terminal-stall'), true);
+  run.advance(1);
+  assert.ok(state.electricCharge[cell] < 1); assert.ok(state.electricityQ[cell] < 255);
+  assert.equal(state.electrifiedCells, 1); assert.equal(state.poweredCellTicks, poweredTicks);
 });
 
 test('bounded exposure flushes exact pressure-time and final peak evidence', () => {
@@ -92,8 +106,10 @@ test('bounded exposure flushes exact pressure-time and final peak evidence', () 
 });
 
 test('a next world resets Level-0 fields after a prior high peak', () => {
-  const prior = new RunController({ seed: 7105, worldOrdinal: '3' }); prior.start(); prior.advance(2400);
-  assert.ok(BigInt(prior.state.peakEnvironmentLevel) >= 3n);
+  const prior = new RunController({ seed: 7105, worldOrdinal: '3' }); prior.start();
+  // Schedule ownership is independent of whether a fragile ecology has already extinguished.
+  prior.state.tick = 2400; updateEnvironmentProgression(prior.state);
+  assert.ok(Number(prior.state.peakEnvironmentLevel) >= 3);
   const next = new RunController({ seed: 7106, worldOrdinal: '4' });
   assert.equal(next.state.currentEnvironmentLevel, '0'); assert.equal(next.state.peakEnvironmentLevel, '0');
   assert.equal(next.state.environmentTransitionCount, '0'); assert.equal(next.state.environmentExposure.totalTicks, '0');

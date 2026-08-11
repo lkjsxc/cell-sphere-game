@@ -128,10 +128,7 @@ export function environmentPressureSummary(profile, options = {}) {
 function minimumAffinityDefense(evolution, affinities) {
   let minimum = null;
   for (const affinity of affinities) {
-    const raw = evolution.affinityDefense?.[affinity]
-      ?? evolution.affinities?.[affinity]?.defenseRating
-      ?? evolution.affinities?.[affinity]?.rating
-      ?? '0';
+    const raw = evolution.affinityDefense?.[affinity] ?? '0';
     const value = normalizeProgressionInteger(raw, '0');
     minimum = minimum === null || compareProgressionIntegers(value, minimum) < 0 ? value : minimum;
   }

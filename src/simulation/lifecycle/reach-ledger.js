@@ -58,13 +58,14 @@ function reachConditions(state) {
     freshwaterForest += Math.max(state.fields.freshwaterInfluence[cell], state.fields.forestDensity[cell]); heat += Math.max(0, state.temperature[cell] - .75) * 4;
     cold += Math.max(0, .25 - state.temperature[cell]) * 4; dry += Math.max(0, .25 - state.moisture[cell]) * 4; toxin += state.toxicity[cell]; }
   const divisor = Math.max(1, living);
-  const support = Math.min(1, (state.memoryConditionals.length + state.memoryUnlocks.length) / 8);
+  const support = Math.min(1, (Object.keys(state.activeTraits ?? {}).length + (state.habitatCapabilities?.length ?? 0)
+    + (state.luminous?.enabled ? 1 : 0)) / 24);
   const positiveConditions = conditionList([['energy-surplus', 'energy surplus', energy / divisor / 3], ['available-frontier', 'available frontier', state.liveness.activeFrontierCount / divisor],
     ['rich-niche-access', 'Rich niche access', nutrient / divisor], ['resource-floor', 'Resource floor', 1 - resourceBlockedCells / state.topo.nodeCount],
-    ['reclamation-access', 'Reclamation access', state.activeBuildIdSet?.has('wasteland-reclaimer') ? 1 : 0],
+    ['reclamation-access', 'Reclamation access', state.worldmakingCapabilities?.reclamation ? 1 : 0],
     ['freshwater-frontier', 'Freshwater-supported frontier', freshwaterForest / divisor],
     ['accessible-nutrients', 'accessible nutrients', nutrient / divisor], ['suitable-moisture', 'suitable moisture', moisture / divisor],
-    ['favorable-temperature', 'favorable temperature', suitableTemp / divisor], ['freshwater-ecology', 'lake, shore, and forest affinity', freshwaterForest / divisor], ['inherited-support', 'Evolution support', support]]);
+    ['favorable-temperature', 'favorable temperature', suitableTemp / divisor], ['freshwater-ecology', 'lake, shore, and forest support', freshwaterForest / divisor], ['inherited-support', 'Evolution support', support]]);
   const negativeConditions = conditionList([['entropy', 'entropy', state.entropy], ['maintenance-burden', 'maintenance burden', deficit / divisor],
     ['heat-stress', 'heat stress', heat / divisor], ['cold-stress', 'cold stress', cold / divisor], ['drought-stress', 'drought stress', dry / divisor],
     ['toxicity', 'toxicity', toxin / divisor], ['fragmentation', 'fragmentation', 1 - state.connectedShare]]);

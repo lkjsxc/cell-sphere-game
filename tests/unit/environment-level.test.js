@@ -98,6 +98,15 @@ test('matched multi-affinity defense mitigates public pressure without changing 
   assert.equal(profile.coefficients.renewalScale, 1); assert.equal(environmentLevelAtTick(environmentTickForLevel('1000')), '1000');
 });
 
+test('retired affinity-object shapes cannot alter current chronic pressure', () => {
+  const baseline = compileChallengeProfile({ environmentLevel: '10', evolution: undefended });
+  const retired = compileChallengeProfile({ environmentLevel: '10', evolution: { affinities: {
+    Fertility: { defenseRating: '999999999', rating: '999999999' },
+    Freshwater: { defenseRating: '999999999', rating: '999999999' },
+  } } });
+  assert.deepEqual(retired, baseline);
+});
+
 test('compiler hashes are deterministic, defense-sensitive, and validation rejects tampering', () => {
   const a = compileChallengeProfile({ environmentLevel: '10', evolution: undefended });
   const b = compileChallengeProfile({ environmentLevel: '10', evolution: undefended });

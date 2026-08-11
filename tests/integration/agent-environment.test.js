@@ -4,10 +4,10 @@ import assert from 'node:assert/strict';
 import { createAgentEnvironment } from '../../src/agent/environment.js';
 import { defaultAgentSave } from '../../src/agent/schema.js';
 
-const REQUIRED_RESULT_KEYS = ['archetype', 'bestEnvironmentLevelReached', 'builds', 'cause', 'echoes',
+const REQUIRED_RESULT_KEYS = ['archetype', 'bestEnvironmentLevelReached', 'cause', 'echoes',
   'environmentExposure', 'environmentProfileVersion', 'finalEnvironmentLevel', 'peakEnvironmentLevel',
   'pressure', 'rank', 'resources', 'resultSchemaVersion', 'score', 'scoreModelVersion', 'startEnvironmentLevel', 'stateHash', 'survivalSeconds', 'terminalCause',
-  'timeAtPeakTicks', 'trophiesAwarded', 'worldOrdinal', 'worldPotential', 'worldmaking'];
+  'timeAtPeakTicks', 'trophiesAwarded', 'worldOrdinal', 'worldmaking'];
 
 test('all fair action shapes use production exact transactions and Level-0 authority', { timeout: 30_000 }, () => {
   const env = createAgentEnvironment(defaultAgentSave(77));
@@ -15,8 +15,8 @@ test('all fair action shapes use production exact transactions and Level-0 autho
   assert.equal(env.act({ type: 'wat' }).reason, 'unknown-action');
   assert.equal(env.act({ type: 'buy-evolution-level', cellId: 'not-a-cell' }).reason, 'unknown-cell');
   const initial = env.observe();
-  assert.equal(env.act({ type: 'buy-skill', skillId: initial.availableEvolutionCells[0].id, expectedLevel: '0',
-    expectedRevision: initial.metaRevision }).reason, 'insufficient-echoes');
+  assert.equal(env.act({ type: 'buy-retired-action', cellId: initial.availableEvolutionCells[0].id, expectedLevel: '0',
+    expectedRevision: initial.metaRevision }).reason, 'unknown-action');
   assert.equal(env.act({ type: 'set-goal', goal: 'not-public' }).reason, 'unknown-goal');
   assert.equal(env.act({ type: 'set-goal', goal: 'freshwater' }).accepted, true);
   const completed = run(env);
@@ -24,7 +24,7 @@ test('all fair action shapes use production exact transactions and Level-0 autho
   for (const key of REQUIRED_RESULT_KEYS) assert.ok(key in completed.result, key);
   assert.ok(BigInt(completed.result.score) > 0n);
   assert.equal(completed.result.startEnvironmentLevel, '0');
-  assert.equal(completed.result.resultSchemaVersion, 8); assert.equal(completed.result.environmentProfileVersion, 4);
+  assert.equal(completed.result.resultSchemaVersion, 9); assert.equal(completed.result.environmentProfileVersion, 4);
   assert.equal('eventDirectorVersion' in completed.result, false);
   assert.ok(BigInt(completed.result.peakEnvironmentLevel) >= 1n); assert.ok(completed.result.stateHash);
   const after = env.exportSave(); assert.equal(after.meta.runs, '1'); assert.equal(after.worldOrdinal, '2');
@@ -38,8 +38,8 @@ test('all fair action shapes use production exact transactions and Level-0 autho
   assert.equal(env.exportSave().history.evolution.length, 1); assert.equal(bought.purchase.newLevel, '1');
   const repeat = env.act({ type: 'buy-evolution-level', cellId: option.id });
   assert.equal(repeat.reason, 'missing-precondition'); assert.equal(env.exportSave().history.evolution.length, 1);
-  assert.equal(env.act({ type: 'inspect-last-result' }).accepted, true); assert.equal(env.act({ type: 'inspect-builds' }).accepted, true);
-  assert.equal(env.act({ type: 'export' }).save.schema, 5);
+  assert.equal(env.act({ type: 'inspect-last-result' }).accepted, true); assert.equal(env.act({ type: 'inspect-evolution' }).accepted, true);
+  assert.equal(env.act({ type: 'export' }).save.schema, 6);
   assert.equal(env.act({ type: 'reset', seed: -1 }).reason, 'invalid-seed'); assert.equal(env.act({ type: 'reset', seed: 77 }).accepted, true);
   assert.equal(env.exportSave().meta.runs, '0'); assert.equal(env.observe().lastResult, null);
 });
@@ -50,7 +50,7 @@ test('agents cannot select/retry static levels and external budget exhaustion is
     expectedWorldOrdinal: observation.worldOrdinal, environmentLevel: '2' }).reason, 'static-environment-actions-retired');
   const started = env.act({ type: 'start-world', expectedRevision: observation.metaRevision,
     expectedWorldOrdinal: observation.worldOrdinal });
-  assert.equal(started.reason, 'world-started'); assert.equal(started.observation.schema, 5);
+  assert.equal(started.reason, 'world-started'); assert.equal(started.observation.schema, 6);
   assert.equal(started.observation.activeWorld.currentEnvironmentLevel, '0');
   const pressure = started.observation.activeWorld.environmentPressureSummary;
   assert.equal(pressure.level, '0'); assert.equal(pressure.nextLevel, '1'); assert.equal(pressure.interpolationQ, 0);
@@ -63,6 +63,22 @@ test('agents cannot select/retry static levels and external budget exhaustion is
   assert.ok(BigInt(terminal.result.peakEnvironmentLevel) >= 1n);
   assert.equal(env.observe().bestEnvironmentLevelReached, terminal.result.peakEnvironmentLevel);
   assert.equal(env.act({ type: 'retry-environment-level' }).reason, 'static-environment-actions-retired');
+});
+
+test('agents cannot alter a World’s compiled Evolution before its terminal settlement', { timeout: 30_000 }, () => {
+  const env = createAgentEnvironment(defaultAgentSave(808));
+  assert.equal(run(env).reason, 'world-completed');
+  const betweenWorlds = env.observe();
+  const target = betweenWorlds.availableEvolutionCells.find((cell) => cell.affordable);
+  assert.ok(target, 'completed World should finance a reachable Evolution cell');
+  assert.equal(env.act({ type: 'start-world', expectedRevision: betweenWorlds.metaRevision,
+    expectedWorldOrdinal: betweenWorlds.worldOrdinal }).reason, 'world-started');
+  const attempted = env.act({ type: 'buy-evolution-level', cellId: target.id, expectedLevel: target.currentLevel,
+    expectedRevision: betweenWorlds.metaRevision });
+  assert.equal(attempted.accepted, false); assert.equal(attempted.reason, 'world-active');
+  const completed = env.act({ type: 'continue-world', budgetTicks: 10_000 });
+  assert.equal(completed.reason, 'world-completed');
+  assert.equal(env.exportSave().meta.runs, '2');
 });
 
 test('same reset seed and fair actions replay to identical result and campaign hashes', { timeout: 30_000 }, () => {

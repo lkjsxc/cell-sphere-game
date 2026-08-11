@@ -25,6 +25,6 @@ export function createBlankSnapshot(nodeCount, identity) {
     biomass: new Float32Array(nodeCount), stress: new Float32Array(nodeCount),
     alive: new Uint8Array(nodeCount), lifeState: new Uint8Array(nodeCount), resourceRichnessQ: new Uint8Array(nodeCount),
     reserveFractionQ: new Uint8Array(nodeCount), resourceState: new Uint8Array(nodeCount),
-    transformationState: new Uint8Array(nodeCount), electricityQ: new Uint8Array(nodeCount),
+    transformationState: new Uint8Array(nodeCount), electricityQ: new Uint8Array(nodeCount), luminousDevelopment: 0,
     reach, metrics, blank: true });
 }

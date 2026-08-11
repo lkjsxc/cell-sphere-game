@@ -1,10 +1,10 @@
 /** Strict bounded visual-History codec. */
 export const MAGIC = 'INHV';
-export const VERSION = 2;
+export const VERSION = 3;
 export const MAX_BYTES = 256 * 1024;
 export const MAX_CELLS = 8192;
 /** Bump when seed-derived geography or its renderer interpretation changes. */
-export const WORLD_VISUAL_VERSION = 1;
+export const WORLD_VISUAL_VERSION = 2;
 const HEADER_BYTES = 24;
 const FRAME_HEADER_BYTES = 10;
 const CELL_BYTES = 3;
@@ -34,7 +34,7 @@ export function encodeVisualHistory(metadata, inputFrames) {
   for (const frame of frames) {
     view.setUint32(offset, frame.tick, true); view.setUint8(offset + 4, frame.entropyQ);
     view.setUint8(offset + 5, frame.flags); view.setUint16(offset + 6, frame.aliveCount, true);
-    view.setUint8(offset + 8, frame.electricityDevelopmentQ); view.setUint8(offset + 9, 0);
+    view.setUint8(offset + 8, frame.luminousDevelopmentQ); view.setUint8(offset + 9, 0);
     bytes.set(frame.cells, offset + FRAME_HEADER_BYTES);
     bytes.set(frame.resources, offset + FRAME_HEADER_BYTES + cellCount);
     bytes.set(frame.worldmaking, offset + FRAME_HEADER_BYTES + cellCount * 2);
@@ -68,7 +68,7 @@ export function decodeVisualHistory(value) {
     for (let cell = 0; cell < cellCount; cell++) if (cells[cell] >>> 6) countedAlive++;
     if (tick <= prior || aliveCount !== countedAlive) throw new Error('invalid visual history checkpoint');
     frames.push(Object.freeze({ tick, entropyQ: view.getUint8(offset + 4), flags, aliveCount,
-      electricityDevelopmentQ: view.getUint8(offset + 8), cells, resources, worldmaking }));
+      luminousDevelopmentQ: view.getUint8(offset + 8), cells, resources, worldmaking }));
     prior = tick;
   }
   if (frames.at(-1).tick !== terminalTick) throw new Error('invalid terminal checkpoint');
@@ -114,14 +114,14 @@ function validateFrames(input, cellCount) {
     const entropyQ = integer(frame?.entropyQ, 0, 255, 'entropyQ');
     const flags = integer(frame?.flags ?? 0, 0, MAJOR_FLAG | TERMINAL_FLAG | INITIAL_FLAG | TRANSITION_FLAG, 'flags');
     const aliveCount = integer(frame?.aliveCount, 0, cellCount, 'aliveCount');
-    const electricityDevelopmentQ = integer(frame?.electricityDevelopmentQ ?? 0, 0, 255, 'electricityDevelopmentQ');
+    const luminousDevelopmentQ = integer(frame?.luminousDevelopmentQ ?? 0, 0, 255, 'luminousDevelopmentQ');
     if (!(frame.cells instanceof Uint8Array) || !(frame.resources instanceof Uint8Array)
       || !(frame.worldmaking instanceof Uint8Array) || frame.cells.length !== cellCount
       || frame.resources.length !== cellCount || frame.worldmaking.length !== cellCount || tick <= prior) {
       throw new Error('invalid checkpoint');
     }
     prior = tick;
-    return { tick, entropyQ, flags, aliveCount, electricityDevelopmentQ,
+    return { tick, entropyQ, flags, aliveCount, luminousDevelopmentQ,
       cells: frame.cells, resources: frame.resources, worldmaking: frame.worldmaking };
   });
 }

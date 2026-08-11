@@ -23,7 +23,7 @@ export function buildTrophyFacts(result, score) {
   if ((lake.lakeLoopSeconds ?? 0) >= 180 && (lake.distinctLakesReached ?? 0) >= 6) flags |= 64;
   if (((lake.ecologyMask ?? 0) & 15) === 15 && (lake.lakeLivingSeconds ?? 0) >= 180 && (lake.lakeRegionPeak ?? 0) >= 100) flags |= 128;
   const total = normalizeProgressionInteger(score?.total, '0');
-  if (atLeast(total, '100000') && axes[1] >= 4500) masteryFlags |= 1;
+  if (atLeast(total, '225000') && axes[1] >= 6500) masteryFlags |= 1;
   if (atLeast(total, '250000') && meetsAxes(axes, [8500, 4200, 3000, 8500, 5000, 6500])) masteryFlags |= 2;
   if (atLeast(total, '500000') && (flags & 1)) masteryFlags |= 4;
   if (atLeast(total, '750000') && habitatClassCount >= 3) masteryFlags |= 8;

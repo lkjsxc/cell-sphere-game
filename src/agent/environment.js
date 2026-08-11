@@ -13,7 +13,7 @@ import { buildAgentObservation } from './observation.js';
 import { AGENT_GOALS, defaultAgentSave, exportAgentSave, validateAgentSave } from './schema.js';
 
 const GOALS = new Set(AGENT_GOALS);
-const SEED_LIMIT = 0x40000000;
+const SEED_LIMIT = 0x100000000;
 /** External API chunk/budget guard, never simulation terminal authority. */
 export const MAX_AGENT_ADVANCE_TICKS = 10_000;
 export const MAX_AGENT_RUN_BUDGET_TICKS = 1_000_000;
@@ -29,7 +29,9 @@ export function createAgentEnvironment(raw = defaultAgentSave()) {
   }
 
   function buy(action) {
-    const cellId = action.cellId ?? action.skillId;
+    // A World's compiled Evolution is immutable for its entire authoritative run.
+    if (activeWorld) return respond(false, 'world-active');
+    const cellId = action.cellId;
     const node = getMemoryNode(cellId);
     if (!node) return respond(false, 'unknown-cell');
     if (!isCanonicalProgressionInteger(action.expectedLevel) || !isCanonicalProgressionInteger(action.expectedRevision)) {
@@ -80,12 +82,8 @@ export function createAgentEnvironment(raw = defaultAgentSave()) {
     const run = new RunController({
       seed, runId: 1, strainId: 'pioneer', worldOrdinal,
       evolutionDefense: { affinityDefense: evolution.affinityDefense, pressureDefense: evolution.pressureDefense },
-      worldPotential: evolution.worldPotential, evolutionPower: evolution.evolutionPower,
-      evolutionDepth: evolution.evolutionDepth, potentialVersion: evolution.potentialVersion,
-      memoryEffects: evolution.effects, memoryConditionals: evolution.conditionals,
-      memoryUnlocks: evolution.unlocks, habitatCapabilities: evolution.habitatCapabilities,
-      activeBuilds: evolution.activeBuilds, buildEffects: evolution.buildEffects,
-      electricityMastery: evolution.electricityMastery,
+      memoryEffects: evolution.effects, habitatCapabilities: evolution.habitatCapabilities,
+      ecology: evolution.ecology, worldmaking: evolution.worldmaking, luminous: evolution.luminous,
     });
     run.start();
     activeWorld = { run, seedIndex, seed, worldOrdinal };
@@ -160,7 +158,7 @@ export function createAgentEnvironment(raw = defaultAgentSave()) {
   function act(action) {
     if (!action || typeof action !== 'object' || typeof action.type !== 'string') return respond(false, 'invalid-action');
     if (action.type === 'observe') return respond(true, 'observed');
-    if (action.type === 'buy-evolution-level' || action.type === 'buy-skill') return buy(action);
+    if (action.type === 'buy-evolution-level') return buy(action);
     if (action.type === 'start-world') return startWorld(action);
     if (action.type === 'advance-world') return advanceWorld(action);
     if (action.type === 'continue-world') return continueWorld(action);
@@ -169,8 +167,8 @@ export function createAgentEnvironment(raw = defaultAgentSave()) {
       return respond(false, 'static-environment-actions-retired');
     }
     if (action.type === 'inspect-last-result') return respond(true, 'last-result-inspected', { result: state.lastResult });
-    if (action.type === 'inspect-builds') return respond(true, 'builds-inspected', {
-      builds: Object.freeze({ active: observe().activeBuilds, near: observe().nearBuilds }) });
+    if (action.type === 'inspect-evolution') return respond(true, 'evolution-inspected', {
+      cells: observe().evolutionCells });
     if (action.type === 'export') return respond(true, 'save-exported', { save: save() });
     if (action.type === 'set-goal') return setGoal(action.goal);
     if (action.type === 'reset') return reset(action.seed);
@@ -189,7 +187,8 @@ export function createAgentEnvironment(raw = defaultAgentSave()) {
       environmentExposure: snapshot.environmentExposure,
       resources: Object.freeze({ reserveFraction: snapshot.metrics.resourceReserveFraction,
         depletedCells: snapshot.metrics.resourceDepletedCells, recoveredCells: snapshot.metrics.resourceRecoveredCells }),
-      reach: snapshot.reach, electricity: Object.freeze({ electrifiedCells: snapshot.metrics.electrifiedCells }),
+      reach: snapshot.reach, luminous: Object.freeze({ electrifiedCells: snapshot.metrics.electrifiedCells,
+        development: snapshot.metrics.luminousDevelopment ?? snapshot.luminousDevelopment ?? 0 }),
     });
   }
   return Object.freeze({ observe, act, exportSave: save });
@@ -215,7 +214,7 @@ function curateResult(result, transaction) {
     environmentExposure: result.environmentExposure, timeAtPeakTicks: result.timeAtPeakTicks,
     archetype: result.archetype, survivalSeconds: result.survivalSeconds, cause: result.cause,
     terminalCause: result.terminalCause, score: transaction.score.total, scoreModelVersion: transaction.score.modelVersion,
-    rank: transaction.score.rank.en, echoes: transaction.score.echoes, worldPotential: result.worldPotential,
+    rank: transaction.score.rank.en, echoes: transaction.score.echoes,
     pressure: result.environmentPressureSummary, peakReach: result.peakCoverage, sustainedReach: result.sustainedCoverage,
     peakConnectedShare: result.peakConnectedShare,
     resources: Object.freeze({ initial: result.resourceInitial, final: result.resourceFinal,
@@ -224,7 +223,6 @@ function curateResult(result, transaction) {
       livingTicksByQuintile: Object.freeze([...(result.resourceLivingTicksByQuintile ?? [])]) }),
     habitats: Object.freeze({ lake: habitats[13] ?? 0, tundra: habitats[11] ?? 0,
       snowIce: habitats[12] ?? 0, shallowOcean: habitats[1] ?? 0, deepOcean: habitats[0] ?? 0 }),
-    builds: Object.freeze([...(result.activeBuilds ?? [])]),
     worldmaking: Object.freeze({ transformedCells: result.transformedCells ?? 0,
       glacialLakeCells: result.glacialLakeCells ?? 0, maritimeForestCells: result.maritimeForestCells ?? 0,
       electrifiedCells: result.electrifiedCells ?? 0, finalElectrifiedCells: result.finalElectrifiedCells ?? 0,

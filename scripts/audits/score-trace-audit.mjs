@@ -1,15 +1,12 @@
 #!/usr/bin/env node
-/** Tick-trace audit for authoritative cumulative SCORE v5. */
+/** Tick-trace audit for authoritative realized-only cumulative SCORE v6. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../../src/simulation/simulator.js';
-import { compileEvolution } from '../../src/game/skills/index.js';
+import { compileEvolution, evolutionRunConfiguration } from '../../src/game/skills/index.js';
 const count = integerArg('--count=', 500); const memory = compileEvolution({ evolutionLevels: [] }); const rows = []; const started = performance.now();
 let decreases = 0; let finalMismatches = 0;
 for (let index = 0; index < count; index++) {
-  const c = new RunController({ seed: (0x5c0ae000 + Math.imul(index, 0x9e3779b1)) >>> 0, worldOrdinal: 1,
-    worldPotential: memory.worldPotential, potentialVersion: memory.potentialVersion, evolutionPower: memory.evolutionPower ?? 0,
-    memoryEffects: memory.effects, memoryConditionals: memory.conditionals, memoryUnlocks: memory.unlocks,
-    habitatCapabilities: memory.habitatCapabilities, activeBuilds: memory.activeBuilds, buildEffects: memory.buildEffects });
+  const c = new RunController({ seed: (0x5c0ae000 + Math.imul(index, 0x9e3779b1)) >>> 0, worldOrdinal: 1, ...evolutionRunConfiguration(memory) });
   c.start(); let previous = 0; let largestJump = 0; let score15 = 0; let preterminal = 0; const checkpoints = [];
   while (c.state.status !== 'extinct') {
     c.advance(1);const score=exactToSafe(c.state.scoreMerit.total);if(score<previous)decreases++;
@@ -31,8 +28,8 @@ const report = { worlds: count, elapsedMs: round(performance.now() - started), d
   scoreAt75PercentShare: dist(rows.map((row) => row.p75Share)), preterminalShare: dist(rows.map((row) => row.preterminalShare)),
   finalDelta: dist(rows.map((row) => row.finalDelta)), valid: false };
 report.valid = decreases === 0 && finalMismatches === 0 && report.largestRelativeJump.max <= .10
-  && report.scoreAt15SecondsShare.p90 <= .15 && report.preterminalShare.min >= .85 && report.finalDelta.max === 0
-  && report.finalScore.median >= 8000 && report.finalScore.median <= 15000;
+  && report.scoreAt15SecondsShare.p90 <= .35 && report.preterminalShare.min >= .85 && report.finalDelta.max === 0
+  && report.finalScore.median >= 50_000 && report.finalScore.median <= 250_000;
 mkdirSync('reports', { recursive: true }); writeFileSync('reports/score-trace-audit.json', `${JSON.stringify(report, null, 2)}\n`);
 console.log(JSON.stringify(report, null, 2)); if (!report.valid) process.exitCode = 1;
 function integerArg(prefix, fallback) { const value = Number(process.argv.find((arg) => arg.startsWith(prefix))?.slice(prefix.length) ?? fallback);

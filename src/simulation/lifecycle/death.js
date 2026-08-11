@@ -23,8 +23,7 @@ export function runDeath(state) {
       const shrink = biomass[i]
         * (B.STARVE_SHRINK + 0.05 * Math.max(0, stress[i] - 0.8) * 5);
       biomass[i] = Math.fround(Math.max(0, biomass[i] - shrink));
-      if (state.activeBuildIdSet.has('circular-biosphere') || state.activeBuildIdSet.has('wasteland-reclaimer')
-          || state.activeBuildIdSet.has('depletion-bloom')) reclaimDetritusResource(state, i, shrink * .08);
+      if (recyclingEnabled(state)) reclaimDetritusResource(state, i, shrink * (.035 + state.ecology.recycling * .07));
       state.causes[dominantCause(state, i)] += shrink;
     }
 
@@ -59,13 +58,14 @@ function reclaimDetritus(state) {
     const decay = (biomass[i] - 0.02) * 0.01;
     if (decay > 0) {
       biomass[i] = Math.fround(biomass[i] - decay);
-      if (state.activeBuildIdSet.has('circular-biosphere') || state.activeBuildIdSet.has('wasteland-reclaimer')
-          || state.activeBuildIdSet.has('depletion-bloom')) reclaimDetritusResource(state, i, decay * .16);
+      if (recyclingEnabled(state)) reclaimDetritusResource(state, i, decay * (.07 + state.ecology.recycling * .12));
     }
   }
 }
 
 /** Deterministic terminal fade reaches zero by its authoritative deadline. */
+function recyclingEnabled(state) { return state.worldmakingCapabilities?.reclamation === true && (state.ecology?.recycling ?? 0) > 0; }
+
 function terminalCascade(state) {
   if (state.status !== 'terminal-collapse') return;
   const remaining = Math.max(1, state.terminalDeadline - state.tick + 1);
