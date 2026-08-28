@@ -20,7 +20,7 @@ not a click-to-place game, and not a hidden-tab idle process.
 ## North stars
 
 - first visible growth under 10 game seconds;
-- provisional fresh no-Evolution median of 45–90 game seconds through finite-resource ecology;
+- fresh no-Evolution worlds remain finite through resource-limited ecology;
 - first-root paired cohorts should survive meaningfully longer than fresh;
 - trophy recognition and Evolution progression are based on realized worlds, not modeled forecasts;
 - same seed + world ordinal + Evolution levels produces the same result at every speed;

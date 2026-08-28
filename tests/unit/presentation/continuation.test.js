@@ -13,7 +13,7 @@ import {
   planContinuationPresentation,
   setContinuationHidden,
   startContinuation,
-} from '../../src/interface/policies/continuation.js';
+} from '../../../src/interface/policies/continuation.js';
 
 test('counting projection derives monotone bounded progress and exact accessible seconds', () => {
   const state = createContinuation(9000); const generation = startContinuation(state, 1000, { resultTransactionKey: 'result-a' });
@@ -69,8 +69,8 @@ test('projection sanitizes malformed timing without creating another deadline', 
 });
 
 test('presentation adds no independent clock or CSS countdown animation', () => {
-  const policy = readFileSync(new URL('../../src/interface/policies/continuation.js', import.meta.url), 'utf8');
-  const styles = readFileSync(new URL('../../styles/shell.css', import.meta.url), 'utf8');
+  const policy = readFileSync(new URL('../../../src/interface/policies/continuation.js', import.meta.url), 'utf8');
+  const styles = readFileSync(new URL('../../../styles/shell.css', import.meta.url), 'utf8');
   assert.doesNotMatch(policy, /setTimeout|setInterval|requestAnimationFrame/);
   for (const rule of styles.matchAll(/[^{}]*continuation[^{}]*\{([^{}]*)\}/g)) {
     assert.doesNotMatch(rule[1], /\banimation(?:-\w+)?\s*:/);

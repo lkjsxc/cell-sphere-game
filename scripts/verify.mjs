@@ -43,7 +43,7 @@ const gates = [
   ['audit:reach100', 'node scripts/audits/reach100-audit.mjs --count=100'],
   ['agent:tournament:smoke', 'node scripts/agent-tournament.mjs --smoke > /dev/null'],
   ['showcase:check', 'node scripts/generate-title-showcase.mjs --check'],
-  ['test:unit', 'node --test tests/unit/*.test.js tests/unit/simulation/*.test.js'],
+  ['test:unit', 'node --test tests/unit/*.test.js tests/unit/presentation/*.test.js tests/unit/simulation/*.test.js'],
   ['test:integration', 'node --test tests/integration/*.test.js'],
   ['audit:lakes', 'node scripts/audits/lake-audit.mjs --count=500'],
   ['balance:smoke', 'node scripts/balance.mjs --smoke'],

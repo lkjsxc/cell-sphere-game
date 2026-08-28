@@ -6,9 +6,11 @@ mutates simulation arrays, consumes authoritative randomness, or changes SCORE.
 | Module | Authority boundary |
 |---|---|
 | `app-controller.js` | Home/World/Evolution/Trophies composition and persistence orchestration. |
-| `run-driver.js` | Worker-first run protocol v10 with identical fallback. |
+| `run-driver.js` | Current Worker-first run protocol with identical fallback and relative-speed conversion. |
 | `policies/run-session.js` | First-wins replacement, neutral Level-0 blank frame, immutable start identity. |
-| `policies/run-result.js` | Validated SCORE/Echo/best-record/History-9/Trophy transaction. |
+| `policies/run-result.js` | Validated SCORE/Echo/best-record/History/Trophy transaction. |
+| `policies/camera-motion.js` | Presentation-only direct gesture samples, bounded inertia, idle orbit, and holds. |
+| `policies/continuation.js` | One-shot Result authority and its bounded visual/assistive projection. |
 | `surfaces.js` / `inspection/` | SCORE/REACH/Environment HUD, dynamic result evidence, metrics, and Inspector. |
 | `panel-surfaces.js` / `progression-spheres.js` | Evolution detail and second-activation transaction. |
 | `history-*` / `app-data.js` | Bounded History and validated import/export. |
@@ -27,8 +29,9 @@ remains independently reachable. Result keeps its continuation status and
 **History**; it never offers static level selection/retry. The Menu owns only
 common preferences and collapsed local data/reset actions; History retention is
 an internal bounded policy. History keeps controls stable above its sole scroll
-owner, renders a complete v2 checkpoint atomically, and stays explicitly
+owner, renders a complete v3 checkpoint atomically, and stays explicitly
 semantic-only while visual data is loading or unavailable.
 Evolution explains that every world starts at Level 0 and displays the achieved
-best record. Exact values use canonical decimal formatting. Scene/camera/speed
+best record. Exact values use canonical decimal formatting. Public speed is a
+relative multiplier converted once to effective game rate. Scene/camera/speed
 changes remain authority-neutral.

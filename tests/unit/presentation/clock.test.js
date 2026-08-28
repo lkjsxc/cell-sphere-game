@@ -2,10 +2,10 @@
  *  tabs must not create unbounded catch-up work. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createClock, advanceClock } from '../../src/core/clock.js';
-import { effectiveGameRateForSpeed } from '../../src/core/runtime-speed.js';
-import { advanceTimeDial, createTimeDialState, visualDialRate, VISUAL_DIAL_GAME_RATE_CEILING } from '../../src/interface/policies/time-dial.js';
-import { pauseLabel } from '../../src/interface/pause-control.js';
+import { createClock, advanceClock } from '../../../src/core/clock.js';
+import { effectiveGameRateForSpeed } from '../../../src/core/runtime-speed.js';
+import { advanceTimeDial, createTimeDialState, visualDialRate, VISUAL_DIAL_GAME_RATE_CEILING } from '../../../src/interface/policies/time-dial.js';
+import { pauseLabel } from '../../../src/interface/pause-control.js';
 
 test('effective game rate 1: 100ms yields exactly 1 tick at 10Hz', () => {
   const c = createClock(10);

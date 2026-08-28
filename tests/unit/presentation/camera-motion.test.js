@@ -1,7 +1,7 @@
 /** Presentation motion remains bounded, frame-rate independent, and outside authority. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createCamera } from '../../src/rendering/camera.js';
+import { createCamera } from '../../../src/rendering/camera.js';
 import {
   advanceCameraMotion,
   beginCameraDrag,
@@ -14,12 +14,12 @@ import {
   setCameraMotionReduced,
   setCameraMotionScene,
   setCameraMotionSurface,
-} from '../../src/interface/policies/camera-motion.js';
+} from '../../../src/interface/policies/camera-motion.js';
 import {
   createTrustedInteractionGuard,
   normalizeTrustedInteraction,
   TRUSTED_INTERACTION_EVENTS,
-} from '../../src/interface/policies/trusted-interaction.js';
+} from '../../../src/interface/policies/trusted-interaction.js';
 
 test('release sampling is fixed-capacity, recent, finite, and clamped', () => {
   const state = createCameraMotion({ now: 0, scene: 'world' });

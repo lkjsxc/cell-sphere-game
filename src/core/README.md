@@ -10,7 +10,7 @@ here is environment-independent and runs under Node and the browser.
 | `hash.js` | FNV-1a over bytes/strings/quantized float arrays; hex formatting. |
 | `progression-integer.js` | Exact non-negative progression integers: canonical decimal JSON boundary, arithmetic, bounded projections, magnitude, hashes, and stable formatting. |
 | `seed-code.js` | 30-bit seed ↔ 6-char Crockford code ("ABC-DEF"), confusable-tolerant decode. |
-| `clock.js` | Fixed-step clock: real time × speed → integer tick counts. |
+| `clock.js` | Fixed-step clock: wall-clock time × effective game rate → integer tick counts and retained debt. |
 | `state-machine.js` | Explicit FSM with declared legal transitions; illegal sends throw. |
 | `assert.js` | Boundary assertions for messages, saves, and configuration. |
 | `adaptation-arrival.js` | Pure deterministic weighted graph arrival field for bounded presentation. |

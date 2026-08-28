@@ -4,20 +4,31 @@ Balance is measured with production `RunController` cohorts, fixed seed sets,
 and explicit external budgets. An exhausted audit budget is incomplete and
 reward-free; it is never converted into an extinction.
 
-## Current direction
+## Current measured development cohort
 
-- Fresh Worlds should be resource-limited rather than event-limited.
-- The provisional fresh no-Evolution target is a 45–90 game-second median.
-- A first general Evolution root should normally outlive fresh Worlds on paired
-  seeds.
-- Resource exhaustion should dominate early extinction causes (provisionally at
-  least 65% where causal evidence supports it).
-- No finite Evolution build is immortal.
+The 2026-08-28 eight-seed smoke measurement records, rather than promises:
 
-The chronic-pressure migration intentionally removed the old 270–330-second
-contract, event survival metrics, and fixed campaign-time targets. The current
-implementation still needs the dedicated resource-limited cohort retune; do not
-interpret pre-retune duration reports as evidence that the new target is met.
+- fresh lifetime 107.4–155.4 game seconds, with p25/median/p75
+  121.1/131.7/137.9;
+- fresh peak REACH median 4.294%;
+- fresh final Environment Level median 1;
+- fresh SCORE median 154,451 and Echoes median 17;
+- two resource-exhaustion and six maintenance-starvation outcomes;
+- the foundation fixture outlived fresh on all eight paired seeds, with a
+  156.1-second median;
+- scarcity, first-visible Luminous, and mature fixture medians of
+  206.3/144.5/209.8 game seconds.
+
+At the nominal new 1× rate, the fresh median implies 32.9 foreground seconds
+before browser overhead. That division is a pacing implication, not observed
+browser survival duration. Browser pacing is measured separately.
+
+The completed ecology retune is current authority. Autonomous World Feel v1 did
+not change simulation constants, Evolution effects, Environment schedules,
+scoring, or seed sets. It rebased wall-clock presentation so a slow foreground
+rate is no longer mistaken for game-time balance. No finite Evolution build may
+be immortal; any future balance change requires development and holdout cohorts
+plus multi-World campaign evidence.
 
 ## Commands
 

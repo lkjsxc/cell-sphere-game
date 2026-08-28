@@ -6,14 +6,15 @@ screenshots are generated evidence, not authority.
 
 | Location | Coverage |
 |---|---|
-| `unit/` | Deterministic primitives/simulation; exact progression integers; 252-cell unlimited Evolution; Environment compiler; Potential v3; SCORE v4; rendering; schemas/state machines. |
-| `integration/` | Whole-run protocol/replay v5 determinism, transactions, meta 11/History 6 migration, fair agent schema 2, worldmaking/Luminous, REACH, and replacement. |
-| `scripts/browser-file-test.mjs` | Trusted pointer/touch/keyboard WebGL2 acceptance, including real Evolution second activation and four draws. |
-| forced Canvas scenario | Matching semantic Evolution, History, worldmaking, charge/zero-charge, and no-wire evidence. |
+| `unit/` | Deterministic primitives/simulation; exact progression integers; authored unlimited Evolution; Environment compiler; realized SCORE; rendering; persistence reset and presentation state machines. |
+| `integration/` | Whole-run current protocol/replay determinism, transactions, Worker/fallback parity, fair agents, worldmaking/Luminous, REACH, continuation, and replacement. |
+| `scripts/browser-file-test.mjs` | Trusted pointer/touch/keyboard WebGL2 acceptance, including speed pacing, camera motion, framing, Result cycle, real Evolution second activation, and four draws. |
+| forced Canvas scenario | Matching camera geometry and semantic Evolution, History, worldmaking, charge/zero-charge, continuation, and no-wire evidence. |
 
 Focused non-suite release gates are `audit:evolution-levels`,
 `audit:environment-levels`, `audit:luminous`, `audit:progression-numbers`,
-`agent:long`, and `balance:holdout`. Active Adaptations are tested only as retired
-legacy migration/evidence; no current action or presentation module is expected.
+`agent:long`, and `balance:holdout`. Retired Adaptation terminology may remain in
+historical negative fixtures only; no current action or presentation module is
+expected.
 A skipped command is not a pass, and physical-device/deployed claims require the
 actual corresponding run.

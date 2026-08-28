@@ -1,8 +1,9 @@
 # Game design
 
-`cell-sphere-game` is a calm deterministic ecology observed on a living cellular
-sphere. A player begins a World, watches life establish in a rich local niche,
-learns from extinction, spends Echoes in Evolution, and begins again.
+`cell-sphere-game` is a calm deterministic autonomous incremental ecology
+observed on a living cellular sphere. A player begins a World, watches life
+establish in a rich local niche without tending individual cells, learns from
+extinction, spends Echoes in Evolution, and begins again.
 
 ## Core loop
 
@@ -13,6 +14,8 @@ learns from extinction, spends Echoes in Evolution, and begins again.
   recovery, and attrition.
 - Extinction records realized SCORE, Echoes, Trophies, and History.
 - One Evolution purchase raises one cell by one exact level.
+- An untouched Result begins the next World automatically; any trusted
+  interaction cancels that continuation while the manual action stays available.
 
 There are no active disasters, crisis eras, telegraphs, or scripted survival
 grants. A World has no rewarded universal timeout.
@@ -27,7 +30,9 @@ The normal World HUD is SCORE, REACH, Environment Level, then Result. Its metric
 slots stay on stable grid tracks as values change. Activating Environment Level
 opens a current-state detail with level timing and chronic pressure; it never
 opens History. Result keeps its continuation status and Next World action outside
-its scrolling evidence body. History is the only durable temporal surface: its
+its scrolling evidence body. A nonnumeric World-cycle ring projects the one
+continuation authority; exact remaining seconds are assistive text, not a second
+clock or a per-second announcement. History is the only durable temporal surface: its
 stable controls lead one timeline scroll owner, and a historical globe appears
 only after a matching approximate visual checkpoint is available. Otherwise it
 shows semantic History honestly. Notifications are bounded, deduplicated,
@@ -37,6 +42,27 @@ The Menu is deliberately small: live-world History or destructive New World,
 auto continuation, quality, motion, contrast, and a collapsed local data/reset
 area. World speed belongs to its direct in-world control; adaptive History
 retention is internal rather than a player-facing preference.
+
+## Time and observation
+
+Game time is fixed-step authority for ecology, Environment Level, SCORE, and
+History. Wall-clock time determines how quickly foreground play supplies game
+time. Animation time drives camera and Result presentation. The public
+0.5×/1×/2× ladder maps to effective game rates 2/4/8; animation-time behavior is
+unchanged by that choice. Closing the page does not advance authority and the
+game makes no offline-progress promise.
+
+Direct drag remains immediate on the existing free-orbit camera. A bounded
+recent sample window may produce clamped release inertia, which decays by
+elapsed animation time. After a fresh idle delay, Home and World orbit slowly.
+Trusted activity, a surface, focus framing, scene or World replacement, hidden
+visibility, and reduced motion clear or hold automatic motion. Evolution and
+Trophies never auto-orbit.
+
+World and Home framing target an observable projected globe diameter: about
+1.08 of the shorter canvas dimension in portrait, 0.98 around tablet/square,
+and 0.90 in wide layouts, with smooth interpolation. Intentional zoom survives
+a same-class resize; a new World restores the default geometry.
 
 ## Progression
 

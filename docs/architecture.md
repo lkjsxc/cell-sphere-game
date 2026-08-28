@@ -45,8 +45,10 @@ start one controller. Stale Worker/fallback messages are rejected.
 
 ## Persistence
 
-Current-only storage uses meta schema 14 and History schema 9. Old or mismatched
-documents start fresh; there are no migration maps. A terminal result validates
+Current-only storage uses meta schema 15, History schema 10, settings schema 7,
+and transaction WAL schema 5. Old or mismatched documents start fresh; there are
+no migration maps. Worker protocol 12 carries a public relative speed whose
+meaning is converted once before clock accumulation. A terminal result validates
 its schedule, Level-0 start, exposure, profile evidence, and SCORE before one
 transaction applies Echoes, records, History, and Trophies.
 
@@ -54,6 +56,8 @@ transaction applies Echoes, records, History, and Trophies.
 
 WebGL2 remains four world draw calls and keeps duplicated cell corners on one
 continuous position shell; Canvas 2D receives the same semantic cell states over
-an opaque globe substrate. Primary scenes are Home, World, Evolution, and Trophies. History is the
-single durable temporal surface. Fair agents use production authority and see no
-future seeds, RNG, raw arrays, or hidden maps.
+an opaque globe substrate. One presentation policy advances bounded camera
+motion from animation time, and World/Home distance derives from projected globe
+geometry. Primary scenes are Home, World, Evolution, and Trophies. History is
+the single durable temporal surface. Fair agents use production authority and
+see no future seeds, RNG, raw arrays, or hidden maps.

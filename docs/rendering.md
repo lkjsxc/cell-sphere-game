@@ -33,7 +33,17 @@ it is evidence tooling, not a player-facing rendering mode.
 
 World uses the high-resolution living topology. Evolution and Trophy scenes use
 their own semantic cell projections while sharing camera and picking
-infrastructure. Opening a surface never changes camera direction.
+infrastructure. The camera retains one orthonormal free-orbit frame; a
+presentation-only motion policy integrates bounded release inertia and Home/World
+idle orbit from animation time. Opening a surface never changes camera direction
+or zoom and clears nonessential motion. Reduced motion keeps direct drag and zoom
+while disabling inertia and automatic orbit.
+
+World/Home default distance is the inverse projection of a target sphere
+diameter using the camera field of view and usable canvas. The target varies
+smoothly from about 1.08 of the shorter dimension in portrait through 0.98 near
+square to 0.90 in wide layouts. Both renderers and picking consume the same
+camera geometry; the atmosphere and four-pass World architecture are unchanged.
 
 ## Title evidence
 
@@ -45,4 +55,6 @@ and snapshot code. `npm run showcase:check` compares it with current source;
 
 Typed arrays, reusable buffers, four WebGL draws, bounded History, and cached
 static fields keep frame work bounded. High developer speeds execute every tick
-while coalescing bounded snapshots and render requests.
+while coalescing bounded snapshots and render requests. Camera velocity samples
+use one fixed-capacity six-entry buffer. The Result ring changes one bounded
+style projection at no more than about 30 Hz and does not add a renderer pass.

@@ -9,10 +9,15 @@
 
 ## Confirmed root causes
 
-- Public speed still means the raw effective multiplier: normal options are `[1, 2, 4, 8]`, settings schema 6 stores that scale, and both Worker and fallback multiply it directly into authoritative tick delivery.
-- Globe input rotates only during pointer movement; release velocity and idle automatic motion have no production owner.
-- World/Home framing is selected from aspect-dependent distance constants rather than a projected-diameter target.
-- Result continuation has one sound nine-second authority, but its primary visible projection is the changing `Next world in N` label.
+- At the starting revision, public speed meant the raw effective multiplier:
+  normal options were `[1, 2, 4, 8]`, settings schema 6 stored that scale, and
+  both Worker and fallback multiplied it directly into tick delivery.
+- At the starting revision, globe input rotated only during pointer movement;
+  release velocity and idle automatic motion had no production owner.
+- At the starting revision, World/Home framing came from aspect-dependent
+  distance constants rather than a projected-diameter target.
+- At the starting revision, Result continuation had one sound nine-second
+  authority but projected a changing `Next world in N` visible label.
 
 ## Decisions and deviations
 
@@ -27,6 +32,10 @@
 - Structured baseline pacing/layout/interaction/Result evidence is complete.
 - Milestone 1 is complete: public speed, settings, Worker/fallback clocks, protocol, cadence, time dial, UI, tests, and browser harness now use one relative-multiplier policy.
 - Milestone 2 is complete: one fixed-capacity camera-motion policy owns release inertia, idle orbit, presentation holds, and reduced/hidden behavior; World/Home framing derives from projected diameter.
+- Milestone 3 is complete: the existing continuation authority now projects one
+  bounded World-cycle ring, non-live exact assistive text, and explicit paused,
+  cancelled, disabled, firing, and completed states; Home uses the selected
+  autonomous-play copy.
 
 ## Focused evidence
 
@@ -41,13 +50,31 @@
 - Trusted Worker/WebGL2 browser camera scenario passed mouse flick, touch flick, tap, pinch, pointer cancellation, wheel cancellation, surface hold with exposed-canvas drag, focus reset, hidden reset, reduced motion, fresh-World stillness, and Home idle orbit.
 - Required viewport projected-diameter ratios are 1.080 at 320×568, 360×640, 390×844, and 430×932; 0.989 at 768×1024; and 0.900 at 844×390, 1024×600, and 1440×900. Every primary control center remained outside the inner 70%, center picking succeeded, and no horizontal overflow occurred.
 - Post-camera `npm run test` passed 187 unit and 72 integration tests; benchmark measured 12,768 ticks/s with unchanged `471ba1cc` and `bec4a764` authority hashes.
+- Continuation-focused tests and the trusted Worker/WebGL2 browser scenario
+  passed static visible copy, exact one-second assistive cadence, bounded trace
+  updates, hidden freeze/resume, cancellation, disabled state, reduced motion,
+  forced colors, stable footer geometry, 200% text, and unattended one-shot
+  replacement.
+- Stable-content Worker/WebGL2, synchronous fallback/WebGL2, and forced Canvas
+  production scenarios passed. Forced Canvas exposed and then proved the strict
+  2.4-rad/s clamp and developer-HUD inner-70% clearance at 320×568.
+- Final `npm run test` passed 192 unit and 72 integration tests. The final
+  benchmark measured 12,300 ticks/s against the 12,579-tick/s baseline (−2.2%)
+  with unchanged authority hashes. Balance smoke retained the 131.7-second
+  fresh median and every measured fixture distribution.
+- Showcase generation/check, link validation, and repository structure pass;
+  structure has maintainability warnings only.
+- Final `npm run verify` passed all 26 gates, including 192 unit tests, 72
+  integration tests, terminal extinction, balance smoke, benchmark, showcase,
+  structure, and link validation.
 - Latest remote workflow `31463707001` and Pages deployment `5845430553` succeeded for the starting revision; cache-busted deployed `index.html`, runtime-speed, and identity bytes equal the checkout.
 
 ## Evidence not obtained
 
 - Physical mouse, touch, pen, high-refresh display, and physical-device thermal evidence are unavailable on this host.
-- Final structured pacing, fallback, Result-cycle, Canvas, and accessibility evidence remains pending implementation.
+- Final structured pacing, CI, and Pages evidence remains pending.
 
 ## Exact next coherent step
 
-Replace the visible Result integer countdown with the authority-driven accessible World-cycle ring and apply the concise autonomous-play copy.
+Generate the final structured Worker/fallback report, commit the documentation
+and harness closure, push normally, and verify CI and Pages.
