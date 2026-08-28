@@ -8,7 +8,7 @@ screenshots are generated evidence, not authority.
 |---|---|
 | `unit/` | Deterministic primitives/simulation; exact progression integers; authored unlimited Evolution; Environment compiler; realized SCORE; rendering; persistence reset and presentation state machines. |
 | `integration/` | Whole-run current protocol/replay determinism, transactions, Worker/fallback parity, fair agents, worldmaking/Luminous, REACH, continuation, and replacement. |
-| `scripts/browser-file-test.mjs` | Trusted pointer/touch/keyboard WebGL2 acceptance, including speed pacing, camera motion, framing, Result cycle, real Evolution second activation, and four draws. |
+| `scripts/browser-file-test.mjs` | Trusted pointer/touch/keyboard WebGL2 acceptance, including cumulative kinetic-release travel, cancellation, speed pacing, framing, Result cycle, real Evolution second activation, and four draws. |
 | forced Canvas scenario | Matching camera geometry and semantic Evolution, History, worldmaking, charge/zero-charge, continuation, and no-wire evidence. |
 
 Focused non-suite release gates are `audit:evolution-levels`,

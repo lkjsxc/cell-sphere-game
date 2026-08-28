@@ -1,6 +1,35 @@
 # Current status
 
-## Living Boundary Semantics v1
+## Kinetic Sphere Release v1
+
+- One presentation-only owner now estimates recent angular velocity and maps it
+  through a quadratic bounded response. The final constants are a `0.30 rad/s`
+  release threshold, `2.20 rad/s` full-fling input knee, `8.00 rad/s` output
+  cap, `600 ms` damping half-life, `0.025 rad/s` stop speed, and `5,000 ms`
+  hard lifetime. The six-sample/120 ms estimator, direct-drag scale, 4.5-second
+  idle delay, and `0.022 rad/s` idle orbit are unchanged.
+- Inertia applies one simultaneous body-frame angular delta per analytic elapsed-
+  time step. Direct manipulation still uses the original immediate free-orbit
+  primitive. Slow inspection therefore stops, medium input carries
+  proportionally, and a deliberate strong flick travels about 1.10 turns before
+  beginning a fresh calm-idle wait.
+- Canonical pure 60 Hz traces measure strong `8.86707 → 8.00000 rad/s`,
+  `6.90347 rad` (`1.09872` turns), `5,000 ms`; medium
+  `1.41156 → 2.73809 rad/s`, `2.34854 rad` (`0.37378` turns),
+  `4,066.67 ms`; and slow `0.26926 → 0`, with zero release travel.
+  Equivalent 30/60/120/144 Hz paths differ by less than `0.003%`, and 0/150/350
+  ms handler delays preserve raw speed, travel, and duration exactly.
+- The production browser scenario now accumulates incremental direction angles
+  from the pointer-up basis through rest, so a wrapped full turn cannot appear
+  stationary. Its bounded receipts include raw/mapped speeds, path, duration,
+  sample high-water, basis error, cancellation, idle-orbit, reduced-motion, and
+  viewport evidence. Authored CDP input timestamps keep mouse and touch traces
+  equivalent under queued handler delivery without changing production input.
+- Simulation, Worker protocol, World identity, renderer semantics and draw
+  count, game time, Environment, Evolution, History, SCORE, Echoes, settings,
+  persistence, and balance are unchanged.
+
+## Living Boundary Semantics v1 (retained)
 
 - Implementation commits `d55addf` and `b9a2f8a` establish one pure
   renderer-semantic owner for ordinary World life on canonical topology edges

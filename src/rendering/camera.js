@@ -78,6 +78,26 @@ export function rotate(cam, dragX, dragY) {
   applyDrag(cam, dragX, dragY);
 }
 
+/** Apply one simultaneous body-frame angular delta without hot-path allocation. */
+export function rotateByAngularDelta(cam, dragX, dragY) {
+  const angle = Math.hypot(dragX, dragY);
+  if (!(angle > 0) || !Number.isFinite(angle)) return;
+  const dx = cam.direction[0]; const dy = cam.direction[1]; const dz = cam.direction[2];
+  const rx = cam.right[0]; const ry = cam.right[1]; const rz = cam.right[2];
+  const ux = cam.up[0]; const uy = cam.up[1]; const uz = cam.up[2];
+  const inverse = 1 / angle;
+  const ax = (-dragY * rx - dragX * ux) * inverse;
+  const ay = (-dragY * ry - dragX * uy) * inverse;
+  const az = (-dragY * rz - dragX * uz) * inverse;
+  const cosine = Math.cos(angle); const sine = Math.sin(angle); const complement = 1 - cosine;
+  rotateInto(cam.direction, dx, dy, dz, ax, ay, az, cosine, sine, complement);
+  rotateInto(cam.right, rx, ry, rz, ax, ay, az, cosine, sine, complement);
+  rotateInto(cam.up, ux, uy, uz, ax, ay, az, cosine, sine, complement);
+  normalizeInPlace(cam.direction);
+  crossInto(cam.right, cam.up, cam.direction); normalizeInPlace(cam.right);
+  crossInto(cam.up, cam.direction, cam.right); normalizeInPlace(cam.up);
+}
+
 /** Zoom by wheel/pinch factor. */
 export function zoom(cam, factor) {
   cam.dist = Math.max(MIN_DIST, Math.min(MAX_DIST, cam.dist * factor));
@@ -107,6 +127,24 @@ function rotateAround(vector, axis, angle) {
     vector[1] * cosine + cross[1] * sine + axis[1] * along,
     vector[2] * cosine + cross[2] * sine + axis[2] * along,
   ];
+}
+
+function rotateInto(target, vx, vy, vz, ax, ay, az, cosine, sine, complement) {
+  const crossX = ay * vz - az * vy; const crossY = az * vx - ax * vz; const crossZ = ax * vy - ay * vx;
+  const along = (ax * vx + ay * vy + az * vz) * complement;
+  target[0] = vx * cosine + crossX * sine + ax * along;
+  target[1] = vy * cosine + crossY * sine + ay * along;
+  target[2] = vz * cosine + crossZ * sine + az * along;
+}
+
+function crossInto(target, a, b) {
+  const x = a[1] * b[2] - a[2] * b[1]; const y = a[2] * b[0] - a[0] * b[2];
+  const z = a[0] * b[1] - a[1] * b[0]; target[0] = x; target[1] = y; target[2] = z;
+}
+
+function normalizeInPlace(vector) {
+  const inverse = 1 / Math.hypot(vector[0], vector[1], vector[2]);
+  vector[0] *= inverse; vector[1] *= inverse; vector[2] *= inverse;
 }
 
 /**

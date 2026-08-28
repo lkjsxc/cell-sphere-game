@@ -5,7 +5,10 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-There is no active work package.
+The active work package is:
+
+- [`kinetic-sphere-release-v1/`](kinetic-sphere-release-v1/) — progressive,
+  bounded release response with cumulative-travel browser evidence.
 
 Completed packages remain as historical or current implementation evidence:
 

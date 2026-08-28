@@ -272,3 +272,21 @@ charge remain independent. No snapshot, protocol, History codec, persistence,
 simulation, or fifth-draw change is introduced. Evidence: exhaustive pair and
 reversal tests, source-negative audit, calibrated Chrome 152 WebGL2/Canvas
 interior/edge/resource/overlap measurements, four-draw and context-loss paths.
+
+## D26 — Deliberate flicks use one progressive bounded release response
+
+D22 remains the camera architecture decision, but its conservative release
+calibration is historical. Keep immediate direct drag, the six-sample/120 ms
+recent estimator, the orthonormal free-orbit frame, analytic animation-time
+damping, and the separate calm Home/World idle orbit. Map finite raw release
+speed through one quadratic response: zero through `0.30 rad/s`, saturation at
+an `8.00 rad/s` output by a `2.20 rad/s` input, a `600 ms` damping half-life,
+`0.025 rad/s` stop speed, and a `5,000 ms` hard lifetime. A deliberate strong
+flick therefore approaches one additional bounded turn, medium input carries
+less, and slow inspection stops. Integrate each inertia step as one simultaneous
+body-frame angular delta so equivalent elapsed traces agree across 30, 60, 120,
+and 144 Hz. Cumulative incremental camera-basis travel, not wrapped final
+orientation, is the release-distance oracle. Trusted activity and every existing
+hold/reset boundary still clear velocity; reduced motion disables release and
+orbit. No simulation, renderer-backend, input-scale, idle-speed, persistence, or
+player-setting authority is added.

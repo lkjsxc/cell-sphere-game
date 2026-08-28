@@ -12,7 +12,8 @@ framing, result actions, and atomic world replacement.
 - `surface-coordinator.js`, `scene-selector.js`, and `layout-policy.js`: shell,
   focus, keyboard, safe-area, and projected-globe scene geometry.
 - `camera-motion.js` and `trusted-interaction.js`: one presentation-only owner
-  for bounded inertia/idle orbit and one normalized trusted-activity path.
+  for recent release sampling, the progressive bounded response, elapsed-time
+  inertia, and calm idle orbit, plus one normalized trusted-activity path.
 - `continuation.js` / `new-world-surface.js`: one-shot Result continuation, its
   13.5-second default, bounded ring/assistive projection, and explicit
   abandonment. `Next World` never selects or retries a static level.

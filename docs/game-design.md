@@ -53,12 +53,14 @@ animation-time behavior is unchanged by that choice. An untouched Result waits
 13.5 animation-time seconds before continuing. Closing the page does not advance
 authority and the game makes no offline-progress promise.
 
-Direct drag remains immediate on the existing free-orbit camera. A bounded
-recent sample window may produce clamped release inertia, which decays by
-elapsed animation time. After a fresh idle delay, Home and World orbit slowly.
-Trusted activity, a surface, focus framing, scene or World replacement, hidden
-visibility, and reduced motion clear or hold automatic motion. Evolution and
-Trophies never auto-orbit.
+Direct drag remains immediate on the existing free-orbit camera. One progressive
+response maps recent angular speed into release inertia: slow inspection stops,
+medium gestures carry proportionally, and a deliberate fast flick travels
+roughly one additional bounded turn. The release decays by elapsed animation
+time and then starts a fresh idle wait. Home and World retain their separate
+slow orbit only after 4.5 seconds of inactivity. Trusted activity, a surface,
+focus framing, scene or World replacement, hidden visibility, and reduced
+motion clear or hold automatic motion. Evolution and Trophies never auto-orbit.
 
 World and Home framing target an observable projected globe diameter: about
 1.08 of the shorter canvas dimension in portrait, 0.98 around tablet/square,

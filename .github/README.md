@@ -31,9 +31,11 @@ checkpoints preserve the renderer's life, resource, transformation, and
 Luminous state; loading or unavailable visual History remains honestly
 semantic-only. Bounded notifications remain presentation-only.
 
-The globe is the primary interface. A drag turns it immediately, release inertia
-decays within a bounded interval, and Home or World begins a calm idle orbit only
-after inactivity. Reduced motion removes inertia and automatic orbit. Responsive
+The globe is the primary interface. A drag turns it immediately; a deliberate
+fast flick carries roughly one additional turn, a medium flick carries less,
+and a slow inspection drag stops on release. Every release decays within a
+bounded interval, and Home or World begins a separate calm idle orbit only after
+inactivity. Reduced motion removes inertia and automatic orbit. Responsive
 framing derives the globe's distance from its projected size instead of device
 distance constants. Portrait layouts stay centered; sufficiently wide Home and
 World layouts place the projected center near two-thirds of usable width while
@@ -95,4 +97,4 @@ npm run test:browser:fallback
 ```
 
 Current implementation status is recorded in
-[`docs/work/autonomous-world-contract-closure-v1/README.md`](docs/work/autonomous-world-contract-closure-v1/README.md).
+[`docs/work/kinetic-sphere-release-v1/README.md`](docs/work/kinetic-sphere-release-v1/README.md).

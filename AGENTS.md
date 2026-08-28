@@ -649,6 +649,16 @@ Worker and fallback consume the same validated relative multiplier and the same 
 
 The time dial follows effective game time.
 
+All public elapsed-time, duration, History-time, Environment-transition, and speed
+labels must derive from authoritative ticks and the current runtime-speed policy.
+
+Do not let a historical helper, retired baseline, renderer cadence, or animation
+clock reinterpret current game time.
+
+When player evidence suggests inconsistent time, reproduce Worker and fallback
+against the same immutable World and tick trace before changing ecology, relabeling
+speed, or editing balance.
+
 Camera and continuation follow animation time.
 
 Speed must not enter:
@@ -737,6 +747,16 @@ The intended sequence is:
 
 `direct manipulation → bounded release inertia → damping → idle wait → calm automatic orbit`
 
+Player-driven release inertia and automatic idle orbit serve different purposes.
+
+A deliberate fast flick should be capable of carrying the sphere through an
+energetic, bounded rotation of roughly a full turn when the gesture warrants it.
+
+Do not accelerate the calm idle orbit to compensate for weak release inertia.
+
+Slow drags must remain precise, direct manipulation must remain immediate, and
+reduced motion must continue to suppress nonessential carried motion.
+
 Required invariants:
 
 - recent velocity samples are fixed-capacity;
@@ -766,6 +786,15 @@ Home and World may rotate calmly after inactivity.
 A newly started World should begin still and enter automatic orbit only after the established idle delay when no trusted interaction occurs.
 
 Automatic motion should communicate life and watchability, not attract attention through speed.
+
+Autonomous survivor framing, when implemented, is bounded presentation guidance
+rather than simulation authority.
+
+It must require evidence that a previously established World is in sustained late
+decline, must not interpret the naturally small starting population as
+near-extinction, must avoid repeatedly hunting between cells, must clear release
+velocity, must cancel immediately on trusted interaction, and must respect
+reduced motion.
 
 Test equivalent elapsed behavior at multiple frame cadences.
 
@@ -1154,6 +1183,17 @@ Environment profiles must compile deterministically from:
 
 Player-facing Environment detail must be truthful.
 
+Distinct pressure dimensions must not all inherit an indistinguishable
+player-visible trajectory merely because they share one Environment Level.
+
+Each dimension needs an authored ecological identity and an authoritative,
+mechanically meaningful profile. Evolution defenses may modify that profile, but
+must not be the sole source of differentiation.
+
+The ordinary Current Chronic Pressure surface should prefer bounded normalized
+percentages with accessible text over qualitative words alone. Keep raw ratings
+and coefficients internal unless they have direct player meaning.
+
 Do not create fake differentiation by changing labels while identical authoritative values remain.
 
 When changing Environment:
@@ -1204,6 +1244,15 @@ A very large level must not create:
 Do not add filler merely to make the sphere larger.
 
 Repeated or related mechanics require authored roles, economic meaning, and clear progression.
+
+A larger Evolution topology should use spatially coherent regions. Related domains
+and adaptations should cluster together, neighboring routes should tell a
+biological progression story, and abilities may recur when their role, cost,
+prerequisite position, and compiled effect remain explicit.
+
+Region design should make adaptation to World-like habitats and pressures legible
+without copying World simulation authority. Do not treat the current compact
+cell count as an eternal product limit, and do not equate more cells with value.
 
 Do not mutate Evolution during a World.
 

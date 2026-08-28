@@ -39,6 +39,7 @@ try {
   const page = targets.targetInfos.find((value) => value.type === 'page');
   const attached = await cdp.send('Target.attachToTarget', { targetId: page.targetId, flatten: true });
   const session = attached.sessionId;
+  const browserIdentity = await cdp.send('Browser.getVersion');
   await cdp.send('Runtime.enable', {}, session);
   await cdp.send('Page.enable', {}, session);
   await cdp.send('Log.enable',{},session);
@@ -63,9 +64,11 @@ try {
     await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 }, session);
     await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }, session);
   };
-  const tools={evaluate,wait,poll,errors:cdp.errors,click,simulationFallback:forceSimulationFallback,
+  const tools={evaluate,wait,poll,errors:cdp.errors,click,simulationFallback:forceSimulationFallback,browserIdentity,
+    pointerDown:(x,y)=>pointerDown(cdp,session,x,y),pointerUp:(x,y)=>pointerUp(cdp,session,x,y),
     key:(value)=>key(cdp,session,value),tap:(x,y)=>tap(cdp,session,x,y),drag:(from,to)=>drag(cdp,session,from,to),
-    flick:(from,to)=>flick(cdp,session,from,to),touchFlick:(from,to)=>touchFlick(cdp,session,from,to),
+    flick:(from,to,options)=>flick(cdp,session,from,to,options),
+    touchFlick:(from,to,options)=>touchFlick(cdp,session,from,to,options),
     wheel:(x,y)=>wheel(cdp,session,x,y),touchDrag:(from,to)=>touchDrag(cdp,session,from,to),
     pinch:(center)=>pinch(cdp,session,center),touchCancel:(point)=>touchCancel(cdp,session,point),screenshot: (name) => screenshot(cdp, session, name),
     setMedia:(features=[])=>cdp.send('Emulation.setEmulatedMedia',{media:'screen',features},session),
@@ -82,6 +85,8 @@ try {
     if (!forceCanvas) await runDeveloperSpeedChecks(tools, publicUrl);
     else tools.continuity = await runContinuityFixture(tools);
     tools.cameraEvidence = await runCameraMotionScenario(tools);
+    tools.cameraReceipt = writeKineticReleaseReport(tools.cameraEvidence, browserIdentity, cdp,
+      forceSimulationFallback, forceCanvas, Boolean(configuredUrl));
     const evidence = forceCanvas ? await runCanvasScenario(tools) : await runScenario(tools);
     const light = evidence.worldmaking.luminance?.emission;
     const lightEvidence = light ? `; paired charge luminance Δ day/night ${light.day.toFixed(3)}/${light.night.toFixed(3)}` : '';
@@ -90,13 +95,13 @@ try {
         +`1.5x (effective 6) ${evidence.elapsed.toFixed(2)}s; developer 64x (effective 256) ${tools.developerEvidence.elapsed.toFixed(2)}s; 4 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
         +`${evidence.worldmaking.powered} powered cells (day ${evidence.worldmaking.day.cell}/${evidence.worldmaking.day.charge}/${evidence.worldmaking.day.dot.toFixed(2)}, night ${evidence.worldmaking.night.cell}/${evidence.worldmaking.night.charge}/${evidence.worldmaking.night.dot.toFixed(2)})${lightEvidence}; continuous shell center/limb clear; visual IDB ${evidence.idb?'yes':'unavailable'}; adjacent Evolution purchase ${evidence.nodeId})`);
     if (tools.continuity) console.log(`continuous shell ${JSON.stringify(tools.continuity)}`);
-    if (tools.cameraEvidence) console.log(`camera motion ${JSON.stringify(tools.cameraEvidence)}`);
+    if (tools.cameraReceipt) console.log(`camera motion ${JSON.stringify(tools.cameraReceipt)}`);
     if (evidence.metricRects) console.log(`metric rects ${JSON.stringify(evidence.metricRects)} responsive ${JSON.stringify(evidence.responsive)}`);
   }
   exitCode = 0;
 } catch (error) {
   console.error(`test:browser:file — FAIL: ${error.message}`);
-  for (const value of cdp.errors.slice(0, 6)) console.error(`  browser> ${value}`);
+  for (const value of [...cdp.errors, ...cdp.stderr].slice(0, 12)) console.error(`  browser> ${value}`);
 } finally {
   processChrome.kill('SIGTERM');
   await wait(250);
@@ -192,7 +197,10 @@ async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait
 
 function protocol(child) {
   let buffer = ''; let nextId = 0;
-  const pending = new Map(); const errors = [];
+  const pending = new Map(); const errors = []; const stderr = [];
+  child.stdio[2].on('data', (data) => { for (const line of data.toString().split('\n').filter(Boolean)) {
+    stderr.push(line.slice(0, 500)); if (stderr.length > 40) stderr.shift();
+  } });
   child.stdio[4].on('data', (data) => {
     buffer += data.toString();
     let boundary;
@@ -217,7 +225,26 @@ function protocol(child) {
     child.stdio[3].write(`${JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })}\0`);
     setTimeout(() => { if (pending.delete(id)) reject(new Error(`CDP timeout: ${method}`)); }, 10000);
   });
-  return { send, errors };
+  return { send, errors, stderr };
+}
+
+function writeKineticReleaseReport(evidence, browserIdentity, cdp, fallback, canvas, deployed) {
+  const simulationPath = fallback ? 'fallback' : 'worker';
+  const rendererPath = canvas ? 'canvas2d' : evidence.backend;
+  const name = `kinetic-sphere-release-${deployed ? 'deployed' : 'final'}-${simulationPath}-${rendererPath}.json`;
+  const report = `${JSON.stringify({ schema: 1, capturedAt: new Date().toISOString(),
+    revision: gitValue(['rev-parse', 'HEAD']), branch: gitValue(['branch', '--show-current']),
+    browser: browserIdentity.product, protocolVersion: browserIdentity.protocolVersion,
+    simulationPath, rendererPath, deployed, ...evidence,
+    browserErrors: cdp.errors.slice(0, 20), browserStderr: cdp.stderr.slice(0, 20) }, null, 2)}\n`;
+  writeFileSync(resolve(REPORTS, name), report);
+  return { path: `reports/${name}`, sha256: createHash('sha256').update(report).digest('hex'),
+    simulationPath, rendererPath, deployed };
+}
+
+function gitValue(args) {
+  const result = spawnSync('git', args, { cwd: ROOT, encoding: 'utf8' });
+  return result.status === 0 ? result.stdout.trim() : null;
 }
 
 async function key(cdp, session, value) {
@@ -234,6 +261,11 @@ async function tap(cdp,session,x,y){
  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]},session);
 }
 
+async function pointerDown(cdp,session,x,y){await cdp.send('Input.dispatchMouseEvent',{
+  type:'mousePressed',x,y,button:'left',clickCount:1},session)}
+async function pointerUp(cdp,session,x,y){await cdp.send('Input.dispatchMouseEvent',{
+  type:'mouseReleased',x,y,button:'left',clickCount:1},session)}
+
 async function drag(cdp, session, from, to) {
   await cdp.send('Input.dispatchMouseEvent', {
     type: 'mousePressed', x: from[0], y: from[1], button: 'left', clickCount: 1,
@@ -246,32 +278,39 @@ async function drag(cdp, session, from, to) {
   }, session);
 }
 
-async function flick(cdp, session, from, to) {
+async function flick(cdp, session, from, to, options = {}) {
+  const steps = boundedInteger(options.steps, 5, 1, 20);
+  const intervalMs = boundedInteger(options.intervalMs, 16, 0, 100);
+  const startedAt = Date.now() / 1000;
   await cdp.send('Input.dispatchMouseEvent', {
-    type: 'mousePressed', x: from[0], y: from[1], button: 'left', clickCount: 1,
+    type: 'mousePressed', x: from[0], y: from[1], button: 'left', clickCount: 1, timestamp: startedAt,
   }, session);
-  for (let step = 1; step <= 5; step++) {
-    await wait(16); await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved',
-      x: from[0] + (to[0] - from[0]) * step / 5, y: from[1] + (to[1] - from[1]) * step / 5,
-      button: 'left', buttons: 1 }, session);
+  for (let step = 1; step <= steps; step++) {
+    await wait(intervalMs); await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved',
+      x: from[0] + (to[0] - from[0]) * step / steps, y: from[1] + (to[1] - from[1]) * step / steps,
+      button: 'left', buttons: 1, timestamp: startedAt + step * intervalMs / 1000 }, session);
   }
   await cdp.send('Input.dispatchMouseEvent', {
     type: 'mouseReleased', x: to[0], y: to[1], button: 'left', clickCount: 1,
+    timestamp: startedAt + (steps * intervalMs + 1) / 1000,
   }, session);
 }
 
 async function wheel(cdp,session,x,y){await cdp.send('Input.dispatchMouseEvent',{type:'mouseWheel',x,y,deltaX:0,deltaY:180},session)}
 async function touchDrag(cdp,session,from,to){await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[touchPoint(1,...from)]},session);
  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[touchPoint(1,...to)]},session);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]},session)}
-async function touchFlick(cdp,session,from,to){await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[touchPoint(1,...from)]},session);
- for(let step=1;step<=4;step++){await wait(18);await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[touchPoint(1,
-   from[0]+(to[0]-from[0])*step/4,from[1]+(to[1]-from[1])*step/4)]},session)}
- await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]},session)}
+async function touchFlick(cdp,session,from,to,options={}){const steps=boundedInteger(options.steps,5,1,20),intervalMs=boundedInteger(options.intervalMs,16,0,100);
+ const startedAt=Date.now()/1000;
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[touchPoint(1,...from)],timestamp:startedAt},session);
+ for(let step=1;step<=steps;step++){await wait(intervalMs);await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[touchPoint(1,
+   from[0]+(to[0]-from[0])*step/steps,from[1]+(to[1]-from[1])*step/steps)],timestamp:startedAt+step*intervalMs/1000},session)}
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[],timestamp:startedAt+(steps*intervalMs+1)/1000},session)}
 async function pinch(cdp,session,[x,y]){await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[touchPoint(1,x-20,y),touchPoint(2,x+20,y)]},session);
  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[touchPoint(1,x-70,y),touchPoint(2,x+70,y)]},session);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]},session)}
 async function touchCancel(cdp,session,[x,y]){await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[touchPoint(1,x,y)]},session);
  await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]},session)}
 function touchPoint(id,x,y){return{id,x,y,radiusX:2,radiusY:2,force:1}}
+function boundedInteger(value,fallback,minimum,maximum){return Number.isInteger(value)?Math.max(minimum,Math.min(maximum,value)):fallback}
 
 async function screenshot(cdp, session, name) {
   const result = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, session);

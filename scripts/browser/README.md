@@ -8,6 +8,17 @@ replacement, Evolution, Environment, and Trophy acceptance.
 it activates the projected center cell with Enter and proves Escape restores
 canvas focus in WebGL2, fallback, and Canvas runs.
 
+`camera-motion-scenario.mjs` measures release travel by accumulating incremental
+camera-direction angles from the pointer-up basis through rest. This bounded
+trace cannot mistake a wrapped full turn for a small endpoint displacement. It
+separately proves strong mouse/touch, medium, and slow gestures; cancellation;
+reduced motion; the unchanged idle orbit; and portrait, landscape, and wide
+layouts. `browser-file-test.mjs` writes the bounded structured receipt under
+ignored `reports/` for Worker/WebGL2, fallback/WebGL2, and Worker/Canvas runs.
+Any endpoint camera displacement retained in the broader autonomous-feel audit
+is supplemental smoke evidence; only the cumulative trace decides release
+distance.
+
 Evolution evidence must perform two separate discrete activations: the first
 selects/opens detail and cannot buy; a later activation of that same selected
 ready cell buys exactly one level. Drag, pinch, wheel, blank, cancellation,
