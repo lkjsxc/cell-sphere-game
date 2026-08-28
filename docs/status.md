@@ -51,9 +51,12 @@
   Worker run passes real context loss into Canvas. Real Tab entry, a system-
   color canvas focus outline, populated Inspector text, Escape, and focus
   restoration pass under forced colors in all three combinations.
-- `showcase:check`, `check:links`, README mirror equality, and
-  `git diff --check` pass. Broad isolated committed-tree verification remains
-  pending. Active-workspace `check:structure` fails solely on the preserved
+- Exact committed tree `e3db4aa8f24aade98c30e5c81d1540815ba13f63`
+  passes all 26 `npm run verify` gates: 201 unit tests, 72 integration tests,
+  structure, links, showcase identity, every production audit, and benchmark.
+  Benchmark is 13,123 ticks/s with unchanged authority hash `471ba1cc` and
+  fresh-profile hash `bec4a764`. README mirror equality and `git diff --check`
+  also pass. Active-workspace `check:structure` fails solely on the preserved
   untracked user mandate under `docs/campaigns/`; that failure is not a pass and
   the user artifact remains untouched.
 
