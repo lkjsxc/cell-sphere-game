@@ -63,8 +63,20 @@
 
 ## External and unavailable evidence
 
-The starting revision `ec02fede…` has successful workflow run `33148901208` and
-Pages deployment `6137086894`. The closure content has not yet been pushed, so
-those identities are orientation evidence rather than release evidence for this
-change. Physical-device mouse, touch, pen, safe-area hardware, high-refresh,
-thermal, and physical-screen-reader evidence is unavailable on this host.
+- Implementation commit `728889a00562bd700567f9e138768867a4365185` was pushed
+  normally to `main`, and the remote ref matched. Workflow run `33161819048`
+  succeeded: verify job `98817835929` and Pages job `98820319358` both
+  succeeded. Pages deployment `6139428972` and deployment status
+  `17455039576` succeeded for that exact source revision.
+- Cache-busted Pages responses exactly match local bytes for `index.html`, the
+  runtime-speed, layout, and continuation owners, and `src/core/identity.js`.
+  Their SHA-256 values are `2d7d4f7c…`, `c223c88a…`, `d5422842…`,
+  `b4401ec3…`, and `c12c844c…`, respectively.
+- A trusted-input browser run against the deployed URL passed the ordinary and
+  developer speed controls, one complete Worker/WebGL2 World and Result,
+  camera motion, responsive geometry, picking, World replacement, and the
+  four-draw rendering contract. Two earlier attempts are classified as failed
+  external loads because Pages returned HTTP 503 for a resource; a fresh
+  cache-busted retry completed without a browser error.
+- Physical-device mouse, touch, pen, safe-area hardware, high-refresh, thermal,
+  and physical-screen-reader evidence is unavailable on this host.

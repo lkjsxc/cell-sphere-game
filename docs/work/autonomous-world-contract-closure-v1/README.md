@@ -23,9 +23,19 @@
   from the 12,768 baseline) with unchanged `471ba1cc` / `bec4a764` hashes;
   balance smoke is unchanged. Regenerating the title showcase changed only its
   source hash; its data hash, frame count, and 230,904-byte payload are identical.
+- Release evidence: implementation commit `728889a00562bd700567f9e138768867a4365185`
+  was pushed normally and matched remote `main`. Workflow run `33161819048`,
+  verify job `98817835929`, Pages job `98820319358`, Pages deployment
+  `6139428972`, and deployment status `17455039576` all succeeded for that
+  revision. Cache-busted deployed bytes match all five required production
+  owners. A trusted deployed Worker/WebGL2 browser run passed the ordinary and
+  developer controls, complete World/Result path, camera behavior, required
+  geometry, picking, World replacement, and four-draw contract. Two preceding
+  attempts failed on an external Pages HTTP 503 and are not counted as passes.
 - Evidence not obtained: physical-device mouse, touch, pen, safe-area hardware, high-refresh, and thermal evidence are unavailable on this host.
-- Exact next coherent step: review and commit the verified implementation, push
-  normally, then verify CI, Pages, deployed bytes, and deployed interaction.
+- Exact next coherent step: none. The selected stopping rule is met; deferred
+  renderer, Environment/Evolution, ecology-balance, and physical-device work
+  remains outside this completed package.
 
 
 ## Mandate metadata
