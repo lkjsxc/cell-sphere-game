@@ -20,7 +20,8 @@ import { TitleShowcase, TITLE_SHOWCASE } from '../../src/showcase/player.js';
 import { createTopology } from '../../src/world/icosphere.js';
 import { createFields } from '../../src/world/fields.js';
 import { createRng } from '../../src/core/prng.js';
-import { applySafeLayout, safeLayout } from '../../src/interface/policies/layout-policy.js';
+import { applySafeLayout, cameraDistanceForProjectedDiameter, projectedSphereDiameter, safeLayout,
+  targetGlobeDiameterRatio } from '../../src/interface/policies/layout-policy.js';
 import { createWorldIdentity } from '../../src/core/world-session.js';
 import { createBlankSnapshot } from '../../src/rendering/blank-snapshot.js';
 import { GLRenderer } from '../../src/rendering/renderer.js';
@@ -35,15 +36,43 @@ const read = (p) => readFileSync(resolve(here, p), 'utf8');
 test('scene composition is viewport-stable and right-biased only when room exists', () => {
   const cases = [[1440, 900, .66, .72], [1920, 1080, .66, .72], [1024, 768, .57, .66], [390, 844, .49, .53]];
   for (const [width, height, minimum, maximum] of cases) {
-    const a = safeLayout(width, height, 'running'); const b = safeLayout(width, height, 'running');
+    const a = safeLayout(width, height, 'world'); const b = safeLayout(width, height, 'world');
     const center = .5 + a.offsetX / 2;
     assert.ok(center >= minimum && center <= maximum, `${width}x${height} center ${center}`);
     assert.deepEqual(a, b); assert.ok(Number.isFinite(a.distance));
   }
-  const camera = createCamera(); const layout = safeLayout(1440, 900, 'memory');
+  const camera = createCamera(); const layout = safeLayout(1440, 900, 'evolution');
   applySafeLayout(camera, layout, false); const distance = camera.dist;
-  applySafeLayout(camera, safeLayout(1440, 900, 'memory'), true);
+  applySafeLayout(camera, safeLayout(1440, 900, 'evolution'), true);
   assert.equal(camera.dist, distance); assert.equal(camera.offsetX, layout.offsetX);
+});
+
+test('World and Home framing derive distance from the projected globe target', () => {
+  const required = [[320, 568], [360, 640], [390, 844], [430, 932], [768, 1024],
+    [844, 390], [1024, 600], [1440, 900]];
+  for (const [width, height] of required) {
+    for (const scene of ['home', 'world']) {
+      const layout = safeLayout(width, height, scene); const shorter = Math.min(layout.rect.width, layout.rect.height);
+      const ratio = projectedSphereDiameter(layout.distance, height) / shorter;
+      assert.ok(Math.abs(ratio - layout.targetDiameterRatio) < 1e-12,
+        `${scene} ${width}x${height}: ${ratio} != ${layout.targetDiameterRatio}`);
+      assert.equal(layout.targetDiameterRatio, targetGlobeDiameterRatio(layout.rect.width / layout.rect.height));
+    }
+  }
+  assert.ok(Math.abs(targetGlobeDiameterRatio(320 / 568) - 1.08) < 1e-12);
+  assert.ok(Math.abs(targetGlobeDiameterRatio(1) - .98) < 1e-12);
+  assert.ok(Math.abs(targetGlobeDiameterRatio(1440 / 900) - .90) < 1e-12);
+});
+
+test('projected diameter conversion round-trips and varies continuously with aspect', () => {
+  for (const diameter of [280, 480, 900, 1200]) {
+    const distance = cameraDistanceForProjectedDiameter(900, diameter);
+    assert.ok(Math.abs(projectedSphereDiameter(distance, 900) - diameter) < 1e-9);
+  }
+  for (const boundary of [.62, .78, 1.1, 1.5]) {
+    const left = targetGlobeDiameterRatio(boundary - 1e-7); const right = targetGlobeDiameterRatio(boundary + 1e-7);
+    assert.ok(Math.abs(left - right) < 1e-6, `${boundary}: discontinuity ${left} -> ${right}`);
+  }
 });
 
 test('viewProjection yields 16 finite numbers', () => {

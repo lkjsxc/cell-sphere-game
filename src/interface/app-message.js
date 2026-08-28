@@ -1,5 +1,4 @@
 /** Route versioned run-driver messages without growing the composition root. */
-import { focusCamera } from '../rendering/camera.js';
 import { identityFields, sameWorldIdentity } from '../core/world-session.js';
 import {markWorldStarted,recoverAuthorityLossDuringReplacement,recoverPreAuthorityFailure} from './policies/run-session.js';
 import * as ui from './surfaces.js';
@@ -9,8 +8,8 @@ export function handleRunMessage(app, message) {
   if (message.t === 'heartbeat') return true;
   if (message.t === 'ready') return app.driver.ready(message);
   if (message.t === 'started') { if (app.phase !== 'starting' || !markWorldStarted(app, message)) return false;
-    app.flow.send('ready'); focusCamera(app.camera, app.topo.positions.subarray(message.inoculationCell * 3, message.inoculationCell * 3 + 3));
-    ui.announce(app.el, `Life inoculated cell ${message.inoculationCell}.`); return true; }
+    app.flow.send('ready'); app.focusCamera(app.topo.positions.subarray(message.inoculationCell * 3, message.inoculationCell * 3 + 3));
+    ui.announce(app.el, `Life is establishing itself at cell ${message.inoculationCell}; no tending is required.`); return true; }
   if (message.t === 'snapshot') { app.snapshot = message;
     ui.updateHud(app.el, message); app.metricUi.update(app.metricModel()); return; }
   if (message.t === 'history-batch') { app.mergeHistory(message.events); return true; }

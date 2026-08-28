@@ -26,6 +26,7 @@
 - Baseline focused tests, benchmark, balance smoke, and trusted Worker/WebGL2 browser scenario are complete.
 - Structured baseline pacing/layout/interaction/Result evidence is complete.
 - Milestone 1 is complete: public speed, settings, Worker/fallback clocks, protocol, cadence, time dial, UI, tests, and browser harness now use one relative-multiplier policy.
+- Milestone 2 is complete: one fixed-capacity camera-motion policy owns release inertia, idle orbit, presentation holds, and reduced/hidden behavior; World/Home framing derives from projected diameter.
 
 ## Focused evidence
 
@@ -36,13 +37,17 @@
 - Baseline report: `reports/autonomous-world-feel-baseline.json` (ignored), SHA-256 `b2bbdeb9ec8b0e5eba555986fb045a7ec151537619f780fb5f20e3d620510b95`; old 1×/2×/4×/8× measured 0.998/2.019/4.037/7.938 game-s per wall-s over eight-second windows.
 - Speed cutover focused tests: 40/40 passed, including every constant and mixed public speed through production fallback authority plus Worker/fallback terminal parity.
 - Speed cutover trusted Worker/WebGL2 browser scenario passed: public `[0.5, 1, 2]`, developer `[0.25, 0.5, 1, 2, 4, 8, 16, 32, 64]`, effective-8 terminal path, effective-256 diagnostic path, and four draws.
+- Camera/framing pure tests passed at 30/60/120 Hz and across 10,000 integration steps; samples stayed at the six-entry cap and the free-orbit frame remained orthonormal.
+- Trusted Worker/WebGL2 browser camera scenario passed mouse flick, touch flick, tap, pinch, pointer cancellation, wheel cancellation, surface hold with exposed-canvas drag, focus reset, hidden reset, reduced motion, fresh-World stillness, and Home idle orbit.
+- Required viewport projected-diameter ratios are 1.080 at 320×568, 360×640, 390×844, and 430×932; 0.989 at 768×1024; and 0.900 at 844×390, 1024×600, and 1440×900. Every primary control center remained outside the inner 70%, center picking succeeded, and no horizontal overflow occurred.
+- Post-camera `npm run test` passed 187 unit and 72 integration tests; benchmark measured 12,768 ticks/s with unchanged `471ba1cc` and `bec4a764` authority hashes.
 - Latest remote workflow `31463707001` and Pages deployment `5845430553` succeeded for the starting revision; cache-busted deployed `index.html`, runtime-speed, and identity bytes equal the checkout.
 
 ## Evidence not obtained
 
 - Physical mouse, touch, pen, high-refresh display, and physical-device thermal evidence are unavailable on this host.
-- Final structured pacing, fallback, camera/framing, Result-cycle, Canvas, and accessibility evidence remains pending implementation.
+- Final structured pacing, fallback, Result-cycle, Canvas, and accessibility evidence remains pending implementation.
 
 ## Exact next coherent step
 
-Implement the bounded camera-motion controller and projected-geometry World/Home framing, then prove trusted gesture and viewport behavior.
+Replace the visible Result integer countdown with the authority-driven accessible World-cycle ring and apply the concise autonomous-play copy.

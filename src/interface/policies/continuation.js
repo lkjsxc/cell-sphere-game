@@ -1,8 +1,5 @@
 /** Untouched-only, one-shot automatic continuation for a single result generation. */
 const ACTIVE = new Set(['counting', 'paused-hidden']);
-const INTERACTION_EVENTS = Object.freeze([
-  'pointerdown', 'touchstart', 'wheel', 'keydown', 'click', 'focusin', 'input', 'change',
-]);
 
 export function createContinuation(durationMs = 9000) {
   return { durationMs, remainingMs: durationMs, status: 'inactive', deadline: 0, lastNow: 0,
@@ -49,27 +46,6 @@ export function continuationLabel(state) {
   if (state.status === 'paused-hidden') return 'Auto next paused while this page is hidden';
   if (state.status === 'cancelled') return 'Auto next cancelled for this result';
   return '';
-}
-export function continuationInteractionType(event) {
-  if (!event?.isTrusted || !INTERACTION_EVENTS.includes(event.type)) return null;
-  if (event.type === 'keydown' && event.key == null) return null;
-  if (event.type === 'focusin') return 'focus';
-  if (event.type === 'wheel') return 'wheel';
-  if (event.type === 'keydown') return 'keyboard';
-  if (event.type === 'touchstart') return 'touch';
-  if (event.type === 'pointerdown') return event.pointerType === 'touch' ? 'touch' : 'pointer';
-  return 'control';
-}
-export function createContinuationInteractionGuard(target, onInteraction) {
-  let programmaticFocusDepth = 0; let disposed = false;
-  const handle = (event) => {
-    const type = continuationInteractionType(event); if (!type) return;
-    if (type === 'focus' && programmaticFocusDepth) return; onInteraction(type, event);
-  };
-  for (const type of INTERACTION_EVENTS) target.addEventListener(type, handle, true);
-  return { runProgrammaticFocus(callback) { programmaticFocusDepth++; try { callback(); } finally { programmaticFocusDepth--; } },
-    dispose() { if (disposed) return; disposed = true; for (const type of INTERACTION_EVENTS) target.removeEventListener(type, handle, true); },
-    get listenerCount() { return disposed ? 0 : INTERACTION_EVENTS.length; } };
 }
 function accrue(state, now) {
   if (state.status !== 'counting') return;

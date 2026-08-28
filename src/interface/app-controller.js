@@ -4,7 +4,7 @@ import { createFields } from '../world/fields.js';
 import { GLRenderer } from '../rendering/renderer.js';
 import { Canvas2DRenderer } from '../rendering/fallback2d.js';
 import { TitleShowcase, TITLE_SHOWCASE } from '../showcase/player.js';
-import { createCamera, focusCamera } from '../rendering/camera.js';
+import { createCamera, focusCamera as orientCamera } from '../rendering/camera.js';
 import { pickNode } from '../rendering/picking.js';
 import { bindGlobeInput } from './globe-input.js';
 import { loadMeta, saveMeta, defaultMeta } from '../platform/storage.js';
@@ -18,7 +18,11 @@ import { createPauseControl, pauseLabel } from './pause-control.js';
 import { createSurfaceCoordinator } from './policies/surface-coordinator.js';
 import { applySafeLayout, safeLayout } from './policies/layout-policy.js'; import { createTimeDial } from './policies/time-dial.js';
 import { advanceContinuation, cancelContinuation, completeContinuation, continuationLabel, createContinuation,
-  createContinuationInteractionGuard, setContinuationHidden } from './policies/continuation.js';
+  setContinuationHidden } from './policies/continuation.js';
+import { createTrustedInteractionGuard } from './policies/trusted-interaction.js';
+import { advanceCameraMotion, beginCameraDrag, cameraMotionActivity, cameraMotionSnapshot, createCameraMotion,
+  endCameraDrag, recordCameraDrag, resetCameraMotion, setCameraMotionHidden, setCameraMotionReduced,
+  setCameraMotionScene, setCameraMotionSurface } from './policies/camera-motion.js';
 import { sameWorldIdentity } from '../core/world-session.js';
 import { effectiveGameRateForSpeed, isStandardSpeed, renderIntervalForSpeed, validateRuntimeSpeed } from '../core/runtime-speed.js';
 import { createWorldReplacementState, finishAbandoned, finishRun, requestWorldReplacement,
@@ -43,7 +47,8 @@ export function startGameApp(options) { const app = new GameApp(options); app.bo
 class GameApp {
   constructor({ canvas, caps, settings, storageStatus = null, developerMode = false }) {
     Object.assign(this, { canvas, caps, settings, storageStatus, developerMode }); this.el = ui.elements(); this.topo4 = createTopology(4); this.topo = this.topo4; initializeProgression(this);
-    this.camera = createCamera(); this.runTransactionRecovery = recoverRunTransaction();
+    this.camera = createCamera(); this.cameraMotion = createCameraMotion({ now: performance.now(), scene: 'home',
+      reduced: settings.motion === 'reduced', hidden: document.hidden }); this.runTransactionRecovery = recoverRunTransaction();
     this.meta = this.runTransactionRecovery?.meta ?? loadMeta(); this.archive = this.runTransactionRecovery?.history ?? loadHistory();
     this.resultKeys = new Set(this.meta.resultKeys); this.flow = createAppState();
     this.speed = validateRuntimeSpeed(settings.speed, { developerMode, fallback: 1 }); this.snapshot = null; this.selectedNode = null;
@@ -56,13 +61,15 @@ class GameApp {
     this.presentationAudit = { blankFrames: 0, lastBlank: null }; this.frameAudit = { frames: 0, scheduled: 0, errors: 0, lastError: null };
     this.driver = createRunDriver(caps, (message) => this.message(message), { developerMode }); this.pause = createPauseControl((paused, reasons) => this.applyPause(paused, reasons));
     this.continuation = createContinuation(); this.countdownLabel = ''; this.continuationStatus = 'inactive';
-    this.interactionGuard = createContinuationInteractionGuard(document, (type) => this.cancelAutoNext(type));
-    this.surfaces = createSurfaceCoordinator(() => this.closeActiveOverlay(), (focus) => this.interactionGuard.runProgrammaticFocus(focus));
+    this.interactionGuard = createTrustedInteractionGuard(document, (type, event) => this.handleTrustedInteraction(type, event));
+    this.surfaces = createSurfaceCoordinator(() => this.closeActiveOverlay(),
+      (focus) => this.interactionGuard.runProgrammaticFocus(focus),
+      (active) => setCameraMotionSurface(this.cameraMotion, Boolean(active), performance.now()));
     this.historyPlayback = createHistoryPlayback(this); this.timeDial = createTimeDial(this.el.pause);
   }
   get phase() { return this.flow.phase; } get scene() { return this.flow.scene; }
   get state() { return this.flow.phase; } boot() {
-    this.makeRenderer(TITLE_SEED); focusCamera(this.camera,
+    this.makeRenderer(TITLE_SEED); this.focusCamera(
       this.topo.positions.subarray(TITLE_SHOWCASE.focusCell * 3, TITLE_SHOWCASE.focusCell * 3 + 3)); this.resize(false);
     this.showcase = new TitleShowcase(this.topo);
     this.makeSurfaces(); this.bindUi(); this.bindCanvas(); this.bindLifecycle(); this.el.speed.value = String(this.speed);
@@ -141,14 +148,19 @@ class GameApp {
     document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key === ',') { event.preventDefault(); this.openMenu(); } });
   }
   bindCanvas() { this.input = bindGlobeInput(this.canvas, this.camera, { canInteract: () => true,
-    onTap: (x, y) => this.tapGlobe(x, y) }); }
+    onTap: (x, y) => this.tapGlobe(x, y),
+    onDirectStart: (now) => beginCameraDrag(this.cameraMotion, now),
+    onDirectDelta: (dragX, dragY, now) => recordCameraDrag(this.cameraMotion, dragX, dragY, now),
+    onDirectEnd: (now, kind) => endCameraDrag(this.cameraMotion, now, kind),
+    onZoom: (now) => cameraMotionActivity(this.cameraMotion, now) }); }
   bindLifecycle() {
     const resize = () => this.resize(true);
     if (typeof ResizeObserver === 'function') { this.resizeObserver = new ResizeObserver(resize); this.resizeObserver.observe(this.canvas); }
     else addEventListener('resize', resize);
     document.addEventListener('visibilitychange', () => { const now = performance.now(); this.last = now;
       this.pause.set('hidden', document.hidden && ['starting', 'running'].includes(this.phase));
-      setContinuationHidden(this.continuation, document.hidden, now); this.updateContinuation(); });
+      setContinuationHidden(this.continuation, document.hidden, now); setCameraMotionHidden(this.cameraMotion, document.hidden, now);
+      this.updateContinuation(); });
   }
   tapGlobe(x, y) {
     const hit = pickNode(this.canvas, x, y, this.camera, this.topo); if (!hit) { this.surfaces.blankTap(); return; }
@@ -163,6 +175,7 @@ class GameApp {
     else if (next === 'evolution') presentEvolution(this, Boolean(saved));
     else presentTrophies(this, Boolean(saved));
     if (saved) restoreCamera(this.camera, saved);
+    setCameraMotionScene(this.cameraMotion, next, performance.now());
     ui.show(this.el, next); this.sceneSelector.update(next); this.updateSceneActions(); this.resize(Boolean(saved)); return true;
   }
   updateSceneActions() {
@@ -193,8 +206,10 @@ class GameApp {
   metricModel() { return { snapshot: this.snapshot, result: this.phase === 'result' ? this.lastResult : null,
     score: this.phase === 'result' ? this.lastScore : null, history: this.currentHistory }; }
   focusHistoryCells(cells) { if (!cells?.length) return; if (this.scene !== 'world') this.selectScene('world'); this.historyHighlights = cells.slice(0, 8);
-    const node = this.historyHighlights[0]; if (Number.isInteger(node) && node >= 0 && node < this.topo4.nodeCount) focusCamera(this.camera, this.topo4.positions.subarray(node * 3, node * 3 + 3));
+    const node = this.historyHighlights[0]; if (Number.isInteger(node) && node >= 0 && node < this.topo4.nodeCount) this.focusCamera(this.topo4.positions.subarray(node * 3, node * 3 + 3));
     ui.announce(this.el, `${this.historyHighlights.length} History ${this.historyHighlights.length === 1 ? 'cell' : 'cells'} highlighted.`); }
+  focusCamera(direction, now = performance.now()) { orientCamera(this.camera, direction); resetCameraMotion(this.cameraMotion, now, this.scene); }
+  resetCameraMotion(scene = this.scene, now = performance.now()) { resetCameraMotion(this.cameraMotion, now, scene); }
   setSpeed(value) {
     const next = validateRuntimeSpeed(value, { developerMode: this.developerMode, fallback: this.speed });
     this.speed = next; this.el.speed.value = String(next);
@@ -252,6 +267,7 @@ class GameApp {
     const requestedSpeed = validateRuntimeSpeed(value?.speed, { developerMode: this.developerMode, fallback: this.speed });
     const durableSpeed = isStandardSpeed(requestedSpeed) ? requestedSpeed : before.speed;
     this.settings = validateSettings({ ...value, speed: durableSpeed }); if (persist) saveSettings(this.settings); applySettingsToDocument(this.settings);
+    if (this.settings.motion !== before.motion) setCameraMotionReduced(this.cameraMotion, this.settings.motion === 'reduced', performance.now());
     if (requestedSpeed !== this.speed) { this.speed = requestedSpeed; this.el.speed.value = String(requestedSpeed); this.driver.setSpeed(requestedSpeed); }
     if (this.phase === 'result' && this.settings.autoContinue !== before.autoContinue && !this.settings.autoContinue) {
       cancelContinuation(this.continuation, 'setting-disabled'); this.updateContinuation(); }
@@ -271,7 +287,13 @@ class GameApp {
   } catch { ui.announce(this.el, 'That local-data action could not be completed.'); } }
   availableEvolutionLevels(){return availableEvolutionLevels(this)}
   worldResourceAudit() { return Object.freeze({ interactionListeners: this.interactionGuard.listenerCount,
-    historyRequests: this.historyPlayback.pendingRequests }); }
+    historyRequests: this.historyPlayback.pendingRequests, cameraMotion: cameraMotionSnapshot(this.cameraMotion), layout: this.layout }); }
+  handleTrustedInteraction(type, event) {
+    // A browser click follows a completed canvas pointer sequence. Pointerdown already stopped automatic motion;
+    // treating the duplicate click as new activity would erase the release velocity created on pointerup.
+    if (!(event?.type === 'click' && event.target === this.canvas)) cameraMotionActivity(this.cameraMotion, performance.now());
+    this.cancelAutoNext(type);
+  }
   cancelAutoNext(reason) { if (this.phase !== 'result') return false;
     const cancelled = cancelContinuation(this.continuation, reason); if (cancelled) this.updateContinuation(); return cancelled; }
   updateContinuation() {
@@ -289,7 +311,7 @@ class GameApp {
     const label = continuationLabel(this.continuation); if (label === this.countdownLabel) return;
     this.countdownLabel = label; this.el.countdown.textContent = label;
   }
-  resize(preserveZoom = true) { const cls = this.canvas.clientWidth < 600 ? 'compact' : this.canvas.clientWidth < 900 ? 'tablet' : 'wide'; const layout = safeLayout(this.canvas.clientWidth, this.canvas.clientHeight, this.scene); preserveZoom &&= cls === this.layoutClass; this.layoutClass = cls;
+  resize(preserveZoom = true) { const cls = this.canvas.clientWidth < 600 ? 'compact' : this.canvas.clientWidth < 900 ? 'tablet' : 'wide'; const layout = safeLayout(this.canvas.clientWidth, this.canvas.clientHeight, this.scene); preserveZoom &&= cls === this.layoutClass; this.layoutClass = cls; this.layout = layout;
     applySafeLayout(this.camera, layout, preserveZoom); this.renderer?.resize(this.canvas.clientWidth, this.canvas.clientHeight, qualityDpr(this.settings, this.caps)); }
   frame(now) { this.frameAudit.frames++;
     try { this.frameStep(now); } catch (error) { this.frameAudit.errors++; this.frameAudit.lastError = error.message; console.error('frame recovered', error); }
@@ -298,6 +320,7 @@ class GameApp {
   frameStep(now) { const dt = Math.max(0, now - this.last); this.last = now;
     this.timeDial.frame(now, { running: this.phase === 'running', paused: this.pause.paused,
       effectiveGameRate: effectiveGameRateForSpeed(this.speed), reduced: this.settings.motion === 'reduced' }); this.driver.frame(dt, now);
+    advanceCameraMotion(this.cameraMotion, this.camera, dt, now);
     if (this.scene === 'home') this.showcase?.update(now, this.settings.motion === 'reduced', document.hidden);
     if (this.phase === 'result' && advanceContinuation(this.continuation, now)) {
       const expected = this.lastResultIdentity; const valid = sameWorldIdentity(expected, this.worldIdentity)

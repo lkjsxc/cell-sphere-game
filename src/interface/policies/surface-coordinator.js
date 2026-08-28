@@ -9,7 +9,7 @@ export function classifySurfaceTarget(path, surface, currentTriggers) {
   return 'empty';
 }
 
-export function createSurfaceCoordinator(onDismiss, runProgrammaticFocus = (callback) => callback()) {
+export function createSurfaceCoordinator(onDismiss, runProgrammaticFocus = (callback) => callback(), onActiveChange = () => {}) {
   let active = null; let opener = null; let element = null; let triggers = []; let policy = {};
   let restoreFocus = true; let focusGeneration = 0; const sequences = new Map();
   const shell = document.getElementById('context-shell'); const scrim = document.getElementById('surface-scrim');
@@ -45,7 +45,7 @@ export function createSurfaceCoordinator(onDismiss, runProgrammaticFocus = (call
       opener = focused instanceof HTMLElement && !nextElement.contains(focused) ? focused : triggers[0] ?? null;
       for (const trigger of triggers) trigger.setAttribute('aria-expanded', 'true');
       if (shell) { shell.hidden = false; shell.dataset.surface = name; }
-      element.hidden = false; if (scrim) scrim.hidden = false; const token = ++focusGeneration;
+      element.hidden = false; if (scrim) scrim.hidden = false; onActiveChange(name); const token = ++focusGeneration;
       requestAnimationFrame(() => { if (token !== focusGeneration || active !== name) return;
         runProgrammaticFocus(() => focusTarget?.focus?.({ preventScroll: true })); });
     },
@@ -55,6 +55,7 @@ export function createSurfaceCoordinator(onDismiss, runProgrammaticFocus = (call
       if (shell) { shell.hidden = true; shell.dataset.surface = 'none'; } if (scrim) scrim.hidden = true;
       const restore = restoreFocus && !options.skipFocus ? opener : null;
       active = null; opener = null; element = null; triggers = []; policy = {}; restoreFocus = true; sequences.clear();
+      onActiveChange(null);
       const token = ++focusGeneration; if (restore?.isConnected) requestAnimationFrame(() => {
         if (token !== focusGeneration || active) return;
         runProgrammaticFocus(() => restore.focus({ preventScroll: true })); });
@@ -63,7 +64,7 @@ export function createSurfaceCoordinator(onDismiss, runProgrammaticFocus = (call
     reset() { focusGeneration++; restoreFocus = false; if (element) element.hidden = true;
       for (const trigger of triggers) trigger.setAttribute('aria-expanded', 'false');
       if (shell) { shell.hidden = true; shell.dataset.surface = 'none'; } if (scrim) scrim.hidden = true;
-      active = null; opener = null; element = null; triggers = []; policy = {}; restoreFocus = true; sequences.clear(); },
+      active = null; opener = null; element = null; triggers = []; policy = {}; restoreFocus = true; sequences.clear(); onActiveChange(null); },
     toggle(name) { if (active !== name) return false; dismiss(false); return true; },
     get active() { return active; },
     dispose() { document.removeEventListener('keydown', keydown); document.removeEventListener('pointerdown', pointerdown, true);
