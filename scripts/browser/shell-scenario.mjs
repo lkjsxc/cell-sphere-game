@@ -1,5 +1,6 @@
 /** Trusted-CDP production evidence for the unified shell vertical slice. */
 import { assertSkillGeometry } from './evidence.mjs';
+import { verifyKeyboardInspector } from './inspector-scenario.mjs';
 import { measureLuminousHierarchy } from './luminous-fixture.mjs';
 import { verifyResultContinuation } from './result-continuation-scenario.mjs';
 export async function runScenario(t) {
@@ -22,6 +23,7 @@ export async function runScenario(t) {
   ok(await poll(()=>evaluate('window.__CELL_SPHERE_APP__.phase'),(phase)=>phase==='running',5000),'world did not start');
   const fallbackAuthority=await evaluate('window.__CELL_SPHERE_APP__.driver.hasFallback');
   ok(fallbackAuthority===Boolean(t.simulationFallback),`unexpected simulation authority: fallback=${fallbackAuthority}`);
+  const keyboardInspector=await verifyKeyboardInspector(t);
   const setDialSpeed = (speed) => evaluate(`(()=>{const s=document.getElementById('speed-select');s.value='${speed}';s.dispatchEvent(new Event('change'))})()`);
   await setDialSpeed(0.5);
   const dial = () => evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,m=document.querySelector('.clock-minute'),h=document.querySelector('.clock-hour');return {phase:a.timeDial.state.phase,hourPhase:a.timeDial.state.hourPhase,minute:m.style.transform,hour:h.style.transform,minuteWidth:getComputedStyle(m).width,hourWidth:getComputedStyle(h).width}})()`);
@@ -244,7 +246,7 @@ export async function runScenario(t) {
   ok(loss.replaced && loss.canvases === 1 && loss.backend === 'canvas2d' && loss.accepted > 0 && loss.input && !loss.errors, `context-loss fallback failed: ${JSON.stringify(loss)}`);
   const idb = await evaluate('window.__CELL_SPHERE_APP__.historyPlayback.recentRuns.ready()'); ok(errors.length === 0, `browser errors: ${errors.join(' | ')}`);
   return {backend:boot.renderer,score:result.score,elapsed,nodeId,render,idb,metricRects,responsive,terminalLayouts,
-    worldmaking:developedEcology,contextLoss:loss};
+    keyboardInspector,worldmaking:developedEcology,contextLoss:loss};
 }
 
 async function evolutionActivationEvidence(t) {

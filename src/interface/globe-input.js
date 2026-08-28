@@ -1,4 +1,4 @@
-/** Pointer-only globe manipulation with forgiving tap/drag/pinch classification. */
+/** Pointer manipulation plus keyboard activation of the currently centered cell. */
 import { rotate, zoom } from '../rendering/camera.js';
 
 export function bindGlobeInput(canvas, camera, options) {
@@ -6,6 +6,9 @@ export function bindGlobeInput(canvas, camera, options) {
 
   const down = (event) => {
     if (!options.canInteract() || !isPrimaryPointer(event)) return;
+    // A focusable canvas emits focusin after pointerdown. Focus it first so the
+    // trusted-activity reset happens before release-velocity sampling begins.
+    if (document.activeElement !== canvas) canvas.focus({ preventScroll: true });
     const observedNow = performance.now(); const inputNow = inputAnimationTime(event, observedNow);
     if (!pointers.size) { pinched = false; options.onDirectStart?.(inputNow); }
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY,
@@ -52,13 +55,17 @@ export function bindGlobeInput(canvas, camera, options) {
     if (!options.canInteract()) return;
     event.preventDefault(); options.onZoom?.(performance.now(), 'wheel'); zoom(camera, event.deltaY > 0 ? 1.08 : 0.93);
   };
+  const keydown = (event) => {
+    if (!options.canInteract() || event.repeat || !['Enter', ' '].includes(event.key)) return;
+    event.preventDefault(); options.onTap(...keyboardActivationPoint(canvas, camera));
+  };
   canvas.addEventListener('pointerdown', down); canvas.addEventListener('pointermove', move);
   canvas.addEventListener('pointerup', finish); canvas.addEventListener('pointercancel', cancel);
-  canvas.addEventListener('wheel', wheel, { passive: false });
+  canvas.addEventListener('wheel', wheel, { passive: false }); canvas.addEventListener('keydown', keydown);
   return { isActive: () => pointers.size > 0, dispose() {
     canvas.removeEventListener('pointerdown', down); canvas.removeEventListener('pointermove', move);
     canvas.removeEventListener('pointerup', finish); canvas.removeEventListener('pointercancel', cancel);
-    canvas.removeEventListener('wheel', wheel);
+    canvas.removeEventListener('wheel', wheel); canvas.removeEventListener('keydown', keydown);
   } };
 }
 
@@ -69,5 +76,10 @@ export function inputAnimationTime(event, observedNow = performance.now()) {
   // PointerEvent timestamps share performance.timeOrigin. Reject legacy epoch
   // timestamps while preserving queued input timing under a busy fallback loop.
   return Number.isFinite(inputNow) && inputNow > 0 && inputNow <= fallback + 1000 ? inputNow : fallback;
+}
+export function keyboardActivationPoint(canvas, camera) {
+  const rect = canvas.getBoundingClientRect();
+  return [rect.left + rect.width * (0.5 + camera.offsetX * 0.5),
+    rect.top + rect.height * (0.5 - camera.offsetY * 0.5)];
 }
 function distance(values) { return Math.hypot(values[0].x - values[1].x, values[0].y - values[1].y); }

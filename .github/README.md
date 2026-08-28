@@ -37,7 +37,11 @@ after inactivity. Reduced motion removes inertia and automatic orbit. Responsive
 framing derives the globe's distance from its projected size instead of device
 distance constants. Portrait layouts stay centered; sufficiently wide Home and
 World layouts place the projected center near two-thirds of usable width while
-retaining the same globe-size targets.
+retaining the same globe-size targets. Ordinary life reads through shared cell
+boundaries: exposed growth fronts are clearer than quiet internal living edges,
+while terrain and finite local resources remain visible inside occupied cells.
+Stress, critical state, remains, selection, History, coastlines, and whole-cell
+Luminous charge keep distinct visual and textual meanings.
 
 Result keeps native Next World, Evolution, and History actions beside one
 authority-driven World-cycle ring. Its visible copy has no changing seconds;
@@ -57,8 +61,8 @@ interaction cancels the 13.5-second automatic continuation for that Result.
 - Game time owns ecology, Environment Level, SCORE, and History meaning.
   Wall-clock time delivers game time. Animation time owns camera and Result
   presentation, so changing speed cannot accelerate either one.
-- WebGL2 uses four world draw calls; Canvas 2D communicates the same cell
-  states as a semantic fallback.
+- WebGL2 uses four World draw calls; Canvas 2D consumes the same deterministic
+  life-edge classification as a semantic fallback.
 - Current-only persistence intentionally starts fresh for old or mismatched
   documents. Visual History is a reset-only device-local cache.
 - Closing the page does not advance a World and no offline progress is promised.

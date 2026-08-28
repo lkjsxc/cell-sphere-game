@@ -5,7 +5,8 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { createStateMachine } from '../../src/core/state-machine.js';
 import { classifySurfaceTarget } from '../../src/interface/policies/surface-coordinator.js';
 import { createAppState } from '../../src/interface/app-state.js';
-import { inputAnimationTime, isPrimaryPointer, isTapGesture } from '../../src/interface/globe-input.js';
+import { inputAnimationTime, isPrimaryPointer, isTapGesture,
+  keyboardActivationPoint } from '../../src/interface/globe-input.js';
 
 const def = {
   initial: 'title',
@@ -60,6 +61,13 @@ test('pointer timing preserves queued input time and rejects incompatible clocks
   assert.equal(inputAnimationTime({ timeStamp: 100 }, 800), 100);
   assert.equal(inputAnimationTime({ timeStamp: 1_700_000_000_000 }, 800), 800);
   assert.equal(inputAnimationTime({ timeStamp: NaN }, 800), 800);
+});
+
+test('keyboard globe activation targets the projected sphere center', () => {
+  const canvas = { getBoundingClientRect: () => ({ left: 10, top: 20, width: 800, height: 600 }) };
+  assert.deepEqual(keyboardActivationPoint(canvas, { offsetX: 0, offsetY: 0 }), [410, 320]);
+  const offset = keyboardActivationPoint(canvas, { offsetX: 1 / 3, offsetY: -0.2 });
+  assert.ok(Math.abs(offset[0] - (1600 / 3 + 10)) < 1e-10); assert.equal(offset[1], 380);
 });
 
 test('surface targets preserve native controls and canvas while isolating empty chrome', () => {

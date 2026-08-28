@@ -14,7 +14,11 @@
   cell, exact levels, owned/reachable/affordable state, and roving keyboard focus.
 - Trophy Sphere exposes all 96 criteria in a semantic grid.
 - Inspector fields use real headings and definition lists. Locked habitats name
-  the missing Evolution capability.
+  the missing Evolution capability. The selected-cell inspector remains the
+  non-color oracle for living state, ecological role, local resource condition,
+  stress, and Luminous charge; canvas color is never the only source of those
+  meanings. The canvas is a keyboard stop: Enter or Space inspects the cell at
+  the projected sphere center, and closing the Inspector restores canvas focus.
 
 ## Shared detail shell
 
@@ -63,8 +67,12 @@ motion uses static emphasis rather than removing information.
 Motion settings use centralized duration variables. Reduced motion preserves
 direct globe manipulation, world-time meaning in the clock, and the informative
 continuation trace while disabling camera inertia, automatic orbit, and the
-ring's travelling marker. Forced colors keeps the ring track and progress in
-system colors; cancelled and disabled text remains explicit. High contrast
+ring's travelling marker. Ordinary life boundaries are static snapshot
+projections and use the same implementation under reduced motion. Stress and
+critical edges differ through static contrast/coverage as well as hue. Forced
+colors keeps controls, focus, selection access, and textual inspection in system
+colors even though the user agent does not recolor pixels inside the WebGL2 or
+Canvas bitmap; cancelled and disabled text remains explicit. High contrast
 strengthens material boundaries and focus indicators. Text and controls remain
 bounded at 200% font scaling. Home copy has one bounded content scroll owner when
 the enlarged text cannot fit, while exposed canvas remains directly manipulable.

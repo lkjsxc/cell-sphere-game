@@ -7,6 +7,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assertBlankReplacement, installFirstReplacementCapture, runScenario } from './browser/shell-scenario.mjs';
 import { runContinuityFixture } from './browser/continuity-fixture.mjs';
+import { verifyKeyboardInspector } from './browser/inspector-scenario.mjs';
 import { runLifeBoundaryFixture } from './browser/life-boundary-fixture.mjs';
 import { measureLuminousHierarchy } from './browser/luminous-fixture.mjs';
 import { runCameraMotionScenario } from './browser/camera-motion-scenario.mjs';
@@ -137,11 +138,12 @@ async function trustedControl(evaluate, click, selector) {
   await click(...point);
 }
 
-async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait, errors }) {
+async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait, errors, key, setMedia }) {
   const boot = await evaluate('window.__CELL_SPHERE_BOOT__'); if (boot?.renderer !== 'canvas2d') throw new Error('Canvas fallback did not boot');
   await screenshot('browser-canvas-title-mobile.png'); await setViewport(1440, 900); await wait(180); await screenshot('browser-canvas-title-desktop.png');
   await evaluate(`document.getElementById('begin-button').click()`);
   if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'running', 5000)) throw new Error('Canvas run did not start');
+  const keyboardInspector=await verifyKeyboardInspector({ evaluate, key, poll, wait, setMedia });
   const developed = await evaluate(`(async()=>{const [{RunController},{compileEvolution,MEMORY_NODE_IDS,evolutionRunConfiguration}]=await Promise.all([import('./src/simulation/simulator.js'),import('./src/game/skills/index.js')]);const m=compileEvolution({evolutionLevels:MEMORY_NODE_IDS.map(id=>({id,level:'20'}))}),c=new RunController({seed:9099,worldOrdinal:'20',...evolutionRunConfiguration(m)});c.start();c.advance(300);const a=window.__CELL_SPHERE_APP__,firstM=compileEvolution({evolutionLevels:['first-division','reliable-budding','bioelectric-spark'].map(id=>({id,level:'1'}))}),first=new RunController({seed:19,worldOrdinal:'20',...evolutionRunConfiguration(firstM)});first.start();first.advance(300);const firstSnapshot={...first.snapshot(),...a.worldIdentity};a.__firstLuminousSnapshot=firstSnapshot;const mid=c.snapshot();c.advance(4000);a.pause.set('browser-luminous',true);a.__luminousDecaySnapshot={...c.snapshot(),...a.worldIdentity};const s={...mid,...a.worldIdentity};a.historySnapshot=s;a.historyPlaybackActive=true;return {transformed:[...s.transformationState].filter(Boolean).length,powered:[...s.electricityQ].filter(Boolean).length,firstPowered:[...firstSnapshot.electricityQ].filter(Boolean).length}})()`);
   if (developed.transformed <= 50 || developed.powered <= 50 || developed.firstPowered <= 0) throw new Error(`Canvas ecology fixture failed: ${JSON.stringify(developed)}`);
   await wait(120);await screenshot('browser-canvas-transformations.png');
@@ -185,7 +187,7 @@ async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait
   const bounded = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {...a.worldResourceAudit(),raf:a.frameAudit}})()`);
   if (bounded.interactionListeners !== 8 || bounded.historyRequests || bounded.raf.errors || bounded.raf.scheduled < bounded.raf.frames - 1) throw new Error(`Canvas replacement resources/RAF leaked: ${JSON.stringify(bounded)}`);
   if(score<=0||atlas!==42||trophies.cells!==162||trophies.nodes!==96||errors.length)throw new Error('Canvas fallback state failed');
-  return{score,worldmaking:developed};
+  return{score,keyboardInspector,worldmaking:developed};
 }
 
 function protocol(child) {

@@ -13,6 +13,8 @@ npm run audit:environment-levels
 npm run audit:resources
 npm run audit:trophies
 npm run showcase:check
+npm run test:browser:life-boundaries
+npm run test:browser:life-boundaries:canvas
 npm run test:browser:file
 npm run test:browser:canvas
 npm run test:browser:fallback
@@ -30,4 +32,16 @@ confirm old or mismatched documents reset rather than migrate.
 
 Browser checks are evidence for real pointer, keyboard, scene, History, Result,
 Evolution, Trophy, WebGL2, and Canvas behavior; a mocked call is not visual
-proof.
+proof. The two life-boundary commands synthesize matched immutable snapshots,
+render each exact input three times through production WebGL2 or Canvas, derive
+anti-alias-safe interior, edge, and inset masks from projected production
+geometry, and write ignored structured reports/screenshots under `reports/`.
+Their relative gates cover ordinary interior preservation, resource contrast,
+internal/exposed hierarchy, stress/critical/remains separation, non-color
+critical urgency, Luminous, selection, History, transformation, coast/lake
+overlap, near/far/limb positions, repeat noise, draw count, buffer size, and
+steady versus accepted-snapshot timing. They also project matched states through
+the production Inspector as a non-color oracle. The full WebGL2, fallback, and
+Canvas scenarios focus the canvas, open that Inspector with Enter, verify its
+state/role/resource/stress/charge fields, close it with Escape, and require focus
+to return to the canvas.

@@ -64,6 +64,7 @@ function fixtureExpression() {
     const geoControl=make(),geoLife=make();activate(geoLife,geoA,LIFE_STATE.LIVING,.35);geoLife.lifeState[geoB]=LIFE_STATE.UNOCCUPIED;
     samples.geographyControl=probe(geoControl,geography,'near','geographyControl');
     samples.geographyLife=probe(geoLife,geography,'near','geographyLife');
+    const textual=inspectTextualStates();
     const floor=.004,threshold=Math.max(floor,repeatNoise*3+.002);
     const metric={
       ordinaryInterior:distance(samples.livingInternal.interior,samples.control.interior),
@@ -104,6 +105,9 @@ function fixtureExpression() {
       transformationPreserved:metric.transformedInterior>threshold&&metric.transformedEdge>threshold,
       nearFarLimb:metric.ordinaryExposedEdge>threshold&&metric.farExposed>threshold&&metric.limbExposed>threshold,
       coincidentGeography:metric.geographyLife>threshold&&metric.geographyControlContrast>threshold&&metric.geographyCoincidentContrast>threshold,
+      textualOracle:textual.living.State==='Alive'&&textual.stressed.Stress==='Strained'
+        &&textual.critical.State.includes('critical stress')&&textual.remains.State==='Dead tissue / scar'
+        &&textual.zeroCharge['Luminous charge']==='0%'&&textual.powered['Luminous charge']==='80%',
       boundedRenderer:renderer.backend==='webgl2'?renderer.drawCalls===4:true,
     };
     const audit=renderer.backend==='webgl2'?renderer.world.dynamicState():renderer.lastFrameAudit;
@@ -116,7 +120,7 @@ function fixtureExpression() {
       compactBytes:renderer.backend==='webgl2'?renderer.world.lifeEdgeData?.byteLength:renderer.lifeEdgeData?.byteLength,
       expandedGpuBytes:renderer.backend==='webgl2'?renderer.world.boundaryLifeData?.byteLength:null,
       edgeUpdates:audit?.edgeUpdates??null,drawCalls:renderer.drawCalls??null},repeat:{renders:3,noise:repeatNoise,threshold,floor},
-      metrics:metric,pairwise,checks,timing,valid:Object.values(checks).every(Boolean)};
+      metrics:metric,pairwise,textual,checks,timing,valid:Object.values(checks).every(Boolean)};
 
     function chooseEdge(wantGeography){let best=-1,bestScore=-Infinity;for(let edge=0;edge<topo.edgeCount;edge++){
       const a=topo.edgeA[edge],b=topo.edgeB[edge],coast=fields.landMask[a]!==fields.landMask[b];
@@ -182,6 +186,16 @@ function fixtureExpression() {
     function luminanceSigned(left,right){const length=Math.min(left.length,right.length);let sum=0;for(let at=0;at<length;at+=3)sum+=(luma(left,at)-luma(right,at))/255;return sum/(length/3);}
     function meanColorDistance(left,right){const l=meanColor(left),r=meanColor(right);return Math.hypot(l[0]-r[0],l[1]-r[1],l[2]-r[2])/(255*Math.sqrt(3));}
     function meanColor(values){const out=[0,0,0];for(let at=0;at<values.length;at+=3){out[0]+=values[at];out[1]+=values[at+1];out[2]+=values[at+2];}return out.map((value)=>value/(values.length/3));}
+    function inspectTextualStates(){const base={node:cellA,alive:1,stress:.2,biomass:.72,energy:3,activeEdges:2,habitatAccessible:true,
+      ecologicalAccessible:true,ecologicalReason:'viable',resourceFloor:.1,adjacentLife:true,suitabilityIfAccessible:.8,initialResourceRichness:.9,
+      resourceStateLabel:'Abundant',resourceRichness:.9,nutrient:.8,reserveFraction:.7,freshwaterSupport:.5,freshwaterTier:2,resourceBlocked:0,
+      habitatBlocked:0,transformationState:0,electricity:0,meanConductance:.8,toxicity:.1};
+      app.inspector.open({node:cellA,world:fields,topo,dynamic:null,events:[]});const result={};
+      for(const [name,dynamic]of Object.entries({living:base,stressed:{...base,stress:.7},critical:{...base,stress:.95},
+        remains:{...base,alive:0,biomass:.3,activeEdges:0},zeroCharge:base,powered:{...base,electricity:.8}})){
+        app.inspector.updateDynamic(dynamic,[]);const root=document.getElementById('inspector-life'),terms=[...root.querySelectorAll('dt')],values=[...root.querySelectorAll('dd')];
+        result[name]=Object.fromEntries(terms.map((term,index)=>[term.textContent,values[index].textContent]));}
+      app.inspector.close();return result;}
     function luma(values,at){return values[at]*.2126+values[at+1]*.7152+values[at+2]*.0722;}
     function summarize(values){const sorted=values.slice().sort((a,b)=>a-b),mean=values.reduce((sum,value)=>sum+value,0)/values.length;return{samples:values.length,mean,p95:sorted[Math.min(sorted.length-1,Math.floor(sorted.length*.95))]};}
     function midpointFor(edge){const a=topo.edgeA[edge]*3,b=topo.edgeB[edge]*3;return normalize([topo.positions[a]+topo.positions[b],topo.positions[a+1]+topo.positions[b+1],topo.positions[a+2]+topo.positions[b+2]]);}

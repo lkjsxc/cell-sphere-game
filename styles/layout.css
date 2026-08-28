@@ -17,6 +17,11 @@
   z-index: var(--z-canvas);
 }
 
+#gl-canvas:focus-visible {
+  outline-offset: -3px;
+  border-radius: 0;
+}
+
 /* Screens occupy the full viewport and stack above the canvas. */
 .screen {
   position: absolute;

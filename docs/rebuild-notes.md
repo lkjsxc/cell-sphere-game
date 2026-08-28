@@ -64,13 +64,17 @@ Apple assets or platform styling.
 
 ### Visible-line audit
 
+This table and the implemented-correction list record the historical D13
+route-removal cutover. D25 now supersedes only their ordinary-life material
+projection: life remains cellular, but living/frontier state is edge-primary.
+
 | Producer | Current meaning | Keep internally | Keep visually | Required action |
 |---|---|---:|---:|---|
 | cell boundary | shared topology | yes | yes, quiet | retain without Knot line accents |
 | coastline | land/water boundary | yes | yes | retain as geography |
 | whole-cell lake | private drainage projection | yes | yes | connected cell fill plus shared lake edges |
 | organism ribbon | adjacent transfer | optional | no | remove production pass and snapshot payload |
-| frontier sprite | living/dead frontier | optional state | no | replace with cell material |
+| frontier sprite | living/dead frontier | optional state | no | replace routes with cellular semantics; D25 projects ordinary life on cell edges |
 | Memory path | distant prerequisite route | no | no | adjacent atlas cells only |
 | background orbit | decoration | no | no | delete shader equation |
 | Imprint filament | fossil corridor | migrate | no | convert bounded edge endpoints to cells |
@@ -87,9 +91,10 @@ before-state for the cell-only renderer gate.
 
 - Deleted organism route/tip shaders, geometry builders, passes, imports, and
   edge presentation payloads; deleted the decorative orbit equation.
-- Moved all living, crisis, selection, Adaptation, History, and Memory meaning
-  into direct cell materials. WebGL2 now submits four draws and presentation
-  snapshots total 25,620 bytes.
+- Historically moved all living, crisis, selection, Adaptation, History, and
+  Memory meaning into direct cell materials. D25 later moved ordinary
+  living/frontier projection to shared cell edges while retaining four WebGL2
+  draws; the historical presentation snapshot measurement was 25,620 bytes.
 - Replaced opaque/full-height documents with one coordinated translucent left
   surface on wide screens or ≤42% bottom sheet on narrow screens; History is a
   visual bottom timeline and result is a compact strip.

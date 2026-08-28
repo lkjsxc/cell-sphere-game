@@ -102,14 +102,17 @@ This decision was superseded by Ecology experience v2. Idle rotation and camera
 inertia were removed rather than exposed as tuning preferences; direct globe
 dragging and focus framing remain.
 
-## D13 — Cell material is the life visual
+## D13 — Cell material is the life visual (ordinary-life projection superseded by D25)
 
 Warm route fragments and tip sprites made the organism look drawn above the
 planet and required explanatory copy. Keep transport internally authoritative,
 but remove its visual pass and edge snapshot payload. Express life stages,
 crises, selection, History, and Adaptation propagation on the same geography
 cells. Consequence: the world remains legible with no graph legend and five
-steady draws. Evidence: source-negative tests, snapshot-byte test, screenshots.
+steady draws. This remains the historical rationale against organism routes;
+D25 supersedes only the claim that ordinary living/frontier state should alter
+whole-cell material. Evidence: historical source-negative tests, snapshot-byte
+test, and screenshots.
 
 ## D14 — Visual History is approximate and authority-neutral
 
@@ -252,3 +255,20 @@ Evidence: exact policy/settings/deadline/continuity tests; all-speed and mixed-
 speed authority equality; eight-second Worker/fallback pacing; trusted Worker,
 fallback, and Canvas browser paths; eight viewport geometry; 200% text;
 reduced motion; forced colors; and unchanged four-draw WebGL2 rendering.
+
+## D25 — Ordinary World life is one shared edge-primary projection
+
+Keep whole cells as simulation, geography, resource, transformation, habitat,
+and Luminous units, while moving ordinary living/frontier presentation from
+cell interiors to canonical inter-cell boundaries. One pure renderer-semantic
+owner classifies every `edgeA` / `edgeB` pair with critical-over-stress-over-
+living-over-remains precedence and internal/exposed/residual relation. WebGL2
+feeds its one-byte result into the existing boundary draw; Canvas consumes the
+same result through fixed typed path batches. Exposed active frontier is stronger
+than an internal living edge. Severe states and remains may keep restrained
+subordinate interior support, but ordinary life does not recolor the cell.
+Selection, History, coast/lake geography, and authoritative whole-cell Luminous
+charge remain independent. No snapshot, protocol, History codec, persistence,
+simulation, or fifth-draw change is introduced. Evidence: exhaustive pair and
+reversal tests, source-negative audit, calibrated Chrome 152 WebGL2/Canvas
+interior/edge/resource/overlap measurements, four-draw and context-loss paths.

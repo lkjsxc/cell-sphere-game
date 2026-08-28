@@ -8,26 +8,40 @@ Evolution, or Trophy state.
 
 ## Backends
 
-WebGL2 is primary and keeps four world draws: background, whole World cells,
-atmosphere, and boundaries. The cell shell has one position path: duplicated
+WebGL2 is primary and keeps four World draws: background, whole World cells,
+boundaries, and atmosphere. The cell shell has one position path: duplicated
 shared corners never receive owner-cell radial displacement. Canvas 2D consumes
 the same snapshot semantics, paints an opaque globe substrate before translucent
 cell material, and remains playable after WebGL context loss without replacing
 world authority.
 
-## Whole-cell visual language
+## Cellular visual language
 
-The smallest visible World unit is one complete cell. Terrain, lakes, habitats,
-life, resource condition, transformation, Luminous charge, selection, Evolution
-ownership, and Trophy state all change whole-cell material. Production rendering
-has no sub-cell rivers, paths, ribbons, wires, fake city geometry, or disaster
-footprints.
+The smallest authoritative World unit is one complete cell. Terrain, lakes,
+habitats, resources, transformations, and Luminous charge remain whole-cell
+material. Ordinary living and frontier state are edge-primary: one pure shared
+projection classifies each canonical `topo.edgeA` / `topo.edgeB` pair as quiet
+internal life, exposed active frontier, stressed, critical, residual remains, or
+none. An exposed frontier is more salient than an internal living edge. Stress,
+critical state, and remains retain restrained subordinate interior support at
+normal far zoom; ordinary life and frontier do not recolor the cell interior.
+
+Selection, History emphasis, static coast/lake edges, and whole-cell Luminous
+charge remain independent signals. The existing WebGL boundary draw combines
+static geography with one dynamic categorical byte per edge; Canvas batches the
+same shared classes into a fixed finite set of paths. Both update their reusable
+edge buffers only when an accepted snapshot changes. Live Worker, live fallback,
+current/past visual History, and the title showcase therefore use the same
+renderer-semantic owner without changing simulation or History authority.
+
+Production rendering has no sub-cell rivers, paths, ribbons, organism routes,
+wires, fake city geometry, or disaster footprints.
 
 Local resource richness/recovery and whole-cell charge are legible in WebGL2 and
 Canvas 2D. Resource-poor cells remain visibly poor; zero charge never receives
-the Luminous powered material. A developer-only uniform-material fixture checks
-both backends for zero background-colored pixels through the center and limb;
-it is evidence tooling, not a player-facing rendering mode.
+the Luminous powered material. Developer-only production-renderer fixtures check
+uniform shell continuity and matched life interiors/edge bands at center, limb,
+near, and far positions. They are evidence tooling, not player-facing modes.
 
 ## Globe scenes
 
@@ -56,7 +70,10 @@ and snapshot code. `npm run showcase:check` compares it with current source;
 ## Performance and bounds
 
 Typed arrays, reusable buffers, four WebGL draws, bounded History, and cached
-static fields keep frame work bounded. High developer speeds execute every tick
+static fields keep frame work bounded. Life classification uses one 7,680-byte
+canonical buffer; WebGL expands it once per accepted semantic snapshot into the
+existing four vertices per boundary edge, while Canvas reuses eight fixed typed
+style batches. Animation time alone never rebuilds either projection. High developer speeds execute every tick
 while coalescing bounded snapshots and render requests. Camera velocity samples
 use one fixed-capacity six-entry buffer. The Result ring changes one bounded
 style projection at no more than about 30 Hz and does not add a renderer pass.
