@@ -43,10 +43,12 @@
 /* The planet stays dominant; editorial type occupies one quiet edge. */
 #title-screen {
   justify-content: flex-end;
-  gap: var(--sp-4);
   background: linear-gradient(0deg, rgba(8, 10, 11, 0.72), transparent 34%);
 }
 
+.title-content { display: grid; justify-items: start; width: min(38rem, 100%); max-height: calc(100dvh - 5rem - var(--safe-top) - var(--safe-bottom));
+  gap: var(--sp-4); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; pointer-events: none; touch-action: pan-y; }
+.title-content > * { pointer-events: auto; }
 .title-identity { max-width: 38rem; text-shadow: 0 2px 20px #080a0b; }
 .title-index { color: var(--accent-gold); font-size: var(--fs-caption); letter-spacing: 0.16em; }
 .title-index span { display: inline-block; margin-right: var(--sp-2); }
@@ -61,7 +63,7 @@
 
 @media (min-width: 900px) {
   #title-screen { justify-content: center; padding-left: max(4vw, var(--sp-6)); background: none; }
-  .title-actions { margin-top: var(--sp-3); }
+  .title-content { gap: var(--sp-5); }
 }
 
 @media (min-width: 600px) and (max-width: 899px) {

@@ -16,10 +16,10 @@ export async function captureTitleEvidence(t) {
   assert(reduced[0] === reduced[1], 'reduced title did not hold its representative frame');
   await wait(80); await screenshot('browser-title-reduced.png');
   await evaluate(`(() => { const app=window.__CELL_SPHERE_APP__; app.settings={...app.settings,motion:'full'};
-    const s=app.showcase; s.reduced=false; s.startedAt=performance.now(); s.apply(0); })()`);
+    const s=app.showcase; s.reduced=false; s.startedAt=performance.now(); s.apply(0); app.resetCameraMotion('home'); })()`);
   const before = await evaluate('window.__CELL_SPHERE_APP__.camera.direction.slice()'); await wait(650);
   const after = await evaluate('window.__CELL_SPHERE_APP__.camera.direction.slice()');
-  assert(distance(before, after) < 1e-8, 'globe rotated although default auto-rotation is off');
+  assert(distance(before, after) < 1e-8, 'Home globe moved before the fresh idle delay elapsed');
   for (const [width, height] of REQUIRED_VIEWPORTS) {
     await setViewport(width, height); await wait(120);
     const fits = await evaluate('document.documentElement.scrollWidth<=innerWidth && document.documentElement.scrollHeight<=innerHeight');

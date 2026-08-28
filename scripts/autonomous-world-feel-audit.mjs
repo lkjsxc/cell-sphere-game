@@ -137,9 +137,14 @@ try {
   }
   await setViewport(390, 844); await wait(180);
   const resultNormal = await resultGeometry(evaluate);
-  const firstVisibleLabel = await evaluate('document.getElementById("result-countdown").textContent');
+  const firstCycle = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,root=document.getElementById('result-continuation');return{visible:document.getElementById('result-continuation-visible').textContent,accessible:document.getElementById('result-continuation-accessible').textContent,progress:Number(root.style.getPropertyValue('--continuation-progress')),audit:{...a.worldResourceAudit().continuationPresentation}}})()`);
   await wait(1100);
-  const secondVisibleLabel = await evaluate('document.getElementById("result-countdown").textContent');
+  const secondCycle = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,root=document.getElementById('result-continuation');return{visible:document.getElementById('result-continuation-visible').textContent,accessible:document.getElementById('result-continuation-accessible').textContent,progress:Number(root.style.getPropertyValue('--continuation-progress')),audit:{...a.worldResourceAudit().continuationPresentation}}})()`);
+  if (firstCycle.visible !== secondCycle.visible || /\d/.test(secondCycle.visible)
+    || firstCycle.accessible === secondCycle.accessible || secondCycle.progress <= firstCycle.progress
+    || secondCycle.audit.styleUpdates - firstCycle.audit.styleUpdates > 35) {
+    throw new Error(`Result continuation projection drifted: ${JSON.stringify({ firstCycle, secondCycle })}`);
+  }
   await setViewport(320, 568);
   await evaluate("document.documentElement.style.fontSize='32px'"); await wait(180);
   const resultAt200Percent = await resultGeometry(evaluate);
@@ -149,8 +154,9 @@ try {
     label, capturedAt: new Date().toISOString(), revision: git('rev-parse HEAD'), branch: git('branch --show-current'),
     browser: version.product, protocolVersion: version.protocolVersion, simulationPath: fallback ? 'fallback' : 'worker',
     environment, pacingWindowMs: windowMs, pacing, geometry, camera,
-    result: { maximumDeveloperSpeed: maximumSpeed, firstVisibleLabel, secondVisibleLabel,
-      visibleLabelChanged: firstVisibleLabel !== secondVisibleLabel, normal: resultNormal, text200Percent: resultAt200Percent },
+    result: { maximumDeveloperSpeed: maximumSpeed, firstCycle, secondCycle,
+      visibleTextChanged: firstCycle.visible !== secondCycle.visible, accessibleTextChanged: firstCycle.accessible !== secondCycle.accessible,
+      normal: resultNormal, text200Percent: resultAt200Percent },
     browserErrors: cdp.errors.slice(0, 20), browserStderr: cdp.stderr.slice(0, 20),
   };
   writeFileSync(output, `${JSON.stringify(report, null, 2)}\n`);
@@ -169,10 +175,11 @@ process.exit(exitCode);
 async function resultGeometry(evaluate) {
   return evaluate(`(()=>{const box=e=>{const r=e.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
     const panel=document.getElementById('result-dialog'),body=panel.querySelector('.result-body'),footer=panel.querySelector('.result-actions'),
-      countdown=document.getElementById('result-countdown'),actions=[...footer.querySelectorAll('button')].map(e=>({label:e.textContent.trim(),rect:box(e)}));
+      cycle=document.getElementById('result-continuation'),actions=[...footer.querySelectorAll('button')].map(e=>({label:e.textContent.trim(),rect:box(e)}));
     return{viewport:{width:innerWidth,height:innerHeight},fontSize:getComputedStyle(document.documentElement).fontSize,panel:box(panel),body:box(body),
-      footer:box(footer),countdown:box(countdown),countdownText:countdown.textContent,countdownRole:countdown.getAttribute('role'),
-      countdownLive:countdown.getAttribute('aria-live'),actions,actionsInViewport:actions.every(({rect:r})=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight),
+      footer:box(footer),cycle:box(cycle),cycleState:cycle.dataset.state,visibleText:document.getElementById('result-continuation-visible').textContent,
+      accessibleText:document.getElementById('result-continuation-accessible').textContent,cycleRole:cycle.getAttribute('role'),cycleLive:cycle.getAttribute('aria-live'),
+      actions,actionsInViewport:actions.every(({rect:r})=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight),
       bodyScrollOwners:Number(getComputedStyle(body).overflowY==='auto'||getComputedStyle(body).overflowY==='scroll'),
       noHorizontalOverflow:document.documentElement.scrollWidth<=innerWidth};})()`);
 }

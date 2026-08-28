@@ -29,7 +29,8 @@ test('release sampling is fixed-capacity, recent, finite, and clamped', () => {
   assert.equal(sampled.sampleCount, 6); assert.equal(sampled.sampleHighWater, 6);
   assert.equal(endCameraDrag(state, 200, 'drag'), true);
   const release = cameraMotionSnapshot(state);
-  assert.equal(release.mode, 'inertia'); assert.ok(release.speed <= 2.4 + 1e-12);
+  assert.equal(release.mode, 'inertia'); assert.ok(release.speed <= 2.4);
+  assert.ok(Math.hypot(release.velocityX, release.velocityY) <= 2.4);
   assert.ok(Number.isFinite(release.velocityX) && Number.isFinite(release.velocityY));
 
   const stale = createCameraMotion({ now: 0, scene: 'world' }); beginCameraDrag(stale, 0);

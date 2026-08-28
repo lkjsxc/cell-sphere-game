@@ -111,6 +111,15 @@ export function endCameraDrag(state, now, kind = 'drag') {
   }
   if (magnitude > state.config.maximumAngularSpeed) {
     const scale = state.config.maximumAngularSpeed / magnitude; velocityX *= scale; velocityY *= scale;
+    // A normalized pair can round a few ulps back outside the public cap. Nudge
+    // only that exceptional result inward so both integration and diagnostics
+    // preserve the strict maximum-speed invariant.
+    const roundedMagnitude = Math.hypot(velocityX, velocityY);
+    if (roundedMagnitude > state.config.maximumAngularSpeed) {
+      const inwardMaximum = Math.max(0, state.config.maximumAngularSpeed
+        - Number.EPSILON * Math.max(1, state.config.maximumAngularSpeed) * 8);
+      const correction = inwardMaximum / roundedMagnitude; velocityX *= correction; velocityY *= correction;
+    }
   }
   state.velocityX = velocityX; state.velocityY = velocityY; state.inertiaElapsedMs = 0; state.sampleCount = 0;
   state.mode = 'inertia'; return true;

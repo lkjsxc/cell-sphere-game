@@ -35,16 +35,18 @@
         <button class="quiet-btn history-open" data-surface-trigger="history" data-action="quiet" type="button">History</button>
         <button class="quiet-btn menu-open" data-surface-trigger="menu" data-action="quiet" type="button">Menu</button>
       </nav>
-      <div class="title-identity">
-        <p class="title-index"><span aria-hidden="true">⬠</span> ECOLOGY / EVOLUTION</p>
-        <h1 id="title-heading">cell-sphere-game</h1>
-        <p class="title-tagline">Every extinction becomes memory.</p>
-        <p class="title-premise">Watch a living network discover a world that cannot last.</p>
-        <p id="boot-status" class="title-status" role="status">Waking the cells…</p>
-      </div>
-      <div class="title-actions">
-        <button id="begin-button" class="btn btn-primary" data-action="recommended" type="button">Grow a world</button>
-        <p class="title-help">Drag to turn · tap a cell to inspect · growth is autonomous</p>
+      <div class="title-content">
+        <div class="title-identity">
+          <p class="title-index"><span aria-hidden="true">⬠</span> AUTONOMOUS INCREMENTAL ECOLOGY</p>
+          <h1 id="title-heading">cell-sphere-game</h1>
+          <p class="title-tagline">Every extinction becomes memory.</p>
+          <p class="title-premise">Life grows on its own, exhausts a finite world, and leaves Echoes for Evolution.</p>
+          <p id="boot-status" class="title-status" role="status">Waking the cells…</p>
+        </div>
+        <div class="title-actions">
+          <button id="begin-button" class="btn btn-primary" data-action="recommended" type="button">Grow a world</button>
+          <p class="title-help">Drag to turn · tap to inspect · no tending required</p>
+        </div>
       </div>
     </section>
 
@@ -90,7 +92,7 @@
         <h3>Score axes</h3><div id="result-breakdown" class="result-breakdown" aria-label="Score axes"></div>
         <p id="result-imprint" class="result-imprint"></p>
       </div>
-      <footer class="surface-actions result-actions"><p id="result-countdown" class="result-countdown"></p><button id="result-next-button" class="btn btn-primary" data-action="next-world" type="button">Next World</button><button id="result-evolution-button" class="btn btn-secondary" type="button">Evolution</button><button id="result-history-button" class="btn btn-secondary" data-surface-trigger="history" type="button">History</button></footer>
+      <footer class="surface-actions result-actions"><p id="result-continuation" class="result-continuation" data-state="inactive" hidden><span class="continuation-cycle" aria-hidden="true"><svg viewBox="0 0 40 40"><circle class="continuation-track" cx="20" cy="20" r="16"></circle><circle id="result-continuation-trace" class="continuation-trace" cx="20" cy="20" r="16" pathLength="1"></circle></svg><span class="continuation-marker"></span></span><span id="result-continuation-visible" class="continuation-copy" aria-hidden="true"></span><span id="result-continuation-accessible" class="sr-only"></span></p><button id="result-next-button" class="btn btn-primary" data-action="next-world" type="button">Next World</button><button id="result-evolution-button" class="btn btn-secondary" type="button">Evolution</button><button id="result-history-button" class="btn btn-secondary" data-surface-trigger="history" type="button">History</button></footer>
     </section>
 
     <section id="cell-inspector" class="context-surface material-regular" hidden aria-labelledby="inspector-heading">

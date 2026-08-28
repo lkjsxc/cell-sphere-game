@@ -22,8 +22,13 @@ test('one selector, context shell, compact dock, and ordered terminal metrics ar
   assert.doesNotMatch(html, /class="metric-summary"/);
   const resultActions = ['result-next-button', 'result-evolution-button', 'result-history-button'].map((id) => html.indexOf(`id="${id}"`));
   assert.ok(resultActions.every((offset, index) => offset > (resultActions[index - 1] ?? -1)));
-  assert.ok(html.indexOf('id="result-countdown"') > html.indexOf('<footer class="surface-actions result-actions">'));
-  assert.doesNotMatch(html, /id="result-countdown"[^>]*role="status"/);
+  assert.ok(html.indexOf('id="result-continuation"') > html.indexOf('<footer class="surface-actions result-actions">'));
+  assert.match(html, /id="result-continuation-trace"[^>]*pathLength="1"/);
+  assert.match(html, /id="result-continuation-accessible" class="sr-only"/);
+  assert.doesNotMatch(html, /result-countdown|Next world in \d/i);
+  assert.match(html, /AUTONOMOUS INCREMENTAL ECOLOGY/);
+  assert.match(html, /Life grows on its own, exhausts a finite world, and leaves Echoes for Evolution\./);
+  assert.match(html, /Drag to turn · tap to inspect · no tending required/);
   for (const retired of ['evolution-focus-available', 'trophy-focus', 'menu-home', 'menu-evolution', 'menu-trophies', 'menu-result', 'settings-speed', 'camera-reset', 'settings-version'])
     assert.equal(html.includes(`id="${retired}"`), false, retired);
   for (const retiredName of ['historyRetention', 'pauseOnPanels', 'cameraInertia', 'idleRotation']) assert.equal(html.includes(`name="${retiredName}"`), false, retiredName);
@@ -109,7 +114,9 @@ test('History, visible metric affordances, restrained Result, and compact dock k
   assert.doesNotMatch(atlas, /\.history-timeline \{[^}]*overflow: auto/s);
   assert.match(atlas, /\.history-event-btn\.is-selected/);
   assert.match(css, /\.hud-metrics:has\(#result-control:not\(\[hidden\]\)\)[^}]*grid-template-columns: repeat\(2/s);
-  assert.match(css, /\.result-actions \{[\s\S]*?display: grid;/); assert.match(css, /\.result-countdown \{/);
+  assert.match(css, /\.result-actions \{[\s\S]*?display: grid;/); assert.match(css, /\.result-continuation \{/);
+  assert.match(css, /\.continuation-trace \{[^}]*stroke-dasharray: 1/s);
+  assert.match(css, /:root\[data-motion="reduced"\] \.continuation-marker/);
   const layout = readFileSync(new URL('../../styles/layout.css', import.meta.url), 'utf8');
   assert.match(layout, /\.hud-metrics \{\s+  display: grid;\s+  grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/);
   const controller = readFileSync(new URL('../../src/interface/app-controller.js', import.meta.url), 'utf8');

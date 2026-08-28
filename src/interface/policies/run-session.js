@@ -76,7 +76,7 @@ export function performWorldReplacement(app) {
 export function retireWorldPresentation(app) {
   const retired = app.worldIdentity; app.retiredWorldIdentity = retired; app.worldIdentity = null; app.activeRunId = 0;
   app.driver.stop(); app.renderer?.resetDynamicState(); app.requestId++; app.requestGeneration++; resetContinuation(app.continuation);
-  app.countdownLabel = ''; app.continuationStatus = 'inactive'; app.el.countdown.textContent = ''; app.pause.clear();
+  app.resetContinuationPresentation?.(); app.pause.clear();
   app.historyPlayback.retire(); app.surfaces.reset?.(); app.inspector.close(); app.historyUi.reset?.(); app.metricUi?.reset?.();
   app.newWorld.close(); app.settingsUi.close(); app.memoryUi.closeNode(); app.trophyUi.close();
   app.overlay = null; app.selectedNode = null; app.currentHistory = [];
@@ -135,7 +135,7 @@ export function finishRun(app,result,visualHistoryBuffer=null){
     const now = performance.now(); startContinuation(app.continuation, now, app.worldIdentity);
     if (globalThis.document?.hidden === true) setContinuationHidden(app.continuation, true, now);
   } else disableContinuation(app.continuation, app.worldIdentity);
-  app.updateContinuation(); app.openResult(); return true;
+  app.updateContinuation(performance.now(), true); app.openResult(); return true;
 }
 export function finishAbandoned(app, summary) {
   if (!sameWorldIdentity(summary, app.worldIdentity) || app.worldReplacement.status !== 'awaiting-authority') return false;

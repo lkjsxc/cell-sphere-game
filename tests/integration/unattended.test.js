@@ -26,18 +26,18 @@ test('bounded transaction keys reject delayed results after a newer world', () =
 
 test('100 unattended result transitions award once and remain bounded', { timeout: 60_000 }, () => {
   let meta = defaultMeta(); let archive = clearHistory(); let lastKey = null; let echoes = 0n; let now = 0;
-  const flow = createAppState(); const countdown = createContinuation(9000); const heapStart = process.memoryUsage().heapUsed;
+  const flow = createAppState(); const continuation = createContinuation(9000); const heapStart = process.memoryUsage().heapUsed;
   for (let world = 0; world < 100; world++) {
     flow.send(world ? 'restart' : 'begin'); flow.send('ready'); const result = complete(5_000_000 + world, world + 1);
     flow.send('extinct');meta={...meta,worldSeedIndex:result.worldOrdinal};const transaction=applyRunResult(meta,archive,result,lastKey);
     assert.equal(transaction.applied,true,`world ${world+1}: ${transaction.reason}`);meta=transaction.meta;archive=transaction.archive;
     lastKey = transaction.key; echoes += BigInt(transaction.score.echoes);
     assert.equal(applyRunResult(meta, archive, result, lastKey).applied, false, 'duplicate result awarded');
-    startContinuation(countdown, now); now += 4000; assert.equal(advanceContinuation(countdown, now), false);
-    if (world % 10 === 0) { setContinuationHidden(countdown, true, now); now += 30_000;
-      assert.equal(advanceContinuation(countdown, now), false); setContinuationHidden(countdown, false, now); }
-    now += 5000; assert.equal(advanceContinuation(countdown, now), true);
-    assert.equal(completeContinuation(countdown, countdown.generation), true);
+    startContinuation(continuation, now); now += 4000; assert.equal(advanceContinuation(continuation, now), false);
+    if (world % 10 === 0) { setContinuationHidden(continuation, true, now); now += 30_000;
+      assert.equal(advanceContinuation(continuation, now), false); setContinuationHidden(continuation, false, now); }
+    now += 5000; assert.equal(advanceContinuation(continuation, now), true);
+    assert.equal(completeContinuation(continuation, continuation.generation), true);
   }
   assert.equal(meta.runs, '100'); assert.equal(meta.totalEchoes, String(echoes)); assert.equal(meta.echoBalance, String(echoes));
   assert.equal(archive.worlds.length, 24); assert.ok(serializeHistory(archive).length < 700_000);

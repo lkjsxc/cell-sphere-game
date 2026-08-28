@@ -11,7 +11,7 @@ export function safeLayout(width, height, state, insets = {}) {
   const centerX = left + usableWidth * (.5 + .2 * slack);
   const portrait = 1 - smoothstep(.72, 1.05, aspect);
   const centerYRatio = state === 'evolution' || state === 'trophies' ? .48 - .1 * portrait
-    : state === 'home' ? .5 - .08 * portrait : .48 - .05 * portrait;
+    : state === 'home' ? .5 - .08 * portrait : .48 - .03 * portrait;
   const centerY = top + usableHeight * centerYRatio;
   const open = smoothstep(.72, 1.5, aspect); const largeSphere = ['evolution', 'trophies'].includes(state);
   const targetDiameterRatio = largeSphere ? null : targetGlobeDiameterRatio(aspect);

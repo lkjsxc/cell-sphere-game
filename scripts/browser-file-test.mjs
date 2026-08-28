@@ -64,6 +64,7 @@ try {
     flick:(from,to)=>flick(cdp,session,from,to),touchFlick:(from,to)=>touchFlick(cdp,session,from,to),
     wheel:(x,y)=>wheel(cdp,session,x,y),touchDrag:(from,to)=>touchDrag(cdp,session,from,to),
     pinch:(center)=>pinch(cdp,session,center),touchCancel:(point)=>touchCancel(cdp,session,point),screenshot: (name) => screenshot(cdp, session, name),
+    setMedia:(features=[])=>cdp.send('Emulation.setEmulatedMedia',{media:'screen',features},session),
     navigate: async (url) => { await cdp.send('Page.navigate', { url }, session); await wait(2200); },
     setViewport: (width, height) => cdp.send('Emulation.setDeviceMetricsOverride',
       { width, height, deviceScaleFactor: 1, mobile: width < 600 }, session) };
@@ -149,9 +150,11 @@ async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait
   await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.historySnapshot=null;a.historyPlaybackActive=false;delete a.__luminousDecaySnapshot;delete a.__firstLuminousSnapshot;a.pause.set('browser-luminous',false);const speed=document.getElementById('speed-select');speed.value='64';speed.dispatchEvent(new Event('change'))})()`);
   if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 50000)) throw new Error('Canvas run did not finish');
   const terminal=await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return{score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),status:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent,
-    environment:document.getElementById('result-environment').textContent,next:document.getElementById('result-next-button').textContent,hud:document.getElementById('hud-environment-level').textContent}})()`);
+    environment:document.getElementById('result-environment').textContent,next:document.getElementById('result-next-button').textContent,hud:document.getElementById('hud-environment-level').textContent,
+    continuation:a.continuation.status,cycle:document.getElementById('result-continuation-visible').textContent,accessible:document.getElementById('result-continuation-accessible').textContent}})()`);
   const score = terminal.score; if(terminal.status!=='extinct'||terminal.alive!==0||terminal.reach!=='0%'||!terminal.environment.includes('Peak Environment Level')
-    ||terminal.next!=='Next World'||terminal.hud==='0')throw new Error(`Canvas terminal snapshot stale: ${JSON.stringify(terminal)}`);
+    ||terminal.next!=='Next World'||terminal.hud==='0'||terminal.continuation!=='counting'||terminal.cycle!=='World cycle continues automatically'
+    ||!terminal.accessible.includes('Any interaction cancels it'))throw new Error(`Canvas terminal snapshot stale: ${JSON.stringify(terminal)}`);
   await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-canvas-history-desktop.png');
   await evaluate("document.getElementById('scene-evolution').click()"); await wait(180); await screenshot('browser-canvas-evolution-desktop.png');
   const selectedReady=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{validateMeta}=await import('./src/platform/storage.js');a.meta=validateMeta({...a.meta,echoBalance:'1000000'});

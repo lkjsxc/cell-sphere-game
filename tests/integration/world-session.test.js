@@ -14,7 +14,7 @@ function identity(value) { return createWorldIdentity({ environmentModelVersion:
   immutableStartConfigurationHash: 'abcdef12', ...value }); }
 function node() { return { textContent: '', hidden: false, disabled: false, dataset: {}, classList: { toggle() {}, add() {}, remove() {} },
   setAttribute() {}, removeAttribute() {}, replaceChildren() {} }; }
-function elements() { const value = {}; for (const name of ['title','run','memory','trophies','countdown','live',
+function elements() { const value = {}; for (const name of ['title','run','memory','trophies','live',
   'resultRank','resultScore','resultEnvironment','resultPower','resultCause','echoes','resultTrophies','resultImprint','resultFirstCycle','breakdown','score','scoreButton',
   'reach','trace','environmentLevel','environmentButton','resultControl','resultNext','resultEvolution','resultRetry','pause','speed']) value[name] = node();
   return value; }
@@ -26,7 +26,7 @@ function harness() {
   const app={phase:'idle',scene:'home',meta:defaultMeta(),archive:defaultHistory(),settings:{},speed:32,
     el: elements(), topo4: { nodeCount: 32 }, worldIdentity: null, retiredWorldIdentity: null, activeRunId: 0,
     worldSessionSequence: 0, presentationGeneration: 0, worldReplacement: createWorldReplacementState(),
-    requestId: 0, requestGeneration: 0, continuation: createContinuation(), countdownLabel: '', renderer,
+    requestId: 0, requestGeneration: 0, continuation: createContinuation(), renderer,
     presentationAudit: { blankFrames: 0, lastBlank: null }, currentHistory: [{ seq: 1 }],
     lastResult: { old: true }, lastResultIdentity: null, historySnapshot: { old: true }, historyHighlights: [4],
     snapshot: { old: true }, worldFields: { old: true }, fields: { old: true }, selectedNode: 4, overlay: 'history',

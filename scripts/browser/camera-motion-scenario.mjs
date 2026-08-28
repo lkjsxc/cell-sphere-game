@@ -1,7 +1,16 @@
 /** Trusted-CDP proof for production camera motion and projected World framing. */
 export async function runCameraMotionScenario(t) {
-  const { evaluate, wait, poll, click, flick, touchFlick, tap, pinch, touchCancel, wheel, key, setViewport } = t;
+  const { evaluate, wait, poll, click, flick, touchFlick, tap, pinch, touchCancel, wheel, key, screenshot, setViewport } = t;
   ok(await poll(() => evaluate('Boolean(window.__CELL_SPHERE_BOOT__?.playable)'), Boolean, 5000), 'camera scenario did not boot');
+
+  await setViewport(320, 568); await evaluate(`document.documentElement.style.fontSize='32px'`); await wait(100);
+  const homeText = await evaluate(`(()=>{const content=document.querySelector('.title-content'),button=document.getElementById('begin-button');button.scrollIntoView({block:'nearest'});const r=button.getBoundingClientRect();return{index:document.querySelector('.title-index').textContent.trim(),premise:document.querySelector('.title-premise').textContent,help:document.querySelector('.title-help').textContent,button:[r.left,r.top,r.right,r.bottom],scrollable:content.scrollHeight>content.clientHeight,noHorizontalOverflow:document.documentElement.scrollWidth<=innerWidth}})()`);
+  ok(homeText.index.includes('AUTONOMOUS INCREMENTAL ECOLOGY')&&homeText.premise==='Life grows on its own, exhausts a finite world, and leaves Echoes for Evolution.'
+    &&homeText.help==='Drag to turn · tap to inspect · no tending required'&&homeText.button[0]>=0&&homeText.button[1]>=0
+    &&homeText.button[2]<=320&&homeText.button[3]<=568&&homeText.noHorizontalOverflow,
+  `Home autonomous copy failed at 200% text: ${JSON.stringify(homeText)}`);
+  await screenshot('shell-home-320x568-text-200.png');
+  await evaluate(`(()=>{document.documentElement.style.fontSize='';document.querySelector('.title-content').scrollTop=0;return true})()`);
 
   await setViewport(390, 844); await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.resetCameraMotion('home');return true})()`);
   const homeStart = await direction(evaluate); await wait(4200); const beforeIdle = await direction(evaluate);
@@ -83,7 +92,7 @@ export async function runCameraMotionScenario(t) {
 
   await evaluate(`localStorage.clear();location.reload();true`); await wait(1700);
   ok(await poll(() => evaluate('Boolean(window.__CELL_SPHERE_BOOT__?.playable)'), Boolean, 5000), 'camera scenario cleanup reload failed');
-  return { homeOrbitTravel: distance(beforeIdle, homeOrbit.direction), mouseReleaseSpeed: released.state.speed,
+  return { homeText, homeOrbitTravel: distance(beforeIdle, homeOrbit.direction), mouseReleaseSpeed: released.state.speed,
     mouseCarryTravel: distance(released.direction, carried.direction), touchReleaseSpeed: touchReleased.state.speed,
     geometry, sameClass, backend: await evaluate('window.__CELL_SPHERE_BOOT__.renderer') };
 }
@@ -96,8 +105,9 @@ async function geometryMatrix({ evaluate, setViewport, wait }) {
       {pickNode}=await import('./src/rendering/picking.js'),rect=a.canvas.getBoundingClientRect(),layout=a.layout,diameter=projectedSphereDiameter(a.camera.dist,rect.height),
       center={x:rect.left+rect.width*(1+a.camera.offsetX)/2,y:rect.top+rect.height*(1-a.camera.offsetY)/2},radius=diameter/2,
       visible=e=>{const r=e.getBoundingClientRect();return !e.hidden&&r.width>0&&r.height>0},controls=[...document.querySelectorAll('#scene-selector button,.hud-metrics button,.command-rail button,.command-rail select')].filter(visible),
-      inside=controls.filter(e=>{const r=e.getBoundingClientRect();return Math.hypot((r.left+r.right)/2-center.x,(r.top+r.bottom)/2-center.y)<radius*.7}).map(e=>e.id);
-      return{viewport:[innerWidth,innerHeight],ratio:diameter/Math.min(rect.width,rect.height),target:layout.targetDiameterRatio,inside,
+      controlRects=controls.map(e=>{const r=e.getBoundingClientRect(),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;return{id:e.id,left:r.left,top:r.top,right:r.right,bottom:r.bottom,x,y,distance:Math.hypot(x-center.x,y-center.y)}}),
+      inside=controlRects.filter(control=>control.distance<radius*.7).map(control=>control.id);
+      return{viewport:[innerWidth,innerHeight],ratio:diameter/Math.min(rect.width,rect.height),target:layout.targetDiameterRatio,center,radius,inside,controlRects,
         pick:pickNode(a.canvas,center.x,center.y,a.camera,a.topo)?.node??null,noOverflow:document.documentElement.scrollWidth<=innerWidth,
         controlsBounded:controls.every(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight})}})()`);
     ok(Math.abs(row.ratio - row.target) <= .0001 && !row.inside.length && row.pick != null
