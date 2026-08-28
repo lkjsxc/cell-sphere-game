@@ -5,8 +5,11 @@
 Completed historical evidence. The current six-step public speed catalog,
 13.5-second Result duration, and two-thirds wide composition supersede this
 package's measured three-speed, nine-second, and earlier horizontal-framing
-values; see
+values; the kinetic release package also supersedes its conservative release
+calibration. See
 [`../autonomous-world-contract-closure-v1/README.md`](../autonomous-world-contract-closure-v1/README.md).
+Current release evidence is in
+[`../kinetic-sphere-release-v1/README.md`](../kinetic-sphere-release-v1/README.md).
 The measurements below remain the evidence for the implementation that existed
 at that revision and are not current policy.
 

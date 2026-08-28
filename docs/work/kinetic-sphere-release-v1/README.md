@@ -12,8 +12,8 @@
 
 ## Confirmed root causes
 
-- Release velocity currently passes directly through a minimum check and a
-  `2.4 rad/s` clamp. With the current `360 ms` half-life and `2,500 ms` hard
+- At the starting revision, release velocity passed directly through a minimum
+  check and a `2.4 rad/s` clamp. With its `360 ms` half-life and `2,500 ms` hard
   lifetime, the canonical strong trace travels `1.23636 rad` (`0.19677` turns)
   after release at 60 Hz.
 - The canonical medium trace produces raw/mapped speed `1.41156 rad/s` and
@@ -66,6 +66,9 @@
 - Strengthened the existing trusted scenario across mouse, touch, slow drag,
   cancellation sources, reduced motion, idle orbit, and portrait/landscape/wide
   layouts; no parallel harness or product telemetry was added.
+- Implementation commit `ea32b505dd29d51159583ce1e428e7c9b2f52e49`
+  contains the complete direct cutover, browser oracle, tests, companion
+  contract, and current documentation.
 
 ## Focused verification
 
@@ -83,7 +86,40 @@
   `0.373781654528–0.373792668770` turns. Maximum basis error is
   `2.23e-16`. Observed handler delays of 0/150/350 ms produce identical medium
   raw speed, travel, and duration while shifting only the idle deadline.
-- `npm run benchmark` — pass, `12,267 ticks/s`; authority hash `471ba1cc`.
+- `npm run test:unit` and `npm run test:integration` — pass, `204/204` and
+  `72/72`. Links and showcase identity also pass.
+- `npm run audit:autonomous-feel` — pass in Chrome 152 with the six expected
+  effective pacing rates, 13.681-second observed Result continuation, and all
+  eight projected-geometry rows.
+- Final `npm run benchmark` — pass, `12,382 ticks/s`, up `0.9%` from the same-
+  host `12,267` baseline. Authority hash `471ba1cc`, fresh hash `bec4a764`,
+  breadth hash `dcc3bafe`, and deep-Luminous hash `60bb9841` are unchanged.
+- Exact-commit Chrome 152 receipts pass with zero browser errors, basis error at
+  most `2.23e-16`, six samples maximum, and unchanged idle rates
+  `0.02197–0.02217 rad/s`:
+  - Worker/WebGL2: strong mouse/touch `1.098720/1.098720` turns, medium
+    `0.385509`, slow `0`; report
+    `reports/kinetic-sphere-release-final-worker-webgl2.json`, SHA-256
+    `228186000f0a388fb6805cfa01eb88440ef767fc0c9def015b75482aa54d83ee`;
+  - fallback/WebGL2: strong mouse/touch `1.098721/1.098720`, medium
+    `0.385509`, slow `0`; report
+    `reports/kinetic-sphere-release-final-fallback-webgl2.json`, SHA-256
+    `805355646b21b5543469c187a0b76cfca840076120aaa5ad1b82635093de0a4b`;
+  - Worker/Canvas 2D: strong mouse/touch `1.098720/1.098720`, medium
+    `0.387400`, slow `0`; report
+    `reports/kinetic-sphere-release-final-worker-canvas2d.json`, SHA-256
+    `c92597fed162128ab67ef7f5e222f794c3e13ad2786c1091f910cedb96e32a38`.
+- All three production scenarios retain SCORE `192,888`; both WebGL2 scenarios
+  retain four draws. Pointer-down, wheel, tap, pinch, cancellation, keyboard,
+  focus, scene, World reset, surface, focus framing, hidden/visible, reduced-
+  motion, repeated-cycle, portrait, `844×390`, and `1440×900` checks pass.
+  Broad 200% text, forced-colors, keyboard Inspector, History, Luminous,
+  Evolution, and responsive checks also pass.
+- Baseline browser report
+  `reports/kinetic-sphere-release-baseline-browser.json` remains ignored at
+  SHA-256 `8ca23526d25104809214e12ad0687e8994bb13bd8b3c7339109418c55fd93cff`.
+  Final JSON receipts and their six viewport screenshots are also ignored,
+  bounded evidence rather than shipped authority.
 - `npm run test:browser:file` — skipped without Chrome on `PATH`; not a pass.
 - Initial cached-Chrome attempts failed before product evidence due to undrained
   stderr/font configuration. Later strengthened attempts exposed endpoint-oracle,
@@ -93,11 +129,11 @@
 ## Evidence not obtained
 
 - Pen and physical-device evidence are unavailable on this host.
-- Stable final Worker/fallback, WebGL2/Canvas, benchmark, full verification, CI,
-  Pages, deployed-byte, and deployed-browser evidence remain pending.
+- Fresh exact-commit `npm run verify`, CI, Pages, deployed-byte, and deployed-
+  browser evidence remain pending.
 
 ## Exact next coherent step
 
-Finish the stable trusted Worker/WebGL2 run, then run fallback/WebGL2 and
-Worker/Canvas, reconcile current status, and execute the fresh final release
-verification and authorized publication sequence.
+Run the fresh complete gate from a clean checkout of the final documentation
+commit, then push normally and verify exact-revision CI, Pages, deployed bytes,
+and the deployed trusted camera scenario.

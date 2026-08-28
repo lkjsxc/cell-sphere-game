@@ -25,6 +25,17 @@
   sample high-water, basis error, cancellation, idle-orbit, reduced-motion, and
   viewport evidence. Authored CDP input timestamps keep mouse and touch traces
   equivalent under queued handler delivery without changing production input.
+- Exact implementation commit `ea32b505dd29d51159583ce1e428e7c9b2f52e49`
+  passes Chrome 152 Worker/WebGL2, fallback/WebGL2, and Worker/Canvas 2D. Strong
+  mouse and touch travel is `1.098719–1.098721` turns, medium is
+  `0.385509–0.387400`, slow is zero, idle rate remains
+  `0.02197–0.02217 rad/s`, basis error is at most `2.23e-16`, and browser errors
+  are zero. The ignored bounded receipt hashes are `22818600…`, `80535564…`,
+  and `c92597fe…` respectively.
+- The current 204 unit and 72 integration tests pass. Final same-host benchmark
+  is `12,382 ticks/s` versus the `12,267` baseline, with unchanged authority,
+  fresh, breadth, and deep-Luminous hashes. The structured autonomous-feel audit,
+  links, and showcase identity pass.
 - Simulation, Worker protocol, World identity, renderer semantics and draw
   count, game time, Environment, Evolution, History, SCORE, Echoes, settings,
   persistence, and balance are unchanged.
@@ -102,9 +113,9 @@
   Their steady/update p95 is `1.5/2.0 ms` and `1.6/2.7 ms` respectively.
 - A first deployed browser attempt encountered a transient HTTP 503 and is not
   a pass. Two subsequent broad shell attempts reached a live World but failed
-  the pre-existing timing-sensitive touch-release camera assertion; they are
-  not passes and are classified separately from the passed deployed renderer
-  fixtures and passed exact-content local Worker/fallback/Canvas shell matrix.
+  the old timing-sensitive touch-release camera assertion; they remain failed
+  historical attempts. D26 supersedes that fixture with authored input timing
+  and cumulative travel rather than reclassifying either attempt as a pass.
 - Physical-device mouse, touch, pen, safe-area hardware, high-refresh, thermal,
   physical-screen-reader, and physical forced-colors evidence is unavailable on
   this host.
