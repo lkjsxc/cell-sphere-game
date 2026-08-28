@@ -17,9 +17,9 @@ const canvas = readFileSync(new URL('../../src/rendering/fallback2d.js', import.
 const authority = readFileSync(new URL('../../src/simulation/worldmaking.js', import.meta.url), 'utf8');
 const rendererSourceContract = {
   webglChargeGate: /float chargeLight = pow\(powered/.test(shader), webglDarkness: /float darkness = 1\.0 - daylight/.test(shader),
-  webglOrdinaryDark: /alive \* life[^\n]*darkness/.test(shader), webglPoweredDarkBoost: /darkness \* 0\.54/.test(shader),
+  webglZeroChargeOrdinary: !/alive \* life[^\n]*darkness/.test(shader), webglPoweredDarkBoost: /darkness \* 0\.54/.test(shader),
   canvasChargeGate: /if \(powered > 0\)/.test(canvas), canvasDarkness: /const darkness=1-daylight/.test(canvas),
-  canvasOrdinaryDark: /state === LIFE_STATE\.LIVING/.test(canvas), wireGeometry: /(?:wire|cable|powerline)(?:Geometry|Path|Vertex)/i.test(`${shader}\n${canvas}\n${authority}`),
+  canvasZeroChargeOrdinary: !/state === LIFE_STATE\.LIVING/.test(canvas), wireGeometry: /(?:wire|cable|powerline)(?:Geometry|Path|Vertex)/i.test(`${shader}\n${canvas}\n${authority}`),
 };
 const average = (rows, key) => rows.reduce((sum, row) => sum + row.mid[key], 0) / rows.length;
 const invariants = {
@@ -30,7 +30,7 @@ const invariants = {
   liveChargeDecayObserved: first.some((row) => row.liveDecayCells > 0),
   extinctionClearsLiveCharge: [...first, ...mature].every((row) => row.terminal.finalElectrifiedCells === 0),
   deterministic: rows.mature[1].hash === repeat.hash && JSON.stringify(rows.mature[1].mid) === JSON.stringify(repeat.mid),
-  rendererHierarchy: ['webglChargeGate', 'webglDarkness', 'webglOrdinaryDark', 'webglPoweredDarkBoost', 'canvasChargeGate', 'canvasDarkness', 'canvasOrdinaryDark']
+  rendererHierarchy: ['webglChargeGate', 'webglDarkness', 'webglZeroChargeOrdinary', 'webglPoweredDarkBoost', 'canvasChargeGate', 'canvasDarkness', 'canvasZeroChargeOrdinary']
     .every((key) => rendererSourceContract[key]) && !rendererSourceContract.wireGeometry,
 };
 const report = { schema: 3, seeds, firstIds, configs: Object.fromEntries(Object.entries(configs).map(([name, value]) => [name, value.luminous])), rows,

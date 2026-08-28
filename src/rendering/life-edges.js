@@ -28,34 +28,28 @@ export const LIFE_EDGE_STYLE = Object.freeze({
 });
 
 export const LIFE_EDGE_STYLE_COUNT = 8;
-export const LIFE_EDGE_STRIDE = 2;
+export const LIFE_EDGE_STRIDE = 1;
 export const BOUNDARY_VERTICES_PER_EDGE = 4;
 
-/** One packed result: low byte is classification, high byte is intensity. */
-export function classifyLifeEdge(stateA, stateB, biomassA = 0, biomassB = 0, stressA = 0, stressB = 0) {
+/** One byte packs the categorical state and adjacency relation. */
+export function classifyLifeEdge(stateA, stateB) {
   const a = normalizeLifeState(stateA); const b = normalizeLifeState(stateB);
   const activeA = isActive(a); const activeB = isActive(b);
   const state = dominantState(a, b);
   const relation = activeA && activeB ? LIFE_EDGE_RELATION.INTERNAL
     : activeA || activeB ? LIFE_EDGE_RELATION.EXPOSED
       : state === LIFE_EDGE_STATE.REMAINS ? LIFE_EDGE_RELATION.RESIDUAL : LIFE_EDGE_RELATION.INACTIVE;
-  const intensity = Math.round(255 * Math.max(
-    cellIntensity(a, biomassA, stressA),
-    cellIntensity(b, biomassB, stressB),
-  ));
-  return encodeLifeEdge(state, relation) | (intensity << 8);
+  return encodeLifeEdge(state, relation);
 }
 
 /** Write canonical edge-order records into a caller-owned Uint8Array. */
-export function writeLifeEdges(topo, lifeState, biomass, stress, out) {
+export function writeLifeEdges(topo, lifeState, out) {
   if (!(out instanceof Uint8Array) || out.length !== topo.edgeCount * LIFE_EDGE_STRIDE) {
     throw new Error('invalid life-edge output');
   }
   for (let edge = 0; edge < topo.edgeCount; edge++) {
     const a = topo.edgeA[edge]; const b = topo.edgeB[edge];
-    const packed = classifyLifeEdge(lifeState?.[a], lifeState?.[b], biomass?.[a], biomass?.[b], stress?.[a], stress?.[b]);
-    out[edge * LIFE_EDGE_STRIDE] = packed & 0xff;
-    out[edge * LIFE_EDGE_STRIDE + 1] = packed >>> 8;
+    out[edge] = classifyLifeEdge(lifeState?.[a], lifeState?.[b]);
   }
   return out;
 }
@@ -68,19 +62,14 @@ export function writeBoundaryLifeVertices(edgeData, out) {
     throw new Error('invalid boundary life-edge output');
   }
   for (let edge = 0; edge < edgeCount; edge++) {
-    const source = edge * LIFE_EDGE_STRIDE;
-    const code = edgeData[source]; const intensity = edgeData[source + 1];
-    for (let vertex = 0; vertex < BOUNDARY_VERTICES_PER_EDGE; vertex++) {
-      const target = (edge * BOUNDARY_VERTICES_PER_EDGE + vertex) * LIFE_EDGE_STRIDE;
-      out[target] = code; out[target + 1] = intensity;
-    }
+    const code = edgeData[edge]; const target = edge * BOUNDARY_VERTICES_PER_EDGE;
+    out[target] = code; out[target + 1] = code; out[target + 2] = code; out[target + 3] = code;
   }
   return out;
 }
 
 export function lifeEdgeState(code) { return code & 7; }
 export function lifeEdgeRelation(code) { return (code >>> 3) & 3; }
-export function lifeEdgeIntensity(packed) { return (packed >>> 8) & 0xff; }
 
 export function lifeEdgeStyle(code) {
   const state = lifeEdgeState(code); const relation = lifeEdgeRelation(code);
@@ -101,11 +90,3 @@ function dominantState(a, b) {
   if (a === LIFE_STATE.DEAD_REMAINS || b === LIFE_STATE.DEAD_REMAINS) return LIFE_EDGE_STATE.REMAINS;
   return LIFE_EDGE_STATE.NONE;
 }
-function cellIntensity(state, biomass, stress) {
-  if (state === LIFE_STATE.CRITICAL) return Math.max(0.90, unit(stress));
-  if (state === LIFE_STATE.STRESSED) return Math.max(0.68, unit(stress));
-  if (state === LIFE_STATE.LIVING || state === LIFE_STATE.FRONTIER) return Math.max(0.45, 0.25 + unit(biomass) * 0.55);
-  if (state === LIFE_STATE.DEAD_REMAINS) return Math.max(0.30, unit(biomass) * 0.45);
-  return 0;
-}
-function unit(value) { return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0; }

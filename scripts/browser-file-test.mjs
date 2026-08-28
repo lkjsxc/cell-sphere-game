@@ -7,6 +7,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assertBlankReplacement, installFirstReplacementCapture, runScenario } from './browser/shell-scenario.mjs';
 import { runContinuityFixture } from './browser/continuity-fixture.mjs';
+import { runLifeBoundaryFixture } from './browser/life-boundary-fixture.mjs';
 import { measureLuminousHierarchy } from './browser/luminous-fixture.mjs';
 import { runCameraMotionScenario } from './browser/camera-motion-scenario.mjs';
 
@@ -15,6 +16,8 @@ const PROFILE = `/tmp/cell-sphere-game-browser-${process.pid}`;
 const REPORTS = resolve(ROOT, 'reports');
 const forceCanvas=process.argv.includes('--canvas');
 const forceSimulationFallback=process.argv.includes('--simulation-fallback');
+const lifeBoundaryOnly=process.argv.includes('--life-boundary-only');
+const recordBaseline=process.argv.includes('--record-baseline');
 const chrome = findChrome();
 if (!chrome) {
   console.log('test:browser:file — SKIP (Chrome/Chromium unavailable) [exit 77]');
@@ -45,7 +48,7 @@ try {
   const configuredUrl = process.env.BROWSER_TEST_URL?.trim();
   const publicUrl = configuredUrl ? `${configuredUrl}${configuredUrl.includes('?') ? '&' : '?'}demo=1&browser-file-test=1`
     : `file://${ROOT}/index.html?demo=1&browser-file-test=1`;
-  await cdp.send('Page.navigate', { url: forceCanvas ? `${publicUrl}&dev=1` : publicUrl }, session);
+  await cdp.send('Page.navigate', { url: forceCanvas || lifeBoundaryOnly ? `${publicUrl}&dev=1` : publicUrl }, session);
   await wait(4500);
 
   const evaluate = async (expression) => {
@@ -68,19 +71,27 @@ try {
     navigate: async (url) => { await cdp.send('Page.navigate', { url }, session); await wait(2200); },
     setViewport: (width, height) => cdp.send('Emulation.setDeviceMetricsOverride',
       { width, height, deviceScaleFactor: 1, mobile: width < 600 }, session) };
-  if (!forceCanvas) await runDeveloperSpeedChecks(tools, publicUrl);
-  else tools.continuity = await runContinuityFixture(tools);
-  tools.cameraEvidence = await runCameraMotionScenario(tools);
-  const evidence = forceCanvas ? await runCanvasScenario(tools) : await runScenario(tools);
-  const light = evidence.worldmaking.luminance?.emission;
-  const lightEvidence = light ? `; paired charge luminance Δ day/night ${light.day.toFixed(3)}/${light.night.toFixed(3)}` : '';
-  console.log(forceCanvas?`test:browser:file — PASS (canvas2d fallback; score ${evidence.score}; ${evidence.worldmaking.powered} powered cells (day ${evidence.worldmaking.day.cell}/${evidence.worldmaking.day.charge}/${evidence.worldmaking.day.dot.toFixed(2)}, night ${evidence.worldmaking.night.cell}/${evidence.worldmaking.night.charge}/${evidence.worldmaking.night.dot.toFixed(2)})${lightEvidence}; continuous shell center/limb clear; unified shell, History, Evolution, and Trophies)`
-    :`test:browser:file — PASS (${evidence.backend}; ${forceSimulationFallback?'fallback simulation':'Worker simulation'}; unified shell; score ${evidence.score}; `
-      +`1.5x (effective 6) ${evidence.elapsed.toFixed(2)}s; developer 64x (effective 256) ${tools.developerEvidence.elapsed.toFixed(2)}s; 4 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
-      +`${evidence.worldmaking.powered} powered cells (day ${evidence.worldmaking.day.cell}/${evidence.worldmaking.day.charge}/${evidence.worldmaking.day.dot.toFixed(2)}, night ${evidence.worldmaking.night.cell}/${evidence.worldmaking.night.charge}/${evidence.worldmaking.night.dot.toFixed(2)})${lightEvidence}; continuous shell center/limb clear; visual IDB ${evidence.idb?'yes':'unavailable'}; adjacent Evolution purchase ${evidence.nodeId})`);
-  if (tools.continuity) console.log(`continuous shell ${JSON.stringify(tools.continuity)}`);
-  if (tools.cameraEvidence) console.log(`camera motion ${JSON.stringify(tools.cameraEvidence)}`);
-  if (evidence.metricRects) console.log(`metric rects ${JSON.stringify(evidence.metricRects)} responsive ${JSON.stringify(evidence.responsive)}`);
+  if (lifeBoundaryOnly) {
+    const label=recordBaseline?'baseline':'final';
+    const evidence=await runLifeBoundaryFixture(tools,{label,enforce:!recordBaseline});
+    const report=JSON.stringify(evidence,null,2)+'\n';const name=`life-boundary-${label}-${evidence.backend}.json`;
+    writeFileSync(resolve(REPORTS,name),report);const hash=createHash('sha256').update(report).digest('hex');
+    console.log(`test:browser:life-boundaries — ${recordBaseline?'RECORDED':'PASS'} (${evidence.backend}; report ${name}; sha256 ${hash}; repeat noise ${evidence.repeat.noise.toFixed(6)}; threshold ${evidence.repeat.threshold.toFixed(6)}; steady p95 ${evidence.timing.steady.p95.toFixed(3)} ms; update p95 ${evidence.timing.update.p95.toFixed(3)} ms)`);
+  } else {
+    if (!forceCanvas) await runDeveloperSpeedChecks(tools, publicUrl);
+    else tools.continuity = await runContinuityFixture(tools);
+    tools.cameraEvidence = await runCameraMotionScenario(tools);
+    const evidence = forceCanvas ? await runCanvasScenario(tools) : await runScenario(tools);
+    const light = evidence.worldmaking.luminance?.emission;
+    const lightEvidence = light ? `; paired charge luminance Δ day/night ${light.day.toFixed(3)}/${light.night.toFixed(3)}` : '';
+    console.log(forceCanvas?`test:browser:file — PASS (canvas2d fallback; score ${evidence.score}; ${evidence.worldmaking.powered} powered cells (day ${evidence.worldmaking.day.cell}/${evidence.worldmaking.day.charge}/${evidence.worldmaking.day.dot.toFixed(2)}, night ${evidence.worldmaking.night.cell}/${evidence.worldmaking.night.charge}/${evidence.worldmaking.night.dot.toFixed(2)})${lightEvidence}; continuous shell center/limb clear; unified shell, History, Evolution, and Trophies)`
+      :`test:browser:file — PASS (${evidence.backend}; ${forceSimulationFallback?'fallback simulation':'Worker simulation'}; unified shell; score ${evidence.score}; `
+        +`1.5x (effective 6) ${evidence.elapsed.toFixed(2)}s; developer 64x (effective 256) ${tools.developerEvidence.elapsed.toFixed(2)}s; 4 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
+        +`${evidence.worldmaking.powered} powered cells (day ${evidence.worldmaking.day.cell}/${evidence.worldmaking.day.charge}/${evidence.worldmaking.day.dot.toFixed(2)}, night ${evidence.worldmaking.night.cell}/${evidence.worldmaking.night.charge}/${evidence.worldmaking.night.dot.toFixed(2)})${lightEvidence}; continuous shell center/limb clear; visual IDB ${evidence.idb?'yes':'unavailable'}; adjacent Evolution purchase ${evidence.nodeId})`);
+    if (tools.continuity) console.log(`continuous shell ${JSON.stringify(tools.continuity)}`);
+    if (tools.cameraEvidence) console.log(`camera motion ${JSON.stringify(tools.cameraEvidence)}`);
+    if (evidence.metricRects) console.log(`metric rects ${JSON.stringify(evidence.metricRects)} responsive ${JSON.stringify(evidence.responsive)}`);
+  }
   exitCode = 0;
 } catch (error) {
   console.error(`test:browser:file — FAIL: ${error.message}`);

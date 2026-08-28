@@ -104,25 +104,20 @@ void main() {
   base = mix(base, exhaustedTint, exhaustedResource * 0.82);
   base = mix(base, waterCell > 0.5 ? vec3(0.035,0.220,0.390) : vec3(0.25,0.35,0.23), recoveringResource * 0.52);
   base = mix(base, vec3(0.22, 0.23, 0.21) + nutrient * 0.05, uMemory * 0.82);
-  float life = clamp(vLife.x, 0.0, 1.0);
   float stress = clamp(vLife.y, 0.0, 1.0);
   float state = floor(vLife.z + 0.5);
   float ordinary = 1.0 - uMemory;
-  float living = (1.0 - step(0.5, abs(state - 1.0))) * ordinary;
-  float frontier = (1.0 - step(0.5, abs(state - 2.0))) * ordinary;
   float stressed = (1.0 - step(0.5, abs(state - 3.0))) * ordinary;
   float critical = (1.0 - step(0.5, abs(state - 4.0))) * ordinary;
   float deadRemains = (1.0 - step(0.5, abs(state - 5.0))) * ordinary;
-  float alive = living + frontier + stressed + critical;
   float centerDot = dot(normalize(vPos), normalize(vCenter));
   float inset = smoothstep(0.9982, 0.99972, centerDot);
   float striation = 0.5 + 0.5 * sin(dot(vPos, vec3(97.0, 151.0, 73.0)) * 17.0);
-  base = mix(base, vec3(0.56, 0.60, 0.34), alive * (0.18 + life * 0.10));
-  base = mix(base, vec3(0.70, 0.73, 0.48), frontier * inset * 0.34);
-  base *= 1.0 - frontier * (1.0 - inset) * 0.10;
-  base = mix(base, vec3(0.58, 0.34, 0.22), stressed * (0.20 + stress * 0.12 + striation * 0.08));
-  base = mix(base, vec3(0.66, 0.20, 0.13), critical * (0.34 + stress * 0.08 + striation * 0.13));
-  base = mix(base, vec3(0.31, 0.30, 0.28), deadRemains * (0.20 + inset * 0.09));
+  // Severe stress and remains retain restrained interior support. Ordinary
+  // living/frontier state is owned by the shared edge projection instead.
+  base = mix(base, vec3(0.58, 0.34, 0.22), stressed * (0.06 + stress * 0.04 + striation * 0.03));
+  base = mix(base, vec3(0.66, 0.20, 0.13), critical * (0.12 + stress * 0.05 + striation * 0.05));
+  base = mix(base, vec3(0.31, 0.30, 0.28), deadRemains * (0.08 + inset * 0.04));
   float atlasStatus = floor(vLife.x + 0.5);
   float atlasBranch = floor(vLife.y + 0.01);
   float atlasKind = floor(fract(vLife.y) * 10.0 + 0.5);
@@ -176,8 +171,6 @@ void main() {
   float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 2.7);
   float plate = smoothstep(0.996, 0.9998, dot(n, normalize(vCenter)));
   vec3 col = base * (0.22 + 0.90 * diffuse) + base * plate * 0.07;
-  // Ordinary life is a dim biological presence, clearest on the dark hemisphere.
-  col += vec3(0.38, 0.39, 0.20) * alive * life * (0.08 + 0.12 * plate) * darkness;
   float chargeLight = pow(powered, 0.62) * ordinary;
   vec3 chargeColor = mix(vec3(0.62, 0.43, 0.12), vec3(0.72, 0.68, 0.28), uElectricityDevelopment);
   // Powered cells retain a little day-side emission and become materially brighter in darkness.

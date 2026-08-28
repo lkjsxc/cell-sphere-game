@@ -4,6 +4,8 @@ import { createDualMesh } from '../world/dual-mesh.js';
 import { cameraBasis } from './camera.js';
 import { sameWorldIdentity } from '../core/world-session.js';
 import { continuityFixture } from './continuity-fixture.js';
+import { LIFE_EDGE_STRIDE, LIFE_EDGE_STYLE, LIFE_EDGE_STYLE_COUNT,
+  lifeEdgeStyle, writeLifeEdges } from './life-edges.js';
 
 const WORLD_LIGHT = Object.freeze((() => { const value=[-.52,.72,.44]; const length=Math.hypot(...value); return value.map((axis)=>axis/length); })());
 const BIOME_COLOR = Object.freeze([
@@ -26,6 +28,10 @@ export class Canvas2DRenderer {
     this.cornerX = new Float32Array(this.dual.cornerCount);
     this.cornerY = new Float32Array(this.dual.cornerCount);
     this.cornerFacing = new Float32Array(this.dual.cornerCount);
+    this.lifeEdgeData = new Uint8Array(topo.edgeCount * LIFE_EDGE_STRIDE);
+    this.lifeEdgeBatches = Array.from({ length: LIFE_EDGE_STYLE_COUNT }, () => new Uint16Array(topo.edgeCount));
+    this.lifeEdgeBatchCounts = new Uint16Array(LIFE_EDGE_STYLE_COUNT);
+    this.lastEdgeSnapshot = null; this.lastEdgeTick = -1; this.edgeUpdateCount = 0;
   }
 
   resize(cssW, cssH, dpr) {
@@ -39,13 +45,15 @@ export class Canvas2DRenderer {
   bindWorldSession(identity) { if (this.disposed) return false; this.boundIdentity = identity ?? null; this.resetDynamicState(); return true; }
   resetDynamicState() { if (this.disposed) return false; this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.fillStyle = '#070b14'; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    this.clearCount++; this.lastFrameAudit = null; return true; }
+    this.lifeEdgeData.fill(0); this.lifeEdgeBatchCounts.fill(0); this.lastEdgeSnapshot = null; this.lastEdgeTick = -1;
+    this.edgeUpdateCount = 0; this.clearCount++; this.lastFrameAudit = null; return true; }
   accepts(scene) { return !this.boundIdentity || (sameWorldIdentity(scene.worldIdentity, this.boundIdentity)
     && sameWorldIdentity(scene.snapshot, this.boundIdentity)); }
 
   render(scene) {
     if (this.disposed || !this.accepts(scene)) { this.rejectedFrames++; return false; }
     const { ctx, canvas, topo, fields } = this; const { snapshot, camera } = scene;
+    this.updateLifeEdges(snapshot);
     const w = canvas.width; const h = canvas.height;
     const cx = w * (0.5 + camera.offsetX * 0.5); const cy = h * (0.5 - camera.offsetY * 0.5);
     const sizeScale = canvas.clientWidth < 600 ? 0.76 : 0.52;
@@ -82,7 +90,8 @@ export class Canvas2DRenderer {
     }
     if (!fixture) {
       if (snapshot) this.drawCellOverlays(snapshot, scene.fade ?? 1, scene.time ?? 0, scene.pulse === true);
-      this.drawBoundaries(false); this.drawBoundaries(true);
+      this.drawBoundaries(false); this.drawLifeBoundaries(scene.fade ?? 1); this.drawBoundaries(true);
+      if (snapshot) this.drawLuminousOutlines(snapshot, scene.fade ?? 1);
       for (const cell of (scene.highlightedCells ?? []).slice(0, 8)) {
         if (this.facing[cell] <= 0) continue; this.cellPath(cell, 0.82);
         ctx.strokeStyle = 'rgba(246,186,79,.96)'; ctx.lineWidth = 2.4; ctx.stroke();
@@ -94,7 +103,8 @@ export class Canvas2DRenderer {
     if (fixture) ctx.restore();
     this.acceptedFrames++; this.lastFrameAudit = Object.freeze({ worldSessionId: snapshot?.worldSessionId ?? null,
       presentationGeneration: snapshot?.presentationGeneration ?? null, lifeCells: count(snapshot?.alive),
-      highlights: scene.highlightedCells?.length ?? 0,
+      highlights: scene.highlightedCells?.length ?? 0, lifeEdges: countEdgeSignals(this.lifeEdgeData),
+      edgeBytes: this.lifeEdgeData.byteLength, edgeUpdates: this.edgeUpdateCount,
       clearCount: this.clearCount }); return true;
   }
 
@@ -106,6 +116,20 @@ export class Canvas2DRenderer {
       outX[i] = cx + (x * right[0] + y * right[1] + z * right[2]) * radius;
       outY[i] = cy - (x * up[0] + y * up[1] + z * up[2]) * radius;
     }
+  }
+
+  updateLifeEdges(snapshot) {
+    const tick = snapshot?.tick ?? -1;
+    if (snapshot === this.lastEdgeSnapshot && tick === this.lastEdgeTick) return false;
+    this.lastEdgeSnapshot = snapshot; this.lastEdgeTick = tick; this.lifeEdgeBatchCounts.fill(0);
+    if (!snapshot || snapshot.status === 'memory' || snapshot.status === 'trophies') this.lifeEdgeData.fill(0);
+    else writeLifeEdges(this.topo, snapshot.lifeState, this.lifeEdgeData);
+    for (let edge = 0; edge < this.topo.edgeCount; edge++) {
+      const style = lifeEdgeStyle(this.lifeEdgeData[edge * LIFE_EDGE_STRIDE]);
+      if (style === LIFE_EDGE_STYLE.NONE) continue;
+      this.lifeEdgeBatches[style][this.lifeEdgeBatchCounts[style]++] = edge;
+    }
+    this.edgeUpdateCount++; return true;
   }
 
   cellPath(cell, scale = 1) {
@@ -136,16 +160,10 @@ export class Canvas2DRenderer {
       }
       const state = snapshot.lifeState?.[cell]
         ?? (snapshot.alive[cell] ? LIFE_STATE.LIVING : snapshot.biomass[cell] > 0 ? LIFE_STATE.DEAD_REMAINS : 0);
-      if (state !== LIFE_STATE.UNOCCUPIED) {
-        const styles = lifeStyles(state, fade); this.cellPath(cell); ctx.fillStyle = styles.fill; ctx.fill();
-        if (styles.inset) { this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill();
-          if (styles.stroke) { ctx.strokeStyle = styles.stroke; ctx.lineWidth = styles.width; ctx.stroke(); } }
-      }
+      const interior = lifeInteriorStyle(state, fade);
+      if (interior) { this.cellPath(cell); ctx.fillStyle = interior; ctx.fill(); }
       const at=cell*3; const lightDot=topo.positions[at]*WORLD_LIGHT[0]+topo.positions[at+1]*WORLD_LIGHT[1]+topo.positions[at+2]*WORLD_LIGHT[2];
       const daylight=Math.max(0,Math.min(1,(lightDot+.16)/.30)); const darkness=1-daylight;
-      if (state === LIFE_STATE.LIVING || state === LIFE_STATE.FRONTIER || state === LIFE_STATE.STRESSED) {
-        this.cellPath(cell,.70); ctx.fillStyle=`rgba(154,164,74,${(.025+darkness*.075)*fade})`; ctx.fill();
-      }
       const powered = (snapshot.electricityQ?.[cell] ?? 0) / 255;
       if (powered > 0) {
         const night=darkness;
@@ -153,8 +171,32 @@ export class Canvas2DRenderer {
         const glow=Math.pow(powered,.62)*( .24+night*.38+development*.14)*fade;
         this.cellPath(cell); ctx.fillStyle=`rgba(238,194,72,${Math.min(.72,glow)})`; ctx.fill();
         this.cellPath(cell,.52-development*.08); ctx.fillStyle=`rgba(255,231,126,${Math.min(.78,glow*(.72+development*.28))})`; ctx.fill();
-        ctx.strokeStyle=`rgba(255,239,161,${Math.min(.86,glow+.16)})`;ctx.lineWidth=1+development*.8;ctx.stroke();
       }
+    }
+  }
+
+  drawLifeBoundaries(fade) {
+    const { ctx, dual } = this;
+    for (let style = 1; style < LIFE_EDGE_STYLE_COUNT; style++) {
+      const count = this.lifeEdgeBatchCounts[style]; if (!count) continue;
+      ctx.beginPath(); const edges = this.lifeEdgeBatches[style];
+      for (let index = 0; index < count; index++) {
+        const edge = edges[index]; const a = dual.boundaryCornerA[edge]; const b = dual.boundaryCornerB[edge];
+        if (this.cornerFacing[a] <= 0 || this.cornerFacing[b] <= 0) continue;
+        ctx.moveTo(this.cornerX[a], this.cornerY[a]); ctx.lineTo(this.cornerX[b], this.cornerY[b]);
+      }
+      const visual = canvasLifeEdgeStyle(style, fade);
+      ctx.strokeStyle = visual.stroke; ctx.lineWidth = visual.width; ctx.stroke();
+    }
+  }
+
+  drawLuminousOutlines(snapshot, fade) {
+    const { ctx, topo } = this; const development = Math.max(0, Math.min(1, snapshot.luminousDevelopment ?? 0));
+    for (let cell = 0; cell < topo.nodeCount; cell++) {
+      if (this.facing[cell] <= 0.02) continue; const powered = (snapshot.electricityQ?.[cell] ?? 0) / 255;
+      if (powered <= 0) continue; const alpha = Math.min(.86, Math.pow(powered, .62) * .52 * fade + .16);
+      this.cellPath(cell, .52 - development * .08); ctx.strokeStyle = `rgba(255,239,161,${alpha})`;
+      ctx.lineWidth = 1 + development * .8; ctx.stroke();
     }
   }
 
@@ -219,10 +261,19 @@ function resourceColor(base, state, richness, water) {
 }
 function mean(values) { return values.reduce((sum, value) => sum + value, 0) / values.length; }
 function count(values) { let result = 0; if (values) for (const value of values) if (value) result++; return result; }
-function lifeStyles(state, fade) {
-  if (state === LIFE_STATE.FRONTIER) return { fill: `rgba(181,187,103,${0.30 * fade})`, inset: `rgba(229,224,157,${0.34 * fade})`, scale: 0.58 };
-  if (state === LIFE_STATE.STRESSED) return { fill: `rgba(154,94,59,${0.38 * fade})`, inset: 'rgba(0,0,0,0)', stroke: `rgba(225,190,137,${0.55 * fade})`, width: 0.8, scale: 0.70 };
-  if (state === LIFE_STATE.CRITICAL) return { fill: `rgba(179,53,35,${0.50 * fade})`, inset: `rgba(59,28,25,${0.26 * fade})`, stroke: `rgba(247,214,174,${0.66 * fade})`, width: 1.1, scale: 0.60 };
-  if (state === LIFE_STATE.DEAD_REMAINS) return { fill: `rgba(103,96,87,${0.24 * fade})` };
-  return { fill: `rgba(154,165,86,${0.29 * fade})` };
+function countEdgeSignals(values) { let result = 0; for (let edge = 0; edge < values.length; edge += LIFE_EDGE_STRIDE) if (values[edge]) result++; return result; }
+function lifeInteriorStyle(state, fade) {
+  if (state === LIFE_STATE.STRESSED) return `rgba(154,94,59,${0.09 * fade})`;
+  if (state === LIFE_STATE.CRITICAL) return `rgba(179,53,35,${0.16 * fade})`;
+  if (state === LIFE_STATE.DEAD_REMAINS) return `rgba(103,96,87,${0.11 * fade})`;
+  return null;
+}
+function canvasLifeEdgeStyle(style, fade) {
+  if (style === LIFE_EDGE_STYLE.LIVING_INTERNAL) return { stroke: `rgba(145,161,80,${0.28 * fade})`, width: .55 };
+  if (style === LIFE_EDGE_STYLE.LIVING_EXPOSED) return { stroke: `rgba(199,207,112,${0.84 * fade})`, width: 1.15 };
+  if (style === LIFE_EDGE_STYLE.STRESSED_INTERNAL) return { stroke: `rgba(211,137,65,${0.66 * fade})`, width: .85 };
+  if (style === LIFE_EDGE_STYLE.STRESSED_EXPOSED) return { stroke: `rgba(229,153,70,${0.88 * fade})`, width: 1.25 };
+  if (style === LIFE_EDGE_STYLE.CRITICAL_INTERNAL) return { stroke: `rgba(252,146,68,${0.90 * fade})`, width: 1.2 };
+  if (style === LIFE_EDGE_STYLE.CRITICAL_EXPOSED) return { stroke: `rgba(255,173,80,${0.98 * fade})`, width: 1.65 };
+  return { stroke: `rgba(105,94,84,${0.46 * fade})`, width: .75 };
 }

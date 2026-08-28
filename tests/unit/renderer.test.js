@@ -27,6 +27,7 @@ import { createBlankSnapshot } from '../../src/rendering/blank-snapshot.js';
 import { GLRenderer } from '../../src/rendering/renderer.js';
 import { Canvas2DRenderer } from '../../src/rendering/fallback2d.js';
 import { WorldPass } from '../../src/rendering/world-pass.js';
+import { BOUNDARY_VERTICES_PER_EDGE, LIFE_EDGE_STRIDE } from '../../src/rendering/life-edges.js';
 import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_HASH,
   ENVIRONMENT_SCHEDULE_VERSION } from '../../src/game/environment-level.js';
 
@@ -234,7 +235,39 @@ test('renderer teardown zeroes dynamic buffers and removes the exact context lis
   assert.match(renderer, /if \(this\.disposed\) return/); assert.match(world, /lifeData\.fill\(0\)/);
   assert.match(world, /ecologyData\.fill\(0\)/); assert.doesNotMatch(world, /eventData|aEvent/);
   assert.doesNotMatch(world, /adaptationData|aAdaptation|uAdaptation/);
-  assert.match(world, /bufferSubData/);
+  assert.match(world, /boundaryLifeData\.fill\(0\)/); assert.match(world, /bufferSubData/);
+});
+
+test('ordinary World life has one shared edge owner in both production backends', () => {
+  const world = read('../../src/rendering/world-pass.js'); const fallback = read('../../src/rendering/fallback2d.js');
+  const globe = read('../../src/rendering/shaders.js'); const boundary = read('../../src/rendering/shaders-boundary.js');
+  assert.match(world, /from '\.\/life-edges\.js'/); assert.match(world, /writeLifeEdges\(this\.topo/);
+  assert.match(world, /aLifeEdge/); assert.match(boundary, /in float aLifeEdge/);
+  assert.match(fallback, /from '\.\/life-edges\.js'/); assert.match(fallback, /writeLifeEdges\(this\.topo/);
+  assert.match(fallback, /lifeEdgeBatches/); assert.match(fallback, /drawLifeBoundaries/);
+  assert.doesNotMatch(globe, /float frontier|alive \* life|frontier \* inset/);
+  assert.doesNotMatch(fallback, /lifeStyles|state === LIFE_STATE\.LIVING|state === LIFE_STATE\.FRONTIER/);
+  assert.match(globe, /Severe stress and remains retain restrained interior support/);
+  assert.match(fallback, /lifeInteriorStyle/);
+});
+
+test('WebGL life-edge upload is compact and changes only with accepted snapshot semantics', () => {
+  const topo = { edgeCount: 1, edgeA: Uint16Array.from([0]), edgeB: Uint16Array.from([1]) };
+  const uploads = []; const gl = { ARRAY_BUFFER: 1, bindBuffer() {}, bufferSubData(target, offset, data) { uploads.push(data.byteLength); } };
+  const pass = { topo, geometry: { vertexCell: Uint16Array.from([0, 1]) }, lifeData: new Float32Array(6),
+    ecologyData: new Uint8Array(8), lifeEdgeData: new Uint8Array(LIFE_EDGE_STRIDE),
+    boundaryLifeData: new Uint8Array(BOUNDARY_VERTICES_PER_EDGE * LIFE_EDGE_STRIDE), lastSnapshot: null, lastTick: -1,
+    edgeUpdateCount: 0, gl, lifeBuffer: {}, ecologyBuffer: {}, boundaryLifeBuffer: {} };
+  const snapshot = { tick: 7, status: 'running', alive: Uint8Array.from([1, 0]), biomass: Float32Array.from([1, 0]),
+    stress: new Float32Array(2), lifeState: Uint8Array.from([LIFE_STATE.FRONTIER, LIFE_STATE.UNOCCUPIED]),
+    resourceRichnessQ: new Uint8Array(2), resourceState: new Uint8Array(2), transformationState: new Uint8Array(2), electricityQ: new Uint8Array(2) };
+  WorldPass.prototype.uploadLife.call(pass, snapshot);
+  assert.deepEqual(uploads, [pass.lifeData.byteLength, pass.ecologyData.byteLength, pass.boundaryLifeData.byteLength]);
+  assert.equal(pass.edgeUpdateCount, 1); assert.ok(pass.boundaryLifeData.some(Boolean));
+  WorldPass.prototype.uploadLife.call(pass, snapshot);
+  assert.equal(uploads.length, 3); assert.equal(pass.edgeUpdateCount, 1);
+  WorldPass.prototype.uploadLife.call(pass, { ...snapshot, lifeState: Uint8Array.from([0, 0]) });
+  assert.equal(uploads.length, 6); assert.equal(pass.edgeUpdateCount, 2); assert.equal(pass.boundaryLifeData.some(Boolean), false);
 });
 
 test('production renderer keeps four draws and has no fine waterway machinery', () => {

@@ -25,11 +25,14 @@ const LINE_EXCEPTIONS = new Map([
   ['AGENTS.md', 'the superseding repository contract is intentionally comprehensive'],
   ['docs/work/autonomous-world-contract-closure-v1/README.md',
     'the user-supplied canonical implementation mandate must remain intact'],
+  ['docs/work/living-boundary-semantics-v1/README.md',
+    'the user-supplied canonical implementation mandate must remain intact'],
 ]);
 
 /** Directories allowed to exceed the 24-child hard cap: path -> reason. */
 const CHILD_EXCEPTIONS = new Map([
-  // none yet
+  // The independently testable shared edge projection adds one cohesive owner.
+  ['tests/unit', 25],
 ]);
 
 const BANNED_NAMES = new Set([

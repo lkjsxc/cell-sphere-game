@@ -5,6 +5,8 @@ import * as SH from './shaders.js';
 import * as SHELL from './shaders-shell.js';
 import * as BOUNDARY from './shaders-boundary.js';
 import { sameWorldIdentity } from '../core/world-session.js';
+import { BOUNDARY_VERTICES_PER_EDGE, LIFE_EDGE_STRIDE, writeBoundaryLifeVertices,
+  writeLifeEdges } from './life-edges.js';
 
 export class WorldPass {
   constructor(gl, topo, fields) {
@@ -18,6 +20,9 @@ export class WorldPass {
     };
     this.lifeData = new Float32Array(this.geometry.vertexCount * 3);
     this.ecologyData = new Uint8Array(this.geometry.vertexCount * 4);
+    this.lifeEdgeData = new Uint8Array(topo.edgeCount * LIFE_EDGE_STRIDE);
+    this.boundaryLifeData = new Uint8Array(topo.edgeCount * BOUNDARY_VERTICES_PER_EDGE * LIFE_EDGE_STRIDE);
+    this.edgeUpdateCount = 0;
     this.lastSnapshot = null; this.boundIdentity = null; this.disposed = false;
     this.lastTick = -1;
     this.zero3 = new Float32Array(3);
@@ -52,6 +57,8 @@ export class WorldPass {
     this.boundaryVao = this.vao();
     this.attribute(this.programs.boundary, 'aPos', this.buffer(gl.ARRAY_BUFFER, g.boundaryPositions), 3);
     this.attribute(this.programs.boundary, 'aFeature', this.buffer(gl.ARRAY_BUFFER, g.boundaryFeature), 2);
+    this.boundaryLifeBuffer = this.buffer(gl.ARRAY_BUFFER, this.boundaryLifeData, gl.DYNAMIC_DRAW);
+    this.attribute(this.programs.boundary, 'aLifeEdge', this.boundaryLifeBuffer, LIFE_EDGE_STRIDE, gl.UNSIGNED_BYTE);
     this.boundaryIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.boundaryIndices);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.boundaryIndex);
 
@@ -77,21 +84,24 @@ export class WorldPass {
   accepts(snapshot) { return !this.boundIdentity || sameWorldIdentity(snapshot, this.boundIdentity); }
   resetDynamicState() {
     if (this.disposed) return false;
-    this.lifeData.fill(0); this.ecologyData.fill(0);
+    this.lifeData.fill(0); this.ecologyData.fill(0); this.lifeEdgeData.fill(0); this.boundaryLifeData.fill(0);
+    this.edgeUpdateCount = 0;
     this.lastSnapshot = null; this.lastTick = -1; this.historyCenters.fill(0);
     const gl = this.gl;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.lifeBuffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.lifeData);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.ecologyBuffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.ecologyData);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.boundaryLifeBuffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.boundaryLifeData);
     return true;
   }
   dynamicState() { return Object.freeze({ life: nonZero(this.lifeData),
-    ecology: nonZero(this.ecologyData), tick: this.lastTick }); }
+    ecology: nonZero(this.ecologyData), lifeEdges: nonZero(this.lifeEdgeData), edgeBytes: this.boundaryLifeData.byteLength,
+    edgeUpdates: this.edgeUpdateCount, tick: this.lastTick }); }
   uploadLife(snapshot) {
     if (snapshot === this.lastSnapshot && (snapshot?.tick ?? -1) === this.lastTick) return;
     this.lastSnapshot = snapshot;
     this.lastTick = snapshot?.tick ?? -1;
     const cells = this.geometry.vertexCell;
-    if (!snapshot) { this.lifeData.fill(0); this.ecologyData.fill(0); }
+    if (!snapshot) { this.lifeData.fill(0); this.ecologyData.fill(0); this.lifeEdgeData.fill(0); }
     else {
       const memory = snapshot.status === 'memory' || snapshot.status === 'trophies';
       for (let vertex = 0; vertex < cells.length; vertex++) {
@@ -111,9 +121,13 @@ export class WorldPass {
             ?? (snapshot.alive[cell] ? 1 : snapshot.biomass[cell] > 0 ? 5 : 0);
         }
       }
+      if (memory) this.lifeEdgeData.fill(0);
+      else writeLifeEdges(this.topo, snapshot.lifeState, this.lifeEdgeData);
     }
+    writeBoundaryLifeVertices(this.lifeEdgeData, this.boundaryLifeData); this.edgeUpdateCount++;
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.lifeBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.lifeData);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.ecologyBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.ecologyData);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.boundaryLifeBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.boundaryLifeData);
   }
   draw(vp, eye, snapshot, selectedNode, highlightedCells = [], time = 0, pulse = false, fixture = null) {
     if (this.disposed || !this.accepts(snapshot)) return false;

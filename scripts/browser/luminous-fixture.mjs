@@ -22,14 +22,16 @@ export async function measureLuminousHierarchy(evaluate) {
       const accepted=a.renderer.render({snapshot:variant(mode,cell),worldIdentity:a.worldIdentity,camera:a.camera,selectedNode:null,highlightedCells:[],time:performance.now()/1000,pulse:false});return{value:luminance(),accepted,cell,charge:source.electricityQ[cell]};};
     try{const unoccupiedDark=probe('unoccupied',nightCell),ordinaryDark=probe('ordinary',nightCell),ordinaryDay=probe('ordinary',dayCell),poweredDay=probe('powered',dayCell),poweredDark=probe('powered',nightCell);
       const values={unoccupiedDark,ordinaryDark,ordinaryDay,poweredDay,poweredDark};const dayEmission=poweredDay.value-ordinaryDay.value,nightEmission=poweredDark.value-ordinaryDark.value;
+      const zeroChargeDelta=ordinaryDark.value-unoccupiedDark.value;
+      const zeroChargeEmission=Math.max(0,zeroChargeDelta);
       // Daylight changes the whole material, so compare paired charged/unpowered
       // cells before ordering emission. This measures the renderer's semantic
       // hierarchy rather than mistaking sunlight for biological charge.
       const semanticDay=ordinaryDark.value+dayEmission,semanticNight=ordinaryDark.value+nightEmission;
       const valid=Object.values(values).every((entry)=>entry.accepted&&Number.isFinite(entry.value))
-        &&unoccupiedDark.value<ordinaryDark.value&&dayEmission>0&&nightEmission>dayEmission
+        &&zeroChargeEmission<Math.max(.012,dayEmission*.75)&&dayEmission>0&&nightEmission>dayEmission
         &&ordinaryDark.value<semanticDay&&semanticDay<semanticNight;
-      return{backend:a.renderer.backend,values,emission:{day:dayEmission,night:nightEmission,semanticDay,semanticNight},valid};
+      return{backend:a.renderer.backend,values,emission:{day:dayEmission,night:nightEmission,semanticDay,semanticNight,zeroChargeDelta,zeroChargeEmission},valid};
     }finally{Object.assign(a.camera,saved);a.lastRender=-Infinity;}
   })()`);
 }

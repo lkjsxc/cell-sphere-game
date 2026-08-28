@@ -9,7 +9,6 @@ import {
   LIFE_EDGE_STRIDE,
   LIFE_EDGE_STYLE,
   classifyLifeEdge,
-  lifeEdgeIntensity,
   lifeEdgeRelation,
   lifeEdgeState,
   lifeEdgeStyle,
@@ -19,7 +18,7 @@ import {
 
 const STATES = Object.values(LIFE_STATE);
 const unpack = (packed) => ({ state: lifeEdgeState(packed), relation: lifeEdgeRelation(packed),
-  intensity: lifeEdgeIntensity(packed), style: lifeEdgeStyle(packed) });
+  style: lifeEdgeStyle(packed) });
 
 test('every categorical pair is symmetric, finite, bounded, and deterministic', () => {
   for (const a of STATES) for (const b of STATES) {
@@ -31,15 +30,15 @@ test('every categorical pair is symmetric, finite, bounded, and deterministic', 
     assert.ok(Object.values(LIFE_EDGE_STATE).includes(edge.state));
     assert.ok(Object.values(LIFE_EDGE_RELATION).includes(edge.relation));
     assert.ok(Object.values(LIFE_EDGE_STYLE).includes(edge.style));
-    assert.ok(Number.isInteger(edge.intensity) && edge.intensity >= 0 && edge.intensity <= 255);
+    assert.ok(Number.isInteger(first) && first >= 0 && first <= 255);
   }
 });
 
 test('precedence and adjacency relation preserve the ecological hierarchy', () => {
   assert.deepEqual(unpack(classifyLifeEdge(LIFE_STATE.UNOCCUPIED, LIFE_STATE.UNOCCUPIED)),
-    { state: LIFE_EDGE_STATE.NONE, relation: LIFE_EDGE_RELATION.INACTIVE, intensity: 0, style: LIFE_EDGE_STYLE.NONE });
+    { state: LIFE_EDGE_STATE.NONE, relation: LIFE_EDGE_RELATION.INACTIVE, style: LIFE_EDGE_STYLE.NONE });
   assert.deepEqual(unpack(classifyLifeEdge(LIFE_STATE.LIVING, LIFE_STATE.FRONTIER, 1, 1)),
-    { state: LIFE_EDGE_STATE.LIVING, relation: LIFE_EDGE_RELATION.INTERNAL, intensity: 204, style: LIFE_EDGE_STYLE.LIVING_INTERNAL });
+    { state: LIFE_EDGE_STATE.LIVING, relation: LIFE_EDGE_RELATION.INTERNAL, style: LIFE_EDGE_STYLE.LIVING_INTERNAL });
   assert.equal(unpack(classifyLifeEdge(LIFE_STATE.FRONTIER, LIFE_STATE.UNOCCUPIED)).relation, LIFE_EDGE_RELATION.EXPOSED);
   assert.equal(unpack(classifyLifeEdge(LIFE_STATE.STRESSED, LIFE_STATE.LIVING)).state, LIFE_EDGE_STATE.STRESSED);
   assert.equal(unpack(classifyLifeEdge(LIFE_STATE.CRITICAL, LIFE_STATE.STRESSED)).state, LIFE_EDGE_STATE.CRITICAL);
@@ -54,18 +53,17 @@ test('malformed optional intensity inputs and unknown states normalize safely', 
   for (const values of [[NaN, Infinity, -Infinity, NaN], [undefined, null, '1', {}]]) {
     const packed = classifyLifeEdge(LIFE_STATE.CRITICAL, LIFE_STATE.STRESSED, ...values);
     assert.equal(unpack(packed).state, LIFE_EDGE_STATE.CRITICAL);
-    assert.ok(Number.isInteger(lifeEdgeIntensity(packed)));
+    assert.ok(Number.isInteger(packed) && Number.isFinite(packed));
   }
   assert.deepEqual(unpack(classifyLifeEdge(99, -1, NaN, Infinity)),
-    { state: LIFE_EDGE_STATE.NONE, relation: LIFE_EDGE_RELATION.INACTIVE, intensity: 0, style: LIFE_EDGE_STYLE.NONE });
+    { state: LIFE_EDGE_STATE.NONE, relation: LIFE_EDGE_RELATION.INACTIVE, style: LIFE_EDGE_STYLE.NONE });
 });
 
 test('canonical topology writers are allocation-free, bounded, and preserve edge order', () => {
   const topo = { edgeCount: 3, edgeA: Uint16Array.from([0, 0, 1]), edgeB: Uint16Array.from([1, 2, 2]) };
   const states = Uint8Array.from([LIFE_STATE.LIVING, LIFE_STATE.LIVING, LIFE_STATE.UNOCCUPIED]);
-  const biomass = Float32Array.from([1, 1, 0]); const stress = new Float32Array(3);
   const edges = new Uint8Array(topo.edgeCount * LIFE_EDGE_STRIDE);
-  assert.equal(writeLifeEdges(topo, states, biomass, stress, edges), edges);
+  assert.equal(writeLifeEdges(topo, states, edges), edges);
   assert.equal(lifeEdgeStyle(edges[0]), LIFE_EDGE_STYLE.LIVING_INTERNAL);
   assert.equal(lifeEdgeStyle(edges[2 * LIFE_EDGE_STRIDE]), LIFE_EDGE_STYLE.LIVING_EXPOSED);
   const vertices = new Uint8Array(topo.edgeCount * BOUNDARY_VERTICES_PER_EDGE * LIFE_EDGE_STRIDE);
@@ -74,7 +72,8 @@ test('canonical topology writers are allocation-free, bounded, and preserve edge
     const source = edge * LIFE_EDGE_STRIDE; const target = (edge * BOUNDARY_VERTICES_PER_EDGE + vertex) * LIFE_EDGE_STRIDE;
     assert.deepEqual([...vertices.subarray(target, target + LIFE_EDGE_STRIDE)], [...edges.subarray(source, source + LIFE_EDGE_STRIDE)]);
   }
-  assert.throws(() => writeLifeEdges(topo, states, biomass, stress, new Uint8Array(1)), /invalid life-edge output/);
+  assert.equal(edges.byteLength, topo.edgeCount, 'projection uses one byte per canonical edge');
+  assert.throws(() => writeLifeEdges(topo, states, new Uint8Array(1)), /invalid life-edge output/);
 });
 
 test('edge projection has no renderer, time, camera, RNG, or simulation dependency', () => {

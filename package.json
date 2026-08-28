@@ -16,6 +16,8 @@
     "test:browser:file":"node scripts/browser-file-test.mjs",
     "test:browser:canvas":"node scripts/browser-file-test.mjs --canvas",
     "test:browser:fallback":"node scripts/browser-file-test.mjs --simulation-fallback",
+    "test:browser:life-boundaries":"node scripts/browser-file-test.mjs --life-boundary-only",
+    "test:browser:life-boundaries:canvas":"node scripts/browser-file-test.mjs --life-boundary-only --canvas",
     "check:structure": "node scripts/check-structure.mjs",
     "check:links": "node scripts/check-links.mjs",
     "balance": "node scripts/balance.mjs",
