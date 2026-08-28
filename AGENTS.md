@@ -173,6 +173,14 @@ The globe remains cellular.
 
 Whole cells remain the primary geography, ecology, transformation, habitat, and Luminous unit.
 
+Whole-cell simulation authority does not require every visual semantic to be expressed as a whole-cell fill.
+
+Ordinary World life and frontier state should read primarily through cell perimeters or inter-cell boundaries, leaving biome and resource material legible inside occupied cells.
+
+Stress, critical state, and dead remains may use restrained interior support when necessary, but the boundary remains their primary cue and ordinary life must not return to destructive whole-cell whitening.
+
+Luminous charge, geography, resources, transformations, selection, and History must remain visually distinct from ordinary life.
+
 WebGL2 and Canvas 2D must communicate the same semantic state even when exact pixels differ.
 
 Accessibility, responsive behavior, reduced motion, forced colors, and keyboard access are product requirements.
@@ -350,6 +358,8 @@ Renderers may not mutate:
 
 Renderer backend, camera, frame cadence, quality, and reduced-motion state must not affect authoritative results.
 
+Renderer-semantic projections shared by WebGL2 and Canvas should have one pure owner when both backends consume the same state.
+
 ### History authority
 
 Semantic History records authoritative observations and completed-World facts.
@@ -408,7 +418,8 @@ Prefer pure functions for:
 - codecs;
 - validation;
 - geometry;
-- presentation projections.
+- presentation projections;
+- cross-backend renderer semantics.
 
 Prefer typed arrays and reusable buffers in hot paths.
 
@@ -418,7 +429,7 @@ Prefer relative visual measurements over exact cross-GPU screenshot hashes.
 
 Prefer paired-seed cohorts over anecdotes.
 
-Prefer production browser evidence over CSS inspection.
+Prefer production browser evidence over CSS or shader inspection alone.
 
 Prefer current-only schema reset over migration code.
 
@@ -1467,7 +1478,8 @@ Do not add tuning controls for:
 - idle delay;
 - sphere position;
 - continuation duration;
-- simulation internals.
+- simulation internals;
+- life-boundary style, width, color, or intensity.
 
 Choose good defaults.
 
@@ -1575,6 +1587,28 @@ Both must preserve:
 
 Semantic parity does not require pixel identity.
 
+Within the World scene, ordinary life is edge-primary.
+
+Use one deterministic renderer-semantic projection from the two cells adjacent to each topology edge.
+
+WebGL2 and Canvas 2D must consume equivalent edge classifications rather than maintaining separate life-state precedence rules.
+
+The exposed active frontier should be more salient than an edge between two ordinary living cells.
+
+Stress and critical state must remain distinct through more than hue alone.
+
+Dead remains must read as residual rather than living or powered.
+
+Ordinary living and frontier interiors must preserve biome and resource information.
+
+Stress, critical state, and remains may use restrained interior support only when the boundary remains primary.
+
+Luminous remains a whole-cell powered semantic and must not be confused with ordinary life.
+
+Selection and History retain independent cues that remain legible over life boundaries.
+
+Geography and life may share an existing boundary pass, but neither may silently replace the other.
+
 Do not increase simulation resolution to fix a cosmetic silhouette.
 
 Do not add a pass when an existing pass can own the replacement cleanly.
@@ -1585,7 +1619,9 @@ Static geometry should be created once or cached.
 
 Do not rebuild static geometry per frame.
 
-Do not allocate per-cell objects in hot render paths.
+Do not allocate per-cell or per-edge objects in hot render paths.
+
+Dynamic edge presentation should use reusable typed buffers, remain `O(edgeCount)` per accepted semantic snapshot update, and should not rebuild merely because animation time advances.
 
 Keep draw calls measured and bounded.
 
@@ -1618,6 +1654,7 @@ Use relative measurements where possible.
 Relevant measurements may include:
 
 - edge versus interior contrast;
+- exposed frontier versus internal living-edge salience;
 - state ordering;
 - center and limb continuity;
 - silhouette deviation;
@@ -1627,7 +1664,7 @@ Relevant measurements may include:
 - zero-charge controls;
 - WebGL2/Canvas semantic ordering;
 - draw count;
-- buffer update size;
+- buffer update size and cadence;
 - frame cost.
 
 Screenshots supplement measurements.
@@ -1644,6 +1681,8 @@ Screenshots do not replace:
 Capture representative output at the required responsive viewports.
 
 Do not approve a visual change from one screenshot.
+
+Calibrate pixel thresholds against repeat noise and leave a meaningful pass margin.
 
 ---
 
@@ -1684,6 +1723,8 @@ A dynamic metric should announce only meaningful changes.
 Do not move focus every time a metric updates.
 
 Do not trap focus outside a real modal surface.
+
+Canvas-only visual meaning must have a truthful textual or structural equivalent where player understanding depends on it.
 
 Test with keyboard-only interaction.
 
@@ -1839,12 +1880,13 @@ Keep bounded:
 - caches;
 - agent traces;
 - notifications;
-- Trophy queues.
+- Trophy queues;
+- renderer-semantic buffers and update work.
 
 Avoid:
 
 - per-frame static-geometry rebuild;
-- per-cell object churn;
+- per-cell or per-edge object churn;
 - unbounded DOM growth;
 - unbounded event listeners;
 - duplicate render loops;
@@ -1874,6 +1916,7 @@ Use for:
 - layout geometry;
 - continuation projection;
 - accessibility projections;
+- renderer-semantic projections;
 - codecs;
 - boundedness.
 
@@ -1904,6 +1947,7 @@ Use for:
 - wheel;
 - layout rectangles;
 - rendering;
+- controlled visual fixtures;
 - context loss;
 - WebGL2;
 - Canvas;
@@ -1940,9 +1984,11 @@ Classify:
 - failed;
 - skipped;
 - unavailable;
-- not run.
+- not run;
+- stale;
+- superseded.
 
-A skipped or unavailable test is not a pass.
+A skipped, unavailable, or stale test is not a pass.
 
 ---
 
@@ -1985,6 +2031,8 @@ Record browser and renderer identities.
 Do not call a synthetic event physical-device evidence.
 
 Do not call a headless browser a physical device.
+
+A local browser pass is not deployed-browser proof.
 
 ---
 
@@ -2131,7 +2179,7 @@ Return an evidence packet containing:
 - authority and deletion summary;
 - deviations and evidence;
 - commands and results;
-- passed, failed, skipped, unavailable, and not-run checks;
+- passed, failed, skipped, unavailable, not-run, stale, and superseded checks;
 - browser and responsive evidence;
 - benchmark or balance evidence when relevant;
 - report paths and digests;

@@ -5,8 +5,14 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-There is no active work package. Completed packages remain as historical or
-current implementation evidence:
+The active work package is:
+
+- [`living-boundary-semantics-v1/`](living-boundary-semantics-v1/) — moving
+  ordinary World life from whole-cell recoloring to one shared WebGL2/Canvas
+  edge-semantic projection while preserving terrain, resources, and the
+  four-draw World renderer.
+
+Completed packages remain as historical or current implementation evidence:
 
 - [`autonomous-world-contract-closure-v1/`](autonomous-world-contract-closure-v1/) —
   completed current evidence for the six-step speed ladder, Result continuation
