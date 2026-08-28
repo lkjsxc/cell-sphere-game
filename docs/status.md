@@ -62,10 +62,20 @@
 
 ## External and unavailable evidence
 
-- The starting remote revision was `ca1b05bf41d0d01c93e39979eedfc414bfc34956`;
-  workflow run `33163257669` succeeded and Pages served that starting revision.
-- The living-boundary commits have not yet been pushed or deployed. CI, Pages,
-  cache-busted byte equality, and deployed-browser behavior are not yet claimed.
+- Published implementation revision
+  `7f4c25913caf2ccda46beccd905821fefc2de9fd` is aligned on remote `main`.
+  Workflow run `33178892928` passed all gates in verify job `98874659899`, then
+  Pages job `98879669340` published deployment `6142915509`; deployment status
+  `17463962115` is successful.
+- Cache-busted Pages bytes exactly match all eight changed production owners.
+  Deployed WebGL2 and Canvas controlled reports (`3e3aee75…` and `e33ffe69…`)
+  pass every life-edge inequality with zero repeat noise at threshold `0.004`.
+  Their steady/update p95 is `1.5/2.0 ms` and `1.6/2.7 ms` respectively.
+- A first deployed browser attempt encountered a transient HTTP 503 and is not
+  a pass. Two subsequent broad shell attempts reached a live World but failed
+  the pre-existing timing-sensitive touch-release camera assertion; they are
+  not passes and are classified separately from the passed deployed renderer
+  fixtures and passed exact-content local Worker/fallback/Canvas shell matrix.
 - Physical-device mouse, touch, pen, safe-area hardware, high-refresh, thermal,
   physical-screen-reader, and physical forced-colors evidence is unavailable on
   this host.
