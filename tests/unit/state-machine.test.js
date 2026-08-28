@@ -5,7 +5,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { createStateMachine } from '../../src/core/state-machine.js';
 import { classifySurfaceTarget } from '../../src/interface/policies/surface-coordinator.js';
 import { createAppState } from '../../src/interface/app-state.js';
-import { isPrimaryPointer, isTapGesture } from '../../src/interface/globe-input.js';
+import { inputAnimationTime, isPrimaryPointer, isTapGesture } from '../../src/interface/globe-input.js';
 
 const def = {
   initial: 'title',
@@ -54,6 +54,12 @@ test('globe gesture classification uses cumulative travel and primary mouse inpu
   assert.equal(isPrimaryPointer({ pointerType: 'mouse', button: 2 }), false); assert.equal(isPrimaryPointer({ pointerType: 'touch', button: 0 }), true);
   assert.equal(isTapGesture({ travel: 12 }, 520, false), true); assert.equal(isTapGesture({ travel: 12.01 }, 100, false), false);
   assert.equal(isTapGesture({ travel: 2 }, 521, false), false); assert.equal(isTapGesture({ travel: 2 }, 100, true), false);
+});
+
+test('pointer timing preserves queued input time and rejects incompatible clocks', () => {
+  assert.equal(inputAnimationTime({ timeStamp: 100 }, 800), 100);
+  assert.equal(inputAnimationTime({ timeStamp: 1_700_000_000_000 }, 800), 800);
+  assert.equal(inputAnimationTime({ timeStamp: NaN }, 800), 800);
 });
 
 test('surface targets preserve native controls and canvas while isolating empty chrome', () => {

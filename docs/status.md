@@ -44,7 +44,7 @@
   continuation. WebGL2 remained at four World draws.
 - Eight-second foreground pacing measured 2.022, 4.032, and 7.937 game seconds
   per wall second at public 0.5×, 1×, and 2× on this host.
-- `npm run test` passed 192 unit and 72 integration tests. The final same-host
+- `npm run test` passed 193 unit and 72 integration tests. The final same-host
   benchmark measured 12,300 ticks/s versus the 12,579-tick/s baseline (−2.2%),
   with unchanged authority hash `471ba1cc` and fresh profile hash `bec4a764`.
 - `npm run balance:smoke` retained the fresh 131.7-game-second median and the
@@ -53,7 +53,7 @@
   `npm run check:structure` pass; structure reports only maintainability
   warnings.
 - Final `npm run verify` passed all 26 gates on stable local content, including
-  192 unit tests, 72 integration tests, terminal extinction, balance smoke,
+  193 unit tests, 72 integration tests, terminal extinction, balance smoke,
   benchmark, showcase, structure, and link validation.
 
 CI and Pages evidence is pending the final normal push. Physical-device mouse,

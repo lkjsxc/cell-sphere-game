@@ -24,6 +24,10 @@
 - Preserve all simulation, scoring, Evolution, Environment, History, renderer-pass, and draw-count authority.
 - Use the mandate's selected speed mapping, camera constants, projected-size targets, and one continuation projection.
 - Chrome was absent from the host. Chrome for Testing 152.0.7977.64 and runtime libraries were installed only under the user cache for trusted browser evidence; no shipped dependency was added.
+- Pointer velocity uses the PointerEvent monotonic timestamp while idle deadlines
+  use observed animation time. This preserves the 120 ms sample contract when a
+  busy synchronous fallback delays handler delivery; incompatible legacy epoch
+  timestamps fall back to observed time.
 
 ## Completed phases
 
@@ -58,15 +62,19 @@
 - Stable-content Worker/WebGL2, synchronous fallback/WebGL2, and forced Canvas
   production scenarios passed. Forced Canvas exposed and then proved the strict
   2.4-rad/s clamp and developer-HUD inner-70% clearance at 320×568.
-- Final `npm run test` passed 192 unit and 72 integration tests. The final
+- Final `npm run test` passed 193 unit and 72 integration tests. The final
   benchmark measured 12,300 ticks/s against the 12,579-tick/s baseline (−2.2%)
   with unchanged authority hashes. Balance smoke retained the 131.7-second
   fresh median and every measured fixture distribution.
 - Showcase generation/check, link validation, and repository structure pass;
   structure has maintainability warnings only.
-- Final `npm run verify` passed all 26 gates, including 192 unit tests, 72
+- Final `npm run verify` passed all 26 gates, including 193 unit tests, 72
   integration tests, terminal extinction, balance smoke, benchmark, showcase,
   structure, and link validation.
+- An exact-commit fallback run exposed handler-time sample expiry during a
+  synthetic touch flick. The input-timestamp repair passed focused queued-event
+  tests, the full fallback/WebGL2 scenario (2.204 rad/s release), and forced
+  Canvas (strict 2.4 rad/s release).
 - Latest remote workflow `31463707001` and Pages deployment `5845430553` succeeded for the starting revision; cache-busted deployed `index.html`, runtime-speed, and identity bytes equal the checkout.
 
 ## Evidence not obtained

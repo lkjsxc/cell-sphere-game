@@ -36,6 +36,13 @@ test('release sampling is fixed-capacity, recent, finite, and clamped', () => {
   const stale = createCameraMotion({ now: 0, scene: 'world' }); beginCameraDrag(stale, 0);
   recordCameraDrag(stale, 1, 0, 500); assert.equal(endCameraDrag(stale, 500, 'drag'), false,
     'one movement after a long hold must not use the gesture start as a velocity sample');
+
+  const queued = createCameraMotion({ now: 0, scene: 'world' }); beginCameraDrag(queued, 20);
+  recordCameraDrag(queued, .2, 0, 60); recordCameraDrag(queued, .2, 0, 100);
+  assert.equal(endCameraDrag(queued, 105, 'drag', 400), true,
+    'handler delay must not make recent input samples stale');
+  assert.equal(cameraMotionSnapshot(queued).idleUntil, 4900,
+    'idle delay remains anchored to observed animation time');
 });
 
 test('tap, pinch, cancellation, reduced motion, and held surfaces never release inertia', () => {

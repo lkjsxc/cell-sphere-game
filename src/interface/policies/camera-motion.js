@@ -88,11 +88,11 @@ export function recordCameraDrag(state, dragX, dragY, now) {
   return true;
 }
 
-export function endCameraDrag(state, now, kind = 'drag') {
-  const time = finiteNow(now);
+export function endCameraDrag(state, now, kind = 'drag', observedNow = now) {
+  const time = finiteNow(now); const activityTime = finiteNow(observedNow);
   state.direct = false;
-  state.lastActivityAt = time;
-  state.idleUntil = time + state.config.idleDelayMs;
+  state.lastActivityAt = activityTime;
+  state.idleUntil = activityTime + state.config.idleDelayMs;
   if (kind !== 'drag' || state.reduced || state.hidden || state.surfaceOpen) {
     stopAutomaticMotion(state); state.mode = restingMode(state); return false;
   }

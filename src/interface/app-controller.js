@@ -154,7 +154,7 @@ class GameApp {
     onTap: (x, y) => this.tapGlobe(x, y),
     onDirectStart: (now) => beginCameraDrag(this.cameraMotion, now),
     onDirectDelta: (dragX, dragY, now) => recordCameraDrag(this.cameraMotion, dragX, dragY, now),
-    onDirectEnd: (now, kind) => endCameraDrag(this.cameraMotion, now, kind),
+    onDirectEnd: (inputNow, kind, observedNow) => endCameraDrag(this.cameraMotion, inputNow, kind, observedNow),
     onZoom: (now) => cameraMotionActivity(this.cameraMotion, now) }); }
   bindLifecycle() {
     const resize = () => this.resize(true);
