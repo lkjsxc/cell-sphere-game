@@ -1,805 +1,1827 @@
 # AGENTS.md
 
 ## Purpose
+
 This file is the standing repository contract for coding agents working on `lkjsxc/cell-sphere-game`.
-Read it before editing code.
-Read the repository before trusting this document about implementation details.
-Treat the product rules in this document as authoritative until the user explicitly supersedes them.
-The user authorizes substantial changes.
-Long-term product quality is more important than preserving prior implementation choices.
-Backward compatibility is not a goal.
-Old local data, old schemas, old node IDs, old replay formats, and old internal APIs may be discarded.
-Do not preserve a weak design merely because code already exists for it.
-Do not turn that freedom into speculative architecture.
-Choose the smallest coherent system that can satisfy the product contract and be tested convincingly.
+
+Read it before editing.
+
+Read the active checkout before trusting this file about exact symbols, files, commands, versions, schemas, test counts, or deployment state.
+
+Treat the product and authority rules here as binding until the user explicitly supersedes them.
+
+The user authorizes substantial changes, deletion of obsolete current-only systems, and breaking internal or persisted formats when that produces a smaller coherent product.
+
+Backward compatibility is not a default goal.
+
+Do not preserve a weak design merely because code exists for it.
+
+Do not use that freedom to create speculative architecture.
+
+Choose the smallest dependency-closed system that satisfies the product contract and can be proved in the real browser and production simulation.
 
 ## Product north star
-`cell-sphere-game` is an autonomous ecological roguelite played on a cellular sphere.
-The player observes a living network spread across a finite world.
-The world is attractive, legible, and materially constrained.
-Resources are finite enough that extinction is inevitable.
-Environment Level rises with elapsed authoritative world time.
-Each new world starts again at Environment Level 0.
-Extinction converts realized performance into permanent progression currency.
-Permanent Evolution changes the rules inherited by later worlds.
-Early worlds are short, fragile, and restricted to favorable cells.
-Evolution gradually enables broader habitat use, stronger reproduction, better resource efficiency, longer survival, and more expressive worldmaking.
-The core emotional arc is:
-1. A small organism begins in a rich place.
-2. It expands autonomously.
-3. Local abundance is consumed.
-4. The network struggles.
-5. The final cells disappear.
-6. The result makes the failure understandable.
-7. Evolution offers one meaningful permanent improvement.
-8. The next world survives differently and usually longer.
-9. The player can see the accumulated biological history in the living world itself.
-The product should be understandable without reading a manual.
+
+`cell-sphere-game` is a calm, deterministic, browser-native, autonomous incremental ecology played on a cellular sphere.
+
+The player begins a World and watches life establish, spread, consume finite local resources, encounter rising environmental pressure, and eventually become extinct.
+
+Extinction records realized performance.
+
+Realized performance yields Echoes.
+
+Echoes improve permanent Evolution between Worlds.
+
+Every new World begins again at Environment Level 0 with the compiled Evolution state inherited from prior purchases.
+
 The globe is the primary interface.
-UI exists to explain and support the globe, not compete with it.
+
+The product should remain understandable while the player simply watches.
+
+The player should not need to tend individual cells.
+
+The player should see cause and consequence:
+
+1. life establishes in a favorable place;
+2. growth proceeds autonomously;
+3. territory and resources change visibly;
+4. maintenance and scarcity create pressure;
+5. the final cells disappear;
+6. Result explains the outcome;
+7. Echoes make one permanent decision possible;
+8. the next World begins automatically unless attention interrupts the cycle;
+9. the next World behaves visibly differently because of Evolution.
+
+The World should feel alive under direct manipulation and while left alone.
+
+The interface explains and supports the sphere. It does not compete with it.
 
 ## Product vocabulary
+
 Use `World` for one autonomous run.
-Use `Environment Level` for the within-world chronic pressure clock.
-Use `Evolution` for permanent progression.
+
+Use `game time` for authoritative fixed-step time measured in ticks or game seconds.
+
+Use `wall-clock time` for foreground elapsed player time.
+
+Use `animation time` for camera and UI presentation timing.
+
+Use `Environment Level` for the unbounded within-World chronic-pressure clock.
+
+Use `Evolution` for permanent progression between Worlds.
+
 Use `Echoes` for permanent progression currency unless the user explicitly renames it.
-Use `History` for durable observation of prior moments and completed worlds.
-Use `Result` for the terminal summary of one world.
-Use `SCORE` for realized world performance.
-Use `REACH` for the proportion of world cells that life currently occupies or has meaningfully occupied, according to the current scoring contract.
+
+Use `History` for durable observation of prior moments and completed Worlds.
+
+Use `Result` for the terminal summary of one World.
+
+Use `SCORE` for realized World performance.
+
+Use `REACH` for the current or meaningfully occupied proportion of World cells according to the current scoring contract.
+
 Use `Luminous` for the bioelectric Evolution domain.
-Do not reintroduce retired public terminology merely because an old schema or test mentions it.
+
+Use `Home`, `World`, `Evolution`, and `Trophies` for the four primary scenes.
+
+Do not reintroduce retired public terminology because an old test, schema, prompt, or historical document mentions it.
+
+## Core product rules
+
+The simulation is authoritative and deterministic.
+
+Rendering is observational.
+
+Camera state is observational.
+
+History is observational.
+
+UI state is observational.
+
+Presentation speed changes wall-clock delivery of game time, not tick content.
+
+A World begins from explicit inputs.
+
+At minimum, those inputs include:
+
+- seed;
+- immutable compiled Evolution state;
+- versioned rule constants;
+- authoritative World identity.
+
+The same inputs must produce the same authoritative result.
+
+Every World begins at Environment Level 0.
+
+Environment Level rises from authoritative World ticks.
+
+Environment Level is not permanent progression.
+
+Evolution is permanent progression.
+
+Local resources are finite.
+
+Renewal is bounded.
+
+Maintenance has persistent cost.
+
+No finite build may become literally immortal.
+
+Extinction must remain possible under unbounded Environment Level.
+
+The player may play indefinitely through repeated finite Worlds and unbounded Evolution levels.
+
+Progression purchases occur between Worlds.
+
+A purchase changes future Worlds, not the active World.
+
+SCORE and Echoes derive from realized authoritative outcomes.
+
+A projection supplied by UI, agent, import, or caller is not reward authority.
+
+The globe remains cellular.
+
+Whole cells remain the primary visible geography, ecology, transformation, and Luminous unit.
+
+WebGL2 and Canvas 2D must communicate the same semantic state even when exact pixels differ.
+
+Accessibility, responsive behavior, and reduced motion are product requirements.
+
+Performance is a feature and must be measured.
 
 ## Non-goals
+
 Do not add manual unit control.
+
 Do not add combat.
-Do not add disaster cards, event attacks, or a hidden game director.
-Do not add random choice popups during a world.
-Do not add a separate adaptation draft.
-Do not make the player click repeatedly to keep life alive.
-Do not turn the simulation into a conventional idle-game spreadsheet.
-Do not expose internal simulation telemetry merely because it exists.
+
+Do not add disaster cards, scripted attacks, crisis popups, or a hidden game director.
+
+Do not add random mid-World choice dialogs.
+
+Do not require repetitive clicking to keep life alive.
+
+Do not turn the game into a conventional idle spreadsheet.
+
+Do not promise offline progress unless a separate explicit authority and persistence design exists.
+
+Do not add offline rewards through elapsed timestamps as incidental scope.
+
+Do not expose internal telemetry merely because it exists.
+
 Do not create lore systems before the core loop is excellent.
-Do not add a framework to solve ordinary DOM and module problems.
-Do not add an ECS unless measured evidence proves that the current typed-array model cannot meet requirements.
-Do not build a generic replay engine when bounded render-history checkpoints are sufficient.
+
+Do not add a tutorial framework when concise contextual copy and behavior are sufficient.
+
+Do not add a framework to solve ordinary DOM and ES-module problems.
+
+Do not add an ECS without measured evidence that the typed-array model cannot meet requirements.
+
+Do not build a second simulator for tests or agents.
+
+Do not build a generic replay engine when bounded visual History checkpoints are sufficient.
+
 Do not build a generic graph editor for Evolution.
-Do not preserve obsolete compatibility layers.
-Do not maintain two authoritative implementations of the same rule.
-Do not create procedural filler content to reach an arbitrary catalog size.
-Do not replace product judgment with a larger settings menu.
-Do not treat more UI as more clarity.
+
+Do not add a renderer pass solely to conceal a defect that can be corrected in an existing pass.
+
+Do not add post-processing bloom merely to make Luminous visible.
+
+Do not create compatibility layers for retired current-only formats without an active maintained consumer.
+
+Do not maintain two authorities for the same rule.
+
+Do not add settings instead of choosing a good default.
+
+Do not use more UI as a substitute for clarity.
+
+Do not generate filler content to reach an arbitrary catalog size.
+
+## Authority map
+
+### Simulation authority
+
+Production `RunController` and its shared rule modules own:
+
+- authoritative ticks;
+- RNG;
+- cell state;
+- resources;
+- reproduction;
+- maintenance;
+- habitats;
+- transformations;
+- Luminous charge;
+- Environment Level;
+- extinction;
+- realized result facts.
+
+Worker and fallback must use the same controller and rules.
+
+Tests and agents must not substitute a simplified authority.
+
+### Progression authority
+
+The Evolution catalog, exact level state, transactional purchase path, and progression compiler own:
+
+- reachability;
+- affordability;
+- levels;
+- costs;
+- compiled effects;
+- habitat capabilities;
+- future-World configuration.
+
+The active World receives one immutable compiled configuration.
+
+Evolution cannot mutate the active World.
+
+### Reward authority
+
+Terminal replay or equivalent trusted reconstruction owns settlement.
+
+SCORE uses realized facts.
+
+Echoes derive from trusted SCORE.
+
+Result UI is a projection.
+
+Agent observations are projections.
+
+Imports are untrusted.
+
+No caller-controlled summary may mint progression.
+
+### Presentation authority
+
+The app controller and narrow presentation policies own:
+
+- scene selection;
+- camera motion;
+- responsive framing;
+- surfaces;
+- focus;
+- speed selection;
+- continuation presentation;
+- accessible announcements;
+- rendering cadence.
+
+Presentation never changes simulation rules.
+
+### Rendering authority
+
+Renderers consume immutable snapshots and presentation state.
+
+Renderers may:
+
+- interpolate;
+- shade;
+- animate;
+- frame;
+- highlight;
+- render approximate History.
+
+Renderers may not mutate:
+
+- simulation;
+- RNG;
+- SCORE;
+- Echoes;
+- Evolution;
+- Trophies;
+- History authority.
+
+### History authority
+
+Semantic History records authoritative observations and completed-World facts.
+
+Visual History is a bounded approximate rendering aid.
+
+Visual History is not a simulation save.
+
+History playback never changes the live World.
+
+A historical label and historical globe state must switch atomically.
+
+### Persistence authority
+
+Narrow platform modules own storage validation, versioning, transactions, namespace boundaries, and current-only reset.
+
+UI modules do not write arbitrary storage documents directly.
 
 ## Engineering posture
-Prefer deletion over adaptation when the old abstraction encodes the wrong product.
+
+Prefer deletion over adaptation when an old abstraction encodes the wrong product.
+
 Prefer direct data flow over indirection.
+
 Prefer explicit state machines over scattered booleans.
-Prefer typed arrays in simulation and rendering hot paths.
-Prefer immutable snapshots at authority boundaries.
-Prefer pure functions for scoring, progression compilation, schedules, and codecs.
-Prefer one owner for each scroll region.
+
+Prefer one owner for each rule.
+
 Prefer one owner for each surface.
+
+Prefer one owner for each scroll region.
+
 Prefer one source of truth for each formatted metric.
-Prefer relative visual tests over brittle exact-color snapshots.
-Prefer paired-seed cohort tests over anecdotes.
-Prefer browser evidence over CSS inspection alone.
-Prefer current-only schemas over migration code.
-Prefer comments that explain invariants and tradeoffs.
-Delete comments that narrate obvious syntax.
+
+Prefer immutable snapshots at authority boundaries.
+
+Prefer pure functions for schedules, scoring, progression compilation, codecs, validation, geometry, and presentation projections.
+
+Prefer typed arrays and reusable buffers in hot paths.
+
+Prefer bounded ring buffers over growing arrays.
+
+Prefer relative visual measurements over exact cross-GPU screenshot hashes.
+
+Prefer paired-seed cohorts over anecdotes.
+
+Prefer production browser evidence over CSS inspection.
+
+Prefer current-only schema reset over migration code.
+
+Prefer standard engineering terminology.
+
+Avoid invented frameworks and project-specific jargon that do not improve correctness.
+
+Comments should explain invariants, authority, tradeoffs, or non-obvious failure modes.
+
+Delete comments that merely narrate syntax.
+
 Keep modules cohesive.
-Split files when a clear responsibility boundary exists.
+
+Split a file when a clear responsibility boundary exists.
+
 Do not split files solely to satisfy an arbitrary line count.
-Do not merge unrelated responsibilities into a universal manager.
+
+Do not create a universal manager for unrelated responsibilities.
 
 ## Required working protocol
-Start every substantial task by checking the current branch, worktree, and recent commits.
-Read the current root `AGENTS.md`.
-Read `docs/status.md`.
-Read the active work note, if one exists.
-Inspect the actual implementation paths involved in the request.
-Reproduce the user-visible problem before proposing a fix when practical.
-Record a baseline before changing performance, balance, persistence, or rendering.
-Use a single concise work note for a multi-turn initiative.
-Do not create a forest of planning documents.
-Update the work note after each coherent phase.
-The work note must state:
-- starting revision;
+
+Start every substantial task by inspecting:
+
 - current branch;
+- current `HEAD`;
+- upstream;
+- worktree;
+- recent commits;
+- active work package;
+- root `AGENTS.md`;
+- `docs/status.md`;
+- relevant source owners;
+- relevant tests;
+- current CI and deployment state when external behavior matters.
+
+Preserve unrelated user changes.
+
+Do not reset a dirty worktree.
+
+Reproduce the user-visible problem before changing it when practical.
+
+Record a baseline before changing:
+
+- performance;
+- balance;
+- pacing;
+- persistence;
+- rendering;
+- layout;
+- interaction;
+- accessibility behavior.
+
+Use `docs/work/` for one active cross-layer work package.
+
+Do not create a competing planning directory.
+
+Do not create a forest of status documents.
+
+An active work note should contain only:
+
+- starting revision and branch;
 - relevant dirty files;
 - confirmed root causes;
-- decisions made;
-- completed phases;
-- verification performed;
-- evidence not yet obtained;
-- exact next coherent phase.
-Commit coherent phases separately when repository access permits.
-Do not leave an old authority path active beside its replacement.
-Do not claim completion from source inspection alone.
+- selected decisions and deviations;
+- completed coherent phases;
+- focused verification;
+- evidence not obtained;
+- exact next coherent step.
+
+Use focused tests while iterating.
+
+Run fresh broad verification against stable final content.
+
+Delete the predecessor path after the replacement becomes authoritative.
+
+Do not leave dormant alternative authorities.
+
+Commit coherent vertical slices when repository access permits.
+
+Do not claim completion from source inspection.
+
+Do not claim browser behavior from unit tests.
+
 Do not claim physical-device behavior without physical-device evidence.
-Do not claim deployment without deployment evidence.
+
 Do not claim CI success unless CI ran.
-If execution limits stop the task, stop at a coherent boundary and leave the repository buildable.
 
-## Source architecture
-Keep the native ES module architecture unless evidence supports a change.
-Keep the browser entry point small.
-Keep simulation authority outside the DOM.
-Keep rendering read-only with respect to simulation authority.
-Keep History observational.
-Keep UI formatting out of simulation hot loops.
-Keep persistence behind narrow platform modules.
-Keep deterministic game rules independent of wall-clock time.
-Keep the Worker protocol explicit and versioned.
-Keep world-session identity checks at asynchronous boundaries.
-Keep stale Worker messages unable to mutate or present the current world.
-Keep renderer state bound to the current world session.
-Keep progression purchases transactional and idempotent.
-Keep agent play on production simulation authority.
-Do not create a parallel simplified simulator for tests or agents.
+Do not claim deployment from a local build or upload step alone.
 
-## Determinism
-A world is determined by explicit inputs.
-At minimum, those inputs include the world seed, compiled Evolution state, and versioned rule constants.
-The same inputs must produce the same authoritative result.
-Rendering time must not alter simulation authority.
-DOM state must not alter simulation authority.
-History playback must not alter simulation authority.
-Frame rate must not alter simulation authority.
-Game speed changes wall-clock presentation rate, not tick semantics.
-Pause changes tick advancement, not accumulated hidden pressure.
-Environment Level is derived from authoritative world ticks.
-A new world always derives Environment Level from tick zero.
-No prior world may leak its Environment Level into a new world.
-Use deterministic tests for all new mechanics.
+If execution limits stop work, stop at a coherent boundary:
+
+- the repository remains buildable;
+- one authority remains active;
+- partial scaffolding is not shipped;
+- the work note identifies the exact next step.
+
+## Time domains
+
+Keep three time domains explicit.
+
+### Game time
+
+Game time is authoritative.
+
+It advances through fixed ticks.
+
+Environment Level, ecology, SCORE, History semantics, and extinction use game time.
+
+### Wall-clock time
+
+Wall-clock time determines how quickly foreground presentation supplies game time.
+
+The player speed control changes this ratio.
+
+### Animation time
+
+Animation time owns:
+
+- camera inertia;
+- idle delay;
+- idle orbit;
+- continuation;
+- panel motion;
+- focus timing;
+- decorative effects.
+
+Animation time must not be multiplied by game speed.
+
+Hidden-page time must not produce camera or UI catch-up.
+
+## Standard speed policy
+
+Normal `1×` is the intended ordinary wall-clock experience.
+
+Normal `1×` maps to an effective game-time rate of former `4×`.
+
+The normal player ladder is:
+
+- `0.5×`;
+- `1×`;
+- `2×`.
+
+The effective mapping is:
+
+- `0.5×` → effective rate `2`;
+- `1×` → effective rate `4`;
+- `2×` → effective rate `8`.
+
+Developer mode may expose diagnostic relative multipliers, including `0.25×` for former `1×` and higher values that preserve the established diagnostic range.
+
+One runtime-speed policy owns:
+
+- public options;
+- validation;
+- public-to-effective conversion;
+- diagnostic cadence thresholds;
+- labels;
+- standard versus developer availability.
+
+Do not scatter the normal baseline factor.
+
+Settings store the public multiplier.
+
+Worker and fallback consume the converted effective rate.
+
+The time dial follows effective game time.
+
+Camera and continuation follow animation time.
+
+Speed must not enter:
+
+- RNG;
+- immutable World rules;
+- World identity;
+- result authority;
+- SCORE;
+- Echoes;
+- Evolution;
+- History meaning.
+
+All presentation speeds must produce the same canonical authoritative result for the same World inputs.
+
+Do not skip ticks to make high speed appear responsive.
+
+Retain bounded authority slices and tick debt.
+
+Standard speeds should preserve legible snapshot and render cadence.
+
+Diagnostic speeds may coalesce presentation while executing every tick.
+
+Do not duplicate the speed control in the Menu.
+
+Changing speed semantics requires coherent updates to settings, Worker protocol, UI, diagnostics, tests, and documentation.
+
+## Camera interaction
+
+The camera is presentation-only.
+
+Keep an orthonormal free-orbit frame or an equivalently robust representation.
+
+Do not regress to clamped yaw/pitch when the current frame supports repeated pole traversal.
+
+Direct manipulation must remain immediate and predictable.
+
+Support:
+
+- mouse;
+- touch;
+- pen through Pointer Events;
+- tap selection;
+- drag rotation;
+- pinch zoom;
+- wheel zoom;
+- pointer cancellation.
+
+Tap and drag must remain distinct.
+
+Dragging must not select or purchase.
+
+Pinching must not produce a tap.
+
+Residual camera motion must not create a selection or purchase.
+
+Programmatic focus framing must not retain old velocity.
+
+Camera state must never alter simulation authority.
+
+## Camera motion
+
+One narrow presentation controller owns camera-motion state.
+
+The intended sequence is:
+
+`direct manipulation → bounded release inertia → damping → idle wait → calm automatic orbit`
+
+Required invariants:
+
+- recent velocity samples are fixed-capacity and time-bounded;
+- release velocity is finite and clamped;
+- damping is based on elapsed animation time, not frame count;
+- inertia converges to stillness;
+- automatic orbit has bounded angular speed;
+- trusted activity stops automatic motion immediately;
+- opening a surface clears and holds automatic motion;
+- direct manipulation remains possible on exposed canvas;
+- automatic motion returns only after a fresh idle delay;
+- scene change clears velocity;
+- World replacement clears velocity;
+- focus framing clears velocity;
+- hidden-page transition clears or suspends without catch-up;
+- returning visible begins a fresh idle delay;
+- reduced motion disables nonessential inertia and automatic orbit;
+- Evolution and Trophies do not auto-orbit;
+- no camera-motion tuning panel exists without demonstrated user need;
+- motion state is not simulation or persistence authority.
+
+Home and World may rotate calmly after inactivity.
+
+Automatic motion should communicate life and watchability, not attract attention through speed.
+
+Test equivalent elapsed behavior at multiple frame cadences.
+
+Test long-run orthonormality.
+
+## Trusted interaction
+
+Use one document-level trusted-interaction capture path when several presentation policies need the same fact.
+
+Normalize trusted interaction types.
+
+Ignore programmatic focus through a scoped guard.
+
+Do not install duplicate full document listener sets for camera and continuation.
+
+Consumers may independently:
+
+- cancel automatic continuation;
+- stop camera motion;
+- reset camera idle time.
+
+Do not couple their state machines.
+
+## Responsive globe framing
+
+Define default framing through observable projected geometry.
+
+Do not define World composition through one unexplained camera-distance constant per device.
+
+A framing policy should derive distance from:
+
+- field of view;
+- sphere radius;
+- usable canvas;
+- target projected diameter;
+- stable scene offset;
+- safe-area constraints.
+
+World framing should be immersive.
+
+The projected World globe should occupy most of the shorter usable dimension.
+
+Controlled outer-limb overflow is acceptable.
+
+Primary controls must remain accessible.
+
+The outer limb may pass behind chrome.
+
+The central globe must not be obscured by primary controls.
+
+Opening a transient surface must not change camera direction or default zoom.
+
+A same-class resize should preserve intentional player zoom.
+
+A new World may restore the scene's default framing.
+
+Picking must remain correct after offset, resize, and controlled cropping.
+
+Measure:
+
+- canvas rectangle;
+- projected center;
+- projected radius;
+- projected diameter ratio;
+- stable control rectangles;
+- overlap;
+- page overflow;
+- safe areas.
+
+Use the required responsive viewport matrix.
+
+## Automatic continuation
+
+Result continuation has one authority.
+
+It is:
+
+- tied to one Result generation;
+- one-shot;
+- identity-checked;
+- paused while hidden;
+- cancelled by trusted interaction;
+- disabled by preference;
+- independent of game speed;
+- unable to mint rewards.
+
+The visible continuation should use an intentional nonnumeric World-cycle or germination treatment.
+
+A changing visible integer is not the primary design.
+
+The exact remaining time remains available to assistive technology.
+
+Visible progress derives from one bounded normalized projection of continuation authority.
+
+Do not create:
+
+- a second deadline;
+- a second interval;
+- a CSS animation clock that can drift;
+- a duplicate firing path.
+
+Manual `Next World` remains available.
+
+Evolution and History remain explicit Result actions.
+
+The continuation visual remains in the fixed Result action region, outside the scrolling body.
+
+Exact accessible text may update at one-second cadence.
+
+Do not announce each second.
+
+Announce meaningful state transitions once.
+
+Reduced motion removes decorative travel and pulse while preserving informative progress.
+
+Forced colors and high contrast must preserve state without color alone.
+
+## Autonomous incremental communication
+
+Player-facing behavior should make clear that:
+
+- life grows autonomously;
+- watching is valid play;
+- no tending is required;
+- Worlds end;
+- extinction yields Echoes;
+- Evolution changes future Worlds;
+- the next World can begin automatically.
+
+Use `autonomous incremental ecology` when concise genre language is useful.
+
+Do not imply offline progress.
+
+Do not imply that closing the page advances authority.
+
+Do not explain implementation terms to make the loop understandable.
+
+Use concise Home, World-start, and Result copy.
+
+Behavior should do more explanatory work than prose.
+
+## Simulation and determinism
+
+A World is determined by explicit inputs.
+
+Use deterministic iteration order.
+
+Use deterministic PRNG streams.
+
+Keep render cadence out of simulation.
+
+Keep DOM state out of simulation.
+
+Keep camera state out of simulation.
+
+Keep History playback out of simulation.
+
+Keep animation time out of simulation.
+
+Keep standard and diagnostic speed out of tick content.
+
+Keep pause from inventing hidden pressure.
+
+Environment Level derives from authoritative ticks.
+
+A new World derives Environment Level from tick zero.
+
+No prior World state may leak into a replacement World.
+
+Worker and fallback must agree.
+
+Asynchronous messages must carry complete current identity.
+
+Stale messages must be rejected before mutation or presentation.
+
+World replacement must retire old presentation and authority coherently.
+
+Add deterministic tests for every new mechanic.
 
 ## World ecology
-The world begins with visible ocean.
-No starting build may erase the ocean before life expands.
-Water, land, lakes, coast, forest, cold regions, poor terrain, and rich terrain must remain whole-cell visual concepts.
-Adjacent cells are the primary spatial relationship.
-Do not reintroduce decorative graph edges as gameplay geometry.
-Early life should establish in favorable terrain.
-Fresh progression should not spread freely through every biome.
-Rich cells should be visibly inviting.
-Poor and depleted cells should be visibly exhausted.
-Resource appearance should follow resource condition, not an arbitrary global color timer.
-Expansion should consume local resources.
-Maintenance should create persistent ecological cost.
-Renewal should be bounded.
-Recycling may delay extinction.
-Recycling must not create an unbounded positive loop.
-Habitat unlocks may broaden viable territory.
-Habitat unlocks must still carry ecological costs.
-The simulation must eventually extinguish under unbounded Environment Level.
-No build may become literally immortal.
 
-## Early-world balance
-Fresh progression should usually die quickly.
-The fresh cohort should commonly fail because it cannot reproduce far enough, cannot maintain its network, or cannot leave favorable terrain.
-Fresh progression should not commonly reach a mature planetary network.
-Fresh progression should not commonly reach high Environment Levels.
-The first few completed worlds should feel fragile rather than merely shorter versions of late worlds.
-The first permanent purchases should produce visible and measurable improvement.
-Improvement should be causal.
-Do not use world ordinal, pity multipliers, or hidden run-count bonuses to fake progress.
-Use paired seeds to compare progression states.
-Do not require every upgraded run to outlive its fresh counterpart.
-Require a clear upward distributional trend.
-Measure median, quartiles, paired win rate, peak reach, habitat occupancy, Environment Level reached, and extinction cause.
-Use a holdout seed set when tuning.
-Do not tune solely to the development seed set.
-Keep provisional timing targets in the balance documentation.
-Change timing targets only with written product reasoning and evidence.
+The generated World begins with visible ocean.
+
+No starting build may erase the ocean before life expands.
+
+Whole cells represent:
+
+- ocean;
+- land;
+- lakes;
+- coast;
+- forest;
+- cold regions;
+- poor terrain;
+- rich terrain;
+- transformed terrain.
+
+Adjacent cells are the primary spatial relation.
+
+Do not use decorative graph edges as gameplay geometry.
+
+Early life establishes in favorable terrain.
+
+Fresh progression does not freely occupy every habitat.
+
+Rich cells should look inviting.
+
+Poor and depleted cells should look exhausted.
+
+Resource appearance follows resource condition.
+
+Expansion consumes local resources.
+
+Maintenance creates persistent ecological cost.
+
+Renewal remains bounded.
+
+Recycling may delay extinction.
+
+Recycling must not create an unbounded positive loop.
+
+Habitat Evolution may broaden viable territory.
+
+Broader territory must retain ecological tradeoffs.
+
+The simulation must eventually extinguish under unbounded Environment Level.
+
+No finite Evolution build is literally immortal.
+
+## Balance
+
+Distinguish:
+
+- game-time balance;
+- wall-clock pacing;
+- visual observability;
+- player comprehension.
+
+Do not retune authority before diagnosing which layer is wrong.
+
+A game-time target does not define wall-clock experience.
+
+A slow presentation can make sound ecology feel poorly balanced.
+
+An unreadable state can make causal balance impossible to judge.
+
+Use production `RunController`.
+
+Use explicit compiled Evolution fixtures.
+
+Use deterministic development seeds.
+
+Use separate holdout seeds.
+
+Use paired-seed comparisons.
+
+Report distributions, not only means.
+
+Report at least:
+
+- game-time survival;
+- normal-speed wall-clock implication;
+- quartiles;
+- paired win rate;
+- peak and sustained REACH;
+- habitat occupancy;
+- Environment Level;
+- extinction cause;
+- SCORE;
+- Echoes;
+- first-purchase cadence;
+- Luminous powered-cell evidence;
+- seed variance.
+
+Use autonomous multi-World agent campaigns for loop-level balance.
+
+An audit budget exhaustion is incomplete and reward-free.
+
+Do not approve a balance change from one seed, screenshot, or anecdotal run.
+
+Do not use:
+
+- hidden pity;
+- run-number power;
+- direct survival-time multipliers;
+- universally positive resource loops;
+- one dominant build;
+- development-seed overfitting.
+
+Progression improvement should be causal and distributional.
+
+An upgraded World need not beat fresh on every seed.
+
+No balance claim is current merely because an old document states it.
+
+Label targets as targets and measurements as measurements.
 
 ## Environment Level
-Environment Level is a within-world clock.
-Every world starts at Level 0.
-The level rises from authoritative elapsed ticks.
-The schedule may be unbounded.
-Pressure effects must remain finite and numerically safe.
-Environment Level must not be permanent progression.
-Evolution may help life withstand higher levels.
-Evolution must not change the fact that a new world starts at Level 0.
+
+Environment Level is an unbounded within-World pressure clock.
+
+Every World starts at Level 0.
+
+It rises from authoritative elapsed ticks.
+
+Pressure remains finite and numerically safe at every level.
+
+Environment Level is not permanent progression.
+
+Evolution may improve resistance.
+
+Evolution cannot change the Level-0 start.
+
 The World HUD displays the current level.
-Activating `ENV LEVEL` opens a dedicated current Environment Level detail.
-It must not open History.
-The detail must explain the current state, not present a timeline.
-The detail should include:
+
+Activating Environment Level opens current-state detail.
+
+It does not open History.
+
+The detail explains:
+
 - current level;
-- progress to the next level;
-- game-time remaining until the next transition;
-- the current chronic pressure dimensions;
-- the strongest current pressure;
-- a concise explanation that every world starts at zero;
-- terminal peak/final context after extinction when relevant.
-The detail should update at a bounded cadence.
+- progress;
+- game-time timing;
+- current pressure dimensions;
+- strongest pressure;
+- Level-0 reset;
+- terminal peak and final context when relevant.
+
+Update detail at bounded cadence.
+
 Do not update DOM text every animation frame.
-Do not expose giant exact integers when a compact presentation is clearer.
-Preserve an exact accessible value where useful.
-Do not make the Environment detail a second History surface.
 
-## World HUD
-The standard World metric order is:
-1. SCORE
-2. REACH
-3. ENV LEVEL
-4. RESULT, only when a result exists
-Metric containers must not change width when values gain digits.
-Use stable grid tracks.
-Use tabular numerals.
-Use compact deterministic formatting for very large values.
-Expose an exact value through an accessible label or detail surface when the visible value is abbreviated.
-Do not allow one long metric to push another metric around.
-Do not allow value changes to move the globe controls.
-Do not allow a terminal RESULT control to cause horizontal overflow.
-Measure actual bounding rectangles before and after representative value transitions.
-Test values around formatting boundaries.
-At minimum, test:
-- 0;
-- 9;
-- 10;
-- 99;
-- 100;
-- 999;
-- 1,000;
-- 9,999;
-- 10,000;
-- a large engineering-notation value.
-Apply the same stability rule to Echoes, Evolution levels, countdown labels, result values, and repeated numeric cards.
+Use compact visible numbers with exact accessible values where useful.
 
-## Result
-Extinction must produce an unmistakable Result.
-The result must explain why the world ended.
-The result must show SCORE and Echoes clearly.
-The result may show a small number of meaningful realized score axes.
-Do not show predictive World Potential.
-Do not show a modeled future score range.
-Do not bury the primary next action below a long scroll.
-On small viewports, the `Next World` action must remain reachable without scrolling to the end of the content.
-An automatic next-world countdown, when enabled, must remain visible.
-Place the countdown in a sticky header or sticky action footer.
-Do not place the only countdown status at the bottom of a scroll body.
-Any trusted user interaction cancels automatic continuation according to the continuation policy.
-The cancellation must be deterministic and tested.
-The Result body may scroll.
-The Result header and primary actions should remain stable.
-Avoid nested scrolling inside Result.
+## Evolution
 
-## Menu
-The menu is not a second navigation system.
-Global scene navigation already owns Home, World, Evolution, and Trophies.
-Do not duplicate those destinations in the menu without a demonstrated need.
-The menu should contain only common, understandable actions.
-A reasonable production menu contains:
-- History access during a live world, if no equally clear direct route exists;
-- New World, only when relevant and clearly destructive;
-- automatic continuation preference;
-- motion preference;
-- contrast preference;
-- a simple quality preference if automatic quality is insufficient;
-- a collapsed secondary data/reset area.
-Remove duplicate default-speed settings when the in-world speed control already persists the preference.
-Remove technical History-retention controls from normal product UI.
-Choose adaptive internal retention instead.
-Remove camera-inertia tuning unless user testing proves it important.
-Remove idle-rotation tuning unless user testing proves it important.
-Remove camera reset from the normal menu unless the camera can become meaningfully lost.
-Remove duplicate Result access when the RESULT metric already exists.
-Remove production diagnostics.
-Diagnostics belong behind explicit developer mode.
-Do not label a rendering-quality preset `Luminous`.
-That name belongs to Evolution.
-Data export, import, History clearing, and progression reset may remain in a collapsed `Data and reset` area.
-Destructive actions require explicit confirmation.
-Do not let secondary data tools dominate the menu.
+Evolution is a physical sphere of authored Skill Cells.
 
-## History purpose
-History helps the player understand how a world changed.
-History is the sole durable temporal observation surface.
-Environment detail is not History.
-An Event Log must not exist as a separate competing surface.
-History may combine a timeline and visual playback.
-It must feel like one coherent product.
-It must not feel like a developer trace viewer.
-History should answer:
-- Which world am I viewing?
-- What time am I viewing?
-- What did life look like then?
-- What materially changed around that time?
-- Am I viewing live state, a historical checkpoint, or semantic-only data?
-History should not answer every internal debugging question.
+It begins from exactly one canonical root concept, `First Division`, unless explicit user policy supersedes it.
 
-## History information architecture
-Use one primary scroll owner.
-Do not place a short nested scrolling list inside an already scrolling panel.
-Do not create a narrow timeline viewport inside a large empty frame.
-Keep the header and core playback controls stable.
-Allow the timeline content to use the available body height.
-On desktop, a bounded side surface is acceptable.
-On mobile, a bottom sheet is acceptable.
-On short landscape viewports, a side surface is usually preferable.
-The globe should remain visible where practical.
-Playback controls must remain usable with touch.
-Targets must meet the minimum touch size.
-The range control must receive meaningful width.
-Previous, next, and live controls must not squeeze the range to an unusable sliver.
-A compact two-row control layout is acceptable on narrow screens.
-A world selector must not force horizontal overflow.
-A selected event must be visually distinct.
-A selected checkpoint must be visually distinct.
-Timeline entries should be concise.
-Avoid repeated boilerplate prose.
-Use progressive disclosure for secondary semantic detail.
+Physical adjacency owns reachability.
 
-## History visual truth
-History may be approximate.
-History must never be misleading.
-Never label the globe as an earlier time while rendering the current live snapshot.
-Never render a prior world using unrelated current-world dynamic buffers.
-Never show a historical Luminous state without its historical charge state.
-Never show current resource depletion at an old checkpoint.
-Never show current transformations at an old checkpoint.
-When visual data is loading, present an explicit loading state.
-Disable or defer historical seeking until a renderable checkpoint is available.
-Switch the label, snapshot, and controls atomically.
-When visual data is unavailable, show semantic History honestly.
-Do not substitute a fabricated visual reconstruction.
-The visual History format should store only channels needed to reproduce meaningful appearance.
-It is not a full simulation save.
-The required render-semantic channels normally include:
-- tick;
-- alive/life state;
-- biomass band;
-- stress band;
-- resource condition;
-- resource richness when visually necessary;
-- transformation state;
-- effective biome when transformation state is insufficient;
-- bioelectric charge;
-- frame-level Luminous development;
-- atmosphere or world-wear value if it materially changes the render;
-- terminal/checkpoint flags.
-Use the static world seed and generated fields for immutable geography.
-Do not duplicate immutable geography per frame.
-Use bounded quantization.
-Use bounded retention.
-Prefer adaptive checkpoint thinning to an unbounded log.
-Preserve terminal, initial, and meaningful transition checkpoints.
-Preserve enough ordinary checkpoints for motion through the run.
-Version the codec.
-Because backward compatibility is not required, delete the old codec path when the replacement is complete.
-Do not keep a v1 decoder in production without a current need.
+A Level-1-or-higher adjacent cell may open a frontier cell according to the current catalog contract.
 
-## Evolution product model
-Evolution is a physical sphere of Skill Cells.
-The current old 252-cell, six-bootstrap-root, procedural-resonance design is not a product constraint.
-The replacement begins from exactly one root.
-The canonical root concept is `First Division`.
-The root represents the organism learning to establish and reproduce reliably.
-A fresh progression state may purchase only this root.
-No other starting cell is reachable.
-The immediate physical neighbors of the root must be major general survival abilities.
-The first ring must not begin with obscure specialist systems.
-Good first-ring concepts include:
-- more reliable budding;
-- better nutrient uptake;
-- lower maintenance;
-- larger energy reserve;
-- stronger local repair;
-- more stable transport or cohesion.
-Use actual physical adjacency as the unlock rule.
-A Level 1 or higher adjacent cell opens a frontier cell.
 Owned cells may receive additional levels indefinitely.
-Levels must have diminishing bounded effects.
-Costs must grow monotonically.
-The early purchase cadence must support one understandable decision after most early extinctions.
-The graph must remain useful indefinitely.
+
+Costs grow monotonically.
+
+Effects remain bounded.
+
 Infinite levels do not justify infinite visual clutter.
 
-## Evolution topology and content
-Prefer a compact geodesic sphere.
-A frequency-3 sphere with 92 cells is the default target.
-Use a smaller frequency-2 sphere with 42 cells if 92 durable authored abilities cannot be justified.
-Do not create filler to preserve 92.
-Do not use a higher frequency merely for visual density.
-Every visible Skill Cell needs a durable purpose.
-Every visible Skill Cell needs authored player-facing text.
-Every visible Skill Cell needs a testable effect, unlock, or meaningful bounded refinement role.
-Do not generate thirty near-identical resonance names per branch.
-Specialized domains should emerge after the foundation ring.
-The major specialization domains may include:
-- Fertility;
-- Freshwater;
-- Scarcity;
-- Cryogenic;
-- Marine;
-- Luminous.
-Domains may overlap physically.
-The sphere should feel like one ecology, not six disconnected menus painted on a globe.
-Late cells may combine domains.
-Capstones must change play visibly.
-Capstones must not create immortality.
-Do not expose implementation tags, compiler versions, or recipe accounting in normal detail UI.
+Every visible Skill Cell needs:
 
-## Evolution detail surface
-The default detail surface should be concise.
-Show:
-- ability name;
-- current level;
-- one-sentence effect;
-- exact next cost;
-- clear before-to-after change;
-- concise unlock reason when locked;
-- purchase instruction when ready.
-Hide secondary implementation detail unless it helps a real decision.
-Do not show World Potential.
-Do not show modeled SCORE ranges.
-Do not show long lists of internal affinity tags.
-Do not show build-recipe accounting by default.
-Do not show document-security implementation language in ordinary progression.
-Handle extreme imported values safely without making security boundaries part of the normal fantasy.
-The primary purchase button remains available as an accessible alternative to second activation.
+- durable purpose;
+- authored player-facing name;
+- concise effect;
+- exact cost;
+- testable mechanical consequence or bounded refinement role.
+
+Do not generate procedural filler.
+
+Foundation abilities appear near the root.
+
+Specialist domains emerge after foundations.
+
+Specialist paths may include:
+
+- fertility;
+- freshwater;
+- scarcity;
+- cold adaptation;
+- marine adaptation;
+- Luminous ecology.
+
+Different paths should produce different survival shapes.
+
+A reach-heavy path may spread farther and spend resources faster.
+
+A scarcity path may grow slowly and last longer.
+
+A marine path may open territory at higher upkeep.
+
+A Luminous path may pay setup cost for powered transport or recovery.
+
+No path creates immortality.
 
 ## Evolution interaction
+
 First activation selects a Skill Cell.
+
 Selection opens or updates its detail.
-A second discrete activation on the same selected cell purchases exactly one level only when the cell is ready.
+
+A second discrete activation on the same selected ready cell purchases exactly one level.
+
 Ready means:
-- the cell is reachable;
-- the player has enough Echoes;
-- the world is between runs;
-- no transaction is in flight;
-- the current level and revision still match.
-A selected ready cell must look inviting.
-It should use a unique center, ring, material, and restrained pulse.
-A selected cell that is locked or unaffordable must not use the same purchase invitation.
-A ready but unselected cell may look available.
-It must be less emphatic than the selected ready cell.
-The visual invitation must survive color-vision differences.
-Use shape, contrast, motion, and text, not color alone.
-The detail must state `Activate this selected cell again to unlock` or `...to upgrade` only when true.
-Keyboard activation must follow the same two-step model.
-The semantic tree must expose the same state.
-Dragging the globe must not purchase a cell.
-A blank tap must not purchase a cell.
-A stale second activation must not spend Echoes.
-A successful purchase spends once.
-A rapid third activation must not accidentally buy another level.
 
-## Evolution effects and survival
-Evolution should generally increase survival time.
-That relationship must arise from mechanics.
-The main causal channels are:
-- establishment reliability;
-- reproduction viability;
-- resource uptake;
-- maintenance efficiency;
-- storage;
-- transport;
-- repair;
-- stress tolerance;
-- habitat access;
-- recycling;
-- bounded worldmaking.
-Do not add a direct hidden `survival time` multiplier.
-Do not scale all stats from one generic power number.
-Do not use a predictive World Potential multiplier.
-Let different paths produce different survival shapes.
-A reach-heavy path may spread farther and burn resources faster.
-A scarcity path may grow slowly and last longer.
-A marine path may open more cells at higher upkeep.
-A Luminous path may improve powered transport and recovery after setup cost.
-Use cohort evidence to ensure the overall progression trend remains upward.
+- reachable;
+- affordable;
+- between Worlds;
+- no transaction in flight;
+- current level and revision still match.
 
-## Luminous mechanics
-Luminous is an authoritative bioelectric ecology.
-The first meaningful Luminous purchase must be visible in the following world.
-Do not require a deep three-node recipe before any cell can charge.
-A first Luminous ability may enable modest charge on viable high-flux living cells.
-Higher Luminous levels may improve:
-- generation;
-- retention;
-- viable domain;
-- transport efficiency;
-- powered recovery;
-- setup cost;
-- upkeep efficiency.
-Keep charge as whole-cell state.
-Do not render decorative wires.
-Do not fake charge in the renderer when authority is zero.
-A powered cell must have a bounded ecological benefit.
-A powered cell must also have setup or upkeep cost.
-A viable Luminous build should improve survival distribution on suitable seeds.
-An unsuitable or premature Luminous build may underperform a general foundation build.
-This tradeoff is acceptable when visible and measured.
-Charge must decay when generation stops.
-Extinction must clear live charge.
-Results may record realized powered-cell evidence.
-History must preserve charge appearance.
+A selected ready cell should look inviting through more than color.
 
-## Luminous rendering
-Living cells without Luminous should still have a subtle biological presence on the dark hemisphere.
-That baseline must be clearly dimmer than powered Luminous cells.
-The intended impression is a living analogue of Earth at night.
-Powered cells should read as clustered cellular lights at globe scale.
-Use warm amber, gold, or pale biological light.
+A locked or unaffordable cell must not use the same invitation.
+
+The detail states the second-activation instruction only when true.
+
+Keyboard and pointer use the same two-step model.
+
+The semantic tree matches the visible sphere.
+
+Dragging does not purchase.
+
+Blank tap does not purchase.
+
+A stale second activation does not spend.
+
+A successful transaction spends once.
+
+A rapid third activation does not accidentally purchase another level.
+
+Keep a native accessible purchase button as an alternative.
+
+## Luminous
+
+Luminous is authoritative whole-cell bioelectric ecology.
+
+The first meaningful Luminous purchase should be visible in the following World.
+
+Do not require a deep hidden recipe before any cell can charge.
+
+Charge is whole-cell state.
+
+Zero authoritative charge produces no powered emission.
+
+A powered cell has bounded benefit.
+
+A powered cell has setup or upkeep cost.
+
+Charge decays when generation stops.
+
+Terminal collapse does not freeze false charge.
+
+Extinction clears live charge.
+
+History preserves charge appearance.
+
+Result may record realized powered-cell evidence.
+
+Ordinary life remains dimmer than powered Luminous life.
+
+Powered light is strongest on the dark side but remains somewhat legible on the day side.
+
 Avoid uniform neon coverage.
-Avoid a flat emissive wash over every living cell.
-Avoid white clipping that erases cell shape.
-Keep a visible cell core or local material structure.
-Powered light should remain somewhat visible on the day side.
-Its strongest contrast should appear on the night side.
-Name shader factors truthfully.
-A factor that is one on the lit side should be called `daylight`, not `night`.
-Apply ordinary biological emission primarily on the dark side.
-Apply powered emission more strongly on the dark side.
-WebGL2 and Canvas 2D must communicate the same hierarchy.
-Exact pixels do not need to match.
-The semantic ordering must match:
-1. unoccupied dark cell;
-2. ordinary living dark-side cell;
-3. powered living day-side cell;
-4. powered living dark-side cell.
-Higher Luminous development should increase visible intensity, duration, or coverage through authoritative state.
-It should not be a quality-preset effect.
 
-## Cell-sphere rendering
-The sphere surface must read as continuous.
-Tiny background gaps between adjacent cells are defects.
-The defect is most important near the silhouette.
-Do not preserve per-cell radial displacement if it separates shared boundaries.
-Prefer a continuous spherical shell.
-Create depth with fragment shading, inset patterns, boundaries, and material contrast.
-Do not add mesh skirts unless a simpler continuous-shell solution fails.
-Do not add a tessellation system.
-Do not add another render pass solely to hide cracks.
-WebGL2 and Canvas 2D must avoid visible background seams.
-A low-contrast boundary line is acceptable.
-A black or background-colored hole is not.
-Use a forced uniform-material browser fixture to test seam continuity.
-Inspect the center and limb.
+Avoid decorative wires.
+
+Avoid white clipping that erases cell shape.
+
+WebGL2 and Canvas preserve semantic ordering.
 
 ## SCORE and Echoes
-SCORE is based on realized world outcomes.
-Do not multiply realized quality by permanent predictive World Potential.
-Do not preview a modeled score range in Evolution.
-A score may use realized dimensions such as:
+
+SCORE uses realized World outcomes.
+
+Do not reintroduce predictive World Potential.
+
+Do not show modeled future SCORE ranges as authority.
+
+A concise score may use realized dimensions such as:
+
 - survival;
-- unique exploration;
+- exploration;
 - sustained presence;
 - coherence;
 - stewardship;
 - worldmaking;
-- sustained Environment pressure performance.
-Use a small number of explainable axes.
-Avoid double-counting survival through several correlated terms.
-Keep live SCORE monotone within a world if the UI promises monotonicity.
-Echoes derive from realized SCORE.
-Echo rewards should support the intended early purchase cadence.
-Large values must remain exact in authority and compact in presentation.
-Rank labels may continue indefinitely.
-Do not let infinite ranks require unbounded tables.
+- sustained Environment pressure.
 
-## Persistence
-Use current-only persistence.
-Version every persisted document.
-Reject or reset mismatched versions.
-Do not migrate obsolete Evolution graphs.
-Do not map old Skill IDs to new Skill IDs.
-Do not translate old History codecs.
-Do not preserve old World Potential fields.
-Do not preserve old menu settings solely for compatibility.
-Import validation must be strict.
-A failed import must not partially persist.
-Transactions must be atomic to the practical limits of browser storage.
-History semantic data may live in local storage if bounded.
-Visual History belongs in bounded device-local binary storage.
-Export may omit device-local visual checkpoints when documented.
-Data reset must be explicit.
+Avoid double-counting correlated facts.
 
-## Responsive layout
-Design from small screens first.
-Required viewport evidence includes:
-- 320 × 568;
-- 360 × 640;
-- 390 × 844;
-- 430 × 932;
-- 768 × 1024;
-- 844 × 390;
-- 1024 × 600;
-- 1440 × 900.
-Also test 200% text where practical.
-Respect safe-area insets.
-No production surface may cause horizontal page overflow.
-The app shell should not depend on body scrolling.
-A bounded surface may scroll internally.
-That surface must own the scroll.
-Avoid nested scroll areas.
-Sticky headers and action footers must not overlap content.
-The globe must not jump abruptly when a surface opens.
-The selected cell should remain visible where layout allows.
-Touch controls must be at least 44 CSS pixels in their primary dimension.
-Controls must remain usable with coarse pointers.
-Do not rely on hover.
+Keep live SCORE monotone when the UI promises monotonicity.
+
+Echoes derive from trusted SCORE.
+
+Early rewards should support understandable permanent decisions.
+
+Large values remain exact in authority.
+
+Visible formatting may use compact engineering notation.
+
+Expose exact accessible values.
+
+Unbounded ranks must not require unbounded tables.
+
+## Result
+
+Extinction produces an unmistakable Result.
+
+Result explains why the World ended.
+
+Result shows SCORE and Echoes clearly.
+
+Result may show a small number of realized axes.
+
+Do not show predictive World Potential.
+
+Do not bury primary actions below a long scroll.
+
+The Result body may scroll.
+
+The action footer remains stable.
+
+Action order is:
+
+1. Next World;
+2. Evolution;
+3. History.
+
+Automatic continuation status remains with the actions.
+
+The primary action remains reachable at small viewports and `200%` text.
+
+Avoid nested Result scrolling.
+
+Settlement is idempotent.
+
+Result presentation cannot mint rewards.
+
+## World HUD
+
+The standard World metric order is:
+
+1. SCORE;
+2. REACH;
+3. ENV LEVEL;
+4. RESULT when available.
+
+Metric containers remain stable as values gain digits.
+
+Use stable grid tracks.
+
+Use tabular numerals.
+
+Use deterministic compact formatting.
+
+Expose exact accessible values when visible values are abbreviated.
+
+One metric must not push another control.
+
+RESULT must not cause overflow.
+
+Measure rectangles across formatting thresholds.
+
+Do not allow metric changes to move globe controls.
+
+## Menu
+
+The Menu is not a second navigation system.
+
+Home, World, Evolution, and Trophies belong to the primary scene selector.
+
+Do not duplicate them in the Menu without demonstrated need.
+
+The production Menu should remain limited to common understandable actions such as:
+
+- live-World History where needed;
+- destructive New World where relevant;
+- automatic continuation preference;
+- motion preference;
+- contrast preference;
+- simple quality preference;
+- collapsed local data and reset actions.
+
+World speed remains in the World control.
+
+Do not expose:
+
+- History retention;
+- camera inertia tuning;
+- idle-orbit tuning;
+- camera reset without a demonstrated lost-camera problem;
+- production diagnostics;
+- duplicate Result;
+- internal schema versions.
+
+Destructive actions require explicit confirmation.
+
+## Surfaces and focus
+
+Use one coordinated context-shell policy.
+
+Use one scroll owner per surface.
+
+Avoid nested scrolling.
+
+Opening a surface must not move or zoom the camera.
+
+Opening a surface stops nonessential automatic camera motion.
+
+Direct manipulation may remain available on exposed canvas.
+
+Focus moves to a sensible heading or control.
+
+Closing returns focus sensibly.
+
+Programmatic focus must not trigger trusted-interaction behavior unintentionally.
+
+Escape and Close dismiss according to the shared policy.
+
+A repeated trigger may toggle its own surface.
+
+Another trigger replaces the active surface in one gesture.
+
+The globe remains visible where practical.
+
+## History
+
+History is the sole durable temporal observation surface.
+
+Do not create a competing Event Log.
+
+History answers:
+
+- which World;
+- which time;
+- what the globe looked like;
+- what materially changed;
+- whether state is live, historical, loading, or semantic-only.
+
+History should not expose every debugging fact.
+
+Use one timeline scroll owner.
+
+Keep core playback controls stable.
+
+Touch controls meet minimum target size.
+
+Selected events and checkpoints have non-color emphasis.
+
+Visual History may be approximate.
+
+Visual History must never be misleading.
+
+Never label a current snapshot as historical.
+
+Never render a prior World with unrelated current buffers.
+
+Never show current resources, transformations, or charge at an old checkpoint.
+
+Loading is explicit.
+
+Unavailable visual data remains honestly semantic-only.
+
+Switch label, snapshot, and controls atomically.
+
+Live restores current authority immediately.
+
+The visual codec stores only channels needed for meaningful appearance.
+
+Immutable geography comes from seed/static fields.
+
+Checkpoint data is quantized, versioned, and bounded.
+
+Initial, terminal, and meaningful transition frames are preserved.
+
+Retired codecs are deleted under current-only policy.
+
+## Rendering
+
+The World surface reads as one continuous cellular sphere.
+
+Background gaps between adjacent cells are defects.
+
+Prefer one continuous position shell.
+
+Create depth through material, fragment shading, boundaries, and contrast.
+
+Do not separate shared boundaries through owner-cell radial displacement.
+
+Do not add skirts or tessellation without evidence.
+
+WebGL2 is primary.
+
+Canvas 2D is a semantic fallback.
+
+Context loss must not replace World authority.
+
+Whole-cell visual language preserves:
+
+- geography;
+- resources;
+- life;
+- stress;
+- remains;
+- transformation;
+- Luminous charge;
+- selection;
+- History;
+- Evolution;
+- Trophies.
+
+Ordinary life must not erase terrain and resources.
+
+Powered Luminous state must remain distinct from ordinary life.
+
+Selection and History must remain distinct from biological state.
+
+The atmosphere is a visual concern.
+
+Do not increase simulation resolution to solve atmosphere appearance.
+
+Renderer changes require controlled fixtures and real screenshots.
+
+Use relative luminance, contrast, geometry, and silhouette measures.
+
+Do not use one exact screenshot hash as the primary cross-GPU oracle.
+
+Keep static geometry static.
+
+Keep draw calls bounded.
 
 ## Accessibility
+
 All meaningful controls require accessible names.
-All visual states require non-color cues.
-Use native buttons, selects, ranges, and details where they are suitable.
+
+Use native controls where suitable.
+
 Preserve visible focus.
-Keep focus within the active surface policy without turning nonmodal surfaces into inaccessible modal traps.
-Return focus sensibly after closing a surface.
-Announce purchases, failures, extinction, and destructive actions.
-Do not announce high-frequency metric updates.
+
+Do not rely on hover.
+
+Do not rely on color alone.
+
+Touch targets are at least `44 CSS px` in their primary dimension.
+
+Keyboard users can perform every meaningful action.
+
+The semantic Evolution tree matches the visible sphere.
+
+History controls are keyboard operable.
+
+Exact state remains available when visible formatting is compact.
+
+Announce:
+
+- purchases;
+- failures;
+- extinction;
+- destructive actions;
+- meaningful continuation transitions.
+
+Do not announce:
+
+- every metric update;
+- every countdown second;
+- every camera frame;
+- every progress-frame change.
+
 Respect reduced motion.
-Pulse animations must become static emphasis under reduced motion.
-Respect high contrast.
-Do not hide exact state from keyboard users.
-The semantic Evolution tree must match the visible sphere.
-History controls must be operable by keyboard.
+
+Reduced motion preserves information and direct control.
+
+Reduced motion removes or suppresses:
+
+- nonessential inertia;
+- idle orbit;
+- decorative pulse;
+- decorative travel;
+- unnecessary transition motion.
+
+Respect high contrast and forced colors.
+
+Use text, shape, border, and state in addition to color.
+
+Do not create modal focus traps for nonmodal surfaces.
+
+## Responsive layout
+
+Design from small screens first.
+
+Required viewport evidence includes:
+
+- `320 × 568`;
+- `360 × 640`;
+- `390 × 844`;
+- `430 × 932`;
+- `768 × 1024`;
+- `844 × 390`;
+- `1024 × 600`;
+- `1440 × 900`.
+
+Test `200%` text where practical.
+
+Respect safe-area insets.
+
+No production surface causes horizontal page overflow.
+
+The app shell should not depend on body scrolling.
+
+A bounded surface may own internal scrolling.
+
+Avoid nested scroll regions.
+
+Sticky headers and action footers must not overlap content.
+
+The globe must not jump when a surface opens.
+
+Primary controls remain reachable.
+
+The selected cell remains visible where layout permits.
+
+Controls remain usable with coarse pointers.
+
+Measure actual rectangles.
+
+Do not infer responsive correctness from CSS source alone.
+
+## Persistence
+
+Use current-only persistence.
+
+Version every persisted document and binary codec.
+
+Validate before use.
+
+Reject or reset mismatched versions.
+
+Do not migrate retired Evolution graphs without an active consumer.
+
+Do not map obsolete Skill IDs merely to preserve old local data.
+
+Do not keep old History decoders without a current need.
+
+Do not preserve retired score or settings fields.
+
+Import validation is strict.
+
+Failed import does not partially persist.
+
+Progression transactions are atomic to browser-storage limits.
+
+Semantic History remains bounded.
+
+Visual History remains bounded by count and bytes.
+
+Export may omit device-local visual checkpoints when documented.
+
+Data reset is explicit.
+
+Storage failure keeps the session playable and communicates temporary persistence honestly.
+
+## Security and hostile data
+
+Treat imports, storage, Worker messages, result DTOs, agent actions, and URL inputs as untrusted.
+
+Validate:
+
+- shape;
+- version;
+- identity;
+- bounds;
+- integers;
+- lengths;
+- recursion depth;
+- cycles;
+- enum values;
+- byte sizes.
+
+Reject stale World messages.
+
+Reject forged settlement projections.
+
+Do not parse hostile giant integers without repository guards.
+
+Do not use `innerHTML` for dynamic content.
+
+Use `textContent` or safe node construction.
+
+A failed validation must not partially mutate authority.
 
 ## Performance
-Performance is a feature.
+
 Measure before optimizing.
-Retain the typed-array simulation design.
+
+Retain typed-array simulation and reusable renderer buffers.
+
 Avoid per-cell object allocation in hot loops.
-Avoid rebuilding static geometry during ordinary frames.
-Avoid recompiling Evolution during every frame.
+
+Avoid per-frame static geometry rebuild.
+
+Avoid recompiling Evolution every frame.
+
 Compile progression when inputs change.
-Bound compile caches by count and bytes.
-Bound History storage by bytes.
-Bound semantic History entries.
+
+Bound caches by count and bytes.
+
+Bound camera samples.
+
+Bound continuation state.
+
+Bound History.
+
 Bound DOM lists.
-Use event delegation when it reduces hundreds of closures without reducing clarity.
-Do not micro-optimize cold code at the cost of readability.
+
+Bound notifications.
+
+Bound agent traces and reports.
+
+Use event delegation when it reduces large closure sets without obscuring ownership.
+
+Do not micro-optimize cold code at the cost of correctness.
+
 Do not add a dependency to save a few lines.
-Maintain the established simulation benchmark floor unless a documented replacement benchmark supersedes it.
-Treat a regression greater than roughly ten percent as requiring investigation.
-Keep renderer draw calls stable unless a measured visual gain justifies another pass.
-Do not add post-processing bloom merely to make Luminous visible.
-Prefer direct emissive material and relative contrast first.
+
+Maintain the current simulation benchmark floor unless a documented replacement supersedes it.
+
+Investigate a same-host regression of approximately `10%` or more.
+
+Keep renderer draw calls stable unless measured visual value justifies a deliberate change.
+
+High diagnostic speeds execute every authoritative tick.
+
+Presentation may be coalesced.
+
+Hidden documents suspend nonessential presentation work.
 
 ## Testing
+
 Every bug fix needs a regression test at the correct layer.
-Pure rule changes need unit tests.
-Authority-boundary changes need integration tests.
-Layout and interaction changes need real-browser tests.
-Renderer semantics need WebGL2 and Canvas evidence.
-History fidelity needs codec, playback-state, and browser tests.
-Balance needs multi-seed production-simulation audits.
-Performance changes need benchmark evidence.
-Test second activation with trusted pointer events.
-Test keyboard activation separately.
-Test that one purchase spends exactly once.
-Test that unaffordable second activation spends nothing.
-Test that dragging does not purchase.
-Test ENV LEVEL opens Environment detail.
-Test ENV LEVEL does not open History.
-Test History remains reachable through its intended routes.
-Test live History loading cannot display an old label over a live snapshot.
-Test historical resource, transformation, and charge channels.
-Test metric rectangles remain stable across value thresholds.
-Test the Result countdown is visible at small viewports without scrolling to the bottom.
-Test the primary Result action remains visible.
-Test the menu no longer contains removed duplicate controls.
-Test the sphere has no detectable interior background cracks in a uniform fixture.
-Test ordinary night-side life is visible.
-Test powered night-side life is materially brighter.
-Test zero authoritative charge produces no powered emission.
-Test WebGL2 and Canvas retain the same semantic order.
 
-## Balance audits
-Use production `RunController`.
-Use explicit compiled Evolution fixtures.
-Use deterministic seeds.
-Use paired-seed comparisons.
-Separate smoke validity gates from deeper statistical gates.
-Smoke runs should remain CI-safe.
-Deep tuning runs may be local or scheduled.
-Write machine-readable reports.
-Record the exact rule versions and progression fixture.
-Record extinction distributions.
-Record cause distributions.
-Record habitat occupancy.
-Record peak and sustained Reach.
-Record Environment Level distribution.
-Record powered-cell evidence for Luminous cohorts.
-Record score and Echo distributions.
-Keep development seeds and holdout seeds separate.
-Do not approve a balance change from one seed.
+Use:
 
-## Browser evidence
-Use the existing trusted CDP harness unless there is a concrete reason to replace it.
-Exercise the production entry point.
-Exercise the real Worker path and the fallback path.
-Exercise WebGL2 and forced Canvas 2D.
-Collect layout rectangles.
-Collect scroll ownership evidence.
-Collect focus evidence.
-Collect state-machine evidence.
-For rendering assertions, prefer controlled fixtures and relative luminance measurements.
-Do not depend on a single exact screenshot hash across GPUs.
-A screenshot may supplement measurements.
-A screenshot does not replace semantic assertions.
+- unit tests for pure rules and state machines;
+- integration tests for authority and asynchronous boundaries;
+- browser tests for interaction, layout, rendering, focus, and accessibility;
+- multi-seed audits for balance;
+- benchmarks for performance.
+
+### Speed tests
+
+Test:
+
+- public options;
+- validation;
+- public-to-effective mapping;
+- settings reset;
+- Worker/fallback agreement;
+- constant-speed result equality;
+- mixed-speed result equality;
+- standard and diagnostic cadence;
+- no skipped ticks;
+- animation-time independence.
+
+### Camera tests
+
+Test:
+
+- slow drag;
+- fast flick;
+- tap;
+- drag classification;
+- pinch;
+- wheel;
+- pointer cancel;
+- bounded samples;
+- bounded velocity;
+- frame-rate-independent damping;
+- convergence;
+- long-run orthonormality;
+- idle delay;
+- automatic orbit;
+- trusted cancellation;
+- surface hold;
+- hidden reset;
+- reduced motion;
+- no selection or purchase from residual motion;
+- picking after framing.
+
+### Continuation tests
+
+Test:
+
+- one Result generation;
+- normalized progress;
+- hidden pause;
+- resume;
+- trusted cancellation;
+- disabled state;
+- firing once;
+- stale identity rejection;
+- manual action;
+- exact accessible text;
+- no second live announcements;
+- reduced motion;
+- forced colors;
+- compact footer geometry.
+
+### Rendering tests
+
+Test:
+
+- continuous shell;
+- no background cracks;
+- ordinary life visibility;
+- powered Luminous hierarchy;
+- zero-charge control;
+- History channels;
+- WebGL2 and Canvas semantic ordering;
+- draw count;
+- controlled fixtures;
+- real screenshots.
+
+### Responsive tests
+
+Collect:
+
+- canvas bounds;
+- projected globe geometry;
+- control rectangles;
+- scroll ownership;
+- focus;
+- overflow;
+- safe areas;
+- `200%` text;
+- every required viewport.
+
+### Balance tests
+
+Use production cohorts.
+
+Separate smoke from deeper holdout gates.
+
+Record exact rule versions and fixtures.
+
+Do not tune from one seed.
+
+### Browser paths
+
+Exercise:
+
+- production entry;
+- Worker;
+- fallback;
+- WebGL2;
+- forced Canvas;
+- Home;
+- World;
+- Result;
+- Evolution;
+- Trophies;
+- History;
+- Menu;
+- reduced motion;
+- high contrast;
+- hidden page;
+- automatic continuation;
+- settings reload;
+- storage failure where supported.
+
+Screenshots supplement assertions.
+
+Screenshots do not replace measurements.
+
+A skipped test is not a pass.
+
+An unavailable test is not a pass.
+
+Classify both explicitly.
 
 ## Documentation
+
 Keep `README.md` product-facing.
-Keep `docs/status.md` current and short.
-Keep design documentation aligned with production behavior.
-Delete stale statements during the same phase that changes behavior.
+
+Do not fill it with volatile schema inventories.
+
+Keep `docs/status.md` concise, factual, and current.
+
+Keep `docs/work/` to one active cross-layer package.
+
+Keep design documents aligned with production behavior.
+
+Delete stale current claims in the same change that alters behavior.
+
+Mark historical material as historical.
+
 Do not document rejected architecture as current.
+
 Do not preserve obsolete migration instructions.
-Document balance targets as targets, not facts, until measured.
-Document performance measurements with host and command.
-Document unverified claims explicitly.
-Use one active work note for a multi-turn initiative.
-Archive or delete finished scratch notes when they no longer add value.
+
+Distinguish:
+
+- target;
+- baseline;
+- measurement;
+- inference;
+- unavailable evidence.
+
+Document balance targets as targets.
+
+Document measured distributions with command, fixture, revision, and host where relevant.
+
+Document performance with comparable conditions.
+
+Do not freeze an orientation commit into durable product policy.
 
 ## Code style
-Use English for code, comments, documentation, tests, and user-facing copy unless localization work is explicitly requested.
+
+Use English for code, comments, documentation, tests, and player-facing copy unless localization is explicitly requested.
+
+Use native ES modules.
+
 Use semicolons consistently with the existing codebase.
+
 Use descriptive names.
+
 Avoid ambiguous abbreviations in product code.
+
 Short mathematical names are acceptable in tight numeric functions.
+
 Keep functions focused.
-Prefer early returns for invalid state.
+
+Prefer early return for invalid state.
+
 Validate external data.
+
 Freeze shared catalogs and immutable public records.
+
 Use exact progression-integer helpers for unbounded authority values.
+
 Use bounded numeric projections in hot loops.
-Do not parse untrusted giant integers directly with native `BigInt` without the repository’s guards.
-Do not use `innerHTML` for dynamic content.
-Use `textContent` or node construction.
+
+Keep browser entry points small.
+
+Keep simulation authority outside the DOM.
+
+Keep UI formatting out of simulation hot loops.
+
+Keep persistence behind narrow platform modules.
+
+Keep the Worker protocol explicit and versioned.
 
 ## Git hygiene
+
 Do not overwrite unrelated user changes.
+
 Do not discard a dirty worktree.
-Do not commit generated reports unless the repository policy requires them.
+
 Do not commit runtime artifacts.
+
+Do not commit generated reports unless repository policy requires them.
+
 Keep commits coherent.
-Use messages that describe product or authority changes.
+
+Use commit messages that describe product or authority changes.
+
 Run focused tests before broad verification.
-Run broad verification before claiming the phase complete.
-Record commands and outcomes.
+
+Run broad verification before claiming completion.
+
+Review the final diff for:
+
+- duplicate authority;
+- stale terminology;
+- dead files;
+- compatibility residue;
+- scope leakage;
+- generated artifacts;
+- accidental simulation changes;
+- accidental renderer-pass changes;
+- documentation drift.
+
+Use normal pushes.
+
+Do not force-push without explicit irreversible-action authorization.
+
+Verify remote postconditions.
+
+Fix published failures through additive commits.
 
 ## Completion standard
-A phase is complete only when:
-- the old conflicting path is deleted;
-- the new path is authoritative;
+
+A coherent phase is complete only when:
+
+- the selected target is active in production paths;
+- the conflicting predecessor is deleted;
 - focused tests pass;
 - relevant browser evidence passes;
+- Worker and fallback remain coherent;
+- WebGL2 and Canvas evidence exists when rendering changed;
+- responsive viewports are observed when layout changed;
+- accessibility behavior is observed when interaction changed;
+- performance evidence exists when hot paths changed;
+- balance evidence exists when authority changed;
 - documentation matches;
-- no known severe regression remains;
-- performance or balance evidence exists when those areas changed;
-- the work note identifies the next phase.
-A feature is not complete because its source exists.
-A feature is not complete because a unit test passes.
-A visual feature is not complete until it is visible in the production renderer.
-A responsive feature is not complete until small viewports are observed.
-A balance feature is not complete until cohorts are measured.
-A multi-turn initiative may stop before all goals are complete.
-It must stop cleanly.
-The repository must remain understandable to the next agent.
+- no selected-scope severe regression remains;
+- skipped and unavailable evidence are named;
+- the work note identifies the next coherent step;
+- the final worktree is clean or every remaining change is accounted for.
 
-## Current correction priority
-When this file is first introduced, prioritize the following in order:
-1. Replace the ENV LEVEL → History route with dedicated Environment detail.
-2. Stabilize metric and result geometry on small screens.
-3. Simplify the production menu.
-4. Rebuild History UX and visual truth.
-5. Remove visible cell-sphere cracks by restoring a continuous shell.
-6. Replace the old Evolution topology and filler content with one root and authored progression.
-7. Retune early-world survival and habitat restriction.
-8. Make first-level Luminous mechanics visibly illuminate real charged cells.
-9. Remove World Potential and complete realized-only SCORE.
-10. Consolidate tests, audits, documentation, and performance evidence.
-Do not force all ten items into one unsafe commit.
-Do not reorder them casually.
-A later phase may expose a prerequisite.
-Document the prerequisite and adjust the order deliberately.
+A feature is not complete because source exists.
+
+A feature is not complete because a unit test passes.
+
+A visual feature is not complete until the production renderer displays it.
+
+An interaction feature is not complete until trusted browser input exercises it.
+
+A responsive feature is not complete until measured at small and large viewports.
+
+A balance feature is not complete until production cohorts are measured.
+
+A deployment is not complete until deployed bytes and behavior are verified.
 
 ## Final instruction
-Build the best coherent version of the product, not the most elaborate version of the specification.
-The player should see cause and consequence.
-The player should see Evolution accumulating in the world.
-The player should never need to understand the implementation to understand the game.
+
+Build the smallest coherent version of the best product.
+
+Protect authority.
+
+Delete superseded paths.
+
+Measure real behavior.
+
+Make autonomous growth, finite ecology, extinction, Evolution, and continuation understandable through the living sphere itself.

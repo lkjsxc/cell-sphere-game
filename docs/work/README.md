@@ -5,8 +5,11 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-- [`ecology-experience-v2/`](ecology-experience-v2/) — active concise work note
-  for the truthful-progression correction.
+- [`autonomous-world-feel-v1/`](autonomous-world-feel-v1/) — active concise work
+  note for presentation pacing, camera motion, responsive framing, and Result
+  continuation.
+- [`ecology-experience-v2/`](ecology-experience-v2/) — completed historical
+  evidence for the truthful-progression correction.
 - [`environment-progression-v2/`](environment-progression-v2/) — historical,
   superseded record of the initial within-world progression implementation;
   it is not current event, migration, or persistence authority.

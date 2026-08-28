@@ -42,6 +42,7 @@
     "audit:environment-levels": "node scripts/audits/environment-level-audit.mjs",
     "audit:luminous": "node scripts/audits/luminous-audit.mjs",
     "audit:progression-numbers": "node scripts/audits/progression-number-audit.mjs",
+    "audit:autonomous-feel": "node scripts/autonomous-world-feel-audit.mjs",
     "agent:play": "node scripts/agent-play.mjs",
     "agent:smoke": "node --test tests/unit/agent.test.js tests/integration/agent-environment.test.js && node scripts/agent-tournament.mjs --smoke",
     "agent:campaign": "node scripts/agent-play.mjs campaign --worlds 5",
