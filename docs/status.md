@@ -39,6 +39,20 @@
 - Simulation, Worker protocol, World identity, renderer semantics and draw
   count, game time, Environment, Evolution, History, SCORE, Echoes, settings,
   persistence, and balance are unchanged.
+- Exact committed tree `5f0a86fb31dbea70c6c966cc82566cb9a55d46f9`
+  passes all 26 clean-checkout verifier gates. Workflow run `33205507801`,
+  verify job `98965399146`, Pages job `98969704461`, deployment `6147779527`,
+  and deployment status `17476361841` are successful for that revision.
+- Cache-busted Pages bytes exactly match both camera owners, the strengthened
+  browser evidence owners, and canonical identity. The deployed Chrome 152
+  Worker/WebGL2 scenario passes with strong mouse/touch at approximately
+  `1.09872` turns, medium at `0.38649`, slow at zero, unchanged idle orbit,
+  SCORE `192,888`, four draws, zero browser errors, and every selected
+  cancellation, accessibility, and viewport boundary. Its ignored bounded
+  report SHA-256 is `cfbbff0a…`.
+- Pen and physical-device mouse, touch, high-refresh, thermal, screen-reader,
+  and forced-colors evidence remain unavailable; emulated evidence is not
+  classified as physical.
 
 ## Living Boundary Semantics v1 (retained)
 

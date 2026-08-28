@@ -91,6 +91,12 @@
 - `npm run audit:autonomous-feel` — pass in Chrome 152 with the six expected
   effective pacing rates, 13.681-second observed Result continuation, and all
   eight projected-geometry rows.
+- Exact committed tree `5f0a86fb31dbea70c6c966cc82566cb9a55d46f9`
+  passes all 26 `npm run verify` gates from a clean checkout: structure,
+  identity, 204 unit tests, 72 integration tests, every production audit,
+  benchmark, and links. The verifier benchmark measured `12,195 ticks/s` with
+  the same four authority/profile hashes. README mirror equality and
+  `git diff --check` also pass.
 - Final `npm run benchmark` — pass, `12,382 ticks/s`, up `0.9%` from the same-
   host `12,267` baseline. Authority hash `471ba1cc`, fresh hash `bec4a764`,
   breadth hash `dcc3bafe`, and deep-Luminous hash `60bb9841` are unchanged.
@@ -126,14 +132,43 @@
   synthetic-delivery, hidden-transition, and short idle-rate fixture defects;
   each failed attempt remains classified as not a product pass.
 
+## Published evidence
+
+- Normal push aligned remote `main` with implementation-evidence revision
+  `5f0a86fb31dbea70c6c966cc82566cb9a55d46f9`. Workflow run `33205507801`
+  completed successfully: verify job `98965399146` passed every gate and Pages
+  job `98969704461` published deployment `6147779527`; deployment status
+  `17476361841` is successful.
+- Cache-busted Pages bytes exactly match the committed copies of
+  `camera-motion.js`, `camera.js`, `camera-motion-scenario.mjs`,
+  `browser-file-test.mjs`, and the canonical identity owner. Their respective
+  SHA-256 values are `a15a725e…`, `9ad9502a…`, `02a6bec0…`, `a33b6af4…`, and
+  `c12c844c…` on both sides.
+- The deployed Chrome 152 Worker/WebGL2 scenario passes with zero browser
+  errors. Strong mouse/touch travel is `1.098720/1.098721` turns, medium is
+  `0.386485`, slow is zero, mouse/touch parity error is below `0.000001`, idle
+  orbit is `0.021909 rad/s`, basis error is at most `3.34e-16`, sample
+  high-water is six, SCORE remains `192,888`, and WebGL remains four draws.
+  Its ignored bounded report is
+  `reports/kinetic-sphere-release-deployed-worker-webgl2.json`, SHA-256
+  `cfbbff0af00c2080b9ff99436bfe8303981a465ec68765e9bd5acce6ebf7be51`.
+- The deployed scenario also passes every selected cancellation and lifecycle
+  boundary, reduced motion, keyboard Inspector, forced colors, 200% text,
+  History, Luminous, portrait, `844×390`, and `1440×900` evidence. Its ignored
+  landscape and wide screenshot hashes are `8bad7e53…` and `6e4bfa58…`.
+- An attempted deployed-browser launch with a temporary cleanup command was
+  rejected by the execution guard before Chrome started. It changed no product
+  state and is not a browser pass.
+
 ## Evidence not obtained
 
 - Pen and physical-device evidence are unavailable on this host.
-- Fresh exact-commit `npm run verify`, CI, Pages, deployed-byte, and deployed-
-  browser evidence remain pending.
+- Physical high-refresh, thermal, screen-reader, forced-colors, mouse, and touch
+  evidence remain unavailable and are not inferred from emulation.
 
 ## Exact next coherent step
 
-Run the fresh complete gate from a clean checkout of the final documentation
-commit, then push normally and verify exact-revision CI, Pages, deployed bytes,
-and the deployed trusted camera scenario.
+None. The selected tactile contract and its local, production-browser, CI,
+Pages, byte-identity, and deployed-browser evidence are complete. The final
+documentation-only closure revision receives its own exact-revision remote
+postcondition checks in the implementation handoff.
