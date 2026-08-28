@@ -24,6 +24,8 @@
 
 - Baseline repository, upstream, current CI, and deployed-byte reconciliation is complete.
 - Baseline focused tests, benchmark, balance smoke, and trusted Worker/WebGL2 browser scenario are complete.
+- Structured baseline pacing/layout/interaction/Result evidence is complete.
+- Milestone 1 is complete: public speed, settings, Worker/fallback clocks, protocol, cadence, time dial, UI, tests, and browser harness now use one relative-multiplier policy.
 
 ## Focused evidence
 
@@ -31,13 +33,16 @@
 - `npm run benchmark`: 12,579 ticks/s, authoritative hash `471ba1cc`, fresh profile hash `bec4a764`.
 - `npm run balance:smoke`: fresh median 131.7 game seconds, p25–p75 121.1–137.9; no authority changes made.
 - `npm run test:browser:file`: passed with trusted Worker/WebGL2, four draws, Canvas continuity fixture, all required responsive shell viewports, and Result 200% text assertions.
+- Baseline report: `reports/autonomous-world-feel-baseline.json` (ignored), SHA-256 `b2bbdeb9ec8b0e5eba555986fb045a7ec151537619f780fb5f20e3d620510b95`; old 1×/2×/4×/8× measured 0.998/2.019/4.037/7.938 game-s per wall-s over eight-second windows.
+- Speed cutover focused tests: 40/40 passed, including every constant and mixed public speed through production fallback authority plus Worker/fallback terminal parity.
+- Speed cutover trusted Worker/WebGL2 browser scenario passed: public `[0.5, 1, 2]`, developer `[0.25, 0.5, 1, 2, 4, 8, 16, 32, 64]`, effective-8 terminal path, effective-256 diagnostic path, and four draws.
 - Latest remote workflow `31463707001` and Pages deployment `5845430553` succeeded for the starting revision; cache-busted deployed `index.html`, runtime-speed, and identity bytes equal the checkout.
 
 ## Evidence not obtained
 
 - Physical mouse, touch, pen, high-refresh display, and physical-device thermal evidence are unavailable on this host.
-- Baseline structured pacing, projected-globe, release/idle, and Result-footer measurements are still being captured.
+- Final structured pacing, fallback, camera/framing, Result-cycle, Canvas, and accessibility evidence remains pending implementation.
 
 ## Exact next coherent step
 
-Capture the structured browser baseline, then cut over speed policy end-to-end before changing camera or Result presentation.
+Implement the bounded camera-motion controller and projected-geometry World/Home framing, then prove trusted gesture and viewport behavior.

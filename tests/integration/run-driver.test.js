@@ -5,6 +5,7 @@ import { createRunDriver } from '../../src/interface/run-driver.js';
 import { seedForRun } from '../../src/interface/app-data.js';
 import { identityFields } from '../../src/core/world-session.js';
 import { RUN_PROTOCOL_VERSION } from '../../src/core/run-protocol.js';
+import { DEVELOPER_SPEEDS, effectiveGameRateForSpeed } from '../../src/core/runtime-speed.js';
 
 class FakeWorker {
   static instances = [];
@@ -95,19 +96,41 @@ test('retired Worker callbacks cannot kill or mutate same-session fallback autho
   assert.equal(messages.length, before); assert.equal(messages.some((message) => message.t === 'worker-failed'), false);
 }));
 
-test('normal drivers clamp high speed while explicit developer drivers transport 256x', () => withWorkers(() => {
+test('normal drivers clamp high speed while explicit developer drivers transport public multipliers', () => withWorkers(() => {
   const normal = createRunDriver({ worker: true }, () => {}); normal.start({ seed: 20 }, 256);
   const normalWorker = FakeWorker.instances.at(-1); deliver(normalWorker, normal, { t: 'ready' }); normal.ready();
   assert.equal(normalWorker.sent.find((message) => message.t === 'init').developerMode, false);
-  assert.equal(normalWorker.sent.find((message) => message.t === 'speed').value, 8);
-  assert.equal(normal.setSpeed(32), 8); assert.equal(normalWorker.sent.at(-1).value, 8);
+  assert.equal(normalWorker.sent.find((message) => message.t === 'speed').publicMultiplier, 2);
+  assert.equal(normal.setSpeed(32), 2); assert.equal(normalWorker.sent.at(-1).publicMultiplier, 2);
 
-  const developer = createRunDriver({ worker: true }, () => {}, { developerMode: true }); developer.start({ seed: 21 }, 256);
+  const developer = createRunDriver({ worker: true }, () => {}, { developerMode: true }); developer.start({ seed: 21 }, 64);
   const devWorker = FakeWorker.instances.at(-1); deliver(devWorker, developer, { t: 'ready' }); developer.ready();
   assert.equal(devWorker.sent.find((message) => message.t === 'init').developerMode, true);
-  assert.equal(devWorker.sent.find((message) => message.t === 'speed').value, 256);
-  assert.equal(developer.setSpeed(128), 128); assert.equal(devWorker.sent.at(-1).value, 128);
+  assert.equal(devWorker.sent.find((message) => message.t === 'speed').publicMultiplier, 64);
+  assert.equal(developer.setSpeed(32), 32); assert.equal(devWorker.sent.at(-1).publicMultiplier, 32);
 }));
+
+test('fallback terminal authority is identical at every public speed and across mixed speeds', () => {
+  const canonical = (summary) => ({ hash: summary.hash, tick: summary.tick, cause: summary.cause,
+    peakEnvironmentLevel: summary.peakEnvironmentLevel, score: summary.score });
+  const run = (pattern) => {
+    let summary = null; const driver = createRunDriver({ worker: false }, (message) => {
+      if (message.t === 'extinct') summary = message.summary;
+    }, { developerMode: true });
+    driver.start({ seed: 987654, strainId: 'pioneer', worldOrdinal: '1' }, pattern[0]);
+    let frame = 0;
+    while (!summary && frame < 100_000) {
+      if (frame % 37 === 0) driver.setSpeed(pattern[(frame / 37) % pattern.length | 0]);
+      driver.frame(16, 0); frame++;
+    }
+    assert.ok(summary, `fallback did not finish for ${pattern.join(',')}`);
+    assert.equal(driver.timing.effectiveGameRate, effectiveGameRateForSpeed(pattern[(Math.floor((frame - 1) / 37)) % pattern.length]));
+    return canonical(summary);
+  };
+  const reference = run([1]);
+  for (const speed of DEVELOPER_SPEEDS) assert.deepEqual(run([speed]), reference, `${speed}x changed authority`);
+  assert.deepEqual(run([0.25, 2, 0.5, 64, 1, 16, 4, 32, 8]), reference);
+});
 
 test('worker silence requests status then exposes an explicit recoverable failure', () => withWorkers(() => {
   const messages = []; const driver = createRunDriver({ worker: true }, (message) => messages.push(message));

@@ -46,7 +46,7 @@ function runWorker(worker, identity, cfg) {
       if (message.t === 'environment-transition') transitions.push({ tick: message.tick,
         environmentLevel: message.environmentLevel, profileHash: message.profileHash });
       if (message.t === 'ready') {
-        worker.postMessage({ t: 'speed', protocolVersion: RUN_PROTOCOL_VERSION, ...identityFields(identity), value: 256 });
+        worker.postMessage({ t: 'speed', protocolVersion: RUN_PROTOCOL_VERSION, ...identityFields(identity), publicMultiplier: 64 });
         worker.postMessage({ t: 'start', protocolVersion: RUN_PROTOCOL_VERSION, ...identityFields(identity) });
       }
       if (message.t === 'extinct') finish({ result: message.summary, transitions, visualHistoryBuffer: message.visualHistoryBuffer });

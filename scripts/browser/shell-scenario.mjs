@@ -6,7 +6,7 @@ export async function runScenario(t) {
   let boot = await evaluate('window.__CELL_SPHERE_BOOT__'); ok(boot?.playable, 'app did not boot');
   boot = await runStorageResetScenario(t, boot);
   const publicSpeeds = await evaluate(`(()=>({runtime:[...document.getElementById('speed-select').options].map(o=>Number(o.value)),menuSpeed:Boolean(document.getElementById('settings-speed')),dev:window.__CELL_SPHERE_BOOT__.developerMode,marker:document.getElementById('dev-mode-marker').hidden,agent:Object.hasOwn(window,'__CSG_AGENT__')}))()`);
-  ok(publicSpeeds.runtime.join(',') === '1,2,4,8' && !publicSpeeds.menuSpeed
+  ok(publicSpeeds.runtime.join(',') === '0.5,1,2' && !publicSpeeds.menuSpeed
     && !publicSpeeds.dev && publicSpeeds.marker && !publicSpeeds.agent, `public speed isolation failed: ${JSON.stringify(publicSpeeds)}`);
   const retired = await evaluate(`(()=>({controls:['adaptations-button','adaptations-dialog','adaptation-cards','result-adaptations'].every(id=>!document.getElementById(id)),setting:!('adaptationMode' in window.__CELL_SPHERE_APP__.settings),pending:typeof window.__CELL_SPHERE_APP__.pendingCount==='undefined'}))()`);
   ok(retired.controls && retired.setting && retired.pending, `active Adaptations remain: ${JSON.stringify(retired)}`);
@@ -22,7 +22,7 @@ export async function runScenario(t) {
   const fallbackAuthority=await evaluate('window.__CELL_SPHERE_APP__.driver.hasFallback');
   ok(fallbackAuthority===Boolean(t.simulationFallback),`unexpected simulation authority: fallback=${fallbackAuthority}`);
   const setDialSpeed = (speed) => evaluate(`(()=>{const s=document.getElementById('speed-select');s.value='${speed}';s.dispatchEvent(new Event('change'))})()`);
-  await setDialSpeed(1);
+  await setDialSpeed(0.5);
   const dial = () => evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,m=document.querySelector('.clock-minute'),h=document.querySelector('.clock-hour');return {phase:a.timeDial.state.phase,hourPhase:a.timeDial.state.hourPhase,minute:m.style.transform,hour:h.style.transform,minuteWidth:getComputedStyle(m).width,hourWidth:getComputedStyle(h).width}})()`);
   const fullDialBefore = await dial(); await wait(300); const fullDialAfter = await dial();
   const fullDialTurn = (fullDialAfter.phase - fullDialBefore.phase + 360) % 360;
@@ -30,18 +30,18 @@ export async function runScenario(t) {
   ok(fullDialTurn > 0 && fullHourTurn > 0 && fullDialBefore.minute !== fullDialAfter.minute && fullDialBefore.hour !== fullDialAfter.hour
     && fullDialBefore.minuteWidth === fullDialBefore.hourWidth,
     `clock hands did not move or match width: ${JSON.stringify({ fullDialBefore, fullDialAfter })}`);
-  await setDialSpeed(8); const fastDialBefore = await dial(); await wait(300); const fastDialAfter = await dial();
+  await setDialSpeed(2); const fastDialBefore = await dial(); await wait(300); const fastDialAfter = await dial();
   const fastDialTurn = (fastDialAfter.phase - fastDialBefore.phase + 360) % 360;
   const fastHourTurn = (fastDialAfter.hourPhase - fastDialBefore.hourPhase + 360) % 360;
   ok(fastDialTurn > fullDialTurn && fastHourTurn > fullHourTurn,
     `clock did not follow world speed: ${JSON.stringify({ fullDialTurn, fullHourTurn, fastDialTurn, fastHourTurn })}`);
-  await setDialSpeed(1); await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'reduced'})})()`);
+  await setDialSpeed(0.5); await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'reduced'})})()`);
   const reducedDialBefore = await dial(); await wait(600); const reducedDialAfter = await dial();
   const reducedDialTurn = (reducedDialAfter.phase - reducedDialBefore.phase + 360) % 360;
   const reducedHourTurn = (reducedDialAfter.hourPhase - reducedDialBefore.hourPhase + 360) % 360;
   ok(reducedDialTurn > 0 && reducedHourTurn > 0 && reducedDialBefore.minute !== reducedDialAfter.minute
     && reducedDialBefore.hour !== reducedDialAfter.hour, `reduced clock stopped: ${JSON.stringify({ reducedDialBefore, reducedDialAfter })}`);
-  await setDialSpeed(8); const reducedFastBefore = await dial(); await wait(600); const reducedFastAfter = await dial();
+  await setDialSpeed(2); const reducedFastBefore = await dial(); await wait(600); const reducedFastAfter = await dial();
   const reducedFastTurn = (reducedFastAfter.phase - reducedFastBefore.phase + 360) % 360;
   const reducedFastHourTurn = (reducedFastAfter.hourPhase - reducedFastBefore.hourPhase + 360) % 360;
   ok(reducedFastTurn > reducedDialTurn && reducedFastHourTurn > reducedHourTurn,
@@ -81,11 +81,11 @@ export async function runScenario(t) {
     && environmentDetail.expanded === 'true' && environmentDetail.focus === 'metric-heading' && environmentDetail.history && !environmentDetail.rangeInside
     && environmentDetail.summary.includes('Finite resources') && environmentDetail.conditions.includes('Strongest current pressure'),
   `Environment detail route failed: ${JSON.stringify(environmentDetail)}`);
-  const environmentCadence = await evaluate(`new Promise((resolve)=>{const a=window.__CELL_SPHERE_APP__,direct=document.getElementById('metric-direct'),update=a.metricUi.update.bind(a.metricUi),replace=direct.replaceChildren.bind(direct);let updates=0,renders=0;a.metricUi.update=(...args)=>{updates++;return update(...args)};direct.replaceChildren=(...args)=>{renders++;return replace(...args)};setTimeout(()=>{a.metricUi.update=update;delete direct.replaceChildren;resolve({updates,renders,tick:a.snapshot.tick})},650)})`);
-  ok(environmentCadence.updates >= 2 && environmentCadence.renders === 0,
+  const environmentCadence = await evaluate(`(async()=>{const {BALANCE}=await import('./src/game/balance.js');return new Promise((resolve)=>{const a=window.__CELL_SPHERE_APP__,direct=document.getElementById('metric-direct'),update=a.metricUi.update.bind(a.metricUi),replace=direct.replaceChildren.bind(direct),startTick=a.snapshot.tick;let updates=0,renders=0;a.metricUi.update=(...args)=>{updates++;return update(...args)};direct.replaceChildren=(...args)=>{renders++;return replace(...args)};setTimeout(()=>{a.metricUi.update=update;delete direct.replaceChildren;const tick=a.snapshot.tick,maximumRenders=Math.ceil((tick-startTick)/BALANCE.TICKS_PER_SECOND)+1;resolve({updates,renders,startTick,tick,maximumRenders})},650)})})()`);
+  ok(environmentCadence.updates >= 2 && environmentCadence.renders <= environmentCadence.maximumRenders,
     `Environment detail rendered more often than one game-time second: ${JSON.stringify(environmentCadence)}`);
   const environmentBefore = await evaluate(`(()=>({tick:window.__CELL_SPHERE_APP__.snapshot.tick,conditions:document.getElementById('metric-conditions').textContent}))()`);
-  await setDialSpeed(8); await wait(650);
+  await setDialSpeed(2); await wait(650);
   const environmentAfter = await evaluate(`(()=>({tick:window.__CELL_SPHERE_APP__.snapshot.tick,conditions:document.getElementById('metric-conditions').textContent}))()`);
   await setDialSpeed(1);
   ok(environmentAfter.tick > environmentBefore.tick && environmentAfter.conditions !== environmentBefore.conditions,
@@ -142,7 +142,7 @@ export async function runScenario(t) {
   await wait(80); const tickBeforeConfirm = await evaluate('window.__CELL_SPHERE_APP__.snapshot.tick'); await wait(220);
   ok(await evaluate(`window.__CELL_SPHERE_APP__.snapshot.tick`) === tickBeforeConfirm, 'confirmation did not own its pause');
   await trustedId(t, 'new-world-keep'); ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.snapshot.tick'), (tick) => tick > tickBeforeConfirm, 1500), 'Keep watching did not resume');
-  const run8StartedAt = performance.now(); await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,save=a.historyPlayback.save.bind(a.historyPlayback);a.__terminalVisualSaves=[];a.historyPlayback.save=(...args)=>{a.__terminalVisualSaves.push(args[1] instanceof ArrayBuffer);return save(...args)};const s=document.getElementById('speed-select');s.value='8';s.dispatchEvent(new Event('change'))})()`);
+  const run2StartedAt = performance.now(); await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,save=a.historyPlayback.save.bind(a.historyPlayback);a.__terminalVisualSaves=[];a.historyPlayback.save=(...args)=>{a.__terminalVisualSaves.push(args[1] instanceof ArrayBuffer);return save(...args)};const s=document.getElementById('speed-select');s.value='2';s.dispatchEvent(new Event('change'))})()`);
   await setViewport(1440, 900); await wait(120); await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,send=a.driver.message.bind(a.driver);a.__historyDeferred=[];a.__historyOriginalMessage=send;a.driver.message=value=>value.t==='history-buffer'?(a.__historyDeferred.push(value),true):send(value)})()`); await trustedId(t, 'menu-button'); await trustedId(t, 'menu-history'); await wait(160);
   const history = await shellRect(evaluate); const historyLoading=await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return{snapshot:Boolean(a.historySnapshot),active:a.historyPlaybackActive,rangeDisabled:document.getElementById('history-range').disabled,noteHidden:document.getElementById('history-visual-note').hidden,note:document.getElementById('history-visual-note').textContent,time:document.getElementById('history-time-label').textContent}})()`);ok(!historyLoading.snapshot&&!historyLoading.active&&historyLoading.rangeDisabled&&!historyLoading.noteHidden&&historyLoading.note.includes('Loading')&&!historyLoading.time.includes('historical visual checkpoint'),`History loading presented a false checkpoint: ${JSON.stringify(historyLoading)}`);await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.driver.message=a.__historyOriginalMessage;a.__historyOriginalMessage(a.__historyDeferred.pop());delete a.__historyDeferred;delete a.__historyOriginalMessage})()`);ok(history.surface === 'history' && history.left < 30 && history.width <= 520, 'History is not the desktop left shell');
   const historyTracks = await evaluate(`(()=>{const panel=document.getElementById('history-dialog'),body=panel.querySelector('.history-body'),timeline=panel.querySelector('.history-timeline'),p=panel.getBoundingClientRect(),b=body.getBoundingClientRect();return {bodyBounded:b.top>=p.top&&b.bottom<=p.bottom+1,bodyOverflow:getComputedStyle(body).overflowY,timelineOverflow:getComputedStyle(timeline).overflowY,tracks:getComputedStyle(panel).gridTemplateRows.split(' ').length}})()`);
@@ -179,8 +179,8 @@ export async function runScenario(t) {
   await wait(120);developedEcology.decayImage=await screenshot('browser-world-luminous-decayed.png');
   ok(developedEcology.decayImage.hash!==developedEcology.nightImage.hash,'charged and decayed WebGL pixels were identical');
   await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.historySnapshot=null;a.historyPlaybackActive=false;delete a.__luminousDecaySnapshot;delete a.__firstLuminousSnapshot;a.pause.set('browser-luminous',false)})()`);
-  ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 50000), '8x run did not finish');
-  const elapsed = (performance.now() - run8StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=document.getElementById('context-shell'),control=document.getElementById('result-control'),ids=[...document.querySelector('.hud-metrics').children].map(x=>x.id),actions=[...document.querySelectorAll('#result-dialog footer button')].map(x=>x.textContent.trim());return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!control.hidden,resultAction:control.dataset.action,resultClass:control.classList.contains('is-recommended'),resultExpanded:control.getAttribute('aria-expanded'),metricOrder:ids.join('|'),redundant:['result-score-button','result-entropy-button','result-reach-button'].some(id=>document.getElementById(id)),entropy:!document.getElementById('entropy-button'),temporalControlsRemoved:!document.getElementById('event-log-dialog')&&!document.getElementById('current-event-button'),pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,trophies:document.getElementById('result-trophies').textContent,resultEnvironment:document.getElementById('result-environment').textContent,
+  ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 50000), '2x run did not finish');
+  const elapsed = (performance.now() - run2StartedAt) / 1000; const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,s=document.getElementById('context-shell'),control=document.getElementById('result-control'),ids=[...document.querySelector('.hud-metrics').children].map(x=>x.id),actions=[...document.querySelectorAll('#result-dialog footer button')].map(x=>x.textContent.trim());return {score:Number(document.getElementById('result-score').textContent.replaceAll(',','')),scene:a.scene,phase:a.phase,overlay:a.overlay,surface:s.dataset.surface,runVisible:!document.getElementById('run-screen').hidden,resultControl:!control.hidden,resultAction:control.dataset.action,resultClass:control.classList.contains('is-recommended'),resultExpanded:control.getAttribute('aria-expanded'),metricOrder:ids.join('|'),redundant:['result-score-button','result-entropy-button','result-reach-button'].some(id=>document.getElementById(id)),entropy:!document.getElementById('entropy-button'),temporalControlsRemoved:!document.getElementById('event-log-dialog')&&!document.getElementById('current-event-button'),pause:document.getElementById('pause-button').disabled,speed:document.getElementById('speed-select').disabled,trophies:document.getElementById('result-trophies').textContent,resultEnvironment:document.getElementById('result-environment').textContent,
       nextLabel:document.getElementById('result-next-button').textContent,countdown:document.getElementById('result-countdown').textContent,actions,snapshotStatus:a.snapshot?.status,alive:a.snapshot?.metrics?.aliveCount,reach:document.getElementById('hud-reach').textContent,visualSaves:a.__terminalVisualSaves}})()`);
   ok(result.score > 0 && result.scene === 'world' && result.phase === 'result' && result.overlay === 'result' && result.surface === 'result'
     && result.runVisible && result.resultControl && result.resultAction === 'available' && !result.resultClass && result.resultExpanded === 'true'
@@ -364,7 +364,7 @@ async function runStorageResetScenario({ evaluate, wait, poll }, initialBoot) {
   const settingsReset = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__;
     return {schema:a.settings.schema,motion:a.settings.motion,autoContinue:a.settings.autoContinue,speed:a.settings.speed,
       status:b.storageStatus?.documents?.settings?.status}})()`);
-  ok(settingsReset.schema === 6 && settingsReset.autoContinue === true && settingsReset.speed === 1 && settingsReset.status === 'reset',
+  ok(settingsReset.schema === 7 && settingsReset.autoContinue === true && settingsReset.speed === 1 && settingsReset.status === 'reset',
     `mismatched current settings were not reset: ${JSON.stringify(settingsReset)}`);
   const rollback = await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,boot=window.__CELL_SPHERE_BOOT__,
     {createExportData}=await import('./src/interface/app-data.js'),keys=boot.storage,before=Object.fromEntries(Object.entries(keys).map(([k,key])=>[k,localStorage.getItem(key)])),

@@ -9,13 +9,14 @@ import {
   ENVIRONMENT_SCHEDULE_VERSION,
 } from '../game/environment-level.js';
 import { hashStringU32, hexU32 } from '../core/hash.js';
-import { MAX_TICKS_PER_SLICE, snapshotIntervalForSpeed, validateRuntimeSpeed } from '../core/runtime-speed.js';
+import { DEFAULT_RUNTIME_SPEED, effectiveGameRateForSpeed, MAX_TICKS_PER_SLICE,
+  snapshotIntervalForSpeed, validateRuntimeSpeed } from '../core/runtime-speed.js';
 
 export function createRunDriver(caps, onMessage, options = {}) {
   const developerMode = options.developerMode === true;
   let worker = null; let fallback = null; let generation = 0; let transportGeneration = 0;
   let runSequence = 0; let presentationSequence = 0;
-  let activeIdentity = null; let speed = 1; let paused = false; let debt = 0;
+  let activeIdentity = null; let speed = DEFAULT_RUNTIME_SPEED; let paused = false; let debt = 0; let lastTiming = null;
   let lastSnapshot = null; let cfg = null; let authorityStarted = false;
   let settled = null; let abortPending = false; let lastWorkerMessageAt = 0; let statusRequestedAt = 0;
   const now = () => performance.now();
@@ -48,6 +49,7 @@ export function createRunDriver(caps, onMessage, options = {}) {
     lastWorkerMessageAt = now(); statusRequestedAt = 0;
     const envelope = { ...message, ...identityFields(identity) };
     if (message.t === 'snapshot') lastSnapshot = envelope;
+    if (message.t === 'heartbeat' && message.timing) lastTiming = Object.freeze({ ...message.timing });
     if (message.t === 'extinct' || message.t === 'aborted') settled = message.t;
     if (message.t === 'abort-rejected') abortPending = false;
     onMessage(envelope); return true;
@@ -57,8 +59,8 @@ export function createRunDriver(caps, onMessage, options = {}) {
     const session = identity ?? reserveIdentity({ seed: config.seed });
     if (!sameWorldIdentity(session, activeIdentity)) throw new Error('world identity was not reserved');
     cfg = { ...config, ...identityFields(session) };
-    speed = validateRuntimeSpeed(initialSpeed, { developerMode, fallback: 1 });
-    paused = false; debt = 0; lastSnapshot = null; settled = null; abortPending = false; authorityStarted = false;
+    speed = validateRuntimeSpeed(initialSpeed, { developerMode, fallback: DEFAULT_RUNTIME_SPEED });
+    paused = false; debt = 0; lastTiming = null; lastSnapshot = null; settled = null; abortPending = false; authorityStarted = false;
     lastWorkerMessageAt = now(); statusRequestedAt = 0; const token = generation;
     if (caps.worker) try {
       worker = new Worker(new URL('../simulation/protocol/worker-entry.js', import.meta.url), { type: 'module' });
@@ -124,23 +126,26 @@ export function createRunDriver(caps, onMessage, options = {}) {
       if (silent > 2500 && !statusRequestedAt) { statusRequestedAt = time; worker.postMessage({ t: 'status',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity) }); }
       else if (silent > 5000 || (statusRequestedAt && time - statusRequestedAt > 2000)) failWorker('World time stopped responding.'); }
     if (!fallback || paused || !['running', 'terminal-collapse'].includes(fallback.state.status)) return;
-    debt += (dt / 1000) * speed * B.TICKS_PER_SECOND;
+    const effectiveGameRate = effectiveGameRateForSpeed(speed);
+    debt += (dt / 1000) * effectiveGameRate * B.TICKS_PER_SECOND;
     const ticks = Math.min(Math.floor(debt), MAX_TICKS_PER_SLICE); debt -= ticks; if (ticks) fallback.advance(ticks);
+    lastTiming = Object.freeze({ publicMultiplier: speed, effectiveGameRate, tickDebt: debt });
     if (fallback.state.status === 'extinct' || fallback.state.status === 'aborted') return;
     if (time - lastSnapshotTime > snapshotIntervalForSpeed(speed) || !lastSnapshot) { lastSnapshotTime = time;
       emit({ t: 'snapshot', runId: activeIdentity.runId, ...fallback.snapshot() }); }
   }
   let lastSnapshotTime = 0;
   function ready(expected = activeIdentity) { if (!worker || settled || !sameWorldIdentity(expected, activeIdentity)) return false;
-    authorityStarted = true; worker.postMessage({ t: 'speed',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity), value: speed });
+    authorityStarted = true; worker.postMessage({ t: 'speed',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity), publicMultiplier: speed });
     worker.postMessage({ t: 'start',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity) }); return true; }
   function setSpeed(value) { speed = validateRuntimeSpeed(value, { developerMode, fallback: speed });
-    if (worker && activeIdentity) worker.postMessage({ t: 'speed',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity), value: speed }); return speed; }
+    if (worker && activeIdentity) worker.postMessage({ t: 'speed',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity), publicMultiplier: speed }); return speed; }
   function setPaused(value) { paused = value; if (worker && activeIdentity) worker.postMessage({ t: value ? 'pause' : 'resume',protocolVersion:RUN_PROTOCOL_VERSION, ...identityFields(activeIdentity) }); }
   function stop() { generation++; retireWorker(); fallback = null; cfg = null;
-    lastSnapshot = null; activeIdentity = null; authorityStarted = false; settled = null; abortPending = false; debt = 0; statusRequestedAt = 0; lastSnapshotTime = 0; }
+    lastSnapshot = null; activeIdentity = null; authorityStarted = false; settled = null; abortPending = false; debt = 0; lastTiming = null; statusRequestedAt = 0; lastSnapshotTime = 0; }
   return { reserveIdentity, start, stop, abort, ready, message, frame, setSpeed, setPaused,
     installSnapshot(value) { lastSnapshot = value; }, get snapshot() { return lastSnapshot; },
     get hasFallback() { return Boolean(fallback); }, get generation() { return generation; },
-    get identity() { return activeIdentity; }, get runId() { return activeIdentity?.runId ?? 0; }, get outcome() { return settled; } };
+    get identity() { return activeIdentity; }, get runId() { return activeIdentity?.runId ?? 0; }, get outcome() { return settled; },
+    get timing() { return lastTiming; } };
 }

@@ -4,9 +4,10 @@ import { snapshotTransfers } from '../snapshot.js';
 import { BALANCE as B } from '../../game/balance.js';
 import { RUN_PROTOCOL_VERSION, acceptsRunProtocol } from '../../core/run-protocol.js';
 import { createWorldIdentity, identityFields, sameWorldIdentity } from '../../core/world-session.js';
-import { MAX_TICKS_PER_SLICE, snapshotIntervalForSpeed, validateRuntimeSpeed } from '../../core/runtime-speed.js';
+import { DEFAULT_RUNTIME_SPEED, effectiveGameRateForSpeed, MAX_TICKS_PER_SLICE,
+  snapshotIntervalForSpeed, validateRuntimeSpeed } from '../../core/runtime-speed.js';
 
-let controller = null; let identity = null; let speed = 1; let paused = false; let developerMode = false;
+let controller = null; let identity = null; let speed = DEFAULT_RUNTIME_SPEED; let paused = false; let developerMode = false;
 let tickDebt = 0; let lastHeartbeat = 0; let lastSnapshotAt = 0; let lastFrameAt = performance.now();
 
 function post(message, transfers) {
@@ -16,7 +17,8 @@ function post(message, transfers) {
 function heartbeat(force = false) {
   const now = performance.now(); if (!force && now - lastHeartbeat < 1000) return;
   lastHeartbeat = now; post({ t: 'heartbeat', tick: controller?.state.tick ?? 0,
-    status: controller?.state.status ?? 'initializing', paused });
+    status: controller?.state.status ?? 'initializing', paused,
+    timing: Object.freeze({ publicMultiplier: speed, effectiveGameRate: effectiveGameRateForSpeed(speed), tickDebt }) });
 }
 function maybeSnapshot(force = false, now = performance.now()) {
   if (!force && now - lastSnapshotAt < snapshotIntervalForSpeed(speed)) return;
@@ -27,7 +29,7 @@ function frame() {
   const now = performance.now(); const elapsed = Math.max(0, now - lastFrameAt); lastFrameAt = now; heartbeat();
   if (!controller || paused || speed <= 0
       || !['running', 'terminal-collapse'].includes(controller.state.status)) return;
-  tickDebt += (elapsed / 1000) * speed * B.TICKS_PER_SECOND;
+  tickDebt += (elapsed / 1000) * effectiveGameRateForSpeed(speed) * B.TICKS_PER_SECOND;
   const ticks = Math.min(Math.floor(tickDebt), MAX_TICKS_PER_SLICE); tickDebt -= ticks; if (ticks <= 0) return;
   controller.advance(ticks);
   if (controller.state.status !== 'extinct' && controller.state.status !== 'aborted') maybeSnapshot(false, now);
@@ -46,7 +48,7 @@ self.onmessage = (event) => {
     if (message.t === 'init') {
       identity = createWorldIdentity(message); developerMode = message.developerMode === true;
       controller = new RunController({ ...message.cfg, ...identityFields(identity) }, post);
-      paused = false; speed = 1; tickDebt = 0; lastSnapshotAt = 0; lastFrameAt = performance.now();
+      paused = false; speed = DEFAULT_RUNTIME_SPEED; tickDebt = 0; lastSnapshotAt = 0; lastFrameAt = performance.now();
       post({ t: 'ready' }); heartbeat(true); return;
     }
     if (!controller || !sameWorldIdentity(message, identity)) return;
@@ -60,9 +62,10 @@ self.onmessage = (event) => {
         post({ t: 'history-buffer', requestId: message.requestId, buffer }, [buffer]); break;
       }
       case 'speed': {
-        const next = validateRuntimeSpeed(message.value, { developerMode, fallback: speed });
-        const accepted = next === Number(message.value); speed = next;
-        post({ t: accepted ? 'speed-ack' : 'speed-rejected', requested: message.value, value: speed }); break;
+        const next = validateRuntimeSpeed(message.publicMultiplier, { developerMode, fallback: speed });
+        const accepted = next === Number(message.publicMultiplier); speed = next;
+        post({ t: accepted ? 'speed-ack' : 'speed-rejected', requestedPublicMultiplier: message.publicMultiplier,
+          publicMultiplier: speed, effectiveGameRate: effectiveGameRateForSpeed(speed) }); break;
       }
       case 'pause': paused = true; lastFrameAt = performance.now(); heartbeat(true); break;
       case 'resume': paused = false; lastFrameAt = performance.now(); heartbeat(true); break;

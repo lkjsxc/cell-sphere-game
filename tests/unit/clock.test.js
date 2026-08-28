@@ -3,22 +3,23 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createClock, advanceClock } from '../../src/core/clock.js';
-import { advanceTimeDial, createTimeDialState, visualDialRate, VISUAL_DIAL_SPEED_CEILING } from '../../src/interface/policies/time-dial.js';
+import { effectiveGameRateForSpeed } from '../../src/core/runtime-speed.js';
+import { advanceTimeDial, createTimeDialState, visualDialRate, VISUAL_DIAL_GAME_RATE_CEILING } from '../../src/interface/policies/time-dial.js';
 import { pauseLabel } from '../../src/interface/pause-control.js';
 
-test('1x: 100ms yields exactly 1 tick at 10Hz', () => {
+test('effective game rate 1: 100ms yields exactly 1 tick at 10Hz', () => {
   const c = createClock(10);
   assert.equal(advanceClock(c, 100, 1, 1000), 1);
   assert.equal(advanceClock(c, 99, 1, 1000), 0);
   assert.equal(advanceClock(c, 1, 1, 1000), 1); // 200ms accumulated total
 });
 
-test('speed multiplies game time only', () => {
+test('effective game rate multiplies game time only', () => {
   const c = createClock(10);
   assert.equal(advanceClock(c, 1000, 32, 10000), 320);
 });
 
-test('paused speed yields nothing and accumulates nothing', () => {
+test('paused game rate yields nothing and accumulates nothing', () => {
   const c = createClock(10);
   assert.equal(advanceClock(c, 1000, 0, 1000), 0);
   assert.equal(c.accMs, 0);
@@ -42,15 +43,16 @@ test('fractional accumulation is preserved across slices', () => {
 });
 
 test('both visual dial hands move independently, freeze, and follow world speed', () => {
-  const state = createTimeDialState(60); const start = advanceTimeDial(state, 0, { running: true, speed: 1 });
-  const moving = advanceTimeDial(state, 100, { running: true, speed: 1 });
+  const normalRate = effectiveGameRateForSpeed(1); const fastRate = effectiveGameRateForSpeed(2);
+  const state = createTimeDialState(60); const start = advanceTimeDial(state, 0, { running: true, effectiveGameRate: normalRate });
+  const moving = advanceTimeDial(state, 100, { running: true, effectiveGameRate: normalRate });
   assert.ok(moving.minute > start.minute); assert.ok(moving.hour > start.hour);
   assert.ok(moving.minute - start.minute > moving.hour - start.hour);
-  const frozen = advanceTimeDial(state, 1100, { running: true, paused: true, speed: 32 });
-  assert.deepEqual(frozen, moving); const resumed = advanceTimeDial(state, 1200, { running: true, speed: 32 });
+  const frozen = advanceTimeDial(state, 1100, { running: true, paused: true, effectiveGameRate: fastRate });
+  assert.deepEqual(frozen, moving); const resumed = advanceTimeDial(state, 1200, { running: true, effectiveGameRate: fastRate });
   assert.ok(resumed.minute > frozen.minute); assert.ok(resumed.hour > frozen.hour);
   assert.ok(resumed.minute - frozen.minute < 100);
-  const reduced = advanceTimeDial(state, 1300, { running: true, reduced: true, speed: 32 });
+  const reduced = advanceTimeDial(state, 1300, { running: true, reduced: true, effectiveGameRate: fastRate });
   assert.ok(reduced.minute > resumed.minute); assert.ok(reduced.hour > resumed.hour);
   assert.ok(reduced.minute - resumed.minute < resumed.minute - frozen.minute);
   const speeds = [1, 2, 4, 8, 16, 32];
@@ -59,11 +61,11 @@ test('both visual dial hands move independently, freeze, and follow world speed'
     assert.ok(rates.every((rate, index) => index === 0 || rate > rates[index - 1]));
   }
   assert.ok(visualDialRate(1, true) < visualDialRate(1));
-  assert.equal(VISUAL_DIAL_SPEED_CEILING, 32);
+  assert.equal(VISUAL_DIAL_GAME_RATE_CEILING, 32);
   assert.equal(visualDialRate(64), visualDialRate(32)); assert.equal(visualDialRate(256), visualDialRate(32));
 
-  const wrapping = createTimeDialState(350); const beforeWrap = advanceTimeDial(wrapping, 0, { running: true, speed: 32 });
-  const afterWrap = advanceTimeDial(wrapping, 100, { running: true, speed: 32 });
+  const wrapping = createTimeDialState(350); const beforeWrap = advanceTimeDial(wrapping, 0, { running: true, effectiveGameRate: 32 });
+  const afterWrap = advanceTimeDial(wrapping, 100, { running: true, effectiveGameRate: 32 });
   assert.ok(afterWrap.minute < beforeWrap.minute, 'long hand did not wrap');
   assert.ok(afterWrap.hour > beforeWrap.hour, 'short hand reset with the long hand');
 });

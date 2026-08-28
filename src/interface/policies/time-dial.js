@@ -1,13 +1,13 @@
 /** One frame-loop visual clock; it never owns simulation time or pause leases. */
 const FULL_TURN = 360; const BASE_DURATION_MS = 2800; const MIN_DURATION_MS = 450;
 const REDUCED_DURATION_MS = 60_000;
-// Above 32x the visual dial intentionally saturates; the selected multiplier remains visible beside it.
-export const VISUAL_DIAL_SPEED_CEILING = 32;
+// Above effective game rate 32 the dial intentionally saturates; the public multiplier remains visible beside it.
+export const VISUAL_DIAL_GAME_RATE_CEILING = 32;
 export function createTimeDialState(phase = 60) {
   return { phase: finiteAngle(phase), hourPhase: finiteAngle(phase / 12), lastNow: null };
 }
-export function visualDialRate(speed, reduced = false) {
-  const bounded = Math.max(1, Math.min(VISUAL_DIAL_SPEED_CEILING, Number(speed) || 1));
+export function visualDialRate(effectiveGameRate, reduced = false) {
+  const bounded = Math.max(1, Math.min(VISUAL_DIAL_GAME_RATE_CEILING, Number(effectiveGameRate) || 1));
   const duration = (reduced ? REDUCED_DURATION_MS : BASE_DURATION_MS) / Math.sqrt(bounded);
   return FULL_TURN / Math.max(reduced ? 1 : MIN_DURATION_MS, duration);
 }
@@ -16,7 +16,7 @@ export function advanceTimeDial(state, now, options = {}) {
   const elapsed = state.lastNow == null ? 0 : Math.max(0, Math.min(100, time - state.lastNow));
   state.lastNow = time;
   if (options.running && !options.paused) {
-    const delta = elapsed * visualDialRate(options.speed, options.reduced);
+    const delta = elapsed * visualDialRate(options.effectiveGameRate, options.reduced);
     state.phase = finiteAngle(state.phase + delta);
     state.hourPhase = finiteAngle(state.hourPhase + delta / 12);
   }

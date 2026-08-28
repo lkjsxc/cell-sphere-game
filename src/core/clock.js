@@ -18,13 +18,13 @@ export function createClock(ticksPerSecond) {
 /**
  * @param {Clock} clock mutated
  * @param {number} dtRealMs real elapsed milliseconds (already clamped by caller)
- * @param {number} speed multiplier (0 = paused)
+ * @param {number} gameRate effective game seconds per wall second (0 = paused)
  * @param {number} maxTicks hard cap for this slice (prevents spiral of death)
  * @returns {number} integer ticks to simulate now
  */
-export function advanceClock(clock, dtRealMs, speed, maxTicks) {
-  if (speed <= 0 || dtRealMs <= 0) return 0;
-  clock.accMs += dtRealMs * speed;
+export function advanceClock(clock, dtRealMs, gameRate, maxTicks) {
+  if (gameRate <= 0 || dtRealMs <= 0) return 0;
+  clock.accMs += dtRealMs * gameRate;
   const msPerTick = 1000 / clock.tps;
   let ticks = Math.floor(clock.accMs / msPerTick);
   if (ticks <= 0) return 0;

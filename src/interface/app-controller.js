@@ -20,7 +20,7 @@ import { applySafeLayout, safeLayout } from './policies/layout-policy.js'; impor
 import { advanceContinuation, cancelContinuation, completeContinuation, continuationLabel, createContinuation,
   createContinuationInteractionGuard, setContinuationHidden } from './policies/continuation.js';
 import { sameWorldIdentity } from '../core/world-session.js';
-import { isStandardSpeed, renderIntervalForSpeed, validateRuntimeSpeed } from '../core/runtime-speed.js';
+import { effectiveGameRateForSpeed, isStandardSpeed, renderIntervalForSpeed, validateRuntimeSpeed } from '../core/runtime-speed.js';
 import { createWorldReplacementState, finishAbandoned, finishRun, requestWorldReplacement,
   startRun } from './policies/run-session.js';
 import { createNewWorldSurface } from './policies/new-world-surface.js'; import { createHistorySurface } from './history-surface.js'; import { createHistoryPlayback } from './history-playback.js';
@@ -296,7 +296,8 @@ class GameApp {
     finally { this.frameAudit.scheduled++; this.rafId = requestAnimationFrame((time) => this.frame(time)); }
   }
   frameStep(now) { const dt = Math.max(0, now - this.last); this.last = now;
-    this.timeDial.frame(now, { running: this.phase === 'running', paused: this.pause.paused, speed: this.speed, reduced: this.settings.motion === 'reduced' }); this.driver.frame(dt, now);
+    this.timeDial.frame(now, { running: this.phase === 'running', paused: this.pause.paused,
+      effectiveGameRate: effectiveGameRateForSpeed(this.speed), reduced: this.settings.motion === 'reduced' }); this.driver.frame(dt, now);
     if (this.scene === 'home') this.showcase?.update(now, this.settings.motion === 'reduced', document.hidden);
     if (this.phase === 'result' && advanceContinuation(this.continuation, now)) {
       const expected = this.lastResultIdentity; const valid = sameWorldIdentity(expected, this.worldIdentity)
