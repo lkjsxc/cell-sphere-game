@@ -76,7 +76,7 @@ try {
   const lightEvidence = light ? `; paired charge luminance Δ day/night ${light.day.toFixed(3)}/${light.night.toFixed(3)}` : '';
   console.log(forceCanvas?`test:browser:file — PASS (canvas2d fallback; score ${evidence.score}; ${evidence.worldmaking.powered} powered cells (day ${evidence.worldmaking.day.cell}/${evidence.worldmaking.day.charge}/${evidence.worldmaking.day.dot.toFixed(2)}, night ${evidence.worldmaking.night.cell}/${evidence.worldmaking.night.charge}/${evidence.worldmaking.night.dot.toFixed(2)})${lightEvidence}; continuous shell center/limb clear; unified shell, History, Evolution, and Trophies)`
     :`test:browser:file — PASS (${evidence.backend}; ${forceSimulationFallback?'fallback simulation':'Worker simulation'}; unified shell; score ${evidence.score}; `
-      +`2x (effective 8) ${evidence.elapsed.toFixed(2)}s; developer 64x (effective 256) ${tools.developerEvidence.elapsed.toFixed(2)}s; 4 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
+      +`1.5x (effective 6) ${evidence.elapsed.toFixed(2)}s; developer 64x (effective 256) ${tools.developerEvidence.elapsed.toFixed(2)}s; 4 draws; title render mean ${evidence.render.mean.toFixed(2)} ms, p95 ${evidence.render.p95.toFixed(2)} ms; `
       +`${evidence.worldmaking.powered} powered cells (day ${evidence.worldmaking.day.cell}/${evidence.worldmaking.day.charge}/${evidence.worldmaking.day.dot.toFixed(2)}, night ${evidence.worldmaking.night.cell}/${evidence.worldmaking.night.charge}/${evidence.worldmaking.night.dot.toFixed(2)})${lightEvidence}; continuous shell center/limb clear; visual IDB ${evidence.idb?'yes':'unavailable'}; adjacent Evolution purchase ${evidence.nodeId})`);
   if (tools.continuity) console.log(`continuous shell ${JSON.stringify(tools.continuity)}`);
   if (tools.cameraEvidence) console.log(`camera motion ${JSON.stringify(tools.cameraEvidence)}`);
@@ -97,16 +97,16 @@ async function runDeveloperSpeedChecks(tools, publicUrl) {
   await navigate(`${publicUrl}&dev=1`);
   if (!await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000)) throw new Error('developer page did not boot');
   const options = await evaluate(`(()=>({runtime:[...document.getElementById('speed-select').options].map(o=>Number(o.value)),menuSpeed:Boolean(document.getElementById('settings-speed')),marker:!document.getElementById('dev-mode-marker').hidden&&document.getElementById('dev-mode-marker').offsetHeight>0,dev:window.__CELL_SPHERE_BOOT__.developerMode,hook:Object.hasOwn(window,'__CSG_AGENT__')&&window.__CSG_AGENT__===null}))()`);
-  if (options.runtime.join(',') !== '0.25,0.5,1,2,4,8,16,32,64' || options.menuSpeed
+  if (options.runtime.join(',') !== '0.25,0.5,0.75,1,1.25,1.5,2,4,8,16,32,64' || options.menuSpeed
       || !options.marker || !options.dev || !options.hook) throw new Error(`developer speed exposure failed: ${JSON.stringify(options)}`);
   await trustedControl(evaluate, click, '#begin-button');
   if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'running', 5000)) throw new Error('developer check world did not start');
   const runStartedAt = performance.now();
   await trustedControl(evaluate, click, '#speed-select'); for (let index = 0; index < 8; index++) await key('ArrowDown'); await key('Enter'); await wait(120);
   const runtime = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,b=window.__CELL_SPHERE_BOOT__,saved=JSON.parse(localStorage.getItem(b.storage.settings));return {selected:Number(document.getElementById('speed-select').value),runtime:a.speed,durable:a.settings.speed,saved:saved.speed}})()`);
-  if (runtime.selected !== 64 || runtime.runtime !== 64 || runtime.durable > 2 || runtime.saved > 2) throw new Error(`trusted developer runtime selection failed: ${JSON.stringify(runtime)}`);
+  if (runtime.selected !== 64 || runtime.runtime !== 64 || runtime.durable > 1.5 || runtime.saved > 1.5) throw new Error(`trusted developer runtime selection failed: ${JSON.stringify(runtime)}`);
   const isolated = await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,data=await import('./src/interface/app-data.js'),saved=JSON.parse(data.serializeExportData(a.meta,a.archive,{...a.settings,speed:64,developerMode:true}));return {runtime:a.speed,durable:a.settings.speed,exportSpeed:saved.settings.speed,exportDev:'developerMode' in saved.settings}})()`);
-  if (isolated.runtime !== 64 || isolated.durable > 2 || isolated.exportSpeed > 2 || isolated.exportDev) throw new Error(`developer settings leaked: ${JSON.stringify(isolated)}`);
+  if (isolated.runtime !== 64 || isolated.durable > 1.5 || isolated.exportSpeed > 1.5 || isolated.exportDev) throw new Error(`developer settings leaked: ${JSON.stringify(isolated)}`);
   if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'result', 8000, 100)) {
     const state = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {phase:a.phase,tick:a.snapshot?.tick,resultReject:a.__lastResultReject??null}})()`);
     throw new Error(`64x developer world did not reach one result: ${JSON.stringify(state)}`);
@@ -118,7 +118,7 @@ async function runDeveloperSpeedChecks(tools, publicUrl) {
   await navigate(publicUrl);
   if (!await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000)) throw new Error('public page did not return after developer check');
   const normal = await evaluate(`(()=>({options:[...document.getElementById('speed-select').options].map(o=>Number(o.value)),dev:window.__CELL_SPHERE_BOOT__.developerMode,marker:document.getElementById('dev-mode-marker').hidden,hook:Object.hasOwn(window,'__CSG_AGENT__'),speed:window.__CELL_SPHERE_APP__.settings.speed}))()`);
-  if (normal.options.join(',') !== '0.5,1,2' || normal.dev || !normal.marker || normal.hook || normal.speed > 2) throw new Error(`public mode contaminated: ${JSON.stringify(normal)}`);
+  if (normal.options.join(',') !== '0.25,0.5,0.75,1,1.25,1.5' || normal.dev || !normal.marker || normal.hook || normal.speed > 1.5) throw new Error(`public mode contaminated: ${JSON.stringify(normal)}`);
 }
 
 async function trustedControl(evaluate, click, selector) {

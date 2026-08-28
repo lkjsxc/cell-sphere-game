@@ -163,7 +163,7 @@
   .scene-selector { top: calc(var(--sp-1) + var(--safe-top)); width: calc(100vw - var(--sp-2) - var(--safe-left) - var(--safe-right)); }
   #run-screen { padding-top: calc(4rem + var(--safe-top)); }
   .hud-bottom { display: grid; width: 100%; }
-  .command-rail { position: absolute; right: calc(var(--sp-1) + var(--safe-right)); bottom: calc(var(--sp-1) + var(--safe-bottom)); width: auto; grid-template-columns: 90px 4.5rem; }
+  .command-rail { position: absolute; right: calc(var(--sp-1) + var(--safe-right)); bottom: calc(var(--sp-1) + var(--safe-bottom)); width: auto; grid-template-columns: 104px 4.5rem; }
   .rail-btn span { display: inline; }
   #menu-button::before { content: none; }
   .context-shell {
@@ -189,7 +189,7 @@
   .metric-button { min-height: 4.75rem; min-width: 0; }
   .metric-value { font-size: 1rem; }
   #reach-button .metric-value { line-height: 1.05; white-space: normal; }
-  .command-rail { width: auto; grid-template-columns: 90px 4.25rem; }
+  .command-rail { width: auto; grid-template-columns: 104px 4.25rem; }
   .menu-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 420px), (max-height: 650px) {

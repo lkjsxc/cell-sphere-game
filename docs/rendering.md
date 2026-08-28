@@ -42,8 +42,10 @@ while disabling inertia and automatic orbit.
 World/Home default distance is the inverse projection of a target sphere
 diameter using the camera field of view and usable canvas. The target varies
 smoothly from about 1.08 of the shorter dimension in portrait through 0.98 near
-square to 0.90 in wide layouts. Both renderers and picking consume the same
-camera geometry; the atmosphere and four-pass World architecture are unchanged.
+square to 0.90 in wide layouts. Horizontal composition transitions continuously
+from centered portrait to a projected center near two-thirds of usable width in
+sufficiently wide layouts. Both renderers and picking consume the same camera
+geometry; the atmosphere and four-pass World architecture are unchanged.
 
 ## Title evidence
 

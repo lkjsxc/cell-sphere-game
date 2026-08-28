@@ -35,12 +35,14 @@ The globe is the primary interface. A drag turns it immediately, release inertia
 decays within a bounded interval, and Home or World begins a calm idle orbit only
 after inactivity. Reduced motion removes inertia and automatic orbit. Responsive
 framing derives the globe's distance from its projected size instead of device
-distance constants.
+distance constants. Portrait layouts stay centered; sufficiently wide Home and
+World layouts place the projected center near two-thirds of usable width while
+retaining the same globe-size targets.
 
 Result keeps native Next World, Evolution, and History actions beside one
 authority-driven World-cycle ring. Its visible copy has no changing seconds;
 exact remaining time stays available to assistive technology. Any trusted
-interaction cancels automatic continuation for that Result.
+interaction cancels the 13.5-second automatic continuation for that Result.
 
 ## Deterministic contracts
 
@@ -48,10 +50,10 @@ interaction cancels automatic continuation for that Result.
   chronic-pressure profiles, and result authority.
 - Camera, scene, renderer, frame cadence, speed, and visibility never alter
   authoritative ticks or SCORE.
-- Normal player speeds are 0.5×, 1×, and 2×. They deliver effective game-time
-  rates of 2, 4, and 8 game seconds per wall-clock second; 1× is the intended
-  ordinary experience. `?dev=1` adds relative diagnostic multipliers from
-  0.25× through 64× without skipping authoritative ticks.
+- Normal player speeds are 0.25×, 0.5×, 0.75×, 1×, 1.25×, and 1.5×. They
+  deliver effective game-time rates of 1, 2, 3, 4, 5, and 6 game seconds per
+  wall-clock second; 1× is the intended ordinary experience. `?dev=1` adds
+  diagnostic multipliers through 64× without skipping authoritative ticks.
 - Game time owns ecology, Environment Level, SCORE, and History meaning.
   Wall-clock time delivers game time. Animation time owns camera and Result
   presentation, so changing speed cannot accelerate either one.
@@ -89,4 +91,4 @@ npm run test:browser:fallback
 ```
 
 Current implementation status is recorded in
-[`docs/work/autonomous-world-feel-v1/README.md`](docs/work/autonomous-world-feel-v1/README.md).
+[`docs/work/autonomous-world-contract-closure-v1/README.md`](docs/work/autonomous-world-contract-closure-v1/README.md).

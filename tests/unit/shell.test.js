@@ -37,7 +37,7 @@ test('one selector, context shell, compact dock, and ordered terminal metrics ar
   const trophyActions = html.match(/<div class="trophy-actions">[\s\S]*?<\/div>/)?.[0] ?? '';
   for (const actions of [memoryActions, trophyActions]) { assert.match(actions, /Next World/); assert.match(actions, /Menu/); assert.doesNotMatch(actions, /Focus|History/); }
   const speedOptions = [...html.matchAll(/id="speed-select"[\s\S]*?<\/select>/g)][0]?.[0] ?? '';
-  assert.deepEqual([...speedOptions.matchAll(/option value="([\d.]+)"/g)].map((match) => Number(match[1])), [.5, 1, 2]);
+  assert.deepEqual([...speedOptions.matchAll(/option value="([\d.]+)"/g)].map((match) => Number(match[1])), [.25, .5, .75, 1, 1.25, 1.5]);
   const rail = html.match(/<div class="command-rail[\s\S]*?<\/div>\s*<\/div>\s*<\/section>/)?.[0] ?? '';
   assert.match(rail, /pause-button/); assert.match(rail, /speed-select/); assert.match(rail, /menu-button/);
   assert.doesNotMatch(rail, /adaptation|card|offer/i);

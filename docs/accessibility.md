@@ -41,7 +41,8 @@ continuation status and primary action sit outside the scrolling Result body, so
 both remain reachable on compact viewports. A nonnumeric World-cycle ring shows
 bounded progress from the existing continuation authority. A visually hidden
 description exposes exact rounded seconds and the interaction-cancellation rule;
-it updates at most at second boundaries and is not a live region. Counting,
+the 13.5-second default truthfully begins at 14 seconds under ceiling semantics,
+updates at most at second boundaries, and is not a live region. Counting,
 paused, cancelled, disabled, firing, and complete state transitions use text and
 shape as well as color, and meaningful transitions announce once. The persistent
 selector and metric controls remain the primary navigation for SCORE, REACH,
@@ -78,7 +79,9 @@ overflow, 44px selector/metric targets, no dock or shell overlap, stable
 production-formatted metric geometry (including an exact accessible large SCORE),
 terminal footer visibility at 200% text, projected globe geometry, mouse/touch
 release classification, surface-held direct manipulation, reduced motion, and
-camera/detail behavior. Canvas 2D runs the same mobile-to-desktop path.
+camera/detail behavior. The native Game speed select exposes all six ordinary
+values with visible focus and a 44px target at 320×568 and 200% text. Canvas 2D
+runs the same mobile-to-desktop path.
 
 ## Visibility and storage
 

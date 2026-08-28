@@ -9,10 +9,10 @@ Evolution evidence must perform two separate discrete activations: the first
 selects/opens detail and cannot buy; a later activation of that same selected
 ready cell buys exactly one level. Drag, pinch, wheel, blank, cancellation,
 non-ready activation, and stale expected state must not buy. The scenario also
-checks selected/ready/owned semantics, player 0.5×/1×/2× relative multipliers
-against effective rates 2/4/8, explicit developer 0.25×–64× diagnostics,
-current-only storage reset behavior, and absence of retired mid-run choice
-controls.
+checks selected/ready/owned semantics, all six player relative multipliers from
+0.25× through 1.5× against effective rates 1 through 6, explicit developer
+0.25×–64× diagnostics, current-only storage reset behavior, and absence of
+retired mid-run choice controls.
 
 Renderer fixtures bind production-generated deep-Luminous snapshots to the
 current presentation identity, focus comparable charged day/night cells, then

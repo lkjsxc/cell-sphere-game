@@ -1,7 +1,7 @@
 /** Current settings and Evolution persistence contracts. */
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import { defaultSettings, SETTINGS_SCHEMA_VERSION, validateSettings } from '../../src/platform/settings.js';
-import { DEVELOPER_SPEEDS, STANDARD_SPEEDS, developerModeFromSearch, runtimeSpeedOptions,
+import { DEFAULT_RUNTIME_SPEED, DEVELOPER_SPEEDS, STANDARD_SPEEDS, developerModeFromSearch, runtimeSpeedOptions,
   effectiveGameRateForSpeed, renderIntervalForSpeed, snapshotIntervalForSpeed,
   validateRuntimeSpeed } from '../../src/core/runtime-speed.js';
 import { defaultMeta, validateMeta } from '../../src/platform/storage.js';
@@ -22,18 +22,19 @@ test('settings omit retired menu choices and reject mismatched schemas', () => {
 
 test('runtime speed policy is standard by default and developer-only by explicit URL flag', () => {
   assert.deepEqual(runtimeSpeedOptions(false), STANDARD_SPEEDS); assert.deepEqual(runtimeSpeedOptions(true), DEVELOPER_SPEEDS);
-  assert.deepEqual(STANDARD_SPEEDS, [0.5, 1, 2]);
-  assert.deepEqual(DEVELOPER_SPEEDS, [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64]);
+  assert.deepEqual(STANDARD_SPEEDS, [0.25, 0.5, 0.75, 1, 1.25, 1.5]);
+  assert.deepEqual(DEVELOPER_SPEEDS, [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 4, 8, 16, 32, 64]);
+  assert.equal(DEFAULT_RUNTIME_SPEED, 1);
   assert.equal(developerModeFromSearch('?dev=1'), true); assert.equal(developerModeFromSearch('?dev=true'), false);
   assert.equal(developerModeFromSearch('?developerMode=1'), false); assert.equal(developerModeFromSearch(''), false);
-  assert.equal(validateRuntimeSpeed(64, { developerMode: true }), 64); assert.equal(validateRuntimeSpeed(256, { developerMode: false }), 2);
-  assert.equal(validateRuntimeSpeed(32, { developerMode: false }), 2); assert.equal(validateRuntimeSpeed(7, { developerMode: false, fallback: 1 }), 2);
-  assert.equal(effectiveGameRateForSpeed(0.25), 1); assert.equal(effectiveGameRateForSpeed(0.5), 2);
-  assert.equal(effectiveGameRateForSpeed(1), 4); assert.equal(effectiveGameRateForSpeed(2), 8);
+  assert.equal(validateRuntimeSpeed(64, { developerMode: true }), 64); assert.equal(validateRuntimeSpeed(256, { developerMode: false }), 1.5);
+  assert.equal(validateRuntimeSpeed(32, { developerMode: false }), 1.5); assert.equal(validateRuntimeSpeed(7, { developerMode: false, fallback: 1 }), 1.5);
+  assert.deepEqual(STANDARD_SPEEDS.map(effectiveGameRateForSpeed), [1, 2, 3, 4, 5, 6]);
+  assert.equal(effectiveGameRateForSpeed(0.25), 1); assert.equal(effectiveGameRateForSpeed(1.5), 6);
   assert.equal(effectiveGameRateForSpeed(64), 256); assert.equal(effectiveGameRateForSpeed('bad'), 4);
-  assert.deepEqual([0.5, 1, 2].map(snapshotIntervalForSpeed), [90, 90, 90]);
+  assert.deepEqual(STANDARD_SPEEDS.map(snapshotIntervalForSpeed), [90, 90, 90, 90, 90, 90]);
   assert.deepEqual([4, 16, 32, 64].map(snapshotIntervalForSpeed), [120, 150, 180, 220]);
-  assert.deepEqual([0.5, 1, 2].map(renderIntervalForSpeed), [0, 0, 0]);
+  assert.deepEqual(STANDARD_SPEEDS.map(renderIntervalForSpeed), [0, 0, 0, 0, 0, 0]);
   assert.deepEqual([4, 16, 32, 64].map(renderIntervalForSpeed), [66, 84, 100, 120]);
 });
 
@@ -42,6 +43,7 @@ test('settings reject garbage and preserve independent accessibility preferences
     autoContinue: false });
   assert.equal(value.motion, defaultSettings().motion); assert.equal(value.contrast, 'high'); assert.equal(value.quality, 'high');
   assert.equal(value.speed, 1); assert.equal(value.autoContinue, false);
+  assert.equal(validateSettings({ ...defaultSettings(), speed: 2 }).speed, 1, 'developer-only speed persisted');
   assert.equal(validateSettings({ ...defaultSettings(), quality: 'luminous' }).quality, 'auto');
   const caps = { dpr: 3, saveData: false, memoryHint: 8 };
   assert.equal(qualityDpr({ quality: 'high' }, caps), 2); assert.equal(qualityDpr({ quality: 'luminous' }, caps), 1.5);

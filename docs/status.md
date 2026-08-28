@@ -1,60 +1,70 @@
 # Current status
 
-## Autonomous World Feel v1
+## Autonomous World Contract Closure v1
 
-- The normal public speed ladder is 0.5×, 1×, and 2×. One runtime-speed policy
-  converts those public values to effective game rates 2, 4, and 8 before the
-  shared Worker/fallback clocks. New settings default to 1×; mismatched older
-  settings reset under the current-only persistence policy.
-- Game time, wall-clock time, and animation time are separate. Speed changes
-  tick delivery and the World time dial only. Camera inertia/orbit, Result
-  continuation, panels, and focus remain wall-clock presentation.
-- A fixed-capacity presentation controller owns direct gesture samples, bounded
-  release inertia, a 4.5-second idle delay, and a calm Home/World orbit. Trusted
-  interaction, surfaces, focus, scene or World replacement, hidden visibility,
-  and reduced motion clear or hold nonessential motion. Evolution and Trophies
-  never auto-orbit.
-- World/Home distance now derives from projected globe geometry. Required
-  viewport measurements are 1.080 of the shorter canvas in phone portrait,
-  0.989 at 768×1024, and 0.900 in wide/landscape layouts. Primary control
-  centers stay outside the globe's inner 70%, picking remains correct, and
-  same-class resize preserves intentional zoom.
-- Result retains one nine-second, identity-checked continuation authority. A
-  nonnumeric World-cycle ring projects its progress at a bounded cadence; exact
-  remaining seconds are non-live assistive text. Hidden time pauses it and the
-  first trusted interaction cancels it. Native Next World, Evolution, and
-  History actions remain in the fixed footer.
-- Home identifies the product as an autonomous incremental ecology, explains
-  finite-world exhaustion and Echoes/Evolution, and says no tending is required.
-  It does not promise offline progress.
-- Authoritative ecology, Environment Level, SCORE, Echoes, Evolution, History,
-  atmosphere, boundary rendering, and the four-draw WebGL2 World path are
-  unchanged by this campaign.
+- The ordinary native Game speed control exposes exactly 0.25×, 0.5×, 0.75×,
+  1×, 1.25×, and 1.5×. One runtime-speed policy maps those values to effective
+  game rates 1, 2, 3, 4, 5, and 6. `1×` remains the default and intended normal
+  pace. Explicit developer mode adds 2×, 4×, 8×, 16×, 32×, and 64×.
+- Settings schema 8 resets mismatched documents to `1×`; it does not migrate
+  the retired public 2× value to 1.5× or persist diagnostic values. Worker
+  protocol 12 remains current because its generic numeric relative multiplier
+  and shared-validation semantics did not change.
+- Game time, wall-clock delivery, and animation time remain separate. Every
+  authoritative tick executes at every standard and diagnostic speed. Camera
+  motion and Result presentation are not multiplied by speed.
+- Result has one identity-checked continuation authority with an exact 13,500 ms
+  default. The existing nonnumeric ring, ceiling-based assistive seconds, hidden
+  pause, trusted cancellation, preference disablement, one-shot firing, and
+  fixed manual actions remain projections of that authority.
+- World/Home projected diameter remains about 1.08 of the shorter usable canvas
+  in portrait, 0.98 near square/tablet, and 0.90 in wide layouts. Portrait stays
+  centered; sufficiently wide layouts approach two-thirds of usable width,
+  with one continuous transition and shared WebGL2/Canvas picking geometry.
+- The existing orthonormal camera, release inertia, 4.5-second idle delay, calm
+  Home/World orbit, trusted-interaction resets, reduced motion, zoom bounds,
+  autonomous copy, and no-offline-progress contract are unchanged.
+- Simulation, Environment, Evolution, SCORE, Echoes, History, Trophies,
+  atmosphere, cell-boundary rendering, balance, and the four-draw WebGL2 World
+  path are unchanged by this package.
 
 ## Current local evidence
 
-- Focused speed tests and all-speed fallback determinism passed, including a
-  mixed-speed terminal run and Worker/fallback parity.
-- Trusted Chrome for Testing 152 passed Worker/WebGL2, synchronous
-  fallback/WebGL2, and forced Canvas 2D production paths. The scenarios cover
-  public and developer speed isolation, real mouse/touch release inertia,
-  tap/pinch/cancel safeguards, Home idle orbit, surface-held direct drag,
-  reduced/hidden behavior, the eight required viewports, Result
-  progress/accessibility states, forced colors, 200% text, and unattended
-  continuation. WebGL2 remained at four World draws.
-- Eight-second foreground pacing measured 2.022, 4.032, and 7.937 game seconds
-  per wall second at public 0.5×, 1×, and 2× on this host.
-- `npm run test` passed 193 unit and 72 integration tests. The final same-host
-  benchmark measured 12,300 ticks/s versus the 12,579-tick/s baseline (−2.2%),
-  with unchanged authority hash `471ba1cc` and fresh profile hash `bec4a764`.
-- `npm run balance:smoke` retained the fresh 131.7-game-second median and the
-  completed ecology distributions; no simulation rule changed.
-- `npm run showcase:check`, `npm run check:links`, and
-  `npm run check:structure` pass; structure reports only maintainability
-  warnings.
-- Final `npm run verify` passed all 26 gates on stable local content, including
-  193 unit tests, 72 integration tests, terminal extinction, balance smoke,
-  benchmark, showcase, structure, and link validation.
+- Fifty-six focused policy and integration tests pass, including exact option
+  order/conversion, current-only settings reset, all-speed and mixed-speed
+  fallback result equality, Worker/fallback parity, exact continuation timing,
+  hidden/cancel/disabled states, layout continuity, picking, and camera motion.
+- Structured Chrome for Testing 152 reports pass for Worker/WebGL2,
+  fallback/WebGL2, and Worker/Canvas 2D. Worker pacing over fresh eight-second
+  foreground windows measured 0.998, 1.997, 3.029, 4.045, 4.982, and 5.956 game
+  seconds per wall second. Fallback measured 0.997, 1.993, 2.996, 3.977, 4.941,
+  and 5.990; Canvas measured 0.999, 1.998, 2.998, 3.997, 4.996, and 5.996.
+- Real default continuation elapsed 13,657.8 ms in Worker, 13,667.7 ms in
+  fallback, and 13,538.5 ms in Canvas from its authoritative start. All three
+  paths also pass hidden pause, trusted cancellation, disabled state, bounded
+  ring progress, exact assistive cadence, 200% text, reduced motion, and forced
+  colors.
+- Home and World measure center ratios 0.500 in portrait; wide ratios are
+  0.6667 at 844×390, 0.6665 at 1024×600, and 0.6565 at 1440×900. Corresponding
+  left:right ratios are 2.000, 1.999, and 1.912. All eight required viewports
+  retain target diameter within 0.01, center picking, bounded controls, and no
+  horizontal overflow.
+- The full trusted Worker, fallback, and Canvas browser scenarios pass camera
+  gestures, queued-input repair, responsive shell, Result actions, History,
+  Evolution, Trophies, renderer continuity, and World replacement. WebGL2
+  remains at four World draws.
+- The stable-suite benchmark measured 12,701 ticks/s versus the 12,768-tick/s
+  active-checkout baseline (−0.5%), with unchanged authority hash `471ba1cc` and
+  fresh profile hash `bec4a764`. Balance smoke retains the fresh 131.7-second
+  median and every fixture distribution.
+- Final `npm run verify` passes all 26 gates, including 193 unit tests, 72
+  integration tests, production audits, terminal smoke, balance smoke,
+  generated-showcase identity, structure, links, and the benchmark.
 
-CI and Pages evidence is pending the final normal push. Physical-device mouse,
-touch, pen, thermal, and high-refresh evidence is unavailable on this host.
+## External and unavailable evidence
+
+The starting revision `ec02fede…` has successful workflow run `33148901208` and
+Pages deployment `6137086894`. The closure content has not yet been pushed, so
+those identities are orientation evidence rather than release evidence for this
+change. Physical-device mouse, touch, pen, safe-area hardware, high-refresh,
+thermal, and physical-screen-reader evidence is unavailable on this host.

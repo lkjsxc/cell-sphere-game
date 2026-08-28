@@ -4,8 +4,8 @@ Production-module whole-run and cross-boundary tests.
 
 - `determinism.test.js`, `run-driver.test.js`, `world-session.test.js`, and
   `reliability.test.js` protect current run/replay and Worker protocol envelopes,
-  command acknowledgement, Worker/fallback and public 0.5×/1×/2× plus the
-  relative 0.25×–64× developer ladder, bounded
+  command acknowledgement, Worker/fallback and the public six-step
+  0.25×–1.5× ladder plus the relative 0.25×–64× developer ladder, bounded
   terminal behavior, exactly-once replacement/result/frontier transactions, and
   repeated lifecycle safety.
 - `skill-globe.test.js` protects the authored 42-cell Evolution topology, the

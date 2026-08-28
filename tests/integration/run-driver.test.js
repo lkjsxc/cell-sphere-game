@@ -100,8 +100,8 @@ test('normal drivers clamp high speed while explicit developer drivers transport
   const normal = createRunDriver({ worker: true }, () => {}); normal.start({ seed: 20 }, 256);
   const normalWorker = FakeWorker.instances.at(-1); deliver(normalWorker, normal, { t: 'ready' }); normal.ready();
   assert.equal(normalWorker.sent.find((message) => message.t === 'init').developerMode, false);
-  assert.equal(normalWorker.sent.find((message) => message.t === 'speed').publicMultiplier, 2);
-  assert.equal(normal.setSpeed(32), 2); assert.equal(normalWorker.sent.at(-1).publicMultiplier, 2);
+  assert.equal(normalWorker.sent.find((message) => message.t === 'speed').publicMultiplier, 1.5);
+  assert.equal(normal.setSpeed(32), 1.5); assert.equal(normalWorker.sent.at(-1).publicMultiplier, 1.5);
 
   const developer = createRunDriver({ worker: true }, () => {}, { developerMode: true }); developer.start({ seed: 21 }, 64);
   const devWorker = FakeWorker.instances.at(-1); deliver(devWorker, developer, { t: 'ready' }); developer.ready();

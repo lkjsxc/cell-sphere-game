@@ -21,7 +21,7 @@ import { createTopology } from '../../src/world/icosphere.js';
 import { createFields } from '../../src/world/fields.js';
 import { createRng } from '../../src/core/prng.js';
 import { applySafeLayout, cameraDistanceForProjectedDiameter, projectedSphereDiameter, safeLayout,
-  targetGlobeDiameterRatio } from '../../src/interface/policies/layout-policy.js';
+  targetGlobeDiameterRatio, WIDE_GLOBE_CENTER_RATIO } from '../../src/interface/policies/layout-policy.js';
 import { createWorldIdentity } from '../../src/core/world-session.js';
 import { createBlankSnapshot } from '../../src/rendering/blank-snapshot.js';
 import { GLRenderer } from '../../src/rendering/renderer.js';
@@ -33,8 +33,8 @@ import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_HASH,
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(here, p), 'utf8');
 
-test('scene composition is viewport-stable and right-biased only when room exists', () => {
-  const cases = [[1440, 900, .66, .72], [1920, 1080, .66, .72], [1024, 768, .57, .66], [390, 844, .49, .53]];
+test('scene composition is viewport-stable, centered in portrait, and two-thirds wide', () => {
+  const cases = [[1440, 900, .65, .68], [1920, 1080, .65, .68], [1024, 768, .57, .66], [390, 844, .49, .51]];
   for (const [width, height, minimum, maximum] of cases) {
     const a = safeLayout(width, height, 'world'); const b = safeLayout(width, height, 'world');
     const center = .5 + a.offsetX / 2;
@@ -45,6 +45,24 @@ test('scene composition is viewport-stable and right-biased only when room exist
   applySafeLayout(camera, layout, false); const distance = camera.dist;
   applySafeLayout(camera, safeLayout(1440, 900, 'evolution'), true);
   assert.equal(camera.dist, distance); assert.equal(camera.offsetX, layout.offsetX);
+  assert.equal(WIDE_GLOBE_CENTER_RATIO, 2 / 3);
+
+  const required = [[320, 568], [360, 640], [390, 844], [430, 932], [768, 1024],
+    [844, 390], [1024, 600], [1440, 900]];
+  for (const [width, height] of required) {
+    const value = safeLayout(width, height, 'world'); const center = .5 + value.offsetX / 2;
+    if (width < height) assert.ok(center >= .49 && center <= .51, `${width}x${height} portrait center ${center}`);
+    else {
+      const ratio = center / (1 - center);
+      assert.ok(center >= .65 && center <= .68, `${width}x${height} wide center ${center}`);
+      assert.ok(ratio >= 1.9 && ratio <= 2.1, `${width}x${height} left:right ${ratio}`);
+    }
+  }
+
+  const insetLayout = safeLayout(1200, 600, 'world', { left: 40, right: 20 });
+  const insetCenterX = 1200 * (.5 + insetLayout.offsetX / 2);
+  const insetCenterRatio = (insetCenterX - insetLayout.rect.left) / insetLayout.rect.width;
+  assert.ok(insetCenterRatio >= .65 && insetCenterRatio <= .68, `safe-area center ${insetCenterRatio}`);
 });
 
 test('World and Home framing derive distance from the projected globe target', () => {
@@ -72,6 +90,12 @@ test('projected diameter conversion round-trips and varies continuously with asp
   for (const boundary of [.62, .78, 1.1, 1.5]) {
     const left = targetGlobeDiameterRatio(boundary - 1e-7); const right = targetGlobeDiameterRatio(boundary + 1e-7);
     assert.ok(Math.abs(left - right) < 1e-6, `${boundary}: discontinuity ${left} -> ${right}`);
+  }
+  for (const boundary of [.92, 1.72]) {
+    const left = safeLayout((boundary - 1e-5) * 1000, 1000, 'world');
+    const right = safeLayout((boundary + 1e-5) * 1000, 1000, 'world');
+    const leftCenter = .5 + left.offsetX / 2; const rightCenter = .5 + right.offsetX / 2;
+    assert.ok(Math.abs(leftCenter - rightCenter) < .002, `${boundary}: center discontinuity ${leftCenter} -> ${rightCenter}`);
   }
 });
 

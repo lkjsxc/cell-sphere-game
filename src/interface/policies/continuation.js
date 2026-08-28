@@ -1,8 +1,9 @@
 /** Untouched-only, one-shot automatic continuation for a single result generation. */
 const ACTIVE = new Set(['counting', 'paused-hidden']);
 export const CONTINUATION_STYLE_INTERVAL_MS = 1000 / 30;
+export const DEFAULT_CONTINUATION_DURATION_MS = 13_500;
 
-export function createContinuation(durationMs = 9000) {
+export function createContinuation(durationMs = DEFAULT_CONTINUATION_DURATION_MS) {
   return { durationMs, remainingMs: durationMs, status: 'inactive', deadline: 0, lastNow: 0,
     generation: 0, resultKey: null, runId: null, presentationGeneration: null, cancelReason: null };
 }

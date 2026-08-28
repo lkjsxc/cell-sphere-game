@@ -1,6 +1,8 @@
 /** Stable scene composition; transient surfaces never participate. */
 import { FOV_Y } from '../../rendering/camera.js';
 
+export const WIDE_GLOBE_CENTER_RATIO = 2 / 3;
+
 export function safeLayout(width, height, state, insets = {}) {
   const w = Math.max(1, width); const h = Math.max(1, height);
   const left = inset(insets.left, w); const rightInset = inset(insets.right, w - left);
@@ -8,7 +10,8 @@ export function safeLayout(width, height, state, insets = {}) {
   const right = w - rightInset; const bottom = h - bottomInset;
   const usableWidth = Math.max(1, right - left); const usableHeight = Math.max(1, bottom - top);
   const aspect = usableWidth / usableHeight; const slack = smoothstep(.92, 1.72, aspect);
-  const centerX = left + usableWidth * (.5 + .2 * slack);
+  const centerRatio = .5 + (WIDE_GLOBE_CENTER_RATIO - .5) * slack;
+  const centerX = left + usableWidth * centerRatio;
   const portrait = 1 - smoothstep(.72, 1.05, aspect);
   const centerYRatio = state === 'evolution' || state === 'trophies' ? .48 - .1 * portrait
     : state === 'home' ? .5 - .08 * portrait : .48 - .03 * portrait;

@@ -1,8 +1,8 @@
 /** Versioned, validated durable player preferences. */
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
-import { STANDARD_SPEEDS } from '../core/runtime-speed.js';
+import { DEFAULT_RUNTIME_SPEED, STANDARD_SPEEDS } from '../core/runtime-speed.js';
 
-export const SETTINGS_SCHEMA_VERSION = 7;
+export const SETTINGS_SCHEMA_VERSION = 8;
 
 export function defaultSettings() {
   const reduced = typeof matchMedia === 'function'
@@ -13,7 +13,7 @@ export function defaultSettings() {
     contrast: 'normal',
     quality: 'auto',
     autoContinue: true,
-    speed: 1,
+    speed: DEFAULT_RUNTIME_SPEED,
   };
 }
 

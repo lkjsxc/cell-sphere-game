@@ -124,10 +124,11 @@ bundle with the extinction outcome so immediate continuation cannot outrun its
 save. Keep bundles current-only, device-local, newest-ten, and byte-bounded. Evidence: neutrality,
 codec/bounds/stale-load tests and real-Chrome Worker/fallback/Canvas paths.
 
-## D15 — Results continue unless attention says otherwise (visual projection superseded by D23)
+## D15 — Results continue unless attention says otherwise (projection superseded by D23; duration by D24)
 
-Ambient play should not stop at an opaque result card, but progression must
-never be spent implicitly. Keep the terminal world behind a compact strip and
+This is historical evidence for the initial continuation cutover; D24 replaces
+only its nine-second duration. Ambient play should not stop at an opaque result
+card, but progression must never be spent implicitly. Keep the terminal world behind a compact strip and
 start one nine-second next-World continuation authority. Hidden time pauses it; the first
 trusted interaction—including opening or closing a detail surface—cancels it
 permanently for that result. Settings toggles never rearm it. Only explicit
@@ -198,10 +199,12 @@ Trophy, with hover/focus holds and static reduced motion. Evidence: production
 24/240-world audit hash `40aa0e55`, migration/result/queue fake-clock tests, and
 real-browser sequential feedback scenario.
 
-## D21 — Public speed is relative to one normal game-rate baseline
+## D21 — Public speed is relative to one normal game-rate baseline (ladder superseded by D24)
 
-The old player ladder made the intended ordinary pace look like a special 4×
-mode. Store a public relative multiplier, expose 0.5×/1×/2×, and convert once to
+This is historical evidence for the relative-speed cutover; D24 replaces only
+its three-step public and developer option catalogs. The old player ladder made
+the intended ordinary pace look like a special 4× mode. Store a public relative
+multiplier, expose 0.5×/1×/2×, and convert once to
 effective game rate 2/4/8 before Worker or fallback clock accumulation. Developer
 mode extends the relative ladder from 0.25× through 64×. Game time owns tick
 meaning; camera and Result behavior use animation time. Current-only settings
@@ -221,13 +224,31 @@ replacement clear or hold it. Derive World/Home distance from field of view and 
 smooth 1.08/0.98/0.90 projected-diameter target. Evidence: 30/60/120 Hz and
 10,000-step tests plus trusted mouse/touch and eight-viewport browser geometry.
 
-## D23 — Result cycle is one accessible projection of continuation authority
+## D23 — Result cycle is one accessible projection of continuation authority (duration superseded by D24)
 
-D15's identity-checked nine-second authority remains. Replace its changing
-visible integer with a nonnumeric World-cycle ring driven only by normalized
+This is historical evidence for the ring projection; D24 replaces only the
+nine-second duration. D15's identity-checked nine-second authority remains.
+Replace its changing visible integer with a nonnumeric World-cycle ring driven only by normalized
 remaining time. Update the bounded trace near 30 Hz; update exact non-live
 assistive text only at second or state boundaries. Reduced motion removes the
 travelling marker, forced colors retains track/trace, and cancelled/disabled
 states remain textual. No CSS clock, second deadline, or second firing path is
 introduced. Evidence: pure projection/cadence tests, hidden/cancel/disabled/
 one-shot integration, and trusted compact/200%-text browser scenarios.
+
+## D24 — The autonomous World presentation contract uses six speeds, 13.5 seconds, and two-thirds wide framing
+
+Keep `1×` as the intended ordinary pace and the relative-to-effective baseline
+of four. Expose exactly `0.25×/0.5×/0.75×/1×/1.25×/1.5×`, mapping to effective
+game rates `1/2/3/4/5/6`; developer mode adds `2×/4×/8×/16×/32×/64×`. Reset
+mismatched settings at schema 8 rather than semantically migrating old public
+values, and retain generic Worker protocol 12 because its numeric message and
+shared validation meaning did not change. Extend the existing one-shot Result
+authority to exactly 13.5 animation-time seconds without adding a clock or
+firing path. Preserve the `1.08/0.98/0.90` globe-diameter policy while moving
+sufficiently wide Home/World projected centers toward two-thirds of usable
+width and keeping portrait centered through one continuous layout policy.
+Evidence: exact policy/settings/deadline/continuity tests; all-speed and mixed-
+speed authority equality; eight-second Worker/fallback pacing; trusted Worker,
+fallback, and Canvas browser paths; eight viewport geometry; 200% text;
+reduced motion; forced colors; and unchanged four-draw WebGL2 rendering.

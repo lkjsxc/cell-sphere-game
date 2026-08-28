@@ -48,9 +48,10 @@ retention is internal rather than a player-facing preference.
 Game time is fixed-step authority for ecology, Environment Level, SCORE, and
 History. Wall-clock time determines how quickly foreground play supplies game
 time. Animation time drives camera and Result presentation. The public
-0.5×/1×/2× ladder maps to effective game rates 2/4/8; animation-time behavior is
-unchanged by that choice. Closing the page does not advance authority and the
-game makes no offline-progress promise.
+0.25×/0.5×/0.75×/1×/1.25×/1.5× ladder maps to effective game rates 1/2/3/4/5/6;
+animation-time behavior is unchanged by that choice. An untouched Result waits
+13.5 animation-time seconds before continuing. Closing the page does not advance
+authority and the game makes no offline-progress promise.
 
 Direct drag remains immediate on the existing free-orbit camera. A bounded
 recent sample window may produce clamped release inertia, which decays by
@@ -61,8 +62,10 @@ Trophies never auto-orbit.
 
 World and Home framing target an observable projected globe diameter: about
 1.08 of the shorter canvas dimension in portrait, 0.98 around tablet/square,
-and 0.90 in wide layouts, with smooth interpolation. Intentional zoom survives
-a same-class resize; a new World restores the default geometry.
+and 0.90 in wide layouts, with smooth interpolation. Portrait remains centered;
+sufficiently wide layouts place the projected center near two-thirds of usable
+width, with a continuous transition between those compositions. Intentional
+zoom survives a same-class resize; a new World restores the default geometry.
 
 ## Progression
 

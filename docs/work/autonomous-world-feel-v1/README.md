@@ -1,5 +1,15 @@
 # Autonomous World Feel v1
 
+## Historical status
+
+Completed historical evidence. The current six-step public speed catalog,
+13.5-second Result duration, and two-thirds wide composition supersede this
+package's measured three-speed, nine-second, and earlier horizontal-framing
+values; see
+[`../autonomous-world-contract-closure-v1/README.md`](../autonomous-world-contract-closure-v1/README.md).
+The measurements below remain the evidence for the implementation that existed
+at that revision and are not current policy.
+
 ## Starting point
 
 - Branch: `main`, starting revision `9fa658516ab763394b845c02819652a857a8e55a`, tracking `origin/main` at the same revision.
@@ -80,9 +90,10 @@
 ## Evidence not obtained
 
 - Physical mouse, touch, pen, high-refresh display, and physical-device thermal evidence are unavailable on this host.
-- Final structured pacing, CI, and Pages evidence remains pending.
+- Final structured pacing and release evidence was not obtained within this
+  historical package; the successor package owns that closure.
 
 ## Exact next coherent step
 
-Generate the final structured Worker/fallback report, commit the documentation
-and harness closure, push normally, and verify CI and Pages.
+None for this completed package. Continue only through the successor work
+package linked above.

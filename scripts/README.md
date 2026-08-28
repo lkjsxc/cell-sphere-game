@@ -18,6 +18,7 @@ ES modules using Node built-ins only (Node >= 22).
 | `audits/lake-audit.mjs` | `npm run audit:lakes` | Audits 500 seeds for connected whole-cell lake distribution, ecology, determinism, and cost. |
 | `audits/no-disaster-audit.mjs` | `npm run audit:no-disaster` | Verifies chronic pressure and removed gameplay-disaster authority. |
 | `browser-test.mjs` | `npm run test:browser` | Same-origin headless-Chrome boot check; reports sandbox socket blocks as exit 77. |
+| `autonomous-world-feel-audit.mjs` | `npm run audit:autonomous-feel` | Structured six-speed pacing, Home/World geometry, camera, continuation, and accessibility evidence for Worker, fallback, or Canvas. |
 | `browser-file-test.mjs` | `npm run test:browser:file` / `test:browser:canvas` | Socket-free real Chrome harness for WebGL2 and forced Canvas 2D. |
 | `browser/` | via file test | Responsive observational run, surfaces, visual History, Evolution/Trophy spheres, and continuation evidence. |
 

@@ -14,10 +14,11 @@ framing, result actions, and atomic world replacement.
 - `camera-motion.js` and `trusted-interaction.js`: one presentation-only owner
   for bounded inertia/idle orbit and one normalized trusted-activity path.
 - `continuation.js` / `new-world-surface.js`: one-shot Result continuation, its
-  bounded ring/assistive projection, and explicit abandonment. `Next World`
-  never selects or retries a static level.
+  13.5-second default, bounded ring/assistive projection, and explicit
+  abandonment. `Next World` never selects or retries a static level.
 - presentation/time policies: bounded accessible feedback and public
-  0.5×/1×/2× relative speed mapped to effective 2/4/8, with every tick executed.
+  0.25×/0.5×/0.75×/1×/1.25×/1.5× relative speed mapped to effective
+  1/2/3/4/5/6, with every tick executed.
 
 These policies never mutate simulation authority. There is no Adaptation choice,
 static Environment frontier, or gameplay-event control.

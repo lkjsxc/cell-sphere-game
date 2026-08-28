@@ -28,10 +28,11 @@ recorded for the exact revision tested; do not infer browser or device results
 from unit tests.
 
 The normal speed ladder changes wall-clock delivery, not tick content. Public
-0.5×/1×/2× becomes effective game rate 2/4/8 before Worker or fallback debt
-accumulation. Each authority slice remains capped at 64 ticks with debt retained;
-diagnostic presentation cadence is selected from effective rate. Camera and
-continuation use animation time and are not multiplied by speed.
+0.25×/0.5×/0.75×/1×/1.25×/1.5× becomes effective game rate 1/2/3/4/5/6 before
+Worker or fallback debt accumulation. Each authority slice remains capped at 64
+ticks with debt retained; diagnostic presentation cadence is selected from
+effective rate. Camera and the 13.5-second Result continuation use animation
+time and are not multiplied by speed.
 
 ## Commands
 

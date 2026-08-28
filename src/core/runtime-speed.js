@@ -1,8 +1,8 @@
 /** Session speed policy. Settings store public multipliers; clocks consume effective game rate. */
 export const NORMAL_GAME_RATE_BASELINE = 4;
 export const DEFAULT_RUNTIME_SPEED = 1;
-export const STANDARD_SPEEDS = Object.freeze([0.5, 1, 2]);
-export const DEVELOPER_SPEEDS = Object.freeze([0.25, 0.5, 1, 2, 4, 8, 16, 32, 64]);
+export const STANDARD_SPEEDS = Object.freeze([0.25, 0.5, 0.75, 1, 1.25, 1.5]);
+export const DEVELOPER_SPEEDS = Object.freeze([0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 4, 8, 16, 32, 64]);
 export const MAX_TICKS_PER_SLICE = 64;
 
 export function developerModeFromSearch(search = '') {
@@ -16,7 +16,7 @@ export function runtimeSpeedOptions(developerMode = false) {
 
 export function isStandardSpeed(value) { return STANDARD_SPEEDS.includes(Number(value)); }
 
-/** Exact options are accepted. Normal-mode high values clamp to 2; other invalid values use a safe fallback. */
+/** Exact options are accepted. Normal-mode high values clamp to 1.5; other invalid values use a safe fallback. */
 export function validateRuntimeSpeed(value, options = {}) {
   const developerMode = options.developerMode === true; const allowed = runtimeSpeedOptions(developerMode);
   const numeric = Number(value); if (allowed.includes(numeric)) return numeric;

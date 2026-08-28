@@ -10,7 +10,7 @@ mutates simulation arrays, consumes authoritative randomness, or changes SCORE.
 | `policies/run-session.js` | First-wins replacement, neutral Level-0 blank frame, immutable start identity. |
 | `policies/run-result.js` | Validated SCORE/Echo/best-record/History/Trophy transaction. |
 | `policies/camera-motion.js` | Presentation-only direct gesture samples, bounded inertia, idle orbit, and holds. |
-| `policies/continuation.js` | One-shot Result authority and its bounded visual/assistive projection. |
+| `policies/continuation.js` | One-shot 13.5-second Result authority and its bounded visual/assistive projection. |
 | `surfaces.js` / `inspection/` | SCORE/REACH/Environment HUD, dynamic result evidence, metrics, and Inspector. |
 | `panel-surfaces.js` / `progression-spheres.js` | Evolution detail and second-activation transaction. |
 | `history-*` / `app-data.js` | Bounded History and validated import/export. |
@@ -32,6 +32,6 @@ an internal bounded policy. History keeps controls stable above its sole scroll
 owner, renders a complete v3 checkpoint atomically, and stays explicitly
 semantic-only while visual data is loading or unavailable.
 Evolution explains that every world starts at Level 0 and displays the achieved
-best record. Exact values use canonical decimal formatting. Public speed is a
-relative multiplier converted once to effective game rate. Scene/camera/speed
-changes remain authority-neutral.
+best record. Exact values use canonical decimal formatting. The six standard
+public speeds are relative multipliers converted once to effective game rates
+1–6. Scene/camera/speed changes remain authority-neutral.
