@@ -59,3 +59,13 @@ bytes, and timing. Canonical
 entry points are `test:browser:life-boundaries` and
 `test:browser:life-boundaries:canvas`. Physical-device or deployed-byte claims
 require separate actual evidence.
+
+The focused Environment pressure path uses production `RunController`
+snapshots and a terminal Result to prove Level 0, an exact rung, midpoint
+interpolation, and a defended profile through the metric shell. It checks
+whole percentages, accessible names, stable strongest-pressure selection,
+keyboard focus restoration, forced colors, reduced motion, 200% text, and the
+maintained responsive matrix. Canonical entry points are
+`test:browser:environment-pressure`,
+`test:browser:environment-pressure:fallback`, and
+`test:browser:environment-pressure:canvas`.

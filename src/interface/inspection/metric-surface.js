@@ -1,15 +1,11 @@
 /** Stable shared projection and surface for World metrics. */
 import { rankFor } from '../../game/scoring.js';
 import { formatProgressionEngineering, normalizeProgressionInteger, subtractProgressionIntegers } from '../../core/progression-integer.js';
+import { challengeDimensions } from '../../simulation/challenge-profile.js';
 
 const MAX_MILESTONES = 5;
-const ENVIRONMENT_DIMENSIONS = Object.freeze([
-  Object.freeze({ key: 'scarcity', label: 'Resources' }),
-  Object.freeze({ key: 'renewal', label: 'Moisture and renewal' }),
-  Object.freeze({ key: 'climate', label: 'Climate' }),
-  Object.freeze({ key: 'toxicity', label: 'Toxicity' }),
-  Object.freeze({ key: 'maintenance', label: 'Maintenance' }),
-]);
+const ENVIRONMENT_DIMENSIONS = Object.freeze(Object.entries(challengeDimensions())
+  .map(([key, definition]) => Object.freeze({ key, label: definition.label })));
 export function createMetricSurface(options) {
   const surface = byId('metric-dialog'); const body = byId('metric-body');
   const buttons = [...document.querySelectorAll('[data-metric]')];
@@ -82,16 +78,20 @@ function environmentProjection({ snapshot, result } = {}) {
   const startTick = canonical(source.environmentLevelStartTick ?? live.environmentLevelStartTick ?? '0');
   const tick = canonical(source.tick ?? live.tick ?? startTick);
   const nextTick = canonical(source.nextEnvironmentLevelTick ?? live.nextEnvironmentLevelTick ?? tick);
-  const progressQ = clampQ(live.environmentLevelProgressQ ?? source.environmentLevelProgressQ);
-  const remainingTicks = final ? null : remaining(nextTick, tick);
   const pressure = object(source.environmentPressureSummary ?? live.environmentPressureSummary);
+  const progressQ = clampQ(pressure.interpolationQ ?? live.environmentLevelProgressQ ?? source.environmentLevelProgressQ);
+  const remainingTicks = final ? null : remaining(nextTick, tick);
+  const sourceDimensions = object(pressure.dimensions);
+  const detailAvailable = ENVIRONMENT_DIMENSIONS.every(({ key }) => Number.isFinite(sourceDimensions[key]?.pressure));
   const dimensions = ENVIRONMENT_DIMENSIONS.map(({ key, label }) => {
-    const value = object(pressure.dimensions)[key];
+    const value = sourceDimensions[key];
     const amount = finite(value?.pressure);
-    return { key, label, amount, value: pressureLabel(amount) };
+    const percent = Math.round(amount * 100);
+    return { key, label: value?.label === label ? value.label : label, amount,
+      value: `${percent}%`, accessible: `${label} pressure, ${percent} percent` };
   });
-  const strongest = dimensions.reduce((best, dimension) => dimension.amount > best.amount ? dimension : best,
-    { key: null, label: 'Baseline ecology', amount: 0, value: 'Baseline' });
+  const strongest = dimensions.slice(1).reduce((best, dimension) => dimension.amount > best.amount ? dimension : best,
+    dimensions[0]);
   const remainingText = remainingTicks == null ? 'World complete' : gameTime(remainingTicks);
   const timing = final
     ? [
@@ -105,7 +105,8 @@ function environmentProjection({ snapshot, result } = {}) {
       { label: 'This level began', value: gameTime(startTick) },
       { label: 'Next transition', value: gameTime(nextTick) },
     ];
-  const dominant = strongest.amount > 0 ? strongest.label : 'baseline resources and maintenance';
+  const dominant = !detailAvailable ? (final ? 'Unavailable for this completed World' : 'Not available yet')
+    : strongest.amount > 0 ? strongest.label : 'baseline resources and maintenance';
   const summary = final
     ? `This world ended at Environment Level ${number(level)}. Its peak was Level ${number(peak)}.`
     : level === '0'
@@ -118,13 +119,15 @@ function environmentProjection({ snapshot, result } = {}) {
     primaryAccessible: `Environment Level ${level}`,
     summary,
     counts: final
-      ? [{ label: 'Final', value: `Level ${number(level)}` }, { label: 'Peak', value: `Level ${number(peak)}` }, { label: 'Pressure', value: pressureLabel(finite(pressure.pressure)) }]
+      ? [{ label: 'Final', value: `Level ${number(level)}` }, { label: 'Peak', value: `Level ${number(peak)}` }, { label: 'Pressure', value: pressurePercent(pressure.pressure) }]
       : [{ label: 'Current', value: `Level ${number(level)}` }, { label: 'Next', value: remainingText }, { label: 'Progress', value: `${Math.floor(progressQ / 10_000)}%` }],
     directHeading: 'Current chronic pressure',
-    direct: dimensions.map((dimension) => ({ label: dimension.label, value: dimension.value })),
+    direct: detailAvailable
+      ? dimensions.map((dimension) => ({ label: dimension.label, value: dimension.value, accessible: dimension.accessible }))
+      : [{ label: 'Dimension detail', value: final ? 'Unavailable for this completed World' : 'Not available yet' }],
     conditionsHeading: final ? 'Final context' : 'Level timing',
     conditions: [{ label: 'Strongest current pressure', value: dominant }, ...timing],
-    footer: 'Every World starts at Environment Level 0. Evolution can help life endure pressure, but never carries this clock into a new World.',
+    footer: 'Environment rises automatically within the current World. Evolution defenses affect future Worlds. Every new World begins at Level 0.',
   };
 }
 function reachProjection({ snapshot, result } = {}) {
@@ -146,6 +149,7 @@ function reachProjection({ snapshot, result } = {}) {
 function count(item) { const node = document.createElement('div'); node.className = 'metric-count'; node.append(line('span', item.label), line('strong', item.value)); return node; }
 function row(item, onSelect) { const node = document.createElement(item.cells?.length ? 'button' : 'div'); node.className = 'metric-row';
   if (item.cells?.length) { node.type = 'button'; node.addEventListener('click', () => onSelect(item.cells)); }
+  if (item.accessible) { node.setAttribute('role', 'group'); node.setAttribute('aria-label', item.accessible); }
   node.append(line('span', item.label), line('strong', item.value)); return node; }
 function nonempty(items, message) { return items.length ? items : [{ label: message, value: '—' }]; }
 function line(tag, text) { const node = document.createElement(tag); node.textContent = text; return node; }
@@ -170,13 +174,7 @@ function environmentUpdateDue(previous, model) {
   const elapsed = remaining(next.tick, previous.tick);
   return elapsed.length > 2 || Number(elapsed) >= 10;
 }
-function pressureLabel(value) {
-  if (!(value > 0)) return 'Baseline';
-  if (value < .2) return 'Mild';
-  if (value < .5) return 'Rising';
-  if (value < .8) return 'Strong';
-  return 'Severe';
-}
+function pressurePercent(value) { return `${Math.round(finite(value) * 100)}%`; }
 function clampQ(value) { return Math.max(0, Math.min(1_000_000, Math.floor(Number.isFinite(value) ? value : 0))); }
 function finite(value) { return Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0)); }
 function object(value) { return value && typeof value === 'object' ? value : {}; }

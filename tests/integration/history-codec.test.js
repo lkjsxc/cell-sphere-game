@@ -123,14 +123,26 @@ test('current History normalizes bounded semantic cells and rejects mismatched s
 });
 
 test('dynamic History retains bounded authoritative interpolation evidence', () => {
+  const dimensions = Object.fromEntries([
+    ['scarcity', 'Resource yield', .45], ['renewal', 'Renewal', .40], ['climate', 'Climate', .29],
+    ['toxicity', 'Toxicity', .23], ['maintenance', 'Maintenance & transport', .35],
+  ].map(([key, label, pressure]) => [key, { label, pressure }]));
   const history = validateHistory({ schema: 10, worlds: [{ seed: 8, tick: 1500, score: '4', startEnvironmentLevel: '0',
     environmentModelVersion: 2, environmentScheduleVersion: 2, environmentScheduleHash: 'ce29fefd',
+    environmentProfileVersion: 5,
     environmentPressureSummary: { level: '1', nextLevel: '2', profileHash: '01234567', nextProfileHash: '89abcdef',
-      interpolationQ: 500000, effectiveCoefficients: { renewalScale: .82, maintenanceScale: 1.13, ignored: Infinity },
-      pressure: .4, severityQ: 400000 } }] });
+      profileVersion: 5, nextProfileVersion: 5, interpolationQ: 500000,
+      effectiveCoefficients: { resourceYieldScale: .93, renewalScale: .82, maintenanceScale: 1.13, ignored: Infinity },
+      dimensions, pressure: .4, severityQ: 400000 } }] });
   const pressure = history.worlds[0].environmentPressureSummary;
   assert.equal(history.schema, 10); assert.equal(pressure.nextLevel, '2'); assert.equal(pressure.interpolationQ, 500000);
-  assert.deepEqual(pressure.effectiveCoefficients, { renewalScale: .82, maintenanceScale: 1.13 });
+  assert.equal(pressure.detailAvailable, true); assert.equal(pressure.dimensions.scarcity.label, 'Resource yield');
+  assert.deepEqual(pressure.effectiveCoefficients, { resourceYieldScale: .93, renewalScale: .82, maintenanceScale: 1.13 });
+  const legacy = validateHistory({ schema: 10, worlds: [{ seed: 9, tick: 1500, score: '4', startEnvironmentLevel: '0',
+    environmentModelVersion: 2, environmentProfileVersion: 4,
+    environmentPressureSummary: { ...history.worlds[0].environmentPressureSummary, profileVersion: 4, dimensions } }] });
+  assert.equal(legacy.worlds[0].environmentPressureSummary.detailAvailable, false);
+  assert.deepEqual(legacy.worlds[0].environmentPressureSummary.dimensions, {});
 });
 
 test('semantic History enforces its byte bound even with maximum-width exact fields', () => {

@@ -3,6 +3,7 @@ import { buildTrophyFacts, validateTrophyFacts } from '../game/trophies/facts.js
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 import { ENVIRONMENT_MODEL_VERSION, normalizeEnvironmentLevel } from '../game/environment-level.js';
 import { ENVIRONMENT_EXPOSURE_VERSION } from '../game/environment-exposure.js';
+import { challengeDimensions, ENVIRONMENT_PROFILE_VERSION } from '../simulation/challenge-profile.js';
 import { addProgressionIntegers, compareProgressionIntegers, incrementProgressionInteger,
   normalizeProgressionInteger } from '../core/progression-integer.js';
 const MAX_BYTES = 700_000;
@@ -101,7 +102,7 @@ function validateWorld(raw) {
   world.timeAtPeakTicks = normalizeProgressionInteger(raw.timeAtPeakTicks, world.environmentExposure.timeAtPeakTicks);
   world.recentEnvironmentTransitions = validateRecentTransitions(raw.recentEnvironmentTransitions);
   world.currentEnvironmentProfileHash = validHash(raw.currentEnvironmentProfileHash);
-  world.environmentPressureSummary = validatePressureSummary(raw.environmentPressureSummary);
+  world.environmentPressureSummary = validatePressureSummary(raw.environmentPressureSummary, world.environmentProfileVersion);
   if (typeof raw.resultTransactionKey === 'string' && raw.resultTransactionKey.length <= 128) world.resultTransactionKey = raw.resultTransactionKey;
   const trophyFacts = validateTrophyFacts(raw.trophyFacts); if (trophyFacts) world.trophyFacts = trophyFacts; return world;
 }
@@ -130,19 +131,30 @@ function validateRecentTransitions(raw) {
     return { tick, level, profileHash, pressure };
   }).filter(Boolean);
 }
-function validatePressureSummary(raw) {
-  if (!raw || typeof raw !== 'object') return Object.freeze({ level: '0', nextLevel: '0', profileHash: '', nextProfileHash: '',
-    interpolationQ: 0, effectiveCoefficients: Object.freeze({}), pressure: 0, severityQ: 0 });
-  const coefficientKeys = ['renewalScale', 'seasonScale', 'dryingScale', 'heatDriftScale', 'toxinScale',
+function validatePressureSummary(raw, worldProfileVersion = 0) {
+  if (!raw || typeof raw !== 'object') return Object.freeze({ level: '0', nextLevel: '0',
+    profileVersion: worldProfileVersion, nextProfileVersion: 0, profileHash: '', nextProfileHash: '', interpolationQ: 0,
+    effectiveCoefficients: Object.freeze({}), pressure: 0, severityQ: 0,
+    detailAvailable: false, dimensions: Object.freeze({}) });
+  const coefficientKeys = ['resourceYieldScale', 'renewalScale', 'seasonScale', 'dryingScale', 'heatDriftScale', 'toxinScale',
     'maintenanceScale', 'transportStressScale', 'recoveryScale', 'attritionScale'];
   const coefficients = Object.fromEntries(coefficientKeys.flatMap((key) => Number.isFinite(raw.effectiveCoefficients?.[key])
     ? [[key, Math.max(-1_000_000, Math.min(1_000_000, raw.effectiveCoefficients[key]))]] : []));
+  const definitions = challengeDimensions();
+  const detailAvailable = worldProfileVersion === ENVIRONMENT_PROFILE_VERSION
+    && raw.profileVersion === ENVIRONMENT_PROFILE_VERSION
+    && raw.nextProfileVersion === ENVIRONMENT_PROFILE_VERSION
+    && Object.keys(definitions).every((key) => Number.isFinite(raw.dimensions?.[key]?.pressure));
+  const dimensions = detailAvailable ? Object.freeze(Object.fromEntries(Object.entries(definitions).map(([key, definition]) => [key,
+    Object.freeze({ label: definition.label,
+      pressure: Math.max(0, Math.min(1, raw.dimensions[key].pressure)) })]))) : Object.freeze({});
   return Object.freeze({ level: normalizeEnvironmentLevel(raw.level, '0'), nextLevel: normalizeEnvironmentLevel(raw.nextLevel, '0'),
+    profileVersion: worldProfileVersion, nextProfileVersion: detailAvailable ? ENVIRONMENT_PROFILE_VERSION : 0,
     profileHash: validHash(raw.profileHash), nextProfileHash: validHash(raw.nextProfileHash),
     interpolationQ: Math.max(0, Math.min(1_000_000, finiteInt(raw.interpolationQ) ?? 0)),
     effectiveCoefficients: Object.freeze(coefficients),
     pressure: Number.isFinite(raw.pressure) ? Math.max(0, Math.min(1, raw.pressure)) : 0,
-    severityQ: Math.max(0, Math.min(1_000_000, finiteInt(raw.severityQ) ?? 0)) });
+    severityQ: Math.max(0, Math.min(1_000_000, finiteInt(raw.severityQ) ?? 0)), detailAvailable, dimensions });
 }
 
 export function validateHistory(raw) {

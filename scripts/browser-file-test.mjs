@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertBlankReplacement, installFirstReplacementCapture, runScenario } from './browser/shell-scenario.mjs';
+import { assertBlankReplacement, installFirstReplacementCapture, runEnvironmentPressureScenario, runScenario } from './browser/shell-scenario.mjs';
 import { runContinuityFixture } from './browser/continuity-fixture.mjs';
 import { verifyKeyboardInspector } from './browser/inspector-scenario.mjs';
 import { runLifeBoundaryFixture } from './browser/life-boundary-fixture.mjs';
@@ -20,6 +20,7 @@ const forceCanvas=process.argv.includes('--canvas');
 const forceSimulationFallback=process.argv.includes('--simulation-fallback');
 const lifeBoundaryOnly=process.argv.includes('--life-boundary-only');
 const atmosphereOnly=process.argv.includes('--atmosphere-only');
+const environmentPressureOnly=process.argv.includes('--environment-pressure-only');
 const recordBaseline=process.argv.includes('--record-baseline');
 const cohort=process.argv.find((value)=>value.startsWith('--cohort='))?.split('=')[1]?.replace(/[^a-z0-9-]/gi,'');
 const cdpTimeoutMs=Math.max(1000,Math.min(60000,Number(process.env.BROWSER_CDP_TIMEOUT_MS)||(atmosphereOnly?60000:10000)));
@@ -32,7 +33,8 @@ mkdirSync(REPORTS, { recursive: true });
 
 const processChrome = spawn(chrome, [
   '--headless', '--no-sandbox', '--enable-unsafe-swiftshader', '--disable-web-security',
-  '--allow-file-access-from-files', ...(forceCanvas ? ['--disable-webgl'] : []), '--remote-debugging-pipe', `--user-data-dir=${PROFILE}`,
+  '--allow-file-access-from-files', '--disable-breakpad', '--disable-crash-reporter', '--disable-dev-shm-usage',
+  '--disable-features=Crashpad', ...(forceCanvas ? ['--disable-webgl'] : []), '--remote-debugging-pipe', `--user-data-dir=${PROFILE}`,
   '--window-size=390,844', 'about:blank',
 ], { stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'] });
 const cdp = protocol(processChrome);
@@ -97,6 +99,11 @@ try {
     const report=JSON.stringify(evidence,null,2)+'\n';const name=`life-boundary-${label}-${evidence.backend}.json`;
     writeFileSync(resolve(REPORTS,name),report);const hash=createHash('sha256').update(report).digest('hex');
     console.log(`test:browser:life-boundaries — ${recordBaseline?'RECORDED':'PASS'} (${evidence.backend}; report ${name}; sha256 ${hash}; repeat noise ${evidence.repeat.noise.toFixed(6)}; threshold ${evidence.repeat.threshold.toFixed(6)}; steady p95 ${evidence.timing.steady.p95.toFixed(3)} ms; update p95 ${evidence.timing.update.p95.toFixed(3)} ms)`);
+  } else if (environmentPressureOnly) {
+    const evidence = await runEnvironmentPressureScenario(tools);
+    const receipt = writeEnvironmentPressureReport(evidence, browserIdentity, cdp, Boolean(configuredUrl), configuredUrl);
+    console.log(`test:browser:environment-pressure — PASS (${evidence.simulationPath}/${evidence.rendererPath}; `
+      +`profile v${evidence.profileVersion}; report ${receipt.path}; sha256 ${receipt.sha256})`);
   } else {
     if (!forceCanvas) await runDeveloperSpeedChecks(tools, publicUrl);
     else tools.continuity = await runContinuityFixture(tools);
@@ -256,6 +263,18 @@ function writeKineticReleaseReport(evidence, browserIdentity, cdp, fallback, can
   writeFileSync(resolve(REPORTS, name), report);
   return { path: `reports/${name}`, sha256: createHash('sha256').update(report).digest('hex'),
     simulationPath, rendererPath, deployed };
+}
+
+function writeEnvironmentPressureReport(evidence, browserIdentity, cdp, deployed, sourceUrl) {
+  const name = `environment-pressure-differentiation-v1-${deployed ? 'deployed' : 'final'}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
+  const report = `${JSON.stringify({ schema: 1, capturedAt: new Date().toISOString(),
+    revision: process.env.BROWSER_TEST_REVISION?.trim() || gitValue(['rev-parse', 'HEAD']),
+    harnessRevision: gitValue(['rev-parse', 'HEAD']), branch: gitValue(['branch', '--show-current']),
+    workingTreeDirty: Boolean(gitValue(['status', '--porcelain'])), sourceUrl: sourceUrl ?? `file://${ROOT}/index.html`,
+    browser: browserIdentity.product, protocolVersion: browserIdentity.protocolVersion, deployed, ...evidence,
+    browserErrors: cdp.errors.slice(0, 20), browserStderr: cdp.stderr.slice(0, 20) }, null, 2)}\n`;
+  writeFileSync(resolve(REPORTS, name), report);
+  return { path: `reports/${name}`, sha256: createHash('sha256').update(report).digest('hex') };
 }
 
 function gitValue(args) {

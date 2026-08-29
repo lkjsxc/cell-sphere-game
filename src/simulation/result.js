@@ -10,8 +10,8 @@ import { reachGoalSummary } from './lifecycle/reach-goal.js';
 import { environmentExposureSummary } from '../game/environment-exposure.js';
 import { environmentPressureSummary } from './challenge-profile.js';
 
-/** v9: realized-only SCORE and direct Ecology/Luminous evidence. */
-export const RUN_RESULT_SCHEMA_VERSION = 9;
+/** v10: terminal-tick effective Environment pressure and profile identity. */
+export const RUN_RESULT_SCHEMA_VERSION = 10;
 
 export function buildRunResult(s) {
   const scoreProjection = evaluate(metricsFromState(s), { environmentBonusQ: s.scoreMerit.environmentBonusQ }); const conservation = resourceConservation(s);

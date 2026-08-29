@@ -30,8 +30,14 @@ test('agent save schema validates exact browser subdocuments and hashes canonica
   const clean = exportAgentSave(defaultAgentSave(123));
   assert.equal(clean.schema, AGENT_SAVE_SCHEMA); assert.equal(clean.campaignSeed, 123);
   assert.equal(clean.worldOrdinal, '1'); assert.equal(clean.stateHash, hashAgentSave(clean));
-  const migrated = validateAgentSave({ ...clean, schema: 3 });
-  assert.equal(migrated.schema, 6); assert.equal(migrated.meta.schema, 15); assert.equal(migrated.history.schema, 10);
+  const preserved = validateAgentSave({ ...clean, meta: { ...clean.meta, runs: '2', worldSeedIndex: '2' }, lastResult: {
+    resultSchemaVersion: 9, worldOrdinal: '2', startEnvironmentLevel: '0', finalEnvironmentLevel: '2',
+    peakEnvironmentLevel: '2', environmentProfileVersion: 4, score: '10', pressure: { profileVersion: 4,
+      level: '2', pressure: .5, dimensions: { scarcity: { environmentRating: '2000', pressure: .5 } } },
+  } });
+  assert.equal(preserved.schema, 6); assert.equal(preserved.meta.runs, '2'); assert.equal(preserved.history.schema, 10);
+  assert.equal(preserved.lastResult.pressure.detailAvailable, false);
+  assert.deepEqual(preserved.lastResult.pressure.dimensions, {});
   const repaired = validateAgentSave({ ...clean, campaignSeed:-2, goal:'secret-goal',
     worldOrdinal:'999', meta:{ ...clean.meta, echoBalance:'-5' }, history:{ worlds:'bad' } });
   assert.equal(repaired.campaignSeed, 0); assert.equal(repaired.goal, 'balanced');

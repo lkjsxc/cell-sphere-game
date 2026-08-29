@@ -65,6 +65,27 @@ Status: active.
   regeneration, climate changing moisture and temperature, toxicity changing
   accumulated load, maintenance changing metabolism/recovery/transport, and
   scarcity changing energy yield while consumed nutrient remains identical.
+- Added one live current/next pressure projection in the profile owner. It
+  interpolates the five normalized pressures on `environmentLevelProgressQ`,
+  derives aggregate/severity from those values, preserves both profile
+  identities, and removes raw ratings from maintained read projections.
+- Cut terminal Result schema `9` to `10` and fair observation schema `6` to
+  `7`. Run protocol `12`, browser meta `15`, semantic History `10`, replay `9`,
+  and agent save `6` remain unchanged. The agent-save validator now strips
+  incompatible legacy pressure detail while preserving permanent campaign
+  meta and History.
+- History retains v5 dimension percentages only when profile identity and all
+  five values validate. Older profile facts retain trustworthy Level, time,
+  SCORE, aggregate pressure, and terminal evidence while dimension detail is
+  explicitly unavailable; it is never recomputed under v5.
+- Replaced the qualitative-only metric rows with `0%`–`100%` whole
+  percentages, the five authored labels, stable unrounded strongest selection,
+  and static accessible row names. A compact metric surface at `<=420 px` now
+  uses one surface scroll owner so 200% text keeps Close and all rows reachable.
+- Extended the existing metric-shell browser owner with a bounded focused
+  Environment receipt. It covers production snapshots and terminal Result,
+  Worker/WebGL2, fallback/WebGL2, fallback/Canvas 2D, keyboard focus restore,
+  forced colors, reduced motion, 200% text, and the required five viewports.
 
 ## Focused verification
 
@@ -116,6 +137,25 @@ Status: active.
   A later transport-consumer fixture started with zero conductance and could
   not exercise decay; it was corrected to initialize a real active route.
   Neither failed run is counted as evidence.
+- PASS — projection-focused tests plus full `npm test`: `218/218` unit and
+  `72/72` integration tests. Worker/fallback terminal summaries agree exactly;
+  Result captures terminal-tick effective pressure; History v4 detail is
+  omitted and v5 detail retained; the fair agent exposes no `netRating`, raw
+  rating, or effective coefficient.
+- PASS (INTERIM; DIRTY CONTENT TREE, TO BE SUPERSEDED) — Chrome
+  `152.0.7977.64` focused pressure scenarios pass on Worker/WebGL2,
+  fallback/WebGL2, and fallback/Canvas 2D with zero browser-console errors.
+  Level 1 renders `45/40/29/23/35%`; midpoint renders
+  `52/50/43/39/46%`; all required viewports have no horizontal page scroll and
+  exactly one pressure-surface scroll owner. Final revision-bound reruns remain
+  required.
+- FAILED DURING ITERATION — initial browser attempts skipped the World start
+  because the harness assumed a `home` phase instead of the production `idle`
+  phase. A later run used a fontconfig path without its sysroot and Chrome
+  aborted in its font manager. Once the runtime was configured, the first real
+  `320×568`/200% check found Close outside the viewport; the bounded one-scroll
+  layout correction fixed it. None of these failed attempts is counted as a
+  browser pass.
 
 ## Evidence not obtained
 
@@ -126,6 +166,6 @@ Status: active.
 
 ## Exact next coherent step
 
-Commit the coherent profile/consumer cutover, then replace the rung-only raw
-summary with one live effective-pressure projection across snapshots, Results,
-History, the fair agent, and the metric surface.
+Commit the coherent projection/UI/persistence/browser cutover, then select the
+highest passing scarcity cap using development seeds only and run the untouched
+post-change holdout once.

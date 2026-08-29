@@ -113,23 +113,34 @@ export function interpolateEnvironmentCoefficients(current, next, progressQ = 0)
   return Object.freeze(result);
 }
 
-/** Compact player-visible finite projection of authoritative chronic pressure. */
+/**
+ * One finite live projection of authoritative chronic pressure. Dimension
+ * pressure follows the same current-to-next progress basis as coefficients;
+ * raw exact ratings remain private to the compiler and audits.
+ */
 export function environmentPressureSummary(profile, options = {}) {
   const source = profile && typeof profile === 'object' ? profile : compileChallengeProfile();
   const next = options.nextProfile && typeof options.nextProfile === 'object' ? options.nextProfile : source;
   const interpolationQ = Math.max(0, Math.min(1_000_000,
     Number.isInteger(options.progressQ) ? options.progressQ : 0));
+  const interpolation = interpolationQ / 1_000_000;
   const coefficients = options.coefficients && typeof options.coefficients === 'object'
     ? options.coefficients : interpolateEnvironmentCoefficients(source, next, interpolationQ);
-  return Object.freeze({ level: source.environmentLevel, publicRating: source.publicRating,
-    profileHash: source.hash, nextLevel: next.environmentLevel, nextProfileHash: next.hash,
+  const dimensions = Object.freeze(Object.fromEntries(Object.entries(DIMENSIONS).map(([name, definition]) => {
+    const currentPressure = finite(source.dimensions?.[name]?.pressure ?? 0, 0, 1);
+    const nextPressure = finite(next.dimensions?.[name]?.pressure ?? currentPressure, 0, 1);
+    return [name, Object.freeze({ label: definition.label,
+      pressure: finite(currentPressure + (nextPressure - currentPressure) * interpolation, 0, 1) })];
+  })));
+  const pressure = finite(averagePressure(dimensions), 0, 1);
+  return Object.freeze({ level: source.environmentLevel, profileVersion: source.version,
+    profileHash: source.hash, nextLevel: next.environmentLevel, nextProfileVersion: next.version, nextProfileHash: next.hash,
     interpolationQ,
     effectiveCoefficients: Object.freeze(Object.fromEntries(Object.entries(coefficients).map(([key, value]) => [key,
       finite(value, -1_000_000, 1_000_000)]))),
-    pressure: finite(source.score?.pressure ?? 0, 0, 1),
-    severityQ: Math.max(0, Math.min(1_000_000, Math.round((source.score?.severity ?? 0) * 1_000_000))),
-    dimensions: Object.freeze(Object.fromEntries(Object.entries(source.dimensions ?? {}).map(([name, dimension]) => [name,
-      Object.freeze({ netRating: dimension.netRating, pressure: dimension.pressure })]))),
+    pressure,
+    severityQ: Math.max(0, Math.min(1_000_000, Math.round(pressure * 1_000_000))),
+    dimensions,
   });
 }
 

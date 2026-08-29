@@ -24,7 +24,10 @@ test('all fair action shapes use production exact transactions and Level-0 autho
   for (const key of REQUIRED_RESULT_KEYS) assert.ok(key in completed.result, key);
   assert.ok(BigInt(completed.result.score) > 0n);
   assert.equal(completed.result.startEnvironmentLevel, '0');
-  assert.equal(completed.result.resultSchemaVersion, 9); assert.equal(completed.result.environmentProfileVersion, 5);
+  assert.equal(completed.result.resultSchemaVersion, 10); assert.equal(completed.result.environmentProfileVersion, 5);
+  assert.equal(completed.result.pressure.profileVersion, 5);
+  assert.equal(JSON.stringify(completed.result.pressure).includes('netRating'), false);
+  assert.equal(JSON.stringify(completed.result.pressure).includes('effectiveCoefficients'), false);
   assert.equal('eventDirectorVersion' in completed.result, false);
   assert.ok(BigInt(completed.result.peakEnvironmentLevel) >= 1n); assert.ok(completed.result.stateHash);
   const after = env.exportSave(); assert.equal(after.meta.runs, '1'); assert.equal(after.worldOrdinal, '2');
@@ -50,11 +53,15 @@ test('agents cannot select/retry static levels and external budget exhaustion is
     expectedWorldOrdinal: observation.worldOrdinal, environmentLevel: '2' }).reason, 'static-environment-actions-retired');
   const started = env.act({ type: 'start-world', expectedRevision: observation.metaRevision,
     expectedWorldOrdinal: observation.worldOrdinal });
-  assert.equal(started.reason, 'world-started'); assert.equal(started.observation.schema, 6);
+  assert.equal(started.reason, 'world-started'); assert.equal(started.observation.schema, 7);
   assert.equal(started.observation.activeWorld.currentEnvironmentLevel, '0');
   const pressure = started.observation.activeWorld.environmentPressureSummary;
   assert.equal(pressure.level, '0'); assert.equal(pressure.nextLevel, '1'); assert.equal(pressure.interpolationQ, 0);
-  assert.ok(Number.isFinite(pressure.effectiveCoefficients.renewalScale)); assert.equal('events' in pressure.dimensions, false);
+  assert.equal(pressure.profileVersion, 5); assert.equal(pressure.nextProfileVersion, 5);
+  assert.deepEqual(Object.keys(pressure.dimensions), ['scarcity', 'renewal', 'climate', 'toxicity', 'maintenance']);
+  assert.equal(pressure.dimensions.scarcity.label, 'Resource yield');
+  assert.equal('netRating' in pressure.dimensions.scarcity, false);
+  assert.equal('effectiveCoefficients' in pressure, false); assert.equal('events' in pressure.dimensions, false);
   const incomplete = env.act({ type: 'continue-world', budgetTicks: 1 });
   assert.equal(incomplete.accepted, true); assert.equal(incomplete.reason, 'incomplete-budget');
   assert.equal(env.exportSave().meta.runs, '0'); assert.equal(env.exportSave().meta.echoBalance, '0');

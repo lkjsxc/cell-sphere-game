@@ -42,9 +42,15 @@ test('snapshots and results expose the authoritative interpolated pressure summa
   const snapshot = run.snapshot(); const pressure = snapshot.environmentPressureSummary;
   assert.equal(pressure.level, '0'); assert.equal(pressure.nextLevel, '1');
   assert.equal(pressure.interpolationQ, run.state.environmentLevelProgressQ);
+  assert.equal(pressure.profileVersion, run.state.currentEnvironmentProfileVersion);
+  assert.equal(pressure.nextProfileVersion, run.state.nextEnvironmentProfile.version);
   assert.equal(pressure.profileHash, run.state.currentEnvironmentProfileHash);
   assert.equal(pressure.nextProfileHash, run.state.nextEnvironmentProfile.hash);
   assert.deepEqual(pressure.effectiveCoefficients, run.state.environmentCoefficients);
+  for (const key of Object.keys(pressure.dimensions)) {
+    assert.equal(pressure.dimensions[key].pressure,
+      Math.round(run.state.nextEnvironmentProfile.dimensions[key].pressure * .5 * 1_000_000) / 1_000_000);
+  }
   assert.deepEqual(run.buildResult().environmentPressureSummary, pressure);
 });
 

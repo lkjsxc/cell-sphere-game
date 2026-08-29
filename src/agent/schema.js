@@ -3,6 +3,7 @@ import { hashStringU32, hexU32 } from '../core/hash.js';
 import {incrementProgressionInteger,maxProgressionInteger,normalizeProgressionInteger} from '../core/progression-integer.js';
 import { normalizeEnvironmentLevel } from '../game/environment-level.js';
 import { ENVIRONMENT_EXPOSURE_VERSION } from '../game/environment-exposure.js';
+import { challengeDimensions, ENVIRONMENT_PROFILE_VERSION } from '../simulation/challenge-profile.js';
 import { defaultMeta, validateMeta } from '../platform/storage.js';
 import { defaultHistory, validateHistory } from '../platform/history.js';
 
@@ -54,20 +55,21 @@ function validateLastResult(raw) {
   for (const key of ['lake', 'tundra', 'snowIce', 'shallowOcean', 'deepOcean'])
     habitats[key] = integer(raw.habitats?.[key]) ?? 0;
   if (raw.startEnvironmentLevel !== '0' || raw.finalEnvironmentLevel === undefined) return null;
+  const environmentProfileVersion = integer(raw.environmentProfileVersion, 1) ?? 0;
   return Object.freeze({ resultSchemaVersion: integer(raw.resultSchemaVersion, 1) ?? 0, worldOrdinal,
     startEnvironmentLevel: '0',
     finalEnvironmentLevel: normalizeEnvironmentLevel(raw.finalEnvironmentLevel, '0'),
     peakEnvironmentLevel: normalizeEnvironmentLevel(raw.peakEnvironmentLevel, raw.finalEnvironmentLevel ?? '0'),
     bestEnvironmentLevelReached: normalizeEnvironmentLevel(raw.bestEnvironmentLevelReached, '0'),
     environmentScheduleVersion: integer(raw.environmentScheduleVersion, 1) ?? 0,
-    environmentProfileVersion: integer(raw.environmentProfileVersion, 1) ?? 0,
+    environmentProfileVersion,
     environmentExposure: validateExposure(raw.environmentExposure),
     timeAtPeakTicks: normalizeProgressionInteger(raw.timeAtPeakTicks, '0'),
     archetype: text(raw.archetype, 40, 'Living World'), survivalSeconds: finite(raw.survivalSeconds),
     cause: text(raw.cause, 32, 'unknown'), terminalCause: text(raw.terminalCause, 32, 'unknown'),
     score, scoreModelVersion: integer(raw.scoreModelVersion, 1) ?? 1,
     rank: text(raw.rank, 64, 'Seed'), echoes:normalizeProgressionInteger(raw.echoes, '0'), peakReach: fraction(raw.peakReach),
-    pressure:validatePressure(raw.pressure),
+    pressure:validatePressure(raw.pressure, environmentProfileVersion),
     sustainedReach: fraction(raw.sustainedReach), peakConnectedShare: fraction(raw.peakConnectedShare),
     resources: Object.freeze({ initial: finite(raw.resources?.initial), final: finite(raw.resources?.final),
       depletedCells: integer(raw.resources?.depletedCells) ?? 0, recoveredCells: integer(raw.resources?.recoveredCells) ?? 0,
@@ -99,25 +101,34 @@ function validateExposure(raw) {
     peakPressureQ: Math.max(0, Math.min(1_000_000, integer(raw.peakPressureQ) ?? 0)),
     currentLevel: normalizeEnvironmentLevel(raw.currentLevel, '0') });
 }
-function validatePressure(raw) {
+function validatePressure(raw, environmentProfileVersion) {
   if (!raw || typeof raw !== 'object') return null;
-  const dimensions = {};
-  for (const key of ['scarcity','renewal','climate','toxicity','maintenance']) {
-    const value = raw.dimensions?.[key]; dimensions[key] = Object.freeze({
-      environmentRating:normalizeProgressionInteger(value?.environmentRating, '0'),
-      defenseRating:normalizeProgressionInteger(value?.defenseRating, '0'),
-      pressure:fraction(value?.pressure),
-    });
+  const dimensions = {}; const definitions = challengeDimensions();
+  const detailAvailable = environmentProfileVersion === ENVIRONMENT_PROFILE_VERSION
+    && raw.profileVersion === ENVIRONMENT_PROFILE_VERSION
+    && raw.nextProfileVersion === ENVIRONMENT_PROFILE_VERSION
+    && Object.keys(definitions).every((key) => Number.isFinite(raw.dimensions?.[key]?.pressure));
+  if (detailAvailable) {
+    for (const [key, definition] of Object.entries(definitions)) {
+      const value = raw.dimensions?.[key]; dimensions[key] = Object.freeze({
+        label: definition.label, pressure:fraction(value?.pressure),
+      });
+    }
   }
-  return Object.freeze({ version:integer(raw.version, 1) ?? 1, hash:text(raw.hash, 16, ''),
-    level: normalizeEnvironmentLevel(raw.level ?? raw.environmentLevel, '0'),
+  return Object.freeze({ level: normalizeEnvironmentLevel(raw.level ?? raw.environmentLevel, '0'),
+    profileVersion: detailAvailable ? ENVIRONMENT_PROFILE_VERSION : environmentProfileVersion,
+    profileHash: validHash(raw.profileHash), nextLevel: normalizeEnvironmentLevel(raw.nextLevel, raw.level ?? '0'),
+    nextProfileVersion: detailAvailable ? ENVIRONMENT_PROFILE_VERSION : 0,
+    nextProfileHash: detailAvailable ? validHash(raw.nextProfileHash) : '',
+    interpolationQ: Math.max(0, Math.min(1_000_000, integer(raw.interpolationQ) ?? 0)),
     pressure: fraction(raw.pressure), severityQ: Math.max(0, Math.min(1_000_000, integer(raw.severityQ) ?? 0)),
-    dimensions:Object.freeze(dimensions) });
+    detailAvailable, dimensions:Object.freeze(dimensions) });
 }
 function validSeed(value) { return Number.isInteger(value) && value >= 0 && value < SEED_LIMIT; }
 function integer(value, min = 0) { return Number.isFinite(value) && value >= min ? Math.floor(value) : null; }
 function finite(value) { return Number.isFinite(value) && value >= 0 ? value : 0; }
 function fraction(value) { return Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0)); }
 function text(value, max, fallback) { return typeof value === 'string' && value ? value.slice(0, max) : fallback; }
+function validHash(value) { return typeof value === 'string' && /^[0-9a-f]{8}$/.test(value) ? value : ''; }
 function strings(value, max) { return Object.freeze(Array.isArray(value)
   ? [...new Set(value.filter((item) => typeof item === 'string'))].slice(0, max) : []); }

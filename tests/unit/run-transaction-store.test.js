@@ -34,7 +34,7 @@ test('forged SCORE, schedule evidence, profile hash, and skipped world ordinals 
  while (controller.state.status !== 'extinct') controller.advance(64);
  const base = { ...controller.buildResult(), resultTransactionKey: 'forgery-test' };
  const meta={...defaultMeta(),worldSeedIndex:'0'};
- assert.equal(base.resultSchemaVersion, 9);
+ assert.equal(base.resultSchemaVersion, 10);
  assert.equal(applyRunResult(meta,defaultHistory(),{...base,resultSchemaVersion:6}).reason,'invalid-environment-result');
  assert.equal(applyRunResult(meta,defaultHistory(),{...base,scoreProjection:{...base.scoreProjection,total:`9${'8'.repeat(1000)}`}}).reason,'invalid-authority-result');
  const forged = { ...base, scoreMerit: { ...base.scoreMerit, raw: { ...base.scoreMerit.raw, survival: 999, exploration: 999,
@@ -66,7 +66,7 @@ test('old result schemas are rejected rather than migrated', () => {
   while (controller.state.status !== 'extinct') controller.advance(64);
   const base = controller.buildResult();
   assert.equal(applyRunResult({ ...defaultMeta(), worldSeedIndex: '0' }, defaultHistory(),
-    { ...base, resultTransactionKey: 'old-result', resultSchemaVersion: 7 }).reason, 'invalid-environment-result');
+    { ...base, resultTransactionKey: 'old-result', resultSchemaVersion: 9 }).reason, 'invalid-environment-result');
 });
 
 test('monotonic exact world ordinal rejects an old result after bounded receipt eviction',()=>{const meta={...defaultMeta(),runs:'9007199254740993',resultKeys:[]};

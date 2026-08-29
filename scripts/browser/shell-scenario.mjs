@@ -3,6 +3,7 @@ import { assertSkillGeometry } from './evidence.mjs';
 import { verifyKeyboardInspector } from './inspector-scenario.mjs';
 import { measureLuminousHierarchy } from './luminous-fixture.mjs';
 import { verifyResultContinuation } from './result-continuation-scenario.mjs';
+export { runEnvironmentPressureScenario } from './environment-pressure-scenario.mjs';
 export async function runScenario(t) {
   const { evaluate, wait, poll, errors, click, tap, drag, screenshot, setViewport, setMedia, key } = t;
   let boot = await evaluate('window.__CELL_SPHERE_BOOT__'); ok(boot?.playable, 'app did not boot');

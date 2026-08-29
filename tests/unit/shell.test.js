@@ -60,36 +60,51 @@ test('metric projections use actual score and Reach ledger values', () => {
 });
 
 test('Environment metric projection is current-state detail with bounded compact time', () => {
+  const dimensions = (values = {}) => Object.fromEntries([
+    ['scarcity', 'Resource yield'], ['renewal', 'Renewal'], ['climate', 'Climate'],
+    ['toxicity', 'Toxicity'], ['maintenance', 'Maintenance & transport'],
+  ].map(([key, label]) => [key, { label, pressure: values[key] ?? 0 }]));
   const atZero = metricProjection('environment', { snapshot: {
     tick: '0', currentEnvironmentLevel: '0', peakEnvironmentLevel: '0', environmentLevelStartTick: '0', nextEnvironmentLevelTick: '1200', environmentLevelProgressQ: 0,
-    environmentPressureSummary: { pressure: 0, dimensions: {} },
+    environmentPressureSummary: { pressure: 0, interpolationQ: 0, dimensions: dimensions() },
   } });
   assert.equal(atZero.primary, '0'); assert.match(atZero.summary, /Finite resources/);
+  assert.deepEqual(atZero.direct.map((item) => item.value), ['0%', '0%', '0%', '0%', '0%']);
+  assert.equal(atZero.direct[0].accessible, 'Resource yield pressure, 0 percent');
   assert.equal(atZero.conditions.find((item) => item.label === 'Game time remaining').value, '02:00');
   const beforeOne = metricProjection('environment', { snapshot: {
     tick: '1199', currentEnvironmentLevel: '0', peakEnvironmentLevel: '0', environmentLevelStartTick: '0', nextEnvironmentLevelTick: '1200', environmentLevelProgressQ: 999_166,
-    environmentPressureSummary: { pressure: 0, dimensions: {} },
+    environmentPressureSummary: { pressure: 0, interpolationQ: 999_166, dimensions: dimensions() },
   } });
   assert.equal(beforeOne.counts.find((item) => item.label === 'Progress').value, '99%');
   const atOne = metricProjection('environment', { snapshot: {
     tick: '1200', currentEnvironmentLevel: '1', peakEnvironmentLevel: '1', environmentLevelStartTick: '1200', nextEnvironmentLevelTick: '1800', environmentLevelProgressQ: 0,
-    environmentPressureSummary: { pressure: .42, dimensions: {
-      scarcity: { pressure: .1 }, renewal: { pressure: .35 }, climate: { pressure: .42 }, toxicity: { pressure: 0 }, maintenance: { pressure: .2 },
-    } },
+    environmentPressureSummary: { pressure: .42, dimensions: dimensions({
+      scarcity: .1, renewal: .35, climate: .4249, toxicity: 0, maintenance: .2,
+    }) },
   } });
   assert.equal(atOne.primary, '1'); assert.equal(atOne.conditions[0].value, 'Climate');
-  assert.equal(atOne.direct.find((item) => item.label === 'Climate').value, 'Rising');
+  assert.equal(atOne.direct.find((item) => item.label === 'Climate').value, '42%');
+  assert.equal(atOne.direct.find((item) => item.label === 'Maintenance & transport').value, '20%');
   const multiDigit = metricProjection('environment', { snapshot: {
     tick: '7800', currentEnvironmentLevel: '12', peakEnvironmentLevel: '12', environmentLevelStartTick: '7800', nextEnvironmentLevelTick: '8400', environmentLevelProgressQ: 0,
-    environmentPressureSummary: { pressure: .8, dimensions: { maintenance: { pressure: .8 } } },
+    environmentPressureSummary: { pressure: .8, dimensions: dimensions({ maintenance: .8 }) },
   } });
-  assert.equal(multiDigit.primary, '12'); assert.equal(multiDigit.conditions[0].value, 'Maintenance');
+  assert.equal(multiDigit.primary, '12'); assert.equal(multiDigit.conditions[0].value, 'Maintenance & transport');
   const terminal = metricProjection('environment', { result: {
     tick: '8000', finalEnvironmentLevel: '12', peakEnvironmentLevel: '13', environmentLevelStartTick: '7800', nextEnvironmentLevelTick: '8400',
-    timeAtPeakTicks: '900', environmentPressureSummary: { pressure: .8, dimensions: { maintenance: { pressure: .8 } } },
+    timeAtPeakTicks: '900', environmentPressureSummary: { pressure: .8, dimensions: dimensions({ maintenance: .8 }) },
   } });
   assert.equal(terminal.eyebrow, 'FINAL ENVIRONMENT'); assert.equal(terminal.counts[1].value, 'Level 13');
+  assert.equal(terminal.counts[2].value, '80%');
   assert.equal(terminal.conditions.find((item) => item.label === 'Time at peak').value, '01:30');
+  const tie = metricProjection('environment', { snapshot: { currentEnvironmentLevel: '1',
+    environmentPressureSummary: { pressure: .3, dimensions: dimensions({ scarcity: .5, renewal: .5 }) } } });
+  assert.equal(tie.conditions[0].value, 'Resource yield', 'stable dimension order breaks an exact tie');
+  assert.ok(atOne.direct.every((item) => /^\d+%$/.test(item.value)));
+  const legacy = metricProjection('environment', { result: { finalEnvironmentLevel: '2', peakEnvironmentLevel: '2',
+    environmentPressureSummary: { pressure: .5, dimensions: {} } } });
+  assert.equal(legacy.direct[0].value, 'Unavailable for this completed World');
   const huge = `1${'0'.repeat(40)}`;
   const hugeProjection = metricProjection('environment', { snapshot: { currentEnvironmentLevel: huge, tick: huge, environmentLevelStartTick: huge, nextEnvironmentLevelTick: huge,
     environmentPressureSummary: null } });

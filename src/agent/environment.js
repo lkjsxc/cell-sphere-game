@@ -9,7 +9,7 @@ import { ENVIRONMENT_SCHEDULE_HASH } from '../game/environment-level.js';
 import { incrementProgressionInteger, isCanonicalProgressionInteger, maxProgressionInteger,
   normalizeProgressionInteger } from '../core/progression-integer.js';
 import { boundedTransactionKey, hashStringU32 } from '../core/hash.js';
-import { buildAgentObservation } from './observation.js';
+import { buildAgentObservation, publicEnvironmentPressure } from './observation.js';
 import { AGENT_GOALS, defaultAgentSave, exportAgentSave, validateAgentSave } from './schema.js';
 
 const GOALS = new Set(AGENT_GOALS);
@@ -180,6 +180,7 @@ export function createAgentEnvironment(raw = defaultAgentSave()) {
     return Object.freeze({ worldOrdinal: activeWorld.worldOrdinal, tick: snapshot.tick, status: snapshot.status,
       currentEnvironmentLevel: snapshot.currentEnvironmentLevel, peakEnvironmentLevel: snapshot.peakEnvironmentLevel,
       environmentScheduleVersion: snapshot.environmentScheduleVersion,
+      environmentProfileVersion: snapshot.environmentProfileVersion,
       environmentLevelStartTick: snapshot.environmentLevelStartTick,
       nextEnvironmentLevelTick: snapshot.nextEnvironmentLevelTick,
       environmentLevelProgressQ: snapshot.environmentLevelProgressQ,
@@ -215,7 +216,7 @@ function curateResult(result, transaction) {
     archetype: result.archetype, survivalSeconds: result.survivalSeconds, cause: result.cause,
     terminalCause: result.terminalCause, score: transaction.score.total, scoreModelVersion: transaction.score.modelVersion,
     rank: transaction.score.rank.en, echoes: transaction.score.echoes,
-    pressure: result.environmentPressureSummary, peakReach: result.peakCoverage, sustainedReach: result.sustainedCoverage,
+    pressure: publicEnvironmentPressure(result.environmentPressureSummary), peakReach: result.peakCoverage, sustainedReach: result.sustainedCoverage,
     peakConnectedShare: result.peakConnectedShare,
     resources: Object.freeze({ initial: result.resourceInitial, final: result.resourceFinal,
       depletedCells: result.resourceDepletedCells, recoveredCells: result.resourceRecoveredCells,

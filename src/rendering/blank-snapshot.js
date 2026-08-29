@@ -2,7 +2,12 @@
 import { createWorldIdentity, identityFields } from '../core/world-session.js';
 import { environmentScheduleAtTick } from '../game/environment-level.js';
 import { createEnvironmentExposure, environmentExposureSummary } from '../game/environment-exposure.js';
-import { ENVIRONMENT_PROFILE_VERSION } from '../simulation/challenge-profile.js';
+import { compileChallengeProfile, environmentPressureSummary, ENVIRONMENT_PROFILE_VERSION } from '../simulation/challenge-profile.js';
+
+const BLANK_ENVIRONMENT_PRESSURE = environmentPressureSummary(
+  compileChallengeProfile({ environmentLevel: '0' }),
+  { nextProfile: compileChallengeProfile({ environmentLevel: '1' }), progressQ: 0 },
+);
 
 export function createBlankSnapshot(nodeCount, identity) {
   if (!Number.isInteger(nodeCount) || nodeCount <= 0) throw new Error('invalid blank snapshot node count');
@@ -20,8 +25,7 @@ export function createBlankSnapshot(nodeCount, identity) {
     currentEnvironmentLevel: '0', peakEnvironmentLevel: '0', environmentLevelStartTick: '0',
     nextEnvironmentLevelTick: schedule.nextEnvironmentLevelTick, environmentLevelProgressQ: 0,
     environmentTransitionCount: '0', environmentExposure: environmentExposureSummary(createEnvironmentExposure('0')),
-    environmentPressureSummary: Object.freeze({ level: '0', publicRating: '0', profileHash: null, nextLevel: '0', nextProfileHash: null,
-    interpolationQ: 0, effectiveCoefficients: Object.freeze({}), pressure: 0, severityQ: 0, dimensions: Object.freeze({}) }),
+    environmentPressureSummary: BLANK_ENVIRONMENT_PRESSURE,
     biomass: new Float32Array(nodeCount), stress: new Float32Array(nodeCount),
     alive: new Uint8Array(nodeCount), lifeState: new Uint8Array(nodeCount), resourceRichnessQ: new Uint8Array(nodeCount),
     reserveFractionQ: new Uint8Array(nodeCount), resourceState: new Uint8Array(nodeCount),

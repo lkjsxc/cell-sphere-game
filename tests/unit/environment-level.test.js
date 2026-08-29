@@ -17,6 +17,7 @@ import {
   ENVIRONMENT_RATING_PER_LEVEL,
   RESOURCE_YIELD_EFFECT_CAP,
   challengeDimensions,
+  environmentPressureSummary,
   environmentProfileHash,
   compileChallengeProfile,
   pressureForNetRating,
@@ -127,6 +128,31 @@ test('fresh dimension trajectories are distinct and change leadership as authore
   for (let index = 0; index < profiles.length; index++) {
     const actual = Object.values(profiles[index].dimensions).map((value) => value.pressure);
     actual.forEach((value, dimension) => assert.ok(Math.abs(value - expected[index][dimension]) < .001));
+  }
+});
+
+test('live pressure projection interpolates dimensions and aggregate from one progress basis', () => {
+  const current = compileChallengeProfile({ environmentLevel: '1', evolution: undefended });
+  const next = compileChallengeProfile({ environmentLevel: '2', evolution: undefended });
+  for (const progressQ of [0, 500_000, 999_999]) {
+    const summary = environmentPressureSummary(current, { nextProfile: next, progressQ });
+    assert.equal(summary.profileVersion, CHALLENGE_PROFILE_VERSION);
+    assert.equal(summary.nextProfileVersion, CHALLENGE_PROFILE_VERSION);
+    assert.equal(summary.profileHash, current.hash); assert.equal(summary.nextProfileHash, next.hash);
+    assert.equal(summary.interpolationQ, progressQ);
+    const q = progressQ / 1_000_000; let total = 0;
+    for (const [key, definition] of Object.entries(challengeDimensions())) {
+      const expected = Math.round((current.dimensions[key].pressure
+        + (next.dimensions[key].pressure - current.dimensions[key].pressure) * q) * 1_000_000) / 1_000_000;
+      assert.equal(summary.dimensions[key].label, definition.label);
+      assert.equal(summary.dimensions[key].pressure, expected);
+      assert.equal('netRating' in summary.dimensions[key], false);
+      total += expected;
+    }
+    const aggregate = Math.round((total / 5) * 1_000_000) / 1_000_000;
+    assert.equal(summary.pressure, aggregate);
+    assert.equal(summary.severityQ, Math.round(aggregate * 1_000_000));
+    assert.equal('publicRating' in summary, false);
   }
 });
 

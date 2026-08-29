@@ -4,9 +4,10 @@ import { TROPHIES } from '../game/trophies/index.js';
 import { compileEvolution, evolutionCellState, getMemoryAdjacentIds, groupAccessibleMemory, previewEvolutionLevel } from '../game/skills/index.js';
 import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_HASH, ENVIRONMENT_SCHEDULE_VERSION, environmentScheduleAtTick } from '../game/environment-level.js';
 import { addProgressionIntegers, formatProgressionEngineering, incrementProgressionInteger, maxProgressionInteger, normalizeProgressionInteger } from '../core/progression-integer.js';
+import { challengeDimensions } from '../simulation/challenge-profile.js';
 import { AGENT_GOALS } from './schema.js';
 
-export const OBSERVATION_SCHEMA = 6;
+export const OBSERVATION_SCHEMA = 7;
 export const OBSERVATION_KEYS = Object.freeze([
   'schema', 'metaRevision', 'worldOrdinal', 'activeWorld', 'environmentSchedule', 'bestEnvironmentLevelReached',
   'bestEnvironmentExposure', 'echoBalance', 'echoBalanceFormatted', 'scoreModelVersion', 'bestScore', 'evolutionSummary',
@@ -40,7 +41,7 @@ function publicActiveWorld(active) { if (!active) return null; return Object.fre
   currentEnvironmentLevel: active.currentEnvironmentLevel, peakEnvironmentLevel: active.peakEnvironmentLevel,
   environmentScheduleVersion: active.environmentScheduleVersion, environmentProfileVersion: Number.isInteger(active.environmentProfileVersion) ? active.environmentProfileVersion : 0,
   environmentLevelStartTick: active.environmentLevelStartTick, nextEnvironmentLevelTick: active.nextEnvironmentLevelTick,
-  environmentLevelProgressQ: active.environmentLevelProgressQ, environmentPressureSummary: publicPressure(active.environmentPressureSummary),
+  environmentLevelProgressQ: active.environmentLevelProgressQ, environmentPressureSummary: publicEnvironmentPressure(active.environmentPressureSummary),
   environmentExposure: publicExposure(active.environmentExposure), resources: Object.freeze({ ...active.resources }), reach: active.reach,
   luminous: Object.freeze({ ...active.luminous }), }); }
 function publicExposure(raw) { if (!raw || typeof raw !== 'object') return Object.freeze({ version: 0, totalTicks: '0', pressureTicksQ: '0', qualityPressureTicksQ: '0', timeAtPeakTicks: '0', peakPressureQ: 0, currentLevel: '0' });
@@ -48,13 +49,16 @@ function publicExposure(raw) { if (!raw || typeof raw !== 'object') return Objec
     pressureTicksQ: normalizeProgressionInteger(raw.pressureTicksQ, '0'), qualityPressureTicksQ: normalizeProgressionInteger(raw.qualityPressureTicksQ, '0'),
     timeAtPeakTicks: normalizeProgressionInteger(raw.timeAtPeakTicks, '0'), peakPressureQ: Number.isInteger(raw.peakPressureQ) ? Math.max(0, Math.min(1_000_000, raw.peakPressureQ)) : 0,
     currentLevel: normalizeProgressionInteger(raw.currentLevel, '0') }); }
-function publicPressure(raw) { const coefficients = {}; const dimensions = {};
-  for (const [key, value] of Object.entries(raw?.effectiveCoefficients ?? {})) if (/^[a-z][A-Za-z0-9]{0,63}$/.test(key) && Number.isFinite(value)) coefficients[key] = Math.max(-1_000_000, Math.min(1_000_000, value));
-  for (const [key, value] of Object.entries(raw?.dimensions ?? {})) if (/^[a-z][a-z-]{0,31}$/.test(key) && value && typeof value === 'object') dimensions[key] = Object.freeze({ netRating: normalizeProgressionInteger(value.netRating, '0'), pressure: Number.isFinite(value.pressure) ? Math.max(0, Math.min(1, value.pressure)) : 0 });
-  return Object.freeze({ level: normalizeProgressionInteger(raw?.level, '0'), profileHash: typeof raw?.profileHash === 'string' ? raw.profileHash : null,
-    nextLevel: normalizeProgressionInteger(raw?.nextLevel, '0'), nextProfileHash: typeof raw?.nextProfileHash === 'string' ? raw.nextProfileHash : null,
+export function publicEnvironmentPressure(raw) { const dimensions = {};
+  for (const [key, definition] of Object.entries(challengeDimensions())) {
+    const value = raw?.dimensions?.[key]; dimensions[key] = Object.freeze({ label: definition.label,
+      pressure: Number.isFinite(value?.pressure) ? Math.max(0, Math.min(1, value.pressure)) : 0 });
+  }
+  return Object.freeze({ level: normalizeProgressionInteger(raw?.level, '0'), profileVersion: validVersion(raw?.profileVersion),
+    profileHash: validHash(raw?.profileHash), nextLevel: normalizeProgressionInteger(raw?.nextLevel, '0'),
+    nextProfileVersion: validVersion(raw?.nextProfileVersion), nextProfileHash: validHash(raw?.nextProfileHash),
     interpolationQ: Number.isInteger(raw?.interpolationQ) ? Math.max(0, Math.min(1_000_000, raw.interpolationQ)) : 0,
-    effectiveCoefficients: Object.freeze(coefficients), dimensions: Object.freeze(dimensions), pressure: Number.isFinite(raw?.pressure) ? Math.max(0, Math.min(1, raw.pressure)) : 0,
+    dimensions: Object.freeze(dimensions), pressure: Number.isFinite(raw?.pressure) ? Math.max(0, Math.min(1, raw.pressure)) : 0,
     severityQ: Number.isInteger(raw?.severityQ) ? Math.max(0, Math.min(1_000_000, raw.severityQ)) : 0 }); }
 function publicSkill(meta, node) {
   const state = evolutionCellState(meta, node); const preview = previewEvolutionLevel(meta, node.id);
@@ -74,3 +78,5 @@ function domainSummary(nodes) { const entries = new Map();
     item.cells++; item.levels = addProgressionIntegers(item.levels, node.evolutionLevel); entries.set(node.domain, item); }
   return Object.freeze([...entries.values()].map((entry) => Object.freeze(entry)));
 }
+function validVersion(value) { return Number.isInteger(value) && value > 0 ? value : 0; }
+function validHash(value) { return typeof value === 'string' && /^[0-9a-f]{8}$/.test(value) ? value : null; }

@@ -81,6 +81,8 @@
   padding-bottom: var(--sp-3);
   border-bottom: 1px solid var(--border-faint);
 }
+.context-surface header > div { min-width: 0; }
+.context-surface header h2 { overflow-wrap: anywhere; }
 .context-surface .surface-body {
   min-height: 0;
   overflow-y: auto;
@@ -191,6 +193,12 @@
   #reach-button .metric-value { line-height: 1.05; white-space: normal; }
   .command-rail { width: auto; grid-template-columns: 104px 4.25rem; }
   .menu-grid { grid-template-columns: 1fr 1fr; }
+  .context-metric { display: block; overflow-y: auto; scrollbar-gutter: stable; }
+  .context-metric .surface-body { overflow: visible; }
+  .context-metric > * { min-width: 0; }
+  .context-metric .metric-summary-slot { min-height: 0; }
+  .context-metric .metric-counts { grid-template-columns: 1fr; min-height: 0; margin-block: var(--sp-2); }
+  .context-metric .metric-footer { min-height: var(--touch-min); margin-top: var(--sp-2); }
 }
 @media (max-width: 420px), (max-height: 650px) {
   .context-result .result-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); padding-top: var(--sp-1); }
