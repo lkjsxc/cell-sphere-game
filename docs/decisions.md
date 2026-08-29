@@ -350,3 +350,25 @@ drift. The separate 4.5-second idle wait and `0.022 rad/s` Home/World orbit rema
 unchanged. Cumulative incremental travel is the distance oracle. Evidence covers
 30/60/120/144 Hz, delayed observation, trusted mouse/touch, every cancellation
 boundary, reduced motion, Worker/fallback, WebGL2/Canvas, and paused authority.
+
+## D31 — Chronic Environment dimensions have authored mechanics and one live projection
+
+Keep the Environment Level-0 start and unbounded schedule unchanged, but replace
+the shared dimension rating with five direct exact curves whose sum preserves
+the prior scalar rating. Profile v5 owns all curve, defense, normalization, and
+coefficient compilation. Scarcity reduces energy recovered from finite nutrient
+through one bounded resource-yield scale; renewal, climate, toxicity, and
+maintenance retain their dedicated production consumers. The selected scarcity
+effect cap is `0.15`, frozen only after development and untouched-holdout gates.
+
+One current/next projection interpolates effective dimension pressure on the
+same authoritative progress basis as coefficients. Snapshots, terminal Results,
+History, the fair agent, and the DOM consume that projection; none recomputes
+ratings. Ordinary UI exposes whole percentages and ecological labels, while raw
+ratings and coefficients remain internal. Legacy detail without matching profile
+identity is omitted rather than reinterpreted. Consequence: every public row is
+mechanically distinct and truthful without changing schedule, SCORE, Evolution,
+renderer, speed, or World authority. Evidence: exact and huge-Level profile
+tests, five controlled production consumers, Worker/fallback parity, paired
+balance cohorts, conservation/terminal/agent audits, fixed-work benchmark, and
+focused WebGL2/Canvas browser scenarios.

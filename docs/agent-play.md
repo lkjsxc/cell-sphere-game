@@ -16,8 +16,8 @@ npm run agent:smoke
 npm run agent:campaign
 ```
 
-Agent-save and observation schema is 5. Browser and agent saves are separate;
-exact values cross JSON as canonical decimal strings.
+Agent-save schema is 6 and fair-observation schema is 7. Browser and agent saves
+are separate; exact values cross JSON as canonical decimal strings.
 
 ## Fair observation
 
@@ -25,6 +25,13 @@ Observation exposes player-visible facts only: next World ordinal, the Level-0
 schedule declaration, active World level/progress, chronic pressure summary,
 bounded exposure, REACH, charge, resources, achieved records, Echoes, SCORE,
 Evolution levels/costs/eligibility, Trophies, and curated Result data.
+
+The chronic-pressure summary contains the same five live normalized values and
+semantic labels visible in Current Chronic Pressure, plus current/next profile
+identity and aggregate severity. It does not expose exact raw ratings,
+coefficients, or future-Level values. Legacy profile detail is omitted rather
+than reinterpreted; permanent campaign state and trustworthy History facts are
+preserved.
 
 It excludes future seeds, hidden RNG, replay authority, raw typed arrays, hidden
 maps, and diagnostics. It exposes no disaster queues because the production

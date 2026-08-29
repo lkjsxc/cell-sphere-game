@@ -8,7 +8,10 @@
 - SCORE, REACH, ENV LEVEL, and terminal RESULT are native buttons with
   persistent borders, backgrounds, and disclosure marks; affordance is not
   hover-only. ENV LEVEL opens a current Environment detail with level timing
-  and chronic-pressure context; History remains its own temporal surface.
+  and five visible whole percentages for Resource yield, Renewal, Climate,
+  Toxicity, and Maintenance & transport. Each static row names its pressure and
+  percentage for assistive technology. Interpolation does not use a live region;
+  History remains its own temporal surface.
   RESULT is last in reading/visual order and remains restrained at extinction.
 - Evolution exposes a synchronized offscreen `role="tree"` with every current
   cell, exact levels, owned/reachable/affordable state, and roving keyboard focus.
@@ -80,6 +83,10 @@ Large exact progression values use compact
 engineering notation and expose their canonical value through an accessible label
 or detail. The Evolution action is geometry-tested at 320×568, short 390×320
 and 640/667 landscape viewports, tablet/desktop sizes, and 200% text.
+At compact widths the Environment detail itself is the one vertical scroll
+owner, keeping Close and all five pressure rows reachable at 200% text without
+horizontal page overflow. Strongest pressure is also named in text, so color is
+never its only distinction.
 
 The real-browser matrix covers 320×568, 360×640, 390×844, 430×932, 768×1024,
 844×390, 1024×600, and 1440×900. CDP pointer/keyboard tests verify no horizontal
@@ -91,6 +98,12 @@ geometry, surface-held direct manipulation, reduced motion, and camera/detail
 behavior. The native Game speed select exposes all six ordinary
 values with visible focus and a 44px target at 320×568 and 200% text. Canvas 2D
 runs the same mobile-to-desktop path.
+
+The focused Environment matrix additionally covers 390×844, 768×1024,
+844×390, and 1440×900 in Worker/WebGL2, fallback/WebGL2, and
+fallback/Canvas 2D. It records percentage text and accessible names, keyboard
+open/Escape/focus restoration, forced colors, reduced motion, 200% text,
+surface rectangles, and scroll ownership.
 
 ## Visibility and storage
 

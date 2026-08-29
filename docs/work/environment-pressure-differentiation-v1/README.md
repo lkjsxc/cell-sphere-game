@@ -46,6 +46,24 @@ Status: active.
   evidence untouched until one development candidate is frozen.
 - No objective-preserving deviation is currently required.
 
+The sole profile-v5 compiler uses these exact direct laws for positive Level
+`L`, with every rating zero at Level 0:
+
+| Dimension | Player label | Rating at Level 1 | Later-Level slope |
+|---|---|---:|---:|
+| `scarcity` | Resource yield | 1400 | 700 |
+| `renewal` | Renewal | 1200 | 850 |
+| `climate` | Climate | 800 | 1150 |
+| `toxicity` | Toxicity | 600 | 1300 |
+| `maintenance` | Maintenance & transport | 1000 | 1000 |
+
+For positive `L`, each rating is `base + slope × (L − 1)` in exact progression
+arithmetic. Their sum is exactly `5000 × L`; compilation is direct and bounded
+for hundreds-of-digits Levels. Level 1 descending pressure is
+`0.452885/0.403657/0.350000/0.291515/0.227768` for scarcity, renewal,
+maintenance, climate, and toxicity. Level 3 reverses leadership to
+toxicity, climate, maintenance, renewal, scarcity.
+
 ## Completed coherent phases
 
 - Repository, upstream, worktree, remotes, recent commits, root contract,

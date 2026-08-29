@@ -17,6 +17,9 @@ npm run test:browser:atmosphere
 npm run test:browser:atmosphere:canvas
 npm run test:browser:life-boundaries
 npm run test:browser:life-boundaries:canvas
+npm run test:browser:environment-pressure
+npm run test:browser:environment-pressure:fallback
+npm run test:browser:environment-pressure:canvas
 npm run test:browser:file
 npm run test:browser:canvas
 npm run test:browser:fallback
@@ -28,9 +31,12 @@ active disaster authority. Ordinary DOM events and semantic History records are
 intentionally outside that prohibition.
 
 Environment checks verify exact Level-0 starts, direct schedule inversion,
-finite chronic coefficients, Worker/fallback parity, bounded exposure evidence,
-and reset on the next World. Persistence checks use current-only schemas and
-confirm old or mismatched documents reset rather than migrate.
+direct huge-Level dimension laws, distinct no-defense trajectories, exact raw
+sum, defense specificity, all five production consumers, finite coefficients,
+live current/next interpolation, Worker/fallback parity, bounded exposure
+evidence, and reset on the next World. Persistence checks use current-only
+schemas and confirm incompatible pressure detail is omitted or reset rather
+than reinterpreted.
 
 Browser checks are evidence for real pointer, keyboard, scene, History, Result,
 Evolution, Trophy, WebGL2, and Canvas behavior; a mocked call is not visual
@@ -53,6 +59,19 @@ the production Inspector as a non-color oracle. The full WebGL2, fallback, and
 Canvas scenarios focus the canvas, open that Inspector with Enter, verify its
 state/role/resource/stress/charge fields, close it with Escape, and require focus
 to return to the canvas.
+
+The three focused Environment commands inject production `RunController`
+snapshots and one terminal Result through the real metric shell. They prove
+Level 0, an exact rung, midpoint interpolation, defense, authored row order,
+whole percentages, accessible names, stable unrounded strongest selection,
+focus restoration, forced colors, reduced motion, 200% text, and responsive
+rectangles in Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D.
+
+`benchmark.mjs` retains terminal and huge-Level checkpoints, and also measures
+seven deterministic samples of an alive fixed 1,000-tick production trace after
+one warm-up. Use that fixed-work median for cross-profile hot-path comparisons;
+terminal ticks-per-second is not comparable when an intended ecology change
+changes extinction length.
 
 The shared camera scenario authors gestures in projected sphere radii, verifies
 one-radian direct travel at all eight responsive viewports and after zoom,

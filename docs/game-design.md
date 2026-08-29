@@ -10,8 +10,8 @@ extinction, spends Echoes in Evolution, and begins again.
 - Every World begins at Environment Level 0 with intact generated geography.
 - Nearby finite resources support bounded expansion, then reachable stock thins.
 - Environment Level rises only from authoritative time in that World.
-- Chronic pressure gradually affects renewal, maintenance, climate, toxicity,
-  recovery, and attrition.
+- Five authored chronic pressures gradually affect resource yield, renewal,
+  climate, toxicity, maintenance, transport, recovery, and attrition.
 - Extinction records realized SCORE, Echoes, Trophies, and History.
 - One Evolution purchase raises one cell by one exact level.
 - An untouched Result begins the next World automatically; any trusted
@@ -28,9 +28,13 @@ cells are the smallest geography, ecology, transformation, and electricity unit.
 
 The normal World HUD is SCORE, REACH, Environment Level, then Result. Its metric
 slots stay on stable grid tracks as values change. Activating Environment Level
-opens a current-state detail with level timing and chronic pressure; it never
-opens History. Result keeps its continuation status and Next World action outside
-its scrolling evidence body. A nonnumeric World-cycle ring projects the one
+opens a current-state detail with level timing and five live whole percentages:
+Resource yield, Renewal, Climate, Toxicity, and Maintenance & transport. The
+values interpolate through the current Level and use unrounded pressure to name
+the strongest dimension. Evolution defenses reduce future-World pressure but
+never change the public clock. The detail never opens History. Result keeps its
+continuation status and Next World action outside its scrolling evidence body. A
+nonnumeric World-cycle ring projects the one
 continuation authority; exact remaining seconds are assistive text, not a second
 clock or a per-second announcement. History is the only durable temporal surface: its
 stable controls lead one timeline scroll owner, and a historical globe appears
@@ -77,6 +81,8 @@ zoom survives a same-class resize; a new World restores the default geometry.
 
 Evolution changes ecology through actual mechanics such as reproduction, uptake,
 maintenance, reserve, recovery, habitat access, and whole-cell Luminous charge.
-It never changes the public Environment clock or creates infinite resources.
+Scarcity defense protects the energy yield from nutrient already consumed; it
+does not create nutrient or energy. Evolution never changes the public
+Environment clock or creates infinite resources.
 SCORE is based on realized authoritative outcomes and is monotone while a World
 is live.

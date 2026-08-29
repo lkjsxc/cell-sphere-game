@@ -1,5 +1,39 @@
 # Current status
 
+## Environment Pressure Differentiation v1
+
+- Environment profile v5 replaces the equal-rating broadcast with five direct,
+  exact, independently authored curves. Level 0 remains all zero; every positive
+  curve increases; raw ratings sum to `5000 × Level`; the unbounded schedule
+  remains model/version 2 with hash `763e6328`.
+- Scarcity now owns `resourceYieldScale`, bounded to `[0.85, 1]` by the selected
+  `0.15` cap and consumed exactly once when finite nutrient becomes energy.
+  Renewal, climate, toxicity, and maintenance retain distinct production
+  consumers. The obsolete `scarcityRamp` and equal public-rating assignment are
+  deleted.
+- One current/next interpolation owner produces five live normalized pressures,
+  aggregate severity, and profile identity from authoritative Level progress.
+  Snapshots, Result schema 10, fair-observation schema 7, History, the agent, and
+  Current Chronic Pressure consume it without exposing raw ratings or internal
+  coefficients. Run protocol 12, agent-save schema 6, semantic History 10,
+  replay 9, SCORE 6, and the Environment schedule remain unchanged.
+- The metric surface displays Resource yield, Renewal, Climate, Toxicity, and
+  Maintenance & transport as live whole percentages. Static accessible names,
+  unrounded strongest selection, keyboard focus restoration, one compact scroll
+  owner, forced colors, reduced motion, 200% text, and responsive geometry are
+  covered by focused Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D
+  scenarios.
+- Cap `0.15` passed the 48-seed development gate and the single untouched
+  48-seed holdout. Across five fixtures, development median lifetime changes are
+  within `−0.30%..+1.71%`; holdout changes are within `−6.79%..+0.95%`; all 480
+  Worlds end authoritatively with bounded resource conservation.
+- Full local evidence includes the exact/huge-Level Environment audit,
+  500-World resources, 500 paired freshwater fixtures, a 10,000-World terminal
+  and persistence soak, and 68 fair-agent campaigns with deterministic reruns.
+  A fixed 1,000-tick same-host benchmark measures v5 at `10,688 ticks/s` versus
+  v4 at `10,537` (`+1.43%`). The canonical work package owns exact report paths,
+  digests, failed-attempt classification, and publication evidence.
+
 ## Kinetic Sphere Release v1
 
 - One camera-motion owner retains projected-radius-normalized immediate drag,

@@ -20,9 +20,12 @@ start a new world at Environment Level 0
 ```
 
 Environment Level is an unlimited within-world clock: Level 1 begins at tick
-1200, then each later level is 600 ticks apart. It applies finite chronic
-pressure to renewal, maintenance, transport, climate, toxicity, and recovery.
-It does not schedule disasters, crises, telegraphs, or event footprints.
+1200, then each later level is 600 ticks apart. Its five authored pressures are
+Resource yield, Renewal, Climate, Toxicity, and Maintenance & transport.
+Resource yield changes energy recovered from consumed finite nutrient; the
+other pressures retain their bounded ecological consumers. Current Chronic
+Pressure shows their live effective values as whole percentages. It does not
+schedule disasters, crises, telegraphs, or event footprints.
 
 Finite local resources are authoritative. Worlds end through causal ecological
 failure; external agent or audit budgets are incomplete and reward-free.
@@ -95,10 +98,13 @@ npm run audit:no-disaster
 npm run audit:environment-levels
 npm run audit:luminous
 npm run audit:trophies
+npm run test:browser:environment-pressure
+npm run test:browser:environment-pressure:fallback
+npm run test:browser:environment-pressure:canvas
 npm run test:browser:file
 npm run test:browser:canvas
 npm run test:browser:fallback
 ```
 
 Current implementation status is recorded in
-[`docs/work/kinetic-sphere-fidelity-v2/README.md`](docs/work/kinetic-sphere-fidelity-v2/README.md).
+[`docs/work/environment-pressure-differentiation-v1/README.md`](docs/work/environment-pressure-differentiation-v1/README.md).

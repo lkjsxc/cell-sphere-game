@@ -8,7 +8,7 @@ under ignored `reports/`; reports never become simulation inputs.
 | Command | Source / authority checked |
 |---|---|
 | `audit:evolution-levels` | Current Evolution vector, exact levels/costs, Builds/mastery, bounded compiler cache, and graph invariants. |
-| `audit:environment-levels` | Unlimited direct schedule compilation, finite monotone chronic pressure, Level-0 reset, and terminal bounds. |
+| `audit:environment-levels` | Unchanged unlimited schedule, exact distinct profile curves, five production consumers, defense specificity, huge-Level bounds, Level-0 reset, and finite extinction. |
 | `audit:no-disaster` | Removed event/crisis modules and forbidden authority fields are absent while semantic History records remain allowed. |
 | `audit:luminous` | Authoritative whole-cell charge, production/decay/zero, mastery, WebGL/Canvas semantics, and no wires. |
 | `audit:progression-numbers` | Exact bigint/canonical decimals, malformed and huge values, debit/credit/hash/round trips, and `2^53` boundaries. |
