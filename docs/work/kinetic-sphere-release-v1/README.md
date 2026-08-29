@@ -1,6 +1,7 @@
 # Kinetic Sphere Release v1
 
-Status: active under the explicit `202608290133.md` reaffirmation.
+Status: active under the explicit `202608290133.md` reaffirmation; exact local
+implementation evidence is complete and publication evidence is pending.
 
 ## 2026-08-29 reaffirmation record
 
@@ -83,62 +84,107 @@ Status: active under the explicit `202608290133.md` reaffirmation.
   extreme-bound, cadence, delayed-observation, debt, cancellation, reduced-
   motion, idle-orbit, and long-run orthonormality evidence.
 - Strengthened the existing production browser receipt for raw/mapped speed,
-  strong/extreme saturation, medium carry, slow/precision stopping, cumulative
-  travel, all existing lifecycle boundaries, normalized input, and paused
-  authority. No parallel harness or product trace was added.
+  strong/extreme saturation, medium carry, slow/precision stopping, bounded
+  cumulative travel, all existing lifecycle boundaries, normalized input, and
+  paused authority. No parallel harness or product trace was added.
 - Reconciled current camera documents and retained the later input and atmosphere
   work as current while marking direct-transfer release policy historical.
+- Coherent implementation commit
+  `5259ba95ea0dbaa0f18177d38d09f8a37c04ca05` contains the companion contract,
+  one production cutover, strengthened existing browser oracle, focused tests,
+  and current documentation. The exact committed tree was clean for all final
+  local browser and verification runs.
 
-### Focused verification
+### Exact trace evidence
 
-- PASS — `node --test tests/unit/presentation/camera-motion.test.js tests/unit/shell.test.js tests/unit/renderer.test.js`
-  (`37/37`).
-- PASS — `npm run benchmark` (`12,145 ticks/s`, authority hash `471ba1cc`).
-- PASS (selected camera scenario only) — cached Chrome 152 Worker/WebGL2 receipt
-  above; the subsequent broad-shell failure remains failed, not reclassified.
-- SKIP — unconfigured `npm run test:browser:file` exited `77` because Chrome is
-  not on `PATH`; this is not a pass.
-- PASS — current focused test set remains `37/37` after cutover.
-- PASS — pure final 60 Hz strong/medium/slow traces are raw/mapped
-  `8.8670739/8`, `1.4115594/2.7380927`, and `0.2692582/0 rad/s`; cumulative
-  paths are `6.9034662 rad` (`1.0987208` turns), `2.3485394 rad`
-  (`0.3737817` turns), and zero. Extreme `32 rad/s` saturates at the same
-  `1.0987208` turns. Results agree at 30/60/120/144 Hz with basis error at most
-  `2.23e-16`; 0/150/350 ms handler delays are identical except idle deadline.
-- PASS (preliminary dirty-tree) — complete Chrome 152 Worker/WebGL2,
-  fallback/WebGL2, and Worker/Canvas 2D commands. Their ignored reports are
-  `reports/kinetic-sphere-release-final-worker-webgl2.json` (`72,090` bytes,
-  SHA-256 `4622916b28591875da2918792a75e982eeb39b405d58d16dda578dea7393f238`),
-  `reports/kinetic-sphere-release-final-fallback-webgl2.json` (`71,967` bytes,
-  SHA-256 `fdcc2d2de8801be037e960d3e00c8311b7eb14ea536533999ea9a843deab9788`),
-  and `reports/kinetic-sphere-release-final-worker-canvas2d.json` (`71,384`
-  bytes, SHA-256
-  `eaeec0b428e0181220c5cb58ef1c991f258e7d19f6bdc2dfe41a00bcd454e283`).
-  All retain SCORE `192,888`; both WebGL2 paths retain four draws; maximum basis
-  error is `4.45e-16`; observed idle orbit is `0.02186–0.02211 rad/s`; sample
-  high-water is six; paused authority is unchanged; browser errors are zero.
-- PASS — `npm run check:links`, `npm run check:structure`, README mirror
-  equality, and `git diff --check`.
-- PASS — `npm run test:unit` (`211/211`) and `npm run test:integration`
-  (`72/72`).
+- PASS — pure 60 Hz strong raw/mapped speed is
+  `8.867073925/8.000000000 rad/s`, cumulative travel is `6.903466175 rad`
+  (`1.098720766` turns), and release duration is `5,000 ms`.
+- PASS — pure 60 Hz medium raw/mapped speed is
+  `1.411559421/2.738092736 rad/s`, cumulative travel is `2.348539400 rad`
+  (`0.373781655` turns), and release duration is `4,066.67 ms`.
+- PASS — pure slow raw/mapped speed is `0.269258240/0 rad/s`, with zero release
+  duration and travel. Extreme `32 rad/s` input saturates at `8 rad/s` and the
+  same `1.098720766`-turn bounded path.
+- PASS — at 30/60/120/144 Hz, strong travel spans only
+  `1.098720766179–1.098720766183` turns and medium travel spans
+  `0.373781654531–0.373792668775` turns. Maximum basis error is `2.23e-16`.
+  Equivalent 0/150/350 ms observed-handler delays have identical raw speed,
+  mapped speed, path, and duration; only the observed-animation-time idle
+  deadline shifts.
+
+### Exact production-browser evidence
+
+- PASS — Chrome `152.0.7977.64` Worker/WebGL2 at exact implementation revision:
+  strong mouse/touch `1.098719977/1.098720766` turns, extreme
+  `1.098720371`, medium `0.372898201`, and slow/precision zero. Report
+  `reports/kinetic-sphere-release-final-worker-webgl2.json` is `72,020` bytes,
+  ignored, SHA-256
+  `6c0ce029af892d0689fc89896efc1db18cbcaa04eece74437961867e051a1981`.
+- PASS — Chrome fallback/WebGL2: strong mouse/touch
+  `1.098720766/1.098719977` turns, extreme `1.098720766`, medium
+  `0.373845748`, and slow/precision zero. Report
+  `reports/kinetic-sphere-release-final-fallback-webgl2.json` is `71,872`
+  bytes, ignored, SHA-256
+  `769d7b6a6dd509a0f2165a8ac0a0599fae07e8c95b60d6e9f8eea0faaec52a7f`.
+- PASS — Chrome Worker/Canvas 2D: strong mouse/touch
+  `1.098719977/1.098719977` turns, extreme `1.098719582`, medium
+  `0.372832271`, and slow/precision zero. Report
+  `reports/kinetic-sphere-release-final-worker-canvas2d.json` is `71,440`
+  bytes, ignored, SHA-256
+  `95c41d7247f54439daa01173977a1136374a10351e7683d3c8a5ad691f7dd912`.
+- PASS — all three exact-revision paths keep sample high-water six, maximum
+  basis error `4.44e-16`, raw-equivalent mouse/touch parity, zero browser
+  errors, SCORE `192,888`, unchanged paused authority, and four WebGL2 draws.
+  Observed idle orbit remains `0.02198–0.02232 rad/s` around the unchanged
+  `0.022` policy.
+- PASS — the existing broad scenario retains tap, pinch, wheel, pointer cancel,
+  pointer-down, keyboard, trusted focus, surface hold/direct drag, programmatic
+  focus framing, hidden/visible, reduced-motion, scene/World replacement,
+  repeated release/cancel, 200% text, forced colors, portrait `390×844`, wide
+  `1440×900`, and small-landscape `844×390` evidence. Direct drag remains
+  radius-normalized and immediate; non-tap gestures do not select.
+- PASS — six supplemental ignored screenshots cover `844×390` and `1440×900`
+  for each path. SHA-256 values are `8518a621…`, `78f2fa93…`, `9ebbd4c4…`,
+  `b87eb7e2…`, `d3f1e4e7…`, and `fcefce31…`; screenshots do not decide motion.
+
+### Complete local verification
+
+- PASS — focused camera/shell/renderer command (`37/37`), unit (`211/211`),
+  integration (`72/72`), links (`136` modules and `11` HTML references),
+  structure, README mirror equality, and `git diff --check`.
 - PASS — corrected-browser `npm run audit:autonomous-feel`; all six effective
   game-rate measurements, `13,686.9 ms` Result continuation, and all eight
-  projected-globe rows remain in their established bands.
-- PASS — preliminary final `npm run benchmark`, `12,611 ticks/s` versus the
-  same-host `12,145` baseline (`+3.84%`), with unchanged authority/profile
-  hashes `471ba1cc`, `dcc3bafe`, `60bb9841`, and `bec4a764`.
+  projected-globe rows remain inside their established bands.
+- PASS — fresh exact-content `npm run verify`; all 26 gates pass. Its loaded
+  embedded benchmark is `10,777 ticks/s`, above the `3,000` floor, with
+  authority/profile hashes `471ba1cc`, `dcc3bafe`, `60bb9841`, and `bec4a764`.
+- PASS — isolated final benchmark is `11,393 ticks/s` versus same-host baseline
+  `12,145` (`-6.19%`, below the 10% investigation threshold), again with all
+  four hashes unchanged. A preliminary isolated final run measured `12,611`
+  (`+3.84%`), identifying ordinary host variance rather than camera-path cost;
+  the production response remains constant-time and allocation-free.
 
-### Evidence not obtained
+### Failed, skipped, and unavailable evidence
 
-- Exact committed browser receipts, fresh complete verifier, final same-host
-  performance comparison, publication, CI, Pages, deployed-byte, and
-  deployed-browser evidence remain outstanding.
-- Pen and physical-device evidence are unavailable on this host.
+- FAILED (baseline harness/environment) — the first configured Chrome launch
+  failed font discovery. A corrected pre-cutover broad run later failed an
+  unrelated rapid Evolution-button assertion after writing a passing selected
+  camera receipt. Neither is a product pass and neither recurs in exact final
+  runs.
+- SKIPPED — unconfigured browser and autonomous-feel commands exited `77`
+  because cached Chrome is not on `PATH`; configured reruns pass and the skips
+  remain skips.
+- UNAVAILABLE — physical mouse, touch, pen, high-refresh display, safe-area
+  hardware, thermal, physical screen-reader, and physical forced-colors proof.
+- NOT RUN — publication, final remote equality, CI, Pages, cache-busted deployed
+  bytes, and deployed trusted-browser evidence remain pending.
 
 ### Exact next coherent step
 
-Commit the coherent implementation cutover, then rerun the three browser paths,
-benchmark, and complete verifier against that exact revision.
+Commit this exact local evidence, publish normally, verify the exact remote CI
+and Pages identities, compare deployed bytes, and exercise the deployed trusted
+Worker/WebGL2 path.
 
 ---
 

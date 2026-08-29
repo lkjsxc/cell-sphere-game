@@ -11,13 +11,16 @@
   `1.09872` turns, medium `1.41156/2.73809 rad/s` at `0.37378` turns, slow
   `0.26926/0` at zero turns, and extreme `32/8` at `1.09872` turns. Results
   agree at 30/60/120/144 Hz and handler delays of 0/150/350 ms.
-- Preliminary Chrome 152 Worker/WebGL2, fallback/WebGL2, and Worker/Canvas 2D
-  production paths pass strong mouse/touch parity, medium and slow classes,
-  every selected cancellation, reduced motion, responsive layouts, unchanged
-  idle orbit, SCORE `192,888`, paused-authority identity, and zero browser errors.
-- Exact committed browser receipts, broad verification, benchmark comparison,
-  publication, CI, Pages, deployed bytes, and deployed-browser evidence remain
-  pending while the package is active.
+- Exact implementation revision `5259ba95ea0dbaa0f18177d38d09f8a37c04ca05`
+  passes Chrome 152 Worker/WebGL2, fallback/WebGL2, and Worker/Canvas 2D with
+  strong mouse/touch parity, medium and slow classes, every selected
+  cancellation, reduced motion, responsive layouts, unchanged idle orbit,
+  SCORE `192,888`, paused-authority identity, and zero browser errors.
+- All 26 fresh `npm run verify` gates pass, including unit `211/211`, integration
+  `72/72`, and a valid `10,777 ticks/s` loaded benchmark. The isolated final
+  benchmark is `11,393 ticks/s` versus the same-host `12,145` baseline, with
+  authority/profile hashes unchanged. Publication, CI, Pages, deployed bytes,
+  and deployed-browser evidence remain pending while the package is active.
 
 ## Inertial Rotation Regression v1 (historical predecessor; superseded)
 
