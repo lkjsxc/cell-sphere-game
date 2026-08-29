@@ -1,6 +1,6 @@
 # Current status
 
-## Atmosphere Silhouette Independence v1 (active)
+## Atmosphere Silhouette Independence v1
 
 - One module-scoped refinement-5 unit icosphere now owns WebGL2 atmosphere
   positions, indices, count, and quality. Its stable signature is
@@ -29,8 +29,19 @@
   life-boundary fixtures pass. The final benchmark is `12,123 ticks/s` versus
   `12,151` baseline with unchanged authority/profile hashes. A fresh complete
   verify passes all 26 gates, including unit `211/211`, integration `72/72`, and
-  a post-suite valid `9,226 ticks/s` benchmark. Commit and external closure
-  remain pending.
+  a post-suite valid `12,695 ticks/s` benchmark.
+- Exact implementation revision `c2008ea3b1fa81fb3ac2208ffcb9060dd3f50f0b`
+  was published to remote `main`. Workflow run `33251258010`, verify job
+  `99097206599`, Pages job `99099045537`, deployment `6155561941`, and
+  deployment status `17497986427` all succeed for that revision. Cache-busted
+  Pages bytes match both affected renderer owners exactly.
+- Deployed Chrome 152 contour report `c255e039…` repeats the local
+  `0.308/0.721 CSS px` p95/maximum result with zero repeat noise, four draws,
+  zero frame uploads, identical gameplay-level probes, and no browser errors.
+  Focused deployed public-World report `fdcf9aae…` passes Worker/WebGL2 boot,
+  authoritative ticks, drag, wheel zoom, four draws, one canvas, and no browser
+  or frame errors. The canonical terminal package preserves exact report sizes,
+  digests, failed-attempt classification, and remaining physical evidence gaps.
 
 ## Kinetic Sphere Fidelity v2
 

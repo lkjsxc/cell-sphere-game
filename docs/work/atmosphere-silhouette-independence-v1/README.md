@@ -1,7 +1,8 @@
 # Atmosphere Silhouette Independence v1
 
-Status: active; the direct cutover and controlled local evidence are complete,
-while full browser regression, final verification, and external closure remain.
+Status: terminal. Implementation revision
+`c2008ea3b1fa81fb3ac2208ffcb9060dd3f50f0b` is published and verified; no
+selected-scope implementation work remains.
 
 ## Starting state
 
@@ -132,12 +133,22 @@ while full browser regression, final verification, and external closure remain.
   `git diff --check`, and focused source/unit gates pass. Structure reports its
   normal maintainability warnings, including the new cohesive 230-line fixture,
   but no hard violation.
-- A fresh `npm run verify` passes all 26 ordered gates: unit `211/211`,
-  integration `72/72`, all deterministic audits/cohorts, balance and terminal
-  smokes, showcase, structure, links, and benchmark. Its post-suite benchmark is
-  a valid `9,226 ticks/s` with authority hash `471ba1cc`, fresh-profile hash
-  `bec4a764`, and unchanged finite profile hashes. This result is being recorded
-  before one final exact-tree rerun so no evidence-document edit follows it.
+- A fresh exact-tree `npm run verify` passes all 26 ordered gates: unit
+  `211/211`, integration `72/72`, all deterministic audits/cohorts, balance and
+  terminal smokes, showcase, structure, links, and benchmark. Its post-suite
+  benchmark is a valid `12,695 ticks/s` with authority hash `471ba1cc`,
+  fresh-profile hash `bec4a764`, and unchanged finite profile hashes. An earlier
+  broad run on the same stable content also passed at `9,226 ticks/s`; it is
+  retained as valid host-variance evidence rather than substituted for the
+  later exact-tree receipt.
+- A clean-checkout rerun at the committed implementation reports the same
+  `0.308/0.721 CSS px` contour p95/maximum and zero repeat noise. Its ignored
+  report is
+  `reports/atmosphere-silhouette-final-cohort-implementation-webgl2.json`
+  (16,986 bytes; SHA-256
+  `3541e51c796d63ac61ccabbd83a5fcf5bc9dd26bc2c9e78f3981b3a0cfd99a02`).
+  The paired committed Canvas report is 5,748 bytes with SHA-256
+  `e9feece789c4915af0384fb907df1c3585dfe3f91708d67889782895e028994e`.
 
 ## Failed and superseded evidence
 
@@ -148,19 +159,59 @@ while full browser regression, final verification, and external closure remain.
 - The contour channel was fixed before final judgment at `32/255`, approximately
   half the expected calm-shell peak, and the exact starting revision was then
   remeasured. Refinement 6 was a rejected sizing experiment, not a shipped path.
+- The first deployed contour invocation lacked the explicit local Chrome path
+  and exited `77`; the next reached Pages while one resource returned HTTP 503
+  and failed its developer-fixture precondition. Neither is a pass. The unchanged
+  cache-busted retry passed after Pages returned 200.
+- Two attempts to run the entire deployed shell regression failed before a
+  product assertion when Chrome stopped answering
+  `Emulation.setDeviceMetricsOverride`, once at the ordinary 10-second CDP
+  limit and once at 60 seconds. Moving the temporary Chrome profile off the
+  nearly full system `/tmp` did not change the failure, disproving profile disk
+  location as the cause. These are failed host/browser transport attempts. The
+  exact same source already passed that complete maintained scenario locally;
+  a smaller deployed public-World smoke supplied the required deployed normal
+  product evidence without reclassifying the failures.
+
+## Published evidence
+
+- Implementation commit `c2008ea3b1fa81fb3ac2208ffcb9060dd3f50f0b`
+  was normally pushed to `origin/main`. Workflow run `33251258010` passed for
+  that exact SHA: verify job `99097206599` completed all gates in `17m29s`, then
+  Pages job `99099045537` published deployment `6155561941`; deployment status
+  `17497986427` is `success`.
+- Cache-busted Pages bytes exactly match the committed affected owners.
+  `src/rendering/atmosphere-geometry.js` is 4,046 bytes with SHA-256
+  `915ea53d79d067b5ec858bad6ac6151854ecf28de0bafefd37f991b74054540b`;
+  `src/rendering/world-pass.js` is 11,042 bytes with SHA-256
+  `7436d9508e851a73e358f4d77caf89fefa1caaa22b21a44be7170c3e61f32a96`.
+- The cache-busted deployed Chrome 152 contour report is
+  `reports/atmosphere-silhouette-final-cohort-deployed-implementation-retry-webgl2.json`
+  (20,731 bytes; SHA-256
+  `c255e03900fcda345790d7d7dfc7e67f66d7a63c3d68210b6f4f7b3f96be99c2`).
+  It names the exact implementation SHA as source and harness, covers all eight
+  viewports, both zoom extremes, four orientations, and three identical
+  repetitions, and passes with zero repeat noise, contour p50/p95/maximum
+  `0.031/0.308/0.721 CSS px`, no holes or spikes, four draws, zero frame
+  uploads, equal level-2/3/4 geometry signatures, and no browser errors.
+- A focused public-mode deployed World smoke names the exact implementation
+  SHA and passes Worker/WebGL2 boot, four draws, active authoritative ticks,
+  zero frame errors, drag and wheel response, one canvas, no page overflow, and
+  no browser errors. Its ignored JSON is
+  `reports/deployed-normal-c2008ea.json` (3,366 bytes; SHA-256
+  `fdcf9aaee5c6476e536139d64fa6c1b9f1507b7933719490d88bfd9b1ad2a218`);
+  the supplemental 99,133-byte screenshot SHA-256 is
+  `8f1a68cf9fcf098be35f3a433f73fb38a3c006297f86d51400b108af4e23a8e2`.
 
 ## Evidence not obtained
 
-- The coherent commit, push, new CI, new Pages, cache-busted served-byte
-  comparison, and deployed-browser proof remain not run. The current contour
-  reports are precommit working-tree evidence and will be rerun against the
-  exact committed implementation revision before publication.
 - Physical-device mouse/touch/pen, high-refresh, thermal, safe-area hardware,
   physical screen-reader, and physical forced-colors evidence is unavailable on
   this host unless the environment changes.
 
 ## Exact next coherent step
 
-Rerun `npm run verify` against this exact documented tree, commit without further
-content edits, rerun its exact contour receipt, and perform the authorized normal
-publication and exact deployed closure.
+None. The evidence-closure commit that makes this record terminal must itself be
+normally pushed and checked against its exact remote ref, CI, Pages deployment,
+and served bytes; those necessarily post-commit facts belong in the final Codex
+evidence packet rather than a self-referential follow-up commit.

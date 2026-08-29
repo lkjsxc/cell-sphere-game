@@ -5,14 +5,14 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active package:
-
-- [`atmosphere-silhouette-independence-v1/`](atmosphere-silhouette-independence-v1/) —
-  fixed renderer-owned WebGL2 atmosphere geometry, topology-independent Canvas
-  semantic parity, four-draw preservation, and controlled silhouette proof.
+There is no active work package.
 
 Completed packages remain as historical or current implementation evidence:
 
+- [`atmosphere-silhouette-independence-v1/`](atmosphere-silhouette-independence-v1/) —
+  completed current evidence for fixed renderer-owned WebGL2 atmosphere
+  geometry, topology-independent Canvas semantic parity, four-draw preservation,
+  and controlled local and deployed silhouette proof.
 - [`kinetic-sphere-fidelity-v2/`](kinetic-sphere-fidelity-v2/) — completed
   current evidence for visible-sphere-normalized direct manipulation, faithful
   release-velocity transfer, natural damping, and cross-backend browser proof.
