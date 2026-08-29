@@ -1,5 +1,8 @@
 # Inertial Rotation Regression v1
 
+Status: terminal for the authorized local implementation at
+`b5186064112d06c348ac1b9e7f0a27297342ad19`.
+
 ## Starting state
 
 - Branch `main` at `bf4ea8ff88a1a1e3007113a5d308b989b691181a`, equal to
@@ -83,15 +86,25 @@
   artifact remains current at SHA-256 `a89fdfaf1d181b9c0a61b1a41873ebc6e1336a433c52123aa7db4629a6beb6fd`.
 - PASS — `npm run benchmark`; `12,564 ticks/s`, authority hash `471ba1cc`,
   profile hashes `dcc3bafe` / `60bb9841` / `bec4a764`, all complete and finite.
-- NOT RUN — fresh broad `npm run verify` after stable final content.
+- PASS — fresh `npm run verify` on exact implementation revision
+  `b5186064112d06c348ac1b9e7f0a27297342ad19`; all `26/26` gates pass, including
+  unit `211/211`, integration `72/72`, and a valid `12,132 ticks/s` benchmark
+  with authority hash `471ba1cc` and unchanged profile hashes.
+- PASS — implementation diff review: the production change is one presentation
+  threshold; tests split gentle carry from precision stopping; documentation
+  records D29; no simulation, protocol, renderer, persistence, or setting changed.
 
 ## Evidence not obtained
 
 - The user's exact device, pointer hardware, stored motion setting, and physical
   gesture trace are unavailable. Reduced Motion must continue to suppress inertia
   by contract; this package does not relabel that intentional behavior as a bug.
+- Remote push, CI, Pages, cache-busted served-byte checks, and deployed-browser
+  proof were not run because this request did not authorize publication. No
+  external success is claimed.
 
 ## Exact next step
 
-Run the remaining focused static/document checks, review the complete diff, then
-run one fresh broad verification on stable content.
+If the user authorizes publication, normally push the two coherent local commits
+and verify the exact remote ref, CI, Pages deployment, and deployed gentle-release
+behavior. Otherwise, none within the authorized local scope.

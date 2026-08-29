@@ -5,14 +5,13 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active package:
-
-- [`inertial-rotation-regression-v1/`](inertial-rotation-regression-v1/) —
-  restore faithful release inertia for deliberate low-speed globe drags without
-  changing direct manipulation, reduced-motion behavior, or simulation authority.
+There is no active work package.
 
 Completed packages remain as historical or current implementation evidence:
 
+- [`inertial-rotation-regression-v1/`](inertial-rotation-regression-v1/) —
+  completed local evidence for faithful gentle-drag inertia, retained
+  sub-threshold precision, reduced-motion suppression, and cross-backend parity.
 - [`atmosphere-silhouette-independence-v1/`](atmosphere-silhouette-independence-v1/) —
   completed current evidence for fixed renderer-owned WebGL2 atmosphere
   geometry, topology-independent Canvas semantic parity, four-draw preservation,

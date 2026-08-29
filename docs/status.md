@@ -15,6 +15,12 @@
   samples, immediate cancellation, reduced-motion suppression, normalized
   responsive input, SCORE `192,888`, and unchanged paused-authority fingerprints;
   both WebGL2 paths retain exactly four draws.
+- Exact implementation revision `b5186064112d06c348ac1b9e7f0a27297342ad19`
+  passes all three production-browser paths. One fresh `npm run verify` passes
+  all 26 gates, including unit `211/211`, integration `72/72`, and a valid
+  `12,132 ticks/s` benchmark with authority hash `471ba1cc`. Publication was not
+  part of this correction, so no fresh remote, CI, Pages, or deployed claim is
+  made.
 
 ## Atmosphere Silhouette Independence v1
 
