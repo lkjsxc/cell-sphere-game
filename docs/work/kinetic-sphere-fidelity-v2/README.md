@@ -151,13 +151,48 @@
   - Worker/Canvas `1440×900`: `reports/kinetic-fidelity-worker-canvas2d-1440x900.png`,
     SHA-256 `df01a635cc3028851acd380fd9afc2ac5430fab457156b02c87b305222c17318`.
 
-## Evidence not obtained
+## External verification
 
-- CI, Pages, deployed-byte, and deployed-browser evidence remain pending.
+- Normal push aligned remote `main` to behavior-and-evidence revision
+  `e55597292a75e04534987b69faa107a60c721811` without rewriting history.
+- Actions run `33244212716` passed exact-SHA verify job `99078720554` and
+  Pages job `99080572534`. The hosted Unit tests step invoked
+  `npm run test:unit` and passed `207/207`; Integration invoked
+  `npm run test:integration` and passed `72/72`. All remaining audits,
+  benchmark, structure, and link checks passed. The hosted benchmark was
+  `4,035 ticks/s` with unchanged hash `471ba1cc`.
+- Pages deployment `6154220329` reached successful status `17494600114` for
+  that exact revision at `https://lkjsxc.github.io/cell-sphere-game/`.
+- Cache-busted deployed bytes exactly match the four changed player-path
+  owners. SHA-256 values are `b67848da…` for `globe-input.js`, `28f58b48…`
+  for `camera-motion.js`, `3f24cc0f…` for `app-controller.js`, and
+  `4722d73d…` for `preview.js`.
+- Chrome `152.0.7977.64` passes the trusted deployed Worker/WebGL2 scenario.
+  The ignored report is
+  `reports/kinetic-sphere-fidelity-v2-deployed-worker-webgl2.json`, SHA-256
+  `400dc5fe1a833e3badeebcc23db8de35aa00c94d6318a8e02c80e27a6d279ea1`.
+  It records one-radius paths of `0.99999996–1.00000017 rad`, spread
+  `2.18e-7 rad`, post-zoom path `0.99999998 rad`, and frozen-resize path
+  `0.99999996 rad`.
+- The deployed strong/touch/faster/medium/slow releases measure
+  `8.8671/8.8671/16.1555/1.4116/0.2600 rad/s`, travel
+  `1.2182/1.2182/2.2224/0.1911/0` turns, and naturally run for approximately
+  `5,055/5,037/5,587/3,480/0 ms`. Every cancellation ends at zero speed,
+  reduced motion carries no release, idle orbit measures `0.02198 rad/s`,
+  sample high-water is six, maximum basis error is below `3.4e-16`, selection
+  and picking remain valid, the paused authoritative tick/hash remain
+  `12/a90bf764`, WebGL2 remains four draws, and browser errors are zero.
+
+## Terminal disposition
+
+- The stopping rule is met for the selected presentation-only campaign. One
+  visible-sphere input path and one natural-damping motion path are current;
+  predecessor limits and the competing planning tree are absent.
+- No simulation, Worker protocol, renderer snapshot, History, settings,
+  progression, reward, or persistence format changed.
+- Environment profile differentiation and percentage UI, Evolution
+  biogeography/regions/balance, and the current-speed time-truth audit remain
+  deferred as independent campaigns.
 - Pen and physical-device mouse, touch, high-refresh, thermal, screen-reader,
-  forced-colors, and safe-area evidence are unavailable on this host.
-
-## Exact next coherent step
-
-Commit this bounded local-evidence record, normal-push the two coherent commits,
-then verify Actions, Pages, cache-busted bytes, and deployed browser behavior.
+  forced-colors, and safe-area evidence remain unavailable on this host.
+- Exact next coherent step: `none`.

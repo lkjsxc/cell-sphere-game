@@ -36,8 +36,10 @@
   the `12,323` predecessor baseline (`+0.23%`).
 - Simulation, Worker protocol, World identity, renderer semantics, game time,
   Environment, Evolution, History, SCORE, Echoes, settings, persistence, and
-  balance are unchanged. CI, Pages, deployed bytes, and deployed-browser
-  evidence remain pending.
+  balance are unchanged. Actions run `33244212716` and Pages deployment
+  `6154220329` pass for exact behavior-and-evidence revision `e5559729…`;
+  cache-busted bytes match all four changed player owners, and deployed Chrome
+  152 Worker/WebGL2 report `400dc5fe…` passes with zero browser errors.
 - Pen and physical-device mouse, touch, high-refresh, thermal, screen-reader,
   forced-colors, and safe-area evidence remain unavailable; emulated evidence is
   not classified as physical.
