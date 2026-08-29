@@ -24,7 +24,7 @@ test('all fair action shapes use production exact transactions and Level-0 autho
   for (const key of REQUIRED_RESULT_KEYS) assert.ok(key in completed.result, key);
   assert.ok(BigInt(completed.result.score) > 0n);
   assert.equal(completed.result.startEnvironmentLevel, '0');
-  assert.equal(completed.result.resultSchemaVersion, 9); assert.equal(completed.result.environmentProfileVersion, 4);
+  assert.equal(completed.result.resultSchemaVersion, 9); assert.equal(completed.result.environmentProfileVersion, 5);
   assert.equal('eventDirectorVersion' in completed.result, false);
   assert.ok(BigInt(completed.result.peakEnvironmentLevel) >= 1n); assert.ok(completed.result.stateHash);
   const after = env.exportSave(); assert.equal(after.meta.runs, '1'); assert.equal(after.worldOrdinal, '2');

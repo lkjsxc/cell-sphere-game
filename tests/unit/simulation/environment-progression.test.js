@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { RunController } from '../../../src/simulation/simulator.js';
 import { beginTerminalCollapse, updateEnvironmentProgression } from '../../../src/simulation/state.js';
 import { compileChallengeProfile } from '../../../src/simulation/challenge-profile.js';
+import { updateEnvironment } from '../../../src/simulation/environment.js';
+import { runMetabolism } from '../../../src/simulation/metabolism.js';
+import { runTransport } from '../../../src/simulation/transport.js';
 import {
   createEnvironmentExposure, environmentExposureSummary, sampleEnvironmentExposure,
 } from '../../../src/game/environment-exposure.js';
@@ -55,6 +58,63 @@ test('public schedule is build-independent while relevant defense changes only e
   assert.equal(weak.state.currentEnvironmentLevel, '2'); assert.equal(strong.state.currentEnvironmentLevel, '2');
   assert.equal(weak.state.environmentLevelStartTick, strong.state.environmentLevelStartTick);
   assert.ok(strong.state.currentEnvironmentProfile.score.pressure <= weak.state.currentEnvironmentProfile.score.pressure);
+});
+
+test('renewal, climate, toxicity, and maintenance coefficients reach their production consumers', () => {
+  const pairedStates = (seed) => {
+    const plain = new RunController({ seed, worldOrdinal: '3' });
+    const defended = new RunController({ seed, worldOrdinal: '3' });
+    for (const controller of [plain, defended]) {
+      controller.start(); controller.state.tick = 1800; updateEnvironmentProgression(controller.state);
+    }
+    return [plain.state, defended.state];
+  };
+  const coefficients = (dimension) => [
+    compileChallengeProfile({ environmentLevel: '2' }).coefficients,
+    compileChallengeProfile({ environmentLevel: '2', evolution: {
+      pressureDefense: { [dimension]: '2000' },
+    } }).coefficients,
+  ];
+
+  const [renewalPlain, renewalDefended] = pairedStates(7110);
+  [renewalPlain.environmentCoefficients, renewalDefended.environmentCoefficients] = coefficients('renewal');
+  renewalPlain.nutrient.fill(0); renewalDefended.nutrient.fill(0);
+  updateEnvironment(renewalPlain); updateEnvironment(renewalDefended);
+  assert.ok(renewalDefended.nutrient.reduce((sum, value) => sum + value, 0)
+    > renewalPlain.nutrient.reduce((sum, value) => sum + value, 0));
+
+  const [climatePlain, climateDefended] = pairedStates(7111);
+  [climatePlain.environmentCoefficients, climateDefended.environmentCoefficients] = coefficients('climate');
+  updateEnvironment(climatePlain); updateEnvironment(climateDefended);
+  assert.notDeepEqual(climateDefended.moisture, climatePlain.moisture);
+  assert.notDeepEqual(climateDefended.temperature, climatePlain.temperature);
+
+  const [toxicityPlain, toxicityDefended] = pairedStates(7112);
+  [toxicityPlain.environmentCoefficients, toxicityDefended.environmentCoefficients] = coefficients('toxicity');
+  toxicityPlain.toxicity.fill(0); toxicityDefended.toxicity.fill(0);
+  updateEnvironment(toxicityPlain); updateEnvironment(toxicityDefended);
+  assert.ok(toxicityDefended.toxicity.reduce((sum, value) => sum + value, 0)
+    < toxicityPlain.toxicity.reduce((sum, value) => sum + value, 0));
+
+  const [maintenancePlain, maintenanceDefended] = pairedStates(7113);
+  [maintenancePlain.environmentCoefficients, maintenanceDefended.environmentCoefficients] = coefficients('maintenance');
+  for (const state of [maintenancePlain, maintenanceDefended]) {
+    const cell = state.inoculationCell;
+    state.energy[cell] = 1; state.nutrient[cell] = 0; state.resourceReserve[cell] = 0;
+    state.moisture[cell] = 0; state.temperature[cell] = 0; state.stress[cell] = .5;
+  }
+  runMetabolism(maintenancePlain); runMetabolism(maintenanceDefended);
+  const maintenanceCell = maintenancePlain.inoculationCell;
+  assert.ok(maintenanceDefended.energy[maintenanceCell] > maintenancePlain.energy[maintenanceCell]);
+  assert.ok(maintenanceDefended.stress[maintenanceCell] < maintenancePlain.stress[maintenanceCell]);
+
+  for (const state of [maintenancePlain, maintenanceDefended]) {
+    state.alive.fill(1); state.energy.fill(1); state.edgeAge.fill(0);
+    state.edgeActive.fill(1); state.conductance.fill(.2); state.edgePeak.fill(.2);
+  }
+  runTransport(maintenancePlain); runTransport(maintenanceDefended);
+  assert.ok(maintenanceDefended.conductance.reduce((sum, value) => sum + value, 0)
+    > maintenancePlain.conductance.reduce((sum, value) => sum + value, 0));
 });
 
 test('chronic pressure leaves no onboarding or gameplay-disaster state', () => {

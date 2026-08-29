@@ -21,6 +21,7 @@ export function runMetabolism(state) {
   const reserveBonus = traits.coldReserve && state.tick < 1650 ? 1.5 : 1;
   const energyCap = B.ENERGY_CAP * traits.energyCap * reserveBonus;
   const environmentCoefficients = state.environmentCoefficients ?? state.currentEnvironmentProfile?.coefficients ?? {};
+  const resourceYieldScale = environmentCoefficients.resourceYieldScale ?? 1;
   const environmentMaintenance = environmentCoefficients.maintenanceScale ?? 1;
   const recoveryScale = environmentCoefficients.recoveryScale ?? 1;
   const attritionScale = environmentCoefficients.attritionScale ?? 1;
@@ -47,7 +48,7 @@ export function runMetabolism(state) {
     const rate = B.UPTAKE_RATE * state.biomass[i] * (0.15 + 0.85 * suit) * traits.uptake * biomeUptake * domainUptake;
     const uptake = consumeNutrient(state, i, rate);
 
-    const gain = uptake * B.CONVERSION;
+    const gain = uptake * B.CONVERSION * resourceYieldScale;
     state.energy[i] = Math.fround(Math.min(energyCap, state.energy[i] + gain));
 
     const biomeMaintenance = transformed ? BIOME_EFFECTS[biome].maintenance : (fields.maintenanceMultiplier?.[i] ?? 1);

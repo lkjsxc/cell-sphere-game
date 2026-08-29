@@ -5,7 +5,11 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package: none.
+Active work package:
+
+- [`environment-pressure-differentiation-v1/`](environment-pressure-differentiation-v1/)
+  — active implementation and evidence record for authored chronic-pressure
+  curves, the scarcity resource-yield consumer, and truthful live percentages.
 
 Completed packages remain as historical or current implementation evidence:
 

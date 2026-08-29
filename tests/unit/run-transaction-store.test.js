@@ -30,7 +30,7 @@ test('Evolution level, exact debit, and History recover from the same WAL',()=>{
  storage.fail=null;const recovered=recoverRunTransaction(storage);assert.equal(recovered.kind,'evolution');assert.equal(recovered.meta.echoBalance,'92');
  assert.deepEqual(recovered.history.evolution[0],history.evolution[0]);});
 test('forged SCORE, schedule evidence, profile hash, and skipped world ordinals cannot mint Echoes',()=>{
- const controller = new RunController({ seed: 9099, runId: 1, worldOrdinal: '1' }); controller.start();
+ const controller = new RunController({ seed: 20260731, runId: 1, worldOrdinal: '1' }); controller.start();
  while (controller.state.status !== 'extinct') controller.advance(64);
  const base = { ...controller.buildResult(), resultTransactionKey: 'forgery-test' };
  const meta={...defaultMeta(),worldSeedIndex:'0'};

@@ -1,7 +1,9 @@
 /** Local resource authority, access, presentation, and conservation contracts. */
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import { RunController } from '../../../src/simulation/simulator.js';
+import { BALANCE } from '../../../src/game/balance.js';
 import { runGrowth } from '../../../src/simulation/lifecycle/growth.js';
+import { runMetabolism } from '../../../src/simulation/metabolism.js';
 import { resourceConservation, resourceRichnessAt, RESOURCE_STATE, updateResourceEcology } from '../../../src/simulation/resource-ecology.js';
 
 function run(seed = 42, cfg = {}) { const c = new RunController({ seed, worldOrdinal: 1, ...cfg }); c.start(); return c; }
@@ -49,4 +51,23 @@ test('full runs reconcile finite stock and pack five bounded ecology bytes', () 
 test('inoculation selects a fertile connected-niche candidate', () => {
   for (let seed = 1; seed <= 20; seed++) { const s = run(seed).state;
     assert.ok(s.initialResourceRichness[s.inoculationCell] >= .56, `${seed}: ${s.initialResourceRichness[s.inoculationCell]}`); }
+});
+
+test('scarcity reduces energy yield once without changing finite nutrient consumption', () => {
+  const fullYield = run(8080); const pressured = run(8080);
+  for (const controller of [fullYield, pressured]) {
+    const state = controller.state; const cell = state.inoculationCell;
+    state.energy[cell] = 0; state.biomass[cell] = 1; state.entropy = 0;
+    state.environmentCoefficients = { ...state.environmentCoefficients, resourceYieldScale: 1 };
+  }
+  pressured.state.environmentCoefficients = { ...pressured.state.environmentCoefficients, resourceYieldScale: .85 };
+  runMetabolism(fullYield.state); runMetabolism(pressured.state);
+  const cell = fullYield.state.inoculationCell;
+  assert.equal(pressured.state.nutrient[cell], fullYield.state.nutrient[cell]);
+  assert.equal(pressured.state.resourceConsumed, fullYield.state.resourceConsumed);
+  assert.equal(pressured.state.totalUptake, fullYield.state.totalUptake);
+  const expectedDifference = fullYield.state.totalUptake * BALANCE.CONVERSION * .15;
+  assert.ok(Math.abs((fullYield.state.energy[cell] - pressured.state.energy[cell]) - expectedDifference) < 1e-6);
+  assert.ok(Math.abs(resourceConservation(fullYield.state).error) < 1e-6);
+  assert.ok(Math.abs(resourceConservation(pressured.state).error) < 1e-6);
 });

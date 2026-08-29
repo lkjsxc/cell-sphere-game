@@ -1,5 +1,5 @@
 /**
- * Environment Profile v4 compiler. Exact public ratings compile directly at
+ * Environment Profile v5 compiler. Exact dimension ratings compile directly at
  * Level transitions into finite chronic coefficients consumed by simulation.
  */
 import {
@@ -14,16 +14,22 @@ import {
 import { hashStringU32, hexU32 } from '../core/hash.js';
 import { normalizeEnvironmentLevel } from '../game/environment-level.js';
 
-export const CHALLENGE_PROFILE_VERSION = 4;
+export const CHALLENGE_PROFILE_VERSION = 5;
 export const ENVIRONMENT_PROFILE_VERSION = CHALLENGE_PROFILE_VERSION;
 export const ENVIRONMENT_RATING_PER_LEVEL = '1000';
+export const RESOURCE_YIELD_EFFECT_CAP = 0.15;
 
 const DIMENSIONS = Object.freeze({
-  scarcity: Object.freeze(['Fertility', 'Freshwater', 'Scarcity']),
-  renewal: Object.freeze(['Fertility', 'Freshwater', 'Scarcity']),
-  climate: Object.freeze(['Freshwater', 'Cryogenic']),
-  toxicity: Object.freeze(['Scarcity', 'Luminous']),
-  maintenance: Object.freeze(['Scarcity', 'Marine', 'Luminous']),
+  scarcity: Object.freeze({ label: 'Resource yield', base: '1400', slope: '700',
+    affinities: Object.freeze(['Fertility', 'Freshwater', 'Scarcity']) }),
+  renewal: Object.freeze({ label: 'Renewal', base: '1200', slope: '850',
+    affinities: Object.freeze(['Fertility', 'Freshwater', 'Scarcity']) }),
+  climate: Object.freeze({ label: 'Climate', base: '800', slope: '1150',
+    affinities: Object.freeze(['Freshwater', 'Cryogenic']) }),
+  toxicity: Object.freeze({ label: 'Toxicity', base: '600', slope: '1300',
+    affinities: Object.freeze(['Scarcity', 'Luminous']) }),
+  maintenance: Object.freeze({ label: 'Maintenance & transport', base: '1000', slope: '1000',
+    affinities: Object.freeze(['Scarcity', 'Marine', 'Luminous']) }),
 });
 
 /** Direct O(1)-by-level-magnitude compiler; work is bounded by five dimensions. */
@@ -32,13 +38,14 @@ export function compileChallengeProfile(input = {}) {
   const publicRating = multiplyProgressionIntegers(environmentLevel, ENVIRONMENT_RATING_PER_LEVEL);
   const evolution = input.evolution && typeof input.evolution === 'object' ? input.evolution : {};
   const dimensions = {};
-  for (const [name, affinities] of Object.entries(DIMENSIONS)) {
-    const affinityDefense = minimumAffinityDefense(evolution, affinities);
+  for (const [name, definition] of Object.entries(DIMENSIONS)) {
+    const environmentRating = dimensionRating(environmentLevel, definition);
+    const affinityDefense = minimumAffinityDefense(evolution, definition.affinities);
     const buildDefense = normalizeProgressionInteger(evolution.pressureDefense?.[name], '0');
     const defenseRating = addProgressionIntegers(affinityDefense, buildDefense);
-    const netRating = compareProgressionIntegers(publicRating, defenseRating) > 0
-      ? subtractProgressionIntegers(publicRating, defenseRating) : '0';
-    dimensions[name] = Object.freeze({ environmentRating: publicRating, defenseRating,
+    const netRating = compareProgressionIntegers(environmentRating, defenseRating) > 0
+      ? subtractProgressionIntegers(environmentRating, defenseRating) : '0';
+    dimensions[name] = Object.freeze({ environmentRating, defenseRating,
       netRating, pressure: pressureForNetRating(netRating) });
   }
   return profileFromDimensions(environmentLevel, publicRating, Object.freeze(dimensions));
@@ -50,13 +57,14 @@ export function validateChallengeProfile(raw) {
     const environmentLevel = normalizeEnvironmentLevel(raw.environmentLevel, '0');
     const publicRating = multiplyProgressionIntegers(environmentLevel, ENVIRONMENT_RATING_PER_LEVEL);
     const dimensions = {};
-    for (const name of Object.keys(DIMENSIONS)) {
+    for (const [name, definition] of Object.entries(DIMENSIONS)) {
       const value = raw.dimensions?.[name];
-      const environmentRating = normalizeProgressionInteger(value?.environmentRating, publicRating);
-      if (environmentRating !== publicRating) return compileChallengeProfile();
+      const expectedEnvironmentRating = dimensionRating(environmentLevel, definition);
+      const environmentRating = normalizeProgressionInteger(value?.environmentRating, expectedEnvironmentRating);
+      if (environmentRating !== expectedEnvironmentRating) return compileChallengeProfile();
       const defenseRating = normalizeProgressionInteger(value?.defenseRating, '0');
-      const expectedNet = compareProgressionIntegers(publicRating, defenseRating) > 0
-        ? subtractProgressionIntegers(publicRating, defenseRating) : '0';
+      const expectedNet = compareProgressionIntegers(environmentRating, defenseRating) > 0
+        ? subtractProgressionIntegers(environmentRating, defenseRating) : '0';
       if (normalizeProgressionInteger(value?.netRating, expectedNet) !== expectedNet) return compileChallengeProfile();
       dimensions[name] = Object.freeze({ environmentRating, defenseRating, netRating: expectedNet,
         pressure: pressureForNetRating(expectedNet) });
@@ -139,13 +147,14 @@ function profileFromDimensions(environmentLevel, publicRating, dimensions) {
   const qScarcity = dimensions.scarcity.pressure; const qRenewal = dimensions.renewal.pressure;
   const qClimate = dimensions.climate.pressure; const qToxicity = dimensions.toxicity.pressure;
   const qMaintenance = dimensions.maintenance.pressure;
-  const scarcityRamp = difficultyRamp(qScarcity);
   const renewalRamp = difficultyRamp(qRenewal);
   const maintenanceRamp = difficultyRamp(qMaintenance);
   const maxNetMagnitude = Math.max(...Object.values(dimensions).map((dimension) => pressureMagnitude(dimension.netRating)));
   const profile = {
     version: CHALLENGE_PROFILE_VERSION, environmentLevel, publicRating, dimensions,
     coefficients: Object.freeze({
+      resourceYieldScale: finite(1 - RESOURCE_YIELD_EFFECT_CAP * qScarcity,
+        1 - RESOURCE_YIELD_EFFECT_CAP, 1),
       renewalScale: finite(1 - 0.55 * renewalRamp, 0.45, 1),
       seasonScale: finite(0.25 + 0.75 * qClimate, 0.25, 1),
       dryingScale: finite(0.22 * qClimate, 0, 0.22),
@@ -161,6 +170,12 @@ function profileFromDimensions(environmentLevel, publicRating, dimensions) {
       minimumExposureTicks: 900, fullExposureTicks: 2400 }),
   };
   return Object.freeze({ ...profile, hash: environmentProfileHash(profile) });
+}
+function dimensionRating(environmentLevel, definition) {
+  if (environmentLevel === '0') return '0';
+  return addProgressionIntegers(definition.base, multiplyProgressionIntegers(
+    subtractProgressionIntegers(environmentLevel, '1'), definition.slope,
+  ));
 }
 function pressureMagnitude(netRating) {
   const magnitude = progressionIntegerMagnitude(netRating, 6);

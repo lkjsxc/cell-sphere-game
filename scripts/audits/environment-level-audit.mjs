@@ -3,18 +3,29 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import { RunController } from '../../src/simulation/simulator.js';
-import { compileChallengeProfile } from '../../src/simulation/challenge-profile.js';
+import {
+  CHALLENGE_PROFILE_VERSION,
+  RESOURCE_YIELD_EFFECT_CAP,
+  challengeDimensions,
+  compileChallengeProfile,
+  pressureForNetRating,
+} from '../../src/simulation/challenge-profile.js';
 import { MEMORY_NODE_IDS, compileEvolution, evolutionRunConfiguration } from '../../src/game/skills/index.js';
 import { scoreResult } from '../../src/game/scoring.js';
 import {
   ENVIRONMENT_SCHEDULE_HASH, environmentLevelAtTick, environmentScheduleAtTick, environmentTickForLevel,
 } from '../../src/game/environment-level.js';
-import { multiplyProgressionIntegers } from '../../src/core/progression-integer.js';
+import {
+  addProgressionIntegers,
+  multiplyProgressionIntegers,
+  subtractProgressionIntegers,
+  sumProgressionIntegers,
+} from '../../src/core/progression-integer.js';
 
 const smoke = process.argv.includes('--smoke');
 const seeds = smoke ? 6 : 16;
 const externalBudgetTicks = smoke ? 10_000 : 20_000;
-const levels = ['0', '1', '2', '4', '8', '32'];
+const levels = ['0', '1', '2', '3', '4', '8', '32'];
 const started = performance.now();
 const fresh = compileEvolution({});
 const breadth = compileEvolution({ evolutionLevels: MEMORY_NODE_IDS.map((id) => ({ id, level: '1' })) });
@@ -46,22 +57,64 @@ const profileComparisons = ['8', '32', '1000000'].map((level) => {
     matched: profileSummary(compileChallengeProfile({ environmentLevel: level, evolution: matched })),
     overpowered: profileSummary(compileChallengeProfile({ environmentLevel: level, evolution: overpowered })) };
 });
+const consumerMappings = Object.freeze({
+  scarcity: Object.freeze({ improves: Object.freeze(['resourceYieldScale']), reduces: Object.freeze([]) }),
+  renewal: Object.freeze({ improves: Object.freeze(['renewalScale']), reduces: Object.freeze([]) }),
+  climate: Object.freeze({ improves: Object.freeze([]), reduces: Object.freeze(['seasonScale', 'dryingScale', 'heatDriftScale']) }),
+  toxicity: Object.freeze({ improves: Object.freeze([]), reduces: Object.freeze(['toxinScale']) }),
+  maintenance: Object.freeze({ improves: Object.freeze(['recoveryScale']),
+    reduces: Object.freeze(['maintenanceScale', 'transportStressScale']) }),
+});
+const baseConsumerProfile = compileChallengeProfile({ environmentLevel: '2', evolution: fresh });
+const consumerEvidence = Object.entries(consumerMappings).map(([dimension, mapping]) => {
+  const defended = compileChallengeProfile({ environmentLevel: '2', evolution: { pressureDefense: { [dimension]: '100' } } });
+  return { dimension, pressureBefore: baseConsumerProfile.dimensions[dimension].pressure,
+    pressureAfter: defended.dimensions[dimension].pressure,
+    coefficients: Object.fromEntries([...mapping.improves, ...mapping.reduces].map((key) => [key,
+      { before: baseConsumerProfile.coefficients[key], after: defended.coefficients[key] }])),
+    unrelatedStable: Object.keys(baseConsumerProfile.dimensions).filter((key) => key !== dimension)
+      .every((key) => baseConsumerProfile.dimensions[key].pressure === defended.dimensions[key].pressure),
+    helpful: mapping.improves.every((key) => defended.coefficients[key] > baseConsumerProfile.coefficients[key])
+      && mapping.reduces.every((key) => defended.coefficients[key] < baseConsumerProfile.coefficients[key]) };
+});
 const pressureMonotone = compiler.every((row, index) => index === 0 || row.pressure + 1e-9 >= compiler[index - 1].pressure);
 const scheduleExact = scheduleRows.every((row, index) => row.inverse === row.level && row.progressQ === 0
   && row.hash === ENVIRONMENT_SCHEDULE_HASH && (index === 0 || BigInt(row.tick) > BigInt(scheduleRows[index - 1].tick)));
 const defenseHelps = profileComparisons.every((row) => row.deep.pressure <= row.breadth.pressure + 1e-9
   && row.breadth.pressure <= row.fresh.pressure + 1e-9);
 const bounded = compiler.every((row) => row.finite && !row.hasGameplayDisasterField && row.compileMs < 50);
+const exactDimensionLaws = compiler.every((row) => row.ratingSum === row.expectedRatingSum
+  && Object.entries(row.dimensionRatings).every(([key, rating]) => rating === expectedDimensionRating(row.level, challengeDimensions()[key])));
+const distinctNoDefense = ['1', '2', '3'].every((level) => {
+  const row = compiler.find((candidate) => candidate.level === level);
+  return row && new Set(Object.values(row.dimensionPressures)).size === 5;
+});
+const one = compiler.find((row) => row.level === '1')?.dimensionPressures ?? {};
+const three = compiler.find((row) => row.level === '3')?.dimensionPressures ?? {};
+const leadershipChanges = one.scarcity > one.renewal && one.renewal > one.maintenance
+  && one.maintenance > one.climate && one.climate > one.toxicity
+  && three.toxicity > three.climate && three.climate > three.maintenance
+  && three.maintenance > three.renewal && three.renewal > three.scarcity;
+const scalarPreserved = ['1', '2', '4', '8', '32'].every((level) => {
+  const row = compiler.find((candidate) => candidate.level === level);
+  return row && Math.abs(row.pressure - pressureForNetRating(row.publicRating)) <= .005;
+});
+const consumersReachable = consumerEvidence.every((row) => row.pressureAfter < row.pressureBefore
+  && row.unrelatedStable && row.helpful);
+const scarcityBounded = compiler.every((row) => row.resourceYieldScale >= 1 - RESOURCE_YIELD_EFFECT_CAP
+  && row.resourceYieldScale <= 1);
 const startsAtZero = cohorts.every((cohort) => cohort.runs.every((row) => row.startEnvironmentLevel === '0'));
 const finiteBuildsTerminate = cohorts.every((cohort) => cohort.runs.every((row) => row.status === 'extinct'));
 const chronicOnly = cohorts.every((cohort) => cohort.runs.every((row) => row.noGameplayDisasterState && row.nonFinite === false));
 const strongerReachesFarther = median(cohorts[1].runs.map((row) => row.peakLevel)) >= median(cohorts[0].runs.map((row) => row.peakLevel));
 const noInstantFarm = cohorts.every((cohort) => cohort.runs.every((row) => row.environmentBonusRate <= .12 && row.score !== '0'));
 const report = {
-  schema: 4, model: 'within-world-chronic-v4', mode: smoke ? 'smoke' : 'full', seedsPerCohort: seeds,
+  schema: 5, model: 'within-world-chronic-v5', profileVersion: CHALLENGE_PROFILE_VERSION,
+  resourceYieldEffectCap: RESOURCE_YIELD_EFFECT_CAP, mode: smoke ? 'smoke' : 'full', seedsPerCohort: seeds,
   externalBudgetTicks, schedule: { hash: ENVIRONMENT_SCHEDULE_HASH, rows: scheduleRows }, compiler,
-  cohorts: cohorts.map(({ name, summary }) => ({ name, ...summary })), profileComparisons,
-  invariants: { scheduleExact, pressureMonotone, defenseHelps, bounded, startsAtZero,
+  cohorts: cohorts.map(({ name, summary }) => ({ name, ...summary })), profileComparisons, consumerEvidence,
+  invariants: { scheduleExact, pressureMonotone, defenseHelps, bounded, exactDimensionLaws,
+    distinctNoDefense, leadershipChanges, scalarPreserved, consumersReachable, scarcityBounded, startsAtZero,
     finiteBuildsTerminate, chronicOnly, strongerReachesFarther, noInstantFarm },
   elapsedMs: Number((performance.now() - started).toFixed(1)),
 };
@@ -83,7 +136,13 @@ function runWorld(seed, evolution, budget) {
     noGameplayDisasterState: ['events', 'eventDirector', 'eventRng'].every((key) => !(key in controller.state)),
     nonFinite: ![result.peakCoverage, result.survivalSeconds, result.tick, score.environmentCredit.bonus].every(Number.isFinite) };
 }
-function profileRow(profile, compileMs) { return { level: profile.environmentLevel, ratingDigits: profile.publicRating.length,
+function profileRow(profile, compileMs) { const dimensionRatings = Object.fromEntries(
+  Object.entries(profile.dimensions).map(([key, value]) => [key, value.environmentRating]));
+  return { level: profile.environmentLevel, publicRating: profile.publicRating, ratingDigits: profile.publicRating.length,
+  ratingSum: sumProgressionIntegers(Object.values(dimensionRatings)),
+  expectedRatingSum: multiplyProgressionIntegers(profile.environmentLevel, '5000'), dimensionRatings,
+  dimensionPressures: Object.fromEntries(Object.entries(profile.dimensions).map(([key, value]) => [key, value.pressure])),
+  resourceYieldScale: profile.coefficients.resourceYieldScale,
   pressure: profile.score.pressure, hasGameplayDisasterField: 'events' in profile,
   compileMs: Number(compileMs.toFixed(3)), hash: profile.hash,
   finite: [...Object.values(profile.coefficients), profile.score.pressure].every(Number.isFinite) }; }
@@ -97,3 +156,5 @@ function median(values) { return percentile(values, .5); }
 function percentile(values, q) { const sorted = values.slice().sort((a, b) => (typeof a === 'string' ? BigInt(a) > BigInt(b) ? 1 : BigInt(a) < BigInt(b) ? -1 : 0 : a - b));
   return sorted[Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * q)))] ?? 0; }
 function counts(values) { const out = {}; for (const value of values) out[value] = (out[value] ?? 0) + 1; return out; }
+function expectedDimensionRating(level, definition) { return level === '0' ? '0' : addProgressionIntegers(definition.base,
+  multiplyProgressionIntegers(subtractProgressionIntegers(level, '1'), definition.slope)); }

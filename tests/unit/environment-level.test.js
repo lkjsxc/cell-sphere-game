@@ -14,11 +14,21 @@ import {
 } from '../../src/game/environment-level.js';
 import {
   CHALLENGE_PROFILE_VERSION,
+  ENVIRONMENT_RATING_PER_LEVEL,
+  RESOURCE_YIELD_EFFECT_CAP,
+  challengeDimensions,
   environmentProfileHash,
   compileChallengeProfile,
   pressureForNetRating,
   validateChallengeProfile,
 } from '../../src/simulation/challenge-profile.js';
+import {
+  addProgressionIntegers,
+  compareProgressionIntegers,
+  multiplyProgressionIntegers,
+  subtractProgressionIntegers,
+  sumProgressionIntegers,
+} from '../../src/core/progression-integer.js';
 
 const undefended = Object.freeze({ affinityDefense: Object.freeze({
   Fertility: '0', Freshwater: '0', Scarcity: '0', Cryogenic: '0', Marine: '0', Luminous: '0',
@@ -81,6 +91,79 @@ test('direct chronic pressure compiler remains finite over schedule-produced hug
   }
 });
 
+test('profile v5 compiles the five exact authored laws directly at every magnitude', () => {
+  const definitions = challengeDimensions();
+  const levels = ['0', '1', '2', '3', '4', '8', '32', '1000000', `1${'0'.repeat(199)}`];
+  let previous = null;
+  for (const level of levels) {
+    const profile = compileChallengeProfile({ environmentLevel: level, evolution: undefended });
+    const ratings = Object.fromEntries(Object.entries(profile.dimensions).map(([key, value]) => [key, value.environmentRating]));
+    assert.equal(sumProgressionIntegers(Object.values(ratings)), multiplyProgressionIntegers(level, '5000'));
+    assert.equal(profile.publicRating, multiplyProgressionIntegers(level, ENVIRONMENT_RATING_PER_LEVEL));
+    for (const [key, definition] of Object.entries(definitions)) {
+      const expected = level === '0' ? '0' : addProgressionIntegers(definition.base,
+        multiplyProgressionIntegers(subtractProgressionIntegers(level, '1'), definition.slope));
+      assert.equal(ratings[key], expected, `${key} Level ${level}`);
+      if (level !== '0' && previous) assert.ok(compareProgressionIntegers(ratings[key], previous[key]) > 0, `${key} did not increase`);
+      assert.ok(Number.isFinite(profile.dimensions[key].pressure));
+    }
+    previous = ratings;
+  }
+});
+
+test('fresh dimension trajectories are distinct and change leadership as authored', () => {
+  const profiles = ['1', '2', '3'].map((environmentLevel) => compileChallengeProfile({ environmentLevel, evolution: undefended }));
+  for (const profile of profiles) assert.equal(new Set(Object.values(profile.dimensions).map((value) => value.pressure)).size, 5);
+  const one = profiles[0].dimensions; const three = profiles[2].dimensions;
+  assert.ok(one.scarcity.pressure > one.renewal.pressure && one.renewal.pressure > one.maintenance.pressure
+    && one.maintenance.pressure > one.climate.pressure && one.climate.pressure > one.toxicity.pressure);
+  assert.ok(three.toxicity.pressure > three.climate.pressure && three.climate.pressure > three.maintenance.pressure
+    && three.maintenance.pressure > three.renewal.pressure && three.renewal.pressure > three.scarcity.pressure);
+  const expected = [
+    [0.453, 0.404, 0.292, 0.228, 0.35],
+    [0.595, 0.587, 0.568, 0.559, 0.577],
+    [0.701, 0.713, 0.737, 0.748, 0.725],
+  ];
+  for (let index = 0; index < profiles.length; index++) {
+    const actual = Object.values(profiles[index].dimensions).map((value) => value.pressure);
+    actual.forEach((value, dimension) => assert.ok(Math.abs(value - expected[index][dimension]) < .001));
+  }
+});
+
+test('dimension defense is specific and never worsens its owned coefficient', () => {
+  const base = compileChallengeProfile({ environmentLevel: '2', evolution: undefended });
+  const owned = {
+    scarcity: [['resourceYieldScale', 1]],
+    renewal: [['renewalScale', 1]],
+    climate: [['seasonScale', -1], ['dryingScale', -1], ['heatDriftScale', -1]],
+    toxicity: [['toxinScale', -1]],
+    maintenance: [['maintenanceScale', -1], ['transportStressScale', -1], ['recoveryScale', 1]],
+  };
+  for (const [dimension, coefficients] of Object.entries(owned)) {
+    const defended = compileChallengeProfile({ environmentLevel: '2', evolution: { pressureDefense: { [dimension]: '100' } } });
+    assert.ok(defended.dimensions[dimension].pressure < base.dimensions[dimension].pressure);
+    for (const other of Object.keys(base.dimensions)) if (other !== dimension) {
+      assert.equal(defended.dimensions[other].pressure, base.dimensions[other].pressure);
+    }
+    for (const [coefficient, direction] of coefficients) {
+      assert.ok(direction * (defended.coefficients[coefficient] - base.coefficients[coefficient]) > 0,
+        `${dimension} did not improve ${coefficient}`);
+    }
+  }
+  assert.equal(base.coefficients.resourceYieldScale,
+    Math.round((1 - RESOURCE_YIELD_EFFECT_CAP * base.dimensions.scarcity.pressure) * 1_000_000) / 1_000_000);
+  assert.ok(base.coefficients.resourceYieldScale >= .85 && base.coefficients.resourceYieldScale <= 1);
+});
+
+test('authored scalar rung pressure preserves the predecessor mean-pressure contract', () => {
+  for (const level of ['1', '2', '4', '8', '32']) {
+    const profile = compileChallengeProfile({ environmentLevel: level, evolution: undefended });
+    const predecessor = pressureForNetRating(multiplyProgressionIntegers(level, ENVIRONMENT_RATING_PER_LEVEL));
+    assert.ok(Math.abs(profile.score.pressure - predecessor) <= .005,
+      `Level ${level}: ${profile.score.pressure} versus ${predecessor}`);
+  }
+});
+
 test('post-ramp exact magnitude continues to worsen bounded attrition without a terminal cap', () => {
   const ordinary = compileChallengeProfile({ environmentLevel: '64', evolution: undefended });
   const high = compileChallengeProfile({ environmentLevel: '1000000', evolution: undefended });
@@ -91,7 +174,7 @@ test('post-ramp exact magnitude continues to worsen bounded attrition without a 
 });
 
 test('matched multi-affinity defense mitigates public pressure without changing the schedule', () => {
-  const rating = '1000000'; const evolution = { affinityDefense: { Fertility: rating, Freshwater: rating, Scarcity: rating,
+  const rating = '2000000'; const evolution = { affinityDefense: { Fertility: rating, Freshwater: rating, Scarcity: rating,
     Cryogenic: rating, Marine: rating, Luminous: rating } };
   const profile = compileChallengeProfile({ environmentLevel: '1000', evolution });
   assert.ok(Object.values(profile.dimensions).every((dimension) => dimension.netRating === '0' && dimension.pressure === 0));
@@ -114,7 +197,7 @@ test('compiler hashes are deterministic, defense-sensitive, and validation rejec
     affinityDefense: Object.fromEntries(Object.keys(undefended.affinityDefense).map((key) => [key, '5000'])) } });
   assert.deepEqual(a, b); assert.equal(a.hash, environmentProfileHash(a)); assert.notEqual(a.hash, defended.hash);
   assert.deepEqual(validateChallengeProfile(a), a); assert.equal(validateChallengeProfile({ ...a, hash: '00000000' }).environmentLevel, '0');
-  assert.equal(CHALLENGE_PROFILE_VERSION, 4);
+  assert.equal(CHALLENGE_PROFILE_VERSION, 5);
 });
 
 test('rating projection is bounded and never requires Number conversion of a huge decimal', () => {
