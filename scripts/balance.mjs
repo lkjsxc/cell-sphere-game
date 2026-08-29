@@ -1,12 +1,22 @@
 #!/usr/bin/env node
 /** Paired-seed production Ecology balance audit: fresh fragility and causal Evolution improvement. */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpus } from 'node:os';
+import { dirname } from 'node:path';
 import { RunController } from '../src/simulation/simulator.js';
 import { compileEvolution, evolutionRunConfiguration } from '../src/game/skills/index.js';
 import { compareProgressionIntegers } from '../src/core/progression-integer.js';
 import { scoreResult } from '../src/game/scoring.js';
+import * as challengeProfile from '../src/simulation/challenge-profile.js';
+import { ENVIRONMENT_SCHEDULE_HASH, ENVIRONMENT_SCHEDULE_VERSION } from '../src/game/environment-level.js';
+import { multiplyProgressionIntegers } from '../src/core/progression-integer.js';
+
+const { CHALLENGE_PROFILE_VERSION, ENVIRONMENT_RATING_PER_LEVEL,
+  compileChallengeProfile, pressureForNetRating } = challengeProfile;
+const RESOURCE_YIELD_EFFECT_CAP = challengeProfile.RESOURCE_YIELD_EFFECT_CAP ?? 0;
 
 const args = process.argv.slice(2); const smoke = args.includes('--smoke'); const strict = args.includes('--strict'); const holdout = args.includes('--holdout');
+const reportArg = valueAfter('--report'); const compareArg = valueAfter('--compare');
 const runsIndex = args.indexOf('--runs'); const count = runsIndex >= 0 ? Number(args[runsIndex + 1]) : smoke ? 8 : 48;
 if (!Number.isInteger(count) || count < 2 || count > 500) throw new Error('--runs must be 2..500');
 const developmentSeeds = Object.freeze([1009, 2017, 3023, 4051, 5099, 6011, 7103, 8111, 9127, 10103, 11117, 12119]);
@@ -34,24 +44,47 @@ const validity = {
   matureEcologyExpressive: rows.mature.some((row) => row.transformedCells > 0) && rows.mature.some((row) => row.everPoweredCells > 0),
   noImmortality: Object.values(rows).every((values) => values.every((row) => row.complete)),
 };
-const report = { schema: 2, mode: smoke ? 'smoke' : 'deep', seedSet: holdout ? 'holdout' : 'development', seeds, fixtureIds,
-  rule: { scoreModel: 6, ecology: 'direct-authored', luminous: 'whole-cell-authority' }, summaries: summary, invariants: validity,
-  elapsedMs: Number((performance.now() - started).toFixed(1)), valid: Object.values(validity).every(Boolean) };
+const profileEvidence = profileContract();
+const report = { schema: 3, mode: smoke ? 'smoke' : 'deep', seedSet: holdout ? 'holdout' : 'development', seeds, fixtureIds,
+  command: process.argv.join(' '), runtime: { node: process.version, platform: process.platform, arch: process.arch,
+    cpu: cpus()[0]?.model ?? 'unknown', logicalCpus: cpus().length },
+  rule: { scoreModel: 6, ecology: 'direct-authored', luminous: 'whole-cell-authority',
+    environmentProfileVersion: CHALLENGE_PROFILE_VERSION, resourceYieldEffectCap: RESOURCE_YIELD_EFFECT_CAP,
+    environmentScheduleVersion: ENVIRONMENT_SCHEDULE_VERSION, environmentScheduleHash: ENVIRONMENT_SCHEDULE_HASH },
+  profileEvidence, summaries: summary, rows, invariants: validity,
+  elapsedMs: Number((performance.now() - started).toFixed(1)), valid: Object.values(validity).every(Boolean) && profileEvidence.scalarPreserved };
+if (compareArg) { report.comparison = compareBaseline(compareArg, report); report.valid &&= report.comparison.pass; }
 if (strict) report.valid &&= upgraded.every(([, value]) => value.lifetime.median >= fresh.lifetime.median && value.paired.lifetimeWins >= .45);
-mkdirSync('reports', { recursive: true }); const suffix = `${smoke ? 'smoke' : 'full'}${holdout ? '-holdout' : ''}`;
-writeFileSync(`reports/balance-${suffix}.json`, `${JSON.stringify(report, null, 2)}\n`); console.log(markdown(report)); if (!report.valid) process.exitCode = 1;
+const suffix = `${smoke ? 'smoke' : 'full'}${holdout ? '-holdout' : ''}`; const reportPath = reportArg ?? `reports/balance-${suffix}.json`;
+mkdirSync(dirname(reportPath), { recursive: true });
+writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`); console.log(markdown(report)); if (!report.valid) process.exitCode = 1;
 function run(seed, evolution) { const controller = new RunController({ seed: seed >>> 0, worldOrdinal: '1', ...evolutionRunConfiguration(evolution) }); controller.start();
   while (controller.state.status !== 'extinct' && controller.state.tick < 20_000) controller.advance(64);
   const result = controller.buildResult(); const score = scoreResult(result); const complete = controller.state.status === 'extinct';
-  return { seed, complete, finite: Number.isFinite(result.survivalSeconds) && Number.isFinite(result.peakCoverage), lifetime: result.survivalSeconds,
-    peakReach: result.peakCoverage, environment: result.peakEnvironmentLevel, cause: result.cause, score: score.total, echoes: score.echoes,
+  return { seed, complete, finite: Number.isFinite(result.survivalSeconds) && Number.isFinite(result.peakCoverage)
+      && Number.isFinite(result.resourceConservationError) && Math.abs(result.resourceConservationError) < 1e-6,
+    lifetime: result.survivalSeconds, peakReach: result.peakCoverage, finalReach: result.coverage,
+    sustainedReach: result.sustainedCoverage, peakLandOccupancy: result.peakLandOccupancy,
+    environment: result.peakEnvironmentLevel, peakEnvironment: result.peakEnvironmentLevel,
+    finalEnvironment: result.finalEnvironmentLevel, cause: result.cause, terminalCause: result.terminalCause,
+    score: score.total, echoes: score.echoes, authorityHash: result.hash,
+    resources: { initial: result.resourceInitial, final: result.resourceFinal, availableFinal: result.resourceAvailableFinal,
+      reserveFinal: result.resourceReserveFinal, conservationError: result.resourceConservationError },
     habitatOccupancy: result.habitatOccupancy, everPoweredCells: result.everPoweredCells, poweredCellSeconds: result.poweredCellSeconds,
     transformedCells: result.transformedCells, luminousDevelopment: result.luminousDevelopment };
 }
 function summarize(values, freshRows) { const paired = values.map((row, index) => ({ row, fresh: freshRows[index] }));
-  return { runs: values.length, lifetime: distribution(values.map((row) => row.lifetime)), peakReach: distribution(values.map((row) => row.peakReach)),
-    environment: exactDistribution(values.map((row) => row.environment)), score: exactDistribution(values.map((row) => row.score)), echoes: exactDistribution(values.map((row) => row.echoes)),
-    causes: counts(values.map((row) => row.cause)), habitatOccupancy: values[0].habitatOccupancy.map((_, index) => distribution(values.map((row) => row.habitatOccupancy[index]))),
+  return { runs: values.length, incomplete: values.filter((row) => !row.complete).length,
+    lifetime: distribution(values.map((row) => row.lifetime)), peakReach: distribution(values.map((row) => row.peakReach)),
+    finalReach: distribution(values.map((row) => row.finalReach)), sustainedReach: distribution(values.map((row) => row.sustainedReach)),
+    peakLandOccupancy: distribution(values.map((row) => row.peakLandOccupancy)),
+    environment: exactDistribution(values.map((row) => row.environment)), peakEnvironment: exactDistribution(values.map((row) => row.peakEnvironment)),
+    finalEnvironment: exactDistribution(values.map((row) => row.finalEnvironment)), score: exactDistribution(values.map((row) => row.score)), echoes: exactDistribution(values.map((row) => row.echoes)),
+    causes: counts(values.map((row) => row.cause)), terminalCauses: counts(values.map((row) => row.terminalCause)),
+    authorityHashes: values.map((row) => row.authorityHash),
+    resources: { final: distribution(values.map((row) => row.resources.final)), reserveFinal: distribution(values.map((row) => row.resources.reserveFinal)),
+      maximumConservationError: Math.max(...values.map((row) => Math.abs(row.resources.conservationError))) },
+    habitatOccupancy: values[0].habitatOccupancy.map((_, index) => distribution(values.map((row) => row.habitatOccupancy[index]))),
     powered: { worlds: values.filter((row) => row.everPoweredCells > 0).length, everPoweredCells: distribution(values.map((row) => row.everPoweredCells)),
       poweredCellSeconds: distribution(values.map((row) => row.poweredCellSeconds)) }, transformedCells: distribution(values.map((row) => row.transformedCells)),
     paired: { lifetimeWins: paired.filter(({ row, fresh }) => row.lifetime > fresh.lifetime).length / values.length,
@@ -65,3 +98,29 @@ function round(value) { return Number((Number.isFinite(value) ? value : 0).toFix
 function markdown(report) { const lines = [`# Balance ${report.mode} (${report.seedSet})`, '', '| fixture | median seconds | p25–p75 | peak reach | env | paired lifetime wins | powered worlds |', '|---|---:|---:|---:|---:|---:|---:|'];
   for (const [name, value] of Object.entries(report.summaries)) lines.push(`| ${name} | ${value.lifetime.median} | ${value.lifetime.p25}–${value.lifetime.p75} | ${value.peakReach.median} | ${value.environment.median} | ${value.paired.lifetimeWins} | ${value.powered.worlds} |`);
   return lines.join('\n'); }
+function valueAfter(flag) { const index = args.indexOf(flag); return index >= 0 ? args[index + 1] : null; }
+function profileContract() {
+  const scalar = ['1', '2', '4', '8', '32'].map((level) => { const profile = compileChallengeProfile({ environmentLevel: level });
+    const predecessor = pressureForNetRating(multiplyProgressionIntegers(level, ENVIRONMENT_RATING_PER_LEVEL));
+    return { level, profileHash: profile.hash, pressure: profile.score.pressure, predecessor,
+      absoluteDifference: Math.abs(profile.score.pressure - predecessor) }; });
+  return { version: CHALLENGE_PROFILE_VERSION, cap: RESOURCE_YIELD_EFFECT_CAP,
+    levelHashes: Object.fromEntries(['0', '1', '2', '4', '8', '32'].map((level) => [level,
+      compileChallengeProfile({ environmentLevel: level }).hash])), scalar,
+    scalarPreserved: scalar.every((row) => row.absoluteDifference <= .005) };
+}
+function compareBaseline(path, current) {
+  const baseline = JSON.parse(readFileSync(path, 'utf8')); const fixtures = {};
+  for (const [name, value] of Object.entries(current.summaries)) {
+    const before = baseline.summaries?.[name]?.lifetime?.median; const threshold = name === 'fresh' ? .10 : .15;
+    const relativeChange = before > 0 ? (value.lifetime.median - before) / before : Infinity;
+    fixtures[name] = { baselineMedian: before, candidateMedian: value.lifetime.median, relativeChange, threshold,
+      withinLifetimeGuardrail: Number.isFinite(relativeChange) && Math.abs(relativeChange) <= threshold,
+      incomplete: value.incomplete, causes: value.causes };
+  }
+  const strongerDefenseHelpful = ['foundation', 'scarcity'].every((name) => current.summaries[name].paired.lifetimeWins >= .45);
+  return { baselinePath: path, fixtures, allComplete: Object.values(current.summaries).every((value) => value.incomplete === 0),
+    strongerDefenseHelpful, scalarPreserved: current.profileEvidence.scalarPreserved,
+    pass: Object.values(fixtures).every((value) => value.withinLifetimeGuardrail) && Object.values(current.summaries).every((value) => value.incomplete === 0)
+      && strongerDefenseHelpful && current.profileEvidence.scalarPreserved };
+}

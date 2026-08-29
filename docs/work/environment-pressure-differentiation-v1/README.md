@@ -86,6 +86,16 @@ Status: active.
   Environment receipt. It covers production snapshots and terminal Result,
   Worker/WebGL2, fallback/WebGL2, fallback/Canvas 2D, keyboard focus restore,
   forced colors, reduced motion, 200% text, and the required five viewports.
+- Froze `resourceYieldEffectCap = 0.15`, the first and highest candidate in the
+  mandated order. Its full development cohort passed before the post-change
+  holdout was inspected; no lower candidate or other ecology constant was
+  evaluated. The one post-change holdout cohort then passed unchanged.
+- Extended the existing production balance audit rather than adding another
+  simulator. Its bounded report now records runtime and profile identity,
+  per-run authority hashes, peak/final/sustained REACH, habitat and powered-cell
+  evidence, peak/final Environment Level, causes, SCORE, Echoes, and resource
+  conservation. An isolated detached worktree at the starting revision
+  captured the same fields for supplemental exact before/after evidence.
 
 ## Focused verification
 
@@ -107,6 +117,12 @@ Status: active.
   mature `231.3 s`; all complete. Report:
   `reports/environment-pressure-differentiation-v1/baseline/balance-holdout-v4.json`,
   SHA-256 `827db21e6065ed9230b4e7dc9d41ca950e11055606736961b7fc69e68d0c872d`.
+- PASS — supplemental schema-3 baselines from an isolated detached checkout of
+  exact starting revision `915dbcf4`, using the final bounded report shape.
+  Development SHA-256 is
+  `c601a1b5ce95a514742ba7ad344cd9c28888ce5a6a8b8e153c7a54cdb9a4aedb`;
+  holdout SHA-256 is
+  `a92f9a026fa84179e7f82c9e0706083f2667dcc2004a340af2d788a70bb3a61b`.
 - PASS — isolated pre-change benchmark on Node `v24.18.1`, Linux x64, AMD
   Ryzen 9 9955HX host: authority sample times `239/156/151 ms`, median
   `13,030 ticks/s`, authority hash `471ba1cc`. Report:
@@ -142,6 +158,21 @@ Status: active.
   Result captures terminal-tick effective pressure; History v4 detail is
   omitted and v5 detail retained; the fair agent exposes no `netRating`, raw
   rating, or effective coefficient.
+- PASS — full 0.15 development selection cohort, 48 paired runs for each of
+  five fixtures. Median lifetime changes against v4 are fresh `-0.30%`,
+  Foundation `+1.47%`, Scarcity `+1.41%`, Luminous `+1.71%`, and mature
+  `-0.19%`. All `240` Worlds ended authoritatively; maximum absolute resource
+  conservation error was below `7e-11`. Report:
+  `reports/environment-pressure-differentiation-v1/candidate/balance-development-cap-0.15.json`,
+  SHA-256 `c70124834dd0e7b22464ec2a738bfd14fb056782e291ec23e1a72526f3e2dc20`.
+- PASS — the single post-change holdout cohort for frozen cap `0.15`, 48 paired
+  runs for each fixture. Median lifetime changes are fresh `+0.95%`, Foundation
+  `-0.43%`, Scarcity `-2.57%`, Luminous `+0.73%`, and mature `-6.79%`. All
+  `240` Worlds ended authoritatively; maximum absolute resource conservation
+  error was below `7e-11`; stronger finite builds retained positive paired
+  outcomes. Report:
+  `reports/environment-pressure-differentiation-v1/final/balance-holdout-cap-0.15.json`,
+  SHA-256 `2fa0b309ad23046089cd5ca5e91d028847de2913400d8846b6bbecfef929f08c`.
 - PASS (INTERIM; DIRTY CONTENT TREE, TO BE SUPERSEDED) — Chrome
   `152.0.7977.64` focused pressure scenarios pass on Worker/WebGL2,
   fallback/WebGL2, and fallback/Canvas 2D with zero browser-console errors.
@@ -166,6 +197,7 @@ Status: active.
 
 ## Exact next coherent step
 
-Commit the coherent projection/UI/persistence/browser cutover, then select the
-highest passing scarcity cap using development seeds only and run the untouched
-post-change holdout once.
+Commit the bounded balance-evidence owner, run final audits, agent evidence,
+showcase regeneration if required, same-host benchmarks, and revision-bound
+browser evidence; then reconcile current documentation and run one fresh clean
+complete verification before authorized publication.
