@@ -1699,6 +1699,8 @@ A renderer change must preserve picking or update picking coherently.
 
 The atmosphere is a visual concern.
 
+Its silhouette must remain smooth and independent of gameplay-cell topology, gameplay-cell count, and simulation resolution.
+
 Its appearance must not alter simulation.
 
 Ordinary life, geography, resources, Luminous charge, selection, and History must remain distinguishable.

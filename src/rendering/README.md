@@ -8,6 +8,8 @@ The WebGL world path remains exactly four steady-state draws.
 
 - `renderer.js`: four-draw composition, world/scene binding, blank-frame and
   context-loss teardown.
+- `atmosphere-geometry.js`: one fixed, argument-free unit icosphere for the
+  decorative WebGL atmosphere silhouette; it has no gameplay-topology input.
 - `life-edges.js`: the pure one-byte-per-canonical-edge ordinary-life
   classification shared by both backends.
 - `world-pass.js`: whole-cell terrain/ecology/charge uploads and accepted-
@@ -46,8 +48,9 @@ The canonical dynamic buffer is 7,680 bytes for the current topology; WebGL
 expands it into the existing four boundary vertices without adding a draw, and
 Canvas rebuilds its fixed batches only for an accepted snapshot change.
 
-Gates: renderer unit tests, `test:browser:life-boundaries`,
+Gates: renderer unit tests, `test:browser:atmosphere`,
+`test:browser:atmosphere:canvas`, `test:browser:life-boundaries`,
 `test:browser:life-boundaries:canvas`, `test:browser:file`, `test:browser:canvas`,
 `audit:cell-visuals`, and `audit:luminous`; browser runs measure a developer-only
-uniform fixture at center and limb with zero background intrusion, and normal
-WebGL evidence must retain four draws.
+uniform fixture at center and limb plus an isolated radial atmosphere contour,
+and normal WebGL evidence must retain four draws.

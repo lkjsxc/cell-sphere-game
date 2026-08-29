@@ -37,6 +37,16 @@ render the production terminal snapshot after charge decays to zero. WebGL
 remains four draws; both backends show whole-cell charge with no wires. Canonical entry points are `test:browser:file`,
 `test:browser:canvas`, and `test:browser:fallback`.
 
+`atmosphere-fixture.mjs` isolates the existing production atmosphere draw without
+adding a player mode. At DPR 1 it samples a fixed half-peak maximum-RGB contour
+through three identical repetitions, four camera orientations, default and
+maximum zoom, and the eight maintained viewports. It records repeat noise,
+radial spread, holes, disconnected arcs, geometry signatures across three
+gameplay topology levels, buffer upload/disposal counts, four draws, and
+synchronized steady/rotating frame cost. Forced Canvas records the equivalent
+analytic halo at representative narrow and wide viewports. Canonical entry
+points are `test:browser:atmosphere` and `test:browser:atmosphere:canvas`.
+
 `life-boundary-fixture.mjs` injects immutable matched snapshots without adding a
 player mode. It uses production topology, geometry, camera, shaders, Canvas
 paths, snapshot shape, and renderer identity. Three renders per exact input feed

@@ -9,6 +9,7 @@ import { assertBlankReplacement, installFirstReplacementCapture, runScenario } f
 import { runContinuityFixture } from './browser/continuity-fixture.mjs';
 import { verifyKeyboardInspector } from './browser/inspector-scenario.mjs';
 import { runLifeBoundaryFixture } from './browser/life-boundary-fixture.mjs';
+import { runAtmosphereFixture } from './browser/atmosphere-fixture.mjs';
 import { measureLuminousHierarchy } from './browser/luminous-fixture.mjs';
 import { runCameraMotionScenario } from './browser/camera-motion-scenario.mjs';
 
@@ -18,7 +19,10 @@ const REPORTS = resolve(ROOT, 'reports');
 const forceCanvas=process.argv.includes('--canvas');
 const forceSimulationFallback=process.argv.includes('--simulation-fallback');
 const lifeBoundaryOnly=process.argv.includes('--life-boundary-only');
+const atmosphereOnly=process.argv.includes('--atmosphere-only');
 const recordBaseline=process.argv.includes('--record-baseline');
+const cohort=process.argv.find((value)=>value.startsWith('--cohort='))?.split('=')[1]?.replace(/[^a-z0-9-]/gi,'');
+const cdpTimeoutMs=Math.max(1000,Math.min(60000,Number(process.env.BROWSER_CDP_TIMEOUT_MS)||(atmosphereOnly?60000:10000)));
 const chrome = findChrome();
 if (!chrome) {
   console.log('test:browser:file — SKIP (Chrome/Chromium unavailable) [exit 77]');
@@ -50,7 +54,7 @@ try {
   const configuredUrl = process.env.BROWSER_TEST_URL?.trim();
   const publicUrl = configuredUrl ? `${configuredUrl}${configuredUrl.includes('?') ? '&' : '?'}demo=1&browser-file-test=1`
     : `file://${ROOT}/index.html?demo=1&browser-file-test=1`;
-  await cdp.send('Page.navigate', { url: forceCanvas || lifeBoundaryOnly ? `${publicUrl}&dev=1` : publicUrl }, session);
+  await cdp.send('Page.navigate', { url: forceCanvas || lifeBoundaryOnly || atmosphereOnly ? `${publicUrl}&dev=1` : publicUrl }, session);
   await wait(4500);
 
   const evaluate = async (expression) => {
@@ -76,7 +80,18 @@ try {
     navigate: async (url) => { await cdp.send('Page.navigate', { url }, session); await wait(2200); },
     setViewport: (width, height) => cdp.send('Emulation.setDeviceMetricsOverride',
       { width, height, deviceScaleFactor: 1, mobile: width < 600 }, session) };
-  if (lifeBoundaryOnly) {
+  if (atmosphereOnly) {
+    const label=`${recordBaseline?'baseline':'final'}${cohort?`-cohort-${cohort}`:''}`;
+    const evidence=await runAtmosphereFixture(tools,{label,enforce:!recordBaseline});
+    const report=JSON.stringify({...evidence,sourceRevision:process.env.BROWSER_TEST_REVISION?.trim()||gitValue(['rev-parse','HEAD']),
+      harnessRevision:gitValue(['rev-parse','HEAD']),branch:gitValue(['branch','--show-current']),
+      workingTreeDirty:Boolean(gitValue(['status','--porcelain'])),sourceUrl:configuredUrl??`file://${ROOT}/index.html`,
+      browser:browserIdentity.product,protocolVersion:browserIdentity.protocolVersion,
+      browserErrors:cdp.errors.slice(0,20),browserStderr:cdp.stderr.slice(0,20)},null,2)+'\n';
+    const name=`atmosphere-silhouette-${label}-${evidence.backend}.json`;writeFileSync(resolve(REPORTS,name),report);
+    const hash=createHash('sha256').update(report).digest('hex');
+    console.log(`test:browser:atmosphere — ${recordBaseline?'RECORDED':'PASS'} (${evidence.backend}; report ${name}; sha256 ${hash}; repeat p95/max ${evidence.repeat.p95?.toFixed(3)}/${evidence.repeat.maximum?.toFixed(3)} CSS px; contour p95/max ${evidence.contour.p95?.toFixed(3)}/${evidence.contour.maximum?.toFixed(3)} CSS px; radius ${evidence.largestProjectedRadius.toFixed(3)} CSS px)`);
+  } else if (lifeBoundaryOnly) {
     const label=recordBaseline?'baseline':'final';
     const evidence=await runLifeBoundaryFixture(tools,{label,enforce:!recordBaseline});
     const report=JSON.stringify(evidence,null,2)+'\n';const name=`life-boundary-${label}-${evidence.backend}.json`;
@@ -224,7 +239,7 @@ function protocol(child) {
     const id = ++nextId;
     pending.set(id, (message) => message.error ? reject(new Error(message.error.message)) : resolvePromise(message.result));
     child.stdio[3].write(`${JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })}\0`);
-    setTimeout(() => { if (pending.delete(id)) reject(new Error(`CDP timeout: ${method}`)); }, 10000);
+    setTimeout(() => { if (pending.delete(id)) reject(new Error(`CDP timeout: ${method}`)); }, cdpTimeoutMs);
   });
   return { send, errors, stderr };
 }
@@ -329,6 +344,8 @@ async function poll(read, done, timeout, interval = 400) {
 }
 
 function findChrome() {
+  const configured = process.env.BROWSER_CHROME_BIN?.trim();
+  if (configured && existsSync(configured)) return configured;
   for (const name of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser']) {
     const result = spawnSync('which', [name], { encoding: 'utf8' });
     if (result.status === 0 && existsSync(result.stdout.trim())) return result.stdout.trim();

@@ -7,12 +7,14 @@ import * as BOUNDARY from './shaders-boundary.js';
 import { sameWorldIdentity } from '../core/world-session.js';
 import { BOUNDARY_VERTICES_PER_EDGE, LIFE_EDGE_STRIDE, writeBoundaryLifeVertices,
   writeLifeEdges } from './life-edges.js';
+import { ATMOSPHERE_GEOMETRY } from './atmosphere-geometry.js';
 
 export class WorldPass {
   constructor(gl, topo, fields) {
     this.gl = gl;
     this.topo = topo;
     this.geometry = createCellGeometry(topo, fields);
+    this.atmosphereGeometry = ATMOSPHERE_GEOMETRY;
     this.programs = {
       globe: this.make(SH.VS_GLOBE, SH.FS_GLOBE),
       boundary: this.make(BOUNDARY.VS_BOUNDARY, BOUNDARY.FS_BOUNDARY),
@@ -63,8 +65,10 @@ export class WorldPass {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.boundaryIndex);
 
     this.atmosphereVao = this.vao();
-    this.attribute(this.programs.atmosphere, 'aPos', this.buffer(gl.ARRAY_BUFFER, this.topo.positions), 3);
-    this.atmosphereIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, this.topo.triangles);
+    this.attribute(this.programs.atmosphere, 'aPos', this.buffer(gl.ARRAY_BUFFER, this.atmosphereGeometry.positions), 3);
+    this.atmosphereIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, this.atmosphereGeometry.indices);
+    this.atmosphereCount = this.atmosphereGeometry.indexCount;
+    this.atmosphereIndexType = gl.UNSIGNED_SHORT;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.atmosphereIndex);
     gl.bindVertexArray(null);
   }
@@ -171,7 +175,7 @@ export class WorldPass {
     gl.uniform1f(atmosphere.u.get('uEntropy'), snapshot?.entropy ?? 0);
     gl.blendFunc(gl.ONE, gl.ONE); gl.cullFace(gl.FRONT); gl.enable(gl.CULL_FACE);
     gl.bindVertexArray(this.atmosphereVao);
-    gl.drawElements(gl.TRIANGLES, this.topo.triangles.length, gl.UNSIGNED_SHORT, 0);
+    gl.drawElements(gl.TRIANGLES, this.atmosphereCount, this.atmosphereIndexType, 0);
     gl.disable(gl.CULL_FACE); return true;
   }
   dispose() {

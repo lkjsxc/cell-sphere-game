@@ -10,10 +10,12 @@ Evolution, or Trophy state.
 
 WebGL2 is primary and keeps four World draws: background, whole World cells,
 boundaries, and atmosphere. The cell shell has one position path: duplicated
-shared corners never receive owner-cell radial displacement. Canvas 2D consumes
-the same snapshot semantics, paints an opaque globe substrate before translucent
-cell material, and remains playable after WebGL context loss without replacing
-world authority.
+shared corners never receive owner-cell radial displacement. The atmosphere draw
+uses one fixed renderer-owned unit icosphere; gameplay topology, cell count,
+snapshots, seeds, and simulation resolution cannot alter its geometry or quality.
+Canvas 2D consumes the same snapshot semantics, paints an analytic projected
+halo and opaque globe substrate before translucent cell material, and remains
+playable after WebGL context loss without replacing world authority.
 
 ## Cellular visual language
 
@@ -64,7 +66,8 @@ smoothly from about 1.08 of the shorter dimension in portrait through 0.98 near
 square to 0.90 in wide layouts. Horizontal composition transitions continuously
 from centered portrait to a projected center near two-thirds of usable width in
 sufficiently wide layouts. Both renderers and picking consume the same camera
-geometry; the atmosphere and four-pass World architecture are unchanged.
+geometry. Atmosphere geometry does not participate in picking, and the four-pass
+World architecture is unchanged.
 
 ## Title evidence
 
@@ -75,10 +78,13 @@ and snapshot code. `npm run showcase:check` compares it with current source;
 ## Performance and bounds
 
 Typed arrays, reusable buffers, four WebGL draws, bounded History, and cached
-static fields keep frame work bounded. Life classification uses one 7,680-byte
-canonical buffer; WebGL expands it once per accepted semantic snapshot into the
-existing four vertices per boundary edge, while Canvas reuses eight fixed typed
-style batches. Animation time alone never rebuilds either projection. High developer speeds execute every tick
+static fields keep frame work bounded. The fixed atmosphere is constructed once
+per module and uploads 245,784 static bytes only at WebGL initialization or
+restoration: 10,242 vertices and 61,440 `Uint16` indices. Life classification
+uses one 7,680-byte canonical buffer; WebGL expands it once per accepted semantic
+snapshot into the existing four vertices per boundary edge, while Canvas reuses
+eight fixed typed style batches. Animation time alone never rebuilds either
+projection. High developer speeds execute every tick
 while coalescing bounded snapshots and render requests. Camera velocity samples
 use one fixed-capacity six-entry buffer; release state is constant-size, and one
 analytic inertia step rotates the reusable camera-basis arrays in place regardless

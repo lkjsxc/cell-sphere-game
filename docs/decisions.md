@@ -309,3 +309,17 @@ every finite speed and duration. Evidence: exact transfer through `32 rad/s`,
 natural-rest references, 30/60/120/144 Hz agreement, queued-handler equivalence,
 trusted mouse/touch and all-viewport normalized gestures, zoom/resize scale
 checks, Worker/fallback and WebGL2/Canvas paths, and paused-authority fingerprints.
+
+## D28 — Atmosphere silhouette quality is renderer-owned
+
+Keep the atmosphere in the existing fourth WebGL2 World draw, but bind it to one
+fixed argument-free refinement-5 unit icosphere rather than the level-4 gameplay
+topology. Its 10,242 vertices and 61,440 `Uint16` indices are constructed once,
+uploaded at renderer initialization/restoration, and disposed through the normal
+World-pass lifecycle. Gameplay topology, cell count, snapshots, seeds, simulation
+resolution, camera, and quality settings cannot change the geometry. Canvas 2D
+retains its analytic projected halo and the same atmosphere meaning. No shader,
+simulation, protocol, History, progression, reward, persistence, camera, picking,
+or draw-count authority changes. Evidence: deterministic geometry bounds,
+source-negative audit, calibrated Chrome contour cohorts, topology probes,
+four-draw lifecycle, Canvas state response, and same-host frame measurements.

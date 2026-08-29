@@ -25,6 +25,7 @@ if (!/fields\.lakeId/.test(fallback) || !/fields\.lakeShore/.test(fallback)) vio
 const geometry = sources.get('src/rendering/cell-geometry.js'); const shader = sources.get('src/rendering/shaders.js');
 const worldPass = sources.get('src/rendering/world-pass.js'); const boundaryShader = sources.get('src/rendering/shaders-boundary.js');
 const lifeEdges = sources.get('src/rendering/life-edges.js');
+const atmosphereGeometry = sources.get('src/rendering/atmosphere-geometry.js');
 if (!/const lakeEdge/.test(geometry)) violations.push('src/rendering/cell-geometry.js: lake edges are not cell-boundary metadata');
 if (!/float lakeCell/.test(shader) || !/\(1\.0 - lakeCell\)/.test(shader)) violations.push('src/rendering/shaders.js: lake relief is not flattened');
 if (!/aEcology/.test(shader) || !/resourceState/.test(shader) || !/recoveringResource/.test(shader))
@@ -41,6 +42,15 @@ if (/float frontier|alive \* life|frontier \* inset/.test(shader))
   violations.push('src/rendering/shaders.js: ordinary whole-cell life authority returned');
 if (/lifeStyles|state === LIFE_STATE\.LIVING|state === LIFE_STATE\.FRONTIER/.test(fallback))
   violations.push('src/rendering/fallback2d.js: ordinary whole-cell life authority returned');
+if (!atmosphereGeometry || !/ATMOSPHERE_GEOMETRY/.test(atmosphereGeometry)
+    || /from ['"]\.\.\/world\//.test(atmosphereGeometry))
+  violations.push('src/rendering/atmosphere-geometry.js: fixed renderer-owned atmosphere geometry missing');
+if (!/from ['"]\.\/atmosphere-geometry\.js['"]/.test(worldPass)
+    || !/this\.atmosphereGeometry\.positions/.test(worldPass) || !/this\.atmosphereGeometry\.indices/.test(worldPass))
+  violations.push('src/rendering/world-pass.js: atmosphere does not consume the fixed renderer geometry');
+if (/programs\.atmosphere[\s\S]{0,500}this\.topo\.(?:positions|triangles)/.test(worldPass)
+    || /drawElements\([^\n]*this\.topo\.triangles/.test(worldPass))
+  violations.push('src/rendering/world-pass.js: gameplay topology still owns atmosphere geometry or draw count');
 const renderer = sources.get('src/rendering/renderer.js');
 if (!/drawCalls = 4/.test(renderer)) violations.push('src/rendering/renderer.js: steady-state draw count changed');
 const fields = sources.get('src/world/fields.js');
@@ -50,7 +60,7 @@ for (const name of ['lakeId', 'lakeDepth', 'lakeShore', 'freshwaterInfluence', '
 const report = { scannedFiles: sources.size, renderingFiles: renderingFiles.length, worldFiles: worldFiles.length,
     fourDraws: /drawCalls = 4/.test(renderer), fullCellLakes: !/cellPath\(cell\s*,/.test(staticGeography),
   localResourceColor: /aEcology/.test(shader) && /resourceState/.test(shader), sharedLifeEdges: /writeLifeEdges\(this\.topo/.test(worldPass)
-    && /writeLifeEdges\(this\.topo/.test(fallback), ordinaryLifeInteriorFill: false,
+    && /writeLifeEdges\(this\.topo/.test(fallback), fixedAtmosphereGeometry: /this\.atmosphereGeometry\.positions/.test(worldPass), ordinaryLifeInteriorFill: false,
   globalEntropyTerrainFade: false, violations };
 console.log(JSON.stringify(report, null, 2)); if (violations.length) process.exitCode = 1;
 function jsFiles(directory) { return readdirSync(resolve(root, directory)).filter((name) => name.endsWith('.js')).sort().map((name) => `${directory}/${name}`); }

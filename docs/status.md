@@ -1,5 +1,37 @@
 # Current status
 
+## Atmosphere Silhouette Independence v1 (active)
+
+- One module-scoped refinement-5 unit icosphere now owns WebGL2 atmosphere
+  positions, indices, count, and quality. Its stable signature is
+  `atmosphere-v1-l5-5de68f8d`; 10,242 vertices, 20,480 triangles, 61,440
+  `Uint16` indices, and 245,784 static bytes are independent of gameplay
+  topology and simulation resolution.
+- The worst supported projected atmosphere radius is `1067.101991 CSS px`.
+  Maximum angular edge `0.041341239 rad` gives a conservative `0.227965 CSS px`
+  sagitta, making level 5 the first refinement below the `0.25 CSS px` bound.
+- Calibrated Chrome 152 baseline-to-final cross-orientation contour spread is
+  `0.613 -> 0.308 CSS px` p95 and `1.525 -> 0.721 CSS px` maximum, with zero
+  repeat noise, holes, or disconnected eligible arcs. The final is below the
+  fixed `0.35/0.75 CSS px` limits across eight viewports and both zoom extremes.
+- Three topology probes now produce one signature and byte count. The existing
+  four draws remain, atmosphere buffers upload only at initialization, all 13
+  renderer buffers dispose, and Canvas retains its analytic state-dependent
+  halo. Shader semantics, camera, picking, simulation, protocol, progression,
+  reward, History, settings, and persistence are unchanged.
+- Median same-host steady p50/p95 changes from `0.800/1.000 ms` to
+  `0.900/1.000 ms`; rotating p50/p95 changes from `0.900/1.500 ms` to
+  `1.200/1.300 ms`. Cohort ranges overlap and neither p95 regresses. The active
+  package records exact ignored-report digests and rejected contour calibration.
+- Worker/WebGL2, simulation-fallback/WebGL2, and Worker/Canvas production-browser
+  paths pass with SCORE `192,888`; both WebGL paths retain four draws, the Worker
+  path restores to playable Canvas after context loss, and focused WebGL/Canvas
+  life-boundary fixtures pass. The final benchmark is `12,123 ticks/s` versus
+  `12,151` baseline with unchanged authority/profile hashes. A fresh complete
+  verify passes all 26 gates, including unit `211/211`, integration `72/72`, and
+  a post-suite valid `9,226 ticks/s` benchmark. Commit and external closure
+  remain pending.
+
 ## Kinetic Sphere Fidelity v2
 
 - One input owner freezes the projected sphere radius in CSS pixels at

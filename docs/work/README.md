@@ -5,7 +5,11 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-There is no active work package.
+Active package:
+
+- [`atmosphere-silhouette-independence-v1/`](atmosphere-silhouette-independence-v1/) —
+  fixed renderer-owned WebGL2 atmosphere geometry, topology-independent Canvas
+  semantic parity, four-draw preservation, and controlled silhouette proof.
 
 Completed packages remain as historical or current implementation evidence:
 
