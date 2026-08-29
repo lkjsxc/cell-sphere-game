@@ -110,15 +110,54 @@
   `207/207` unit tests, `72/72` integration tests, benchmark, and links.
 - `npm run check:links` and `npm run showcase:check` — pass; 135 module links,
   11 HTML references, and unchanged showcase digest `a89fdfaf…`.
+- Exact revision `526d4b39e5c3774fc68caafda57326d932f13226` passes
+  `npm run test:browser:file`, `npm run test:browser:fallback`, and
+  `npm run test:browser:canvas` in Chrome `152.0.7977.64`. Reports:
+  - Worker/WebGL2: `reports/kinetic-sphere-fidelity-v2-final-worker-webgl2.json`,
+    SHA-256 `c8eea74c2ba92d6643ffec9d55a1c2b6931bb058f61850d6b809a3df0a69f2cb`.
+  - fallback/WebGL2: `reports/kinetic-sphere-fidelity-v2-final-fallback-webgl2.json`,
+    SHA-256 `21c3437d11e904a48880eb8ff797fedf5a337366f9cc1e977781df23490462bb`.
+  - Worker/Canvas 2D: `reports/kinetic-sphere-fidelity-v2-final-worker-canvas2d.json`,
+    SHA-256 `fdd907cb97abd8d2b6d8566320a4d6fe94752014030dd608a5689e435033cb78`.
+- All three exact-revision reports record one-radius paths of
+  `0.99999996–1.00000017 rad` across all eight viewports (spread
+  `2.18e-7 rad`), post-wheel travel `0.99999998 rad`, and frozen-resize travel
+  `0.99999996 rad`. Selected nodes remain unchanged and picking stays valid.
+- Worker/WebGL2 measured strong/touch/faster/medium/slow speeds of
+  `8.8671/8.8671/16.1555/1.4116/0.2600 rad/s`. Natural paths and durations were
+  `1.2182/1.2182/2.2224/0.1911/0` turns and
+  `5056/5047/5594/3477/0 ms`. The other two paths remain within the authored
+  tolerance; maximum mouse/touch difference is `0.125%`.
+- Every trusted cancellation ends at zero speed; reduced motion keeps direct
+  drag at zero release speed; calm orbit measures `0.02168–0.02210 rad/s`;
+  sample high-water is six; maximum basis error is `4.45e-16`; browser errors
+  are zero. Paused snapshot tick/hash/identity are unchanged before and after
+  all camera gestures in every path.
+- The same runs pass real keyboard Inspector entry/focus restoration, forced
+  colors, 200% text, reduced motion, responsive geometry, History, Evolution,
+  Trophies, selection/purchase guards, SCORE `192,888`, and shared picking.
+  Both WebGL2 runs retain four draws.
+- Six ignored landscape/wide screenshots accompany the reports:
+  - Worker/WebGL2 `844×390`: `reports/kinetic-fidelity-worker-webgl2-844x390.png`,
+    SHA-256 `e1c5a0549b76e19b4b560c4a310f64db884140dadc01e1d972d62d60b5104a4d`.
+  - Worker/WebGL2 `1440×900`: `reports/kinetic-fidelity-worker-webgl2-1440x900.png`,
+    SHA-256 `f03cb30baf98b286e82094dcfffd9dab44906daec454dd14d94156c080dd538f`.
+  - fallback/WebGL2 `844×390`: `reports/kinetic-fidelity-fallback-webgl2-844x390.png`,
+    SHA-256 `bcbdca44f752044abee1fd3860aa184afed58d23ccdad6de2caba96a2a6bc09c`.
+  - fallback/WebGL2 `1440×900`: `reports/kinetic-fidelity-fallback-webgl2-1440x900.png`,
+    SHA-256 `be39bbe84e520337c3dcd6ebf150e9d183e85cbdac43ba289585b72c6105bff3`.
+  - Worker/Canvas `844×390`: `reports/kinetic-fidelity-worker-canvas2d-844x390.png`,
+    SHA-256 `5e8e510c45bc95f69ccf269e89d3585969c8aa927cdf543be1445381954f2586`.
+  - Worker/Canvas `1440×900`: `reports/kinetic-fidelity-worker-canvas2d-1440x900.png`,
+    SHA-256 `df01a635cc3028851acd380fd9afc2ac5430fab457156b02c87b305222c17318`.
 
 ## Evidence not obtained
 
-- Exact committed-revision browser reports, CI, Pages, deployed-byte, and
-  deployed-browser evidence remain pending.
+- CI, Pages, deployed-byte, and deployed-browser evidence remain pending.
 - Pen and physical-device mouse, touch, high-refresh, thermal, screen-reader,
   forced-colors, and safe-area evidence are unavailable on this host.
 
 ## Exact next coherent step
 
-Commit the coherent implementation, then rerun all three browser paths against
-that exact revision and record bounded report identities.
+Commit this bounded local-evidence record, normal-push the two coherent commits,
+then verify Actions, Pages, cache-busted bytes, and deployed browser behavior.

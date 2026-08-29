@@ -16,15 +16,17 @@
   `4.40511` turns. The `8.86707 rad/s` reference rests near `5,082.23 ms` after
   about `1.21815` turns. Paths agree across 30/60/120/144 Hz and handler delays
   of 0/150/350 ms.
-- Chrome 152 Worker/WebGL2, fallback/WebGL2, and Worker/Canvas 2D preliminary
-  receipts pass. One-radius direct paths across all eight viewports are
+- Exact implementation revision `526d4b39e5c3774fc68caafda57326d932f13226`
+  passes Chrome 152 Worker/WebGL2, fallback/WebGL2, and Worker/Canvas 2D.
+  One-radius direct paths across all eight viewports are
   `0.99999996–1.00000017 rad`; post-wheel zoom and mid-gesture resize paths also
   remain one radian. Strong, faster, medium, and slow measured releases are
-  approximately `8.867`, `16.16`, `1.412`, and `0.260 rad/s`, producing about
-  `1.218`, `2.223`, `0.191`, and zero release turns. Mouse/touch parity differs
-  by at most `0.13%`, basis error is below `4.5e-16`, sample high-water is six,
-  SCORE remains `192,888`, both WebGL2 runs retain four draws, and browser errors
-  are zero.
+  approximately `8.867`, `16.155`, `1.412`, and `0.260 rad/s`, producing about
+  `1.218`, `2.222`, `0.191`, and zero release turns. Mouse/touch parity differs
+  by at most `0.125%`, basis error is below `4.5e-16`, sample high-water is six,
+  every cancellation ends at zero speed, SCORE remains `192,888`, both WebGL2
+  runs retain four draws, and browser errors are zero. Ignored report digests are
+  `c8eea74c…`, `21c3437d…`, and `fdd907cb…`.
 - The paused authoritative snapshot fingerprint and tick remain unchanged across
   every camera gesture in all three browser paths. Unit tests pass `207/207`,
   integration tests pass `72/72`, and the restored structure gate passes.
@@ -34,8 +36,8 @@
   the `12,323` predecessor baseline (`+0.23%`).
 - Simulation, Worker protocol, World identity, renderer semantics, game time,
   Environment, Evolution, History, SCORE, Echoes, settings, persistence, and
-  balance are unchanged. Exact committed browser receipts, CI, Pages, deployed
-  bytes, and deployed-browser evidence remain pending.
+  balance are unchanged. CI, Pages, deployed bytes, and deployed-browser
+  evidence remain pending.
 - Pen and physical-device mouse, touch, high-refresh, thermal, screen-reader,
   forced-colors, and safe-area evidence remain unavailable; emulated evidence is
   not classified as physical.
