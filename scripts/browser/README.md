@@ -8,12 +8,15 @@ replacement, Evolution, Environment, and Trophy acceptance.
 it activates the projected center cell with Enter and proves Escape restores
 canvas focus in WebGL2, fallback, and Canvas runs.
 
-`camera-motion-scenario.mjs` measures release travel by accumulating incremental
-camera-direction angles from the pointer-up basis through rest. This bounded
-trace cannot mistake a wrapped full turn for a small endpoint displacement. It
-separately proves strong mouse/touch, medium, and slow gestures; cancellation;
-reduced motion; the unchanged idle orbit; and portrait, landscape, and wide
-layouts. `browser-file-test.mjs` writes the bounded structured receipt under
+`camera-motion-scenario.mjs` authors pointer traces in projected globe radii and
+measures release travel by accumulating incremental camera-direction angles from
+the pointer-up basis through natural rest. The constant-space observer cannot
+mistake wrapped multi-turn travel for a small endpoint displacement. It proves
+two distinct high-speed traces without a plateau, strong mouse/touch parity,
+medium and slow gestures, one-radian direct travel at eight viewports and after
+zoom, pointerdown-scale freezing across resize, cancellation, reduced motion,
+paused-authority neutrality, and the unchanged idle orbit.
+`browser-file-test.mjs` writes the bounded structured receipt under
 ignored `reports/` for Worker/WebGL2, fallback/WebGL2, and Worker/Canvas runs.
 Any endpoint camera displacement retained in the broader autonomous-feel audit
 is supplemental smoke evidence; only the cumulative trace decides release

@@ -65,7 +65,8 @@ try {
     await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }, session);
   };
   const tools={evaluate,wait,poll,errors:cdp.errors,click,simulationFallback:forceSimulationFallback,browserIdentity,
-    pointerDown:(x,y)=>pointerDown(cdp,session,x,y),pointerUp:(x,y)=>pointerUp(cdp,session,x,y),
+    pointerDown:(x,y)=>pointerDown(cdp,session,x,y),pointerMove:(x,y)=>pointerMove(cdp,session,x,y),
+    pointerUp:(x,y)=>pointerUp(cdp,session,x,y),
     key:(value)=>key(cdp,session,value),tap:(x,y)=>tap(cdp,session,x,y),drag:(from,to)=>drag(cdp,session,from,to),
     flick:(from,to,options)=>flick(cdp,session,from,to,options),
     touchFlick:(from,to,options)=>touchFlick(cdp,session,from,to,options),
@@ -85,7 +86,7 @@ try {
     if (!forceCanvas) await runDeveloperSpeedChecks(tools, publicUrl);
     else tools.continuity = await runContinuityFixture(tools);
     tools.cameraEvidence = await runCameraMotionScenario(tools);
-    tools.cameraReceipt = writeKineticReleaseReport(tools.cameraEvidence, browserIdentity, cdp,
+    tools.cameraReceipt = writeKineticFidelityReport(tools.cameraEvidence, browserIdentity, cdp,
       forceSimulationFallback, forceCanvas, Boolean(configuredUrl));
     const evidence = forceCanvas ? await runCanvasScenario(tools) : await runScenario(tools);
     const light = evidence.worldmaking.luminance?.emission;
@@ -228,11 +229,11 @@ function protocol(child) {
   return { send, errors, stderr };
 }
 
-function writeKineticReleaseReport(evidence, browserIdentity, cdp, fallback, canvas, deployed) {
+function writeKineticFidelityReport(evidence, browserIdentity, cdp, fallback, canvas, deployed) {
   const simulationPath = fallback ? 'fallback' : 'worker';
   const rendererPath = canvas ? 'canvas2d' : evidence.backend;
-  const name = `kinetic-sphere-release-${deployed ? 'deployed' : 'final'}-${simulationPath}-${rendererPath}.json`;
-  const report = `${JSON.stringify({ schema: 1, capturedAt: new Date().toISOString(),
+  const name = `kinetic-sphere-fidelity-v2-${deployed ? 'deployed' : 'final'}-${simulationPath}-${rendererPath}.json`;
+  const report = `${JSON.stringify({ schema: 2, capturedAt: new Date().toISOString(),
     revision: gitValue(['rev-parse', 'HEAD']), branch: gitValue(['branch', '--show-current']),
     browser: browserIdentity.product, protocolVersion: browserIdentity.protocolVersion,
     simulationPath, rendererPath, deployed, ...evidence,
@@ -263,6 +264,8 @@ async function tap(cdp,session,x,y){
 
 async function pointerDown(cdp,session,x,y){await cdp.send('Input.dispatchMouseEvent',{
   type:'mousePressed',x,y,button:'left',clickCount:1},session)}
+async function pointerMove(cdp,session,x,y){await cdp.send('Input.dispatchMouseEvent',{
+  type:'mouseMoved',x,y,button:'left',buttons:1},session)}
 async function pointerUp(cdp,session,x,y){await cdp.send('Input.dispatchMouseEvent',{
   type:'mouseReleased',x,y,button:'left',clickCount:1},session)}
 

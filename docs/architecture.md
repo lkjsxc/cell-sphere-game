@@ -56,10 +56,12 @@ transaction applies Echoes, records, History, and Trophies.
 
 WebGL2 remains four world draw calls and keeps duplicated cell corners on one
 continuous position shell; Canvas 2D receives the same semantic cell states over
-an opaque globe substrate. One presentation policy advances bounded camera
-motion from animation time, and World/Home distance derives from projected globe
-geometry; the same policy transitions horizontal composition from centered
-portrait to near two-thirds of usable width on wide layouts. Primary scenes are
+an opaque globe substrate. One input path freezes the visible sphere radius for
+each one-pointer gesture and converts CSS-pixel movement to angular deltas. One
+constant-space presentation policy transfers the sampled release vector directly
+and damps it from animation time to a finite rest threshold. World/Home distance
+derives from projected globe geometry; the layout policy transitions horizontal
+composition from centered portrait to near two-thirds of usable width on wide layouts. Primary scenes are
 Home, World, Evolution, and Trophies. History is
 the single durable temporal surface. Fair agents use production authority and
 see no future seeds, RNG, raw arrays, or hidden maps.

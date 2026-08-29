@@ -708,6 +708,14 @@ Do not regress to clamped yaw/pitch when the current frame supports repeated pol
 
 Direct manipulation must remain immediate and predictable.
 
+Direct-manipulation sensitivity must be defined relative to the sphere that is actually visible, not through a fixed per-CSS-pixel gain or device-specific table.
+
+For ordinary one-pointer rotation, one current projected globe radius of pointer travel should correspond to approximately one radian of angular travel.
+
+Use CSS-pixel pointer deltas with CSS-pixel projected geometry, use the same geometric gain on both axes, and keep one gesture's scale stable from pointerdown through release or cancellation.
+
+The exact angular deltas applied while grabbed must be the deltas sampled for release estimation.
+
 Support:
 
 - mouse;
@@ -745,30 +753,39 @@ One narrow presentation controller owns camera-motion state.
 
 The intended sequence is:
 
-`direct manipulation → bounded release inertia → damping → idle wait → calm automatic orbit`
+`direct manipulation → faithful release inertia → damping → idle wait → calm automatic orbit`
 
 Player-driven release inertia and automatic idle orbit serve different purposes.
 
-A deliberate fast flick should be capable of carrying the sphere through an
-energetic, bounded rotation of roughly a full turn when the gesture warrants it.
+A valid above-threshold drag release must transfer the measured angular velocity vector faithfully.
+
+Do not apply a nonlinear boost curve, arbitrary angular-speed ceiling, maximum-turn limit, or fixed inertia lifetime.
+
+A faster finite gesture may therefore carry the sphere through multiple turns.
+
+This is not perpetual motion: elapsed-time damping and a finite stillness threshold dissipate every finite valid release naturally unless trusted activity cancels it first.
 
 Do not accelerate the calm idle orbit to compensate for weak release inertia.
 
-Slow drags must remain precise, direct manipulation must remain immediate, and
-reduced motion must continue to suppress nonessential carried motion.
+Slow drags must remain precise, direct manipulation must remain immediate, and reduced motion must continue to suppress nonessential carried motion.
 
 Required invariants:
 
 - recent velocity samples are fixed-capacity;
 - samples are time-bounded;
-- release velocity is finite;
-- release velocity is clamped;
+- direct angular deltas are normalized by current projected sphere geometry;
+- one gesture uses one stable finite geometry snapshot;
+- direct manipulation and release sampling consume the same angular deltas;
+- measured release velocity is finite;
+- valid above-threshold release velocity is transferred without amplification or saturation;
+- malformed, nonfinite, stale, insufficient, tap, pinch, and cancelled traces create no inertia;
 - damping uses elapsed animation time, not frame count;
-- inertia converges to stillness;
-- inertia has a hard bounded lifetime;
+- damping and the stillness threshold make every finite uncancelled release converge to rest;
+- no fixed elapsed-time cut-off replaces natural rest;
+- per-frame work and motion state remain constant-space regardless of speed, turns, or duration;
 - automatic orbit has bounded angular speed;
-- trusted activity stops automatic motion immediately;
-- opening a surface clears and holds automatic motion;
+- trusted activity stops automatic or carried motion immediately;
+- opening a surface clears and holds automatic or carried motion;
 - direct manipulation remains possible on exposed canvas;
 - automatic motion returns only after a fresh idle delay;
 - scene change clears velocity;
@@ -798,7 +815,9 @@ reduced motion.
 
 Test equivalent elapsed behavior at multiple frame cadences.
 
-Test long-run orthonormality.
+Test normalized gesture behavior across responsive viewport geometry and supported zoom.
+
+Test long-run orthonormality and high finite multi-turn releases.
 
 Test fallback input delay.
 
@@ -1922,7 +1941,7 @@ Keep bounded:
 
 - tick debt;
 - work per slice;
-- camera samples;
+- camera samples and motion-state size;
 - continuation state;
 - History;
 - reports;
@@ -1931,6 +1950,8 @@ Keep bounded:
 - notifications;
 - Trophy queues;
 - renderer-semantic buffers and update work.
+
+A camera release magnitude is not arbitrarily capped, but camera memory and per-frame work must remain constant-space regardless of speed, turns, or natural damping duration.
 
 Avoid:
 
@@ -1962,6 +1983,7 @@ Use for:
 - progression compilation;
 - scoring;
 - camera math;
+- input-to-angle geometry;
 - layout geometry;
 - continuation projection;
 - accessibility projections;
@@ -1995,6 +2017,8 @@ Use for:
 - pinch;
 - wheel;
 - layout rectangles;
+- projected-radius-normalized direct manipulation;
+- release velocity transfer and cumulative path;
 - rendering;
 - controlled visual fixtures;
 - context loss;
@@ -2038,6 +2062,10 @@ Classify:
 - superseded.
 
 A skipped, unavailable, or stale test is not a pass.
+
+Keep canonical test lists in maintained package scripts when CI and local verification need the same suite.
+
+Do not let a duplicated hosted glob silently omit presentation tests.
 
 ---
 

@@ -31,15 +31,17 @@ checkpoints preserve the renderer's life, resource, transformation, and
 Luminous state; loading or unavailable visual History remains honestly
 semantic-only. Bounded notifications remain presentation-only.
 
-The globe is the primary interface. A drag turns it immediately; a deliberate
-fast flick carries roughly one additional turn, a medium flick carries less,
-and a slow inspection drag stops on release. Every release decays within a
-bounded interval, and Home or World begins a separate calm idle orbit only after
-inactivity. Reduced motion removes inertia and automatic orbit. Responsive
-framing derives the globe's distance from its projected size instead of device
-distance constants. Portrait layouts stay centered; sufficiently wide Home and
-World layouts place the projected center near two-thirds of usable width while
-retaining the same globe-size targets. Ordinary life reads through shared cell
+The globe is the primary interface. A drag turns it immediately, with one
+projected globe radius of pointer travel corresponding to one radian on every
+supported layout and zoom. A valid release carries the measured angular velocity
+directly: stronger finite flicks travel farther, while damping brings each to a
+natural stop and slow inspection stops on release. Home or World begins a
+separate calm idle orbit only after inactivity. Reduced motion removes inertia
+and automatic orbit. Responsive framing derives the globe's distance from its
+projected size instead of device distance constants. Portrait layouts stay
+centered; sufficiently wide Home and World layouts place the projected center
+near two-thirds of usable width while retaining the same globe-size targets.
+Ordinary life reads through shared cell
 boundaries: exposed growth fronts are clearer than quiet internal living edges,
 while terrain and finite local resources remain visible inside occupied cells.
 Stress, critical state, remains, selection, History, coastlines, and whole-cell
@@ -97,4 +99,4 @@ npm run test:browser:fallback
 ```
 
 Current implementation status is recorded in
-[`docs/work/kinetic-sphere-release-v1/README.md`](docs/work/kinetic-sphere-release-v1/README.md).
+[`docs/work/kinetic-sphere-fidelity-v2/README.md`](docs/work/kinetic-sphere-fidelity-v2/README.md).

@@ -48,13 +48,15 @@ near, and far positions. They are evidence tooling, not player-facing modes.
 World uses the high-resolution living topology. Evolution and Trophy scenes use
 their own semantic cell projections while sharing camera and picking
 infrastructure. The camera retains one orthonormal free-orbit frame; a
-presentation-only motion policy maps recent angular speed through one quadratic,
-bounded response and integrates release inertia from animation time. Slow drags
-stop, medium flicks carry proportionally, and deliberate fast flicks approach one
-additional turn. The separate Home/World idle orbit remains calm and begins only
-after a fresh delay. Opening a surface never changes camera direction or zoom and
-clears nonessential motion. Reduced motion keeps direct drag and zoom while
-disabling inertia and automatic orbit.
+single input path snapshots the projected sphere radius in CSS pixels and uses
+the same isotropic angular deltas for immediate manipulation and recent release
+sampling. The presentation-only motion policy transfers every valid above-
+threshold measured vector directly, then integrates elapsed-time damping until
+the finite rest threshold. There is no response curve, speed/turn ceiling, or
+fixed inertia lifetime. The separate Home/World idle orbit remains calm and
+begins only after a fresh delay. Opening a surface never changes camera direction
+or zoom and clears nonessential motion. Reduced motion keeps direct drag and zoom
+while disabling inertia and automatic orbit.
 
 World/Home default distance is the inverse projection of a target sphere
 diameter using the camera field of view and usable canvas. The target varies
@@ -78,7 +80,8 @@ canonical buffer; WebGL expands it once per accepted semantic snapshot into the
 existing four vertices per boundary edge, while Canvas reuses eight fixed typed
 style batches. Animation time alone never rebuilds either projection. High developer speeds execute every tick
 while coalescing bounded snapshots and render requests. Camera velocity samples
-use one fixed-capacity six-entry buffer; the release response is constant-time,
-and inertia rotates the reusable camera-basis arrays in place. The Result ring
+use one fixed-capacity six-entry buffer; release state is constant-size, and one
+analytic inertia step rotates the reusable camera-basis arrays in place regardless
+of release speed, turns, or duration. The Result ring
 changes one bounded style projection at no more than about 30 Hz and does not
 add a renderer pass.

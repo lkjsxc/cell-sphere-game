@@ -1,58 +1,44 @@
 # Current status
 
-## Kinetic Sphere Release v1
+## Kinetic Sphere Fidelity v2
 
-- One presentation-only owner now estimates recent angular velocity and maps it
-  through a quadratic bounded response. The final constants are a `0.30 rad/s`
-  release threshold, `2.20 rad/s` full-fling input knee, `8.00 rad/s` output
-  cap, `600 ms` damping half-life, `0.025 rad/s` stop speed, and `5,000 ms`
-  hard lifetime. The six-sample/120 ms estimator, direct-drag scale, 4.5-second
-  idle delay, and `0.022 rad/s` idle orbit are unchanged.
-- Inertia applies one simultaneous body-frame angular delta per analytic elapsed-
-  time step. Direct manipulation still uses the original immediate free-orbit
-  primitive. Slow inspection therefore stops, medium input carries
-  proportionally, and a deliberate strong flick travels about 1.10 turns before
-  beginning a fresh calm-idle wait.
-- Canonical pure 60 Hz traces measure strong `8.86707 → 8.00000 rad/s`,
-  `6.90347 rad` (`1.09872` turns), `5,000 ms`; medium
-  `1.41156 → 2.73809 rad/s`, `2.34854 rad` (`0.37378` turns),
-  `4,066.67 ms`; and slow `0.26926 → 0`, with zero release travel.
-  Equivalent 30/60/120/144 Hz paths differ by less than `0.003%`, and 0/150/350
-  ms handler delays preserve raw speed, travel, and duration exactly.
-- The production browser scenario now accumulates incremental direction angles
-  from the pointer-up basis through rest, so a wrapped full turn cannot appear
-  stationary. Its bounded receipts include raw/mapped speeds, path, duration,
-  sample high-water, basis error, cancellation, idle-orbit, reduced-motion, and
-  viewport evidence. Authored CDP input timestamps keep mouse and touch traces
-  equivalent under queued handler delivery without changing production input.
-- Exact implementation commit `ea32b505dd29d51159583ce1e428e7c9b2f52e49`
-  passes Chrome 152 Worker/WebGL2, fallback/WebGL2, and Worker/Canvas 2D. Strong
-  mouse and touch travel is `1.098719–1.098721` turns, medium is
-  `0.385509–0.387400`, slow is zero, idle rate remains
-  `0.02197–0.02217 rad/s`, basis error is at most `2.23e-16`, and browser errors
-  are zero. The ignored bounded receipt hashes are `22818600…`, `80535564…`,
-  and `c92597fe…` respectively.
-- The current 204 unit and 72 integration tests pass. Final same-host benchmark
-  is `12,382 ticks/s` versus the `12,267` baseline, with unchanged authority,
-  fresh, breadth, and deep-Luminous hashes. The structured autonomous-feel audit,
-  links, and showcase identity pass.
-- Simulation, Worker protocol, World identity, renderer semantics and draw
-  count, game time, Environment, Evolution, History, SCORE, Echoes, settings,
-  persistence, and balance are unchanged.
-- Exact committed tree `5f0a86fb31dbea70c6c966cc82566cb9a55d46f9`
-  passes all 26 clean-checkout verifier gates. Workflow run `33205507801`,
-  verify job `98965399146`, Pages job `98969704461`, deployment `6147779527`,
-  and deployment status `17476361841` are successful for that revision.
-- Cache-busted Pages bytes exactly match both camera owners, the strengthened
-  browser evidence owners, and canonical identity. The deployed Chrome 152
-  Worker/WebGL2 scenario passes with strong mouse/touch at approximately
-  `1.09872` turns, medium at `0.38649`, slow at zero, unchanged idle orbit,
-  SCORE `192,888`, four draws, zero browser errors, and every selected
-  cancellation, accessibility, and viewport boundary. Its ignored bounded
-  report SHA-256 is `cfbbff0a…`.
+- One input owner freezes the projected sphere radius in CSS pixels at
+  pointerdown. Both axes use the same `delta / radius` mapping, and the exact
+  immediately applied angular delta enters the fixed six-sample/120 ms release
+  estimator.
+- Every finite valid release above `0.30 rad/s` transfers its measured vector
+  directly. The former response curve, `8 rad/s` ceiling, duplicate mapped-speed
+  diagnostic, and five-second lifetime are deleted. A `600 ms` half-life and
+  `0.025 rad/s` rest threshold dissipate finite motion naturally; lifecycle and
+  trusted-interaction cancellation remain immediate.
+- Pure references pass exact identity transfer through `32 rad/s`. That release
+  remains active after five seconds, rests near `6,193.16 ms`, and travels about
+  `4.40511` turns. The `8.86707 rad/s` reference rests near `5,082.23 ms` after
+  about `1.21815` turns. Paths agree across 30/60/120/144 Hz and handler delays
+  of 0/150/350 ms.
+- Chrome 152 Worker/WebGL2, fallback/WebGL2, and Worker/Canvas 2D preliminary
+  receipts pass. One-radius direct paths across all eight viewports are
+  `0.99999996–1.00000017 rad`; post-wheel zoom and mid-gesture resize paths also
+  remain one radian. Strong, faster, medium, and slow measured releases are
+  approximately `8.867`, `16.16`, `1.412`, and `0.260 rad/s`, producing about
+  `1.218`, `2.223`, `0.191`, and zero release turns. Mouse/touch parity differs
+  by at most `0.13%`, basis error is below `4.5e-16`, sample high-water is six,
+  SCORE remains `192,888`, both WebGL2 runs retain four draws, and browser errors
+  are zero.
+- The paused authoritative snapshot fingerprint and tick remain unchanged across
+  every camera gesture in all three browser paths. Unit tests pass `207/207`,
+  integration tests pass `72/72`, and the restored structure gate passes.
+- One fresh `npm run verify` passes all 26 gates on stable implementation
+  content. Its benchmark is `12,454 ticks/s` with unchanged authority/profile
+  hashes; the separately isolated final benchmark is `12,351 ticks/s` versus
+  the `12,323` predecessor baseline (`+0.23%`).
+- Simulation, Worker protocol, World identity, renderer semantics, game time,
+  Environment, Evolution, History, SCORE, Echoes, settings, persistence, and
+  balance are unchanged. Exact committed browser receipts, CI, Pages, deployed
+  bytes, and deployed-browser evidence remain pending.
 - Pen and physical-device mouse, touch, high-refresh, thermal, screen-reader,
-  and forced-colors evidence remain unavailable; emulated evidence is not
-  classified as physical.
+  forced-colors, and safe-area evidence remain unavailable; emulated evidence is
+  not classified as physical.
 
 ## Living Boundary Semantics v1 (retained)
 

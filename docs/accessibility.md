@@ -86,8 +86,9 @@ The real-browser matrix covers 320×568, 360×640, 390×844, 430×932, 768×1024
 overflow, 44px selector/metric targets, no dock or shell overlap, stable
 production-formatted metric geometry (including an exact accessible large SCORE),
 terminal footer visibility at 200% text, projected globe geometry, mouse/touch
-release classification, surface-held direct manipulation, reduced motion, and
-camera/detail behavior. The native Game speed select exposes all six ordinary
+release parity, one-radius direct travel, post-zoom and resize-stable gesture
+geometry, surface-held direct manipulation, reduced motion, and camera/detail
+behavior. The native Game speed select exposes all six ordinary
 values with visible focus and a 44px target at 320×568 and 200% text. Canvas 2D
 runs the same mobile-to-desktop path.
 

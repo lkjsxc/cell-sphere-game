@@ -5,8 +5,10 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { createStateMachine } from '../../src/core/state-machine.js';
 import { classifySurfaceTarget } from '../../src/interface/policies/surface-coordinator.js';
 import { createAppState } from '../../src/interface/app-state.js';
-import { inputAnimationTime, isPrimaryPointer, isTapGesture,
-  keyboardActivationPoint } from '../../src/interface/globe-input.js';
+import { bindGlobeInput, inputAnimationTime, isPrimaryPointer, isTapGesture,
+  keyboardActivationPoint, normalizedGlobeDrag, projectedGestureRadiusCssPx } from '../../src/interface/globe-input.js';
+import { createCamera } from '../../src/rendering/camera.js';
+import { projectedSphereDiameter, safeLayout } from '../../src/interface/policies/layout-policy.js';
 
 const def = {
   initial: 'title',
@@ -61,6 +63,56 @@ test('pointer timing preserves queued input time and rejects incompatible clocks
   assert.equal(inputAnimationTime({ timeStamp: 100 }, 800), 100);
   assert.equal(inputAnimationTime({ timeStamp: 1_700_000_000_000 }, 800), 800);
   assert.equal(inputAnimationTime({ timeStamp: NaN }, 800), 800);
+});
+
+test('visible-sphere drag geometry is isotropic, finite, and one radius per radian', () => {
+  for (const [width, height] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[844,390],[1024,600],[1440,900]]) {
+    const layout = safeLayout(width, height, 'world'); const radius = projectedGestureRadiusCssPx(layout.distance, height);
+    assert.ok(Math.abs(radius - projectedSphereDiameter(layout.distance, height) / 2) < 1e-12);
+    assert.deepEqual(normalizedGlobeDrag(radius, 0, radius), { x: 1, y: 0 });
+    assert.deepEqual(normalizedGlobeDrag(0, radius, radius), { x: 0, y: 1 });
+  }
+  for (const value of [NaN, Infinity, -1, 0]) assert.equal(projectedGestureRadiusCssPx(value, 600), null);
+  assert.equal(projectedGestureRadiusCssPx(4.1, 0), null);
+  assert.equal(normalizedGlobeDrag(1, 1, 0), null); assert.equal(normalizedGlobeDrag(NaN, 1, 100), null);
+});
+
+test('one-pointer drag freezes projected radius and applies the sampled angular delta immediately', () => {
+  const originalDocument = globalThis.document; const listeners = new Map(); const captured = new Set();
+  let height = 600; const canvas = {
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height }),
+    addEventListener: (type, listener) => listeners.set(type, listener), removeEventListener: (type) => listeners.delete(type),
+    setPointerCapture: (id) => captured.add(id), releasePointerCapture: (id) => captured.delete(id),
+    hasPointerCapture: (id) => captured.has(id), focus() {},
+  };
+  globalThis.document = { activeElement: canvas };
+  const camera = createCamera(); const direct = []; const endings = [];
+  const input = bindGlobeInput(canvas, camera, { canInteract: () => true, onTap() {},
+    onDirectDelta: (x, y) => direct.push([x, y]), onDirectEnd: (_now, kind) => endings.push(kind) });
+  try {
+    const startedAt = performance.now(); const initialRadius = projectedGestureRadiusCssPx(camera.dist, height);
+    listeners.get('pointerdown')({ pointerType: 'mouse', button: 0, pointerId: 1, clientX: 100, clientY: 100, timeStamp: startedAt });
+    assert.equal(input.snapshot().gestureRadiusCssPx, initialRadius);
+    height = 300; camera.dist = 2.5;
+    listeners.get('pointermove')({ pointerId: 1, clientX: 100 + initialRadius, clientY: 100, timeStamp: startedAt + 20 });
+    assert.ok(Math.abs(direct[0][0] - 1) < 1e-12); assert.equal(direct[0][1], 0);
+    listeners.get('pointerup')({ pointerId: 1, clientX: 100 + initialRadius, clientY: 100, timeStamp: startedAt + 40 });
+    const completed = input.snapshot();
+    assert.equal(completed.gestureRadiusCssPx, null); assert.equal(completed.lastGestureKind, 'drag');
+    assert.equal(completed.lastGestureRadiusCssPx, initialRadius);
+    assert.ok(Math.abs(completed.lastPointerTravelCssPx - initialRadius) < 1e-12);
+    assert.ok(Math.abs(completed.lastAngularTravelRadians - 1) < 1e-12);
+    assert.deepEqual(endings, ['drag']);
+
+    const nextRadius = projectedGestureRadiusCssPx(camera.dist, height);
+    listeners.get('pointerdown')({ pointerType: 'touch', button: 0, pointerId: 2, clientX: 50, clientY: 50, timeStamp: startedAt + 60 });
+    assert.equal(input.snapshot().gestureRadiusCssPx, nextRadius); assert.notEqual(nextRadius, initialRadius);
+    input.reset(); assert.equal(input.snapshot().pointerCount, 0); assert.equal(input.snapshot().gestureRadiusCssPx, null);
+    assert.equal(input.snapshot().lastGestureKind, 'reset');
+  } finally {
+    input.dispose();
+    if (originalDocument === undefined) delete globalThis.document; else globalThis.document = originalDocument;
+  }
 });
 
 test('keyboard globe activation targets the projected sphere center', () => {

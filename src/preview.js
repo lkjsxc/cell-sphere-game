@@ -11,6 +11,7 @@ import { GLRenderer } from './rendering/renderer.js';
 import { Canvas2DRenderer } from './rendering/fallback2d.js';
 import { createCamera, rotate, zoom } from './rendering/camera.js';
 import { pickNode } from './rendering/picking.js';
+import { normalizedGlobeDrag, projectedGestureRadiusCssPx } from './interface/globe-input.js';
 
 const SEED = 20260731;
 
@@ -48,8 +49,10 @@ export function startPreview(canvas) {
   let moved = 0;
   let lastX = 0;
   let lastY = 0;
+  let gestureRadiusCssPx = null;
   canvas.addEventListener('pointerdown', (e) => {
     dragging = true; moved = 0; lastX = e.clientX; lastY = e.clientY;
+    gestureRadiusCssPx = projectedGestureRadiusCssPx(camera.dist, canvas.getBoundingClientRect().height);
     canvas.setPointerCapture(e.pointerId);
   });
   canvas.addEventListener('pointermove', (e) => {
@@ -57,16 +60,18 @@ export function startPreview(canvas) {
     const dx = e.clientX - lastX;
     const dy = e.clientY - lastY;
     moved += Math.abs(dx) + Math.abs(dy);
-    rotate(camera, dx * 0.006, dy * 0.005);
+    const angular = normalizedGlobeDrag(dx, dy, gestureRadiusCssPx);
+    if (angular) rotate(camera, angular.x, angular.y);
     lastX = e.clientX; lastY = e.clientY;
   });
   canvas.addEventListener('pointerup', (e) => {
-    dragging = false;
+    dragging = false; gestureRadiusCssPx = null;
     if (moved < 8) {
       const hit = pickNode(canvas, e.clientX, e.clientY, camera, topo);
       if (hit) selectedNode = hit.node;
     }
   });
+  canvas.addEventListener('pointercancel', () => { dragging = false; gestureRadiusCssPx = null; });
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
     zoom(camera, e.deltaY > 0 ? 1.08 : 0.93);

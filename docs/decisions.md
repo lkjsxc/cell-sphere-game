@@ -215,17 +215,16 @@ reset and a single protocol revision replace old semantics. Evidence: conversion
 settings, protocol, all-speed/mixed-speed determinism, and eight-second Worker and
 fallback pacing measurements.
 
-## D22 — Bounded default camera motion and projected World framing
+## D22 — Default camera-motion architecture and projected World framing (release limits superseded by D27)
 
 A watchable autonomous ecology should remain tactile after release and quietly
 alive without input, without returning camera-tuning preferences to the Menu.
-Keep the orthonormal free-orbit camera and add one presentation-only controller:
-six samples over at most 120 ms, clamped release velocity, elapsed-time damping,
-a hard inertia lifetime, and a slow Home/World orbit after 4.5 seconds. Trusted
-activity, surfaces, focus, visibility, reduced motion, scene changes, and World
-replacement clear or hold it. Derive World/Home distance from field of view and a
-smooth 1.08/0.98/0.90 projected-diameter target. Evidence: 30/60/120 Hz and
-10,000-step tests plus trusted mouse/touch and eight-viewport browser geometry.
+This decision established the orthonormal free-orbit frame, fixed recent sample
+storage, elapsed-time damping, lifecycle cancellation, separate calm Home/World
+orbit, and projected framing. Its clamped velocity and hard lifetime were first
+recalibrated by D26 and then deleted by D27. Retain the 4.5-second idle delay and
+derive World/Home distance from field of view and a smooth 1.08/0.98/0.90
+projected-diameter target.
 
 ## D23 — Result cycle is one accessible projection of continuation authority (duration superseded by D24)
 
@@ -273,7 +272,7 @@ simulation, or fifth-draw change is introduced. Evidence: exhaustive pair and
 reversal tests, source-negative audit, calibrated Chrome 152 WebGL2/Canvas
 interior/edge/resource/overlap measurements, four-draw and context-loss paths.
 
-## D26 — Deliberate flicks use one progressive bounded release response
+## D26 — Deliberate flicks use one progressive bounded release response (superseded by D27)
 
 D22 remains the camera architecture decision, but its conservative release
 calibration is historical. Keep immediate direct drag, the six-sample/120 ms
@@ -289,4 +288,24 @@ and 144 Hz. Cumulative incremental camera-basis travel, not wrapped final
 orientation, is the release-distance oracle. Trusted activity and every existing
 hold/reset boundary still clear velocity; reduced motion disables release and
 orbit. No simulation, renderer-backend, input-scale, idle-speed, persistence, or
-player-setting authority is added.
+player-setting authority is added. These values remain historical measured
+evidence only; D27 replaces the complete response curve and hard-lifetime policy.
+
+## D27 — Visible-sphere input and faithful release transfer
+
+Ordinary direct manipulation uses the object the player can see as its scale.
+At the first one-pointer down, snapshot half the projected sphere diameter in
+CSS pixels; keep that finite radius stable for the gesture and divide both CSS
+delta axes by it. Apply each angular delta immediately and give that exact delta
+to the six-sample/120 ms estimator.
+
+At a valid drag release above `0.30 rad/s`, transfer the finite measured velocity
+components directly. Delete nonlinear amplification, output saturation, turn
+limits, and the fixed lifetime. Retain the `600 ms` damping half-life,
+`0.025 rad/s` stillness threshold, analytic body-frame integration, bounded
+frame step, lifecycle cancellation, reduced-motion suppression, 4.5-second idle
+delay, and `0.022 rad/s` Home/World orbit. Motion state remains constant-size at
+every finite speed and duration. Evidence: exact transfer through `32 rad/s`,
+natural-rest references, 30/60/120/144 Hz agreement, queued-handler equivalence,
+trusted mouse/touch and all-viewport normalized gestures, zoom/resize scale
+checks, Worker/fallback and WebGL2/Canvas paths, and paused-authority fingerprints.

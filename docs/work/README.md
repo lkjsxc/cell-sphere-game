@@ -5,13 +5,17 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-There is no active work package.
+Active work package:
+
+- [`kinetic-sphere-fidelity-v2/`](kinetic-sphere-fidelity-v2/) — normalizes
+  direct manipulation to the visible sphere and replaces bounded release
+  mapping with faithful velocity transfer and natural damping.
 
 Completed packages remain as historical or current implementation evidence:
 
-- [`kinetic-sphere-release-v1/`](kinetic-sphere-release-v1/) — completed current
-  evidence for progressive bounded release response, precise slow inspection,
-  calm idle orbit, and cumulative-travel production-browser proof.
+- [`kinetic-sphere-release-v1/`](kinetic-sphere-release-v1/) — completed
+  historical evidence for the superseded progressive bounded release response,
+  precise slow inspection, calm idle orbit, and cumulative-travel browser oracle.
 - [`living-boundary-semantics-v1/`](living-boundary-semantics-v1/) — completed
   current evidence for one shared WebGL2/Canvas life-edge projection, retained
   terrain and resource interiors, and the four-draw World renderer.

@@ -26,9 +26,9 @@ jobs:
       - name: Title lifecycle integrity
         run: node scripts/generate-title-showcase.mjs --check
       - name: Unit tests
-        run: node --test tests/unit/*.test.js tests/unit/simulation/*.test.js
+        run: npm run test:unit
       - name: Integration tests
-        run: node --test tests/integration/*.test.js
+        run: npm run test:integration
       - name: Balance smoke
         run: node scripts/balance.mjs --smoke
       - name: World and no-disaster audits

@@ -161,6 +161,7 @@ class GameApp {
     if (typeof ResizeObserver === 'function') { this.resizeObserver = new ResizeObserver(resize); this.resizeObserver.observe(this.canvas); }
     else addEventListener('resize', resize);
     document.addEventListener('visibilitychange', () => { const now = performance.now(); this.last = now;
+      if (document.hidden) this.input?.reset();
       this.pause.set('hidden', document.hidden && ['starting', 'running'].includes(this.phase));
       setContinuationHidden(this.continuation, document.hidden, now); setCameraMotionHidden(this.cameraMotion, document.hidden, now);
       this.updateContinuation(now, true); });
@@ -172,7 +173,7 @@ class GameApp {
   selectScene(next) {
     if (!['home', 'world', 'evolution', 'trophies'].includes(next)) return false;
     const previous = this.scene; if (previous === next) { ui.show(this.el, next); this.sceneSelector.update(next); return true; }
-    this.cameraByScene.set(previous, cloneCamera(this.camera)); this.closeActiveOverlay(); this.flow.select(next); const saved = this.cameraByScene.get(next);
+    this.input?.reset(); this.cameraByScene.set(previous, cloneCamera(this.camera)); this.closeActiveOverlay(); this.flow.select(next); const saved = this.cameraByScene.get(next);
     if (next === 'home') this.makeRenderer(TITLE_SEED);
     else if (next === 'world') this.makeRenderer(this.worldIdentity ? this.runSeed : TITLE_SEED, 'world', this.worldIdentity);
     else if (next === 'evolution') presentEvolution(this, Boolean(saved));
@@ -211,8 +212,8 @@ class GameApp {
   focusHistoryCells(cells) { if (!cells?.length) return; if (this.scene !== 'world') this.selectScene('world'); this.historyHighlights = cells.slice(0, 8);
     const node = this.historyHighlights[0]; if (Number.isInteger(node) && node >= 0 && node < this.topo4.nodeCount) this.focusCamera(this.topo4.positions.subarray(node * 3, node * 3 + 3));
     ui.announce(this.el, `${this.historyHighlights.length} History ${this.historyHighlights.length === 1 ? 'cell' : 'cells'} highlighted.`); }
-  focusCamera(direction, now = performance.now()) { orientCamera(this.camera, direction); resetCameraMotion(this.cameraMotion, now, this.scene); }
-  resetCameraMotion(scene = this.scene, now = performance.now()) { resetCameraMotion(this.cameraMotion, now, scene); }
+  focusCamera(direction, now = performance.now()) { orientCamera(this.camera, direction); this.resetCameraMotion(this.scene, now); }
+  resetCameraMotion(scene = this.scene, now = performance.now()) { this.input?.reset(); resetCameraMotion(this.cameraMotion, now, scene); }
   setSpeed(value) {
     const next = validateRuntimeSpeed(value, { developerMode: this.developerMode, fallback: this.speed });
     this.speed = next; this.el.speed.value = String(next);
@@ -290,7 +291,8 @@ class GameApp {
   } catch { ui.announce(this.el, 'That local-data action could not be completed.'); } }
   availableEvolutionLevels(){return availableEvolutionLevels(this)}
   worldResourceAudit() { return Object.freeze({ interactionListeners: this.interactionGuard.listenerCount,
-    historyRequests: this.historyPlayback.pendingRequests, cameraMotion: cameraMotionSnapshot(this.cameraMotion), layout: this.layout,
+    historyRequests: this.historyPlayback.pendingRequests, cameraMotion: cameraMotionSnapshot(this.cameraMotion),
+    globeInput: this.input?.snapshot() ?? null, layout: this.layout,
     continuationPresentation: Object.freeze({ ...this.continuationAudit }) }); }
   handleTrustedInteraction(type, event) {
     // A browser click follows a completed canvas pointer sequence. Pointerdown already stopped automatic motion;
