@@ -10,10 +10,10 @@ canvas focus in WebGL2, fallback, and Canvas runs.
 
 `camera-motion-scenario.mjs` authors pointer traces in projected globe radii and
 measures release travel by accumulating incremental camera-direction angles from
-the pointer-up basis through natural rest. The constant-space observer cannot
-mistake wrapped multi-turn travel for a small endpoint displacement. It proves
-two distinct high-speed traces without a plateau, strong mouse/touch parity,
-medium and gentle carried releases, a separate sub-threshold precision drag,
+the pointer-up basis through bounded rest. The constant-space observer cannot
+mistake a wrapped roughly-full-turn path for a small endpoint displacement. It
+proves high-speed saturation, strong mouse/touch parity, proportional medium
+carry, separate slow and precision drags with no release motion,
 one-radian direct travel at eight viewports and after
 zoom, pointerdown-scale freezing across resize, cancellation, reduced motion,
 paused-authority neutrality, and the unchanged idle orbit.

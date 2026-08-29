@@ -14,7 +14,7 @@ select-first/later-second-activation transaction state machine.
 
 Presentation policy tests cover public-to-effective speed conversion, bounded
 clock debt, projected World and one-radius input geometry, the six-entry camera
-sample window, direct release transfer, natural rest, 30/60/120/144 Hz damping
-equivalence, long-run multi-turn free-orbit orthonormality, shared trusted
+sample window, progressive bounded release, strong/medium/slow cumulative travel,
+30/60/120/144 Hz damping equivalence, long-run free-orbit orthonormality, shared trusted
 interaction, and Result-cycle progress/text cadence. Browser behavior is still
 proved in the trusted production browser harness, not inferred here.

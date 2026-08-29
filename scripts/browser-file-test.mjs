@@ -101,7 +101,7 @@ try {
     if (!forceCanvas) await runDeveloperSpeedChecks(tools, publicUrl);
     else tools.continuity = await runContinuityFixture(tools);
     tools.cameraEvidence = await runCameraMotionScenario(tools);
-    tools.cameraReceipt = writeKineticFidelityReport(tools.cameraEvidence, browserIdentity, cdp,
+    tools.cameraReceipt = writeKineticReleaseReport(tools.cameraEvidence, browserIdentity, cdp,
       forceSimulationFallback, forceCanvas, Boolean(configuredUrl));
     const evidence = forceCanvas ? await runCanvasScenario(tools) : await runScenario(tools);
     const light = evidence.worldmaking.luminance?.emission;
@@ -244,11 +244,11 @@ function protocol(child) {
   return { send, errors, stderr };
 }
 
-function writeKineticFidelityReport(evidence, browserIdentity, cdp, fallback, canvas, deployed) {
+function writeKineticReleaseReport(evidence, browserIdentity, cdp, fallback, canvas, deployed) {
   const simulationPath = fallback ? 'fallback' : 'worker';
   const rendererPath = canvas ? 'canvas2d' : evidence.backend;
-  const name = `kinetic-sphere-fidelity-v2-${deployed ? 'deployed' : 'final'}-${simulationPath}-${rendererPath}.json`;
-  const report = `${JSON.stringify({ schema: 2, capturedAt: new Date().toISOString(),
+  const name = `kinetic-sphere-release-${deployed ? 'deployed' : 'final'}-${simulationPath}-${rendererPath}.json`;
+  const report = `${JSON.stringify({ schema: 3, capturedAt: new Date().toISOString(),
     revision: gitValue(['rev-parse', 'HEAD']), branch: gitValue(['branch', '--show-current']),
     browser: browserIdentity.product, protocolVersion: browserIdentity.protocolVersion,
     simulationPath, rendererPath, deployed, ...evidence,

@@ -9,7 +9,7 @@ mutates simulation arrays, consumes authoritative randomness, or changes SCORE.
 | `run-driver.js` | Current Worker-first run protocol with identical fallback and relative-speed conversion. |
 | `policies/run-session.js` | First-wins replacement, neutral Level-0 blank frame, immutable start identity. |
 | `policies/run-result.js` | Validated SCORE/Echo/best-record/History/Trophy transaction. |
-| `policies/camera-motion.js` | Presentation-only recent gesture samples, faithful release transfer, natural damping, idle orbit, and holds. |
+| `policies/camera-motion.js` | Presentation-only recent gesture samples, progressive bounded release, elapsed-time damping, idle orbit, and holds. |
 | `policies/continuation.js` | One-shot 13.5-second Result authority and its bounded visual/assistive projection. |
 | `surfaces.js` / `inspection/` | SCORE/REACH/Environment HUD, dynamic result evidence, metrics, and Inspector. |
 | `panel-surfaces.js` / `progression-spheres.js` | Evolution detail and second-activation transaction. |

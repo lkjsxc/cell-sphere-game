@@ -34,8 +34,10 @@ semantic-only. Bounded notifications remain presentation-only.
 The globe is the primary interface. A drag turns it immediately, with one
 projected globe radius of pointer travel corresponding to one radian on every
 supported layout and zoom. A valid release carries the measured angular velocity
-directly: stronger finite flicks travel farther, while damping brings each to a
-natural stop and slow inspection stops on release. Home or World begins a
+through one progressive bounded response: a deliberate fast flick carries about
+one additional turn, medium input carries less, and slow inspection stops on
+release. Elapsed-time damping and a hard lifetime always bring inertia to rest.
+Home or World begins a
 separate calm idle orbit only after inactivity. Reduced motion removes inertia
 and automatic orbit. Responsive framing derives the globe's distance from its
 projected size instead of device distance constants. Portrait layouts stay

@@ -12,7 +12,7 @@ framing, result actions, and atomic world replacement.
 - `surface-coordinator.js`, `scene-selector.js`, and `layout-policy.js`: shell,
   focus, keyboard, safe-area, and projected-globe scene geometry.
 - `camera-motion.js` and `trusted-interaction.js`: one presentation-only owner
-  for recent release sampling, faithful measured-velocity transfer, naturally
+  for recent release sampling, progressive bounded response, analytically
   damped elapsed-time inertia, and calm idle orbit, plus one normalized
   trusted-activity path.
 - `continuation.js` / `new-world-surface.js`: one-shot Result continuation, its

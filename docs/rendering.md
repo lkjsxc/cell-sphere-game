@@ -53,10 +53,11 @@ infrastructure. The camera retains one orthonormal free-orbit frame; a
 single input path snapshots the projected sphere radius in CSS pixels and uses
 the same isotropic angular deltas for immediate manipulation and recent release
 sampling. The presentation-only motion policy transfers every valid measured
-vector above the `0.08 rad/s` perceptible-release threshold directly, then
-integrates elapsed-time damping until
-the finite rest threshold. There is no response curve, speed/turn ceiling, or
-fixed inertia lifetime. The separate Home/World idle orbit remains calm and
+direction through one quadratic response: zero through `0.30 rad/s`, saturation
+at `8 rad/s` by `2.20 rad/s` input, a `600 ms` damping half-life,
+`0.025 rad/s` rest threshold, and `5,000 ms` hard lifetime. This mapping applies
+only after release; direct manipulation remains immediate. The separate
+Home/World idle orbit remains calm and
 begins only after a fresh delay. Opening a surface never changes camera direction
 or zoom and clears nonessential motion. Reduced motion keeps direct drag and zoom
 while disabling inertia and automatic orbit.
@@ -89,6 +90,6 @@ projection. High developer speeds execute every tick
 while coalescing bounded snapshots and render requests. Camera velocity samples
 use one fixed-capacity six-entry buffer; release state is constant-size, and one
 analytic inertia step rotates the reusable camera-basis arrays in place regardless
-of release speed, turns, or duration. The Result ring
+of release class or frame cadence. The Result ring
 changes one bounded style projection at no more than about 30 Hz and does not
 add a renderer pass.

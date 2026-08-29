@@ -13,8 +13,8 @@
 - History, notifications, transaction receipts, visual checkpoints, and profile
   caches are bounded.
 - Camera release sampling uses at most six entries from the latest 120 ms.
-  Gesture and motion state remain constant-size; natural damping duration and
-  cumulative turns add no path history, timer set, or per-frame allocation.
+  Gesture and motion state remain constant-size; the progressive mapping and
+  five-second bound add no path history, timer set, or per-frame allocation.
 - Result continuation updates its progress style at no more than about 30 Hz,
   exact assistive text only at second/state boundaries, and owns no second timer.
 - Hidden documents suspend rendering; replacement renders one blank frame before

@@ -1,5 +1,149 @@
 # Kinetic Sphere Release v1
 
+Status: active under the explicit `202608290133.md` reaffirmation.
+
+## 2026-08-29 reaffirmation record
+
+### Starting state
+
+- Branch `main` at `d85c6f04967c8ea506e5e7e95a5733b1f3a6d810`, equal to
+  `origin/main` (`0` ahead, `0` behind). The mandate orientation
+  `ecce3c961368b9d1afacfd483964242638af0c57` is an ancestor and is superseded
+  by later fidelity, atmosphere, and gentle-inertia work.
+- Starting user changes are the supplied root `AGENTS.md` replacement and the
+  untracked mandate initially at `docs/work/202608290133.md` (SHA-256
+  `efe4a38fd1e8534bc50dbf0a676943dbcaf2cd99f41c45270dfdfe218e4a63ec`).
+  The mandate is preserved byte-for-byte outside the canonical planning tree at
+  `/home/coder/workspace/cell-sphere-game-preserved/202608290133.md` so the
+  repository structure gate does not treat the transfer artifact as a second
+  package. No unrelated dirty file was present.
+- No package was active. This package was completed historical evidence for an
+  earlier bounded-release implementation, then superseded by Kinetic Sphere
+  Fidelity v2 and Inertial Rotation Regression v1. The current mandate
+  explicitly selects this path and current-only bounded policy again without
+  reopening the autonomous-World or living-boundary packages.
+- Starting Actions run `33255817603` succeeds for exact starting `HEAD`: verify
+  job `99109205821` and Pages job `99110763469` both succeed.
+
+### Confirmed root causes and baseline
+
+- Current input is correctly radius-normalized, immediate, timestamped, and
+  fixed-capacity. Current release sampling transfers every above-threshold raw
+  vector directly and has no maximum speed or hard lifetime.
+- At 60 Hz the canonical traces are: strong raw/mapped `8.8670739 rad/s`,
+  `7.6538772 rad` (`1.2181524` turns), `5,083.33 ms`; medium
+  `1.4115594 rad/s`, `1.2004401 rad` (`0.1910560` turns), `3,500 ms`; and the
+  mandate's slow trace `0.2692582 rad/s`, `0.2116647 rad` (`0.0336875` turns),
+  `2,066.67 ms`. A `32 rad/s` release reaches `27.6782748 rad`
+  (`4.4051342` turns) over `6,200 ms`.
+- The direct-transfer policy therefore already places the canonical strong and
+  medium fixtures inside their bands, but fails slow precision, maximum-path,
+  maximum-speed, and lifetime requirements. Direct drag scale is not the cause.
+- The same traces agree across 30/60/120/144 Hz; medium handler observation at
+  0/150/350 ms preserves identical raw speed, path, and duration while moving
+  only the idle deadline.
+- Focused baseline passes `37/37`. Same-host benchmark baseline is
+  `12,145 ticks/s`, authority hash `471ba1cc`, with profile hashes
+  `dcc3bafe`, `60bb9841`, and `bec4a764`.
+- Corrected cached Chrome 152 Worker/WebGL2 captured mouse/touch strong travel
+  `1.2198060/1.2197422` turns, medium `0.1913081`, gentle `0.0325611`, and
+  precision `0`, with sample high-water six, basis error at most `4.44e-16`,
+  no browser errors, unchanged paused authority fingerprint, and observed idle
+  orbit `0.0226931 rad/s`. Ignored receipt
+  `reports/kinetic-sphere-fidelity-v2-final-worker-webgl2.json` is `73,202`
+  bytes, SHA-256
+  `06edf7159feade6f2d7ae92a52ac3ce915dabe7da9f3ec7e28cc884989df28e5`.
+- The first configured Chrome launch failed in font discovery. The corrected
+  broad run later failed an unrelated rapid Evolution-button assertion after
+  writing the passing camera receipt. Neither attempt is a complete broad
+  browser pass.
+
+### Selected decisions and deviations
+
+- Restore one quadratic progressive response in the current camera-motion
+  owner with `0.30 / 2.20 / 8.00 / 600 / 0.025 / 5,000` calibration.
+- Retain the newer projected-radius input mapping, strict timestamp validation,
+  simultaneous body-frame rotation, visible foreground debt, lifecycle holds,
+  calm idle orbit, renderer work, and all simulation authority unchanged.
+- Rename diagnostics to raw and mapped release speed and strengthen the current
+  browser receipt back to bounded release classes. No calibration deviation is
+  selected from baseline evidence.
+
+### Completed coherent phases
+
+- Reconciled the branch, upstream, worktree, user artifacts, contract, package
+  history, camera/input/render owners, tests, browser path, Actions, and Pages.
+- Captured pure, benchmark, and trusted Worker/WebGL2 selected-scope baselines.
+- Cut the current camera-motion owner directly to one quadratic progressive
+  response and hard lifetime while retaining normalized input, strict timestamp
+  validation, body-frame integration, foreground debt, lifecycle holds, and
+  calm idle orbit.
+- Replaced direct-transfer/natural-only unit assertions with threshold,
+  monotonicity, direction, saturation, malformed-input, strong/medium/slow,
+  extreme-bound, cadence, delayed-observation, debt, cancellation, reduced-
+  motion, idle-orbit, and long-run orthonormality evidence.
+- Strengthened the existing production browser receipt for raw/mapped speed,
+  strong/extreme saturation, medium carry, slow/precision stopping, cumulative
+  travel, all existing lifecycle boundaries, normalized input, and paused
+  authority. No parallel harness or product trace was added.
+- Reconciled current camera documents and retained the later input and atmosphere
+  work as current while marking direct-transfer release policy historical.
+
+### Focused verification
+
+- PASS — `node --test tests/unit/presentation/camera-motion.test.js tests/unit/shell.test.js tests/unit/renderer.test.js`
+  (`37/37`).
+- PASS — `npm run benchmark` (`12,145 ticks/s`, authority hash `471ba1cc`).
+- PASS (selected camera scenario only) — cached Chrome 152 Worker/WebGL2 receipt
+  above; the subsequent broad-shell failure remains failed, not reclassified.
+- SKIP — unconfigured `npm run test:browser:file` exited `77` because Chrome is
+  not on `PATH`; this is not a pass.
+- PASS — current focused test set remains `37/37` after cutover.
+- PASS — pure final 60 Hz strong/medium/slow traces are raw/mapped
+  `8.8670739/8`, `1.4115594/2.7380927`, and `0.2692582/0 rad/s`; cumulative
+  paths are `6.9034662 rad` (`1.0987208` turns), `2.3485394 rad`
+  (`0.3737817` turns), and zero. Extreme `32 rad/s` saturates at the same
+  `1.0987208` turns. Results agree at 30/60/120/144 Hz with basis error at most
+  `2.23e-16`; 0/150/350 ms handler delays are identical except idle deadline.
+- PASS (preliminary dirty-tree) — complete Chrome 152 Worker/WebGL2,
+  fallback/WebGL2, and Worker/Canvas 2D commands. Their ignored reports are
+  `reports/kinetic-sphere-release-final-worker-webgl2.json` (`72,090` bytes,
+  SHA-256 `4622916b28591875da2918792a75e982eeb39b405d58d16dda578dea7393f238`),
+  `reports/kinetic-sphere-release-final-fallback-webgl2.json` (`71,967` bytes,
+  SHA-256 `fdcc2d2de8801be037e960d3e00c8311b7eb14ea536533999ea9a843deab9788`),
+  and `reports/kinetic-sphere-release-final-worker-canvas2d.json` (`71,384`
+  bytes, SHA-256
+  `eaeec0b428e0181220c5cb58ef1c991f258e7d19f6bdc2dfe41a00bcd454e283`).
+  All retain SCORE `192,888`; both WebGL2 paths retain four draws; maximum basis
+  error is `4.45e-16`; observed idle orbit is `0.02186–0.02211 rad/s`; sample
+  high-water is six; paused authority is unchanged; browser errors are zero.
+- PASS — `npm run check:links`, `npm run check:structure`, README mirror
+  equality, and `git diff --check`.
+- PASS — `npm run test:unit` (`211/211`) and `npm run test:integration`
+  (`72/72`).
+- PASS — corrected-browser `npm run audit:autonomous-feel`; all six effective
+  game-rate measurements, `13,686.9 ms` Result continuation, and all eight
+  projected-globe rows remain in their established bands.
+- PASS — preliminary final `npm run benchmark`, `12,611 ticks/s` versus the
+  same-host `12,145` baseline (`+3.84%`), with unchanged authority/profile
+  hashes `471ba1cc`, `dcc3bafe`, `60bb9841`, and `bec4a764`.
+
+### Evidence not obtained
+
+- Exact committed browser receipts, fresh complete verifier, final same-host
+  performance comparison, publication, CI, Pages, deployed-byte, and
+  deployed-browser evidence remain outstanding.
+- Pen and physical-device evidence are unavailable on this host.
+
+### Exact next coherent step
+
+Commit the coherent implementation cutover, then rerun the three browser paths,
+benchmark, and complete verifier against that exact revision.
+
+---
+
+## Historical 2026-08-28 implementation record
+
 ## Starting state
 
 - Branch: `main`.

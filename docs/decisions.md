@@ -215,7 +215,7 @@ reset and a single protocol revision replace old semantics. Evidence: conversion
 settings, protocol, all-speed/mixed-speed determinism, and eight-second Worker and
 fallback pacing measurements.
 
-## D22 — Default camera-motion architecture and projected World framing (release limits superseded by D27)
+## D22 — Default camera-motion architecture and projected World framing (release policy current in D30)
 
 A watchable autonomous ecology should remain tactile after release and quietly
 alive without input, without returning camera-tuning preferences to the Menu.
@@ -272,7 +272,7 @@ simulation, or fifth-draw change is introduced. Evidence: exhaustive pair and
 reversal tests, source-negative audit, calibrated Chrome 152 WebGL2/Canvas
 interior/edge/resource/overlap measurements, four-draw and context-loss paths.
 
-## D26 — Deliberate flicks use one progressive bounded release response (superseded by D27)
+## D26 — Deliberate flicks use one progressive bounded release response (historical; restored by D30)
 
 D22 remains the camera architecture decision, but its conservative release
 calibration is historical. Keep immediate direct drag, the six-sample/120 ms
@@ -288,10 +288,10 @@ and 144 Hz. Cumulative incremental camera-basis travel, not wrapped final
 orientation, is the release-distance oracle. Trusted activity and every existing
 hold/reset boundary still clear velocity; reduced motion disables release and
 orbit. No simulation, renderer-backend, input-scale, idle-speed, persistence, or
-player-setting authority is added. These values remain historical measured
-evidence only; D27 replaces the complete response curve and hard-lifetime policy.
+player-setting authority is added. D27 later replaced this response curve and
+hard-lifetime policy; D30 restores them on top of D27's retained input geometry.
 
-## D27 — Visible-sphere input and faithful release transfer (threshold refined by D29)
+## D27 — Visible-sphere input and faithful release transfer (input retained; release transfer superseded by D30)
 
 Ordinary direct manipulation uses the object the player can see as its scale.
 At the first one-pointer down, snapshot half the projected sphere diameter in
@@ -324,7 +324,7 @@ or draw-count authority changes. Evidence: deterministic geometry bounds,
 source-negative audit, calibrated Chrome contour cohorts, topology probes,
 four-draw lifecycle, Canvas state response, and same-host frame measurements.
 
-## D29 — Faithful low-speed release has a perceptible threshold
+## D29 — Faithful low-speed release has a perceptible threshold (superseded by D30)
 
 Supersede only D27's `0.30 rad/s` release threshold with `0.08 rad/s`. The larger
 value belonged to D26's deleted progressive response and left a broad dead zone
@@ -335,3 +335,18 @@ suppression unchanged. A deliberate release near `0.260 rad/s` must therefore
 carry without amplification, while a genuine precision trace near `0.050 rad/s`
 must remain still after release. This is presentation-only and adds no setting,
 simulation input, allocation, or second motion owner.
+
+## D30 — Progressive bounded release is restored over visible-sphere input
+
+Retain D27's projected-radius-normalized immediate manipulation, strict input
+timestamps, exact applied-delta sampling, simultaneous body-frame integration,
+and bounded foreground animation debt. Supersede D27/D29 release transfer with
+one quadratic response owned by `camera-motion.js`: zero through `0.30 rad/s`,
+saturation at `8 rad/s` by `2.20 rad/s` input, `600 ms` damping half-life,
+`0.025 rad/s` rest threshold, and `5,000 ms` hard lifetime. The response applies
+only after a valid drag release. Strong input therefore travels about one bounded
+turn, medium input carries proportionally less, and slow inspection does not
+drift. The separate 4.5-second idle wait and `0.022 rad/s` Home/World orbit remain
+unchanged. Cumulative incremental travel is the distance oracle. Evidence covers
+30/60/120/144 Hz, delayed observation, trusted mouse/touch, every cancellation
+boundary, reduced motion, Worker/fallback, WebGL2/Canvas, and paused authority.

@@ -57,8 +57,10 @@ Direct drag remains immediate on the free-orbit camera. One projected globe
 radius of pointer travel supplies about one radian on both axes, with the scale
 frozen for the gesture. The exact applied angular deltas enter recent release
 sampling. Slow inspection stops; a valid stronger release transfers its measured
-velocity directly and decays by elapsed animation time to natural rest without a
-speed, turn, or lifetime limit. A fresh idle wait then begins. Home and World
+direction through one progressive bounded response. Deliberate fast input carries
+about one additional turn, medium input carries less, and elapsed animation-time
+damping plus a hard lifetime guarantees rest. A fresh idle wait then begins.
+Home and World
 retain their separate slow orbit only after 4.5 seconds of inactivity. Trusted
 activity, a surface, focus framing, scene or World replacement, hidden
 visibility, and reduced motion clear or hold automatic motion. Evolution and

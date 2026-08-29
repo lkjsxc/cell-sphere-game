@@ -1,6 +1,25 @@
 # Current status
 
-## Inertial Rotation Regression v1
+## Kinetic Sphere Release v1
+
+- One camera-motion owner retains projected-radius-normalized immediate drag,
+  strict input timestamps, a six-entry/120 ms sample window, and simultaneous
+  body-frame integration. Release alone uses the current quadratic
+  `0.30 / 2.20 / 8.00 rad/s` response, `600 ms` half-life, `0.025 rad/s` rest
+  threshold, and `5,000 ms` hard lifetime.
+- Pure 60 Hz traces measure strong raw/mapped `8.86707/8.00000 rad/s` at
+  `1.09872` turns, medium `1.41156/2.73809 rad/s` at `0.37378` turns, slow
+  `0.26926/0` at zero turns, and extreme `32/8` at `1.09872` turns. Results
+  agree at 30/60/120/144 Hz and handler delays of 0/150/350 ms.
+- Preliminary Chrome 152 Worker/WebGL2, fallback/WebGL2, and Worker/Canvas 2D
+  production paths pass strong mouse/touch parity, medium and slow classes,
+  every selected cancellation, reduced motion, responsive layouts, unchanged
+  idle orbit, SCORE `192,888`, paused-authority identity, and zero browser errors.
+- Exact committed browser receipts, broad verification, benchmark comparison,
+  publication, CI, Pages, deployed bytes, and deployed-browser evidence remain
+  pending while the package is active.
+
+## Inertial Rotation Regression v1 (historical predecessor; superseded)
 
 - The faithful camera release threshold is `0.08 rad/s`. The former `0.30 rad/s`
   value was retained from the deleted progressive response and made a deliberate
@@ -65,7 +84,7 @@
   or frame errors. The canonical terminal package preserves exact report sizes,
   digests, failed-attempt classification, and remaining physical evidence gaps.
 
-## Kinetic Sphere Fidelity v2 (retained base)
+## Kinetic Sphere Fidelity v2 (retained input base; release policy superseded)
 
 - One input owner freezes the projected sphere radius in CSS pixels at
   pointerdown. Both axes use the same `delta / radius` mapping, and the exact

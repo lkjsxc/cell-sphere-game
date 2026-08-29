@@ -45,47 +45,42 @@ export async function runCameraMotionScenario(t) {
 
   const mouseStrong = await measuredRelease(t, 'strong-mouse', () => normalizedFlick(t, 'mouse', .66, .26,
     { steps: 5, intervalMs: 16 }));
-  assertNaturalRelease(mouseStrong, 8.4, 9.3, 1.15, 1.3);
+  assertBoundedRelease(mouseStrong, 8.4, 9.3, 7.99, 0.9, 1.25);
   const touchStrong = await measuredRelease(t, 'strong-touch', () => normalizedFlick(t, 'touch', -.66, .26,
     { steps: 5, intervalMs: 16 }));
-  assertNaturalRelease(touchStrong, 8.4, 9.3, 1.15, 1.3);
-  const speedParity = Math.abs(mouseStrong.release.measuredReleaseSpeed - touchStrong.release.measuredReleaseSpeed)
-    / mouseStrong.release.measuredReleaseSpeed;
+  assertBoundedRelease(touchStrong, 8.4, 9.3, 7.99, 0.9, 1.25);
+  const speedParity = Math.abs(mouseStrong.release.rawReleaseSpeed - touchStrong.release.rawReleaseSpeed)
+    / mouseStrong.release.rawReleaseSpeed;
   const pathParity = Math.abs(mouseStrong.cumulativeTurns - touchStrong.cumulativeTurns) / mouseStrong.cumulativeTurns;
   ok(speedParity <= .1 && pathParity <= .1,
     `mouse/touch normalized release diverged: ${JSON.stringify({ mouseStrong, touchStrong })}`);
 
-  const faster = await measuredRelease(t, 'faster-mouse', () => normalizedFlick(t, 'mouse', 1.2, .48,
+  const extreme = await measuredRelease(t, 'extreme-mouse', () => normalizedFlick(t, 'mouse', 1.2, .48,
     { steps: 5, intervalMs: 16 }));
-  assertNaturalRelease(faster, 15.4, 16.9, 2.05, 2.3);
-  ok(faster.release.measuredReleaseSpeed > mouseStrong.release.measuredReleaseSpeed * 1.7
-    && faster.cumulativeTurns > mouseStrong.cumulativeTurns * 1.7,
-  `stronger release plateaued: ${JSON.stringify({ mouseStrong, faster })}`);
+  assertBoundedRelease(extreme, 15.4, 16.9, 7.99, 0.9, 1.25);
+  ok(extreme.release.rawReleaseSpeed > mouseStrong.release.rawReleaseSpeed * 1.7
+    && Math.abs(extreme.release.mappedReleaseSpeed - mouseStrong.release.mappedReleaseSpeed) < 1e-12
+    && extreme.cumulativeTurns <= 1.35,
+  `extreme release did not saturate safely: ${JSON.stringify({ mouseStrong, extreme })}`);
 
   const medium = await measuredRelease(t, 'medium-mouse', () => normalizedFlick(t, 'mouse', .13, .055,
     { steps: 5, intervalMs: 20 }));
-  assertNaturalRelease(medium, 1.25, 1.55, .17, .22);
+  assertBoundedRelease(medium, 1.25, 1.55, 2.3, .18, .5);
   ok(medium.cumulativeTurns < mouseStrong.cumulativeTurns,
     `medium release did not remain below strong: ${JSON.stringify({ medium, mouseStrong })}`);
 
-  const gentle = await measuredRelease(t, 'gentle-mouse', () => normalizedFlick(t, 'mouse', .078, 0,
-    { steps: 15, intervalMs: 20 }));
-  assertNaturalRelease(gentle, .24, .28, .025, .04);
+  const slow = await stoppedDragEvidence(t, 'slow-mouse', .078, { steps: 15, intervalMs: 20 });
+  ok(slow.directTravel > .07 && slow.rawReleaseSpeed >= .24 && slow.rawReleaseSpeed <= .28
+    && slow.mappedReleaseSpeed === 0 && slow.input.lastGestureKind === 'drag'
+    && slow.finalState.mode === 'idle-wait' && slow.finalState.speed === 0
+    && slow.cumulativeRadians < 1e-8 && slow.selectedBefore === slow.selectedAfter,
+  `slow inspection drag became slippery or selected: ${JSON.stringify(slow)}`);
 
-  const precisionBefore = await motion(evaluate);
-  const precisionGesture = await normalizedFlick(t, 'mouse', .06, 0, { steps: 15, intervalMs: 80 });
-  const precisionRelease = await motion(evaluate); await wait(260); const precisionAfter = await motion(evaluate);
-  const precision = { gesture: precisionGesture, measuredReleaseSpeed: precisionRelease.state.measuredReleaseSpeed,
-    directTravel: precisionRelease.input.lastAngularTravelRadians,
-    directBasisTravel: basisAngle(precisionBefore.basis, precisionRelease.basis),
-    cumulativeRadians: basisAngle(precisionRelease.basis, precisionAfter.basis),
-    cumulativeTurns: basisAngle(precisionRelease.basis, precisionAfter.basis) / (2 * Math.PI),
-    releaseDurationMs: 0, sampleHighWater: precisionRelease.state.sampleHighWater,
-    basisError: basisError(precisionAfter.basis), finalState: precisionAfter.state };
-  ok(precision.directTravel > .05 && precision.measuredReleaseSpeed > 0 && precision.measuredReleaseSpeed < .08
-    && precisionRelease.input.lastGestureKind === 'drag' && precision.finalState.mode === 'idle-wait'
-    && precision.finalState.speed === 0 && precision.cumulativeRadians < 1e-8
-    && precisionBefore.selectedNode === precisionAfter.selectedNode,
+  const precision = await stoppedDragEvidence(t, 'precision-mouse', .06, { steps: 15, intervalMs: 80 });
+  ok(precision.directTravel > .05 && precision.rawReleaseSpeed > 0 && precision.rawReleaseSpeed < .08
+    && precision.mappedReleaseSpeed === 0 && precision.input.lastGestureKind === 'drag'
+    && precision.finalState.mode === 'idle-wait' && precision.finalState.speed === 0
+    && precision.cumulativeRadians < 1e-8 && precision.selectedBefore === precision.selectedAfter,
   `sub-threshold precision drag became slippery or selected: ${JSON.stringify(precision)}`);
 
   await normalizedFlick(t, 'mouse', -.66, .26); await wait(70); await pointerDown(...point);
@@ -149,7 +144,7 @@ export async function runCameraMotionScenario(t) {
 
   await setViewport(844, 390); await wait(120);
   await normalizedFlick(t, 'mouse', .66, -.26, { steps: 5, intervalMs: 16 }); await wait(120);
-  const landscapeMoving = await motion(evaluate); const landscapeName = `kinetic-fidelity-${evidenceLabel}-844x390.png`;
+  const landscapeMoving = await motion(evaluate); const landscapeName = `kinetic-release-${evidenceLabel}-844x390.png`;
   const landscapeImage = await screenshot(landscapeName);
   await key('Shift'); const landscapeStopped = await motion(evaluate); await wait(220); const landscapeAfter = await motion(evaluate);
   ok(landscapeMoving.state.mode === 'inertia' && landscapeStopped.state.speed === 0
@@ -158,7 +153,7 @@ export async function runCameraMotionScenario(t) {
 
   await setViewport(1440, 900); await wait(120);
   await normalizedFlick(t, 'mouse', -.66, .26, { steps: 5, intervalMs: 16 }); await wait(120);
-  const wideMoving = await motion(evaluate); const wideName = `kinetic-fidelity-${evidenceLabel}-1440x900.png`;
+  const wideMoving = await motion(evaluate); const wideName = `kinetic-release-${evidenceLabel}-1440x900.png`;
   const wideImage = await screenshot(wideName);
   await key('Shift'); const wideStopped = await motion(evaluate); await wait(220); const wideAfter = await motion(evaluate);
   ok(wideMoving.state.mode === 'inertia' && wideStopped.state.speed === 0
@@ -214,11 +209,12 @@ export async function runCameraMotionScenario(t) {
   ok(await poll(() => evaluate('Boolean(window.__CELL_SPHERE_BOOT__?.playable)'), Boolean, 5000), 'camera scenario cleanup reload failed');
   return { policy: await evaluate(`(()=>{const c=window.__CELL_SPHERE_APP__.cameraMotion.config;return{
       sampleCapacity:c.sampleCapacity,sampleWindowMs:c.sampleWindowMs,releaseThreshold:c.releaseThreshold,
-      dampingHalfLifeMs:c.dampingHalfLifeMs,stopSpeed:c.stopSpeed,
+      fullFlingInputSpeed:c.fullFlingInputSpeed,maximumAngularSpeed:c.maximumAngularSpeed,
+      dampingHalfLifeMs:c.dampingHalfLifeMs,stopSpeed:c.stopSpeed,maximumInertiaMs:c.maximumInertiaMs,
       idleDelayMs:c.idleDelayMs,idleOrbitSpeed:c.idleOrbitSpeed,maximumFrameMs:c.maximumFrameMs}})()`),
     homeText, homeOrbitTravel: distance(beforeIdle, homeOrbit.direction), homeOrbitRate, cameraEvidencePaused,
     authority: { before: authorityBefore, after: authorityAfter, unchanged: true },
-    releases: { mouseStrong, touchStrong, faster, medium, gentle, precision,
+    releases: { mouseStrong, touchStrong, extreme, medium, slow, precision,
       parity: { speed: speedParity, path: pathParity } },
     cancellations: { pointerDown: pointerPressed.state, wheel: wheelStopped.state, tap: tapState.state, pinch: pinchState.state,
       pointerCancel: cancelled.state, keyboard: keyboardStopped.state, focus: focusStopped.state,
@@ -325,7 +321,7 @@ async function measuredRelease({ evaluate, poll }, label, performGesture) {
       if(record.status==='armed'&&state.mode==='inertia'){const origin=record.releaseBasis??current;record.status='tracking';record.startedAt=record.releasedAt??now;
         record.startBasis=record.directStartBasis;record.directBasisRadians=angle(record.directStartBasis.direction,origin.direction);
         record.input=audit.globeInput;record.previous=current;record.cumulativeRadians=angle(origin.direction,current.direction);record.samples=1;
-        record.release={measuredReleaseSpeed:state.measuredReleaseSpeed,speed:state.speed,
+        record.release={rawReleaseSpeed:state.rawReleaseSpeed,mappedReleaseSpeed:state.mappedReleaseSpeed,speed:state.speed,
           velocityX:state.velocityX,velocityY:state.velocityY,idleUntil:state.idleUntil};}
       else if(record.status==='tracking'){record.cumulativeRadians+=angle(record.previous.direction,current.direction);record.samples++;record.previous=current;
         if(state.mode!=='inertia'){record.status='complete';record.completedAt=now;record.releaseDurationMs=now-record.startedAt;
@@ -350,18 +346,33 @@ async function measuredRelease({ evaluate, poll }, label, performGesture) {
     finalState:r.finalState,startBasis:r.startBasis,finalBasis:r.finalBasis,immediate:r.immediate}})()`);
 }
 
-function assertNaturalRelease(evidence, minimumSpeed, maximumSpeed, minimumTurns, maximumTurns) {
-  ok(evidence.status === 'complete' && evidence.release?.measuredReleaseSpeed >= minimumSpeed
-    && evidence.release.measuredReleaseSpeed <= maximumSpeed && evidence.release.speed > 0
+async function stoppedDragEvidence(t, label, travelRadii, options) {
+  const before = await motion(t.evaluate);
+  const gesture = await normalizedFlick(t, 'mouse', travelRadii, 0, options);
+  const release = await motion(t.evaluate); await t.wait(260); const after = await motion(t.evaluate);
+  const cumulativeRadians = basisAngle(release.basis, after.basis);
+  return { label, status: release.state.mode === 'inertia' ? 'unexpected-inertia' : 'no-inertia', gesture,
+    rawReleaseSpeed: release.state.rawReleaseSpeed, mappedReleaseSpeed: release.state.mappedReleaseSpeed,
+    directTravel: release.input.lastAngularTravelRadians, directBasisTravel: basisAngle(before.basis, release.basis),
+    cumulativeRadians, cumulativeTurns: cumulativeRadians / (2 * Math.PI), releaseDurationMs: 0,
+    sampleHighWater: release.state.sampleHighWater, basisError: basisError(after.basis), input: release.input,
+    selectedBefore: before.selectedNode, selectedAfter: after.selectedNode, finalState: after.state };
+}
+
+function assertBoundedRelease(evidence, minimumRawSpeed, maximumRawSpeed, minimumMappedSpeed, minimumTurns, maximumTurns) {
+  ok(evidence.status === 'complete' && evidence.release?.rawReleaseSpeed >= minimumRawSpeed
+    && evidence.release.rawReleaseSpeed <= maximumRawSpeed
+    && evidence.release.mappedReleaseSpeed >= minimumMappedSpeed
+    && evidence.release.mappedReleaseSpeed <= 8 && evidence.release.speed > 0
     && evidence.cumulativeTurns >= minimumTurns && evidence.cumulativeTurns <= maximumTurns
-    && evidence.releaseDurationMs <= 6500
+    && evidence.cumulativeTurns <= 1.35 && evidence.releaseDurationMs <= 5100
     && Math.abs(evidence.input?.lastGestureRadiusCssPx - evidence.gesture?.gestureRadiusCssPx) <= .01
     && Math.abs(evidence.input?.lastPointerTravelCssPx - evidence.gesture?.pointerTravelCssPx) <= .01
     && Math.abs(evidence.input?.lastAngularTravelRadians - evidence.gesture?.pointerTravelRadii) <= .01
     && evidence.samples > 0 && evidence.samples <= 480 && evidence.sampleHighWater <= 6
     && evidence.basisError < 1e-10 && evidence.finalState?.mode === 'idle-wait'
     && evidence.finalState?.speed === 0 && evidence.finalState?.idleUntil > evidence.completedAt,
-  `natural release failed ${minimumSpeed}-${maximumSpeed} rad/s: ${JSON.stringify(evidence)}`);
+  `bounded release failed ${minimumRawSpeed}-${maximumRawSpeed} raw rad/s: ${JSON.stringify(evidence)}`);
 }
 
 async function motion(evaluate) { return evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,audit=a.worldResourceAudit();return{now:performance.now(),
