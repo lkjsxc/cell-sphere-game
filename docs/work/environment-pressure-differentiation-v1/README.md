@@ -315,6 +315,10 @@ toxicity, climate, maintenance, renewal, scarcity.
   recursive removal pattern. It changed no repository or hosted state and is
   not a pass. The replacement used an isolated retained temporary directory and
   byte-compared every named file successfully.
+- CORRECTED DURING FINAL REVIEW — `src/agent/README.md` still described the
+  pre-existing v4 observation/save boundary and retired public fields. The
+  current owner now records observation schema 7, agent-save schema 6, live
+  normalized pressure, and the hidden raw-rating/coefficient boundary.
 
 ## Publication evidence
 
