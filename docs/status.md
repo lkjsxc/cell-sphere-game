@@ -19,8 +19,14 @@
 - All 26 fresh `npm run verify` gates pass, including unit `211/211`, integration
   `72/72`, and a valid `10,777 ticks/s` loaded benchmark. The isolated final
   benchmark is `11,393 ticks/s` versus the same-host `12,145` baseline, with
-  authority/profile hashes unchanged. Publication, CI, Pages, deployed bytes,
-  and deployed-browser evidence remain pending while the package is active.
+  authority/profile hashes unchanged.
+- Exact behavior-and-evidence revision `5ac24ed7639fe8733cdee809c1bfb3e47a50479c`
+  is published. Actions run `33261241378`, verify job `99123444160`, Pages job
+  `99125484703`, deployment `6157542582`, and status `17502842882` succeed.
+  Four cache-busted source/identity owners match local bytes. Deployed Chrome
+  152 Worker/WebGL2 repeats strong mouse/touch `1.098721/1.098720` turns,
+  medium `0.373781`, slow and precision zero, unchanged authority, four draws,
+  and zero browser errors; receipt SHA-256 is `87619a70…`.
 
 ## Inertial Rotation Regression v1 (historical predecessor; superseded)
 

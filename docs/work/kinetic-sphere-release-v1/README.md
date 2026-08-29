@@ -1,7 +1,7 @@
 # Kinetic Sphere Release v1
 
-Status: active under the explicit `202608290133.md` reaffirmation; exact local
-implementation evidence is complete and publication evidence is pending.
+Status: completed current evidence under the explicit `202608290133.md`
+reaffirmation.
 
 ## 2026-08-29 reaffirmation record
 
@@ -165,6 +165,34 @@ implementation evidence is complete and publication evidence is pending.
   (`+3.84%`), identifying ordinary host variance rather than camera-path cost;
   the production response remains constant-time and allocation-free.
 
+### Publication and deployed evidence
+
+- PASS — normal push aligned remote `main` with exact behavior-and-evidence
+  revision `5ac24ed7639fe8733cdee809c1bfb3e47a50479c`; no history rewrite or
+  unrelated remote mutation occurred.
+- PASS — Actions run `33261241378` succeeds for that exact revision. Verify job
+  `99123444160` passes every step in `17m28s`; Pages job `99125484703` succeeds
+  in `12s`.
+- PASS — Pages deployment `6157542582` and deployment status `17502842882`
+  succeed for the exact revision at
+  `https://lkjsxc.github.io/cell-sphere-game/`.
+- PASS — cache-busted deployed bytes and sizes exactly match local
+  `camera-motion.js` (`42642be4…`, `11,410` bytes),
+  `camera-motion-scenario.mjs` (`62bb4b7b…`, `33,293` bytes),
+  `browser-file-test.mjs` (`56d70c74…`, `33,041` bytes), and canonical
+  `identity.js` (`c12c844c…`, `970` bytes).
+- PASS — deployed Chrome `152.0.7977.64` Worker/WebGL2 runs the complete trusted
+  scenario with strong mouse/touch `1.098720766/1.098720371` turns, extreme
+  `1.098720766`, medium `0.373780834`, slow raw/mapped `0.260000057/0`, and
+  precision `0.049937102/0`. Release duration remains below `5,000 ms`, sample
+  high-water is six, maximum basis error is `2.22e-16`, idle orbit is
+  `0.0220904 rad/s`, the paused authority hash stays `50deb38f`, browser errors
+  are zero, SCORE is `192,888`, and WebGL2 remains four draws.
+- PASS — ignored deployed receipt
+  `reports/kinetic-sphere-release-deployed-worker-webgl2.json` is `71,971`
+  bytes, SHA-256
+  `87619a70796597190d70a2956fe48165911a7df48f31aae293ef9cc311730b28`.
+
 ### Failed, skipped, and unavailable evidence
 
 - FAILED (baseline harness/environment) — the first configured Chrome launch
@@ -177,14 +205,16 @@ implementation evidence is complete and publication evidence is pending.
   remain skips.
 - UNAVAILABLE — physical mouse, touch, pen, high-refresh display, safe-area
   hardware, thermal, physical screen-reader, and physical forced-colors proof.
-- NOT RUN — publication, final remote equality, CI, Pages, cache-busted deployed
-  bytes, and deployed trusted-browser evidence remain pending.
+- SUPERSEDED — the direct-transfer release policy and its natural-only tests are
+  retained only as historical evidence; the radius-normalized input,
+  simultaneous body-frame camera, atmosphere, renderer, simulation, and reward
+  boundaries remain current.
 
 ### Exact next coherent step
 
-Commit this exact local evidence, publish normally, verify the exact remote CI
-and Pages identities, compare deployed bytes, and exercise the deployed trusted
-Worker/WebGL2 path.
+None. The selected stopping rule is met. Deferred survivor focus, time
+consistency, atmosphere silhouette, Environment, Evolution, ecology/balance,
+and physical-device concerns remain separate work.
 
 ---
 

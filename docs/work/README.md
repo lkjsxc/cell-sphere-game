@@ -5,14 +5,14 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package:
-
-- [`kinetic-sphere-release-v1/`](kinetic-sphere-release-v1/) — current
-  implementation record for the explicitly reaffirmed progressive bounded
-  release response on top of the later radius-normalized input path.
+Active work package: none.
 
 Completed packages remain as historical or current implementation evidence:
 
+- [`kinetic-sphere-release-v1/`](kinetic-sphere-release-v1/) — completed
+  current evidence for the explicitly reaffirmed progressive bounded release
+  response on top of the radius-normalized input path, including exact local,
+  CI, Pages, deployed-byte, and deployed-browser proof.
 - [`inertial-rotation-regression-v1/`](inertial-rotation-regression-v1/) —
   completed local evidence for faithful gentle-drag inertia, retained
   sub-threshold precision, reduced-motion suppression, and cross-backend parity.
