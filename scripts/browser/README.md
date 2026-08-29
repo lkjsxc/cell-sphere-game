@@ -13,7 +13,8 @@ measures release travel by accumulating incremental camera-direction angles from
 the pointer-up basis through natural rest. The constant-space observer cannot
 mistake wrapped multi-turn travel for a small endpoint displacement. It proves
 two distinct high-speed traces without a plateau, strong mouse/touch parity,
-medium and slow gestures, one-radian direct travel at eight viewports and after
+medium and gentle carried releases, a separate sub-threshold precision drag,
+one-radian direct travel at eight viewports and after
 zoom, pointerdown-scale freezing across resize, cancellation, reduced motion,
 paused-authority neutrality, and the unchanged idle orbit.
 `browser-file-test.mjs` writes the bounded structured receipt under

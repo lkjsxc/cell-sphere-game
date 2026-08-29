@@ -291,7 +291,7 @@ orbit. No simulation, renderer-backend, input-scale, idle-speed, persistence, or
 player-setting authority is added. These values remain historical measured
 evidence only; D27 replaces the complete response curve and hard-lifetime policy.
 
-## D27 — Visible-sphere input and faithful release transfer
+## D27 — Visible-sphere input and faithful release transfer (threshold refined by D29)
 
 Ordinary direct manipulation uses the object the player can see as its scale.
 At the first one-pointer down, snapshot half the projected sphere diameter in
@@ -323,3 +323,15 @@ simulation, protocol, History, progression, reward, persistence, camera, picking
 or draw-count authority changes. Evidence: deterministic geometry bounds,
 source-negative audit, calibrated Chrome contour cohorts, topology probes,
 four-draw lifecycle, Canvas state response, and same-host frame measurements.
+
+## D29 — Faithful low-speed release has a perceptible threshold
+
+Supersede only D27's `0.30 rad/s` release threshold with `0.08 rad/s`. The larger
+value belonged to D26's deleted progressive response and left a broad dead zone
+after measured-vector transfer became direct. Keep the six-sample/120 ms
+estimator, exact vector transfer, `600 ms` damping half-life, `0.025 rad/s` rest
+threshold, natural termination, cancellation boundaries, and reduced-motion
+suppression unchanged. A deliberate release near `0.260 rad/s` must therefore
+carry without amplification, while a genuine precision trace near `0.050 rad/s`
+must remain still after release. This is presentation-only and adds no setting,
+simulation input, allocation, or second motion owner.

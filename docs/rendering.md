@@ -52,8 +52,9 @@ their own semantic cell projections while sharing camera and picking
 infrastructure. The camera retains one orthonormal free-orbit frame; a
 single input path snapshots the projected sphere radius in CSS pixels and uses
 the same isotropic angular deltas for immediate manipulation and recent release
-sampling. The presentation-only motion policy transfers every valid above-
-threshold measured vector directly, then integrates elapsed-time damping until
+sampling. The presentation-only motion policy transfers every valid measured
+vector above the `0.08 rad/s` perceptible-release threshold directly, then
+integrates elapsed-time damping until
 the finite rest threshold. There is no response curve, speed/turn ceiling, or
 fixed inertia lifetime. The separate Home/World idle orbit remains calm and
 begins only after a fresh delay. Opening a surface never changes camera direction

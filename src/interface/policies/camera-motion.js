@@ -4,7 +4,7 @@ import { rotate, rotateByAngularDelta } from '../../rendering/camera.js';
 export const CAMERA_MOTION_DEFAULTS = Object.freeze({
   sampleCapacity: 6,
   sampleWindowMs: 120,
-  releaseThreshold: 0.3,
+  releaseThreshold: 0.08,
   dampingHalfLifeMs: 600,
   stopSpeed: 0.025,
   idleDelayMs: 4500,

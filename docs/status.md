@@ -1,5 +1,21 @@
 # Current status
 
+## Inertial Rotation Regression v1
+
+- The faithful camera release threshold is `0.08 rad/s`. The former `0.30 rad/s`
+  value was retained from the deleted progressive response and made a deliberate
+  low-speed drag stop at pointer-up even though direct manipulation remained live.
+- Chrome 152 production input now carries the same `16.4268 CSS px`,
+  `0.259740 rad/s` gentle drag for about `0.03250` turns over `2.02 s` before
+  natural rest. A distinct `12.6360 CSS px`, `0.0499995 rad/s` precision drag
+  remains still after release, so the correction does not make inspection
+  slippery.
+- Worker/WebGL2, simulation-fallback/WebGL2, and Worker/Canvas 2D agree within
+  measurement noise. All retain direct measured-vector transfer, six bounded
+  samples, immediate cancellation, reduced-motion suppression, normalized
+  responsive input, SCORE `192,888`, and unchanged paused-authority fingerprints;
+  both WebGL2 paths retain exactly four draws.
+
 ## Atmosphere Silhouette Independence v1
 
 - One module-scoped refinement-5 unit icosphere now owns WebGL2 atmosphere
@@ -43,14 +59,15 @@
   or frame errors. The canonical terminal package preserves exact report sizes,
   digests, failed-attempt classification, and remaining physical evidence gaps.
 
-## Kinetic Sphere Fidelity v2
+## Kinetic Sphere Fidelity v2 (retained base)
 
 - One input owner freezes the projected sphere radius in CSS pixels at
   pointerdown. Both axes use the same `delta / radius` mapping, and the exact
   immediately applied angular delta enters the fixed six-sample/120 ms release
   estimator.
-- Every finite valid release above `0.30 rad/s` transfers its measured vector
-  directly. The former response curve, `8 rad/s` ceiling, duplicate mapped-speed
+- Every finite valid release above the current `0.08 rad/s` threshold transfers
+  its measured vector directly. The former response curve, `8 rad/s` ceiling,
+  duplicate mapped-speed
   diagnostic, and five-second lifetime are deleted. A `600 ms` half-life and
   `0.025 rad/s` rest threshold dissipate finite motion naturally; lifecycle and
   trusted-interaction cancellation remain immediate.
@@ -59,13 +76,14 @@
   `4.40511` turns. The `8.86707 rad/s` reference rests near `5,082.23 ms` after
   about `1.21815` turns. Paths agree across 30/60/120/144 Hz and handler delays
   of 0/150/350 ms.
-- Exact implementation revision `526d4b39e5c3774fc68caafda57326d932f13226`
-  passes Chrome 152 Worker/WebGL2, fallback/WebGL2, and Worker/Canvas 2D.
+- Base implementation revision `526d4b39e5c3774fc68caafda57326d932f13226`
+  passed Chrome 152 Worker/WebGL2, fallback/WebGL2, and Worker/Canvas 2D.
   One-radius direct paths across all eight viewports are
   `0.99999996–1.00000017 rad`; post-wheel zoom and mid-gesture resize paths also
   remain one radian. Strong, faster, medium, and slow measured releases are
-  approximately `8.867`, `16.155`, `1.412`, and `0.260 rad/s`, producing about
-  `1.218`, `2.222`, `0.191`, and zero release turns. Mouse/touch parity differs
+  approximately `8.867`, `16.155`, `1.412`, and `0.260 rad/s`, then producing
+  about `1.218`, `2.222`, `0.191`, and zero release turns. The last result is the
+  superseded threshold baseline corrected above. Mouse/touch parity differs
   by at most `0.125%`, basis error is below `4.5e-16`, sample high-water is six,
   every cancellation ends at zero speed, SCORE remains `192,888`, both WebGL2
   runs retain four draws, and browser errors are zero. Ignored report digests are

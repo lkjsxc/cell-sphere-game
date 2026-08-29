@@ -5,7 +5,11 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-There is no active work package.
+Active package:
+
+- [`inertial-rotation-regression-v1/`](inertial-rotation-regression-v1/) —
+  restore faithful release inertia for deliberate low-speed globe drags without
+  changing direct manipulation, reduced-motion behavior, or simulation authority.
 
 Completed packages remain as historical or current implementation evidence:
 

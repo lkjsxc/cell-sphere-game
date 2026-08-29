@@ -57,7 +57,8 @@ to return to the canvas.
 The shared camera scenario authors gestures in projected sphere radii, verifies
 one-radian direct travel at all eight responsive viewports and after zoom,
 freezes gesture scale through a mid-drag resize, and accumulates release travel
-through natural rest. Distinct high-speed traces reject a release plateau;
-mouse/touch parity, slow inspection, lifecycle cancellation, reduced motion,
+through natural rest. Distinct high-speed traces reject a release plateau; a
+gentle deliberate release must carry while a separate sub-threshold precision
+drag must stop. Mouse/touch parity, lifecycle cancellation, reduced motion,
 fixed sample high-water, basis error, and a paused authoritative snapshot
 fingerprint are recorded in bounded ignored reports.

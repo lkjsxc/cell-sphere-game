@@ -68,21 +68,25 @@ export async function runCameraMotionScenario(t) {
   ok(medium.cumulativeTurns < mouseStrong.cumulativeTurns,
     `medium release did not remain below strong: ${JSON.stringify({ medium, mouseStrong })}`);
 
-  const slowBefore = await motion(evaluate);
-  const slowGesture = await normalizedFlick(t, 'mouse', .078, 0, { steps: 15, intervalMs: 20 });
-  const slowRelease = await motion(evaluate); await wait(260); const slowAfter = await motion(evaluate);
-  const slow = { gesture: slowGesture, measuredReleaseSpeed: slowRelease.state.measuredReleaseSpeed,
-    directTravel: slowRelease.input.lastAngularTravelRadians,
-    directBasisTravel: basisAngle(slowBefore.basis, slowRelease.basis),
-    cumulativeRadians: basisAngle(slowRelease.basis, slowAfter.basis),
-    cumulativeTurns: basisAngle(slowRelease.basis, slowAfter.basis) / (2 * Math.PI),
-    releaseDurationMs: 0, sampleHighWater: slowRelease.state.sampleHighWater,
-    basisError: basisError(slowAfter.basis), finalState: slowAfter.state };
-  ok(slow.directTravel > .07 && slow.measuredReleaseSpeed > 0 && slow.measuredReleaseSpeed < .3
-    && slow.finalState.mode === 'idle-wait'
-    && slow.finalState.speed === 0 && slow.cumulativeRadians < 1e-8
-    && slowBefore.selectedNode === slowAfter.selectedNode,
-  `slow precision drag became slippery or selected: ${JSON.stringify(slow)}`);
+  const gentle = await measuredRelease(t, 'gentle-mouse', () => normalizedFlick(t, 'mouse', .078, 0,
+    { steps: 15, intervalMs: 20 }));
+  assertNaturalRelease(gentle, .24, .28, .025, .04);
+
+  const precisionBefore = await motion(evaluate);
+  const precisionGesture = await normalizedFlick(t, 'mouse', .06, 0, { steps: 15, intervalMs: 80 });
+  const precisionRelease = await motion(evaluate); await wait(260); const precisionAfter = await motion(evaluate);
+  const precision = { gesture: precisionGesture, measuredReleaseSpeed: precisionRelease.state.measuredReleaseSpeed,
+    directTravel: precisionRelease.input.lastAngularTravelRadians,
+    directBasisTravel: basisAngle(precisionBefore.basis, precisionRelease.basis),
+    cumulativeRadians: basisAngle(precisionRelease.basis, precisionAfter.basis),
+    cumulativeTurns: basisAngle(precisionRelease.basis, precisionAfter.basis) / (2 * Math.PI),
+    releaseDurationMs: 0, sampleHighWater: precisionRelease.state.sampleHighWater,
+    basisError: basisError(precisionAfter.basis), finalState: precisionAfter.state };
+  ok(precision.directTravel > .05 && precision.measuredReleaseSpeed > 0 && precision.measuredReleaseSpeed < .08
+    && precisionRelease.input.lastGestureKind === 'drag' && precision.finalState.mode === 'idle-wait'
+    && precision.finalState.speed === 0 && precision.cumulativeRadians < 1e-8
+    && precisionBefore.selectedNode === precisionAfter.selectedNode,
+  `sub-threshold precision drag became slippery or selected: ${JSON.stringify(precision)}`);
 
   await normalizedFlick(t, 'mouse', -.66, .26); await wait(70); await pointerDown(...point);
   const pointerPressed = await motion(evaluate); await wait(220); const pointerHeld = await motion(evaluate);
@@ -214,7 +218,8 @@ export async function runCameraMotionScenario(t) {
       idleDelayMs:c.idleDelayMs,idleOrbitSpeed:c.idleOrbitSpeed,maximumFrameMs:c.maximumFrameMs}})()`),
     homeText, homeOrbitTravel: distance(beforeIdle, homeOrbit.direction), homeOrbitRate, cameraEvidencePaused,
     authority: { before: authorityBefore, after: authorityAfter, unchanged: true },
-    releases: { mouseStrong, touchStrong, faster, medium, slow, parity: { speed: speedParity, path: pathParity } },
+    releases: { mouseStrong, touchStrong, faster, medium, gentle, precision,
+      parity: { speed: speedParity, path: pathParity } },
     cancellations: { pointerDown: pointerPressed.state, wheel: wheelStopped.state, tap: tapState.state, pinch: pinchState.state,
       pointerCancel: cancelled.state, keyboard: keyboardStopped.state, focus: focusStopped.state,
       sceneChange: sceneStopped.state, worldReplacementReset: worldReset.state,

@@ -26,13 +26,14 @@ import {
 const TRACE = Object.freeze({
   strong: Object.freeze({ steps: 5, intervalMs: 16, dragX: 0.66 / 5, dragY: 0.26 / 5 }),
   medium: Object.freeze({ steps: 5, intervalMs: 20, dragX: 0.13 / 5, dragY: 0.055 / 5 }),
-  slow: Object.freeze({ steps: 12, intervalMs: 20, dragX: 0.005, dragY: 0.002 }),
+  gentle: Object.freeze({ steps: 12, intervalMs: 20, dragX: 0.005, dragY: 0.002 }),
+  precision: Object.freeze({ steps: 12, intervalMs: 100, dragX: 0.005, dragY: 0.002 }),
 });
 const REFERENCE_STRONG_SPEED = 8.86707;
 
 test('valid measured release vectors transfer directly without amplification or saturation', () => {
   assert.deepEqual(CAMERA_MOTION_DEFAULTS, {
-    sampleCapacity: 6, sampleWindowMs: 120, releaseThreshold: 0.3,
+    sampleCapacity: 6, sampleWindowMs: 120, releaseThreshold: 0.08,
     dampingHalfLifeMs: 600, stopSpeed: 0.025, idleDelayMs: 4500,
     idleOrbitSpeed: 0.022, maximumFrameMs: 100,
   });
@@ -87,8 +88,8 @@ test('release sampling stays recent, finite, and fixed-capacity', () => {
   assert.doesNotThrow(() => advanceCameraMotion(malformed, createCamera(), Infinity, NaN));
 });
 
-test('thresholded slow inspection stops while stronger releases carry proportionally', () => {
-  for (const speed of [0, 0.3, NaN, Infinity, -Infinity]) {
+test('deliberate low-speed releases carry faithfully while sub-threshold inspection stops', () => {
+  for (const speed of [0, 0.08, NaN, Infinity, -Infinity]) {
     const state = createCameraMotion({ now: 0, scene: 'world' }); beginCameraDrag(state, 0);
     if (Number.isFinite(speed)) recordCameraDrag(state, speed * 0.1, 0, 100);
     assert.equal(endCameraDrag(state, 100, 'drag'), false, String(speed));
@@ -103,11 +104,18 @@ test('thresholded slow inspection stops while stronger releases carry proportion
   assert.ok(medium.turns >= 0.18 && medium.turns <= 0.21, `medium travel ${medium.turns} turns`);
   assert.ok(medium.turns < strong.turns);
 
-  const slow = integrateTrace(TRACE.slow, 60);
-  assert.equal(slow.entered, false); assert.ok(slow.directTravel > 0);
-  assert.ok(slow.release.measuredReleaseSpeed < CAMERA_MOTION_DEFAULTS.releaseThreshold);
-  assert.equal(slow.travelRadians, 0); assert.equal(slow.durationMs, 0);
-  assert.equal(slow.final.mode, 'idle-wait'); assert.ok(slow.final.idleUntil > slow.releaseAt);
+  const gentle = integrateTrace(TRACE.gentle, 60);
+  assert.equal(gentle.entered, true); assert.ok(gentle.directTravel > 0);
+  assert.ok(gentle.release.measuredReleaseSpeed > 0.25 && gentle.release.measuredReleaseSpeed < 0.28);
+  assert.ok(gentle.turns >= 0.03 && gentle.turns <= 0.04, `gentle travel ${gentle.turns} turns`);
+  assert.equal(gentle.final.mode, 'idle-wait'); assert.ok(gentle.final.idleUntil > gentle.releaseAt);
+
+  const precision = integrateTrace(TRACE.precision, 60);
+  assert.equal(precision.entered, false); assert.ok(precision.directTravel > 0);
+  assert.ok(precision.release.measuredReleaseSpeed > 0
+    && precision.release.measuredReleaseSpeed < CAMERA_MOTION_DEFAULTS.releaseThreshold);
+  assert.equal(precision.travelRadians, 0); assert.equal(precision.durationMs, 0);
+  assert.equal(precision.final.mode, 'idle-wait'); assert.ok(precision.final.idleUntil > precision.releaseAt);
 });
 
 test('high finite releases outlive five seconds and stop only at the natural threshold', () => {
