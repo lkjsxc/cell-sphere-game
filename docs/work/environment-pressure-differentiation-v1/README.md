@@ -96,6 +96,11 @@ Status: active.
   evidence, peak/final Environment Level, causes, SCORE, Echoes, and resource
   conservation. An isolated detached worktree at the starting revision
   captured the same fields for supplemental exact before/after evidence.
+- Extended the existing benchmark with a fixed 1,000-tick production trace,
+  after the terminal-length throughput metric proved unsuitable for this
+  ecology change. The trace excludes initialization, remains alive under both
+  profiles, runs seven samples after one warm-up, and verifies one authority
+  hash per profile. This is measurement correction, not a second simulator.
 
 ## Focused verification
 
@@ -173,6 +178,47 @@ Status: active.
   outcomes. Report:
   `reports/environment-pressure-differentiation-v1/final/balance-holdout-cap-0.15.json`,
   SHA-256 `2fa0b309ad23046089cd5ca5e91d028847de2913400d8846b6bbecfef929f08c`.
+- PASS — final full Environment audit, 16 Worlds per maintained cohort and a
+  20,000-tick external budget. Every exact-curve, consumer, schedule, defense,
+  finite-extinction, and huge-Level invariant is true. Report:
+  `reports/environment-pressure-differentiation-v1/final/environment-level-audit-full-v5.json`,
+  SHA-256 `ecb6b64a865e2e6048585407c5f88dde91458b5654e7257eb8b9403133b67745`.
+- PASS — 500-World resource audit and 500-pair freshwater audit. Resource
+  conservation error is zero at report precision; all finite/occupancy/SCORE
+  bounds pass. Reports and SHA-256 digests:
+  `reports/environment-pressure-differentiation-v1/final/resource-audit-full-v5.json`
+  (`b977408d5185b3f57066ba086fa8d561223f4d27d62a475c72da433897179d79`)
+  and
+  `reports/environment-pressure-differentiation-v1/final/freshwater-audit-full-v5.json`
+  (`d8d57b1d9e4952d32be71e4be64d3ebbf0b914cf9c545b3cfdffe602a385e81d`).
+- PASS — 10,000-World production terminal/persistence soak. All Worlds
+  completed, all 10,000 duplicate settlements were rejected, History remained
+  at 24 entries, receipts at 16, and the report completed in `629,507.9 ms`.
+  Report:
+  `reports/environment-pressure-differentiation-v1/final/terminal-soak-10000-v5.json`,
+  SHA-256 `0a23d3a64e6b37c1731f86c97c067b6d2f67660d364bd189a2ea934bcf8851a6`.
+- PASS — full fair-agent training tournament: 68 six-World campaigns across 17
+  policies, every policy repeated deterministically, no failures, bounded
+  traces, valid specialist domains, and fair production observations. Report:
+  `reports/environment-pressure-differentiation-v1/final/agent-tournament-training-v5.json`,
+  SHA-256 `25da87b89b235626678c9039df95b3b941301f9c0473fd3da3343416a2963969`.
+- FAILED/CONFOUNDED PERFORMANCE ATTEMPT — five ordinary terminal benchmark
+  invocations reported a median `11,112 ticks/s` versus the original v4
+  `13,030 ticks/s` (`-14.72%`). The measured authority fixture itself shortened
+  from 2,036 to 1,492 ticks under the intended ecology change, so fixed setup
+  cost and different tick content made that rate non-comparable. This is not
+  counted as a performance pass.
+- PASS — five alternating v4/v5 benchmark invocations using the new fixed
+  1,000-tick production trace. The v4 invocation medians were
+  `10,734/10,519/9,706/10,641/10,537 ticks/s` (aggregate median `10,537`);
+  v5 medians were `10,791/10,688/10,245/10,740/10,649` (aggregate median
+  `10,688`, `+1.43%`). Every seven-sample invocation was deterministic and
+  valid. Median v4 report:
+  `reports/environment-pressure-differentiation-v1/baseline/benchmark-v4-fixed-sample-5.json`,
+  SHA-256 `a7f259b855eaee44db2950b622fd96671a64f39323ef91ed10603aa692bc9705`;
+  median v5 report:
+  `reports/environment-pressure-differentiation-v1/final/benchmark-v5-fixed-sample-2.json`,
+  SHA-256 `90e37cc495c5a9f07499aa8a9c3f829f846fd6f5142c27b0462183b0a167c244`.
 - PASS (INTERIM; DIRTY CONTENT TREE, TO BE SUPERSEDED) — Chrome
   `152.0.7977.64` focused pressure scenarios pass on Worker/WebGL2,
   fallback/WebGL2, and fallback/Canvas 2D with zero browser-console errors.
@@ -187,6 +233,11 @@ Status: active.
   `320×568`/200% check found Close outside the viewport; the bounded one-scroll
   layout correction fixed it. None of these failed attempts is counted as a
   browser pass.
+- FAILED DURING FINALIZATION — `showcase:check` correctly rejected the v4
+  production-simulation title fixture after the profile cutover. The bounded
+  fixture was regenerated once; its current digest is
+  `608dec0905e713b0e1343de5259ac4c96b34f296836ce80394bf3f935d5f9fd7`
+  and its fresh self-check passes. The stale check is not counted as a pass.
 
 ## Evidence not obtained
 
