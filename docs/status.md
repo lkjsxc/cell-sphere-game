@@ -33,6 +33,13 @@
   A fixed 1,000-tick same-host benchmark measures v5 at `10,688 ticks/s` versus
   v4 at `10,537` (`+1.43%`). The canonical work package owns exact report paths,
   digests, failed-attempt classification, and publication evidence.
+- Published implementation-and-evidence revision `a4399ccd14ce250d2a849ffd34bf2b7395ab09a5`
+  passes Actions run `33277716602`, verify job `99167259876`, Pages job
+  `99168597235`, deployment `6160684806`, and successful deployment status
+  `17510501917`. Nine cache-busted production owners match deployed bytes.
+  Deployed Chrome 152 Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D
+  receipts pass all controlled percentages, accessibility, focus, responsive,
+  forced-color, reduced-motion, parity, and zero-error gates.
 
 ## Kinetic Sphere Release v1
 

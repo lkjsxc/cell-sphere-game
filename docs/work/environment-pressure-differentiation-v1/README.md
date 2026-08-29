@@ -1,6 +1,6 @@
 # Environment Pressure Differentiation v1
 
-Status: active.
+Status: complete.
 
 ## Starting point
 
@@ -32,6 +32,20 @@ Status: active.
   coefficients.
 - Existing tests and the Environment audit do not reject identical fresh
   curves or a dimension with no dedicated consumer.
+
+## Disproved hypotheses
+
+- Schedule identity did not need to change: schedule/model version 2 and hash
+  `763e6328` remain independently valid under profile v5.
+- The added coefficient did not change Worker message shape or meaning, so run
+  protocol 12 remains valid and Worker/fallback parity passes unchanged.
+- SCORE, replay, semantic History, browser meta, and agent-save formats did not
+  require semantic migration. Only terminal Result and fair observation changed
+  public shape; incompatible old pressure detail is omitted without touching
+  permanent progression or trustworthy completed-World facts.
+- The apparent `-14.72%` terminal throughput result was not a reproducible hot-
+  path regression. It compared different extinction lengths; alternating fixed-
+  work traces instead measure `+1.43%` at v5.
 
 ## Selected decisions and deviations
 
@@ -123,6 +137,10 @@ toxicity, climate, maintenance, renewal, scarcity.
   status, game design, simulation, balancing, fair-agent play, accessibility,
   testing, decisions, and the two relevant script indexes. Historical work
   packages and their measurements remain unchanged.
+- Published exact implementation-and-local-evidence revision
+  `a4399ccd14ce250d2a849ffd34bf2b7395ab09a5` through the configured `main`
+  upstream, verified its CI/Pages deployment and bytes, and exercised the
+  cache-busted deployed application through all three focused browser paths.
 
 ## Focused verification
 
@@ -241,6 +259,15 @@ toxicity, climate, maintenance, renewal, scarcity.
   median v5 report:
   `reports/environment-pressure-differentiation-v1/final/benchmark-v5-fixed-sample-2.json`,
   SHA-256 `90e37cc495c5a9f07499aa8a9c3f829f846fd6f5142c27b0462183b0a167c244`.
+- PASS — one fresh complete `npm run verify` from a clean detached checkout of
+  exact revision `a4399ccd14ce250d2a849ffd34bf2b7395ab09a5`. All 26 gates
+  pass, including structure, identity, every production audit, showcase,
+  `218/218` unit tests, `72/72` integration tests, agent/balance/terminal smoke,
+  fixed-work benchmark, and links. Log:
+  `reports/environment-pressure-differentiation-v1/final/verify-a4399cc.log`,
+  SHA-256 `0271f75452863d0a02d537abc75a68b85d7b004c6d5a4db9da0553121435b68b`.
+  Its loaded benchmark remains valid; report SHA-256 is
+  `1637486dcb60d3036f7183ffd6a5a575ab5e0389908150660e9529fa6384d3d6`.
 - PASS (INTERIM; DIRTY CONTENT TREE, TO BE SUPERSEDED) — Chrome
   `152.0.7977.64` focused pressure scenarios pass on Worker/WebGL2,
   fallback/WebGL2, and fallback/Canvas 2D with zero browser-console errors.
@@ -283,6 +310,39 @@ toxicity, climate, maintenance, renewal, scarcity.
   untracked `docs/work/202608300500.md` and rejects its 1,054 lines. No tracked
   campaign file violates a hard cap. Final verification must run from a clean
   exact-revision worktree so the user's unrelated artifact remains unchanged.
+- FAILED EVIDENCE COMMAND — the first deployed-byte comparison was rejected by
+  local command policy before execution because its temporary cleanup used a
+  recursive removal pattern. It changed no repository or hosted state and is
+  not a pass. The replacement used an isolated retained temporary directory and
+  byte-compared every named file successfully.
+
+## Publication evidence
+
+- PASS — normal non-force push moved `origin/main` from starting revision
+  `915dbcf4e340aea48003af5cf96a77937b9e232a` to exact published revision
+  `a4399ccd14ce250d2a849ffd34bf2b7395ab09a5`; `git ls-remote` confirmed the
+  postcondition.
+- PASS — GitHub Actions run `33277716602` completed successfully for exact head
+  SHA `a4399cc`. Verify job `99167259876` passed every configured gate in
+  `11m26s`; Pages job `99168597235` completed successfully. The sole annotation
+  is the platform's informational Node-20 action deprecation warning while the
+  runner forces Node 24; it is not a selected-scope failure.
+- PASS — GitHub Pages deployment `6160684806` names exact SHA `a4399cc` and
+  successful deployment status `17510501917` at
+  `https://lkjsxc.github.io/cell-sphere-game/`.
+- PASS — cache-busted Pages bytes exactly match local `index.html`, profile,
+  metabolism, Result, metric surface, observation, agent schema, History, and
+  shell CSS owners. Their SHA-256 values respectively begin
+  `dac192ed`, `49bd0a96`, `7602d551`, `f96ff6a0`, `49721327`, `8b53ff76`,
+  `262e8b30`, `47297b31`, and `a482214c`.
+- PASS — deployed Chrome `152.0.7977.64` Worker/WebGL2, fallback/WebGL2, and
+  fallback/Canvas 2D receipts are clean, revision-bound to `a4399cc`, and agree
+  exactly on controlled semantic projections. All 15 responsive cases,
+  percentage/accessibility/focus/forced-color/reduced-motion checks, and zero-
+  error gates pass. Receipt SHA-256 values are
+  `304ed5361bce73a776a5a95b7b55cdcc07b6bd3e94716f8b4fc9f5349a78b349`,
+  `6a69cee9fe42df62bb11a975271e5b62dcabbbdd99d76c5d6a48e6a97b30c3bc`,
+  and `feeb3808748e3461801af2d6095e38ae1e012b5fdae76b66dc2c3acf87899b7a`.
 - FAILED DURING FINALIZATION — `showcase:check` correctly rejected the v4
   production-simulation title fixture after the profile cutover. The bounded
   fixture was regenerated once; its current digest is
@@ -293,13 +353,19 @@ toxicity, climate, maintenance, renewal, scarcity.
 
 - A completed pre-change browser scenario; the failed attempts above are the
   only browser baseline available.
-- Fresh complete final verification, CI, Pages, deployed-byte, and
-  deployed-browser evidence.
 - Physical-device evidence is outside this campaign.
+
+## Stopping-rule disposition
+
+Satisfied. Profile v5 is the sole production authority; all five dimensions
+have exact distinct curves and dedicated production consumers; every maintained
+projection uses one live normalized owner; predecessor public/raw/dead paths are
+gone; local, balance, conservation, determinism, parity, browser, performance,
+CI, Pages, deployed-byte, and deployed-browser gates pass. No severe
+selected-scope regression remains. Survivor framing, time-display investigation,
+Evolution expansion, broad ecology tuning, and physical-device work remain
+explicitly deferred.
 
 ## Exact next coherent step
 
-Commit this final local evidence, run one fresh complete verification from a
-clean exact-revision worktree, review the final diff, then perform the authorized
-normal push and verify CI, Pages, deployed bytes, and cache-busted deployed
-browser behavior before closing the package.
+None.

@@ -5,14 +5,14 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package:
-
-- [`environment-pressure-differentiation-v1/`](environment-pressure-differentiation-v1/)
-  — active implementation and evidence record for authored chronic-pressure
-  curves, the scarcity resource-yield consumer, and truthful live percentages.
+Active work package: none.
 
 Completed packages remain as historical or current implementation evidence:
 
+- [`environment-pressure-differentiation-v1/`](environment-pressure-differentiation-v1/)
+  — completed current evidence for authored chronic-pressure curves, five
+  production consumers, truthful live percentages, bounded balance, and exact
+  local/CI/Pages/deployed-browser closure.
 - [`kinetic-sphere-release-v1/`](kinetic-sphere-release-v1/) — completed
   current evidence for the explicitly reaffirmed progressive bounded release
   response on top of the radius-normalized input path, including exact local,
