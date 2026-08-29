@@ -119,6 +119,10 @@ toxicity, climate, maintenance, renewal, scarcity.
   ecology change. The trace excludes initialization, remains alive under both
   profiles, runs seven samples after one warm-up, and verifies one authority
   hash per profile. This is measurement correction, not a second simulator.
+- Reconciled every current documentation owner: root and GitHub README mirror,
+  status, game design, simulation, balancing, fair-agent play, accessibility,
+  testing, decisions, and the two relevant script indexes. Historical work
+  packages and their measurements remain unchanged.
 
 ## Focused verification
 
@@ -244,6 +248,21 @@ toxicity, climate, maintenance, renewal, scarcity.
   `52/50/43/39/46%`; all required viewports have no horizontal page scroll and
   exactly one pressure-surface scroll owner. Final revision-bound reruns remain
   required.
+- PASS — clean revision-bound Chrome `152.0.7977.64` browser receipts for exact
+  content revision `d7d3dc5518c05ff1ca052050f2cb9fa19b672d49` in
+  Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D. Controlled semantic
+  projections agree exactly. Level 1 renders `45/40/29/23/35%`; midpoint
+  renders `52/50/43/39/46%`. All 15 required responsive cases retain one scroll
+  owner, reachable controls/rows, and no horizontal page overflow at 200% text.
+  Keyboard open/Escape/focus restoration, static accessible row names, forced
+  colors, reduced motion, terminal Result schema 10, and zero browser errors
+  pass. Reports and SHA-256 digests:
+  - `reports/environment-pressure-differentiation-v1-final-worker-webgl2.json`
+    — `afc064b59abded55536780357d6ad1aeb0ea0b44b5d2188ba68020a4a4782790`;
+  - `reports/environment-pressure-differentiation-v1-final-fallback-webgl2.json`
+    — `12b084d40e4697bd338ca7bb91828726fe6933e8e28af6b72b9f837f2c69cca8`;
+  - `reports/environment-pressure-differentiation-v1-final-fallback-canvas2d.json`
+    — `505c260baf17a43fb0bd3c1ddb69392cc749d7a8991ca3902e1824165329ffee`.
 - FAILED DURING ITERATION — initial browser attempts skipped the World start
   because the harness assumed a `home` phase instead of the production `idle`
   phase. A later run used a fontconfig path without its sysroot and Chrome
@@ -251,6 +270,19 @@ toxicity, climate, maintenance, renewal, scarcity.
   `320×568`/200% check found Close outside the viewport; the bounded one-scroll
   layout correction fixed it. None of these failed attempts is counted as a
   browser pass.
+- SUPERSEDED RECEIPTS — the first clean revision-bound browser rerun used a
+  mistyped supplied full revision even though its independently captured
+  harness revision was correct. Those three behavior passes are rejected as
+  identity evidence and replaced by the matching receipts above. A subsequent
+  read-only aggregation script expected `layouts` instead of the report's
+  `responsive` key and threw before validation; the corrected aggregation
+  proves identity, semantic parity, geometry, and zero errors. Neither failed
+  evidence-processing attempt is counted as a pass.
+- EXPECTED WORKSPACE-ONLY STRUCTURE FAILURE — current documentation links and
+  the tracked README mirror pass. Direct `check:structure` sees the preserved
+  untracked `docs/work/202608300500.md` and rejects its 1,054 lines. No tracked
+  campaign file violates a hard cap. Final verification must run from a clean
+  exact-revision worktree so the user's unrelated artifact remains unchanged.
 - FAILED DURING FINALIZATION — `showcase:check` correctly rejected the v4
   production-simulation title fixture after the profile cutover. The bounded
   fixture was regenerated once; its current digest is
@@ -261,12 +293,13 @@ toxicity, climate, maintenance, renewal, scarcity.
 
 - A completed pre-change browser scenario; the failed attempts above are the
   only browser baseline available.
-- Final local, CI, Pages, deployed-byte, and deployed-browser evidence.
+- Fresh complete final verification, CI, Pages, deployed-byte, and
+  deployed-browser evidence.
 - Physical-device evidence is outside this campaign.
 
 ## Exact next coherent step
 
-Commit the bounded balance-evidence owner, run final audits, agent evidence,
-showcase regeneration if required, same-host benchmarks, and revision-bound
-browser evidence; then reconcile current documentation and run one fresh clean
-complete verification before authorized publication.
+Commit this final local evidence, run one fresh complete verification from a
+clean exact-revision worktree, review the final diff, then perform the authorized
+normal push and verify CI, Pages, deployed bytes, and cache-busted deployed
+browser behavior before closing the package.
