@@ -26,8 +26,10 @@
   scenarios pass Worker/WebGL2, fallback/WebGL2, and Worker/Canvas.
 - Same-host final p95 accepted-update/steady costs are `1.3/1.2 ms` WebGL and
   `2.1/1.9 ms` Canvas. Warm entry p95 is `19.9 ms` WebGL and `6.1 ms` Canvas.
-  Exact baseline/final reports are ignored under `reports/`; publication evidence
-  remains pending until stable final verification and the authorized push.
+  Exact baseline/final reports are ignored under `reports/`. Clean revision
+  `17b632e5ba564eea7b89f2e46258bcb8d7378a31` passes all 26 `npm run verify`
+  gates, unit `222/222`, integration `73/73`, and a `12,161 ticks/s` benchmark;
+  publication evidence remains pending until the authorized push.
 
 ## Environment Pressure Differentiation v1
 

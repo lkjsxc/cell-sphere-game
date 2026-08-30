@@ -82,6 +82,11 @@
   top and the complete action at the bottom. Canvas's old coarse-cell selection
   outline was removed from fine cells; selection now belongs to the shared
   territory perimeter while bounded inner status glyphs remain.
+- The coherent production cutover is commit
+  `d750e0007a7ab343925be3a2c4e85cb2aa9613f3`. Because the checked-in title
+  showcase hashes all `src/game` JavaScript, commit
+  `17b632e5ba564eea7b89f2e46258bcb8d7378a31` refreshes only that generated
+  source receipt; its simulation payload hash remains unchanged.
 
 ## Focused verification
 
@@ -100,7 +105,7 @@
   compact Imprints, renderer buffer reuse, and deterministic repeat construction.
 - PASS — final skill audit: 2,562/2,562 covered; 42 connected territories;
   sizes `56–65`; expected/actual contacts `120/120`; 36 stable ties; digest
-  `3fb3be93`; measured construction `2.55 ms`; authored graph/content/compiler
+  `3fb3be93`; stable-content verify measured construction `2.578 ms`; authored graph/content/compiler
   versions remain `42`, `120`, `54b3576d`, and `2/2/3/8`.
 - PASS — five isolated predecessor/final fixtures (fresh, partial, scarcity
   specialist, Luminous, full breadth) have identical IDs, roots, adjacency,
@@ -119,6 +124,10 @@
   42 owners/tree items, whole selected territory, internal < territory <
   selected salience, all eight viewports at 200% text, forced colors, stable
   reduced motion, reusable projection/geometry, and zero steady edge updates.
+  Exact clean-revision receipt SHA-256 values are
+  `7adfbda4cbaed26a22bc1e2df9a4ca54afe5d63efa087717eba6aebd1443f71f`,
+  `61d7d004db4ab67f07494d0f5988045f2ee42e7b4ce64c71adb1cbe44a82d512`,
+  and `b5aaf04586218c0d12078bf3d9773435ebac532c96148802a412cdfc5b8a8d21`.
 - PASS — WebGL remains four draws. Final p95 update/steady costs are `1.3/1.2
   ms` for Worker/WebGL2 and `2.1/1.9 ms` for fallback/Canvas; warm entry p95 is
   `19.9/6.1 ms`. Predecessor values were `0.2/0.1/4.1 ms` WebGL and
@@ -127,14 +136,19 @@
 - PASS — full production browser scenarios for Worker/WebGL2, fallback/WebGL2,
   and Worker/Canvas, including active-World Evolution lockout, exact purchases,
   pointer/touch/keyboard, drag/pinch/wheel/cancel, storage reload/reset,
-  four-draw WebGL, context continuity, and zero browser-console errors.
+  four-draw WebGL, context continuity, paused-World snapshot fingerprints, and
+  zero browser-console errors. Worker and fallback both settle SCORE `178012`.
+- PASS — fresh clean-worktree `npm run verify` at
+  `17b632e5ba564eea7b89f2e46258bcb8d7378a31`: every one of 26 gates passes,
+  including unit `222/222`, integration `73/73`, structure, links, showcase,
+  audits, and a `12,161 ticks/s` benchmark. Simulation hashes remain
+  `15863d52` and `e32ad0ff`; the regenerated showcase payload remains
+  `608dec0905e713b0e1343de5259ac4c96b34f296836ce80394bf3f935d5f9fd7`.
 
 ## Evidence not obtained
 
-- Fresh stable-content `npm run verify`, final benchmark, diff/link/structure
-  review, commit hashes, and exact publication evidence remain pending.
 - CI, Pages, deployed bytes, and deployed-browser behavior cannot exist until
-  the verified final revision is pushed.
+  the verified local revision is pushed. They remain pending, not passed.
 - Physical-device mouse, touch, pen, screen-reader, high-refresh, thermal, and
   safe-area hardware evidence are unavailable in this environment. CDP touch,
   Pointer Events, keyboard, forced-colors, reduced-motion, and responsive
@@ -157,10 +171,17 @@
 - Two broad runs failed only the predecessor fixed-footer oracle after the
   product moved short landscape to one scroll owner; the final oracle proves
   both scroll endpoints with the repository's 1 px geometry tolerance.
+- The first clean `npm run verify` at `d750e00` passed every other gate but
+  failed `showcase:check` because the new `src/game/skills/territories.js`
+  changed the generator's declared source hash. It is not a full pass. The
+  generated payload did not change; commit `17b632e` refreshes the receipt and
+  the complete stable-content rerun passes.
+- One focused Worker/WebGL2 report carried a manually mistyped full revision in
+  its metadata. It is superseded and not evidence; the exact `17b632e5...`
+  report above replaced it.
 
 ## Exact next coherent step
 
-Finish current-document reconciliation and source-negative review, run fresh
-stable-content verification and benchmark, review/commit the coherent cutover,
-then perform the authorized safe push and exact CI/Pages/deployed checks before
-marking this package terminal.
+Commit this local evidence record, recheck the tracked upstream relationship,
+perform the authorized normal push, and verify exact CI, Pages, cache-busted
+bytes, and deployed browser behavior before marking this package terminal.
