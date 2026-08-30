@@ -47,9 +47,15 @@ near, and far positions. They are evidence tooling, not player-facing modes.
 
 ## Globe scenes
 
-World uses the high-resolution living topology. Evolution and Trophy scenes use
-their own semantic cell projections while sharing camera and picking
-infrastructure. The camera retains one orthonormal free-orbit frame; a
+World and Evolution use the level-4 2,562-cell topology, while Evolution maps
+those cells into 42 authored skill territories and Trophy retains its own
+semantic projection. One pure territory owner supplies fine-cell picking,
+semantic centroids, compact membership, and edge classifications. Internal fine
+boundaries remain visible; territory, selected, and recently upgraded
+perimeters reuse the existing WebGL boundary draw and Canvas boundary phase.
+The authoritative frequency-2 skill graph—not rendered contact inference—still
+owns adjacency and purchases. Camera and picking infrastructure remain shared.
+The camera retains one orthonormal free-orbit frame; a
 single input path snapshots the projected sphere radius in CSS pixels and uses
 the same isotropic angular deltas for immediate manipulation and recent release
 sampling. The presentation-only motion policy transfers every valid measured
@@ -86,7 +92,9 @@ restoration: 10,242 vertices and 61,440 `Uint16` indices. Life classification
 uses one 7,680-byte canonical buffer; WebGL expands it once per accepted semantic
 snapshot into the existing four vertices per boundary edge, while Canvas reuses
 eight fixed typed style batches. Animation time alone never rebuilds either
-projection. High developer speeds execute every tick
+projection. Evolution territory ownership and geometry are immutable for one
+topology lifetime; unchanged animation frames do not rebuild the map, geometry,
+or 7,680-byte edge classification. High developer speeds execute every tick
 while coalescing bounded snapshots and render requests. Camera velocity samples
 use one fixed-capacity six-entry buffer; release state is constant-size, and one
 analytic inertia step rotates the reusable camera-basis arrays in place regardless

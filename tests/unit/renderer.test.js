@@ -270,6 +270,24 @@ test('WebGL life-edge upload is compact and changes only with accepted snapshot 
   assert.equal(uploads.length, 6); assert.equal(pass.edgeUpdateCount, 2); assert.equal(pass.boundaryLifeData.some(Boolean), false);
 });
 
+test('Evolution reuses the existing boundary buffer for shared territory-edge semantics', () => {
+  const topo = { edgeCount: 1, edgeA: Uint16Array.from([0]), edgeB: Uint16Array.from([1]) };
+  const uploads = []; const gl = { ARRAY_BUFFER: 1, bindBuffer() {}, bufferSubData(target, offset, data) { uploads.push(data.byteLength); } };
+  const pass = { topo, geometry: { vertexCell: Uint16Array.from([0, 1]) }, lifeData: new Float32Array(6),
+    ecologyData: new Uint8Array(8), lifeEdgeData: new Uint8Array(LIFE_EDGE_STRIDE),
+    boundaryLifeData: new Uint8Array(BOUNDARY_VERTICES_PER_EDGE * LIFE_EDGE_STRIDE), lastSnapshot: null, lastTick: -1,
+    edgeUpdateCount: 0, gl, lifeBuffer: {}, ecologyBuffer: {}, boundaryLifeBuffer: {} };
+  const snapshot = { tick: 1, status: 'memory', memoryStatus: Uint8Array.from([7, 1]), memoryBranch: new Uint8Array(2),
+    memoryKind: new Uint8Array(2), memoryImprintWeight: new Float32Array(2), memoryTier: new Uint8Array(2),
+    memoryEmphasis: new Uint8Array(2), memoryTerritoryEdge: Uint8Array.from([3]) };
+  WorldPass.prototype.uploadLife.call(pass, snapshot);
+  assert.deepEqual([...pass.lifeEdgeData], [3]); assert.deepEqual([...pass.boundaryLifeData], [3, 3, 3, 3]);
+  assert.deepEqual(uploads, [pass.lifeData.byteLength, pass.ecologyData.byteLength, pass.boundaryLifeData.byteLength]);
+  WorldPass.prototype.uploadLife.call(pass, snapshot); assert.equal(uploads.length, 3);
+  assert.match(read('../../src/rendering/fallback2d.js'), /memoryTerritoryEdge/);
+  assert.match(read('../../src/rendering/shaders-boundary.js'), /uMemory/);
+});
+
 test('production renderer keeps four draws and has no fine waterway machinery', () => {
   const renderer = read('../../src/rendering/renderer.js'); const shaders = read('../../src/rendering/shaders.js');
   const fallback = read('../../src/rendering/fallback2d.js');

@@ -12,11 +12,13 @@ mutates simulation arrays, consumes authoritative randomness, or changes SCORE.
 | `policies/camera-motion.js` | Presentation-only recent gesture samples, progressive bounded release, elapsed-time damping, idle orbit, and holds. |
 | `policies/continuation.js` | One-shot 13.5-second Result authority and its bounded visual/assistive projection. |
 | `surfaces.js` / `inspection/` | SCORE/REACH/Environment HUD, dynamic result evidence, metrics, and Inspector. |
-| `panel-surfaces.js` / `progression-spheres.js` | Evolution detail and second-activation transaction. |
+| `panel-surfaces.js` / `progression-spheres.js` | Evolution territory selection/detail and second-activation transaction. |
 | `history-*` / `app-data.js` | Bounded History and validated import/export. |
 
 Evolution activation is select first, then a later discrete activation purchases
-one ready selected cell. During an active world, detail states that upgrades
+one ready selected skill territory. Fine-cell picking resolves through the one
+shared owner map; the 42-item semantic tree enters the same state machine.
+During an active world, detail states that upgrades
 become available after that world and disables the transaction control. Drag,
 pinch, wheel, inertia, cancellation, blank taps, non-ready state, and stale
 level/revision never purchase.

@@ -12,6 +12,7 @@ import { runLifeBoundaryFixture } from './browser/life-boundary-fixture.mjs';
 import { runAtmosphereFixture } from './browser/atmosphere-fixture.mjs';
 import { measureLuminousHierarchy } from './browser/luminous-fixture.mjs';
 import { runCameraMotionScenario } from './browser/camera-motion-scenario.mjs';
+import { runEvolutionTerritoryFixture } from './browser/evolution-territory-fixture.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROFILE = `/tmp/cell-sphere-game-browser-${process.pid}`;
@@ -21,6 +22,7 @@ const forceSimulationFallback=process.argv.includes('--simulation-fallback');
 const lifeBoundaryOnly=process.argv.includes('--life-boundary-only');
 const atmosphereOnly=process.argv.includes('--atmosphere-only');
 const environmentPressureOnly=process.argv.includes('--environment-pressure-only');
+const evolutionTerritoryOnly=process.argv.includes('--evolution-territory-only');
 const recordBaseline=process.argv.includes('--record-baseline');
 const cohort=process.argv.find((value)=>value.startsWith('--cohort='))?.split('=')[1]?.replace(/[^a-z0-9-]/gi,'');
 const cdpTimeoutMs=Math.max(1000,Math.min(60000,Number(process.env.BROWSER_CDP_TIMEOUT_MS)||(atmosphereOnly?60000:10000)));
@@ -56,7 +58,7 @@ try {
   const configuredUrl = process.env.BROWSER_TEST_URL?.trim();
   const publicUrl = configuredUrl ? `${configuredUrl}${configuredUrl.includes('?') ? '&' : '?'}demo=1&browser-file-test=1`
     : `file://${ROOT}/index.html?demo=1&browser-file-test=1`;
-  await cdp.send('Page.navigate', { url: forceCanvas || lifeBoundaryOnly || atmosphereOnly ? `${publicUrl}&dev=1` : publicUrl }, session);
+  await cdp.send('Page.navigate', { url: forceCanvas || lifeBoundaryOnly || atmosphereOnly || evolutionTerritoryOnly ? `${publicUrl}&dev=1` : publicUrl }, session);
   await wait(4500);
 
   const evaluate = async (expression) => {
@@ -99,6 +101,15 @@ try {
     const report=JSON.stringify(evidence,null,2)+'\n';const name=`life-boundary-${label}-${evidence.backend}.json`;
     writeFileSync(resolve(REPORTS,name),report);const hash=createHash('sha256').update(report).digest('hex');
     console.log(`test:browser:life-boundaries — ${recordBaseline?'RECORDED':'PASS'} (${evidence.backend}; report ${name}; sha256 ${hash}; repeat noise ${evidence.repeat.noise.toFixed(6)}; threshold ${evidence.repeat.threshold.toFixed(6)}; steady p95 ${evidence.timing.steady.p95.toFixed(3)} ms; update p95 ${evidence.timing.update.p95.toFixed(3)} ms)`);
+  } else if (evolutionTerritoryOnly) {
+    const label=recordBaseline?'baseline':'final';const evidence=await runEvolutionTerritoryFixture(tools,{label,enforce:!recordBaseline});
+    const report=JSON.stringify({sourceRevision:process.env.BROWSER_TEST_REVISION?.trim()||gitValue(['rev-parse','HEAD']),
+      harnessRevision:gitValue(['rev-parse','HEAD']),branch:gitValue(['branch','--show-current']),workingTreeDirty:Boolean(gitValue(['status','--porcelain'])),
+      sourceUrl:configuredUrl??`file://${ROOT}/index.html`,browser:browserIdentity.product,protocolVersion:browserIdentity.protocolVersion,
+      browserErrors:cdp.errors.slice(0,20),browserStderr:cdp.stderr.slice(0,20),...evidence},null,2)+'\n';
+    const name=`evolution-cellular-territories-v1-${label}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
+    writeFileSync(resolve(REPORTS,name),report);const hash=createHash('sha256').update(report).digest('hex');
+    console.log(`test:browser:evolution-territories — ${recordBaseline?'RECORDED':'PASS'} (${evidence.simulationPath}/${evidence.rendererPath}; ${evidence.semantic.presentationCells} cells; report ${name}; sha256 ${hash})`);
   } else if (environmentPressureOnly) {
     const evidence = await runEnvironmentPressureScenario(tools);
     const receipt = writeEnvironmentPressureReport(evidence, browserIdentity, cdp, Boolean(configuredUrl), configuredUrl);
@@ -200,7 +211,7 @@ async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait
   await evaluate("document.getElementById('scene-evolution').click()"); await wait(180); await screenshot('browser-canvas-evolution-desktop.png');
   const selectedReady=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{validateMeta}=await import('./src/platform/storage.js');a.meta=validateMeta({...a.meta,echoBalance:'1000000'});
     const target=a.memorySnapshot.nodeStates.find(n=>n.reason==='ready');a.selectEvolutionCell(target.id);a.trophyNotifications.replace({...a.meta,trophyQueue:[]});const next=a.memorySnapshot.nodeStates.find(n=>n.id===target.id);
-    return{id:target.id,status:a.memorySnapshot.memoryStatus[next.cell],action:document.getElementById('memory-unlock').getAttribute('aria-label')}})()`);
+    const skill=a.evolutionTerritories.skillBySiteCell[next.cell];return{id:target.id,status:a.memorySnapshot.memoryStatus[a.evolutionTerritories.anchorCell[skill]],action:document.getElementById('memory-unlock').getAttribute('aria-label')}})()`);
   if(![7,10].includes(selectedReady.status)||!selectedReady.action?.includes('Echoes'))throw new Error(`Canvas selected-ready state failed: ${JSON.stringify(selectedReady)}`);
   const pulseA=await screenshot('browser-canvas-evolution-selected-ready.png');await wait(450);
   const pulseB=await screenshot('browser-canvas-evolution-selected-ready-pulse.png');if(pulseA.hash===pulseB.hash)throw new Error('Canvas selected-ready normal-motion pulse was static');
@@ -214,7 +225,7 @@ async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait
   assertBlankReplacement(await evaluate('window.__CELL_SPHERE_APP__.__firstReplacementFrame'), 'Canvas 2D');
   const bounded = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {...a.worldResourceAudit(),raf:a.frameAudit}})()`);
   if (bounded.interactionListeners !== 8 || bounded.historyRequests || bounded.raf.errors || bounded.raf.scheduled < bounded.raf.frames - 1) throw new Error(`Canvas replacement resources/RAF leaked: ${JSON.stringify(bounded)}`);
-  if(score<=0||atlas!==42||trophies.cells!==162||trophies.nodes!==96||errors.length)throw new Error('Canvas fallback state failed');
+  if(score<=0||atlas!==2562||trophies.cells!==162||trophies.nodes!==96||errors.length)throw new Error('Canvas fallback state failed');
   return{score,keyboardInspector,worldmaking:developed};
 }
 

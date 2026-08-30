@@ -81,6 +81,12 @@ zoom survives a same-class resize; a new World restores the default geometry.
 
 Evolution changes ecology through actual mechanics such as reproduction, uptake,
 maintenance, reserve, recovery, habitat access, and whole-cell Luminous charge.
+Its 42 authored skills remain the progression units. On the globe each skill
+owns a connected territory within the same 2,562-cell topology family as World;
+every visible fine cell selects its owner, and stronger territory borders show
+the truthful purchase frontier. The semantic tree still exposes 42 skills, not
+2,562 controls. A first activation selects; only a later activation of that same
+ready territory or its explicit action can buy one exact level.
 Scarcity defense protects the energy yield from nutrient already consumed; it
 does not create nutrient or energy. Evolution never changes the public
 Environment clock or creates infinite resources.

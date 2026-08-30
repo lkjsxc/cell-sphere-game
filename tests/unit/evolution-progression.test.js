@@ -6,7 +6,7 @@ import { EVOLUTION_COMPILER_VERSIONS, EVOLUTION_COST_VERSION, MEMORY_CELL_BY_ID,
 import { compareProgressionIntegers } from '../../src/core/progression-integer.js';
 import { defaultMeta } from '../../src/platform/storage.js';
 
-test('authored Evolution is a compact 42-cell sphere with one general-survival root', () => {
+test('authored Evolution graph has 42 skills and one general-survival root', () => {
   const graph = validateMemoryGraph();
   assert.equal(graph.valid, true); assert.equal(graph.topologyFrequency, 2); assert.equal(graph.topologyCells, 42);
   assert.deepEqual(MEMORY_ROOT_IDS, ['first-division']); assert.equal(MEMORY_NODES.length, 42);

@@ -372,3 +372,20 @@ renderer, speed, or World authority. Evidence: exact and huge-Level profile
 tests, five controlled production consumers, Worker/fallback parity, paired
 balance cohorts, conservation/terminal/agent audits, fixed-work benchmark, and
 focused WebGL2/Canvas browser scenarios.
+
+## D32 — Authored Evolution graph and cellular presentation are separate authorities
+
+Keep the existing frequency-2 graph as the sole authority for 42 skill IDs,
+roots, adjacency, costs, exact levels, purchases, and compiled effects. Project
+those sites deterministically onto the shared level-4 topology by stable
+spherical Voronoi ownership. All 2,562 fine cells have one owner; every territory
+is connected; the visible contact graph equals all 120 authored edges with no
+extra contact. One pure immutable owner supplies compact membership, semantic
+centroids/anchors, picking, scene projection, and edge classes.
+
+Fine cell boundaries remain visible. Territory, selected, and recently upgraded
+perimeters reuse the existing WebGL boundary draw and Canvas boundary phase, so
+WebGL remains four draws. The semantic tree remains 42 items. ID-based meta and
+the compact frequency-2 Imprint record do not change or reset, and no fine map is
+persisted. Consequence: Evolution gains World-density physical character without
+new skills, filler, economy changes, renderer authority, or active-World effects.

@@ -14,7 +14,7 @@ import { hashStringU32, hexU32 } from '../../src/core/hash.js';
 
 const started = performance.now(); const catalog = validateTrophyCatalog(); const atlas = validateTrophyAtlas();
 const firstWorldCohort = Array.from({ length: 24 }, (_, lane) => firstWorld(20260731 + lane * 104729));
-const campaign = modeledCampaign(240); // Calibrated against the current fragile, realized-SCORE economy: early lineage proof is sparse, while the authored 42-cell sphere makes mid-campaign evidence visibly accumulate.
+const campaign = modeledCampaign(240); // Calibrated against the current fragile, realized-SCORE economy: early lineage proof is sparse, while the authored 42-skill catalog makes mid-campaign evidence visibly accumulate.
 const targets = { 1: [2, 4], 4: [3, 8], 12: [8, 20], 48: [45, 65], 240: [65, 92] };
 const targetResults = Object.fromEntries(Object.entries(targets).map(([horizon, range]) => { const acquired = campaign.horizons[horizon].total;
   return [horizon, { acquired, target: range, withinTarget: acquired >= range[0] && acquired <= range[1] }]; }));

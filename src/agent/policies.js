@@ -1,4 +1,4 @@
-/** Deterministic campaign policies over fair, player-visible Evolution cells. */
+/** Deterministic campaign policies over fair, player-visible Evolution skills. */
 import { hashStringU32 } from '../core/hash.js';
 import { compareProgressionIntegers } from '../core/progression-integer.js';
 import { AGENT_GOALS } from './schema.js';

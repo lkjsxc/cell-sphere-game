@@ -1,5 +1,34 @@
 # Current status
 
+## Evolution Cellular Territories v1
+
+- Evolution now renders the shared level-4 topology: 2,562 fine cells and 7,680
+  canonical edges grouped into the existing 42 authored skills. The frequency-2
+  graph remains authoritative for one `First Division` root, 120 adjacency
+  edges, costs, exact levels, transactions, and compilation.
+- Stable catalog-order spherical Voronoi ownership covers every cell exactly
+  once. All territory components equal one, sizes are `56–65`, all 120 authored
+  contacts appear, no nonadjacent skills touch, 36 exact ties resolve by catalog
+  order, and the diagnostic digest is `3fb3be93`.
+- Picking any fine cell resolves through the shared owner. State copies over the
+  whole territory; semantic centroids prevent large territories from weighting
+  focus. WebGL2 and Canvas consume one edge classification through their existing
+  boundary phases; WebGL remains four draws.
+- The 42-item semantic tree, first-select/later-purchase behavior, coarse
+  frequency-2 Imprints, meta schema 15, content hash `54b3576d`, compiler
+  versions `2/2/3/8`, rewards, agents, and active-World lockout remain unchanged.
+  Five predecessor/final authority fixtures have identical SHA-256
+  `975c32a7e742a5f0f7726a2706bf64788d1e6e4aee2faaacdfd5841f2218969c`.
+- Focused Chrome 152 Worker/WebGL2, fallback/WebGL2, and fallback/Canvas receipts
+  pass territory semantics, relative edge salience, forced colors, stable reduced
+  motion, 200% text at all eight maintained viewports, cached geometry/map,
+  unchanged-frame edge updates, and buffer/draw audits. Full production browser
+  scenarios pass Worker/WebGL2, fallback/WebGL2, and Worker/Canvas.
+- Same-host final p95 accepted-update/steady costs are `1.3/1.2 ms` WebGL and
+  `2.1/1.9 ms` Canvas. Warm entry p95 is `19.9 ms` WebGL and `6.1 ms` Canvas.
+  Exact baseline/final reports are ignored under `reports/`; publication evidence
+  remains pending until stable final verification and the authorized push.
+
 ## Environment Pressure Differentiation v1
 
 - Environment profile v5 replaces the equal-rating broadcast with five direct,

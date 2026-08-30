@@ -1,4 +1,4 @@
-/** Exact monotonically growing costs for one authored Evolution cell at a time. */
+/** Exact monotonically growing costs for one authored Evolution skill at a time. */
 import { addProgressionIntegers, incrementProgressionInteger, multiplyProgressionIntegers,
   parseProgressionInteger, subtractProgressionIntegers } from '../../core/progression-integer.js';
 

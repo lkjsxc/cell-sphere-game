@@ -106,7 +106,7 @@ class GameApp {
     this.settingsUi = createSettingsSurface({ read: () => ({ ...this.settings, speed: this.speed }), onChange: (value) => this.applySettings(value), onClose: () => this.panelClosed('menu'), onAction: (action, value) => this.settingsAction(action, value) });
   }
   makeRenderer(seed, mode = 'world', identity = null) {
-    this.visualSeed = seed; this.topo = mode === 'memory' ? this.topo3 : mode === 'trophies' ? this.topo2 : this.topo4;
+    this.visualSeed = seed; this.presentationMode = mode; this.topo = mode === 'trophies' ? this.topo2 : this.topo4;
     if (mode === 'memory') this.fields = this.atlasFields; else if (mode === 'trophies') this.fields = this.trophyFields;
     else { this.worldFields = createFields(createRng(seed ^ 0x51ab3d71), this.topo4); this.fields = this.worldFields; }
     const binding = identity ?? (mode === 'world' && this.worldIdentity?.seed === seed ? this.worldIdentity : null);

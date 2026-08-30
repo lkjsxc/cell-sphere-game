@@ -1,4 +1,5 @@
-/** Read-only whole-cell projection for the compact authored Evolution sphere. */
+/** Read-only authored-skill projection over the fine Evolution territories. */
+import { writeEvolutionTerritoryEdges } from './territories.js';
 export const MEMORY_STATUS = Object.freeze({
   EMPTY: 0, LOCKED: 1, UNAFFORDABLE: 2, AFFORDABLE: 3, OWNED_UNAFFORDABLE: 4,
   SELECTED_LOCKED: 5, SELECTED_UNAFFORDABLE: 6, SELECTED_AFFORDABLE: 7,
@@ -18,24 +19,40 @@ export function createMemoryFields(topo) {
     landmarks: Object.freeze([]), sources: Object.freeze([0]) });
 }
 
-export function renderMemorySnapshot(topo, meta, scene, emphasizedIds = []) {
-  const count = topo.nodeCount; const status = new Uint8Array(count); const branch = new Uint8Array(count);
+export function renderMemorySnapshot(territories, meta, scene, emphasizedIds = []) {
+  const topo = territories.topology; const count = topo.nodeCount; const status = new Uint8Array(count); const branch = new Uint8Array(count);
   const tier = new Uint8Array(count); const kind = new Uint8Array(count); const imprintWeight = new Float32Array(count);
-  const nodeIndex = new Int16Array(count).fill(-1); const emphasis = new Uint8Array(count); const marked = new Set(emphasizedIds); const focusCells = [];
+  const nodeIndex = new Int16Array(count).fill(-1); const emphasis = new Uint8Array(count); const marked = new Set(emphasizedIds);
+  const emphasizedSkills = new Uint8Array(territories.skillCount); const imprintSkills = new Uint8Array(territories.skillCount);
+  const focusSkills = []; let selectedSkill = -1;
+  for (const imprint of meta.imprints ?? []) for (const siteCell of imprint.cells ?? []) {
+    const skill = territories.skillBySiteCell[siteCell] ?? -1; if (skill >= 0) imprintSkills[skill] = 1;
+  }
   scene.nodes.forEach((node, index) => {
-    const selected = node.id === scene.selectedId;
-    status[node.cell] = statusFor(node, selected); branch[node.cell] = DOMAINS[node.domain] ?? 0;
-    tier[node.cell] = node.tier; kind[node.cell] = KINDS[node.kind] ?? 2; nodeIndex[node.cell] = index;
-    if (marked.has(node.id)) emphasis[node.cell] = 1;
-    if (node.owned || (node.reachable && node.affordable)) focusCells.push(node.cell);
+    const skill = territories.skillBySiteCell[node.cell];
+    if (skill < 0) throw new Error(`Evolution skill ${node.id} has no presentation territory`);
+    const selected = node.id === scene.selectedId; if (selected) selectedSkill = skill;
+    const nodeStatus = statusFor(node, selected); const nodeBranch = DOMAINS[node.domain] ?? 0;
+    const nodeKind = KINDS[node.kind] ?? 2; const emphasized = marked.has(node.id);
+    if (emphasized) emphasizedSkills[skill] = 1;
+    for (let offset = territories.cellStart[skill]; offset < territories.cellStart[skill + 1]; offset++) {
+      const cell = territories.cells[offset]; status[cell] = nodeStatus; branch[cell] = nodeBranch;
+      tier[cell] = node.tier; kind[cell] = nodeKind; nodeIndex[cell] = index;
+      if (emphasized) emphasis[cell] = 1; if (imprintSkills[skill]) imprintWeight[cell] = .55;
+    }
+    if (node.owned || (node.reachable && node.affordable)) focusSkills.push(skill);
   });
-  for (const imprint of meta.imprints ?? []) for (const cell of imprint.cells ?? []) if (cell >= 0 && cell < count) imprintWeight[cell] = .55;
+  const territoryEdges = writeEvolutionTerritoryEdges(territories, selectedSkill, emphasizedSkills);
   return Object.freeze({
     tick: scene.nodes.filter((node) => node.owned).length * 16 + (scene.selectedId ? 1 : 0), entropy: .30, status: 'memory',
     memoryStatus: status, memoryBranch: branch, memoryTier: tier, memoryKind: kind, memoryImprintWeight: imprintWeight,
     memoryNodeIndex: nodeIndex, memoryEmphasis: emphasis, memoryScene: scene, nodeStates: scene.nodes,
-    metrics: Object.freeze({ coverage: scene.nodes.filter((node) => node.owned).length / Math.max(1, count), score: '0' }),
-    focus: focusDirection(topo, focusCells.length ? focusCells : scene.nodes.filter((node) => node.kind === 'root').map((node) => node.cell)),
+    memoryOwner: territories.ownerByCell, memoryTerritoryEdge: territoryEdges,
+    memoryTerritorySize: territories.territorySize, memoryTerritoryAnchor: territories.anchorCell,
+    memoryTerritoryCentroid: territories.centroid, memoryTerritoryDiagnostics: territories.diagnostics,
+    metrics: Object.freeze({ coverage: scene.nodes.filter((node) => node.owned).length / Math.max(1, scene.nodes.length), score: '0' }),
+    focus: focusDirection(territories, focusSkills.length ? focusSkills
+      : scene.nodes.filter((node) => node.kind === 'root').map((node) => territories.skillBySiteCell[node.cell])),
   });
 }
 function statusFor(node, selected) {
@@ -45,8 +62,10 @@ function statusFor(node, selected) {
   if (node.affordable) return selected ? MEMORY_STATUS.SELECTED_AFFORDABLE : MEMORY_STATUS.AFFORDABLE;
   return selected ? MEMORY_STATUS.SELECTED_UNAFFORDABLE : MEMORY_STATUS.UNAFFORDABLE;
 }
-function focusDirection(topo, cells) {
+function focusDirection(territories, skills) {
   const focus = [0, 0, 0];
-  for (const cell of cells.length ? cells : [0]) for (let axis = 0; axis < 3; axis++) focus[axis] += topo.positions[cell * 3 + axis];
+  for (const skill of skills.length ? skills : [0]) for (let axis = 0; axis < 3; axis++) {
+    focus[axis] += territories.centroid[skill * 3 + axis];
+  }
   const length = Math.hypot(...focus); return length ? focus.map((value) => value / length) : [0, 0, 1];
 }

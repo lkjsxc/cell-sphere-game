@@ -27,10 +27,24 @@ Resource ecology updates authoritative cells without skipping ticks. Chronic
 pressure retains current/next finite profiles and bounded exposure evidence;
 it has no gameplay-event arrays or render buffers.
 
-Evolution and Trophy projections should compile or patch only when their
-underlying meta revision changes. Benchmark and scene-entry evidence must be
-recorded for the exact revision tested; do not infer browser or device results
-from unit tests.
+Evolution territory ownership and static level-4 geometry are built once per
+immutable topology lifetime. Selection and upgrade emphasis rebuild only bounded
+snapshot/edge bytes; unchanged animation frames perform zero edge-buffer
+updates. Trophy and Evolution semantic snapshots remain bounded. Benchmark and
+scene-entry evidence must be recorded for the exact revision tested; do not
+infer browser or device results from unit tests.
+
+Same-host Chrome 152 predecessor → territorial measurements are: WebGL warm
+entry p95 `4.1 → 19.9 ms`, accepted update p95 `0.2 → 1.3 ms`, and steady frame
+p95 `0.1 → 1.2 ms`; Canvas warm entry p95 `2.0 → 6.1 ms`, accepted update p95
+`0.3 → 2.1 ms`, and steady frame p95 `0.2 → 1.9 ms`. WebGL remains four draws.
+Its static/dynamic bytes are `28,836/5,112 → 1,838,196/325,152`; the compact
+edge classification is `120 → 7,680` bytes. Canvas static/dynamic bytes are
+`2,092/2,040 → 133,132/130,560`. The percentage increases were investigated:
+absolute steady costs remain below 2.1 ms p95, the projection/geometry is cached,
+and the measured player gain is complete 2,562-cell meaning plus exact connected
+42-territory contact and visible edge hierarchy. Node construction is about
+`2.55 ms` cold and never runs per frame.
 
 The atmosphere silhouette cutover's same-host Chrome 152 median-of-three
 synchronized costs are baseline to fixed shell: steady p50 `0.800 -> 0.900 ms`,
@@ -52,6 +66,9 @@ time and are not multiplied by speed.
 npm run benchmark
 npm run test:browser:atmosphere
 npm run test:browser:atmosphere:canvas
+npm run test:browser:evolution-territories
+npm run test:browser:evolution-territories:fallback
+npm run test:browser:evolution-territories:canvas
 npm run terminal:soak
 npm run test:browser:file
 npm run test:browser:canvas

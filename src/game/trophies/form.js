@@ -1,5 +1,5 @@
 import { allOf as all, atLeast as n, defineTrophyFamily as family } from './definition.js';
-/** Network-form trophies scale to the authored 42-cell Evolution sphere. */
+/** Network-form trophies scale to the authored 42-skill Evolution catalog. */
 export const FORM_TROPHIES = family('form', [
   ['first-loop', 'Enduring Circuit', 'With seven Evolution cells, sustain lake-centered loops with fifty surplus edges.', all(n('loopSurplusPeak', 50), n('lakeLoopSeconds', 120), n('skillCount', 7))],
   ['first-split', 'Surviving Fracture', 'With seven Evolution cells, split twice and regrow 300 cells.', all(n('splits', 2), n('regrowth', 300), n('skillCount', 7))],

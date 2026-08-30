@@ -125,7 +125,11 @@ export class WorldPass {
             ?? (snapshot.alive[cell] ? 1 : snapshot.biomass[cell] > 0 ? 5 : 0);
         }
       }
-      if (memory) this.lifeEdgeData.fill(0);
+      if (snapshot.status === 'memory') {
+        if (!(snapshot.memoryTerritoryEdge instanceof Uint8Array)
+          || snapshot.memoryTerritoryEdge.length !== this.topo.edgeCount) throw new Error('invalid Evolution territory edges');
+        this.lifeEdgeData.set(snapshot.memoryTerritoryEdge);
+      } else if (memory) this.lifeEdgeData.fill(0);
       else writeLifeEdges(this.topo, snapshot.lifeState, this.lifeEdgeData);
     }
     writeBoundaryLifeVertices(this.lifeEdgeData, this.boundaryLifeData); this.edgeUpdateCount++;
@@ -145,7 +149,7 @@ export class WorldPass {
     gl.uniform1f(globe.u.get('uTime'), Number.isFinite(time) ? time : 0);
     gl.uniform1f(globe.u.get('uPulse'), pulse ? 1 : 0);
     gl.uniform1f(globe.u.get('uElectricityDevelopment'), Math.max(0, Math.min(1, snapshot?.luminousDevelopment ?? 0)));
-    const selected = Number.isInteger(selectedNode) ? selectedNode : -1;
+    const selected = snapshot?.status !== 'memory' && Number.isInteger(selectedNode) ? selectedNode : -1;
     gl.uniform1f(globe.u.get('uHasSelection'), selected >= 0 ? 1 : 0);
     gl.uniform3fv(globe.u.get('uSelectedCenter'), selected >= 0
       ? this.topo.positions.subarray(selected * 3, selected * 3 + 3) : this.zero3);
@@ -163,6 +167,7 @@ export class WorldPass {
     gl.uniformMatrix4fv(boundary.u.get('uViewProj'), false, vp);
     gl.uniform3fv(boundary.u.get('uEye'), eye);
     gl.uniform1f(boundary.u.get('uEntropy'), snapshot?.entropy ?? 0);
+    gl.uniform1f(boundary.u.get('uMemory'), snapshot?.status === 'memory' ? 1 : 0);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false); gl.bindVertexArray(this.boundaryVao);
     gl.drawElements(gl.TRIANGLES, this.geometry.boundaryIndices.length, gl.UNSIGNED_SHORT, 0);

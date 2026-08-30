@@ -1,4 +1,4 @@
-/** Evolution sphere semantic tree, concise detail, and exact acquisition feedback. */
+/** Evolution skill semantic tree, concise detail, and exact acquisition feedback. */
 import { MEMORY_NODES, evolutionCellState, getMemoryNode, previewEvolutionLevel, newlyAvailableAdjacentIds } from '../game/skills/index.js';
 import { formatProgressionEngineering, normalizeProgressionInteger } from '../core/progression-integer.js';
 
@@ -17,18 +17,18 @@ export function createMemorySurface(options) {
       : state.owned ? state.affordable ? `Level ${number(state.currentLevel)} · ready to upgrade` : `Level ${number(state.currentLevel)} · more Echoes required`
         : state.locked ? 'Level 0 · locked by physical adjacency' : state.affordable ? 'Level 0 · ready to unlock' : 'Level 0 · reachable · more Echoes required';
     const neighbor = state.adjacentOwnedId ? getMemoryNode(state.adjacentOwnedId)?.nameEn ?? state.adjacentOwnedId
-      : state.bootstrap ? 'First Division is the only fresh frontier' : 'No adjacent Level 1+ cell';
+      : state.bootstrap ? 'First Division is the only fresh frontier' : 'No adjacent Level 1+ skill';
     const changes = preview?.changes?.map(formatChange).join(' · ') || 'No further change can be represented';
     const unlocked = preview?.unlocked?.map(humanize).join(', ') || 'No new habitat';
     const nearby = newlyAvailableAdjacentIds(meta, state.id).map((id) => getMemoryNode(id)?.nameEn ?? id);
-    const instruction = state.selectedReady && purchasesOpen ? `Activate this selected cell again to ${state.owned ? 'upgrade' : 'unlock'}.`
-      : state.owned ? 'Activate to select this cell.' : state.reachable ? 'Activate to select this reachable cell.' : 'Unlock a directly adjacent Level 1+ cell first.';
+    const instruction = state.selectedReady && purchasesOpen ? `Activate this selected territory again to ${state.owned ? 'upgrade' : 'unlock'}.`
+      : state.owned ? 'Activate to select this territory.' : state.reachable ? 'Activate to select this reachable territory.' : 'Unlock a directly adjacent Level 1+ skill first.';
     byId('memory-node-meta').replaceChildren(...definitionRows([
       ['Status', purchasesOpen ? status : `${status} · Evolution is available after this World`],
       ['Current → next level', boundary ? `Level ${number(state.currentLevel)} · unavailable` : `Level ${number(state.currentLevel)} → Level ${number(state.nextLevel)}`],
       ['Exact next cost', boundary ? `${number(meta.echoBalance)} Echoes held` : `${number(state.nextCost)} Echoes · ${number(meta.echoBalance)} held`],
       ['Before → after', changes], ['New habitat', unlocked], ['Unlock reason', neighbor], ['Purchase', instruction],
-      ['New neighboring cells', nearby.length ? nearby.join(', ') : 'No additional frontier from this cell'],
+      ['New neighboring skills', nearby.length ? nearby.join(', ') : 'No additional frontier from this skill'],
     ]));
     unlock.hidden = false; unlock.disabled = !state.selectedReady || !purchasesOpen;
     const verb = state.owned ? 'Upgrade' : 'Unlock';
@@ -44,7 +44,7 @@ export function createMemorySurface(options) {
       const state = evolutionCellState(meta, node, selected?.id); const button = document.createElement('button'); button.type = 'button';
       button.setAttribute('role', 'treeitem'); button.setAttribute('aria-level', String(state.tier + 1)); button.setAttribute('aria-selected', String(state.id === selected?.id));
       const availability = state.owned ? state.affordable ? 'Owned and ready to upgrade' : 'Owned; more Echoes required'
-        : state.reachable ? state.affordable ? 'Ready to unlock' : 'Reachable; more Echoes required' : 'Locked; an adjacent Level 1+ cell is required';
+        : state.reachable ? state.affordable ? 'Ready to unlock' : 'Reachable; more Echoes required' : 'Locked; an adjacent Level 1+ skill is required';
       const next = state.nextCost === null ? 'No further level is available.' : `Next level ${number(state.nextLevel)} costs ${number(state.nextCost)} Echoes.`;
       const prompt = state.id === selected?.id && state.reason === 'ready' ? `Activate again to ${state.owned ? 'purchase one upgrade' : 'unlock'}.` : 'Activate to select.';
       button.textContent = `${state.nameEn}. ${state.domain}. Level ${number(state.currentLevel)}. ${state.summary} ${availability}. ${next} ${prompt}`;
@@ -54,7 +54,7 @@ export function createMemorySurface(options) {
   function acquisition(preview, newly) {
     clearTimeout(feedbackTimer); change.hidden = false; change.classList.remove('skill-acquired'); void change.offsetWidth; change.classList.add('skill-acquired');
     const effect = preview?.changes?.map(formatChange).join(' · ') || 'Permanent ecological rule improved';
-    change.textContent = `${effect}. ${newly.length} adjacent ${newly.length === 1 ? 'cell is' : 'cells are'} now available.`;
+    change.textContent = `${effect}. ${newly.length} adjacent ${newly.length === 1 ? 'skill is' : 'skills are'} now available.`;
     feedbackTimer = setTimeout(() => { change.hidden = true; change.classList.remove('skill-acquired'); }, 5000);
   }
   return { panel,

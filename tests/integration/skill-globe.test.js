@@ -1,9 +1,9 @@
-/** Compact authored Evolution sphere integration: topology, renderer projection, and exact transactions. */
+/** Authored Evolution graph and fine territorial presentation integration. */
 import { test } from 'node:test'; import assert from 'node:assert/strict';
-import { createGeodesicTopology } from '../../src/world/icosphere.js';
-import { MEMORY_CELL_REVERSE, MEMORY_NODES, MEMORY_PHYSICAL_ADJACENCY, availableMemoryNodes, buildMemorySnapshot,
-  compileEvolution, evolutionCellState, getMemoryAdjacentIds, getMemoryNode, normalizeEvolutionLevels, purchaseEvolutionLevel,
-  validateMemoryGraph } from '../../src/game/skills/index.js';
+import { createGeodesicTopology, createTopology } from '../../src/world/icosphere.js';
+import { MEMORY_NODES, MEMORY_PHYSICAL_ADJACENCY, availableMemoryNodes, buildMemorySnapshot,
+  compileEvolution, createEvolutionTerritories, evolutionCellState, getMemoryAdjacentIds, getMemoryNode,
+  normalizeEvolutionLevels, purchaseEvolutionLevel, validateMemoryGraph } from '../../src/game/skills/index.js';
 import { createMemoryFields } from '../../src/game/skills/scene.js'; import { defaultMeta } from '../../src/platform/storage.js';
 import { createCamera } from '../../src/rendering/camera.js'; import { pickNode } from '../../src/rendering/picking.js';
 
@@ -28,14 +28,34 @@ test('legal adjacency purchases traverse every authored cell and direct compilat
   assert.equal(full.totalOwnedCells, 42); assert.equal(full.luminous.enabled, true); assert.equal(full.habitatCapabilities.length, 6);
   assert.ok(Object.values(full.effects).every((value) => Number.isFinite(value) && value > 0 && value < 10));
 });
-test('Evolution scene projects exactly one whole-cell semantic state and CPU picking reaches it', () => {
-  const topology = createGeodesicTopology(2); const snapshot = buildMemorySnapshot(topology, { ...defaultMeta(), echoBalance: '8' });
-  assert.equal(snapshot.memoryStatus.length, 42); assert.equal(snapshot.memoryNodeIndex.filter((index) => index >= 0).length, 42);
-  assert.equal(snapshot.nodeStates.length, 42); assert.equal(createMemoryFields(topology).biomeId.length, 42);
+test('Evolution scene projects 42 authored states over every level-4 presentation cell', () => {
+  const topology = createTopology(4); const territories = createEvolutionTerritories(topology);
+  const snapshot = buildMemorySnapshot(territories, { ...defaultMeta(), echoBalance: '8' });
+  assert.equal(snapshot.memoryStatus.length, 2562); assert.equal(snapshot.memoryNodeIndex.filter((index) => index >= 0).length, 2562);
+  assert.equal(snapshot.nodeStates.length, 42); assert.equal(createMemoryFields(topology).biomeId.length, 2562);
+  assert.equal(new Set(snapshot.memoryOwner).size, 42); assert.equal(snapshot.memoryTerritoryEdge.length, 7680);
+  for (let skill = 0; skill < 42; skill++) {
+    const values = snapshot.memoryStatus.filter((_, cell) => snapshot.memoryOwner[cell] === skill);
+    assert.equal(new Set(values).size, 1, `skill ${skill} had mixed territory state`);
+  }
   const canvas = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 1000 }) };
-  const hit = pickNode(canvas, 500, 500, createCamera(), topology); assert.ok(hit); assert.ok(MEMORY_CELL_REVERSE[hit.node] >= 0);
+  const hit = pickNode(canvas, 500, 500, createCamera(), topology); assert.ok(hit);
+  assert.ok(territories.ownerByCell[hit.node] >= 0 && territories.ownerByCell[hit.node] < 42);
+  const boundary = topology.edgeA.findIndex((cell, edge) => territories.ownerByCell[cell] !== territories.ownerByCell[topology.edgeB[edge]]);
+  assert.ok(boundary >= 0); assert.notEqual(territories.ownerByCell[topology.edgeA[boundary]], territories.ownerByCell[topology.edgeB[boundary]]);
 });
-test('a selected ready cell uses the same exact state for pointer and keyboard purchase paths', () => {
+test('coarse Evolution Imprints project over owned fine territories without durable expansion', () => {
+  const topology = createTopology(4); const territories = createEvolutionTerritories(topology);
+  const imprintCells = Array.from({ length: 12 }, (_, cell) => cell);
+  const meta = { ...defaultMeta(), imprints: [{ kind: 'strongest-corridor', seed: 7, cells: imprintCells,
+    topology: { kind: 'geodesic', frequency: 2, nodeCount: 42, edgeCount: 120 } }] };
+  const snapshot = buildMemorySnapshot(territories, meta); const imprintedSkills = new Set(imprintCells.map((cell) => territories.skillBySiteCell[cell]));
+  for (let cell = 0; cell < topology.nodeCount; cell++) {
+    assert.equal(snapshot.memoryImprintWeight[cell] > 0, imprintedSkills.has(territories.ownerByCell[cell]));
+  }
+  assert.deepEqual(meta.imprints[0].cells, imprintCells); assert.equal(meta.imprints[0].topology.frequency, 2);
+});
+test('a selected ready territory uses the same exact state for pointer and keyboard purchase paths', () => {
   const meta = { ...defaultMeta(), echoBalance: '100' }; const state = evolutionCellState(meta, 'first-division', 'first-division');
   assert.equal(state.selectedReady, true); const purchased = purchaseEvolutionLevel(meta, 'first-division', { expectedLevel: state.currentLevel,
     expectedRevision: meta.revision, transactionKey: 'one-purchase' });

@@ -25,12 +25,15 @@ The WebGL world path remains exactly four steady-state draws.
   pointer-to-cell selection.
 - `blank-snapshot.js`: typed zero-life `starting` frame before new authority.
 
-The Evolution scene is the authored frequency-2 42-cell topology. Its projection
-visually distinguishes locked/reachable, affordable, selected-ready, owned,
-owned-ready, selected-owned-ready, and recently upgraded states with material,
-inset/outline/relief, text-backed semantics, and reduced-motion-safe treatment.
-Rendering never purchases; interface transaction authority handles the required
-select-first, later-second-activation state machine.
+Evolution renders the level-4 2,562-cell topology as 42 authored territories.
+The shared pure territory owner supplies both backends with fine-cell ownership
+and internal/territory/selected/emphasized edge classes. Fine boundaries come
+from the existing static boundary phase; stronger territory perimeters reuse the
+existing dynamic boundary draw and Canvas batches, so WebGL remains four draws.
+Locked/reachable, affordable, selected-ready, owned, owned-ready,
+selected-owned-ready, recently upgraded, and coarse-Imprint states remain
+text-backed and reduced-motion safe. Rendering never purchases; interface
+transaction authority handles select-first, later-second-activation behavior.
 
 Luminous visuals come only from authoritative per-cell charge bytes. Zero charge
 emits no light; production, local variation, decay, day/night emphasis, and

@@ -1,4 +1,4 @@
-/** Authored physical Evolution sphere: exact transactions, adjacency, and direct ecology compilation. */
+/** Authored Evolution graph: exact transactions, adjacency, and direct ecology compilation. */
 import { EVOLUTION_CATALOG, EVOLUTION_DOMAINS, EVOLUTION_NODE_IDS } from './catalog.js';
 import { renderMemorySnapshot } from './scene.js';
 import { EVOLUTION_COST_VERSION, evolutionCostForTargetLevel, nextEvolutionCostForNode } from './cost.js';
@@ -16,6 +16,7 @@ import { addProgressionIntegers, compareProgressionIntegers, incrementProgressio
   parseProgressionInteger, ProgressionIntegerError, subtractProgressionIntegers } from '../../core/progression-integer.js';
 import { hashStringU32, hexU32 } from '../../core/hash.js';
 import { createGeodesicTopology } from '../../world/icosphere.js';
+import { createEvolutionTerritoryProjection } from './territories.js';
 
 export { createMemoryFields } from './scene.js';
 export { EVOLUTION_COST_VERSION, evolutionCostForTargetLevel } from './cost.js';
@@ -24,6 +25,7 @@ export { EVOLUTION_EFFECT_VERSION, EVOLUTION_COMPILE_CACHE_LIMIT, EVOLUTION_COMP
 export { EVOLUTION_LEVEL_VECTOR_VERSION, EVOLUTION_LEVEL_DOCUMENT_DIGIT_LIMIT, boundedEvolutionLevelRefinement } from './levels.js';
 export { EVOLUTION_CATALOG, EVOLUTION_DOMAINS } from './catalog.js';
 export { evolutionRunConfiguration } from './run-config.js';
+export { EVOLUTION_TERRITORY_EDGE, writeEvolutionTerritoryEdges } from './territories.js';
 
 export const MEMORY_GRAPH_VERSION = 6;
 export const EVOLUTION_CONTENT_VERSION = 8;
@@ -47,7 +49,6 @@ const BY_ID = new Map(MEMORY_NODES.map((node) => [node.id, node]));
 const BY_CELL = new Map(MEMORY_NODES.map((node) => [node.cell, node]));
 const ROOT_IDS = new Set(MEMORY_ROOT_IDS);
 export const MEMORY_CELL_BY_ID = Object.freeze(Object.fromEntries(MEMORY_NODES.map((node) => [node.id, node.cell])));
-export const MEMORY_CELL_REVERSE = createReverse();
 export const MEMORY_PHYSICAL_ADJACENCY = Object.freeze(Object.fromEntries(MEMORY_NODES.map((node) => [node.id,
   Object.freeze(Array.from(TOPOLOGY.nodeNeighbors.slice(TOPOLOGY.nodeStart[node.cell], TOPOLOGY.nodeStart[node.cell + 1]),
     (cell) => BY_CELL.get(cell)?.id).filter(Boolean))])));
@@ -193,8 +194,11 @@ export function buildMemoryScene(meta, selectedId = null) {
   const groups = groupAccessibleMemory(meta, selectedId); return Object.freeze({ version: MEMORY_GRAPH_VERSION, selectedId,
     nodes: Object.freeze(groups.flatMap((group) => group.nodes)), groups });
 }
-export function buildMemorySnapshot(topo, meta, selectedId = null, emphasizedIds = []) {
-  return renderMemorySnapshot(topo, meta, buildMemoryScene(meta, selectedId), emphasizedIds);
+export function buildMemorySnapshot(territories, meta, selectedId = null, emphasizedIds = []) {
+  return renderMemorySnapshot(territories, meta, buildMemoryScene(meta, selectedId), emphasizedIds);
+}
+export function createEvolutionTerritories(presentationTopology) {
+  return createEvolutionTerritoryProjection(presentationTopology, TOPOLOGY, MEMORY_NODES);
 }
 /** Static effects have no per-tick conditional authority. */
 export function applyMemoryConditionals(state) { return state.activeTraits; }
@@ -223,7 +227,6 @@ export function validateMemoryGraph(nodes = MEMORY_NODES) {
     contentHash: EVOLUTION_CONTENT_HASH, contentVersion: EVOLUTION_CONTENT_VERSION });
 }
 
-function createReverse() { const reverse = new Int16Array(TOPOLOGY.nodeCount).fill(-1); MEMORY_NODES.forEach((node, index) => { reverse[node.cell] = index; }); return reverse; }
 function sum(values) { let total = '0'; for (const value of values) total = addProgressionIntegers(total, value); return total; }
 function canonical(value) { try { return parseProgressionInteger(value); } catch { return null; } }
 function validTransactionKey(value) { return typeof value === 'string' && value.length > 0 && value.length <= 128 ? value : null; }

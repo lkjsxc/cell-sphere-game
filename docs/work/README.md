@@ -5,7 +5,8 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package: none.
+Active work package:
+[`evolution-cellular-territories-v1/`](evolution-cellular-territories-v1/).
 
 Completed packages remain as historical or current implementation evidence:
 

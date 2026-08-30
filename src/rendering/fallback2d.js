@@ -6,6 +6,7 @@ import { sameWorldIdentity } from '../core/world-session.js';
 import { continuityFixture } from './continuity-fixture.js';
 import { LIFE_EDGE_STRIDE, LIFE_EDGE_STYLE, LIFE_EDGE_STYLE_COUNT,
   lifeEdgeStyle, writeLifeEdges } from './life-edges.js';
+import { EVOLUTION_TERRITORY_EDGE } from '../game/skills/territories.js';
 
 const WORLD_LIGHT = Object.freeze((() => { const value=[-.52,.72,.44]; const length=Math.hypot(...value); return value.map((axis)=>axis/length); })());
 const BIOME_COLOR = Object.freeze([
@@ -14,6 +15,7 @@ const BIOME_COLOR = Object.freeze([
   [112, 110, 104], [113, 128, 104], [205, 218, 218], [13, 66, 88],
 ]);
 const BASE_SHELL = Object.freeze([8 / 255, 28 / 255, 62 / 255]);
+const MEMORY_STYLE_CACHE_SIZE = 11 * 8 * 2 * 2;
 
 export class Canvas2DRenderer {
   constructor(canvas, topo, fields, opts = {}) {
@@ -31,7 +33,8 @@ export class Canvas2DRenderer {
     this.lifeEdgeData = new Uint8Array(topo.edgeCount * LIFE_EDGE_STRIDE);
     this.lifeEdgeBatches = Array.from({ length: LIFE_EDGE_STYLE_COUNT }, () => new Uint16Array(topo.edgeCount));
     this.lifeEdgeBatchCounts = new Uint16Array(LIFE_EDGE_STYLE_COUNT);
-    this.lastEdgeSnapshot = null; this.lastEdgeTick = -1; this.edgeUpdateCount = 0;
+    this.memoryStyleCache = new Array(MEMORY_STYLE_CACHE_SIZE).fill(null);
+    this.lastEdgeSnapshot = null; this.lastEdgeTick = -1; this.edgeUpdateCount = 0; this.edgeMode = 'life';
   }
 
   resize(cssW, cssH, dpr) {
@@ -96,7 +99,7 @@ export class Canvas2DRenderer {
         if (this.facing[cell] <= 0) continue; this.cellPath(cell, 0.82);
         ctx.strokeStyle = 'rgba(246,186,79,.96)'; ctx.lineWidth = 2.4; ctx.stroke();
       }
-      if (Number.isInteger(scene.selectedNode) && this.facing[scene.selectedNode] > 0) {
+      if (snapshot?.status !== 'memory' && Number.isInteger(scene.selectedNode) && this.facing[scene.selectedNode] > 0) {
         this.cellPath(scene.selectedNode, 0.84); ctx.strokeStyle = 'rgba(202,238,219,.95)'; ctx.lineWidth = 2.2; ctx.stroke();
       }
     }
@@ -122,10 +125,16 @@ export class Canvas2DRenderer {
     const tick = snapshot?.tick ?? -1;
     if (snapshot === this.lastEdgeSnapshot && tick === this.lastEdgeTick) return false;
     this.lastEdgeSnapshot = snapshot; this.lastEdgeTick = tick; this.lifeEdgeBatchCounts.fill(0);
-    if (!snapshot || snapshot.status === 'memory' || snapshot.status === 'trophies') this.lifeEdgeData.fill(0);
+    this.edgeMode = snapshot?.status === 'memory' ? 'territory' : 'life';
+    if (snapshot?.status === 'memory') {
+      if (!(snapshot.memoryTerritoryEdge instanceof Uint8Array)
+        || snapshot.memoryTerritoryEdge.length !== this.topo.edgeCount) throw new Error('invalid Evolution territory edges');
+      this.lifeEdgeData.set(snapshot.memoryTerritoryEdge);
+    } else if (!snapshot || snapshot.status === 'trophies') this.lifeEdgeData.fill(0);
     else writeLifeEdges(this.topo, snapshot.lifeState, this.lifeEdgeData);
     for (let edge = 0; edge < this.topo.edgeCount; edge++) {
-      const style = lifeEdgeStyle(this.lifeEdgeData[edge * LIFE_EDGE_STRIDE]);
+      const style = this.edgeMode === 'territory' ? this.lifeEdgeData[edge * LIFE_EDGE_STRIDE]
+        : lifeEdgeStyle(this.lifeEdgeData[edge * LIFE_EDGE_STRIDE]);
       if (style === LIFE_EDGE_STYLE.NONE) continue;
       this.lifeEdgeBatches[style][this.lifeEdgeBatchCounts[style]++] = edge;
     }
@@ -146,11 +155,16 @@ export class Canvas2DRenderer {
 
   drawCellOverlays(snapshot, fade, time = 0, pulse = false) {
     const { ctx, topo } = this;
+    if (snapshot.status === 'memory' || snapshot.status === 'trophies') this.memoryStyleCache.fill(null);
     for (let cell = 0; cell < topo.nodeCount; cell++) {
       if (this.facing[cell] <= 0.02) continue;
       if (snapshot.status === 'memory' || snapshot.status === 'trophies') {
-        const styles = memoryStyles(snapshot.memoryStatus[cell], snapshot.memoryKind[cell],
-          snapshot.memoryImprintWeight[cell], fade, snapshot.memoryBranch[cell], time, pulse);
+        const status = snapshot.memoryStatus[cell]; const fossil = snapshot.memoryImprintWeight[cell];
+        if (!status && !fossil) continue;
+        const kind = snapshot.memoryKind[cell]; const branch = snapshot.memoryBranch[cell];
+        const key = status + 11 * (Math.min(7, branch) + 8 * ((kind >= 4 ? 1 : 0) + 2 * (fossil > 0 ? 1 : 0)));
+        const styles = this.memoryStyleCache[key] ??= memoryStyles(status, kind, fossil, fade, branch, time, pulse,
+          snapshot.status === 'memory');
         if (!styles) continue; this.cellPath(cell); ctx.fillStyle = styles.fill; ctx.fill();
         if (styles.outerStroke) { ctx.strokeStyle = styles.outerStroke; ctx.lineWidth = styles.outerWidth;
           ctx.setLineDash(styles.dash ?? []); ctx.stroke(); ctx.setLineDash([]); }
@@ -185,7 +199,7 @@ export class Canvas2DRenderer {
         if (this.cornerFacing[a] <= 0 || this.cornerFacing[b] <= 0) continue;
         ctx.moveTo(this.cornerX[a], this.cornerY[a]); ctx.lineTo(this.cornerX[b], this.cornerY[b]);
       }
-      const visual = canvasLifeEdgeStyle(style, fade);
+      const visual = this.edgeMode === 'territory' ? canvasTerritoryEdgeStyle(style, fade) : canvasLifeEdgeStyle(style, fade);
       ctx.strokeStyle = visual.stroke; ctx.lineWidth = visual.width; ctx.stroke();
     }
   }
@@ -219,7 +233,7 @@ export class Canvas2DRenderer {
   dispose() { if (this.disposed) return; this.disposed = true; this.boundIdentity = null; this.lastFrameAudit = null; }
 }
 
-function memoryStyles(status, kind, fossil, fade, branch, time, pulse) {
+function memoryStyles(status, kind, fossil, fade, branch, time, pulse, territory = false) {
   if (!status && !fossil) return null;
   const selected = [5,6,7,9,10].includes(status); const unlockReady = [3,7].includes(status);
   const owned = [4,8,9,10].includes(status); const ownedReady = [8,10].includes(status);
@@ -227,19 +241,25 @@ function memoryStyles(status, kind, fossil, fade, branch, time, pulse) {
   const unaffordable = [2,6].includes(status); const special = kind >= 4;
   const tint = ['55,58,59', '49,93,168', '85,191,209', '194,139,66', '105,173,104', '215,237,245', '216,173,76'][branch] ?? '55,58,59';
   const outline = selected ? 'rgba(235,248,238,.98)' : unaffordable ? 'rgba(171,185,168,.65)' : null;
-  if (locked) return { fill: `rgba(${tint},${0.76 * fade})`, outerStroke:outline, outerWidth:1.2 };
-  if (unaffordable) return { fill:`rgba(104,119,105,${0.52 * fade})`, inset:'rgba(38,43,41,.62)', scale:.62,
-    outerStroke:outline, outerWidth:1 };
+  if (locked) return territoryCellStyle({ fill: `rgba(${tint},${0.76 * fade})`, outerStroke:outline, outerWidth:1.2 }, territory);
+  if (unaffordable) return territoryCellStyle({ fill:`rgba(104,119,105,${0.52 * fade})`, inset:'rgba(38,43,41,.62)', scale:.62,
+    outerStroke:outline, outerWidth:1 }, territory);
   const breath = selectedReady && pulse ? .86 + .14 * Math.sin(time * 2.2) : 1;
-  if (unlockReady) return { fill:`rgba(${tint},${Math.min(.98, .84 * breath) * fade})`, inset:'rgba(239,244,194,.90)', scale:selectedReady ? .42 : .54,
+  if (unlockReady) return territoryCellStyle({ fill:`rgba(${tint},${Math.min(.98, .84 * breath) * fade})`, inset:'rgba(239,244,194,.90)', scale:selectedReady ? .42 : .54,
     stroke:'rgba(31,48,38,.95)', width:1.2, outerStroke:outline ?? 'rgba(221,238,205,.88)', outerWidth:selectedReady?2.5:1.5,
-    dash:selectedReady?[4,2]:[] };
-  if(owned)return{fill:`rgba(${tint},${(ownedReady ? .94 : .78)*breath*fade})`,
+    dash:selectedReady?[4,2]:[] }, territory);
+  if(owned)return territoryCellStyle({fill:`rgba(${tint},${(ownedReady ? .94 : .78)*breath*fade})`,
     inset:ownedReady?`rgba(244,226,153,${(.82+.10*breath).toFixed(3)})`:special?'rgba(224,218,163,.78)':'rgba(197,220,185,.62)',
     scale:selectedReady ? .40 : special ? .45 : .62, stroke:ownedReady?'rgba(54,48,24,.94)':null, width:1.2,
     outerStroke:outline ?? (ownedReady?'rgba(236,220,158,.82)':null), outerWidth:selectedReady?2.5:1.5,
-    dash:selectedReady?[4,2]:[] };
+    dash:selectedReady?[4,2]:[] }, territory);
   return { fill:`rgba(111,91,66,${fossil * .48 * fade})` };
+}
+function territoryCellStyle(style, territory) {
+  // Fine-cell outlines come from the existing static boundary phase. Selection
+  // and upgrade emphasis belong to the shared territory-edge classification.
+  if (territory) { style.outerStroke = null; style.outerWidth = 0; style.dash = []; }
+  return style;
 }
 
 function drawBaseShell(ctx, cx, cy, radius, color) {
@@ -276,4 +296,9 @@ function canvasLifeEdgeStyle(style, fade) {
   if (style === LIFE_EDGE_STYLE.CRITICAL_INTERNAL) return { stroke: `rgba(252,146,68,${0.90 * fade})`, width: 1.2 };
   if (style === LIFE_EDGE_STYLE.CRITICAL_EXPOSED) return { stroke: `rgba(255,173,80,${0.98 * fade})`, width: 1.65 };
   return { stroke: `rgba(105,94,84,${0.46 * fade})`, width: .75 };
+}
+function canvasTerritoryEdgeStyle(style, fade) {
+  if (style === EVOLUTION_TERRITORY_EDGE.BOUNDARY) return { stroke: `rgba(190,198,176,${0.72 * fade})`, width: 1.05 };
+  if (style === EVOLUTION_TERRITORY_EDGE.EMPHASIZED) return { stroke: `rgba(235,204,111,${0.90 * fade})`, width: 1.45 };
+  return { stroke: `rgba(229,248,234,${0.98 * fade})`, width: 2.2 };
 }

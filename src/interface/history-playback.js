@@ -125,7 +125,8 @@ export function createHistoryPlayback(app) {
   }
   function clearPreview() { clearPresentation(); decoded = null; buffers = null; }
   function restoreFields() {
-    if (progressionBefore && app.topo !== (progressionBefore === 'evolution' ? app.topo3 : app.topo2)) {
+    const expectedMode = progressionBefore === 'evolution' ? 'memory' : 'trophies';
+    if (progressionBefore && app.presentationMode !== expectedMode) {
       app.makeRenderer(0, progressionBefore === 'evolution' ? 'memory' : 'trophies'); app.resize(true); return;
     }
     if (!progressionBefore && seedBefore != null && (app.visualSeed !== seedBefore || app.topo !== app.topo4)) {

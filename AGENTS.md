@@ -1254,11 +1254,28 @@ Region design should make adaptation to World-like habitats and pressures legibl
 without copying World simulation authority. Do not treat the current compact
 cell count as an eternal product limit, and do not equate more cells with value.
 
+A dense Evolution presentation may refine a smaller authored skill graph without
+expanding progression authority.
+
+When it does:
+
+- the authored skill graph remains the only reachability, purchase, cost, level,
+  and compiled-effect authority;
+- every visible presentation cell maps to exactly one authored skill territory;
+- every territory is nonempty and connected;
+- visible contact between territories agrees with authoritative skill adjacency;
+- picking, focus, scene projection, WebGL2, Canvas 2D, and accessibility consume
+  one deterministic territory map;
+- fine presentation cells are not hidden purchasable nodes, inert decoration, or
+  filler;
+- a presentation-only topology change does not reset or version unaffected
+  progression and persistence authority.
+
 Do not mutate Evolution during a World.
 
 Do not create a second progression compiler for agents or previews.
 
-When changing Evolution topology or catalog, update together:
+When changing the authored graph, presentation topology, or catalog, update every affected layer together:
 
 - topology;
 - catalog;
@@ -1276,7 +1293,7 @@ When changing Evolution topology or catalog, update together:
 - balance;
 - documentation.
 
-Use current-only reset when a coherent new topology cannot truthfully map old state.
+Use current-only reset when a coherent new authoritative topology or catalog cannot truthfully map old state.
 
 ---
 

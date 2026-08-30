@@ -52,6 +52,17 @@ meaning is converted once before clock accumulation. A terminal result validates
 its schedule, Level-0 start, exposure, profile evidence, and SCORE before one
 transaction applies Echoes, records, History, and Trophies.
 
+## Evolution graph and presentation
+
+The frequency-2 graph in `src/game/skills/index.js` remains the sole authority
+for 42 skill IDs, roots, adjacency, costs, exact levels, transactions, and
+compiled effects. `src/game/skills/territories.js` is a pure observational
+projection over the shared level-4 topology: every one of 2,562 fine cells has
+one skill owner, every territory is connected, and visible cross-territory
+contacts equal the 120 authored graph edges exactly. Scene projection, picking,
+focus, WebGL2, and Canvas 2D consume that one map. ID-based meta and the compact
+frequency-2 Imprint record remain unchanged; no fine owner map is persisted.
+
 ## Rendering and interaction
 
 WebGL2 remains four world draw calls and keeps duplicated cell corners on one

@@ -52,7 +52,7 @@ export function validateMeta(raw) {
   return out;
 }
 
-/** Convert a current run's world-edge imprint to the compact Evolution sphere. */
+/** Convert a World-edge imprint to the compact authored Evolution graph. */
 export function convertImprintToAtlas(imprint) {
   if (!imprint || typeof imprint !== 'object' || imprint.kind !== 'strongest-corridor') return null;
   if (!Number.isInteger(imprint.seed) || imprint.seed < 0 || imprint.seed >= 0x100000000) return null;

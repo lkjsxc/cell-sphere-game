@@ -13,8 +13,10 @@
   percentage for assistive technology. Interpolation does not use a live region;
   History remains its own temporal surface.
   RESULT is last in reading/visual order and remains restrained at extinction.
-- Evolution exposes a synchronized offscreen `role="tree"` with every current
-  cell, exact levels, owned/reachable/affordable state, and roving keyboard focus.
+- Evolution exposes a synchronized offscreen `role="tree"` with exactly one
+  item per authored skill territory (42 total), exact levels,
+  owned/reachable/affordable state, and keyboard activation. The 2,562 rendered
+  fine cells never become separate DOM controls or live announcements.
 - Trophy Sphere exposes all 96 criteria in a semantic grid.
 - Inspector fields use real headings and definition lists. Locked habitats name
   the missing Evolution capability. The selected-cell inspector remains the
@@ -30,7 +32,9 @@ detail, and New World confirmation use one bounded nonmodal shell. The selected
 globe remains visible and draggable. Evolution detail reserves a dedicated
 intrinsic footer
 track, so its 44 CSS px Unlock action cannot be collapsed or clipped by the
-scrolling evidence body.
+scrolling evidence body. In short landscape at enlarged text, the complete
+Evolution detail becomes the sole scroll owner; Close is reachable at scroll-top
+and the full purchase action is reachable at scroll-bottom without page overflow.
 
 Interaction contract:
 
@@ -79,7 +83,10 @@ Canvas bitmap; cancelled and disabled text remains explicit. High contrast
 strengthens material boundaries and focus indicators. Text and controls remain
 bounded at 200% font scaling. Home copy has one bounded content scroll owner when
 the enlarged text cannot fit, while exposed canvas remains directly manipulable.
-Large exact progression values use compact
+Territory status is never canvas-color-only: the 42-item tree and detail name
+locked, reachable-unaffordable, ready, owned, owned-ready, and selected state;
+cell glyphs and progressively stronger perimeters provide non-color visual
+shape/weight cues. Large exact progression values use compact
 engineering notation and expose their canonical value through an accessible label
 or detail. The Evolution action is geometry-tested at 320×568, short 390×320
 and 640/667 landscape viewports, tablet/desktop sizes, and 200% text.
@@ -98,6 +105,12 @@ geometry, surface-held direct manipulation, reduced motion, and camera/detail
 behavior. The native Game speed select exposes all six ordinary
 values with visible focus and a 44px target at 320×568 and 200% text. Canvas 2D
 runs the same mobile-to-desktop path.
+
+The focused Evolution-territory matrix covers all eight maintained viewports at
+200% text in Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D. It proves
+42 semantic tree items, whole-territory selection, forced colors, stable reduced
+motion, reachable actions, 44 px tabs, canvas reachability, and no horizontal
+page or panel overflow.
 
 The focused Environment matrix additionally covers 390×844, 768×1024,
 844×390, and 1440×900 in Worker/WebGL2, fallback/WebGL2, and

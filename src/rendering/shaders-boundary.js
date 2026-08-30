@@ -1,5 +1,6 @@
 /** Closed cell-edge etching with facing, light, and zoom-aware attenuation. */
 import { LIFE_EDGE_RELATION, LIFE_EDGE_STATE } from './life-edges.js';
+import { EVOLUTION_TERRITORY_EDGE } from '../game/skills/territories.js';
 
 export const VS_BOUNDARY = `#version 300 es
 uniform mat4 uViewProj;
@@ -25,6 +26,7 @@ flat in vec2 vLifeEdge;
 out vec4 outColor;
 uniform vec3 uEye;
 uniform float uEntropy;
+uniform float uMemory;
 void main() {
   vec3 n = normalize(vPos);
   vec3 viewDir = normalize(uEye - vPos);
@@ -39,6 +41,20 @@ void main() {
   geographyAlpha *= mix(0.28, 1.0, lightSide) * (1.0 - uEntropy * 0.30);
 
   float state = vLifeEdge.x; float relation = vLifeEdge.y;
+  if (uMemory > 0.5) {
+    vec3 territoryColor = vec3(0.64, 0.68, 0.62); float territoryAlpha = 0.0;
+    if (state > ${EVOLUTION_TERRITORY_EDGE.INTERNAL}.5 && state < ${EVOLUTION_TERRITORY_EDGE.EMPHASIZED}.5) {
+      territoryColor = vec3(0.72, 0.75, 0.67); territoryAlpha = 0.48;
+    } else if (state > ${EVOLUTION_TERRITORY_EDGE.BOUNDARY}.5 && state < ${EVOLUTION_TERRITORY_EDGE.SELECTED}.5) {
+      territoryColor = vec3(0.91, 0.79, 0.43); territoryAlpha = 0.72;
+    } else if (state > ${EVOLUTION_TERRITORY_EDGE.EMPHASIZED}.5) {
+      territoryColor = vec3(0.89, 0.97, 0.91); territoryAlpha = 0.96;
+    }
+    territoryAlpha *= mix(0.68, 1.0, closeView) * mix(0.72, 1.0, lightSide);
+    vec3 territoryComposite = territoryAlpha > 0.0 ? territoryColor : geographyColor;
+    float territoryCompositeAlpha = max(geographyAlpha, territoryAlpha);
+    outColor = vec4(territoryComposite, facing * territoryCompositeAlpha); return;
+  }
   vec3 lifeColor = geographyColor; float lifeAlpha = 0.0;
   bool exposed = relation > ${LIFE_EDGE_RELATION.INTERNAL}.5;
   if (state > ${LIFE_EDGE_STATE.NONE}.5 && state < ${LIFE_EDGE_STATE.LIVING}.5) {

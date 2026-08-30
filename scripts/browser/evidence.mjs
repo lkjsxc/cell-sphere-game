@@ -58,8 +58,9 @@ export async function assertSkillGeometry(t) {
     const distMax = width < 600 ? 5.6 : width < 900 ? 4.7 : 3.8;
     assert(!g.overlap && !g.horizontal && g.dist <= distMax && g.p[0] >= -1 && g.p[1] >= -1
       && g.p[2] <= width + 1 && g.p[3] <= height + 1 && g.close[0] >= 0 && g.close[2] <= width
+      && g.close[1] >= g.p[1] - 1 && g.close[3] <= Math.min(g.p[3], height) + 1
       && g.unlock[0] >= g.p[0] && g.unlock[1] >= g.p[1] && g.unlock[2] <= g.p[2]
-      && g.unlock[3] <= Math.min(g.p[3], height) && g.unlock[3] - g.unlock[1] >= 43,
+      && g.unlock[3] <= Math.min(g.p[3], height) + 1 && g.unlock[3] - g.unlock[1] >= 43,
     `skill geometry at ${width}x${height}: ${JSON.stringify(g)}`);
     if ([[320,568],[390,320],[390,844],[667,375],[844,390],[768,1024],[1440,900]].some(v=>v[0]===width&&v[1]===height)) await screenshot(`browser-skill-${width}x${height}.png`);
   }
@@ -73,11 +74,13 @@ export async function assertSkillGeometry(t) {
 }
 async function skillGeometry(evaluate) {
   return evaluate(`(() => { const app=window.__CELL_SPHERE_APP__,panel=document.getElementById('memory-node-panel'),body=panel.querySelector('.surface-body'),
-    footer=panel.querySelector('.surface-actions'),close=document.getElementById('memory-node-close').getBoundingClientRect(),unlock=document.getElementById('memory-unlock').getBoundingClientRect(); body.scrollTop=body.scrollHeight;
+    footer=panel.querySelector('.surface-actions'),unlockNode=document.getElementById('memory-unlock'),closeNode=document.getElementById('memory-node-close');
+    body.scrollTop=body.scrollHeight;panel.scrollTop=0;const close=closeNode.getBoundingClientRect();unlockNode.scrollIntoView({block:'nearest'});const unlock=unlockNode.getBoundingClientRect();
     const last=document.querySelector('#memory-node-meta dd:last-of-type')?.getBoundingClientRect(),f=footer.getBoundingClientRect(),p=panel.getBoundingClientRect(); body.scrollTop=0;
     return {dist:app.camera.dist,p:[p.left,p.top,p.right,p.bottom],close:[close.left,close.top,close.right,close.bottom],unlock:[unlock.left,unlock.top,unlock.right,unlock.bottom],footer:[f.left,f.top,f.right,f.bottom],
       rows:getComputedStyle(panel).gridTemplateRows,padding:getComputedStyle(panel).padding,footerHeight:getComputedStyle(footer).height,
       footerGrid:getComputedStyle(footer).gridRow,footerMin:getComputedStyle(footer).minHeight,beforePosition:getComputedStyle(panel,'::before').position,beforeGrid:getComputedStyle(panel,'::before').gridRow,
+      surfaceScroll:panel.scrollTop,surfaceOverflow:getComputedStyle(panel).overflowY,
       overlap:Boolean(last&&last.bottom>f.top+1),horizontal:panel.scrollWidth>panel.clientWidth}; })()`);
 }
 function distance(a, b) { return Math.hypot(...a.map((value, index) => value - b[index])); }

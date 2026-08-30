@@ -1,5 +1,5 @@
 import { allOf as all, atLeast as n, defineTrophyFamily as family, includes as bits } from './definition.js';
-/** Reach trophies scale to the authored 42-cell Evolution sphere. */
+/** Reach trophies scale to the authored 42-skill Evolution catalog. */
 export const REACH_TROPHIES = family('reach', [
   ['coast-touch', 'Coastal Expedition', 'With seven Evolution cells, reach coast and forest while covering one quarter of a World.', all(bits('geographyMask', 5), n('peakCoverageBp', 2500), n('skillCount', 7))],
   ['lake-network', 'Lake Constellation', 'With fourteen Evolution cells, reach five lakes and eighty shore cells.', all(n('distinctLakesReached', 5), n('lakeShoreCellsReached', 80), n('lakeLivingSeconds', 120), n('skillCount', 14))],

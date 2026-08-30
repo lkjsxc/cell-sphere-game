@@ -1,4 +1,4 @@
-/** Direct bounded compilation from authored Evolution cells to ecology rules. */
+/** Direct bounded compilation from authored Evolution skills to ecology rules. */
 import { addProgressionIntegers, normalizeProgressionInteger } from '../../core/progression-integer.js';
 import { boundedEvolutionLevelRefinement, levelMapFromVector } from './levels.js';
 
