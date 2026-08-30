@@ -5,15 +5,14 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package:
-
-- [`evolution-cell-progression-v1/`](evolution-cell-progression-v1/) — replacing
-  the 42-territory authority split with exact level-4 Evolution cells, direct
-  fine adjacency, aggregate archetype ranks, bounded navigation, and a
-  current-only persistence cutover.
+Active work package: none.
 
 Completed packages remain as historical or current implementation evidence:
 
+- [`evolution-cell-progression-v1/`](evolution-cell-progression-v1/) — terminal
+  current evidence for exact level-4 Evolution cell authority, direct fine
+  adjacency, aggregate archetype ranks, bounded navigation, current-only
+  persistence, and exact local/CI/Pages/deployed-browser closure.
 - [`evolution-cellular-territories-v1/`](evolution-cellular-territories-v1/)
   — terminal historical evidence for the superseded 42-territory projection,
   including exact local/CI/Pages/deployed-browser closure at its final revision.

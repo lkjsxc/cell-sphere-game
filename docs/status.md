@@ -29,8 +29,15 @@
   receipts pass exact selection/purchase/frontier diffs, quiet < frontier <
   selected edge salience, forced colors, reduced motion, 200% text at all eight
   maintained viewports, bounded DOM, cached layout/geometry, zero steady edge
-  updates, and renderer parity. Final publication evidence remains owned by the
-  active canonical work package until its stopping rule is closed.
+  updates, and renderer parity.
+- Published production-and-evidence revision
+  `431e35820bba43bad8bd05d856634377729b9bfe` passes Actions run
+  `33298418938`, verify job `99221958431`, Pages job `99223730991`, deployment
+  `6164324133`, and deployment status `17521712069`. All 28 changed current
+  production assets match cache-busted Pages bytes, the deleted territory module
+  returns `404`, and deployed Chrome 152 passes Worker/WebGL2, fallback/WebGL2,
+  and fallback/Canvas 2D exact-cell fixtures. The canonical terminal package
+  owns exact hashes, performance measurements, failures, and evidence limits.
 
 ## Environment Pressure Differentiation v1
 

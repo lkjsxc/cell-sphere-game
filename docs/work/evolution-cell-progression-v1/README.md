@@ -1,6 +1,6 @@
 # Evolution Cell Progression v1
 
-Status: active.
+Status: terminal.
 
 ## Starting point
 
@@ -197,6 +197,49 @@ Status: active.
   unit `226/226`, integration `74/74`, every production audit, structure,
   links, generated showcase, and the benchmark/hashes above. The retained log
   is `/tmp/csg-final-verify.log`.
+- PASS — a second clean detached-worktree `npm run verify` against exact
+  publication candidate `431e35820bba43bad8bd05d856634377729b9bfe` passes
+  all 26 gates. Unit remains `226/226`, integration remains `74/74`, the fresh
+  benchmark is `12,547 ticks/s`, fixed-trace median is `10,925 ticks/s`, and
+  deterministic hashes remain `15863d52` / `e32ad0ff`. The retained log is
+  `/tmp/csg-publication-verify.log`.
+
+## Publication evidence
+
+- PASS — a normal fast-forward push advanced `origin/main` from
+  `c3754318ef1399e37cb4ce4e3411885ec3c605bc` to publication candidate
+  `431e35820bba43bad8bd05d856634377729b9bfe`. Local `HEAD`, the remote-tracking
+  ref, and `git ls-remote` agreed exactly after the push; no force, retry, tag,
+  release, issue, pull request, settings, permissions, secrets, or domain action
+  occurred.
+- PASS — GitHub Actions run `33298418938` succeeded for exact SHA
+  `431e35820bba43bad8bd05d856634377729b9bfe`. Verify job `99221958431`
+  passed every step in `17m14s`; dependent Pages job `99223730991` passed in
+  `11s`. The only annotations are GitHub's non-failing Node-action deprecation
+  notices.
+- PASS — Pages deployment `6164324133` and deployment status `17521712069`
+  report `success` for the exact SHA at
+  `https://lkjsxc.github.io/cell-sphere-game/`.
+- PASS — every changed deployed production owner matches its cache-busted local
+  bytes: 28 current assets, including all progression, storage, History, UI,
+  renderer, agent, Trophy, index, and generated-showcase owners. Deleted
+  `src/game/skills/territories.js` returns HTTP `404`. The ordered 29-entry
+  manifest is `2,954` bytes with SHA-256
+  `be8f3d824df4db0ac85c675759ff12b7a20680c861d103de9bd3c83a26fdab4e`
+  at `/tmp/csg-byte-proof-PcHynu/manifest.txt`.
+- PASS — deployed Chrome 152 Worker/WebGL2, fallback/WebGL2, and
+  fallback/Canvas 2D receipts have SHA-256
+  `24280d78b2211508154caffc9c2ef98130ced17f7cc37c720c4520981fc713d7`,
+  `c755f12953c99cf119221439285b05ccaacae57a307e8ad6d5136a245cd41fe8`,
+  and `837265258221ab8b7bd4dcb202cc0e20f4f8151890d7c0c5713a4d55d81c9b2f`.
+  Every receipt identifies the exact source and harness revision with a clean
+  worktree, observes `2,562/7,680` cells/edges, digest `db40b2ed`, selected
+  count `1`, tree count `0`, nine bounded navigator buttons, six direct
+  neighbors, the exact one-cell purchase/frontier diff, all eight viewports,
+  stable reduced motion, zero browser-console errors, cached static state, and
+  zero steady edge updates. Both WebGL paths retain four draws. Their deployed
+  entry/snapshot/update/steady p95 values are `14.1/0.8/1.8/1.5 ms`,
+  `15.5/0.6/1.4/1.2 ms`, and `7.4/0.6/2.3/2.3 ms` respectively.
 
 ## Evidence not obtained
 
@@ -248,6 +291,25 @@ Status: active.
 
 ## Exact next coherent step
 
-Commit this exact local evidence record, then publish normally and prove the
-exact remote/CI/Pages/deployed-byte/deployed-browser revision if the branch
-remains safely fast-forwardable.
+`none`.
+
+## Terminal disposition
+
+- Every visible level-4 Evolution cell is current progression authority; one
+  valid purchase changes one selected local level and one aggregate rank.
+- Direct fine adjacency, aggregate-rank economics, one compiler, sparse current
+  persistence, exact-cell rendering/picking/History/Imprints, bounded native
+  navigation, and bounded fair-agent candidates are the only current paths.
+- The territory owner, coarse purchase graph, whole-territory interaction,
+  42-item tree, skill-ID levels, coarse Imprints, obsolete fixtures, and current
+  territory claims are deleted or superseded. Historical D32 and the terminal
+  predecessor package remain truthful historical evidence.
+- Local, deterministic, Worker/fallback, WebGL2/Canvas 2D, accessibility,
+  responsive, agent, performance, remote, CI, Pages, deployed-byte, and deployed
+  browser acceptance evidence is complete for the selected scope. No severe
+  selected-scope regression remains.
+- Deferred concerns remain physical-device mouse/touch/pen, real screen-reader,
+  high-refresh, thermal, and hardware safe-area proof; adjacent ecology tuning,
+  new archetypes, Trophy redesign, and broader product changes were not entered.
+- The stopping rule is met for the production-content revision. This package is
+  terminal and the exact next coherent step is `none`.
