@@ -74,6 +74,11 @@ Status: active.
   behavior. Affected audits, browser fixtures, commands, generated consumers,
   source READMEs, and current root documentation use cell authority. D33
   explicitly supersedes D32 without rewriting D32's historical evidence.
+- The dependency-closed implementation is commit
+  `3c4766979d7405b265b3bf0434eba6d09781c798` (`feat: make every Evolution
+  cell authoritative`). It is a normal descendant of the starting revision and
+  contains the complete production, test, generated-output, and current-document
+  cutover; the three timestamped handoffs remain outside the commit.
 
 ## Focused verification
 
@@ -113,39 +118,57 @@ Status: active.
   Foundation root neighbors, layout digest/repeat digest `db40b2ed`, non-root
   occurrences `62–63`, largest same-archetype component `1`, one-hop diversity
   `100%`, valid exact/huge-level compilation, 10,248 typed projection bytes,
-  and `7.161 ms` measured layout construction.
+  `5.869 ms` measured layout construction, and `1.554 ms` measured full
+  projection construction in the exact final gate.
 - PASS — progression-number, Environment smoke, habitat, Trophy, campaign smoke,
-  transformation, and benchmark audits. The fresh benchmark is `12,021 ticks/s`,
-  fixed-trace median `10,381 ticks/s`, and retains deterministic hashes
-  `15863d52` / `e32ad0ff`.
+  transformation, and benchmark audits. The exact final fresh benchmark is
+  `11,396 ticks/s`, fixed-trace median `10,881 ticks/s`, and retains
+  deterministic hashes `15863d52` / `e32ad0ff`.
 - PASS — focused Chrome 152 Worker/WebGL2 cell receipt
   `reports/evolution-cell-progression-v1-final-worker-webgl2.json`, SHA-256
-  `715f51e87071e8a8932fb44c98907484231e193207fab821b7cf55603d60a4ae`
-  (`17,043` bytes). Entry/snapshot/update/steady p95 is
-  `15.8/0.8/1.9/1.4 ms`.
+  `762d1c417cc895ef09221c479677d207c76b0b253061d2a17448e4a371ca3950`
+  (`13,498` bytes). Entry/snapshot/update/steady p95 is
+  `15.5/0.5/1.6/1.6 ms`.
   It proves one changed `{cell:642, level:"1"}` entry, exact new frontier
   `[162,643,1050]`, only truthful local status/incident-edge changes, bounded
   nine-button navigation, edge salience `0.01796 < 0.29417 < 0.35504`, four
   draws, zero steady edge updates, forced colors, reduced motion, and all eight
   maintained viewports at 200% text.
 - PASS — focused fallback/WebGL2 and fallback/Canvas 2D receipts, SHA-256
-  `9c0a1fddeb5ca69fa6a79c175fd2bce81994625e629aaf7d8a3d3bbead1eb9ea`
-  (`16,989` bytes) and
-  `32c924a5ecaf82b1f5ed751f359e768ca19b33a0d26baf39edc34c1bf9d42827`
-  (`16,955` bytes). Their p95 timings are `14.3/0.5/1.3/1.1 ms` and
-  `8.2/0.5/2.6/1.7 ms`.
+  `1f2ad60e2b9e2e51139b8164727dc1cae4b4f42301b082d12652525d51aacf54`
+  (`13,558` bytes) and
+  `4347b02b2a2bdedd256a8acd5466e80400db7931976338588282e03cffd6c872`
+  (`12,831` bytes). Their p95 timings are `16.6/1.1/2.4/1.3 ms` and
+  `6.2/0.6/1.8/2.4 ms`.
   Both repeat the exact cell/frontier/navigation/viewport semantics; WebGL2
   retains four draws and both backends pass calibrated edge ordering.
-- PASS — `npm run check:links` and `npm run check:structure`; the latter retains
-  explicit exceptions for the three user-supplied timestamped transfer artifacts
-  so they remain byte-preserved and noncanonical.
+- PASS — exact same-host predecessor/final focused comparison. Worker/WebGL2
+  entry improves `21.3 → 15.5 ms`; accepted update/steady changes
+  `1.5/1.5 → 1.6/1.6 ms`. Fallback/WebGL2 entry improves `23.2 → 16.6 ms`,
+  update/steady changes `2.3/1.8 → 2.4/1.3 ms`; fallback/Canvas entry improves
+  `6.8 → 6.2 ms`, update/steady changes `2.4/2.2 → 1.8/2.4 ms`. Snapshot
+  p95 changes by at most `0.4 ms`. Percentage changes above 10% occur only in
+  these sub-millisecond snapshots; absolute frame work remains bounded, static
+  topology/layout is reused, and every path reports zero unchanged-frame edge
+  updates.
+- PASS — `npm run check:links` and `npm run check:structure` in the clean
+  detached exact-revision worktree. The structure gate therefore measures only
+  revision content; the three user-supplied timestamped handoffs remain
+  byte-preserved, untracked, and unstaged in the main checkout, without special
+  repository exceptions.
 - PASS — the production-backed Worker/WebGL2 shell path, fallback/WebGL2 shell
   path, and Worker/Canvas 2D shell path. All settle the same SCORE `178012`,
   exercise exact mouse/touch cell purchases and active-World rejection, and
   preserve deterministic results; both WebGL paths report four draws and the
   Worker/WebGL path also passes context loss. The required viewport, forced-color,
   reduced-motion, pointer, focus, and surface scenarios pass in the focused
-  fixture rather than being duplicated here.
+  fixture rather than being duplicated here. Exact local camera receipts are
+  `9961d1ca239a64b25c8382e15f8a65eb87307d9b0978006b2ebea72091128b6c`
+  (Worker/WebGL2),
+  `82f25212b92c05d739cd57f1a9845e51ee450e92c336eea8c471039669dccbdc`
+  (fallback/WebGL2), and
+  `e16ee35aad2e9c978624afe73d1d6a24a4fe4e5fabf9073bd69660b6256aeeec`
+  (Worker/Canvas 2D).
 - PASS — `npm run agent:smoke`: `10/10` focused fair-agent tests plus twelve
   deterministic five-World production campaigns across two training seeds. The
   candidate projection remains capped at `224`; its seven domain hop counts are
@@ -169,6 +192,11 @@ Status: active.
 - PASS — `npm run showcase:generate && npm run showcase:check`: the current
   30-frame generated title-showcase payload is `230,904` bytes with SHA-256
   `608dec0905e713b0e1343de5259ac4c96b34f296836ce80394bf3f935d5f9fd7`.
+- PASS — fresh clean detached-worktree `npm run verify` at
+  `3c4766979d7405b265b3bf0434eba6d09781c798`: all 26 gates pass, including
+  unit `226/226`, integration `74/74`, every production audit, structure,
+  links, generated showcase, and the benchmark/hashes above. The retained log
+  is `/tmp/csg-final-verify.log`.
 
 ## Evidence not obtained
 
@@ -181,11 +209,14 @@ Status: active.
 - The first focused final browser attempt hit the default 10-second evaluate
   ceiling during the combined timing/visual probe; the 60-second rerun passed
   and supersedes it.
-- Four broad Worker-browser attempts crashed or timed out before assertions
-  because the cached Chrome runtime had its shared libraries but not its matching
-  Fontconfig sysroot/config. Those are failures, not passes. Supplying the
-  extracted Fontconfig identity eliminated the crash and exposed subsequent
-  product assertions normally.
+- Seven broad Worker-browser attempts crashed or timed out before assertions
+  because the cached Chrome runtime had its shared libraries but no usable font
+  directory. The final diagnostic captured Chrome 152's exact
+  `SkFontMgr_FontConfigInterface.cpp:163` fatal and `SIGABRT`; these are host
+  failures, not product passes. A test-only Fontconfig file pointing at an
+  existing environment font directory eliminated the abort. The clean
+  exact-revision broad and focused browser runs then passed without a source
+  diagnostic patch.
 - One broad-browser run then exposed a stale fixture assumption that every first
   World yields at least two simultaneous Trophies. The authoritative run yielded
   one. The fixture now verifies the actual nonempty bounded queue and persistence
@@ -209,11 +240,14 @@ Status: active.
   salience gate. Increasing the exact selected-cell perimeter to an opaque white
   trace produced `0.01796 < 0.29417 < 0.35504` in both WebGL execution paths;
   the failed run is not a pass.
+- One later exact-revision `npm run verify` traversed all 26 gates but its final
+  output stream was lost during context compaction. It is not classified as a
+  pass; the retained-log clean rerun above supersedes it.
 - Physical-device mouse, touch, pen, screen-reader, high-refresh, thermal, and
   safe-area hardware evidence is unavailable in this environment.
 
 ## Exact next coherent step
 
-Run the fresh stable `npm run verify`, review and commit the final diff, then
-publish and prove the exact remote/CI/Pages/deployed-byte/deployed-browser
-revision if the branch remains safely fast-forwardable.
+Commit this exact local evidence record, then publish normally and prove the
+exact remote/CI/Pages/deployed-byte/deployed-browser revision if the branch
+remains safely fast-forwardable.
