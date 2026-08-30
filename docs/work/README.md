@@ -5,11 +5,15 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package:
-[`evolution-cellular-territories-v1/`](evolution-cellular-territories-v1/).
+Active work package: none.
 
 Completed packages remain as historical or current implementation evidence:
 
+- [`evolution-cellular-territories-v1/`](evolution-cellular-territories-v1/)
+  — completed current evidence for 42 connected authored territories over the
+  level-4 2,562-cell Evolution presentation, exact graph-contact equivalence,
+  shared WebGL2/Canvas boundaries, authority and persistence neutrality, and
+  exact local/CI/Pages/deployed-browser closure.
 - [`environment-pressure-differentiation-v1/`](environment-pressure-differentiation-v1/)
   — completed current evidence for authored chronic-pressure curves, five
   production consumers, truthful live percentages, bounded balance, and exact

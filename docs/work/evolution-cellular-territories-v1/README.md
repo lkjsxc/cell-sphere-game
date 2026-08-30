@@ -1,5 +1,7 @@
 # Evolution Cellular Territories v1
 
+Status: terminal.
+
 ## Starting point
 
 - Branch `main` at `8c1ee90ecebea2964f53d839755aa4c14378ed14`, tracking
@@ -87,6 +89,11 @@
   showcase hashes all `src/game` JavaScript, commit
   `17b632e5ba564eea7b89f2e46258bcb8d7378a31` refreshes only that generated
   source receipt; its simulation payload hash remains unchanged.
+- Local evidence and publication readiness were recorded in
+  `26d5b46d8bd0ebac3eb678bd263837a32216bfad`. That exact revision was pushed
+  as a normal fast-forward, passed the repository workflow, deployed through
+  the existing Pages job, matched cache-busted production bytes, and passed
+  all three focused deployed-browser paths.
 
 ## Focused verification
 
@@ -144,11 +151,41 @@
   audits, and a `12,161 ticks/s` benchmark. Simulation hashes remain
   `15863d52` and `e32ad0ff`; the regenerated showcase payload remains
   `608dec0905e713b0e1343de5259ac4c96b34f296836ce80394bf3f935d5f9fd7`.
+- PASS — a second fresh clean detached-worktree `npm run verify` against stable
+  final publication content at
+  `26d5b46d8bd0ebac3eb678bd263837a32216bfad`: all 26 gates pass, unit
+  `222/222`, integration `73/73`, benchmark `12,142 ticks/s`, and deterministic
+  hashes `15863d52` / `e32ad0ff`.
+- PASS — exact GitHub Actions run `33287097917` completed successfully for
+  `26d5b46d8bd0ebac3eb678bd263837a32216bfad`; verify job `99192076945`
+  passed every step in `17m16s`, and dependent Pages job `99193944919` passed
+  in `14s`. The runner emitted only GitHub's non-failing Node-action
+  deprecation notice; no workflow retry or duplicate deployment was issued.
+- PASS — Pages deployment `6162370597` and status `17516681774` report
+  `success` for the exact revision at
+  `https://lkjsxc.github.io/cell-sphere-game/`. Eleven cache-busted production
+  assets match local SHA-256 and byte counts exactly: `index.html`, the three
+  skill territory/scene/index owners, app and picking owners, both renderer
+  owners, the boundary shader, shell CSS, and showcase data. The ordered local
+  manifest digest is
+  `6302630807dde08b72be9a4fb79b4a4a392091b5f865085dd4ac1b659d73cd51`.
+- PASS — deployed Chrome 152 focused receipts for Worker/WebGL2,
+  fallback/WebGL2, and fallback/Canvas 2D are respectively
+  `5630641c20d4be4601a97ea596c6d9a3711ed69e78d52d0789b92bd096735381`,
+  `7900e4fa13a4006e70aa7f59d73c53e150d88e0efe2be0f73cab2c2292e1f144`,
+  and `3fd77746f6c383ffcd36f0792407f4defb86aff6c74264e0915aade07031852b`.
+  All three observe 2,562 cells, 7,680 edges, 42 owners/tree items, semantic
+  digest `3fb3be93`, whole-territory selection, zero browser errors, stable
+  static projection/geometry, and zero steady edge updates. WebGL remains four
+  draws. Deployed p95 entry/update/steady is `16.2/1.5/1.1 ms` for
+  Worker/WebGL2, `22.2/1.8/1.1 ms` for fallback/WebGL2, and `6.6/2.0/1.9 ms`
+  for fallback/Canvas. The Worker receipt also repeats forced colors, stable
+  reduced motion, 42 semantic items, minimum 44 px tabs, reachable canvas and
+  action, and no horizontal overflow at all eight maintained 200%-text
+  viewports.
 
 ## Evidence not obtained
 
-- CI, Pages, deployed bytes, and deployed-browser behavior cannot exist until
-  the verified local revision is pushed. They remain pending, not passed.
 - Physical-device mouse, touch, pen, screen-reader, high-refresh, thermal, and
   safe-area hardware evidence are unavailable in this environment. CDP touch,
   Pointer Events, keyboard, forced-colors, reduced-motion, and responsive
@@ -179,9 +216,25 @@
 - One focused Worker/WebGL2 report carried a manually mistyped full revision in
   its metadata. It is superseded and not evidence; the exact `17b632e5...`
   report above replaced it.
+- GitHub's legacy latest Pages-build endpoint returned HTTP 404 for this
+  workflow-based deployment and is not evidence. Exact deployment, status,
+  job, cache-busted bytes, and deployed-browser oracles above supersede it.
+
+## Terminal disposition
+
+- The level-4 territorial projection is the only production Evolution
+  presentation authority. The frequency-2 topology remains only the authored
+  progression and bounded Imprint authority.
+- The retired coarse renderer topology, reverse picking map, and one-cell-per-
+  skill scene assumption are deleted. No dual presentation path remains.
+- All geometry, interaction, renderer, accessibility, persistence,
+  authority-neutrality, performance, documentation, CI, Pages, deployed-byte,
+  and deployed-browser acceptance evidence required by the stopping rule is
+  current and successful, except for the explicitly unavailable physical-device
+  evidence that was never claimed.
+- No new skills, economy, balance, World, Environment, Trophy, History, camera,
+  continuation, offline-progress, or speculative framework work was added.
 
 ## Exact next coherent step
 
-Commit this local evidence record, recheck the tracked upstream relationship,
-perform the authorized normal push, and verify exact CI, Pages, cache-busted
-bytes, and deployed browser behavior before marking this package terminal.
+None. The stopping rule is met.

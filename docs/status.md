@@ -26,10 +26,19 @@
   scenarios pass Worker/WebGL2, fallback/WebGL2, and Worker/Canvas.
 - Same-host final p95 accepted-update/steady costs are `1.3/1.2 ms` WebGL and
   `2.1/1.9 ms` Canvas. Warm entry p95 is `19.9 ms` WebGL and `6.1 ms` Canvas.
-  Exact baseline/final reports are ignored under `reports/`. Clean revision
-  `17b632e5ba564eea7b89f2e46258bcb8d7378a31` passes all 26 `npm run verify`
-  gates, unit `222/222`, integration `73/73`, and a `12,161 ticks/s` benchmark;
-  publication evidence remains pending until the authorized push.
+  Exact baseline/final reports are ignored under `reports/`. Stable publication
+  revision `26d5b46d8bd0ebac3eb678bd263837a32216bfad` passes a fresh clean local
+  26-gate `npm run verify`, unit `222/222`, integration `73/73`, and a valid
+  `12,142 ticks/s` benchmark with unchanged hashes.
+- The implementation is published through successful Actions run `33287097917`,
+  verify job `99192076945`, Pages job `99193944919`, deployment `6162370597`,
+  and deployment status `17516681774`. Eleven cache-busted production assets
+  match local bytes exactly. Deployed Chrome 152 Worker/WebGL2,
+  fallback/WebGL2, and fallback/Canvas 2D receipts pass with SHA-256
+  `5630641c…`, `7900e4fa…`, and `3fd77746…`; all repeat the 2,562-cell / 42-owner
+  semantic digest `3fb3be93`, backend salience, responsive/accessibility gates,
+  reusable geometry, and zero browser errors. The canonical work package is
+  terminal and the work index has no active package.
 
 ## Environment Pressure Differentiation v1
 
