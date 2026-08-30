@@ -1,6 +1,7 @@
 /** Closed cell-edge etching with facing, light, and zoom-aware attenuation. */
 import { LIFE_EDGE_RELATION, LIFE_EDGE_STATE } from './life-edges.js';
 import { EVOLUTION_CELL_EDGE } from '../game/skills/scene.js';
+import { RENDER_SCENE } from './scene-mode.js';
 
 export const VS_BOUNDARY = `#version 300 es
 uniform mat4 uViewProj;
@@ -26,7 +27,7 @@ flat in vec2 vLifeEdge;
 out vec4 outColor;
 uniform vec3 uEye;
 uniform float uEntropy;
-uniform float uMemory;
+uniform float uSceneMode;
 void main() {
   vec3 n = normalize(vPos);
   vec3 viewDir = normalize(uEye - vPos);
@@ -41,7 +42,7 @@ void main() {
   geographyAlpha *= mix(0.28, 1.0, lightSide) * (1.0 - uEntropy * 0.30);
 
   float state = vLifeEdge.x; float relation = vLifeEdge.y;
-  if (uMemory > 0.5) {
+  if (abs(uSceneMode - ${RENDER_SCENE.EVOLUTION}.0) < 0.5) {
     vec3 evolutionColor = geographyColor; float evolutionAlpha = 0.0;
     if (state > ${EVOLUTION_CELL_EDGE.QUIET}.5 && state < ${EVOLUTION_CELL_EDGE.OWNED}.5) {
       evolutionColor = vec3(0.64, 0.71, 0.62); evolutionAlpha = 0.34;

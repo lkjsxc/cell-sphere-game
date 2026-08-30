@@ -5,7 +5,11 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package: none.
+Active work package:
+
+- [`evolution-world-substrate-v1/`](evolution-world-substrate-v1/) — active
+  presentation-only cutover from the uniform all-land Evolution material to one
+  fixed World-derived planet substrate beneath exact-cell progression.
 
 Completed packages remain as historical or current implementation evidence:
 

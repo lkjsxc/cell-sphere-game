@@ -1,10 +1,11 @@
 /** Exact harder Trophy catalog, proof boundaries, evaluation, and cellular projection. */
 import { test } from 'node:test'; import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { TROPHIES, TROPHY_IDS, groupedTrophies, validateTrophyCatalog } from '../../src/game/trophies/index.js';
 import { TROPHY_ATLAS_HASH, TROPHY_ATLAS_REVERSE, validateTrophyAtlas } from '../../src/game/trophies/atlas.js';
 import { reconcileTrophies, trophyConditionMet } from '../../src/game/trophies/evaluator.js';
 import { TROPHY_MAX_KEYS, TROPHY_SUM_KEYS } from '../../src/game/trophies/keys.js';
-import { buildTrophySnapshot } from '../../src/game/trophies/scene.js';
+import { buildTrophySnapshot, createTrophyFields } from '../../src/game/trophies/scene.js';
 import { EVOLUTION_LAYOUT, EVOLUTION_TOPOLOGY } from '../../src/game/skills/index.js';
 import { defaultMeta } from '../../src/platform/storage.js'; import { createTopology } from '../../src/world/icosphere.js';
 
@@ -57,5 +58,16 @@ test('Trophy projection is read-only, exact, and leaves neutral cells inert', ()
   assert.equal(snapshot.memoryStatus.length, 162); assert.equal(snapshot.memoryNodeIndex.filter((index) => index < 0).length, 66);
   assert.equal(snapshot.nodeStates.filter((node) => node.earned).length, 3);
   assert.equal('alive' in snapshot, false); assert.equal('effects' in snapshot.trophyScene, false);
+});
+
+test('Trophy retains its established atlas fields independently of Evolution geography', () => {
+  const fields = createTrophyFields(createTopology(2)); const hash = createHash('sha256');
+  for (const key of ['landMask', 'biomeId', 'altitude', 'baseMoisture', 'baseTemp', 'baseNutrient',
+    'forestDensity', 'lakeId', 'lakeDepth', 'lakeShore', 'ridgeStrength']) {
+    const value = fields[key]; hash.update(Buffer.from(value.buffer, value.byteOffset, value.byteLength));
+  }
+  assert.equal(hash.digest('hex'), '596e008801108d39e971d04a45cb100aeb840152e0c24a6c02142a6df03bcaab');
+  assert.equal(fields.landMask.reduce((sum, value) => sum + value, 0), 162);
+  assert.deepEqual([...new Set(fields.biomeId)], [9]); assert.deepEqual(fields.sources, [0]);
 });
 function leaves(condition) { return ['all','any'].includes(condition.rule) ? condition.conditions.flatMap(leaves) : [condition]; }

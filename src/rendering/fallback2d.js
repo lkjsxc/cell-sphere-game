@@ -15,7 +15,10 @@ const BIOME_COLOR = Object.freeze([
   [112, 110, 104], [113, 128, 104], [205, 218, 218], [13, 66, 88],
 ]);
 const BASE_SHELL = Object.freeze([8 / 255, 28 / 255, 62 / 255]);
-const MEMORY_STYLE_CACHE_SIZE = 11 * 8 * 2 * 2;
+const EVOLUTION_DOMAIN_TINT = Object.freeze([
+  '122,148,120', '105,173,104', '85,191,209', '194,139,66', '215,237,245', '49,93,168', '216,173,76',
+]);
+const MEMORY_STYLE_CACHE_SIZE = 11 * 8 * 5 * 2;
 
 export class Canvas2DRenderer {
   constructor(canvas, topo, fields, opts = {}) {
@@ -80,12 +83,6 @@ export class Canvas2DRenderer {
       if (fixture) { this.cellPath(cell); ctx.fillStyle = cssColor(fixture.surface); ctx.fill(); continue; }
       if (this.facing[cell] <= .02) continue;
       let color = BIOME_COLOR[fields.biomeId?.[cell] ?? 5]; const forest = fields.forestDensity?.[cell] ?? 0;
-      if (snapshot?.status === 'evolution') {
-        const nutrient = fields.baseNutrient?.[cell] ?? .4; const moisture = fields.baseMoisture?.[cell] ?? .4;
-        const ridge = fields.ridgeStrength?.[cell] ?? .1;
-        color = [Math.round(34 + nutrient * 34 + ridge * 28), Math.round(37 + moisture * 35 + forest * 28),
-          Math.round(32 + (1 - moisture) * 22 + ridge * 14)];
-      }
       const transform = snapshot?.transformationState?.[cell] ?? 0;
       if (transform === 3) color = [24, 91, 125]; else if (transform === 4) color = [38, 112, 78]; else if (transform === 5) color = [18, 83, 48];
       const shore = fields.lakeShore?.[cell] ? .28 : 0; const canopy = forest * .38;
@@ -171,10 +168,12 @@ export class Canvas2DRenderer {
         if (!status && !fossil) continue;
         const kind = evolution ? snapshot.evolutionKind[cell] : snapshot.memoryKind[cell];
         const branch = evolution ? snapshot.evolutionDomain[cell] : snapshot.memoryBranch[cell];
-        const key = status + 11 * (Math.min(7, branch) + 8 * ((kind >= 4 ? 1 : 0) + 2 * (fossil > 0 ? 1 : 0)));
-        const styles = this.memoryStyleCache[key] ??= memoryStyles(status, kind, fossil, fade, branch, time, pulse,
-          evolution);
-        if (!styles) continue; this.cellPath(cell); ctx.fillStyle = styles.fill; ctx.fill();
+        const key = status + 11 * (Math.min(7, branch) + 8 * (Math.min(4, kind) + 5 * (fossil > 0 ? 1 : 0)));
+        const styles = this.memoryStyleCache[key] ??= (evolution
+          ? evolutionStyles(status, kind, fossil, fade, branch, time, pulse)
+          : trophyStyles(status, kind, fossil, fade, branch, time, pulse));
+        if (!styles) continue;
+        if (styles.fill) { this.cellPath(cell); ctx.fillStyle = styles.fill; ctx.fill(); }
         if (styles.outerStroke) { ctx.strokeStyle = styles.outerStroke; ctx.lineWidth = styles.outerWidth;
           ctx.setLineDash(styles.dash ?? []); ctx.stroke(); ctx.setLineDash([]); }
         if (styles.inset) { this.cellPath(cell, styles.scale); ctx.fillStyle = styles.inset; ctx.fill();
@@ -242,7 +241,7 @@ export class Canvas2DRenderer {
   dispose() { if (this.disposed) return; this.disposed = true; this.boundIdentity = null; this.lastFrameAudit = null; }
 }
 
-function memoryStyles(status, kind, fossil, fade, branch, time, pulse, evolution = false) {
+function trophyStyles(status, kind, fossil, fade, branch, time, pulse) {
   if (!status && !fossil) return null;
   const selected = [5,6,7,9,10].includes(status); const unlockReady = [3,7].includes(status);
   const owned = [4,8,9,10].includes(status); const ownedReady = [8,10].includes(status);
@@ -250,24 +249,39 @@ function memoryStyles(status, kind, fossil, fade, branch, time, pulse, evolution
   const unaffordable = [2,6].includes(status); const special = kind >= 4;
   const tint = ['55,58,59', '49,93,168', '85,191,209', '194,139,66', '105,173,104', '215,237,245', '216,173,76'][branch] ?? '55,58,59';
   const outline = selected ? 'rgba(235,248,238,.98)' : unaffordable ? 'rgba(171,185,168,.65)' : null;
-  if (locked) return evolutionCellStyle({ fill: `rgba(${tint},${0.46 * fade})`, outerStroke:outline, outerWidth:1.2 }, evolution);
-  if (unaffordable) return evolutionCellStyle({ fill:`rgba(104,119,105,${0.34 * fade})`, inset:'rgba(38,43,41,.38)', scale:.62,
-    outerStroke:outline, outerWidth:1 }, evolution);
+  if (locked) return { fill: `rgba(${tint},${0.46 * fade})`, outerStroke:outline, outerWidth:1.2 };
+  if (unaffordable) return { fill:`rgba(104,119,105,${0.34 * fade})`, inset:'rgba(38,43,41,.38)', scale:.62,
+    outerStroke:outline, outerWidth:1 };
   const breath = selectedReady && pulse ? .86 + .14 * Math.sin(time * 2.2) : 1;
-  if (unlockReady) return evolutionCellStyle({ fill:`rgba(${tint},${Math.min(.84, .68 * breath) * fade})`, inset:'rgba(239,244,194,.72)', scale:selectedReady ? .42 : .54,
+  if (unlockReady) return { fill:`rgba(${tint},${Math.min(.84, .68 * breath) * fade})`, inset:'rgba(239,244,194,.72)', scale:selectedReady ? .42 : .54,
     stroke:'rgba(31,48,38,.95)', width:1.2, outerStroke:outline ?? 'rgba(221,238,205,.88)', outerWidth:selectedReady?2.5:1.5,
-    dash:selectedReady?[4,2]:[] }, evolution);
-  if(owned)return evolutionCellStyle({fill:`rgba(${tint},${(ownedReady ? .78 : .62)*breath*fade})`,
+    dash:selectedReady?[4,2]:[] };
+  if(owned)return {fill:`rgba(${tint},${(ownedReady ? .78 : .62)*breath*fade})`,
     inset:ownedReady?`rgba(244,226,153,${(.82+.10*breath).toFixed(3)})`:special?'rgba(224,218,163,.78)':'rgba(197,220,185,.62)',
     scale:selectedReady ? .40 : special ? .45 : .62, stroke:ownedReady?'rgba(54,48,24,.94)':null, width:1.2,
     outerStroke:outline ?? (ownedReady?'rgba(236,220,158,.82)':null), outerWidth:selectedReady?2.5:1.5,
-    dash:selectedReady?[4,2]:[] }, evolution);
+    dash:selectedReady?[4,2]:[] };
   return { fill:`rgba(111,91,66,${fossil * .48 * fade})` };
 }
-function evolutionCellStyle(style, evolution) {
-  // Exact-cell state perimeters come from the shared existing boundary phase.
-  if (evolution) { style.outerStroke = null; style.outerWidth = 0; style.dash = []; }
-  return style;
+function evolutionStyles(status, kind, fossil, fade, branch, time, pulse) {
+  if (!status && !fossil) return null;
+  const selected = [5,6,7,9,10].includes(status); const unlockReady = [3,7].includes(status);
+  const owned = [4,8,9,10].includes(status); const ownedReady = [8,10].includes(status);
+  const selectedReady = [7,10].includes(status); const locked = [1,5].includes(status);
+  const unaffordable = [2,6].includes(status); const tint = EVOLUTION_DOMAIN_TINT[branch] ?? EVOLUTION_DOMAIN_TINT[0];
+  const kindScale = kind === 1 ? .26 : kind === 3 ? .42 : .33;
+  const fill = fossil > 0 ? `rgba(111,91,66,${fossil * .08 * fade})` : null;
+  if (locked) return { fill, inset:`rgba(${tint},${(selected ? .18 : .10) * fade})`, scale:kindScale,
+    stroke:selected?'rgba(220,232,214,.72)':null, width:.65 };
+  if (unaffordable) return { fill, inset:`rgba(${tint},${.18 * fade})`, scale:kindScale + .03,
+    stroke:'rgba(171,185,168,.62)', width:.65 };
+  const breath = selectedReady && pulse ? .86 + .14 * Math.sin(time * 2.2) : 1;
+  if (unlockReady) return { fill, inset:`rgba(${tint},${.48 * breath * fade})`, scale:kindScale + .08,
+    stroke:'rgba(225,235,191,.88)', width:selectedReady?1.35:.9 };
+  if (owned) return { fill, inset:`rgba(${tint},${(ownedReady ? .52 : .36) * breath * fade})`,
+    scale:kindScale + (selectedReady ? .16 : .12), stroke:ownedReady?'rgba(235,211,130,.90)':'rgba(54,69,56,.86)',
+    width:selectedReady?1.35:.85 };
+  return { fill };
 }
 
 function drawBaseShell(ctx, cx, cy, radius, color) {

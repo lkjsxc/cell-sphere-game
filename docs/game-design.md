@@ -92,6 +92,12 @@ cell or its explicit action can buy one exact local level.
 The bounded native navigator presents one current cell, its five or six direct
 neighbors, stable previous/next traversal, and a next-ready action. It keeps
 every cell keyboard-reachable without creating 2,562 persistent DOM controls.
+Evolution's immutable presentation substrate comes from the maintained World
+planet-field generator at one fixed seed. Large connected oceans and landmasses,
+coasts, relief, lakes, and biome regions remain visually primary; archetype,
+domain, ownership, readiness, selection, recent change, and Imprint remain
+truthful local cues and text. Geography has no purchase, persistence, reward, or
+World authority and is unchanged by progression.
 Scarcity defense protects the energy yield from nutrient already consumed; it
 does not create nutrient or energy. Evolution never changes the public
 Environment clock or creates infinite resources.

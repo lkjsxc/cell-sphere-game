@@ -30,6 +30,7 @@ import { WorldPass } from '../../src/rendering/world-pass.js';
 import { BOUNDARY_VERTICES_PER_EDGE, LIFE_EDGE_STRIDE } from '../../src/rendering/life-edges.js';
 import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_HASH,
   ENVIRONMENT_SCHEDULE_VERSION } from '../../src/game/environment-level.js';
+import { RENDER_SCENE, renderSceneMode } from '../../src/rendering/scene-mode.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(here, p), 'utf8');
@@ -166,6 +167,21 @@ test('parseUniformNames strips array brackets', () => {
   assert.match(SH.VS_GLOBE, /in vec4 aEcology/);
 });
 
+test('one renderer scene discriminator separates World, Evolution, and Trophy', () => {
+  assert.deepEqual(RENDER_SCENE, { WORLD: 0, EVOLUTION: 1, TROPHY: 2 });
+  assert.equal(renderSceneMode(null), RENDER_SCENE.WORLD);
+  assert.equal(renderSceneMode({ status: 'running' }), RENDER_SCENE.WORLD);
+  assert.equal(renderSceneMode({ status: 'evolution' }), RENDER_SCENE.EVOLUTION);
+  assert.equal(renderSceneMode({ status: 'trophies' }), RENDER_SCENE.TROPHY);
+  const sources = [read('../../src/rendering/world-pass.js'), read('../../src/rendering/shaders.js'),
+    read('../../src/rendering/shaders-boundary.js')].join('\n');
+  assert.match(sources, /uSceneMode/); assert.doesNotMatch(sources, /uMemory/);
+  assert.doesNotMatch(read('../../src/rendering/world-pass.js'), /const memory\s*=/);
+  const canvas = read('../../src/rendering/fallback2d.js');
+  assert.match(canvas, /let color = BIOME_COLOR/); assert.match(canvas, /evolutionStyles/); assert.match(canvas, /trophyStyles/);
+  assert.doesNotMatch(canvas, /if \(snapshot\?\.status === 'evolution'\) \{\s*const nutrient/);
+});
+
 test('every declared uniform is uploaded by the renderer modules', () => {
   const uploaded = new Set();
   const re = /\.u\.get\(['"]([^'"]+)['"]\)/g;
@@ -287,7 +303,7 @@ test('Evolution reuses the existing boundary buffer for shared exact-cell edge s
   assert.match(read('../../src/rendering/fallback2d.js'), /evolutionEdge/);
   assert.doesNotMatch(read('../../src/rendering/fallback2d.js'), /ownerByCell|memoryTerritoryEdge/);
   const boundaryShader = read('../../src/rendering/shaders-boundary.js');
-  assert.match(boundaryShader, /uMemory/);
+  assert.match(boundaryShader, /uSceneMode/);
   assert.match(boundaryShader, /state < \$\{EVOLUTION_CELL_EDGE\.OWNED\}\.5/);
   assert.match(boundaryShader, /state < \$\{EVOLUTION_CELL_EDGE\.FRONTIER\}\.5/);
   assert.match(boundaryShader, /state < \$\{EVOLUTION_CELL_EDGE\.RECENT\}\.5/);

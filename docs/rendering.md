@@ -13,6 +13,8 @@ boundaries, and atmosphere. The cell shell has one position path: duplicated
 shared corners never receive owner-cell radial displacement. The atmosphere draw
 uses one fixed renderer-owned unit icosphere; gameplay topology, cell count,
 snapshots, seeds, and simulation resolution cannot alter its geometry or quality.
+One renderer scene discriminator selects World, Evolution, or Trophy material;
+it does not add a draw or another overlapping material-mode authority.
 Canvas 2D consumes the same snapshot semantics, paints an analytic projected
 halo and opaque globe substrate before translucent cell material, and remains
 playable after WebGL context loss without replacing world authority.
@@ -48,10 +50,15 @@ near, and far positions. They are evidence tooling, not player-facing modes.
 ## Globe scenes
 
 World and Evolution use the level-4 2,562-cell topology, while Trophy retains
-its own semantic projection. Every Evolution cell is an exact progression cell
-carrying one immutable archetype. One pure projection supplies local state,
-deterministic substrate, and quiet/owned/frontier/recent/selected edge classes
-to both backends. Internal fine boundaries remain visible; exact-cell state
+its own fields, atlas material, and semantic projection. Every Evolution cell is
+an exact progression cell carrying one immutable archetype. Evolution constructs
+one fixed-seed presentation-only substrate through the maintained World
+`createFields` owner and reuses its land/water, biome, forest, relief, lake,
+shore, and lighting hierarchy in both backends. Its progression projection
+separately supplies local status, domain, kind, tier, Imprint, recent state, and
+quiet/owned/frontier/recent/selected edges. Restrained cell-centered glyphs and
+insets preserve domain and state meaning without replacing geography with a
+whole-cell mosaic. Internal fine boundaries remain visible; exact-cell state
 perimeters reuse the existing WebGL boundary draw and Canvas boundary phase.
 Direct canonical cell adjacency—not rendered contact inference—owns reachability
 and purchases. Camera and picking infrastructure remain shared and picking
@@ -93,10 +100,11 @@ restoration: 10,242 vertices and 61,440 `Uint16` indices. Life classification
 uses one 7,680-byte canonical buffer; WebGL expands it once per accepted semantic
 snapshot into the existing four vertices per boundary edge, while Canvas reuses
 eight fixed typed style batches. Animation time alone never rebuilds either
-projection. Evolution topology, archetype layout, and substrate are immutable
-for one topology lifetime; accepted progression changes rebuild the bounded
-projection, while unchanged animation frames do not rebuild layout, geometry, or
-the 7,680-byte edge classification. High developer speeds execute every tick
+projection. Evolution topology, archetype layout, fixed World-derived substrate,
+and static geometry are immutable for one topology lifetime; accepted
+progression changes rebuild only the bounded progression projection, while
+unchanged animation frames do not rebuild fields, layout, geometry, or the
+7,680-byte edge classification. High developer speeds execute every tick
 while coalescing bounded snapshots and render requests. Camera velocity samples
 use one fixed-capacity six-entry buffer; release state is constant-size, and one
 analytic inertia step rotates the reusable camera-basis arrays in place regardless

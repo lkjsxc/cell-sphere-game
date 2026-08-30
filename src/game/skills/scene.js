@@ -1,6 +1,6 @@
 /** Shared exact-cell Evolution material and edge projection for both renderers. */
 import { createRng } from '../../core/prng.js';
-import { smoothField, sphericalField } from '../../world/noise.js';
+import { createFields } from '../../world/fields.js';
 import { EVOLUTION_ARCHETYPES } from './catalog.js';
 
 export const EVOLUTION_STATUS = Object.freeze({
@@ -9,28 +9,13 @@ export const EVOLUTION_STATUS = Object.freeze({
   OWNED_AFFORDABLE: 8, SELECTED_OWNED_UNAFFORDABLE: 9, SELECTED_OWNED_AFFORDABLE: 10,
 });
 export const EVOLUTION_CELL_EDGE = Object.freeze({ QUIET: 0, OWNED: 1, FRONTIER: 2, RECENT: 3, SELECTED: 4 });
+export const EVOLUTION_SUBSTRATE_SEED = 0xe701c311;
 
 const KINDS = Object.freeze({ root: 1, specialization: 2, capstone: 3 });
 const DOMAINS = Object.freeze({ Foundation: 0, Fertility: 1, Freshwater: 2, Scarcity: 3, Cryogenic: 4, Marine: 5, Luminous: 6 });
 
 export function createEvolutionFields(topology) {
-  const rng = createRng(0xe701c311); const count = topology.nodeCount;
-  const nutrientField = smoothField(sphericalField(rng, topology.positions, count, { lobes: 23, sharpness: 3, signed: true }), topology, 1);
-  const moistureField = smoothField(sphericalField(rng, topology.positions, count, { lobes: 19, sharpness: 2, signed: true }), topology, 1);
-  const temperatureField = smoothField(sphericalField(rng, topology.positions, count, { lobes: 17, sharpness: 2, signed: true }), topology, 1);
-  const reliefField = sphericalField(rng, topology.positions, count, { lobes: 29, sharpness: 4, signed: true });
-  const baseNutrient = scaled(nutrientField, .16, .62); const baseMoisture = scaled(moistureField, .12, .70);
-  const baseTemp = scaled(temperatureField, .18, .66); const altitude = scaled(reliefField, .27, .42);
-  const forestDensity = new Float32Array(count); const ridgeStrength = new Float32Array(count);
-  for (let cell = 0; cell < count; cell++) {
-    forestDensity[cell] = Math.fround(.08 + nutrientField[cell] * moistureField[cell] * .34);
-    ridgeStrength[cell] = Math.fround(.05 + Math.abs(reliefField[cell] - .5) * .32);
-  }
-  return Object.freeze({ baseNutrient, baseMoisture, baseTemp, altitude,
-    biomeId: new Uint8Array(count).fill(9), forestDensity,
-    lakeDepth: new Float32Array(count), lakeShore: new Uint8Array(count), freshwaterInfluence: new Float32Array(count),
-    lakeId: new Int16Array(count).fill(-1), ridgeStrength, landMask: new Uint8Array(count).fill(1),
-    landmarks: Object.freeze([]), sources: Object.freeze([0]) });
+  return createFields(createRng(EVOLUTION_SUBSTRATE_SEED), topology);
 }
 
 export function renderEvolutionSnapshot(layout, meta, projection) {
@@ -93,10 +78,4 @@ function focusDirection(topology, cells) {
   const length = Math.hypot(...focus);
   if (length > 1e-8) return focus.map((value) => value / length);
   const fallback = cells[0] ?? 0; return Array.from(topology.positions.slice(fallback * 3, fallback * 3 + 3));
-}
-
-function scaled(source, offset, scale) {
-  const out = new Float32Array(source.length);
-  for (let index = 0; index < source.length; index++) out[index] = Math.fround(offset + source[index] * scale);
-  return out;
 }

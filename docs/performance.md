@@ -51,6 +51,23 @@ from `19,790.6 ms` on the exact predecessor to `18,275.3 ms` on the final
 same-host working tree (`−7.7%`). Repeated final cohorts and the canonical work
 package own the stable comparison used for closure.
 
+The World-derived Evolution substrate cutover preserves those bounds. Repeated
+same-host Chrome 152 final cohorts recorded p95 entry/snapshot/update/steady
+ranges of `14.5–19.9/0.5–1.8/1.1–1.9/1.0–1.5 ms` for Worker/WebGL2,
+`14.4–15.9/0.5–0.6/1.4–1.5/1.1–1.2 ms` for fallback/WebGL2, and
+`5.5–11.2/0.5–0.6/1.6–2.7/1.5–1.6 ms` for fallback/Canvas. The matched
+predecessor ranges were `15.0–15.4/0.6/1.3–1.6/1.0–1.1 ms`,
+`14.7–15.2/0.8/1.5–1.6/1.1–1.5 ms`, and
+`5.5–6.1/0.4/1.8–2.1/1.6–1.9 ms`. Repetition traced the isolated entry and
+sub-millisecond relative swings to host/timer noise: all one-time entries remain
+below `30 ms`, steady work remains at or below `1.6 ms`, the substrate and
+static geometry references stay stable, and unchanged frames perform zero edge
+updates. WebGL remains four draws with byte-identical `1,838,196` static and
+`325,152` dynamic allocations; Canvas remains `133,132` static and `130,560`
+dynamic bytes. A direct same-process construction sample changed the obsolete
+placeholder's median/p95 `0.835/1.322 ms` to `3.185/3.755 ms` for the full
+cached World field pipeline; it is one-time topology-lifetime work.
+
 The atmosphere silhouette cutover's same-host Chrome 152 median-of-three
 synchronized costs are baseline to fixed shell: steady p50 `0.800 -> 0.900 ms`,
 steady p95 `1.000 -> 1.000 ms`, rotating p50 `0.900 -> 1.200 ms`, and rotating

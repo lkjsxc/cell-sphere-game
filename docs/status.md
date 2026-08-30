@@ -1,5 +1,39 @@
 # Current status
 
+## Evolution World Substrate v1
+
+- Evolution now constructs one immutable presentation-only level-4 planet by
+  calling the maintained World field owner with fixed seed `0xe701c311`.
+  The measured 2,562-cell substrate is 54.02% land; its 1,384 land and 1,178
+  water cells each form one connected component. It contains 13 biomes, seven
+  lakes, 206 coast edges, and 286 lake edges, with 97.32% land/water and 81.61%
+  biome same-class adjacency. Deterministic browser digest is `57eda917`.
+- World fields provide the base land/water, biome, forest, relief, lake, shore,
+  and lighting material in WebGL2 and Canvas. Domain and progression state now
+  use restrained local glyphs, insets, exact-cell edges, Imprints, and text rather
+  than a dominant whole-cell mosaic. The all-land, one-biome Evolution placeholder
+  and the Canvas Evolution biome override are deleted.
+- One World/Evolution/Trophy scene discriminator replaces WebGL `uMemory`.
+  WebGL remains exactly four draws with `1,838,196` static and `325,152`
+  dynamic bytes; Canvas retains `133,132` static and `130,560` dynamic bytes.
+  Unchanged frames rebuild no fields or geometry and perform zero progression
+  edge updates. WebGL context loss reaches Canvas with the same field reference
+  and digest.
+- Production-browser Worker/WebGL2, fallback/WebGL2, and fallback/Canvas
+  receipts pass the fixed field gates, exact selection and purchase locality,
+  quiet < frontier < selected edges, repeated center/limb and far/close visual
+  hierarchy, forced colors, reduced motion, and all eight maintained viewports
+  at 200% text. In every probe, geographic separation exceeds same-status
+  cross-domain variation while domain variation remains nonzero.
+- Trophy fields and controlled matched images are identical to the predecessor:
+  WebGL2 SHA-256 `b98ca89587f026a000ccbf69e66af5be2fd17a9b55dd18be910335c91ea004ed`
+  and Canvas SHA-256 `dba741f68c1b2a90a77d58496f5f5e72d8258a0649191eca5847ce6c722be49b`.
+  Progression topology/layout/economy/compiler/persistence, World simulation,
+  SCORE, Echoes, agents, and the bounded navigator have no changed owner.
+- The canonical work package owns focused commands, matched image/report hashes,
+  performance investigation, complete verification, publication evidence, and
+  unavailable physical-device evidence.
+
 ## Evolution Cell-by-Cell Authority v1
 
 - The maintained level-4 topology is now both the visible and progression

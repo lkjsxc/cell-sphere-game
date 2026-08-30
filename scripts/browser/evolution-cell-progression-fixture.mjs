@@ -1,6 +1,6 @@
 /** Focused production-browser evidence for exact-cell Evolution authority. */
 export async function runEvolutionCellProgressionFixture(tools, { label = 'final', enforce = true } = {}) {
-  const { click, drag, evaluate, key, pinch, screenshot, setMedia, setViewport, touchCancel, wait, wheel } = tools;
+  const { click, drag, evaluate, key, pinch, poll, screenshot, setMedia, setViewport, touchCancel, wait, wheel } = tools;
   const originalViewport = await evaluate('({width:innerWidth,height:innerHeight})');
   await setViewport(1440, 900); await wait(100);
   const entryPoint = await evaluate(`(()=>{const e=document.getElementById('scene-evolution'),r=e.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]})()`);
@@ -27,7 +27,7 @@ export async function runEvolutionCellProgressionFixture(tools, { label = 'final
   await click(...actionPoint); await wait(160);
   const report = await evaluate(POST_EXPRESSION(tools.simulationFallback));
   report.interaction = { selected, manipulation, purchase: report.purchase };
-  report.screenshots = { selected: await screenshot(`evolution-cell-progression-${label}-${report.rendererPath}-selected-1440x900.png`) };
+  report.screenshots = { selected: await screenshot(`evolution-world-substrate-${label}-${report.simulationPath}-${report.rendererPath}-selected-1440x900.png`) };
 
   const nextButton = await evaluate(`(()=>{const e=document.getElementById('evolution-next'),r=e.getBoundingClientRect();e.focus();return[r.left+r.width/2,r.top+r.height/2]})()`);
   const beforeKeyboard = await evaluate('window.__CELL_SPHERE_APP__.memoryUi.selectedCell'); await key('Enter'); await wait(80);
@@ -67,12 +67,18 @@ export async function runEvolutionCellProgressionFixture(tools, { label = 'final
     && report.forcedColors.neighborBorder !== 'none' && report.forcedColors.current.includes('Local Level') && report.forcedColors.treeItems === 0,
   `Evolution forced colors failed: ${JSON.stringify(report.forcedColors)}`);
   await setMedia([]); await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'reduced'})})()`); await wait(80);
-  const reducedA = await screenshot(`evolution-cell-progression-${label}-${report.rendererPath}-reduced-a.png`); await wait(320);
-  const reducedB = await screenshot(`evolution-cell-progression-${label}-${report.rendererPath}-reduced-b.png`);
+  const reducedA = await screenshot(`evolution-world-substrate-${label}-${report.simulationPath}-${report.rendererPath}-reduced-a.png`); await wait(320);
+  const reducedB = await screenshot(`evolution-world-substrate-${label}-${report.simulationPath}-${report.rendererPath}-reduced-b.png`);
   report.reducedMotion = { stable: reducedA.hash === reducedB.hash, first: reducedA, second: reducedB };
   if (enforce) ok(report.reducedMotion.stable, 'Evolution reduced-motion rendering changed without state change');
 
-  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'full'});window.__CSG_EVOLUTION_CELL_FIXTURE__?.restore()})()`);
+  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'full'})})()`);
+  report.screenshots.matched = await captureMatchedScenes({ evaluate, screenshot, setViewport, wait }, label, report.simulationPath,
+    report.rendererPath, prepared.normalDistance);
+  report.contextLoss = report.rendererPath === 'webgl2'
+    ? await verifyContextLoss({ evaluate, poll }, report.substrate.digest)
+    : { applicable:false, retained:true, backend:'canvas2d' };
+  await evaluate(`window.__CSG_EVOLUTION_CELL_FIXTURE__?.restore()`);
   await setViewport(originalViewport.width, originalViewport.height); await wait(80);
   if (enforce) {
     ok(report.semantic.valid, `Evolution semantic projection failed: ${JSON.stringify(report.semantic)}`);
@@ -82,6 +88,9 @@ export async function runEvolutionCellProgressionFixture(tools, { label = 'final
     ok(report.rendererPath !== 'webgl2' || report.packing.drawCalls === 4,
       `Evolution WebGL draw count changed: ${JSON.stringify(report.packing)}`);
     if (report.visual.available) ok(report.visual.valid, `Evolution edge hierarchy failed: ${JSON.stringify(report.visual)}`);
+    ok(report.substrate.valid, `Evolution substrate semantics failed: ${JSON.stringify(report.substrate)}`);
+    ok(report.visual.hierarchy.valid, `Evolution substrate/domain hierarchy failed: ${JSON.stringify(report.visual.hierarchy)}`);
+    ok(report.contextLoss.retained, `Evolution context fallback lost substrate: ${JSON.stringify(report.contextLoss)}`);
   }
   ok(tools.errors.length === 0, `Evolution browser errors: ${tools.errors.join(' | ')}`); return report;
 }
@@ -104,10 +113,11 @@ const PREPARE_EXPRESSION = `(async()=>{
     w=matrix[3]*x+matrix[7]*y+matrix[11]*z+matrix[15],targetPoint=[rect.left+(clipX/w*.5+.5)*rect.width,rect.top+(1-(clipY/w*.5+.5))*rect.height];
   const beforeProjection=buildEvolutionProjection(app.meta),beforeSnapshot=buildEvolutionSnapshot(app.meta),levelsBefore=JSON.stringify(app.meta.evolutionLevels);
   window.__CSG_EVOLUTION_CELL_FIXTURE__={original,targetCell,beforeProjection,beforeSnapshot,levelsBefore,layout:EVOLUTION_LAYOUT,
+    fields:app.evolutionFields,normalDistance:app.camera.dist,
     restore(){app.closeActiveOverlay();app.meta=original.meta;app.archive=original.archive;app.selectedNode=original.selectedNode;
       app.historySnapshot=original.historySnapshot;app.historyPlaybackActive=original.historyPlaybackActive;Object.assign(app.camera,original.camera);
       app.memorySnapshot=buildEvolutionSnapshot(app.meta);app.memoryUi.closeNode();delete window.__CSG_EVOLUTION_CELL_FIXTURE__;}};
-  return{targetCell,targetPoint,canvasPoint:[rect.left+rect.width*.72,rect.top+rect.height*.45],topology:{cells:EVOLUTION_TOPOLOGY.nodeCount,
+  return{targetCell,targetPoint,normalDistance:app.camera.dist,canvasPoint:[rect.left+rect.width*.72,rect.top+rect.height*.45],topology:{cells:EVOLUTION_TOPOLOGY.nodeCount,
     edges:EVOLUTION_TOPOLOGY.edgeCount,layoutDigest:EVOLUTION_LAYOUT.diagnostics.digest,rootCount:EVOLUTION_LAYOUT.diagnostics.rootCount}};
 })()`;
 
@@ -122,7 +132,7 @@ const SELECTION_EXPRESSION = `(()=>{const app=window.__CELL_SPHERE_APP__,f=windo
 function POST_EXPRESSION(simulationFallback) { return `(async()=>{
   const app=window.__CELL_SPHERE_APP__,f=window.__CSG_EVOLUTION_CELL_FIXTURE__,renderer=app.renderer;
   const [{EVOLUTION_ARCHETYPES,EVOLUTION_CELL_EDGE,EVOLUTION_LAYOUT,EVOLUTION_TOPOLOGY,buildEvolutionProjection,buildEvolutionSnapshot,
-    evolutionCellState,getEvolutionAdjacentCells},{viewProjection,focusCamera}]=await Promise.all([
+    createEvolutionFields,evolutionCellState,getEvolutionAdjacentCells},{viewProjection,focusCamera}]=await Promise.all([
       import('./src/game/skills/index.js'),import('./src/rendering/camera.js')]);
   const afterProjection=app.memorySnapshot.evolutionProjection,target=f.targetCell,before=f.beforeProjection;
   const changedEntries=app.meta.evolutionLevels.filter(entry=>!JSON.parse(f.levelsBefore).some(old=>old.cell===entry.cell&&old.level===entry.level));
@@ -169,8 +179,14 @@ function POST_EXPRESSION(simulationFallback) { return `(async()=>{
     :{drawCalls:null,buffers:null,staticGeometryBytes:typedBytes(activeRenderer.dual),
       dynamicBytes:activeRenderer.lifeEdgeData.byteLength+activeRenderer.lifeEdgeBatches.reduce((sum,value)=>sum+value.byteLength,0),
       compactEdgeBytes:activeRenderer.lifeEdgeData.byteLength,expandedEdgeBytes:null};
-  const visual=measureVisual(activeRenderer);return{schema:2,rendererPath:activeRenderer.backend,
-    simulationPath:${JSON.stringify(simulationFallback ? 'fallback' : 'worker')},semantic,purchase,performance:performanceReport,packing,visual};
+  const substrate=substrateReport(app.evolutionFields);const repeatedSubstrate=substrateReport(createEvolutionFields(EVOLUTION_TOPOLOGY));
+  substrate.repeatDigest=repeatedSubstrate.digest;substrate.stableReference=f.fields===app.evolutionFields;
+  substrate.valid=substrate.landFraction>=.38&&substrate.landFraction<=.58&&substrate.largestLand>=substrate.landCells*.70
+    &&substrate.largestWater>=substrate.waterCells*.70&&substrate.sameLandAdjacency>=.90&&substrate.biomes>=6
+    &&substrate.landBiomes>=4&&substrate.oceanBiomes>=1&&substrate.sameBiomeAdjacency>=.65&&substrate.lakes>=1
+    &&substrate.coastEdges>0&&substrate.lakeEdges>0&&substrate.digest===substrate.repeatDigest&&substrate.stableReference;
+  const visual=measureVisual(activeRenderer);visual.hierarchy=measureHierarchy(activeRenderer);return{schema:3,rendererPath:activeRenderer.backend,
+    simulationPath:${JSON.stringify(simulationFallback ? 'fallback' : 'worker')},semantic,substrate,purchase,performance:performanceReport,packing,visual};
 
   function measureVisual(targetRenderer){const root=EVOLUTION_LAYOUT.rootCell,step=EVOLUTION_LAYOUT.rootRing[0],visualTarget=getEvolutionAdjacentCells(step)
       .filter(cell=>cell!==root).sort((a,b)=>EVOLUTION_LAYOUT.rootDistance[b]-EVOLUTION_LAYOUT.rootDistance[a]||a-b)[0];
@@ -201,10 +217,138 @@ function POST_EXPRESSION(simulationFallback) { return `(async()=>{
       const data=targetRenderer.ctx.getImageData(px,py,1,1).data;return[data[0],data[1],data[2]];}
     function mean(values){return[0,1,2].map(axis=>values.reduce((sum,value)=>sum+value[axis],0)/values.length);}
     function distance(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2])/(255*Math.sqrt(3));}}
+  function measureHierarchy(targetRenderer){
+    const locked=buildEvolutionSnapshot({...app.meta,evolutionLevels:[],echoBalance:'0'},null,[]),fields=app.evolutionFields;
+    let coastEdge=-1;for(let edge=0;edge<EVOLUTION_TOPOLOGY.edgeCount;edge++){const a=EVOLUTION_TOPOLOGY.edgeA[edge],b=EVOLUTION_TOPOLOGY.edgeB[edge];
+      if(fields.landMask[a]!==fields.landMask[b]&&locked.evolutionDomain[a]===locked.evolutionDomain[b]
+        &&locked.evolutionStatus[a]===1&&locked.evolutionStatus[b]===1){coastEdge=edge;break;}}
+    if(coastEdge<0)return{available:false,valid:false,reason:'no same-domain locked coast edge'};
+    const coastCells=[EVOLUTION_TOPOLOGY.edgeA[coastEdge],EVOLUTION_TOPOLOGY.edgeB[coastEdge]],coastDirection=midpoint(coastCells);
+    let domainEdge=-1,domainScore=-Infinity;for(let edge=0;edge<EVOLUTION_TOPOLOGY.edgeCount;edge++){const a=EVOLUTION_TOPOLOGY.edgeA[edge],b=EVOLUTION_TOPOLOGY.edgeB[edge];
+      if(fields.landMask[a]!==fields.landMask[b]||fields.biomeId[a]!==fields.biomeId[b]
+        ||locked.evolutionDomain[a]===locked.evolutionDomain[b]||locked.evolutionStatus[a]!==1||locked.evolutionStatus[b]!==1)continue;
+      const score=dot(midpoint([a,b]),coastDirection);if(score>domainScore){domainScore=score;domainEdge=edge;}}
+    if(domainEdge<0)return{available:false,valid:false,reason:'no same-biome locked cross-domain edge'};
+    const domainCells=[EVOLUTION_TOPOLOGY.edgeA[domainEdge],EVOLUTION_TOPOLOGY.edgeB[domainEdge]],
+      domainCueCell=domainCells.find(cell=>locked.evolutionKind[cell]===2)??domainCells[0],far=Math.max(2.7,f.normalDistance),close=Math.max(1.9,far-.65);
+    const cases=[];for(const [name,distanceValue,limb] of [['far-center',far,false],['close-center',close,false],['far-limb',far,true],['close-limb',close,true]]){
+      const substrateValue=pairProbe(coastCells,distanceValue,limb),domainValue=pairProbe(domainCells,distanceValue,limb),
+        domainCueValue=domainProbe(domainCueCell,distanceValue,limb),
+        noise=Math.max(substrateValue.noise,domainValue.noise,domainCueValue.noise),margin=Math.max(.004,noise*4+.001);
+      cases.push({name,distance:distanceValue,limb,substrateSeparation:substrateValue.separation,
+        domainVariation:domainValue.separation,domainCue:domainCueValue.separation,noise,margin,
+        valid:substrateValue.separation>domainValue.separation+margin&&domainCueValue.separation>noise+.001});}
+    return{available:true,coastEdge,coastCells,domainEdge,domainCells,domainCueCell,domainProximity:domainScore,cases,
+      valid:cases.every(value=>value.valid)};
+    function pairProbe(cells,distanceValue,limb){const camera={...app.camera,direction:app.camera.direction.slice(),right:app.camera.right.slice(),up:app.camera.up.slice()},center=midpoint(cells);
+      focusCamera(camera,limb?limbDirection(center):center);camera.dist=distanceValue;camera.offsetX=0;camera.offsetY=0;const samples=[];
+      for(let repeat=0;repeat<3;repeat++){targetRenderer.render({snapshot:locked,worldIdentity:null,camera,selectedNode:null,highlightedCells:[],time:0,pulse:false});
+        samples.push(cells.map(cell=>readPatch(projectCell(cell,camera),2)));}
+      const separation=distance(samples[0][0],samples[0][1]);let noise=0;for(let repeat=1;repeat<samples.length;repeat++)for(let side=0;side<2;side++)noise=Math.max(noise,distance(samples[0][side],samples[repeat][side]));
+      return{separation,noise,colors:samples[0]};}
+    function domainProbe(cell,distanceValue,limb){const camera={...app.camera,direction:app.camera.direction.slice(),right:app.camera.right.slice(),up:app.camera.up.slice()},center=midpoint([cell]);
+      focusCamera(camera,limb?limbDirection(center):center);camera.dist=distanceValue;camera.offsetX=0;camera.offsetY=0;
+      const domains=new Uint8Array(locked.evolutionDomain);domains[cell]=(domains[cell]+1)%7;
+      const alternate={...locked,evolutionDomain:domains,tick:locked.tick+1},samples=[];
+      for(let repeat=0;repeat<3;repeat++){const colors=[];for(const snapshotValue of [locked,alternate]){
+        targetRenderer.render({snapshot:snapshotValue,worldIdentity:null,camera,selectedNode:null,highlightedCells:[],time:0,pulse:false});
+        colors.push(readPatchBytes(projectCell(cell,camera),6));}samples.push(colors);}
+      const separation=patchDistance(samples[0][0],samples[0][1]);let noise=0;for(let repeat=1;repeat<samples.length;repeat++)for(let side=0;side<2;side++)noise=Math.max(noise,patchDistance(samples[0][side],samples[repeat][side]));
+      return{separation,noise};}
+    function projectCell(cell,camera){if(targetRenderer.backend==='canvas2d')return[targetRenderer.px[cell],targetRenderer.py[cell]];
+      const matrix=viewProjection(camera,targetRenderer.canvas.width/targetRenderer.canvas.height),at=cell*3,x=EVOLUTION_TOPOLOGY.positions[at],y=EVOLUTION_TOPOLOGY.positions[at+1],z=EVOLUTION_TOPOLOGY.positions[at+2],
+        clipX=matrix[0]*x+matrix[4]*y+matrix[8]*z+matrix[12],clipY=matrix[1]*x+matrix[5]*y+matrix[9]*z+matrix[13],w=matrix[3]*x+matrix[7]*y+matrix[11]*z+matrix[15];
+      return[(clipX/w*.5+.5)*targetRenderer.canvas.width,(1-(clipY/w*.5+.5))*targetRenderer.canvas.height];}
+    function readPatch(point,radius){const data=readPatchBytes(point,radius),color=[0,0,0];
+      for(let at=0;at<data.length;at+=4){color[0]+=data[at];color[1]+=data[at+1];color[2]+=data[at+2];}
+      return color.map(value=>value/(data.length/4));}
+    function readPatchBytes(point,radius){const size=radius*2+1,left=Math.max(0,Math.min(targetRenderer.canvas.width-size,Math.round(point[0])-radius)),
+        top=Math.max(0,Math.min(targetRenderer.canvas.height-size,Math.round(point[1])-radius));let data;
+      if(targetRenderer.backend==='webgl2'){data=new Uint8Array(size*size*4);targetRenderer.gl.readPixels(left,targetRenderer.canvas.height-top-size,size,size,
+        targetRenderer.gl.RGBA,targetRenderer.gl.UNSIGNED_BYTE,data);}else data=targetRenderer.ctx.getImageData(left,top,size,size).data;
+      return data;}
+    function patchDistance(a,b){let result=0;for(let at=0;at<a.length;at+=4)result=Math.max(result,
+      Math.hypot(a[at]-b[at],a[at+1]-b[at+1],a[at+2]-b[at+2])/(255*Math.sqrt(3)));return result;}
+    function limbDirection(center){const reference=Math.abs(center[1])<.9?[0,1,0]:[1,0,0],tangent=normalize(cross(reference,center));return normalize(center.map((value,index)=>value+tangent[index]*2));}
+    function midpoint(cells){const out=[0,0,0];for(const cell of cells)for(let axis=0;axis<3;axis++)out[axis]+=EVOLUTION_TOPOLOGY.positions[cell*3+axis];return normalize(out);}
+    function normalize(value){const length=Math.hypot(...value)||1;return value.map(axis=>axis/length);}
+    function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+    function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+    function mean(values){return[0,1,2].map(axis=>values.reduce((sum,value)=>sum+value[axis],0)/values.length);}
+    function distance(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2])/(255*Math.sqrt(3));}}
+  function substrateReport(fields){const landCells=fields.landMask.reduce((sum,value)=>sum+value,0),waterCells=EVOLUTION_TOPOLOGY.nodeCount-landCells,
+      seen=new Uint8Array(EVOLUTION_TOPOLOGY.nodeCount),largest=[0,0];
+    for(let root=0;root<EVOLUTION_TOPOLOGY.nodeCount;root++){if(seen[root])continue;const kind=fields.landMask[root]?1:0,queue=[root];seen[root]=1;
+      for(let head=0;head<queue.length;head++){const cell=queue[head];for(let at=EVOLUTION_TOPOLOGY.nodeStart[cell];at<EVOLUTION_TOPOLOGY.nodeStart[cell+1];at++){
+        const next=EVOLUTION_TOPOLOGY.nodeNeighbors[at];if(!seen[next]&&(fields.landMask[next]?1:0)===kind){seen[next]=1;queue.push(next);}}}largest[kind]=Math.max(largest[kind],queue.length);}
+    let sameLand=0,sameBiome=0,coastEdges=0,lakeEdges=0;for(let edge=0;edge<EVOLUTION_TOPOLOGY.edgeCount;edge++){const a=EVOLUTION_TOPOLOGY.edgeA[edge],b=EVOLUTION_TOPOLOGY.edgeB[edge];
+      if(fields.landMask[a]===fields.landMask[b])sameLand++;else coastEdges++;if(fields.biomeId[a]===fields.biomeId[b])sameBiome++;
+      if(fields.lakeId[a]!==fields.lakeId[b]&&(fields.lakeId[a]>=0||fields.lakeId[b]>=0))lakeEdges++;}
+    const landBiomes=new Set(),oceanBiomes=new Set();for(let cell=0;cell<EVOLUTION_TOPOLOGY.nodeCount;cell++)(fields.landMask[cell]?landBiomes:oceanBiomes).add(fields.biomeId[cell]);
+    return{digest:fieldDigest(fields),landCells,waterCells,landFraction:landCells/EVOLUTION_TOPOLOGY.nodeCount,largestLand:largest[1],largestWater:largest[0],
+      landComponentShare:largest[1]/Math.max(1,landCells),waterComponentShare:largest[0]/Math.max(1,waterCells),sameLandAdjacency:sameLand/EVOLUTION_TOPOLOGY.edgeCount,
+      sameBiomeAdjacency:sameBiome/EVOLUTION_TOPOLOGY.edgeCount,biomes:new Set(fields.biomeId).size,landBiomes:landBiomes.size,oceanBiomes:oceanBiomes.size,
+      lakes:new Set([...fields.lakeId].filter(value=>value>=0)).size,coastEdges,lakeEdges};}
+  function fieldDigest(fields){let hash=2166136261;for(const key of ['landMask','biomeId','altitude','baseMoisture','baseTemp','baseNutrient','forestDensity','lakeId','lakeDepth','lakeShore','ridgeStrength']){
+      const value=fields[key],bytes=new Uint8Array(value.buffer,value.byteOffset,value.byteLength);for(const byte of bytes){hash^=byte;hash=Math.imul(hash,16777619);}}return(hash>>>0).toString(16).padStart(8,'0');}
   function edgeUpdates(value){return value.backend==='webgl2'?value.world.edgeUpdateCount:value.edgeUpdateCount;}
   function typedBytes(value){let bytes=0;for(const item of Object.values(value))if(ArrayBuffer.isView(item))bytes+=item.byteLength;return bytes;}
   function summarize(values){const sorted=values.slice().sort((a,b)=>a-b);return{samples:values.length,mean:values.reduce((sum,value)=>sum+value,0)/Math.max(1,values.length),
     minimum:sorted[0]??0,p50:sorted[Math.floor(sorted.length*.5)]??0,p95:sorted[Math.min(sorted.length-1,Math.floor(sorted.length*.95))]??0,maximum:sorted.at(-1)??0};}
 })()`; }
+
+async function captureMatchedScenes(tools, label, simulationPath, rendererPath, normalDistance) {
+  const { evaluate, screenshot, setViewport, wait } = tools; await setViewport(1440, 900); await wait(80);
+  // Fixed directions keep baseline/final images comparable even when the
+  // predecessor substrate has no coast from which to derive a view.
+  const orientations = {
+    first: normalize([0.34, 0.22, 0.91]),
+    second: normalize([-0.82, 0.35, -0.45]),
+  };
+  const distance = Math.max(2.7, Number(normalDistance) || 3.1); const close = Math.max(1.9, distance - .65);
+  const captures = {};
+  for (const [name, scene, direction, sceneDistance] of [
+    ['worldOrientationAFar', 'home', orientations.first, distance],
+    ['evolutionOrientationAFar', 'evolution', orientations.first, distance],
+    ['worldOrientationBFar', 'home', orientations.second, distance],
+    ['evolutionOrientationBFar', 'evolution', orientations.second, distance],
+    ['trophyOrientationAFar', 'trophies', orientations.first, distance],
+    ['evolutionOrientationAClose', 'evolution', orientations.first, close],
+  ]) {
+    const receipt = await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{focusCamera}=await import('./src/rendering/camera.js');
+      a.selectScene(${JSON.stringify(scene)});focusCamera(a.camera,${JSON.stringify(direction)});a.camera.dist=${sceneDistance};a.camera.offsetX=0;a.camera.offsetY=0;
+      const snapshot=${JSON.stringify(scene)}==='home'?a.showcase.snapshot:${JSON.stringify(scene)}==='evolution'?a.memorySnapshot:a.trophySnapshot;
+      const expectedFields=${JSON.stringify(scene)}==='home'?a.worldFields:${JSON.stringify(scene)}==='evolution'?a.evolutionFields:a.trophyFields;
+      a.renderer.render({snapshot,worldIdentity:null,camera:a.camera,
+        selectedNode:null,highlightedCells:[],time:0,pulse:false});return{scene:a.scene,status:snapshot.status??null,backend:a.renderer.backend,
+        distance:a.camera.dist,direction:a.camera.direction.slice(),fields:a.fields===expectedFields}})()`);
+    await wait(60); const file = `evolution-world-substrate-${label}-${simulationPath}-${rendererPath}-${hyphenate(name)}.png`;
+    captures[name] = { ...receipt, ...await screenshot(file) };
+  }
+  return { orientations, normalDistance:distance, closeDistance:close, captures };
+}
+
+function normalize(value) {
+  const length = Math.hypot(...value);
+  return value.map((axis) => axis / length);
+}
+
+async function verifyContextLoss(tools, expectedDigest) {
+  const { evaluate, poll } = tools;
+  const requested = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,ext=a.renderer?.gl?.getExtension('WEBGL_lose_context');
+    if(!ext)return false;ext.loseContext();return true})()`);
+  const activated = requested && await poll(() => evaluate('window.__CELL_SPHERE_APP__.renderer?.backend'),
+    (backend) => backend === 'canvas2d', 3000, 50);
+  if (!activated) return { applicable:true, requested, activated:false, retained:false };
+  const result = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,f=a.evolutionFields;let hash=2166136261;
+    for(const key of ['landMask','biomeId','altitude','baseMoisture','baseTemp','baseNutrient','forestDensity','lakeId','lakeDepth','lakeShore','ridgeStrength']){
+      const value=f[key],bytes=new Uint8Array(value.buffer,value.byteOffset,value.byteLength);for(const byte of bytes){hash^=byte;hash=Math.imul(hash,16777619);}}
+    return{backend:a.renderer.backend,sameSceneFields:a.fields===f,rendererFields:a.renderer.fields===f,
+      stableReference:window.__CSG_EVOLUTION_CELL_FIXTURE__.fields===f,digest:(hash>>>0).toString(16).padStart(8,'0')}})()`);
+  return { applicable:true, requested, activated, ...result, retained:result.backend === 'canvas2d' && result.sameSceneFields
+    && result.rendererFields && result.stableReference && result.digest === expectedDigest };
+}
+
+function hyphenate(value) { return value.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`); }
 
 function ok(value, message) { if (!value) throw new Error(message); }

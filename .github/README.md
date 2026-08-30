@@ -59,6 +59,11 @@ is selectable, persistent, and purchasable; a fresh profile exposes only the
 rank per archetype, so repeated occurrences follow one cost sequence and one
 bounded production compiler. A bounded native navigator exposes the selected
 cell, its direct neighbors, stable traversal, and the next actionable frontier.
+The scene rests on one immutable fixed-seed planet built by the maintained World
+field generator, so continents, oceans, coasts, relief, lakes, and biome-scale
+regions organize the sphere before restrained local progression marks and exact
+cell-state edges. That substrate is presentation-only and never changes with a
+purchase, profile, World, or renderer.
 
 Result keeps native Next World, Evolution, and History actions beside one
 authority-driven World-cycle ring. Its visible copy has no changing seconds;
@@ -78,8 +83,9 @@ interaction cancels the 13.5-second automatic continuation for that Result.
 - Game time owns ecology, Environment Level, SCORE, and History meaning.
   Wall-clock time delivers game time. Animation time owns camera and Result
   presentation, so changing speed cannot accelerate either one.
-- WebGL2 uses four World draw calls; Canvas 2D consumes the same deterministic
-  life-edge classification as a semantic fallback.
+- WebGL2 uses four World draw calls; one World/Evolution/Trophy discriminator
+  preserves each material hierarchy, and Canvas 2D consumes the same geography
+  and deterministic edge semantics as a semantic fallback.
 - Current-only persistence intentionally starts fresh for old or mismatched
   documents. Visual History is a reset-only device-local cache.
 - Closing the page does not advance a World and no offline progress is promised.
@@ -118,4 +124,4 @@ npm run test:browser:fallback
 ```
 
 Current implementation status is recorded in
-[`docs/work/evolution-cell-progression-v1/README.md`](docs/work/evolution-cell-progression-v1/README.md).
+[`docs/work/evolution-world-substrate-v1/README.md`](docs/work/evolution-world-substrate-v1/README.md).

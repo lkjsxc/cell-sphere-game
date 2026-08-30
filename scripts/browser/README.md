@@ -37,7 +37,11 @@ checks 2,562 progression cells, the deterministic 42-archetype weave, one-cell
 selection and purchase, truthful direct-neighbor frontier changes, shared edge
 classes, quiet/frontier/selected salience, bounded native navigation, unchanged
 four-draw WebGL composition, cached projection/geometry, stable reduced motion,
-forced colors, and the eight-viewport 200%-text matrix. Canonical entry points are
+forced colors, and the eight-viewport 200%-text matrix. It also records the
+fixed substrate digest and geography gates, proves stable field identity across
+progression and context loss, compares repeated land/water-versus-domain pixels
+at center/limb and far/close framing, and captures matched fixed-camera World,
+Evolution, and Trophy images. Canonical entry points are
 `test:browser:evolution-cells`,
 `test:browser:evolution-cells:fallback`, and
 `test:browser:evolution-cells:canvas`; structured reports and screenshots

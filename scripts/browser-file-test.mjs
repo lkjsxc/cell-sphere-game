@@ -25,7 +25,7 @@ const environmentPressureOnly=process.argv.includes('--environment-pressure-only
 const evolutionCellOnly=process.argv.includes('--evolution-cell-only');
 const recordBaseline=process.argv.includes('--record-baseline');
 const cohort=process.argv.find((value)=>value.startsWith('--cohort='))?.split('=')[1]?.replace(/[^a-z0-9-]/gi,'');
-const cdpTimeoutMs=Math.max(1000,Math.min(60000,Number(process.env.BROWSER_CDP_TIMEOUT_MS)||(atmosphereOnly?60000:10000)));
+const cdpTimeoutMs=Math.max(1000,Math.min(60000,Number(process.env.BROWSER_CDP_TIMEOUT_MS)||((atmosphereOnly||evolutionCellOnly)?60000:10000)));
 const chrome = findChrome();
 if (!chrome) {
   console.log('test:browser:file — SKIP (Chrome/Chromium unavailable) [exit 77]');
@@ -108,7 +108,7 @@ try {
       harnessRevision:gitValue(['rev-parse','HEAD']),branch:gitValue(['branch','--show-current']),workingTreeDirty:Boolean(gitValue(['status','--porcelain'])),
       sourceUrl:configuredUrl??`file://${ROOT}/index.html`,browser:browserIdentity.product,protocolVersion:browserIdentity.protocolVersion,
       browserErrors:cdp.errors.slice(0,20),browserStderr:cdp.stderr.slice(0,20),...evidence},null,2)+'\n';
-    const name=`evolution-cell-progression-v1-${label}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
+    const name=`evolution-world-substrate-v1-${label}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
     writeFileSync(resolve(REPORTS,name),report);const hash=createHash('sha256').update(report).digest('hex');
     console.log(`test:browser:evolution-cells — ${recordBaseline?'RECORDED':'PASS'} (${evidence.simulationPath}/${evidence.rendererPath}; ${evidence.semantic.progressionCells} cells; report ${name}; sha256 ${hash})`);
   } else if (environmentPressureOnly) {
@@ -366,7 +366,7 @@ async function screenshot(cdp, session, name) {
   const result = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, session);
   const data = Buffer.from(result.data, 'base64');
   writeFileSync(resolve(REPORTS, name), data);
-  return { hash: createHash('sha256').update(data).digest('hex') };
+  return { path: `reports/${name}`, bytes: data.byteLength, hash: createHash('sha256').update(data).digest('hex') };
 }
 
 async function poll(read, done, timeout, interval = 400) {

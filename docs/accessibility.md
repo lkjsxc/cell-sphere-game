@@ -87,8 +87,11 @@ bounded at 200% font scaling. Home copy has one bounded content scroll owner whe
 the enlarged text cannot fit, while exposed canvas remains directly manipulable.
 Evolution state is never canvas-color-only: the bounded navigator and detail name
 locked, reachable-unaffordable, ready, owned, owned-ready, and selected state;
-exact-cell material and progressively stronger perimeters provide non-color
-visual shape/weight cues. Large exact progression values use compact
+small kind-sensitive inset shapes and progressively stronger exact-cell
+perimeters provide non-color visual shape/weight cues over unchanged geographic
+material. Domain and archetype remain named in text; land, water, biome, and
+progression colors are not semantic substitutes for those names. Large exact
+progression values use compact
 engineering notation and expose their canonical value through an accessible label
 or detail. The Evolution action is geometry-tested at 320×568, short 390×320
 and 640/667 landscape viewports, tablet/desktop sizes, and 200% text.
@@ -112,8 +115,9 @@ The focused Evolution-cell matrix covers all eight maintained viewports at 200%
 text in Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D. It proves bounded
 DOM independent of cell count, one exact selected cell, named direct neighbors,
 deterministic native traversal, forced colors, stable reduced motion, reachable
-actions, 44 px controls/tabs, canvas reachability, and no horizontal page or
-panel overflow.
+actions, 44 px controls/tabs, canvas reachability, no horizontal page or panel
+overflow, and stable unchanged frames while the same fixed geographic substrate
+remains beneath local state cues.
 
 The focused Environment matrix additionally covers 390×844, 768×1024,
 844×390, and 1440×900 in Worker/WebGL2, fallback/WebGL2, and

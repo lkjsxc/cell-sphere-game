@@ -13,7 +13,8 @@ The WebGL world path remains exactly four steady-state draws.
 - `life-edges.js`: the pure one-byte-per-canonical-edge ordinary-life
   classification shared by both backends.
 - `world-pass.js`: whole-cell terrain/ecology/charge uploads and accepted-
-  snapshot updates to the existing WebGL boundary draw.
+  snapshot updates to the existing WebGL boundary draw, selected through the
+  single World/Evolution/Trophy scene mode in `scene-mode.js`.
 - `shaders*.js`: cellular geography, edge-primary World life, severe/remains
   interior support, Evolution material, atmosphere, and charge-local emission.
 - `fallback2d.js`: matching whole-cell resource, transformation, charge, and
@@ -27,10 +28,15 @@ The WebGL world path remains exactly four steady-state draws.
 
 Evolution renders the level-4 2,562-cell topology as 2,562 authoritative
 progression cells carrying 42 repeated archetypes. The shared exact-cell
-projection supplies both backends with deterministic material variation and
-quiet/owned/frontier/recent/selected edge classes. Fine boundaries come from the
-existing static boundary phase; state perimeters reuse the existing dynamic
-boundary draw and Canvas batches, so WebGL remains four draws.
+projection supplies both backends with local state and
+quiet/owned/frontier/recent/selected edge classes. Beneath it, one fixed-seed
+call to the maintained World field owner supplies coherent oceans, landmasses,
+biomes, relief, lakes, and shores. Both backends begin from those same fields;
+domain/kind glyphs and state insets remain small local marks instead of broad
+whole-cell fills. Fine boundaries come from the existing static boundary phase;
+state perimeters reuse the existing dynamic boundary draw and Canvas batches,
+so WebGL remains four draws. Trophy retains its independent field and atlas
+material path.
 Locked/reachable, affordable, selected-ready, owned, owned-ready,
 selected-owned-ready, recently upgraded, and fine-Imprint states remain
 text-backed and reduced-motion safe. Rendering never purchases; interface

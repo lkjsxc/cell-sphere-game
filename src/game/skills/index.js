@@ -24,7 +24,8 @@ import {
   EVOLUTION_TOPOLOGY_LEVEL, createEvolutionCellLayout, validateEvolutionCellLayout,
 } from './layout.js';
 
-export { EVOLUTION_CELL_EDGE, EVOLUTION_STATUS, createEvolutionFields, writeEvolutionCellEdges } from './scene.js';
+export { EVOLUTION_CELL_EDGE, EVOLUTION_STATUS, EVOLUTION_SUBSTRATE_SEED,
+  createEvolutionFields, writeEvolutionCellEdges } from './scene.js';
 export { EVOLUTION_COST_VERSION, evolutionCostForTargetLevel } from './cost.js';
 export {
   EVOLUTION_EFFECT_VERSION, EVOLUTION_COMPILE_CACHE_LIMIT, EVOLUTION_COMPILE_CACHE_BYTE_LIMIT,

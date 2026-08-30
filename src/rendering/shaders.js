@@ -1,4 +1,5 @@
 /** Dual-cell world, life, History, and Evolution GLSL. */
+import { RENDER_SCENE } from './scene-mode.js';
 
 export const VS_GLOBE = `#version 300 es
 uniform mat4 uViewProj;
@@ -37,7 +38,7 @@ in vec4 vEcology;
 out vec4 outColor;
 uniform vec3 uEye;
 uniform float uEntropy;
-uniform float uMemory;
+uniform float uSceneMode;
 uniform float uTime;
 uniform float uPulse;
 uniform float uElectricityDevelopment;
@@ -103,15 +104,18 @@ void main() {
   base = mix(base, depletedTint, depletedResource * 0.72);
   base = mix(base, exhaustedTint, exhaustedResource * 0.82);
   base = mix(base, waterCell > 0.5 ? vec3(0.035,0.220,0.390) : vec3(0.25,0.35,0.23), recoveringResource * 0.52);
-  // Evolution shares the World's cellular material scale. Its immutable fields
-  // modulate a quiet substrate instead of flattening cells into owner regions.
-  vec3 memorySubstrate = vec3(0.135 + nutrient * 0.13 + ridge * 0.08,
+  float worldScene = 1.0 - step(0.5, abs(uSceneMode - ${RENDER_SCENE.WORLD}.0));
+  float evolutionScene = 1.0 - step(0.5, abs(uSceneMode - ${RENDER_SCENE.EVOLUTION}.0));
+  float trophyScene = 1.0 - step(0.5, abs(uSceneMode - ${RENDER_SCENE.TROPHY}.0));
+  // Trophy retains its established atlas substrate. Evolution keeps the World
+  // geography calculated above and adds only local progression marks below.
+  vec3 trophySubstrate = vec3(0.135 + nutrient * 0.13 + ridge * 0.08,
     0.145 + moisture * 0.12 + forest * 0.11,
     0.125 + (1.0 - moisture) * 0.08 + ridge * 0.04);
-  base = mix(base, memorySubstrate, uMemory * 0.72);
+  base = mix(base, trophySubstrate, trophyScene * 0.72);
   float stress = clamp(vLife.y, 0.0, 1.0);
   float state = floor(vLife.z + 0.5);
-  float ordinary = 1.0 - uMemory;
+  float ordinary = worldScene;
   float stressed = (1.0 - step(0.5, abs(state - 3.0))) * ordinary;
   float critical = (1.0 - step(0.5, abs(state - 4.0))) * ordinary;
   float deadRemains = (1.0 - step(0.5, abs(state - 5.0))) * ordinary;
@@ -143,7 +147,8 @@ void main() {
   float ownedCell = s4 + s8 + s9 + s10;
   float ownedReadyCell = s8 + s10;
   float selectedReadyCell = s7 + s10;
-  vec3 branchColor = vec3(0.48, 0.58, 0.47); // Foundation
+  // Preserve the existing Trophy family palette exactly.
+  vec3 branchColor = vec3(0.48, 0.58, 0.47);
   if (atlasBranch < 1.5) branchColor = vec3(0.412, 0.678, 0.408); // Fertility
   else if (atlasBranch < 2.5) branchColor = vec3(0.333, 0.749, 0.820); // Freshwater
   else if (atlasBranch < 3.5) branchColor = vec3(0.761, 0.545, 0.259); // Scarcity
@@ -152,7 +157,7 @@ void main() {
   else branchColor = vec3(0.847, 0.678, 0.298); // Luminous
   float fossil = fract(vLife.z); float emphasis = step(31.0, vLife.z);
   float broadGlyph = smoothstep(0.38, 0.60, abs(sin(dot(vPos, vec3(11.0, 7.0, 5.0)) * (1.0 + atlasKind * 0.12))));
-  vec3 atlasBase = mix(memorySubstrate, vec3(0.30, 0.27, 0.22), fossil * 0.38);
+  vec3 atlasBase = mix(trophySubstrate, vec3(0.30, 0.27, 0.22), fossil * 0.38);
   atlasBase = mix(atlasBase, branchColor * (0.34 + inset * 0.13), lockedCell * (0.22 + inset * 0.12));
   atlasBase = mix(atlasBase, branchColor * 0.54, unaffordableCell * (0.26 + (1.0 - inset) * 0.10));
   atlasBase = mix(atlasBase, branchColor * 0.92, affordableCell * (0.36 + inset * 0.12));
@@ -166,7 +171,31 @@ void main() {
   atlasBase += selectedReadyCell * readyBreath * (readyCore * vec3(0.50, 0.56, 0.34)
     + readyRing * vec3(0.32, 0.38, 0.23) + readyPattern * vec3(0.08, 0.11, 0.06));
   atlasBase += emphasis * vec3(0.18, 0.22, 0.15) * inset;
-  base = mix(base, atlasBase, uMemory);
+  vec3 domainColor = vec3(0.48, 0.58, 0.47); // Foundation
+  if (atlasBranch > 0.5 && atlasBranch < 1.5) domainColor = vec3(0.412, 0.678, 0.408); // Fertility
+  else if (atlasBranch < 2.5 && atlasBranch > 1.5) domainColor = vec3(0.333, 0.749, 0.820); // Freshwater
+  else if (atlasBranch < 3.5 && atlasBranch > 2.5) domainColor = vec3(0.761, 0.545, 0.259); // Scarcity
+  else if (atlasBranch < 4.5 && atlasBranch > 3.5) domainColor = vec3(0.843, 0.929, 0.961); // Cryogenic
+  else if (atlasBranch < 5.5 && atlasBranch > 4.5) domainColor = vec3(0.192, 0.365, 0.659); // Marine
+  else if (atlasBranch > 5.5) domainColor = vec3(0.847, 0.678, 0.298); // Luminous
+  float glyphCore = smoothstep(0.99920, 0.99982, centerDot);
+  float glyphBand = smoothstep(0.99845, 0.99910, centerDot) * (1.0 - glyphCore);
+  float specializationGlyph = glyphCore * (0.52 + broadGlyph * 0.48);
+  float capstoneGlyph = max(glyphBand * (0.55 + broadGlyph * 0.45), glyphCore * broadGlyph);
+  float domainGlyph = atlasKind < 1.5 ? glyphCore : atlasKind < 2.5 ? specializationGlyph : capstoneGlyph;
+  float domainWeight = lockedCell * 0.10 + unaffordableCell * 0.18 + affordableCell * 0.38
+    + ownedCell * 0.30 + ownedReadyCell * 0.12;
+  vec3 evolutionBase = mix(base, domainColor, clamp(domainGlyph * domainWeight, 0.0, 0.62));
+  float readyStatus = clamp(affordableCell + ownedReadyCell, 0.0, 1.0);
+  evolutionBase = mix(evolutionBase, vec3(0.86, 0.84, 0.55),
+    glyphBand * readyStatus * (0.20 + selectedReadyCell * 0.16));
+  evolutionBase = mix(evolutionBase, vec3(0.42, 0.34, 0.23),
+    fossil * glyphBand * (0.18 + striation * 0.18));
+  evolutionBase += selectedStatus * glyphCore * vec3(0.12, 0.16, 0.12);
+  evolutionBase += selectedReadyCell * readyBreath * glyphCore * vec3(0.12, 0.14, 0.07);
+  evolutionBase += emphasis * glyphBand * vec3(0.14, 0.11, 0.04);
+  base = mix(base, evolutionBase, evolutionScene);
+  base = mix(base, atlasBase, trophyScene);
   vec3 n = normalize(vPos);
   vec3 light = normalize(vec3(-0.52, 0.72, 0.44) + normalize(uEye) * 0.58);
   float diffuse = max(dot(n, light), 0.0);

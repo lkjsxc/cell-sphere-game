@@ -79,6 +79,9 @@ Use these terms consistently:
 - `Evolution cell`: one visible and authoritative cell on the Evolution sphere.
 - `Evolution archetype`: an authored ability definition that may be carried by
   more than one Evolution cell.
+- `Evolution substrate`: the fixed deterministic presentation-only planet
+  beneath exact-cell progression. It has no World, simulation, reward, or
+  persistence authority.
 - `Echoes`: permanent progression currency unless explicitly renamed.
 - `History`: durable observation of prior moments and completed Worlds.
 - `Result`: the terminal summary of one World.
@@ -137,6 +140,13 @@ Evolution uses the same visible cellular scale as the maintained World globe.
 Every visible Evolution cell is an actual selectable and purchasable progression
 cell. A many-cell territory must not masquerade as one purchase unit.
 
+Evolution must also read at first glance as the same kind of coherent living
+planet as World. Its immutable presentation substrate uses contiguous large-scale
+geography and climate/biome regions, including meaningful land-water contrast.
+Archetype, domain, ownership, affordability, selection, and recent-change cues
+are secondary overlays; they must not turn the globe into uniform all-land noise
+or a dominant cell-by-cell color mosaic.
+
 WebGL2 and Canvas 2D communicate the same semantic state even when exact pixels
 differ. Accessibility, responsive behavior, reduced motion, forced colors,
 keyboard access, and bounded performance are product requirements.
@@ -163,7 +173,9 @@ is sufficient, or a generic Evolution graph editor.
 
 Do not add a renderer pass solely to conceal a defect that an existing pass can
 own. Do not add bloom merely to make Luminous visible. Do not increase simulation
-resolution to fix a cosmetic silhouette.
+resolution to fix a cosmetic silhouette. Do not use Evolution archetype/domain
+layout as planetary geography or change purchase topology to repair a
+presentation problem when a renderer-owned substrate can solve it.
 
 Do not create compatibility layers for retired current-only formats without an
 active maintained consumer. Do not maintain two authorities for the same rule.
@@ -596,18 +608,25 @@ large exact levels must not create `NaN`, infinity, overflow, immortal builds,
 unbounded loops, or unbounded compile cost. Bounded compiled effects and finite
 Worlds remain mandatory.
 
-The Evolution sphere should share World's cellular physical character without
-copying live World authority. Use the maintained cell scale, lighting, camera,
-and renderer architecture. Give the sphere stable, deterministic, organic
-per-cell material variation. Preserve archetype/domain identity inside each cell.
-Communicate owned, frontier, selected, recently strengthened, locked, and
-unaffordable state primarily through the exact cell's perimeter or inset edge,
-not a destructive multi-cell fill.
+The Evolution sphere must read immediately as a World-like living globe without
+copying the active or historical World. Use one fixed deterministic
+presentation-only planet substrate on the maintained topology, with coherent
+low-frequency land/water masses, coastlines, relief, climate, and biome-scale
+regions owned by maintained World-generation primitives or one deliberately
+shared pure presentation owner. Preserve World's cell scale, lighting, camera,
+material hierarchy, and renderer architecture. Archetype/domain identity and
+local progression state remain secondary local cues—perimeters, inset edges,
+small glyph or pattern accents, restrained material modulation, and text—not a
+dominant whole-cell patchwork. Do not change Evolution topology, adjacency, cell
+identity, persistence, economy, or compiled effects merely to repair
+presentation unless evidence proves one of those authorities is actually the
+cause.
 
-Selecting one cell may affect that cell and its incident presentation edges. It
-must not recolor or outline a many-cell territory. Ordinary cell material remains
-legible beneath progression state. Selection, recent change, Imprint, domain, and
-cost/readiness remain distinguishable through non-color cues as well as color.
+Selecting or strengthening one cell may affect that cell's secondary cue and its
+incident presentation edges. It must not regenerate the substrate or recolor or
+outline a many-cell territory. Ordinary cell material remains legible beneath
+progression state. Selection, recent change, Imprint, domain, and cost/readiness
+remain distinguishable through non-color cues as well as color.
 
 Do not expose thousands of simultaneous DOM controls. Accessibility uses a
 bounded native navigator for the selected cell, direct neighbors, stable
@@ -766,10 +785,20 @@ residual, not living or powered. Ordinary living interiors preserve biome and
 resource information. Luminous remains independent. Selection and History retain
 independent cues.
 
-Evolution also uses one shared cell/edge projection. Exact per-cell state, not a
-territory owner, drives both renderers. Selected and recently strengthened cells
-are local. Locked, reachable, owned, and affordable state must not erase the
-stable organic substrate or imply that a group of cells is one purchase.
+Evolution uses one shared immutable planet substrate plus one shared cell/edge
+progression projection. Both renderers consume the same land/water, biome,
+relief, and exact-cell semantic inputs. Exact per-cell state, not a territory
+owner, drives progression cues. Selected and recently strengthened cells are
+local. Locked, reachable, owned, and affordable state must not erase macro
+geography or imply that a group of cells is one purchase. At normal far framing,
+coherent substrate geography must dominate arbitrary cross-domain color changes;
+at near framing, archetype and state cues remain legible.
+
+Verify this hierarchy with semantic field invariants and relative production-
+browser measurements, not screenshots alone: land and water both exist in
+coherent components, biome-scale regions survive both backends, substrate
+contrast exceeds same-substrate cross-domain variation, and progression edge
+ordering remains truthful.
 
 Geography and life may share an existing boundary pass, but neither replaces the
 other. Do not add a pass when an existing pass can own the replacement. Do not

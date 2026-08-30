@@ -13,8 +13,10 @@ occurs on exactly one root cell.
 - `levels.js` keeps the sparse exact per-cell `evolutionLevels` vector.
 - `effects.js` compiles direct traits, habitats, ecology, worldmaking, Luminous,
   and bounded pressure defense with a bounded cache.
-- `scene.js` projects exact-cell state, deterministic substrate, fine Imprints,
-  and one shared edge classification for WebGL2 and Canvas 2D.
+- `scene.js` obtains one fixed-seed presentation-only planet from the maintained
+  World `createFields` owner, then projects exact-cell state, fine Imprints, and
+  one shared edge classification for WebGL2 and Canvas 2D. The substrate is
+  immutable for the topology lifetime and has no progression or World authority.
 
 A fresh progression can buy only the `First Division` root cell. Owning a cell
 opens only its direct unowned neighbors; owned cells remain refinable. A later

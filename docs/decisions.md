@@ -375,20 +375,9 @@ focused WebGL2/Canvas browser scenarios.
 
 ## D32 — Authored Evolution graph and cellular presentation are separate authorities
 
-Keep the existing frequency-2 graph as the sole authority for 42 skill IDs,
-roots, adjacency, costs, exact levels, purchases, and compiled effects. Project
-those sites deterministically onto the shared level-4 topology by stable
-spherical Voronoi ownership. All 2,562 fine cells have one owner; every territory
-is connected; the visible contact graph equals all 120 authored edges with no
-extra contact. One pure immutable owner supplies compact membership, semantic
-centroids/anchors, picking, scene projection, and edge classes.
+Keep the existing frequency-2 graph as the sole authority for 42 skill IDs, roots, adjacency, costs, exact levels, purchases, and compiled effects. Project those sites deterministically onto the shared level-4 topology by stable spherical Voronoi ownership. All 2,562 fine cells have one owner; every territory is connected; the visible contact graph equals all 120 authored edges with no extra contact. One pure immutable owner supplies compact membership, semantic centroids/anchors, picking, scene projection, and edge classes.
 
-Fine cell boundaries remain visible. Territory, selected, and recently upgraded
-perimeters reuse the existing WebGL boundary draw and Canvas boundary phase, so
-WebGL remains four draws. The semantic tree remains 42 items. ID-based meta and
-the compact frequency-2 Imprint record do not change or reset, and no fine map is
-persisted. Consequence: Evolution gains World-density physical character without
-new skills, filler, economy changes, renderer authority, or active-World effects.
+Fine cell boundaries remain visible. Territory, selected, and recently upgraded perimeters reuse the existing WebGL boundary draw and Canvas boundary phase, so WebGL remains four draws. The semantic tree remains 42 items. ID-based meta and the compact frequency-2 Imprint record do not change or reset, and no fine map is persisted. Consequence: Evolution gains World-density physical character without new skills, filler, economy changes, renderer authority, or active-World effects.
 
 ## D33 — Every visible Evolution cell is progression authority
 
@@ -397,3 +386,9 @@ Supersede D32 for current product behavior. The maintained level-4 topology is b
 Persist sparse exact local levels by cell. Sum them into exact aggregate archetype ranks; price the next occurrence through the existing target-level law at aggregate rank plus one; compile the same 42 ranks through the one production compiler. Repeated cells add spatial choice without multiplying cheap first levels or making location a hidden simulation rule.
 
 Picking, focus, transactions, fine Imprints, History, renderers, accessibility, and agents consume exact cells. One bounded native navigator replaces the 42-item tree. WebGL2 retains four draws and Canvas consumes the same edge semantics. Incompatible skill-ID levels, receipts, coarse Imprints, and Evolution History reset under current-only validation; no arbitrary migration maps old skills into new cells. D32 remains historical evidence for its terminal revision, but its graph/territory authority is deleted from current production.
+
+## D34 — Evolution presentation rests on one fixed World-derived planet
+
+Retain D33 as the sole progression authority, but stop treating its deliberately high-frequency archetype weave as geography. `createEvolutionFields` calls the maintained World `createFields` owner with fixed seed `0xe701c311` and constructs one immutable presentation-only substrate for the level-4 topology. Land/water, biomes, forest, relief, lakes, shores, and lighting establish the primary planetary hierarchy; purchases, profiles, Worlds, renderers, and animation never regenerate it.
+
+One World/Evolution/Trophy renderer scene discriminator preserves current World and Trophy material while Evolution adds only restrained cell-centered domain/kind glyphs, local state insets, fine Imprints, and the existing exact quiet/owned/frontier/recent/selected edges. Canvas begins from the same biome and water fields, and WebGL remains four draws. The predecessor all-land Evolution fields, broad Canvas biome override, `uMemory` material branch, and dominant whole-cell progression mosaic are superseded. Trophy keeps its prior fixed fields and atlas material byte-for-byte; progression topology, cell identity, layout, costs, compiler, transactions, persistence, agents, and World simulation remain unchanged.

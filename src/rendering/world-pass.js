@@ -8,6 +8,7 @@ import { sameWorldIdentity } from '../core/world-session.js';
 import { BOUNDARY_VERTICES_PER_EDGE, LIFE_EDGE_STRIDE, writeBoundaryLifeVertices,
   writeLifeEdges } from './life-edges.js';
 import { ATMOSPHERE_GEOMETRY } from './atmosphere-geometry.js';
+import { RENDER_SCENE, renderSceneMode } from './scene-mode.js';
 
 export class WorldPass {
   constructor(gl, topo, fields) {
@@ -107,14 +108,14 @@ export class WorldPass {
     const cells = this.geometry.vertexCell;
     if (!snapshot) { this.lifeData.fill(0); this.ecologyData.fill(0); this.lifeEdgeData.fill(0); }
     else {
-      const memory = snapshot.status === 'evolution' || snapshot.status === 'trophies';
+      const sceneMode = renderSceneMode(snapshot);
       for (let vertex = 0; vertex < cells.length; vertex++) {
         const cell = cells[vertex]; this.ecologyData[vertex * 4] = snapshot.resourceRichnessQ?.[cell] ?? 0;
         this.ecologyData[vertex * 4 + 1] = snapshot.resourceState?.[cell] ?? 0;
         this.ecologyData[vertex * 4 + 2] = snapshot.transformationState?.[cell] ?? 0;
         this.ecologyData[vertex * 4 + 3] = snapshot.electricityQ?.[cell] ?? 0;
-        if (memory) {
-          const evolution = snapshot.status === 'evolution';
+        if (sceneMode !== RENDER_SCENE.WORLD) {
+          const evolution = sceneMode === RENDER_SCENE.EVOLUTION;
           this.lifeData[vertex * 3] = evolution ? snapshot.evolutionStatus[cell] : snapshot.memoryStatus[cell];
           this.lifeData[vertex * 3 + 1] = (evolution ? snapshot.evolutionDomain[cell] : snapshot.memoryBranch[cell])
             + (evolution ? snapshot.evolutionKind[cell] : snapshot.memoryKind[cell]) * 0.1;
@@ -128,11 +129,11 @@ export class WorldPass {
             ?? (snapshot.alive[cell] ? 1 : snapshot.biomass[cell] > 0 ? 5 : 0);
         }
       }
-      if (snapshot.status === 'evolution') {
+      if (sceneMode === RENDER_SCENE.EVOLUTION) {
         if (!(snapshot.evolutionEdge instanceof Uint8Array)
           || snapshot.evolutionEdge.length !== this.topo.edgeCount) throw new Error('invalid Evolution cell edges');
         this.lifeEdgeData.set(snapshot.evolutionEdge);
-      } else if (memory) this.lifeEdgeData.fill(0);
+      } else if (sceneMode === RENDER_SCENE.TROPHY) this.lifeEdgeData.fill(0);
       else writeLifeEdges(this.topo, snapshot.lifeState, this.lifeEdgeData);
     }
     writeBoundaryLifeVertices(this.lifeEdgeData, this.boundaryLifeData); this.edgeUpdateCount++;
@@ -142,13 +143,13 @@ export class WorldPass {
   }
   draw(vp, eye, snapshot, selectedNode, highlightedCells = [], time = 0, pulse = false, fixture = null) {
     if (this.disposed || !this.accepts(snapshot)) return false;
-    const gl = this.gl; this.uploadLife(snapshot);
+    const gl = this.gl; const sceneMode = renderSceneMode(snapshot); this.uploadLife(snapshot);
     const globe = this.programs.globe;
     gl.useProgram(globe.program);
     gl.uniformMatrix4fv(globe.u.get('uViewProj'), false, vp);
     gl.uniform3fv(globe.u.get('uEye'), eye);
     gl.uniform1f(globe.u.get('uEntropy'), snapshot?.entropy ?? 0);
-    gl.uniform1f(globe.u.get('uMemory'), ['evolution', 'trophies'].includes(snapshot?.status) ? 1 : 0);
+    gl.uniform1f(globe.u.get('uSceneMode'), sceneMode);
     gl.uniform1f(globe.u.get('uTime'), Number.isFinite(time) ? time : 0);
     gl.uniform1f(globe.u.get('uPulse'), pulse ? 1 : 0);
     gl.uniform1f(globe.u.get('uElectricityDevelopment'), Math.max(0, Math.min(1, snapshot?.luminousDevelopment ?? 0)));
@@ -170,7 +171,7 @@ export class WorldPass {
     gl.uniformMatrix4fv(boundary.u.get('uViewProj'), false, vp);
     gl.uniform3fv(boundary.u.get('uEye'), eye);
     gl.uniform1f(boundary.u.get('uEntropy'), snapshot?.entropy ?? 0);
-    gl.uniform1f(boundary.u.get('uMemory'), snapshot?.status === 'evolution' ? 1 : 0);
+    gl.uniform1f(boundary.u.get('uSceneMode'), sceneMode);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false); gl.bindVertexArray(this.boundaryVao);
     gl.drawElements(gl.TRIANGLES, this.geometry.boundaryIndices.length, gl.UNSIGNED_SHORT, 0);
