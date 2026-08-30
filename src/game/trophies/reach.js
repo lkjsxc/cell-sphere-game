@@ -16,5 +16,5 @@ export const REACH_TROPHIES = family('reach', [
   ['sustained-quarter', 'Lasting Continent', 'With twenty-eight Evolution cells, average 40% coverage with lake ecology.', all(n('sustainedCoverageBp', 4000), n('lakeEcologyWorld', 1), n('skillCount', 28))],
   ['gains-two-fifty', 'Twenty-Two Hundred Arrivals', 'With fourteen Evolution cells, record 2,200 Reach gains.', all(n('reachGains', 2200), n('skillCount', 14))],
   ['gains-seven-fifty', 'Thirty-Five Hundred Arrivals', 'With twenty-eight Evolution cells, record 3,500 Reach gains.', all(n('reachGains', 3500), n('skillCount', 28))],
-  ['gains-fifteen-hundred', 'Six Thousand Arrivals', 'With all forty-two Evolution cells, record 6,000 Reach gains.', all(n('reachGains', 6000), n('skillCount', 42))],
+  ['gains-fifteen-hundred', 'Six Thousand Arrivals', 'With forty-two Evolution cells, record 6,000 Reach gains.', all(n('reachGains', 6000), n('skillCount', 42))],
 ]);

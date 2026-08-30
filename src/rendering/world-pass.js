@@ -107,17 +107,20 @@ export class WorldPass {
     const cells = this.geometry.vertexCell;
     if (!snapshot) { this.lifeData.fill(0); this.ecologyData.fill(0); this.lifeEdgeData.fill(0); }
     else {
-      const memory = snapshot.status === 'memory' || snapshot.status === 'trophies';
+      const memory = snapshot.status === 'evolution' || snapshot.status === 'trophies';
       for (let vertex = 0; vertex < cells.length; vertex++) {
         const cell = cells[vertex]; this.ecologyData[vertex * 4] = snapshot.resourceRichnessQ?.[cell] ?? 0;
         this.ecologyData[vertex * 4 + 1] = snapshot.resourceState?.[cell] ?? 0;
         this.ecologyData[vertex * 4 + 2] = snapshot.transformationState?.[cell] ?? 0;
         this.ecologyData[vertex * 4 + 3] = snapshot.electricityQ?.[cell] ?? 0;
         if (memory) {
-          this.lifeData[vertex * 3] = snapshot.memoryStatus[cell];
-          this.lifeData[vertex * 3 + 1] = snapshot.memoryBranch[cell] + snapshot.memoryKind[cell] * 0.1;
-          this.lifeData[vertex * 3 + 2] = snapshot.memoryImprintWeight[cell]
-            + snapshot.memoryTier[cell] * 2 + snapshot.memoryEmphasis[cell] * 32;
+          const evolution = snapshot.status === 'evolution';
+          this.lifeData[vertex * 3] = evolution ? snapshot.evolutionStatus[cell] : snapshot.memoryStatus[cell];
+          this.lifeData[vertex * 3 + 1] = (evolution ? snapshot.evolutionDomain[cell] : snapshot.memoryBranch[cell])
+            + (evolution ? snapshot.evolutionKind[cell] : snapshot.memoryKind[cell]) * 0.1;
+          this.lifeData[vertex * 3 + 2] = (evolution ? snapshot.evolutionImprintWeight[cell] : snapshot.memoryImprintWeight[cell])
+            + (evolution ? snapshot.evolutionTier[cell] : snapshot.memoryTier[cell]) * 2
+            + (evolution ? snapshot.evolutionRecent[cell] : snapshot.memoryEmphasis[cell]) * 32;
         } else {
           this.lifeData[vertex * 3] = snapshot.alive[cell] ? Math.min(1, 0.25 + snapshot.biomass[cell] * 0.55) : 0;
           this.lifeData[vertex * 3 + 1] = snapshot.stress[cell];
@@ -125,10 +128,10 @@ export class WorldPass {
             ?? (snapshot.alive[cell] ? 1 : snapshot.biomass[cell] > 0 ? 5 : 0);
         }
       }
-      if (snapshot.status === 'memory') {
-        if (!(snapshot.memoryTerritoryEdge instanceof Uint8Array)
-          || snapshot.memoryTerritoryEdge.length !== this.topo.edgeCount) throw new Error('invalid Evolution territory edges');
-        this.lifeEdgeData.set(snapshot.memoryTerritoryEdge);
+      if (snapshot.status === 'evolution') {
+        if (!(snapshot.evolutionEdge instanceof Uint8Array)
+          || snapshot.evolutionEdge.length !== this.topo.edgeCount) throw new Error('invalid Evolution cell edges');
+        this.lifeEdgeData.set(snapshot.evolutionEdge);
       } else if (memory) this.lifeEdgeData.fill(0);
       else writeLifeEdges(this.topo, snapshot.lifeState, this.lifeEdgeData);
     }
@@ -145,11 +148,11 @@ export class WorldPass {
     gl.uniformMatrix4fv(globe.u.get('uViewProj'), false, vp);
     gl.uniform3fv(globe.u.get('uEye'), eye);
     gl.uniform1f(globe.u.get('uEntropy'), snapshot?.entropy ?? 0);
-    gl.uniform1f(globe.u.get('uMemory'), ['memory', 'trophies'].includes(snapshot?.status) ? 1 : 0);
+    gl.uniform1f(globe.u.get('uMemory'), ['evolution', 'trophies'].includes(snapshot?.status) ? 1 : 0);
     gl.uniform1f(globe.u.get('uTime'), Number.isFinite(time) ? time : 0);
     gl.uniform1f(globe.u.get('uPulse'), pulse ? 1 : 0);
     gl.uniform1f(globe.u.get('uElectricityDevelopment'), Math.max(0, Math.min(1, snapshot?.luminousDevelopment ?? 0)));
-    const selected = snapshot?.status !== 'memory' && Number.isInteger(selectedNode) ? selectedNode : -1;
+    const selected = snapshot?.status !== 'evolution' && Number.isInteger(selectedNode) ? selectedNode : -1;
     gl.uniform1f(globe.u.get('uHasSelection'), selected >= 0 ? 1 : 0);
     gl.uniform3fv(globe.u.get('uSelectedCenter'), selected >= 0
       ? this.topo.positions.subarray(selected * 3, selected * 3 + 3) : this.zero3);
@@ -167,7 +170,7 @@ export class WorldPass {
     gl.uniformMatrix4fv(boundary.u.get('uViewProj'), false, vp);
     gl.uniform3fv(boundary.u.get('uEye'), eye);
     gl.uniform1f(boundary.u.get('uEntropy'), snapshot?.entropy ?? 0);
-    gl.uniform1f(boundary.u.get('uMemory'), snapshot?.status === 'memory' ? 1 : 0);
+    gl.uniform1f(boundary.u.get('uMemory'), snapshot?.status === 'evolution' ? 1 : 0);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false); gl.bindVertexArray(this.boundaryVao);
     gl.drawElements(gl.TRIANGLES, this.geometry.boundaryIndices.length, gl.UNSIGNED_SHORT, 0);

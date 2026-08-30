@@ -4,7 +4,7 @@ import { RunController } from '../../src/simulation/simulator.js';
 import { REPLAY, REPLAY_VERSION } from '../../src/simulation/replay.js';
 import { scoreResult } from '../../src/game/scoring.js';
 import { RUN_PROTOCOL_VERSION, acceptsRunProtocol } from '../../src/core/run-protocol.js';
-import { compileEvolution, evolutionRunConfiguration, MEMORY_NODES } from '../../src/game/skills/index.js';
+import { EVOLUTION_ROOT_CELL, compileEvolution, evolutionRunConfiguration } from '../../src/game/skills/index.js';
 import { appendWorld, defaultHistory, loadHistory, normalizeHistoryEvents, saveHistory, serializeHistory } from '../../src/platform/history.js';
 
 function runFull(cfg, chunk = 50) { const controller = new RunController({ worldOrdinal: 1, ...cfg }); controller.start();
@@ -49,7 +49,7 @@ test('hundreds of inspections and snapshots remain observationally neutral', () 
 test('strain and permanent Evolution remain authoritative start inputs', () => {
   const pioneer = runFull({ seed: 31337, strainId: 'pioneer' }); const weaver = runFull({ seed: 31337, strainId: 'weaver' });
   assert.notEqual(pioneer.hash, weaver.hash);
-  const root = MEMORY_NODES[0]; const memory = compileEvolution({ evolutionLevels: [{ id: root.id, level: '1' }] });
+  const memory = compileEvolution({ evolutionLevels: [{ cell: EVOLUTION_ROOT_CELL, level: '1' }] });
   const evolved = runFull({ seed: 31337, ...evolutionRunConfiguration(memory) });
   assert.notEqual(evolved.hash, pioneer.hash); assert.equal(evolved.luminousEnabled, false);
 });
@@ -61,7 +61,7 @@ test('replay schema 9 contains only stable run creation inputs', () => {
 });
 
 test('owned direct Evolution is installed once as a static authoritative start input', () => {
-  const target = MEMORY_NODES.find((node) => node.id === 'first-division'); const memory = compileEvolution({ evolutionLevels: [{ id: target.id, level: '1' }] });
+  const memory = compileEvolution({ evolutionLevels: [{ cell: EVOLUTION_ROOT_CELL, level: '1' }] });
   const controller = new RunController({ seed: 9182, ...evolutionRunConfiguration(memory) }); controller.start(); controller.advance(1);
   assert.ok(controller.state.activeTraits.reach > 1.4); assert.equal(controller.state.luminous.enabled, false);
 });

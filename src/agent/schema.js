@@ -7,7 +7,7 @@ import { challengeDimensions, ENVIRONMENT_PROFILE_VERSION } from '../simulation/
 import { defaultMeta, validateMeta } from '../platform/storage.js';
 import { defaultHistory, validateHistory } from '../platform/history.js';
 
-export const AGENT_SAVE_SCHEMA = 6;
+export const AGENT_SAVE_SCHEMA = 7;
 export const AGENT_GOALS = Object.freeze([
   'balanced', 'breadth-first', 'depth-first', 'cheapest', 'diversity', 'weak', 'sustainability',
   'fertility', 'freshwater', 'scarcity', 'cryogenic', 'marine', 'luminous', 'worldmaking', 'reach-100',

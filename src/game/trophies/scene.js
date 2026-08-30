@@ -1,8 +1,8 @@
 /** Cellular renderer projection for the read-only Trophy Sphere. */
-import { createMemoryFields } from '../skills/scene.js';
+import { createEvolutionFields } from '../skills/scene.js';
 import { TROPHIES } from './index.js';
 export const TROPHY_STATUS = Object.freeze({ UNEARNED: 2, EARNED: 4, SELECTED_UNEARNED: 6, SELECTED_EARNED: 8 });
-export function createTrophyFields(topo) { return createMemoryFields(topo); }
+export function createTrophyFields(topo) { return createEvolutionFields(topo); }
 export function buildTrophySnapshot(topo, meta, selectedId = null, emphasizedIds = []) {
   if (topo.levels !== 2 || topo.nodeCount !== 162) throw new Error('Trophy Sphere requires the level-2 topology');
   const count = topo.nodeCount; const status = new Uint8Array(count); const branch = new Uint8Array(count);

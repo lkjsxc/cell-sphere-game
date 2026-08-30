@@ -1,44 +1,36 @@
 # Current status
 
-## Evolution Cellular Territories v1
+## Evolution Cell-by-Cell Authority v1
 
-- Evolution now renders the shared level-4 topology: 2,562 fine cells and 7,680
-  canonical edges grouped into the existing 42 authored skills. The frequency-2
-  graph remains authoritative for one `First Division` root, 120 adjacency
-  edges, costs, exact levels, transactions, and compilation.
-- Stable catalog-order spherical Voronoi ownership covers every cell exactly
-  once. All territory components equal one, sizes are `56–65`, all 120 authored
-  contacts appear, no nonadjacent skills touch, 36 exact ties resolve by catalog
-  order, and the diagnostic digest is `3fb3be93`.
-- Picking any fine cell resolves through the shared owner. State copies over the
-  whole territory; semantic centroids prevent large territories from weighting
-  focus. WebGL2 and Canvas consume one edge classification through their existing
-  boundary phases; WebGL remains four draws.
-- The 42-item semantic tree, first-select/later-purchase behavior, coarse
-  frequency-2 Imprints, meta schema 15, content hash `54b3576d`, compiler
-  versions `2/2/3/8`, rewards, agents, and active-World lockout remain unchanged.
-  Five predecessor/final authority fixtures have identical SHA-256
-  `975c32a7e742a5f0f7726a2706bf64788d1e6e4aee2faaacdfd5841f2218969c`.
-- Focused Chrome 152 Worker/WebGL2, fallback/WebGL2, and fallback/Canvas receipts
-  pass territory semantics, relative edge salience, forced colors, stable reduced
-  motion, 200% text at all eight maintained viewports, cached geometry/map,
-  unchanged-frame edge updates, and buffer/draw audits. Full production browser
-  scenarios pass Worker/WebGL2, fallback/WebGL2, and Worker/Canvas.
-- Same-host final p95 accepted-update/steady costs are `1.3/1.2 ms` WebGL and
-  `2.1/1.9 ms` Canvas. Warm entry p95 is `19.9 ms` WebGL and `6.1 ms` Canvas.
-  Exact baseline/final reports are ignored under `reports/`. Stable publication
-  revision `26d5b46d8bd0ebac3eb678bd263837a32216bfad` passes a fresh clean local
-  26-gate `npm run verify`, unit `222/222`, integration `73/73`, and a valid
-  `12,142 ticks/s` benchmark with unchanged hashes.
-- The implementation is published through successful Actions run `33287097917`,
-  verify job `99192076945`, Pages job `99193944919`, deployment `6162370597`,
-  and deployment status `17516681774`. Eleven cache-busted production assets
-  match local bytes exactly. Deployed Chrome 152 Worker/WebGL2,
-  fallback/WebGL2, and fallback/Canvas 2D receipts pass with SHA-256
-  `5630641c…`, `7900e4fa…`, and `3fd77746…`; all repeat the 2,562-cell / 42-owner
-  semantic digest `3fb3be93`, backend salience, responsive/accessibility gates,
-  reusable geometry, and zero browser errors. The canonical work package is
-  terminal and the work index has no active package.
+- The maintained level-4 topology is now both the visible and progression
+  topology: 2,562 stable Evolution cells and 7,680 direct canonical edges. One
+  purchase increments exactly one selected cell. Direct fine-cell adjacency is
+  the only frontier rule; the predecessor frequency-2 purchase graph and owner
+  projection are deleted.
+- A deterministic stratified cellular weave assigns the retained 42 authored
+  archetypes. Digest `db40b2ed` has one `First Division` root, 62–63 occurrences
+  of each non-root archetype, maximum same-archetype component size `1`, and
+  100% one-hop neighborhood diversity. Root neighbors are distinct Foundation
+  archetypes.
+- Sparse exact local levels sum into exact aggregate archetype ranks. The
+  retained target-level cost law consumes aggregate rank plus one, and the one
+  production compiler consumes the 42 ranks. Equal aggregate distributions
+  compile identically regardless of spatial placement.
+- Picking, focus, detail, History, fine Imprints, agent candidates, WebGL2, and
+  Canvas 2D use exact cell identities. The former 42-item tree is replaced by a
+  bounded native navigator exposing the current cell, five or six direct
+  neighbors, previous/next traversal, next ready cell, and one purchase action.
+  WebGL still uses four draws.
+- Current-only validation preserves independently valid non-Evolution meta while
+  resetting incompatible skill-ID levels, receipts, coarse Imprints, and
+  Evolution History. The current representation writes only sparse `{cell,
+  level}` entries with matching vector/layout/content identities.
+- Focused Chrome 152 Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D
+  receipts pass exact selection/purchase/frontier diffs, quiet < frontier <
+  selected edge salience, forced colors, reduced motion, 200% text at all eight
+  maintained viewports, bounded DOM, cached layout/geometry, zero steady edge
+  updates, and renderer parity. Final publication evidence remains owned by the
+  active canonical work package until its stopping rule is closed.
 
 ## Environment Pressure Differentiation v1
 
@@ -53,9 +45,9 @@
   deleted.
 - One current/next interpolation owner produces five live normalized pressures,
   aggregate severity, and profile identity from authoritative Level progress.
-  Snapshots, Result schema 10, fair-observation schema 7, History, the agent, and
+  Snapshots, Result schema 10, fair-observation schema 9, History, the agent, and
   Current Chronic Pressure consume it without exposing raw ratings or internal
-  coefficients. Run protocol 12, agent-save schema 6, semantic History 10,
+  coefficients. Run protocol 12, agent-save schema 7, semantic History 10,
   replay 9, SCORE 6, and the Environment schedule remain unchanged.
 - The metric surface displays Resource yield, Renewal, Climate, Toxicity, and
   Maintenance & transport as live whole percentages. Static accessible names,

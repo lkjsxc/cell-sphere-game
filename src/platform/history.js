@@ -13,8 +13,10 @@ const MAX_EVENTS = 80;
 const MAX_MEMORY_EVENTS = 128;
 const MAX_TROPHY_EVENTS = 128;
 const CELL_COUNT = 2562;
+export const EVOLUTION_HISTORY_VERSION = 2;
 
-export function defaultHistory() { return { schema: 10, worlds: [], evolution: [], trophies: [] }; }
+export function defaultHistory() { return { schema: 10, evolutionVersion: EVOLUTION_HISTORY_VERSION,
+  worlds: [], evolution: [], trophies: [] }; }
 function finiteInt(value, min = 0) { return Number.isFinite(value) && value >= min ? Math.floor(value) : null; }
 
 const SIM_EVENT = Object.freeze({
@@ -160,7 +162,7 @@ function validatePressureSummary(raw, worldProfileVersion = 0) {
 export function validateHistory(raw) {
   const out = defaultHistory(); if (!raw || typeof raw !== 'object' || raw.schema !== out.schema) return out;
   if(Array.isArray(raw.worlds))out.worlds=raw.worlds.slice(-HISTORY_WORLD_RETENTION*2).map(validateWorld).filter(Boolean).slice(-HISTORY_WORLD_RETENTION);
-  const evolution=Array.isArray(raw.evolution) ? raw.evolution : [];
+  const evolution=raw.evolutionVersion === EVOLUTION_HISTORY_VERSION && Array.isArray(raw.evolution) ? raw.evolution : [];
   out.evolution=evolution.slice(-MAX_MEMORY_EVENTS*2).map(validateEvolutionEvent).filter(Boolean).slice(-MAX_MEMORY_EVENTS);
   if(Array.isArray(raw.trophies))out.trophies=raw.trophies.slice(-MAX_TROPHY_EVENTS*2).map(validateTrophyEvent).filter(Boolean).slice(-MAX_TROPHY_EVENTS);
   return trimValidatedHistory(out).value;
@@ -239,15 +241,18 @@ export function appendTrophyEvents(history, ids, worldId = history.worlds.at(-1)
   }); return validateHistory({ ...source, worlds, trophies: [...source.trophies, ...added] });
 }
 function validateEvolutionEvent(raw, index) {
-  if (!raw || typeof raw !== 'object' || typeof raw.nodeId !== 'string'
-    || !/^[a-z][a-z-]{1,63}$/.test(raw.nodeId)) return null;
-  const oldLevel = normalizeProgressionInteger(raw.oldLevel, '0');
-  const newLevel=normalizeProgressionInteger(raw.newLevel,safeIncrement(oldLevel));
+  if (!raw || typeof raw !== 'object' || !Number.isInteger(raw.cell) || raw.cell < 0 || raw.cell >= CELL_COUNT
+    || typeof raw.archetypeId !== 'string' || !/^[a-z][a-z-]{1,63}$/.test(raw.archetypeId)) return null;
+  const oldLocalLevel = normalizeProgressionInteger(raw.oldLocalLevel, '0');
+  const newLocalLevel=normalizeProgressionInteger(raw.newLocalLevel,safeIncrement(oldLocalLevel));
+  const oldAggregateRank = normalizeProgressionInteger(raw.oldAggregateRank, '0');
+  const newAggregateRank=normalizeProgressionInteger(raw.newAggregateRank,safeIncrement(oldAggregateRank));
   const cost = normalizeProgressionInteger(raw.cost, '0');
   const balanceAfter = normalizeProgressionInteger(raw.balanceAfter ?? raw.balance, '0');
   const balanceBefore=normalizeProgressionInteger(raw.balanceBefore,safeAdd(balanceAfter,cost));
-  const event = { seq: finiteInt(raw.seq) ?? index, kind: 'evolution-level', nodeId: raw.nodeId,
-    oldLevel, newLevel, cost, balanceBefore, balanceAfter,
+  const event = { seq: finiteInt(raw.seq) ?? index, kind: 'evolution-cell-level', cell: raw.cell,
+    archetypeId: raw.archetypeId, oldLocalLevel, newLocalLevel, oldAggregateRank, newAggregateRank,
+    cost, balanceBefore, balanceAfter,
     run: normalizeProgressionInteger(raw.run, '0'),
     bestEnvironmentLevelReached: normalizeEnvironmentLevel(raw.bestEnvironmentLevelReached, '0') };
   if (typeof raw.transactionKey === 'string' && raw.transactionKey.length > 0 && raw.transactionKey.length <= 128)

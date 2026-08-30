@@ -10,7 +10,8 @@ import {
   compileChallengeProfile,
   pressureForNetRating,
 } from '../../src/simulation/challenge-profile.js';
-import { MEMORY_NODE_IDS, compileEvolution, evolutionRunConfiguration } from '../../src/game/skills/index.js';
+import { compileEvolution, evolutionRunConfiguration } from '../../src/game/skills/index.js';
+import { evolutionRepresentativeLevels } from '../lib.mjs';
 import { scoreResult } from '../../src/game/scoring.js';
 import {
   ENVIRONMENT_SCHEDULE_HASH, environmentLevelAtTick, environmentScheduleAtTick, environmentTickForLevel,
@@ -28,8 +29,8 @@ const externalBudgetTicks = smoke ? 10_000 : 20_000;
 const levels = ['0', '1', '2', '3', '4', '8', '32'];
 const started = performance.now();
 const fresh = compileEvolution({});
-const breadth = compileEvolution({ evolutionLevels: MEMORY_NODE_IDS.map((id) => ({ id, level: '1' })) });
-const deep = compileEvolution({ evolutionLevels: MEMORY_NODE_IDS.map((id) => ({ id, level: '10' })) });
+const breadth = compileEvolution({ evolutionLevels: evolutionRepresentativeLevels('1') });
+const deep = compileEvolution({ evolutionLevels: evolutionRepresentativeLevels('10') });
 const huge = `1${'0'.repeat(512)}`;
 const compilerLevels = [...levels, '1000000', huge];
 const compiler = compilerLevels.map((level) => {
@@ -124,7 +125,7 @@ writeFileSync(`reports/environment-level-audit-${smoke ? 'smoke' : 'full'}.json`
 console.log(JSON.stringify(report, null, 2));
 if (!report.valid) process.exitCode = 1;
 
-function uniformEvolution(level) { return compileEvolution({ evolutionLevels: MEMORY_NODE_IDS.map((id) => ({ id, level })) }); }
+function uniformEvolution(level) { return compileEvolution({ evolutionLevels: evolutionRepresentativeLevels(level) }); }
 function runWorld(seed, evolution, budget) {
   const controller = new RunController({ seed, worldOrdinal: '20', ...evolutionRunConfiguration(evolution) });
   controller.start();

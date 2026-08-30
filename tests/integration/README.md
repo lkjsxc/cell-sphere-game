@@ -8,10 +8,10 @@ Production-module whole-run and cross-boundary tests.
   0.25×–1.5× ladder plus the relative 0.25×–64× developer ladder, bounded
   terminal behavior, exactly-once replacement/result/frontier transactions, and
   repeated lifecycle safety.
-- `skill-globe.test.js` protects the authored 42-skill graph, its single-root
-  physical frontier, the 2,562-cell territorial scene, compact Imprint
-  projection, unlimited owned-skill upgrades, exact debit, stale
-  expected-level/revision rejection, and direct compiled effects.
+- `skill-globe.test.js` protects the 2,562-cell authority, deterministic
+  42-archetype weave, single-root direct frontier, fine Imprints, unlimited
+  owned-cell refinement, exact debit, stale local/aggregate/revision rejection,
+  and aggregate-equivalent compiled effects.
 - `history-codec.test.js` protects current bounded History, exact decimal
   purchase/Environment records, strict visual-bundle decoding, thinning, stale
   guards, storage fallback, and recorder neutrality.

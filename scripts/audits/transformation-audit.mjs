@@ -2,9 +2,10 @@
 /** Production transformation, reclamation, electricity, and score-bound audit. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../../src/simulation/simulator.js';
-import { compileEvolution, evolutionRunConfiguration, MEMORY_NODE_IDS } from '../../src/game/skills/index.js';
+import { compileEvolution, evolutionRunConfiguration } from '../../src/game/skills/index.js';
+import { evolutionRepresentativeLevels } from '../lib.mjs';
 
-const count=integerArg('--count=',24);const breadth=compileEvolution({evolutionLevels:MEMORY_NODE_IDS.map((id)=>({id,level:'1'}))});
+const count=integerArg('--count=',24);const breadth=compileEvolution({evolutionLevels:evolutionRepresentativeLevels('1')});
 const fresh=compileEvolution({evolutionLevels:[]});const rows=[],untouched=[];const started=performance.now();
 for(let index=0;index<count;index++)rows.push(run((0x7472616e+Math.imul(index,0x9e3779b1))>>>0,breadth,20));
 for (let index = 0; index < Math.min(12, count); index++) untouched.push(run((0x66726565 + Math.imul(index, 0x85ebca6b)) >>> 0, fresh, 1));

@@ -13,9 +13,9 @@ test('all fair action shapes use production exact transactions and Level-0 autho
   const env = createAgentEnvironment(defaultAgentSave(77));
   assert.equal(env.act({ type: 'observe' }).accepted, true);
   assert.equal(env.act({ type: 'wat' }).reason, 'unknown-action');
-  assert.equal(env.act({ type: 'buy-evolution-level', cellId: 'not-a-cell' }).reason, 'unknown-cell');
+  assert.equal(env.act({ type: 'buy-evolution-level', cell: 'not-a-cell' }).reason, 'unknown-cell');
   const initial = env.observe();
-  assert.equal(env.act({ type: 'buy-retired-action', cellId: initial.availableEvolutionCells[0].id, expectedLevel: '0',
+  assert.equal(env.act({ type: 'buy-retired-action', cell: initial.availableEvolutionCells[0].cell, expectedLocalLevel: '0',
     expectedRevision: initial.metaRevision }).reason, 'unknown-action');
   assert.equal(env.act({ type: 'set-goal', goal: 'not-public' }).reason, 'unknown-goal');
   assert.equal(env.act({ type: 'set-goal', goal: 'freshwater' }).accepted, true);
@@ -35,14 +35,14 @@ test('all fair action shapes use production exact transactions and Level-0 autho
   assert.equal(after.meta.totalEchoes, completed.result.echoes); assert.equal(after.history.worlds[0].score, completed.result.score);
   const option = env.observe().availableEvolutionCells.find((cell) => cell.affordable);
   assert.ok(option, 'first result should finance a reachable cell');
-  const bought = env.act({ type: 'buy-evolution-level', cellId: option.id, expectedLevel: option.currentLevel,
-    expectedRevision: env.observe().metaRevision });
+  const bought = env.act({ type: 'buy-evolution-level', cell: option.cell, expectedLocalLevel: option.localLevel,
+    expectedAggregateRank: option.aggregateRank, expectedRevision: env.observe().metaRevision });
   assert.equal(bought.accepted, true); assert.equal(bought.reason, 'evolution-level-purchased');
-  assert.equal(env.exportSave().history.evolution.length, 1); assert.equal(bought.purchase.newLevel, '1');
-  const repeat = env.act({ type: 'buy-evolution-level', cellId: option.id });
+  assert.equal(env.exportSave().history.evolution.length, 1); assert.equal(bought.purchase.newLocalLevel, '1');
+  const repeat = env.act({ type: 'buy-evolution-level', cell: option.cell });
   assert.equal(repeat.reason, 'missing-precondition'); assert.equal(env.exportSave().history.evolution.length, 1);
   assert.equal(env.act({ type: 'inspect-last-result' }).accepted, true); assert.equal(env.act({ type: 'inspect-evolution' }).accepted, true);
-  assert.equal(env.act({ type: 'export' }).save.schema, 6);
+  assert.equal(env.act({ type: 'export' }).save.schema, 7);
   assert.equal(env.act({ type: 'reset', seed: -1 }).reason, 'invalid-seed'); assert.equal(env.act({ type: 'reset', seed: 77 }).accepted, true);
   assert.equal(env.exportSave().meta.runs, '0'); assert.equal(env.observe().lastResult, null);
 });
@@ -53,7 +53,7 @@ test('agents cannot select/retry static levels and external budget exhaustion is
     expectedWorldOrdinal: observation.worldOrdinal, environmentLevel: '2' }).reason, 'static-environment-actions-retired');
   const started = env.act({ type: 'start-world', expectedRevision: observation.metaRevision,
     expectedWorldOrdinal: observation.worldOrdinal });
-  assert.equal(started.reason, 'world-started'); assert.equal(started.observation.schema, 7);
+  assert.equal(started.reason, 'world-started'); assert.equal(started.observation.schema, 9);
   assert.equal(started.observation.activeWorld.currentEnvironmentLevel, '0');
   const pressure = started.observation.activeWorld.environmentPressureSummary;
   assert.equal(pressure.level, '0'); assert.equal(pressure.nextLevel, '1'); assert.equal(pressure.interpolationQ, 0);
@@ -80,8 +80,8 @@ test('agents cannot alter a World’s compiled Evolution before its terminal set
   assert.ok(target, 'completed World should finance a reachable Evolution cell');
   assert.equal(env.act({ type: 'start-world', expectedRevision: betweenWorlds.metaRevision,
     expectedWorldOrdinal: betweenWorlds.worldOrdinal }).reason, 'world-started');
-  const attempted = env.act({ type: 'buy-evolution-level', cellId: target.id, expectedLevel: target.currentLevel,
-    expectedRevision: betweenWorlds.metaRevision });
+  const attempted = env.act({ type: 'buy-evolution-level', cell: target.cell, expectedLocalLevel: target.localLevel,
+    expectedAggregateRank: target.aggregateRank, expectedRevision: betweenWorlds.metaRevision });
   assert.equal(attempted.accepted, false); assert.equal(attempted.reason, 'world-active');
   const completed = env.act({ type: 'continue-world', budgetTicks: 10_000 });
   assert.equal(completed.reason, 'world-completed');

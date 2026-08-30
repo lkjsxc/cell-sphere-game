@@ -92,6 +92,10 @@
 .skill-detail { width: clamp(20rem, 27vw, 28rem); }.surface-body { min-width: 0; min-height: 0; overflow: auto; scrollbar-gutter: stable; padding: var(--sp-3) 2px; }
 .surface-actions { display: flex; gap: var(--sp-2); align-items: center; justify-content: flex-end; padding-top: var(--sp-3); border-top: 1px solid var(--border-faint); }
 #memory-unlock { width: 100%; }.skill-change { color: var(--action-available); font-size: var(--fs-caption); }
+.evolution-navigator { display: grid; gap: var(--sp-2); margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px solid var(--border-faint); }
+.evolution-traversal, .evolution-neighbors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+.evolution-traversal .btn, .evolution-neighbors .btn { min-width: 0; min-height: var(--touch-min); padding-inline: var(--sp-2); white-space: normal; }
+.evolution-traversal #evolution-frontier { grid-column: 1 / -1; }
 .skill-change.skill-acquired { padding: var(--sp-3); border: 1px solid var(--action-available); border-radius: var(--radius-s); background: rgba(95, 148, 112, .18); animation: skill-acquired 5s var(--ease-out) both; }
 @keyframes skill-acquired { 0% { opacity: 0; transform: translateY(.4rem); } 8%, 86% { opacity: 1; transform: none; } 100% { opacity: 0; } }
 #surface-scrim { position: absolute; inset: 0; z-index: calc(var(--z-sheet) - 1); pointer-events: none; background: rgba(3, 5, 6, .16); }
@@ -115,6 +119,14 @@
   .hud-bottom { align-items: end; }.rail-btn { height: 44px; padding-inline: 2px; overflow: hidden; }
   .time-dial { width: var(--touch-min); height: var(--touch-min); }.speed-control select { width: 58px; height: 44px; padding: 0 2px; font-size: 12px; }
   .rail-btn span { display: inline; }
+}
+@media (max-width: 390px) {
+  .evolution-traversal, .evolution-neighbors { grid-template-columns: 1fr; }
+  .evolution-traversal #evolution-frontier { grid-column: auto; }
+}
+@media (forced-colors: active) {
+  .evolution-navigator { border-color: CanvasText; }
+  .evolution-traversal .btn, .evolution-neighbors .btn { border: 1px solid ButtonText; }
 }
 @media (max-width: 410px) { .corner-nav { gap: 0; }.quiet-btn { padding: 0 var(--sp-2); }.command-rail { width: auto; } }
 @media (min-width: 600px) and (max-width: 899px) { .command-rail { width: auto; grid-template-columns: 104px 68px; } }

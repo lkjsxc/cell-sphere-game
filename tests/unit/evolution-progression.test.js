@@ -1,56 +1,98 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { EVOLUTION_COMPILER_VERSIONS, EVOLUTION_COST_VERSION, MEMORY_CELL_BY_ID, MEMORY_NODES, MEMORY_ROOT_IDS,
-  availableMemoryNodes, compileEvolution, evolutionCellState, evolutionCostForTargetLevel, evolutionLevel, getMemoryAdjacentIds,
-  normalizeEvolutionLevels, purchaseEvolutionLevel, validateMemoryGraph } from '../../src/game/skills/index.js';
+import {
+  EVOLUTION_ARCHETYPES, EVOLUTION_COMPILER_VERSIONS, EVOLUTION_COST_VERSION, EVOLUTION_LAYOUT,
+  EVOLUTION_ROOT_CELL, EVOLUTION_TOPOLOGY, availableEvolutionCells, buildEvolutionProjection,
+  compileEvolution, evolutionArchetypeForCell, evolutionCellState, evolutionCostForTargetLevel,
+  evolutionLevel, getEvolutionAdjacentCells, normalizeEvolutionLevels, purchaseEvolutionLevel,
+  validateEvolutionAuthority,
+} from '../../src/game/skills/index.js';
 import { compareProgressionIntegers } from '../../src/core/progression-integer.js';
 import { defaultMeta } from '../../src/platform/storage.js';
 
-test('authored Evolution graph has 42 skills and one general-survival root', () => {
-  const graph = validateMemoryGraph();
-  assert.equal(graph.valid, true); assert.equal(graph.topologyFrequency, 2); assert.equal(graph.topologyCells, 42);
-  assert.deepEqual(MEMORY_ROOT_IDS, ['first-division']); assert.equal(MEMORY_NODES.length, 42);
-  assert.equal(new Set(Object.values(MEMORY_CELL_BY_ID)).size, 42);
-  assert.ok(MEMORY_NODES.every((node) => node.nameEn && node.summary && node.description && node.effects.length));
-  assert.ok(getMemoryAdjacentIds('first-division').every((id) => MEMORY_NODES.find((node) => node.id === id)?.domain === 'Foundation'));
+test('Evolution uses one validated level-4 cell authority and a deterministic archetype weave', () => {
+  const authority = validateEvolutionAuthority(); const layout = EVOLUTION_LAYOUT.diagnostics;
+  assert.equal(authority.valid, true); assert.deepEqual([EVOLUTION_TOPOLOGY.nodeCount, EVOLUTION_TOPOLOGY.edgeCount], [2562, 7680]);
+  assert.equal(EVOLUTION_ARCHETYPES.length, 42); assert.equal(layout.rootCount, 1); assert.equal(EVOLUTION_ROOT_CELL, 0);
+  assert.equal(evolutionArchetypeForCell(EVOLUTION_ROOT_CELL).id, 'first-division');
+  assert.deepEqual([layout.minNonRootCount, layout.maxNonRootCount], [62, 63]);
+  assert.ok(layout.largestComponent <= 8); assert.ok(layout.neighborhoodDiversity >= .95);
+  assert.match(layout.digest, /^[0-9a-f]{8}$/);
+  assert.ok(EVOLUTION_ARCHETYPES.every((archetype) => archetype.nameEn && archetype.summary
+    && archetype.description && archetype.effects.length));
+  const ring = getEvolutionAdjacentCells(EVOLUTION_ROOT_CELL).map(evolutionArchetypeForCell);
+  assert.ok(ring.every((archetype) => archetype.domain === 'Foundation'));
+  assert.equal(new Set(ring.map((archetype) => archetype.id)).size, ring.length);
 });
 
-test('fresh progression exposes only First Division and physical adjacency controls the frontier', () => {
-  const fresh = { ...defaultMeta(), echoBalance: '1000' }; const available = availableMemoryNodes(fresh);
-  assert.deepEqual(available.map((node) => node.id), ['first-division']);
-  const root = purchase(fresh, 'first-division', 'root'); assert.equal(root.ok, true);
-  const next = availableMemoryNodes(root.meta).filter((node) => !node.owned).map((node) => node.id).sort();
-  assert.deepEqual(next, [...getMemoryAdjacentIds('first-division')].sort());
-  const distant = MEMORY_NODES.find((node) => node.id === 'living-biosphere');
+test('fresh progression exposes only First Division and direct fine adjacency owns the frontier', () => {
+  const fresh = { ...defaultMeta(), echoBalance: '1000' }; const projection = buildEvolutionProjection(fresh);
+  assert.deepEqual(availableEvolutionCells(projection), [EVOLUTION_ROOT_CELL]);
+  const root = purchase(fresh, EVOLUTION_ROOT_CELL, 'root'); assert.equal(root.ok, true);
+  assert.deepEqual(availableEvolutionCells(root.meta).filter((cell) => evolutionLevel(root.meta, cell) === '0').sort((a, b) => a - b),
+    [...getEvolutionAdjacentCells(EVOLUTION_ROOT_CELL)].sort((a, b) => a - b));
+  const distant = EVOLUTION_LAYOUT.rootDistance.findIndex((distance) => distance > 1);
   assert.equal(evolutionCellState(root.meta, distant).reason, 'adjacency-required');
 });
 
-test('second activation transaction spends exactly once and stale or duplicate commands never spend', () => {
-  const meta = { ...defaultMeta(), echoBalance: '1000' }; const first = purchase(meta, 'first-division', 'once');
-  assert.equal(first.ok, true); assert.equal(first.newLevel, '1'); assert.equal(evolutionLevel(first.meta, 'first-division'), '1');
-  const duplicate = purchaseEvolutionLevel(first.meta, 'first-division', { transactionKey: 'once', expectedLevel: '1', expectedRevision: first.meta.revision });
-  assert.equal(duplicate.ok, false); assert.equal(duplicate.reason, 'duplicate-transaction'); assert.equal(duplicate.balanceAfter, first.meta.echoBalance);
-  const stale = purchaseEvolutionLevel(first.meta, 'reliable-budding', { transactionKey: 'stale', expectedLevel: '0', expectedRevision: '0' });
-  assert.equal(stale.ok, false); assert.equal(stale.reason, 'stale-revision'); assert.equal(stale.balanceAfter, first.meta.echoBalance);
+test('one transaction changes one local level and rejects duplicate, stale, malformed, and active-World commands without spend', () => {
+  const meta = { ...defaultMeta(), echoBalance: '1000' }; const first = purchase(meta, EVOLUTION_ROOT_CELL, 'once');
+  assert.equal(first.ok, true); assert.equal(first.newLocalLevel, '1'); assert.equal(first.newAggregateRank, '1');
+  assert.deepEqual(first.meta.evolutionLevels, [{ cell: EVOLUTION_ROOT_CELL, level: '1' }]);
+  const state = evolutionCellState(first.meta, EVOLUTION_ROOT_CELL);
+  const base = { expectedLocalLevel: state.localLevel, expectedAggregateRank: state.aggregateRank,
+    expectedRevision: first.meta.revision };
+  const cases = [
+    ['duplicate-transaction', { ...base, transactionKey: 'once' }],
+    ['stale-local-level', { ...base, expectedLocalLevel: '0', transactionKey: 'stale-local' }],
+    ['stale-aggregate-rank', { ...base, expectedAggregateRank: '0', transactionKey: 'stale-rank' }],
+    ['stale-revision', { ...base, expectedRevision: '0', transactionKey: 'stale-revision' }],
+    ['world-active', { ...base, transactionKey: 'active', activeWorld: true }],
+    ['invalid-precondition', { ...base, expectedLocalLevel: '-1', transactionKey: 'malformed' }],
+  ];
+  for (const [reason, command] of cases) {
+    const result = purchaseEvolutionLevel(first.meta, EVOLUTION_ROOT_CELL, command);
+    assert.equal(result.ok, false); assert.equal(result.reason, reason); assert.equal(result.spent, '0');
+    assert.equal(result.balanceAfter, first.meta.echoBalance); assert.equal(result.meta, first.meta);
+  }
+  assert.equal(purchaseEvolutionLevel(first.meta, -1, { ...base, transactionKey: 'invalid-cell' }).reason, 'unknown-cell');
 });
 
-test('costs remain exact and monotone at repeated and huge levels', () => {
-  const root = MEMORY_NODES.find((node) => node.id === 'first-division'); const levels = ['1', '2', '3', '10', `1${'0'.repeat(256)}`];
-  const costs = levels.map((level) => evolutionCostForTargetLevel(root, level));
+test('repeated cells share one exact aggregate-rank cost sequence and one compiler', () => {
+  const archetypeIndex = EVOLUTION_LAYOUT.archetypeByCell.findIndex((index) => index > 0);
+  const cells = Array.from(EVOLUTION_LAYOUT.archetypeByCell).flatMap((index, cell) => index === archetypeIndex ? [cell] : []);
+  assert.ok(cells.length >= 2); const archetype = EVOLUTION_ARCHETYPES[archetypeIndex]; const [left, right] = cells;
+  const firstRank = { ...defaultMeta(), echoBalance: '999999', evolutionLevels: [{ cell: left, level: '1' }] };
+  const rightState = evolutionCellState(firstRank, right);
+  assert.equal(rightState.localLevel, '0'); assert.equal(rightState.aggregateRank, '1');
+  assert.equal(rightState.nextCost, evolutionCostForTargetLevel(archetype, '2'));
+  assert.ok(compareProgressionIntegers(rightState.nextCost, evolutionCostForTargetLevel(archetype, '1')) > 0);
+  const concentrated = compileEvolution({ evolutionLevels: [{ cell: left, level: '2' }] });
+  const distributed = compileEvolution({ evolutionLevels: [{ cell: left, level: '1' }, { cell: right, level: '1' }] });
+  assert.deepEqual(distributed, concentrated);
+});
+
+test('costs remain exact and monotone at huge aggregate ranks', () => {
+  const archetype = EVOLUTION_ARCHETYPES[0]; const levels = ['1', '2', '3', '10', `1${'0'.repeat(256)}`];
+  const costs = levels.map((level) => evolutionCostForTargetLevel(archetype, level));
   assert.ok(costs.every((cost, index) => index === 0 || compareProgressionIntegers(cost, costs[index - 1]) > 0));
   assert.equal(EVOLUTION_COST_VERSION, 2); assert.equal(EVOLUTION_COMPILER_VERSIONS.cost, 2);
+  const huge = compileEvolution({ evolutionLevels: [{ cell: EVOLUTION_ROOT_CELL, level: levels.at(-1) }] });
+  assert.ok(Object.values(huge.effects).every(Number.isFinite)); assert.ok(Object.values(huge.ecology).every(Number.isFinite));
 });
 
-test('direct compilation produces causal ecology and first Luminous ownership enables charge immediately', () => {
-  const levels = [{ id: 'first-division', level: '1' }, { id: 'reliable-budding', level: '1' }, { id: 'bioelectric-spark', level: '1' }];
-  const compiled = compileEvolution({ ...defaultMeta(), evolutionLevels: levels });
-  assert.equal(compiled.luminous.enabled, true); assert.ok(compiled.luminous.generationScale > 0); assert.ok(compiled.luminous.visualDevelopment > 0);
-  assert.ok(compiled.luminous.upkeepScale > 1); const mature = compileEvolution({ evolutionLevels: [...levels,
-    { id: 'powered-transport', level: '1' }, { id: 'deep-current', level: '1' }, { id: 'luminous-crown', level: '1' }] });
-  assert.ok(mature.luminous.upkeepScale < compiled.luminous.upkeepScale);
-  assert.ok(compiled.effects.reach > 1); assert.equal(compiled.habitatCapabilities.length, 0); assert.deepEqual(compiled.worldmaking, { reclamation: false, cryolake: false, littoral: false });
-  const normalized = normalizeEvolutionLevels({ evolutionLevels: [...levels, { id: 'removed-id', level: '9' }] });
-  assert.equal(normalized.length, 3);
+test('sparse cell vectors are canonical and invalid documents reset as one untrusted unit', () => {
+  assert.deepEqual(normalizeEvolutionLevels({ evolutionLevels: [{ cell: 9, level: '2' }, { cell: 1, level: '3' }] }),
+    [{ cell: 1, level: '3' }, { cell: 9, level: '2' }]);
+  for (const evolutionLevels of [
+    [{ cell: 1, level: '0' }], [{ cell: 1, level: '1' }, { cell: 1, level: '2' }],
+    [{ cell: -1, level: '1' }], [{ cell: 2562, level: '1' }], [{ cell: 1, level: '01' }],
+    [{ cell: 1, level: '1', id: 'old' }],
+  ]) assert.deepEqual(normalizeEvolutionLevels({ evolutionLevels }), []);
 });
-function purchase(meta, id, key) { const state = evolutionCellState(meta, id, id); return purchaseEvolutionLevel(meta, id,
-  { transactionKey: key, expectedLevel: state.currentLevel, expectedRevision: meta.revision }); }
+
+function purchase(meta, cell, key) {
+  const state = evolutionCellState(meta, cell, cell);
+  return purchaseEvolutionLevel(meta, cell, { transactionKey: key, expectedLocalLevel: state.localLevel,
+    expectedAggregateRank: state.aggregateRank, expectedRevision: meta.revision });
+}

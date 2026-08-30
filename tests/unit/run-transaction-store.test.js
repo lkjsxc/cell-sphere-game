@@ -18,13 +18,14 @@ test('successful bundle commit clears recovery journal only after both verified 
  assert.equal(recoverRunTransaction(storage),null);});
 test('current WAL schema validates current documents', () => {
  const storage=memoryStorage(),key='current-wal',meta={...defaultMeta(),resultKeys:[key]},history=defaultHistory();
- storage.setItem(STORAGE_KEYS.resultTransaction, JSON.stringify({schema:5,kind:'run',key,meta,history}));
+ storage.setItem(STORAGE_KEYS.resultTransaction, JSON.stringify({schema:6,kind:'run',key,meta,history}));
  const recovered=recoverRunTransaction(storage);assert.equal(recovered.kind,'run');assert.equal(recovered.key,key);
  assert.equal(recovered.meta.schema,15);assert.equal(recovered.history.schema,10);
 });
 test('Evolution level, exact debit, and History recover from the same WAL',()=>{const storage=memoryStorage();const key='evolution:0:cell:0:1';
- const meta={...defaultMeta(),revision:'1',echoBalance:'92',evolutionLevels:[{id:'first-division',level:'1'}],evolutionTransactionKeys:[key]};
- const evidence={transactionKey:key,nodeId:'first-division',oldLevel:'0',newLevel:'1',cost:'8',balanceBefore:'100',balanceAfter:'92',run:'0'};
+ const meta={...defaultMeta(),revision:'1',echoBalance:'92',evolutionLevels:[{cell:0,level:'1'}],evolutionTransactionKeys:[key]};
+ const evidence={transactionKey:key,cell:0,archetypeId:'first-division',oldLocalLevel:'0',newLocalLevel:'1',
+   oldAggregateRank:'0',newAggregateRank:'1',cost:'8',balanceBefore:'100',balanceAfter:'92',run:'0'};
  const history=appendEvolutionEvent(defaultHistory(),evidence);assert.equal(appendEvolutionEvent(history,evidence).evolution.length,1);
  storage.fail=STORAGE_KEYS.history;assert.equal(saveProgressionTransaction(meta,history,{kind:'evolution',key},storage),false);
  storage.fail=null;const recovered=recoverRunTransaction(storage);assert.equal(recovered.kind,'evolution');assert.equal(recovered.meta.echoBalance,'92');

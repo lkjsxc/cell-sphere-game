@@ -3,7 +3,7 @@ import { STORAGE_KEYS } from '../core/identity.js';
 import { validateHistory } from './history.js';
 import { validateMeta } from './storage.js';
 
-export const PROGRESSION_TRANSACTION_SCHEMA = 5;
+export const PROGRESSION_TRANSACTION_SCHEMA = 6;
 
 export function saveProgressionTransaction(meta, history, options = {}, storage = browserStorage()) {
   if (!storage?.getItem || !storage?.setItem) return false;

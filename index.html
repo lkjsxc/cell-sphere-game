@@ -76,7 +76,6 @@
         <div class="evolution-identity"><span class="eyebrow">PERMANENT EVOLUTION</span><strong>Evolution Globe</strong><span id="evolution-line" class="evolution-line">Shape what every future world inherits.</span><span><b id="memory-balance">0</b> Echoes · <span id="memory-available">0 levels ready</span></span><span id="memory-environment">Every world begins at Environment Level 0.</span></div>
         <div class="memory-actions"><button id="restart-button" class="btn btn-primary" data-action="recommended" type="button" hidden>Next World</button><button class="btn btn-secondary menu-open" data-surface-trigger="menu" data-action="quiet" type="button">Menu</button></div>
       </div>
-      <div id="evolution-tree" class="sr-only" role="tree" aria-label="Evolution skill territories"></div>
     </section>
 
     <section id="trophy-screen" class="screen" data-scene="trophies" role="tabpanel" hidden aria-labelledby="scene-trophies trophy-heading">
@@ -103,8 +102,14 @@
     </section>
 
     <section id="memory-node-panel" class="context-surface skill-detail material-regular" hidden aria-labelledby="memory-node-heading">
-      <header><p id="memory-node-branch" class="eyebrow">EVOLUTION TERRITORY</p><button id="memory-node-close" class="close-btn" data-action="quiet" type="button">Close</button></header>
-      <div class="surface-body"><h2 id="memory-node-heading" tabindex="-1">Evolution Territory</h2><p id="memory-node-summary" class="panel-copy"></p><p id="memory-node-detail" class="panel-copy"></p><p id="memory-node-change" class="skill-change" hidden></p><dl id="memory-node-meta" class="inspection-grid"></dl></div>
+      <header><p id="memory-node-branch" class="eyebrow">EVOLUTION CELL</p><button id="memory-node-close" class="close-btn" data-action="quiet" type="button">Close</button></header>
+      <div class="surface-body"><h2 id="memory-node-heading" tabindex="-1">Evolution cell</h2><p id="memory-node-summary" class="panel-copy"></p><p id="memory-node-detail" class="panel-copy"></p><p id="memory-node-change" class="skill-change" hidden></p><dl id="memory-node-meta" class="inspection-grid"></dl>
+        <nav id="evolution-navigator" class="evolution-navigator" aria-label="Evolution cell navigation">
+          <p id="evolution-current" class="panel-copy"></p>
+          <div class="evolution-traversal"><button id="evolution-previous" class="btn btn-secondary" type="button">Previous cell</button><button id="evolution-next" class="btn btn-secondary" type="button">Next cell</button><button id="evolution-frontier" class="btn btn-secondary" type="button">Next ready cell</button></div>
+          <p class="eyebrow">DIRECT NEIGHBORS</p><div id="evolution-neighbors" class="evolution-neighbors"></div>
+        </nav>
+      </div>
       <footer class="surface-actions"><button id="memory-unlock" class="btn btn-primary" data-action="recommended" type="button">Unlock</button></footer>
     </section>
 

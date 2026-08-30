@@ -4,7 +4,7 @@ import { applyRunResult } from '../interface/policies/run-result.js';
 import { appendEvolutionEvent, appendTrophyEvents, validateHistory } from '../platform/history.js';
 import { validateMeta } from '../platform/storage.js';
 import { reconcileTrophies } from '../game/trophies/evaluator.js';
-import { compileEvolution, evolutionCellState, getMemoryNode, purchaseEvolutionLevel } from '../game/skills/index.js';
+import { EVOLUTION_TOPOLOGY, compileEvolution, evolutionCellState, purchaseEvolutionLevel } from '../game/skills/index.js';
 import { ENVIRONMENT_SCHEDULE_HASH } from '../game/environment-level.js';
 import { incrementProgressionInteger, isCanonicalProgressionInteger, maxProgressionInteger,
   normalizeProgressionInteger } from '../core/progression-integer.js';
@@ -31,34 +31,40 @@ export function createAgentEnvironment(raw = defaultAgentSave()) {
   function buy(action) {
     // A World's compiled Evolution is immutable for its entire authoritative run.
     if (activeWorld) return respond(false, 'world-active');
-    const cellId = action.cellId;
-    const node = getMemoryNode(cellId);
-    if (!node) return respond(false, 'unknown-cell');
-    if (!isCanonicalProgressionInteger(action.expectedLevel) || !isCanonicalProgressionInteger(action.expectedRevision)) {
+    const cell = action.cell;
+    if (!Number.isInteger(cell) || cell < 0 || cell >= EVOLUTION_TOPOLOGY.nodeCount) return respond(false, 'unknown-cell');
+    if (!isCanonicalProgressionInteger(action.expectedLocalLevel)
+      || !isCanonicalProgressionInteger(action.expectedAggregateRank)
+      || !isCanonicalProgressionInteger(action.expectedRevision)) {
       return respond(false, 'missing-precondition');
     }
-    const status = evolutionCellState(state.meta, node);
+    const status = evolutionCellState(state.meta, cell);
     if (!status.reachable) return respond(false, 'adjacency-required');
     if (!status.affordable) return respond(false, 'insufficient-echoes');
     if (action.transactionKey !== undefined && !(typeof action.transactionKey === 'string'
       && action.transactionKey.length > 0 && action.transactionKey.length <= 128)) return respond(false, 'invalid-transaction-key');
     const transactionKey = action.transactionKey
-      ?? agentEvolutionTransactionKey(action.expectedRevision, cellId, action.expectedLevel, status.nextLevel);
-    const purchase = purchaseEvolutionLevel(state.meta, cellId, {
-      transactionKey, expectedLevel: action.expectedLevel, expectedRevision: action.expectedRevision,
+      ?? agentEvolutionTransactionKey(action.expectedRevision, cell, action.expectedLocalLevel,
+        action.expectedAggregateRank, status.nextLocalLevel, status.nextAggregateRank);
+    const purchase = purchaseEvolutionLevel(state.meta, cell, {
+      transactionKey, expectedLocalLevel: action.expectedLocalLevel,
+      expectedAggregateRank: action.expectedAggregateRank, expectedRevision: action.expectedRevision,
     });
     if (!purchase.ok) return respond(false, purchase.reason);
     const recognition = reconcileTrophies(purchase.meta, state.history);
     let history = appendEvolutionEvent(state.history, {
-      transactionKey, nodeId: cellId, oldLevel: purchase.oldLevel, newLevel: purchase.newLevel, cost: purchase.cost,
+      transactionKey, cell, archetypeId: purchase.archetypeId,
+      oldLocalLevel: purchase.oldLocalLevel, newLocalLevel: purchase.newLocalLevel,
+      oldAggregateRank: purchase.oldAggregateRank, newAggregateRank: purchase.newAggregateRank, cost: purchase.cost,
       balanceBefore: purchase.balanceBefore, balanceAfter: purchase.balanceAfter, run: recognition.meta.runs,
       bestEnvironmentLevelReached: recognition.meta.bestEnvironmentLevelReached,
       compilerVersions: purchase.compilerVersions,
     });
     history = appendTrophyEvents(history, recognition.awardedIds);
     state = validateAgentSave({ ...state, meta: validateMeta(recognition.meta), history: validateHistory(history) });
-    return respond(true, 'evolution-level-purchased', { purchase: Object.freeze({ cellId,
-      oldLevel: purchase.oldLevel, newLevel: purchase.newLevel, cost: purchase.cost,
+    return respond(true, 'evolution-level-purchased', { purchase: Object.freeze({ cell, archetypeId: purchase.archetypeId,
+      oldLocalLevel: purchase.oldLocalLevel, newLocalLevel: purchase.newLocalLevel,
+      oldAggregateRank: purchase.oldAggregateRank, newAggregateRank: purchase.newAggregateRank, cost: purchase.cost,
       balanceAfter: purchase.balanceAfter, transactionKey, trophiesAwarded: recognition.awardedIds }) });
   }
 
@@ -201,8 +207,8 @@ function boundedTicks(value, ceiling) {
 function agentResultTransactionKey(worldOrdinal, seed, scheduleHash, profileHash, resultHash, tick) {
   return boundedTransactionKey('agent-result', [worldOrdinal, seed, scheduleHash, profileHash, resultHash, tick]);
 }
-function agentEvolutionTransactionKey(revision, id, currentLevel, nextLevel) {
-  return boundedTransactionKey('agent-evolution', [revision, id, currentLevel, nextLevel]);
+function agentEvolutionTransactionKey(revision, cell, localLevel, aggregateRank, nextLocalLevel, nextAggregateRank) {
+  return boundedTransactionKey('agent-evolution-cell', [revision, cell, localLevel, aggregateRank, nextLocalLevel, nextAggregateRank]);
 }
 function curateResult(result, transaction) {
   const habitats = result.habitatOccupancy ?? [];

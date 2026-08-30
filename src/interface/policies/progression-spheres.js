@@ -1,83 +1,121 @@
-/** Evolution and Trophy sphere coordination outside the core app controller. */
-import { buildMemorySnapshot, createEvolutionTerritories, createMemoryFields, evolutionCellState, getMemoryNode,
-  MEMORY_NODES, purchaseEvolutionLevel } from '../../game/skills/index.js';
+/** Exact Evolution-cell and Trophy sphere coordination outside the app controller. */
+import {
+  EVOLUTION_LAYOUT, buildEvolutionProjection, buildEvolutionSnapshot, createEvolutionFields,
+  evolutionCellState, newlyReachableEvolutionCells, purchaseEvolutionLevel,
+} from '../../game/skills/index.js';
 import { TROPHIES, TROPHY_ATLAS_REVERSE, getTrophy } from '../../game/trophies/index.js';
-import { reconcileTrophies } from '../../game/trophies/evaluator.js'; import { buildTrophySnapshot, createTrophyFields } from '../../game/trophies/scene.js';
+import { reconcileTrophies } from '../../game/trophies/evaluator.js';
+import { buildTrophySnapshot, createTrophyFields } from '../../game/trophies/scene.js';
 import { createTopology } from '../../world/icosphere.js';
-import { appendEvolutionEvent, appendTrophyEvents, saveHistory } from '../../platform/history.js'; import { saveMeta } from '../../platform/storage.js';
+import { appendEvolutionEvent, appendTrophyEvents, saveHistory } from '../../platform/history.js';
+import { saveMeta } from '../../platform/storage.js';
 import { saveProgressionTransaction } from '../../platform/run-transaction-store.js';
-import {boundedTransactionKey} from '../../core/hash.js';
+import { boundedTransactionKey } from '../../core/hash.js';
 import * as ui from '../surfaces.js';
 
-export function initializeProgression(app) { app.topo2 = createTopology(2);
-  app.evolutionTerritories = createEvolutionTerritories(app.topo4);
-  app.atlasFields = createMemoryFields(app.topo4); app.trophyFields = createTrophyFields(app.topo2);
-  app.memorySnapshot = null; app.trophySnapshot = null; app.evolutionActivation = { lastPurchaseAt: -Infinity }; }
-export function progressionTap(app, node) {
-  if(app.scene==='evolution'){const index=app.evolutionTerritories.ownerByCell[node];if(index>=0)selectEvolutionCell(app,MEMORY_NODES[index].id);return true;}
-  if (app.scene === 'trophies') { const index = TROPHY_ATLAS_REVERSE[node]; if (index >= 0) selectTrophy(app, TROPHIES[index].id); return true; }
+export function initializeProgression(app) {
+  app.topo2 = createTopology(2); app.evolutionLayout = EVOLUTION_LAYOUT;
+  app.evolutionFields = createEvolutionFields(app.topo4); app.trophyFields = createTrophyFields(app.topo2);
+  app.memorySnapshot = null; app.trophySnapshot = null; app.evolutionActivation = { lastPurchaseAt: -Infinity };
+}
+
+export function progressionTap(app, cell) {
+  if (app.scene === 'evolution') { selectEvolutionCell(app, cell, 'cell'); return true; }
+  if (app.scene === 'trophies') { const index = TROPHY_ATLAS_REVERSE[cell]; if (index >= 0) selectTrophy(app, TROPHIES[index].id); return true; }
   return false;
 }
+
 export function enterEvolution(app) { return app.selectScene('evolution'); }
-export function presentEvolution(app, restoreCamera = false) { app.closeActiveOverlay(); app.selectedNode = null; app.makeRenderer(0, 'memory'); app.memorySnapshot = buildMemorySnapshot(app.evolutionTerritories, app.meta);
-  if (!restoreCamera && app.memorySnapshot.focus) app.focusCamera(app.memorySnapshot.focus); app.memoryUi.syncTree(app.meta);
-  ui.showMemory(app.el,app.meta,availableEvolutionLevels(app));}
-export function selectEvolutionCell(app,id,source='cell'){const node=getMemoryNode(id);if(!node)return false;
-  if(app.overlay==='memory-node'&&app.memoryUi.selectedId===id)return activateSelectedEvolutionCell(app,id,source);
-  app.closeActiveOverlay(); const skill = app.evolutionTerritories.skillBySiteCell[node.cell];
-  app.selectedNode = app.evolutionTerritories.anchorCell[skill];
-  app.memorySnapshot = buildMemorySnapshot(app.evolutionTerritories, app.meta, id); app.memoryUi.openNode(node, app.meta); app.overlay = 'memory-node';
-  app.surfaces.open('memory-node', app.memoryUi.panel, document.getElementById('memory-node-heading')); app.resize(true); return true; }
-export function closeEvolutionCell(app){app.memoryUi.closeNode();app.surfaces.close('memory-node');if(app.overlay==='memory-node')app.overlay=null;
-  app.selectedNode=null;app.memorySnapshot=buildMemorySnapshot(app.evolutionTerritories,app.meta);app.resize(true);}
-export function buyEvolutionLevel(app,id,source='button'){return requestEvolutionPurchase(app,id,source)}
-function activateSelectedEvolutionCell(app,id,source){
-  const state = evolutionCellState(app.meta, id, id);
-  if (state.reason !== 'ready') { app.memoryUi.refresh(app.meta); ui.announce(app.el, purchaseReason(state)); return false; }
-  return requestEvolutionPurchase(app, id, source);
+export function presentEvolution(app, restoreCamera = false) {
+  app.closeActiveOverlay(); app.selectedNode = null; app.makeRenderer(0, 'memory');
+  app.memorySnapshot = buildEvolutionSnapshot(app.meta);
+  if (!restoreCamera && app.memorySnapshot.focus) app.focusCamera(app.memorySnapshot.focus);
+  ui.showMemory(app.el, app.meta, availableEvolutionLevels(app));
 }
-function requestEvolutionPurchase(app,id,source,now=performance.now()){
-  if(['starting','running'].includes(app.phase)){ui.announce(app.el,'Evolution upgrades are available between worlds.');return false}
-  if (now - (app.evolutionActivation?.lastPurchaseAt ?? -Infinity) < 350) {
-    ui.announce(app.el, 'Upgrade registered. Activate the territory again for another level.'); return false;
+
+export function selectEvolutionCell(app, cell, source = 'cell') {
+  const projection = app.memorySnapshot?.evolutionProjection ?? buildEvolutionProjection(app.meta);
+  const state = evolutionCellState(projection, cell, cell); if (state.cell === null) return false;
+  if (app.overlay === 'memory-node' && app.memoryUi.selectedCell === cell) return activateSelectedEvolutionCell(app, cell, source);
+  const surfaceOpen = app.overlay === 'memory-node';
+  if (!surfaceOpen) app.closeActiveOverlay();
+  app.selectedNode = cell; app.memorySnapshot = buildEvolutionSnapshot(app.meta, cell);
+  if (source === 'navigator') app.focusCamera(app.topo4.positions.subarray(cell * 3, cell * 3 + 3));
+  if (surfaceOpen) app.memoryUi.openCell(cell, app.memorySnapshot.evolutionProjection);
+  else {
+    app.memoryUi.openCell(cell, app.memorySnapshot.evolutionProjection); app.overlay = 'memory-node';
+    app.surfaces.open('memory-node', app.memoryUi.panel, document.getElementById('memory-node-heading'));
   }
-  const state=evolutionCellState(app.meta,id,id);
-  const key = evolutionTransactionKey(app.meta.revision, id, state.currentLevel, state.nextLevel);
-  const before = new Set(app.memorySnapshot.nodeStates.filter((node) => node.reachable).map((node) => node.id));
-  const purchase = purchaseEvolutionLevel(app.meta, id, { expectedLevel:state.currentLevel,
-    expectedRevision:app.meta.revision, transactionKey:key, source });
-  if (!purchase.ok) { ui.announce(app.el, purchaseReason({ ...state, reason:purchase.reason })); return false; }
+  app.resize(true); return true;
+}
+
+export function closeEvolutionCell(app) {
+  app.memoryUi.closeNode(); app.surfaces.close('memory-node'); if (app.overlay === 'memory-node') app.overlay = null;
+  app.selectedNode = null; app.memorySnapshot = buildEvolutionSnapshot(app.meta); app.resize(true);
+}
+
+export function buyEvolutionLevel(app, cell, source = 'button') { return requestEvolutionPurchase(app, cell, source); }
+
+function activateSelectedEvolutionCell(app, cell, source) {
+  const state = evolutionCellState(app.memorySnapshot.evolutionProjection, cell, cell);
+  if (state.reason !== 'ready') { app.memoryUi.refresh(app.memorySnapshot.evolutionProjection); ui.announce(app.el, purchaseReason(state)); return false; }
+  return requestEvolutionPurchase(app, cell, source);
+}
+
+function requestEvolutionPurchase(app, cell, source, now = performance.now()) {
+  const activeWorld = ['starting', 'running'].includes(app.phase);
+  if (activeWorld) { ui.announce(app.el, 'Evolution upgrades are available between Worlds.'); return false; }
+  if (now - (app.evolutionActivation?.lastPurchaseAt ?? -Infinity) < 350) {
+    ui.announce(app.el, 'Upgrade registered. Activate the cell again for another local level.'); return false;
+  }
+  const beforeProjection = app.memorySnapshot?.evolutionProjection ?? buildEvolutionProjection(app.meta, cell);
+  const state = evolutionCellState(beforeProjection, cell, cell);
+  const key = evolutionTransactionKey(app.meta.revision, cell, state.localLevel, state.aggregateRank,
+    state.nextLocalLevel, state.nextAggregateRank);
+  const purchase = purchaseEvolutionLevel(app.meta, cell, {
+    expectedLocalLevel: state.localLevel, expectedAggregateRank: state.aggregateRank,
+    expectedRevision: app.meta.revision, transactionKey: key, source, activeWorld,
+  });
+  if (!purchase.ok) { ui.announce(app.el, purchaseReason({ ...state, reason: purchase.reason })); return false; }
   const trophies = reconcileTrophies(purchase.meta, app.archive);
-  let archive = appendEvolutionEvent(app.archive, { transactionKey:key, nodeId:id,
-    oldLevel:purchase.oldLevel, newLevel:purchase.newLevel, cost:purchase.cost,
-    balanceBefore:purchase.balanceBefore, balanceAfter:purchase.balanceAfter, run:trophies.meta.runs,
-    bestEnvironmentLevelReached:trophies.meta.bestEnvironmentLevelReached, compilerVersions:purchase.compilerVersions });
+  let archive = appendEvolutionEvent(app.archive, { transactionKey: key, cell, archetypeId: purchase.archetypeId,
+    oldLocalLevel: purchase.oldLocalLevel, newLocalLevel: purchase.newLocalLevel,
+    oldAggregateRank: purchase.oldAggregateRank, newAggregateRank: purchase.newAggregateRank,
+    cost: purchase.cost, balanceBefore: purchase.balanceBefore, balanceAfter: purchase.balanceAfter,
+    run: trophies.meta.runs, bestEnvironmentLevelReached: trophies.meta.bestEnvironmentLevelReached,
+    compilerVersions: purchase.compilerVersions });
   archive = appendTrophyEvents(archive, trophies.awardedIds);
   app.meta = trophies.meta; app.archive = archive;
-  const persisted = saveProgressionTransaction(app.meta, app.archive, { kind:'evolution', key });
+  const persisted = saveProgressionTransaction(app.meta, app.archive, { kind: 'evolution', key });
   app.evolutionActivation.lastPurchaseAt = now; app.trophyNotifications.sync(app.meta);
-  const next = buildMemorySnapshot(app.evolutionTerritories, app.meta, id);
-  const newly = purchase.oldLevel === '0'
-    ? next.nodeStates.filter((node) => node.reachable && !before.has(node.id)).map((node) => node.id) : [];
-  app.memorySnapshot=buildMemorySnapshot(app.evolutionTerritories,app.meta,id,newly);
-  app.memoryUi.refresh(app.meta,newly,purchase.preview);ui.showMemory(app.el,app.meta,availableEvolutionLevels(app));
-  const verb = purchase.oldLevel === '0' ? 'unlocked' : `upgraded to Level ${purchase.newLevel}`;
-  ui.announce(app.el, `${purchase.node.nameEn} ${verb}. ${newly.length ? `${newly.length} adjacent skills are now available. ` : ''}`
-    + `${trophies.awardedIds.length ? `${trophies.awardedIds.length} trophies recognized. ` : ''}`
-    + `${persisted ? '' : 'Progress is temporary because browser storage is unavailable.'}`); return true;
+  const afterProjection = buildEvolutionProjection(app.meta, cell, [cell]);
+  const newly = purchase.oldLocalLevel === '0' ? newlyReachableEvolutionCells(beforeProjection, afterProjection) : [];
+  app.memorySnapshot = buildEvolutionSnapshot(app.meta, cell, [cell]);
+  app.memoryUi.refresh(app.memorySnapshot.evolutionProjection, newly, purchase.preview);
+  ui.showMemory(app.el, app.meta, availableEvolutionLevels(app));
+  const verb = purchase.oldLocalLevel === '0' ? 'established' : `strengthened to Local Level ${purchase.newLocalLevel}`;
+  ui.announce(app.el, `Cell ${cell + 1}, ${purchase.archetype.nameEn}, ${verb}. Shared rank ${purchase.newAggregateRank}. `
+    + `${newly.length ? `${newly.length} neighboring cells are now reachable. ` : ''}`
+    + `${trophies.awardedIds.length ? `${trophies.awardedIds.length} Trophies recognized. ` : ''}`
+    + `${persisted ? '' : 'Progress is temporary because browser storage is unavailable.'}`);
+  return true;
 }
+
 function purchaseReason(state) {
-  if (state.reason === 'adjacency-required') return 'This skill needs one directly adjacent Level 1 or higher skill.';
-  if (state.reason === 'insufficient-echoes') return `More Echoes are required for Level ${state.nextLevel}.`;
-  if (state.reason === 'stale-level' || state.reason === 'stale-revision') return 'Evolution changed; the current level and cost were refreshed.';
-  if(state.reason==='duplicate-transaction')return'That Evolution upgrade was already recorded.';
-  if(state.reason==='progression-security-boundary')return'This imported magnitude reached the document security boundary; no Echoes were spent.';
-  return'This Evolution territory is not ready to upgrade.';
+  if (state.reason === 'world-active') return 'Evolution upgrades are available between Worlds.';
+  if (state.reason === 'adjacency-required') return 'This cell needs one directly adjacent owned cell.';
+  if (state.reason === 'insufficient-echoes') return `More Echoes are required for the next shared archetype rank.`;
+  if (['stale-local-level', 'stale-aggregate-rank', 'stale-revision'].includes(state.reason)) return 'Evolution changed; the local level, shared rank, and cost were refreshed.';
+  if (state.reason === 'duplicate-transaction') return 'That Evolution cell upgrade was already recorded.';
+  if (state.reason === 'progression-security-boundary') return 'This imported magnitude reached the document security boundary; no Echoes were spent.';
+  return 'This Evolution cell is not ready to strengthen.';
 }
-function evolutionTransactionKey(revision,id,currentLevel,nextLevel){
- return boundedTransactionKey('evolution-level',[revision,id,currentLevel,nextLevel])
+
+function evolutionTransactionKey(revision, cell, localLevel, aggregateRank, nextLocalLevel, nextAggregateRank) {
+  return boundedTransactionKey('evolution-cell-level', [revision, cell, localLevel, aggregateRank, nextLocalLevel, nextAggregateRank]);
 }
-export function availableEvolutionLevels(app){return app.memorySnapshot?.nodeStates?.filter((node)=>node.reason==='ready').length??0}
+
+export function availableEvolutionLevels(app) { return app.memorySnapshot?.evolutionProjection?.readyCells?.length ?? 0; }
 export function enterTrophies(app) { app.selectScene('trophies'); }
 export function presentTrophies(app, restoreCamera = false) { app.closeActiveOverlay();
   const recognition = reconcileTrophies(app.meta, app.archive); app.meta = recognition.meta;

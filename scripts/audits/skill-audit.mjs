@@ -1,68 +1,107 @@
 #!/usr/bin/env node
-/** Production-backed authored Evolution topology, exact economy, and compiler audit. */
+/** Production-backed fine-cell Evolution topology, exact economy, and compiler audit. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
-import { createGeodesicTopology, createTopology } from '../../src/world/icosphere.js';
-import { EVOLUTION_COMPILER_VERSIONS, MEMORY_NODES, availableMemoryNodes, compileEvolution, evolutionCompileCacheDiagnostics,
-  createEvolutionTerritories, evolutionCostForTargetLevel, evolutionLevel, getMemoryAdjacentIds, normalizeEvolutionLevels, purchaseEvolutionLevel,
-  validateMemoryGraph } from '../../src/game/skills/index.js';
+import {
+  EVOLUTION_ARCHETYPES, EVOLUTION_COMPILER_VERSIONS, EVOLUTION_LAYOUT, EVOLUTION_ROOT_CELL,
+  EVOLUTION_TOPOLOGY, availableEvolutionCells, buildEvolutionProjection, compileEvolution,
+  createEvolutionCellLayout, evolutionCellState, evolutionCostForTargetLevel, evolutionLevel,
+  getEvolutionAdjacentCells, normalizeEvolutionLevels, purchaseEvolutionLevel, validateEvolutionAuthority,
+} from '../../src/game/skills/index.js';
 import { addProgressionIntegers, compareProgressionIntegers } from '../../src/core/progression-integer.js';
 import { defaultMeta } from '../../src/platform/storage.js';
+import { evolutionCellForArchetype } from '../lib.mjs';
 
-const started = performance.now(); const topology = createGeodesicTopology(2); const graph = validateMemoryGraph();
-const presentationTopology = createTopology(4); const territoryStarted = performance.now();
-const territories = createEvolutionTerritories(presentationTopology); const territoryConstructionMs = performance.now() - territoryStarted;
-let meta = { ...defaultMeta(), echoBalance: '1000000' }; let spent = '0'; let guard = 0;
-while (normalizeEvolutionLevels(meta).length < MEMORY_NODES.length && guard++ < 64) {
-  const node = availableMemoryNodes(meta).find((entry) => entry.currentLevel === '0');
-  if (!node) throw new Error(`legal breadth traversal stopped at ${normalizeEvolutionLevels(meta).length}`);
-  const transaction = purchaseEvolutionLevel(meta, node.id, { expectedLevel: '0', expectedRevision: meta.revision, transactionKey: `audit-breadth-${guard}` });
-  if (!transaction.ok) throw new Error(`purchase rejected: ${node.id} (${transaction.reason})`);
+const started = performance.now(); const authority = validateEvolutionAuthority();
+const layoutStarted = performance.now(); const repeatedLayout = createEvolutionCellLayout(EVOLUTION_TOPOLOGY);
+const layoutConstructionMs = performance.now() - layoutStarted;
+let meta = { ...defaultMeta(), echoBalance: '1000000000000000' }; let spent = '0'; let guard = 0;
+const traversalStarted = performance.now();
+while (normalizeEvolutionLevels(meta).length < EVOLUTION_TOPOLOGY.nodeCount && guard++ < EVOLUTION_TOPOLOGY.nodeCount + 1) {
+  const projection = buildEvolutionProjection(meta); const cell = availableEvolutionCells(projection)
+    .find((candidate) => projection.owned[candidate] === 0);
+  if (!Number.isInteger(cell)) throw new Error(`legal fine-cell traversal stopped at ${normalizeEvolutionLevels(meta).length}`);
+  const state = evolutionCellState(projection, cell); const transaction = purchaseEvolutionLevel(meta, cell, {
+    expectedLocalLevel: state.localLevel, expectedAggregateRank: state.aggregateRank,
+    expectedRevision: meta.revision, transactionKey: `audit-breadth-${guard}`,
+  });
+  if (!transaction.ok) throw new Error(`purchase rejected: cell ${cell} (${transaction.reason})`);
   spent = addProgressionIntegers(spent, transaction.spent); meta = transaction.meta;
 }
-const breadth = compileEvolution(meta); const root = MEMORY_NODES.find((node) => node.id === 'first-division');
+const traversalMs = performance.now() - traversalStarted; const breadth = compileEvolution(meta);
 let repeatMeta = { ...meta, echoBalance: `1${'0'.repeat(400)}` }; const repeat = [];
 for (let index = 0; index < 9; index++) {
-  const before = evolutionLevel(repeatMeta, root.id); const transaction = purchaseEvolutionLevel(repeatMeta, root.id,
-    { expectedLevel: before, expectedRevision: repeatMeta.revision, transactionKey: `audit-depth-${index}` });
-  if (!transaction.ok) throw new Error(`repeat rejected at ${before}: ${transaction.reason}`);
-  repeat.push({ old: transaction.oldLevel, next: transaction.newLevel, cost: transaction.spent }); repeatMeta = transaction.meta;
+  const state = evolutionCellState(repeatMeta, EVOLUTION_ROOT_CELL); const transaction = purchaseEvolutionLevel(repeatMeta, EVOLUTION_ROOT_CELL, {
+    expectedLocalLevel: state.localLevel, expectedAggregateRank: state.aggregateRank,
+    expectedRevision: repeatMeta.revision, transactionKey: `audit-depth-${index}`,
+  });
+  if (!transaction.ok) throw new Error(`repeat rejected at ${state.localLevel}: ${transaction.reason}`);
+  repeat.push({ oldLocal: transaction.oldLocalLevel, nextLocal: transaction.newLocalLevel,
+    oldAggregate: transaction.oldAggregateRank, nextAggregate: transaction.newAggregateRank, cost: transaction.spent });
+  repeatMeta = transaction.meta;
 }
 const hugeLevel = `1${'0'.repeat(256)}`; const compileAt = performance.now();
-const extreme = compileEvolution({ ...defaultMeta(), evolutionLevels: [{ id: root.id, level: hugeLevel }] });
-const extremeCompileMs = performance.now() - compileAt; const sampledTargets = ['1', '2', '3', '10', '1000000', hugeLevel];
+const extreme = compileEvolution({ evolutionLevels: [{ cell: EVOLUTION_ROOT_CELL, level: hugeLevel }] });
+const extremeCompileMs = performance.now() - compileAt; const root = EVOLUTION_ARCHETYPES[EVOLUTION_LAYOUT.rootArchetype];
+const sampledTargets = ['1', '2', '3', '10', '1000000', hugeLevel];
 const costs = sampledTargets.map((level) => ({ level, cost: evolutionCostForTargetLevel(root, level) }));
-const spark = MEMORY_NODES.find((node) => node.id === 'bioelectric-spark');
-const luminous = compileEvolution({ ...defaultMeta(), evolutionLevels: [{ id: root.id, level: '1' }, { id: 'reliable-budding', level: '1' }, { id: spark.id, level: '1' }] });
-const degreeCounts = Object.fromEntries([...new Set(topology.degree)].map((degree) => [degree, [...topology.degree].filter((value) => value === degree).length]));
+const sparkCell = evolutionCellForArchetype('bioelectric-spark'); const buddingCell = evolutionCellForArchetype('reliable-budding');
+const luminous = compileEvolution({ evolutionLevels: [{ cell: EVOLUTION_ROOT_CELL, level: '1' },
+  { cell: buddingCell, level: '1' }, { cell: sparkCell, level: '1' }] });
+const repeatedArchetype = EVOLUTION_LAYOUT.archetypeByCell.find((value) => value !== EVOLUTION_LAYOUT.rootArchetype);
+const occurrences = Array.from(EVOLUTION_LAYOUT.archetypeByCell).flatMap((value, cell) => value === repeatedArchetype ? [cell] : []).slice(0, 2);
+const concentrated = compileEvolution({ evolutionLevels: [{ cell: occurrences[0], level: '2' }] });
+const distributed = compileEvolution({ evolutionLevels: occurrences.map((cell) => ({ cell, level: '1' })) });
+const projectionAt = performance.now(); const projection = buildEvolutionProjection(meta); const projectionMs = performance.now() - projectionAt;
+const diagnostics = EVOLUTION_LAYOUT.diagnostics;
 const report = {
   versions: EVOLUTION_COMPILER_VERSIONS,
-  topology: { frequency: 2, cells: topology.nodeCount, boundaries: topology.edgeCount, pentagons: degreeCounts[5] ?? 0, hexagons: degreeCounts[6] ?? 0,
-    graphValid: graph.valid, roots: graph.roots, firstRing: getMemoryAdjacentIds(root.id).map((id) => MEMORY_NODES.find((node) => node.id === id)?.domain) },
-  presentation: { levels: presentationTopology.levels, cells: presentationTopology.nodeCount, boundaries: presentationTopology.edgeCount,
-    territories: territories.skillCount, coveredCells: territories.diagnostics.coveredCells,
-    minTerritoryCells: territories.diagnostics.minSize, maxTerritoryCells: territories.diagnostics.maxSize,
-    connected: territories.componentCount.every((count) => count === 1), expectedContacts: territories.diagnostics.expectedContacts,
-    actualContacts: territories.diagnostics.actualContacts, tieCells: territories.diagnostics.tieCellCount,
-    digest: territories.diagnostics.digest, constructionMs: Number(territoryConstructionMs.toFixed(3)) },
-  authored: { cells: MEMORY_NODES.length, completeText: MEMORY_NODES.every((node) => node.nameEn && node.summary && node.description && node.effects.length),
-    directEffects: MEMORY_NODES.every((node) => node.effects.every((effect) => ['trait', 'ecology', 'habitat', 'worldmaking', 'luminous', 'defense'].includes(effect.kind))) },
-  breadth: { cells: normalizeEvolutionLevels(meta).length, spent, habitats: breadth.habitatCapabilities.length, luminousEnabled: breadth.luminous.enabled },
-  repeat: { finalLevel: evolutionLevel(repeatMeta, root.id), purchases: repeat,
+  topology: { level: EVOLUTION_TOPOLOGY.levels, cells: EVOLUTION_TOPOLOGY.nodeCount, boundaries: EVOLUTION_TOPOLOGY.edgeCount,
+    pentagons: [...EVOLUTION_TOPOLOGY.degree].filter((degree) => degree === 5).length,
+    hexagons: [...EVOLUTION_TOPOLOGY.degree].filter((degree) => degree === 6).length,
+    authorityValid: authority.valid, rootCell: EVOLUTION_ROOT_CELL,
+    firstRing: getEvolutionAdjacentCells(EVOLUTION_ROOT_CELL).map((cell) => EVOLUTION_ARCHETYPES[EVOLUTION_LAYOUT.archetypeByCell[cell]].domain) },
+  layout: { version: EVOLUTION_LAYOUT.version, digest: diagnostics.digest,
+    repeatDigest: repeatedLayout.diagnostics.digest, constructionMs: Number(layoutConstructionMs.toFixed(3)),
+    archetypes: diagnostics.archetypes, rootCount: diagnostics.rootCount,
+    minOccurrence: diagnostics.minNonRootCount, maxOccurrence: diagnostics.maxNonRootCount,
+    largestComponent: diagnostics.largestComponent, neighborhoodDiversity: diagnostics.neighborhoodDiversity },
+  authored: { archetypes: EVOLUTION_ARCHETYPES.length,
+    completeText: EVOLUTION_ARCHETYPES.every((archetype) => archetype.nameEn && archetype.summary && archetype.description && archetype.effects.length),
+    directEffects: EVOLUTION_ARCHETYPES.every((archetype) => archetype.effects.every((effect) =>
+      ['trait', 'ecology', 'habitat', 'worldmaking', 'luminous', 'defense'].includes(effect.kind))) },
+  breadth: { cells: normalizeEvolutionLevels(meta).length, spent, traversalMs: Number(traversalMs.toFixed(1)),
+    habitats: breadth.habitatCapabilities.length, luminousEnabled: breadth.luminous.enabled },
+  repeat: { finalLocalLevel: evolutionLevel(repeatMeta, EVOLUTION_ROOT_CELL), purchases: repeat,
     costsMonotone: repeat.every((row, index) => index === 0 || compareProgressionIntegers(row.cost, repeat[index - 1].cost) > 0) },
-  directExtreme: { digits: hugeLevel.length, compileMs: Number(extremeCompileMs.toFixed(3)), effectsFinite: Object.values(extreme.effects).every((value) => Number.isFinite(value) && value > 0 && value < 10),
-    cache: evolutionCompileCacheDiagnostics() },
-  luminous: { enabled: luminous.luminous.enabled, generationScale: luminous.luminous.generationScale, visualDevelopment: luminous.luminous.visualDevelopment },
-  costs, costsMonotone: costs.every((row, index) => index === 0 || compareProgressionIntegers(row.cost, costs[index - 1].cost) > 0), elapsedMs: Number((performance.now() - started).toFixed(1)), valid: false,
+  aggregateEquivalence: { archetype: EVOLUTION_ARCHETYPES[repeatedArchetype].id, cells: occurrences,
+    identicalCompiler: JSON.stringify(distributed) === JSON.stringify(concentrated) },
+  projection: { constructionMs: Number(projectionMs.toFixed(3)), ownedCells: projection.ownedCellCount,
+    readyCells: projection.readyCells.length,
+    bytes: projection.owned.byteLength + projection.reachable.byteLength + projection.affordable.byteLength + projection.recent.byteLength },
+  directExtreme: { digits: hugeLevel.length, compileMs: Number(extremeCompileMs.toFixed(3)),
+    effectsFinite: Object.values(extreme.effects).every((value) => Number.isFinite(value) && value > 0 && value < 10),
+    cache: (await import('../../src/game/skills/index.js')).evolutionCompileCacheDiagnostics() },
+  luminous: { enabled: luminous.luminous.enabled, generationScale: luminous.luminous.generationScale,
+    visualDevelopment: luminous.luminous.visualDevelopment },
+  costs, costsMonotone: costs.every((row, index) => index === 0 || compareProgressionIntegers(row.cost, costs[index - 1].cost) > 0),
+  elapsedMs: Number((performance.now() - started).toFixed(1)), valid: false,
 };
-report.valid = report.topology.cells === 42 && report.topology.boundaries === 120 && report.topology.pentagons === 12 && report.topology.hexagons === 30
-  && report.topology.graphValid && report.topology.roots.join() === 'first-division' && report.topology.firstRing.every((domain) => domain === 'Foundation')
-  && report.presentation.levels === 4 && report.presentation.cells === 2562 && report.presentation.boundaries === 7680
-  && report.presentation.territories === 42 && report.presentation.coveredCells === 2562 && report.presentation.connected
-  && report.presentation.expectedContacts === 120 && report.presentation.actualContacts === 120 && report.presentation.constructionMs < 100
-  && report.authored.cells === 42 && report.authored.completeText && report.authored.directEffects && report.breadth.cells === 42
-  && report.repeat.finalLevel === '10' && report.repeat.costsMonotone && report.directExtreme.effectsFinite && report.directExtreme.compileMs < 100
-  && report.directExtreme.cache.bytes <= report.directExtreme.cache.byteLimit && report.costsMonotone && report.luminous.enabled && report.luminous.generationScale > 0;
+report.valid = report.topology.cells === 2562 && report.topology.boundaries === 7680
+  && report.topology.pentagons === 12 && report.topology.hexagons === 2550 && report.topology.authorityValid
+  && report.topology.firstRing.every((domain) => domain === 'Foundation')
+  && report.layout.digest === report.layout.repeatDigest && report.layout.rootCount === 1
+  && report.layout.minOccurrence >= Math.ceil(2562 * .01) && report.layout.maxOccurrence <= Math.floor(2562 * .04)
+  && report.layout.largestComponent <= 8 && report.layout.neighborhoodDiversity >= .95 && report.layout.constructionMs < 100
+  && report.authored.archetypes === 42 && report.authored.completeText && report.authored.directEffects
+  && report.breadth.cells === 2562 && report.breadth.habitats === 6 && report.breadth.luminousEnabled
+  && report.repeat.finalLocalLevel === '10' && report.repeat.costsMonotone && report.aggregateEquivalence.identicalCompiler
+  && report.projection.ownedCells === 2562 && report.projection.bytes === 10248
+  && report.directExtreme.effectsFinite && report.directExtreme.compileMs < 100
+  && report.directExtreme.cache.bytes <= report.directExtreme.cache.byteLimit && report.costsMonotone
+  && report.luminous.enabled && report.luminous.generationScale > 0;
 mkdirSync(new URL('../../reports', import.meta.url).pathname, { recursive: true });
-for (const name of ['evolution-level-audit.json', 'skill-audit.json']) writeFileSync(new URL(`../../reports/${name}`, import.meta.url), JSON.stringify(report, null, 2));
+for (const name of ['evolution-level-audit.json', 'skill-audit.json']) {
+  writeFileSync(new URL(`../../reports/${name}`, import.meta.url), JSON.stringify(report, null, 2));
+}
 console.log(JSON.stringify(report, null, 2)); if (!report.valid) process.exitCode = 1;

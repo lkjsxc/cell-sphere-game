@@ -15,7 +15,7 @@ start a new world at Environment Level 0
 → finite reachable resources thin as it expands
 → Environment Level rises from authoritative world time
 → extinction records realized SCORE, Echoes, and Trophies
-→ raise one Evolution skill by one level
+→ strengthen one Evolution cell by one local level
 → begin the next world at Environment Level 0, manually or through the untouched Result cycle
 ```
 
@@ -52,12 +52,13 @@ while terrain and finite local resources remain visible inside occupied cells.
 Stress, critical state, remains, selection, History, coastlines, and whole-cell
 Luminous charge keep distinct visual and textual meanings.
 
-Evolution keeps 42 authored skills and their exact physical adjacency, costs,
-levels, and effects. Its globe projects those skills as 42 connected territories
-over the same 2,562-cell topology family as World. Every visible fine cell
-selects its owning skill; quiet internal cell boundaries preserve cellular
-density while stronger territory perimeters reveal the truthful purchase
-frontier. The accessible tree remains exactly 42 skill items.
+Evolution uses the same 2,562-cell topology scale as World. Every visible cell
+is selectable, persistent, and purchasable; a fresh profile exposes only the
+`First Division` root, and owned cells open their direct neighbors. Cells carry
+42 repeated authored archetypes. Their exact local levels sum into one shared
+rank per archetype, so repeated occurrences follow one cost sequence and one
+bounded production compiler. A bounded native navigator exposes the selected
+cell, its direct neighbors, stable traversal, and the next actionable frontier.
 
 Result keeps native Next World, Evolution, and History actions beside one
 authority-driven World-cycle ring. Its visible copy has no changing seconds;
@@ -108,13 +109,13 @@ npm run audit:trophies
 npm run test:browser:environment-pressure
 npm run test:browser:environment-pressure:fallback
 npm run test:browser:environment-pressure:canvas
-npm run test:browser:evolution-territories
-npm run test:browser:evolution-territories:fallback
-npm run test:browser:evolution-territories:canvas
+npm run test:browser:evolution-cells
+npm run test:browser:evolution-cells:fallback
+npm run test:browser:evolution-cells:canvas
 npm run test:browser:file
 npm run test:browser:canvas
 npm run test:browser:fallback
 ```
 
 Current implementation status is recorded in
-[`docs/work/evolution-cellular-territories-v1/README.md`](docs/work/evolution-cellular-territories-v1/README.md).
+[`docs/work/evolution-cell-progression-v1/README.md`](docs/work/evolution-cell-progression-v1/README.md).

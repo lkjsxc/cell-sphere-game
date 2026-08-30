@@ -1,6 +1,6 @@
 /** Closed cell-edge etching with facing, light, and zoom-aware attenuation. */
 import { LIFE_EDGE_RELATION, LIFE_EDGE_STATE } from './life-edges.js';
-import { EVOLUTION_TERRITORY_EDGE } from '../game/skills/territories.js';
+import { EVOLUTION_CELL_EDGE } from '../game/skills/scene.js';
 
 export const VS_BOUNDARY = `#version 300 es
 uniform mat4 uViewProj;
@@ -42,18 +42,20 @@ void main() {
 
   float state = vLifeEdge.x; float relation = vLifeEdge.y;
   if (uMemory > 0.5) {
-    vec3 territoryColor = vec3(0.64, 0.68, 0.62); float territoryAlpha = 0.0;
-    if (state > ${EVOLUTION_TERRITORY_EDGE.INTERNAL}.5 && state < ${EVOLUTION_TERRITORY_EDGE.EMPHASIZED}.5) {
-      territoryColor = vec3(0.72, 0.75, 0.67); territoryAlpha = 0.48;
-    } else if (state > ${EVOLUTION_TERRITORY_EDGE.BOUNDARY}.5 && state < ${EVOLUTION_TERRITORY_EDGE.SELECTED}.5) {
-      territoryColor = vec3(0.91, 0.79, 0.43); territoryAlpha = 0.72;
-    } else if (state > ${EVOLUTION_TERRITORY_EDGE.EMPHASIZED}.5) {
-      territoryColor = vec3(0.89, 0.97, 0.91); territoryAlpha = 0.96;
+    vec3 evolutionColor = geographyColor; float evolutionAlpha = 0.0;
+    if (state > ${EVOLUTION_CELL_EDGE.QUIET}.5 && state < ${EVOLUTION_CELL_EDGE.OWNED}.5) {
+      evolutionColor = vec3(0.64, 0.71, 0.62); evolutionAlpha = 0.34;
+    } else if (state > ${EVOLUTION_CELL_EDGE.OWNED}.5 && state < ${EVOLUTION_CELL_EDGE.FRONTIER}.5) {
+      evolutionColor = vec3(0.82, 0.89, 0.74); evolutionAlpha = 0.69;
+    } else if (state > ${EVOLUTION_CELL_EDGE.FRONTIER}.5 && state < ${EVOLUTION_CELL_EDGE.RECENT}.5) {
+      evolutionColor = vec3(0.92, 0.78, 0.38); evolutionAlpha = 0.86;
+    } else if (state > ${EVOLUTION_CELL_EDGE.RECENT}.5) {
+      evolutionColor = vec3(1.0); evolutionAlpha = 1.0;
     }
-    territoryAlpha *= mix(0.68, 1.0, closeView) * mix(0.72, 1.0, lightSide);
-    vec3 territoryComposite = territoryAlpha > 0.0 ? territoryColor : geographyColor;
-    float territoryCompositeAlpha = max(geographyAlpha, territoryAlpha);
-    outColor = vec4(territoryComposite, facing * territoryCompositeAlpha); return;
+    evolutionAlpha *= mix(0.68, 1.0, closeView) * mix(0.72, 1.0, lightSide);
+    vec3 evolutionComposite = evolutionAlpha > 0.0 ? evolutionColor : geographyColor;
+    float evolutionCompositeAlpha = max(geographyAlpha, evolutionAlpha);
+    outColor = vec4(evolutionComposite, facing * evolutionCompositeAlpha); return;
   }
   vec3 lifeColor = geographyColor; float lifeAlpha = 0.0;
   bool exposed = relation > ${LIFE_EDGE_RELATION.INTERNAL}.5;

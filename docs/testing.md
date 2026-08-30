@@ -20,9 +20,9 @@ npm run test:browser:life-boundaries:canvas
 npm run test:browser:environment-pressure
 npm run test:browser:environment-pressure:fallback
 npm run test:browser:environment-pressure:canvas
-npm run test:browser:evolution-territories
-npm run test:browser:evolution-territories:fallback
-npm run test:browser:evolution-territories:canvas
+npm run test:browser:evolution-cells
+npm run test:browser:evolution-cells:fallback
+npm run test:browser:evolution-cells:canvas
 npm run test:browser:file
 npm run test:browser:canvas
 npm run test:browser:fallback
@@ -70,14 +70,15 @@ whole percentages, accessible names, stable unrounded strongest selection,
 focus restoration, forced colors, reduced motion, 200% text, and responsive
 rectangles in Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D.
 
-The three focused Evolution-territory commands use the production entry point,
-level-4 topology, scene projection, renderers, and 42-item semantic tree. They
-prove 2,562-cell coverage, whole-territory selected state, shared edge-class
-counts, internal < territory < selected boundary salience, four WebGL draws,
-cached geometry/projection, zero unchanged-frame edge updates, forced colors,
-stable reduced motion, and all eight maintained viewports at 200% text. Ignored
-JSON receipts pair warm entry, accepted update, steady frame, and buffer costs
-with the isolated 42-cell predecessor baseline.
+The three focused Evolution-cell commands use the production entry point,
+level-4 topology, cell projection, renderers, and bounded native navigator. They
+prove 2,562 authoritative cells, one exact selected/purchased cell, direct
+neighbor frontier diffs, aggregate-rank detail, bounded DOM, shared edge classes,
+quiet < frontier < selected salience, four WebGL draws, cached layout/geometry,
+zero unchanged-frame edge updates, forced colors, stable reduced motion, and all
+eight maintained viewports at 200% text. Ignored JSON receipts pair warm entry,
+projection, accepted update, steady frame, and buffer costs with the exact
+territory-predecessor baseline.
 
 `benchmark.mjs` retains terminal and huge-Level checkpoints, and also measures
 seven deterministic samples of an alive fixed 1,000-tick production trace after

@@ -5,8 +5,9 @@ import { cpus } from 'node:os';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../src/simulation/simulator.js';
 import { runHeadless } from './pilot.mjs';
-import { MEMORY_NODES, MEMORY_NODE_IDS, compileEvolution, evolutionCompileCacheDiagnostics, evolutionRunConfiguration,
+import { EVOLUTION_TOPOLOGY, compileEvolution, evolutionCompileCacheDiagnostics, evolutionRunConfiguration,
   resetEvolutionCompileCache } from '../src/game/skills/index.js';
+import { evolutionRepresentativeLevels } from './lib.mjs';
 import { CHALLENGE_PROFILE_VERSION, compileChallengeProfile } from '../src/simulation/challenge-profile.js';
 import { environmentLevelAtTick, environmentTickForLevel } from '../src/game/environment-level.js';
 
@@ -24,8 +25,8 @@ if (!samples.every((sample) => sample.complete && sample.result?.hash === sample
 const ordered = samples.slice().sort((a, b) => a.ms - b.ms);
 const { result, ticks, ms } = ordered[1];
 const ticksPerSecond = Math.round(ticks / (ms / 1000));
-const breadth = compileEvolution({ evolutionLevels: MEMORY_NODE_IDS.map((id) => ({ id, level: '1' })) });
-const deepLuminous = compileEvolution({ evolutionLevels: MEMORY_NODES.map((node) => ({ id: node.id, level: node.domain === 'Luminous' ? '20' : '1' })) });
+const breadth = compileEvolution({ evolutionLevels: evolutionRepresentativeLevels('1') });
+const deepLuminous = compileEvolution({ evolutionLevels: evolutionRepresentativeLevels((archetype) => archetype.domain === 'Luminous' ? '20' : '1') });
 const fresh = compileEvolution({});
 const extremeLevel = `1${'0'.repeat(512)}`;
 const profiles = {
@@ -41,7 +42,7 @@ const fixedTrace = { ticks: FIXED_TRACE_TICKS, samples: fixedTraceSamples,
   medianElapsedMs: fixedTraceOrdered[3].elapsedMs, medianTicksPerSecond: fixedTraceOrdered[3].ticksPerSecond,
   deterministic: fixedTraceSamples.every((row) => row.hash === fixedTraceSamples[0].hash && row.alive === fixedTraceSamples[0].alive) };
 resetEvolutionCompileCache(); const compileAt = performance.now();
-for (let index = 0; index < 1000; index++) compileEvolution({ evolutionLevels: [{ id: MEMORY_NODE_IDS[index % MEMORY_NODE_IDS.length], level: String(index + 1) }] });
+for (let index = 0; index < 1000; index++) compileEvolution({ evolutionLevels: [{ cell: index % EVOLUTION_TOPOLOGY.nodeCount, level: String(index + 1) }] });
 const compileCache = { elapsedMs: Number((performance.now() - compileAt).toFixed(2)), ...evolutionCompileCacheDiagnostics() };
 const checkpoint = { date: new Date().toISOString().slice(0, 10), node: process.version, platform: process.platform,
   arch: process.arch, cpus: cpus().length, seed: SEED, minTicksPerSecond: MIN_TICKS_PER_SECOND, ticks, elapsedMs: Math.round(ms),

@@ -27,24 +27,29 @@ Resource ecology updates authoritative cells without skipping ticks. Chronic
 pressure retains current/next finite profiles and bounded exposure evidence;
 it has no gameplay-event arrays or render buffers.
 
-Evolution territory ownership and static level-4 geometry are built once per
-immutable topology lifetime. Selection and upgrade emphasis rebuild only bounded
-snapshot/edge bytes; unchanged animation frames perform zero edge-buffer
-updates. Trophy and Evolution semantic snapshots remain bounded. Benchmark and
-scene-entry evidence must be recorded for the exact revision tested; do not
-infer browser or device results from unit tests.
+Evolution topology, immutable archetype layout, deterministic substrate, and
+static level-4 geometry are built once per module/topology lifetime. An accepted
+progression or selection change rebuilds one `O(cells + edges + archetypes)`
+projection; unchanged animation frames perform zero edge-buffer updates. The
+canonical projection uses 10,248 typed status bytes plus bounded exact arrays;
+agent observations expose at most 224 compact candidates rather than 2,562
+heavyweight objects. Benchmark and scene-entry evidence must be recorded for the
+exact revision tested; do not infer browser or device results from unit tests.
 
-Same-host Chrome 152 predecessor → territorial measurements are: WebGL warm
-entry p95 `4.1 → 19.9 ms`, accepted update p95 `0.2 → 1.3 ms`, and steady frame
-p95 `0.1 → 1.2 ms`; Canvas warm entry p95 `2.0 → 6.1 ms`, accepted update p95
-`0.3 → 2.1 ms`, and steady frame p95 `0.2 → 1.9 ms`. WebGL remains four draws.
-Its static/dynamic bytes are `28,836/5,112 → 1,838,196/325,152`; the compact
-edge classification is `120 → 7,680` bytes. Canvas static/dynamic bytes are
-`2,092/2,040 → 133,132/130,560`. The percentage increases were investigated:
-absolute steady costs remain below 2.1 ms p95, the projection/geometry is cached,
-and the measured player gain is complete 2,562-cell meaning plus exact connected
-42-territory contact and visible edge hierarchy. Node construction is about
-`2.55 ms` cold and never runs per frame.
+The exact same-host Chrome 152 territory baseline p95 entry/snapshot/update/
+steady measurements were Worker/WebGL2 `21.3/0.4/1.5/1.5 ms`, fallback/WebGL2
+`23.2/0.7/2.3/1.8 ms`, and fallback/Canvas `6.8/0.5/2.4/2.2 ms`. Final
+cell-authority receipts measure `15.8/0.8/1.9/1.4 ms`, `14.3/0.5/1.3/1.1 ms`,
+and `8.2/0.5/2.6/1.7 ms` respectively. Percentage regressions in the sub-
+millisecond projection samples and Canvas entry/update were investigated:
+absolute steady work stays at or below `1.7 ms` p95, the expensive immutable layout/geometry is stable,
+unchanged frames upload no edge bytes, and the measured product change replaces
+2,562 presentation subdivisions with 2,562 truthful purchase cells and bounded
+navigation. WebGL remains four draws with the same `1,838,196` static and
+`325,152` dynamic bytes. The production agent smoke is also bounded and improves
+from `19,790.6 ms` on the exact predecessor to `18,275.3 ms` on the final
+same-host working tree (`−7.7%`). Repeated final cohorts and the canonical work
+package own the stable comparison used for closure.
 
 The atmosphere silhouette cutover's same-host Chrome 152 median-of-three
 synchronized costs are baseline to fixed shell: steady p50 `0.800 -> 0.900 ms`,
@@ -66,9 +71,9 @@ time and are not multiplied by speed.
 npm run benchmark
 npm run test:browser:atmosphere
 npm run test:browser:atmosphere:canvas
-npm run test:browser:evolution-territories
-npm run test:browser:evolution-territories:fallback
-npm run test:browser:evolution-territories:canvas
+npm run test:browser:evolution-cells
+npm run test:browser:evolution-cells:fallback
+npm run test:browser:evolution-cells:canvas
 npm run terminal:soak
 npm run test:browser:file
 npm run test:browser:canvas

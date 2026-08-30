@@ -1,70 +1,107 @@
-/** Evolution skill semantic tree, concise detail, and exact acquisition feedback. */
-import { MEMORY_NODES, evolutionCellState, getMemoryNode, previewEvolutionLevel, newlyAvailableAdjacentIds } from '../game/skills/index.js';
+/** Bounded exact-cell Evolution detail and native topology navigation. */
+import {
+  EVOLUTION_TOPOLOGY, evolutionCellState, evolutionArchetypeForCell,
+  previewEvolutionLevel,
+} from '../game/skills/index.js';
 import { formatProgressionEngineering, normalizeProgressionInteger } from '../core/progression-integer.js';
 
 export function createMemorySurface(options) {
   const panel = byId('memory-node-panel'); const unlock = /** @type {HTMLButtonElement} */ (byId('memory-unlock'));
-  const tree = byId('evolution-tree'); const change = byId('memory-node-change'); let selected = null; let meta = null; let feedbackTimer = 0;
+  const change = byId('memory-node-change'); const neighbors = byId('evolution-neighbors');
+  const previous = /** @type {HTMLButtonElement} */ (byId('evolution-previous'));
+  const next = /** @type {HTMLButtonElement} */ (byId('evolution-next'));
+  const frontier = /** @type {HTMLButtonElement} */ (byId('evolution-frontier'));
+  let selectedCell = null; let projection = null; let feedbackTimer = 0;
   byId('memory-node-close').addEventListener('click', options.onCloseNode);
-  unlock.addEventListener('click', () => { if (selected) options.onUnlock(selected.id); });
-  function renderNode() {
-    const state = evolutionCellState(meta, selected, selected?.id); selected = state; const purchasesOpen = options.canUnlock?.() !== false;
-    const preview = previewEvolutionLevel(meta, state.id); const boundary = state.reason === 'progression-security-boundary';
-    byId('memory-node-branch').textContent = `${state.domain.toUpperCase()} · RING ${state.tier}`;
+  unlock.addEventListener('click', () => { if (selectedCell !== null) options.onUnlock(selectedCell); });
+  previous.addEventListener('click', () => navigate((selectedCell - 1 + EVOLUTION_TOPOLOGY.nodeCount) % EVOLUTION_TOPOLOGY.nodeCount));
+  next.addEventListener('click', () => navigate((selectedCell + 1) % EVOLUTION_TOPOLOGY.nodeCount));
+  frontier.addEventListener('click', () => { const cell = nextReadyCell(); if (cell !== null) navigate(cell); });
+  byId('evolution-navigator').addEventListener('keydown', (event) => {
+    if (event.key === 'Home') { event.preventDefault(); navigate(0); }
+    if (event.key === 'End') { event.preventDefault(); navigate(EVOLUTION_TOPOLOGY.nodeCount - 1); }
+  });
+
+  function navigate(cell) { if (Number.isInteger(cell)) options.onSelect(cell, 'navigator'); }
+  function render() {
+    if (selectedCell === null || !projection) return;
+    const state = evolutionCellState(projection, selectedCell, selectedCell);
+    const purchasesOpen = options.canUnlock?.() !== false;
+    const preview = previewEvolutionLevel({ evolutionLevels: projection.vector }, selectedCell, projection);
+    const boundary = state.reason === 'progression-security-boundary';
+    byId('memory-node-branch').textContent = `${state.domain.toUpperCase()} · CELL ${state.cell + 1} OF ${EVOLUTION_TOPOLOGY.nodeCount}`;
     byId('memory-node-heading').textContent = state.nameEn; byId('memory-node-summary').textContent = state.summary;
     byId('memory-node-detail').textContent = state.description;
-    const status = boundary ? `Level ${number(state.currentLevel)} · no further level can be represented here`
-      : state.owned ? state.affordable ? `Level ${number(state.currentLevel)} · ready to upgrade` : `Level ${number(state.currentLevel)} · more Echoes required`
-        : state.locked ? 'Level 0 · locked by physical adjacency' : state.affordable ? 'Level 0 · ready to unlock' : 'Level 0 · reachable · more Echoes required';
-    const neighbor = state.adjacentOwnedId ? getMemoryNode(state.adjacentOwnedId)?.nameEn ?? state.adjacentOwnedId
-      : state.bootstrap ? 'First Division is the only fresh frontier' : 'No adjacent Level 1+ skill';
+    const status = boundary ? `Local Level ${number(state.localLevel)} · no further level can be represented here`
+      : state.owned ? state.affordable ? `Local Level ${number(state.localLevel)} · ready to strengthen` : `Local Level ${number(state.localLevel)} · more Echoes required`
+        : state.locked ? 'Local Level 0 · locked by direct cell adjacency' : state.affordable ? 'Local Level 0 · ready to establish' : 'Local Level 0 · reachable · more Echoes required';
     const changes = preview?.changes?.map(formatChange).join(' · ') || 'No further change can be represented';
     const unlocked = preview?.unlocked?.map(humanize).join(', ') || 'No new habitat';
-    const nearby = newlyAvailableAdjacentIds(meta, state.id).map((id) => getMemoryNode(id)?.nameEn ?? id);
-    const instruction = state.selectedReady && purchasesOpen ? `Activate this selected territory again to ${state.owned ? 'upgrade' : 'unlock'}.`
-      : state.owned ? 'Activate to select this territory.' : state.reachable ? 'Activate to select this reachable territory.' : 'Unlock a directly adjacent Level 1+ skill first.';
+    const readyNeighbors = state.neighbors.filter((cell) => projection.reachable[cell] && !projection.owned[cell]);
+    const instruction = state.selectedReady && purchasesOpen ? `Activate this selected cell again to ${state.owned ? 'strengthen' : 'establish'} it.`
+      : state.owned ? 'Activate to select this cell.' : state.reachable ? 'Activate to select this reachable cell.' : 'Establish a directly adjacent cell first.';
     byId('memory-node-meta').replaceChildren(...definitionRows([
       ['Status', purchasesOpen ? status : `${status} · Evolution is available after this World`],
-      ['Current → next level', boundary ? `Level ${number(state.currentLevel)} · unavailable` : `Level ${number(state.currentLevel)} → Level ${number(state.nextLevel)}`],
-      ['Exact next cost', boundary ? `${number(meta.echoBalance)} Echoes held` : `${number(state.nextCost)} Echoes · ${number(meta.echoBalance)} held`],
-      ['Before → after', changes], ['New habitat', unlocked], ['Unlock reason', neighbor], ['Purchase', instruction],
-      ['New neighboring skills', nearby.length ? nearby.join(', ') : 'No additional frontier from this skill'],
+      ['Local level', boundary ? `Level ${number(state.localLevel)} · unavailable` : `Level ${number(state.localLevel)} → ${number(state.nextLocalLevel)}`],
+      ['Shared archetype rank', boundary ? `Rank ${number(state.aggregateRank)} · unavailable` : `Rank ${number(state.aggregateRank)} → ${number(state.nextAggregateRank)}`],
+      ['Exact next cost', boundary ? `${number(projection.balance)} Echoes held` : `${number(state.nextCost)} Echoes · ${number(projection.balance)} held`],
+      ['Before → after', changes], ['New habitat', unlocked], ['Purchase', instruction],
+      ['Ready neighboring cells', readyNeighbors.length ? readyNeighbors.map(cellName).join(', ') : 'No additional ready neighbor'],
     ]));
     unlock.hidden = false; unlock.disabled = !state.selectedReady || !purchasesOpen;
-    const verb = state.owned ? 'Upgrade' : 'Unlock';
+    const verb = state.owned ? 'Strengthen' : 'Establish';
     unlock.textContent = !purchasesOpen ? 'Evolution after this World' : boundary ? 'No further level available'
-      : `${verb} for ${number(state.nextCost)} Echoes`;
-    unlock.setAttribute('aria-label', !purchasesOpen ? `${state.nameEn} upgrades are available after this World`
-      : boundary ? `${state.nameEn} has no further representable level` : `${verb} ${state.nameEn} for ${number(state.nextCost)} Echoes`);
+      : `${verb} cell for ${number(state.nextCost)} Echoes`;
+    unlock.setAttribute('aria-label', !purchasesOpen ? `${state.nameEn} cell upgrades are available after this World`
+      : boundary ? `${state.nameEn} cell has no further representable level`
+        : `${verb} ${state.nameEn} at cell ${state.cell + 1} for ${number(state.nextCost)} Echoes`);
     if (state.nextCost === null) delete unlock.dataset.exactValue; else unlock.dataset.exactValue = state.nextCost;
     unlock.dataset.action = state.selectedReady && purchasesOpen ? 'recommended' : 'normal';
+    renderNavigator(state);
   }
-  function renderTree() {
-    tree.replaceChildren(...MEMORY_NODES.map((node) => {
-      const state = evolutionCellState(meta, node, selected?.id); const button = document.createElement('button'); button.type = 'button';
-      button.setAttribute('role', 'treeitem'); button.setAttribute('aria-level', String(state.tier + 1)); button.setAttribute('aria-selected', String(state.id === selected?.id));
-      const availability = state.owned ? state.affordable ? 'Owned and ready to upgrade' : 'Owned; more Echoes required'
-        : state.reachable ? state.affordable ? 'Ready to unlock' : 'Reachable; more Echoes required' : 'Locked; an adjacent Level 1+ skill is required';
-      const next = state.nextCost === null ? 'No further level is available.' : `Next level ${number(state.nextLevel)} costs ${number(state.nextCost)} Echoes.`;
-      const prompt = state.id === selected?.id && state.reason === 'ready' ? `Activate again to ${state.owned ? 'purchase one upgrade' : 'unlock'}.` : 'Activate to select.';
-      button.textContent = `${state.nameEn}. ${state.domain}. Level ${number(state.currentLevel)}. ${state.summary} ${availability}. ${next} ${prompt}`;
-      button.addEventListener('click', () => options.onSelect(node.id)); return button;
+
+  function renderNavigator(state) {
+    byId('evolution-current').textContent = `Cell ${state.cell + 1} of ${EVOLUTION_TOPOLOGY.nodeCount}. ${state.nameEn}. ${state.domain}. Local Level ${number(state.localLevel)}. Shared rank ${number(state.aggregateRank)}. ${statusName(state)}.`;
+    previous.setAttribute('aria-label', `Previous Evolution cell, ${cellName((state.cell - 1 + EVOLUTION_TOPOLOGY.nodeCount) % EVOLUTION_TOPOLOGY.nodeCount)}`);
+    next.setAttribute('aria-label', `Next Evolution cell, ${cellName((state.cell + 1) % EVOLUTION_TOPOLOGY.nodeCount)}`);
+    neighbors.replaceChildren(...state.neighbors.map((cell) => {
+      const neighborState = evolutionCellState(projection, cell, state.cell); const button = document.createElement('button');
+      button.type = 'button'; button.className = 'btn btn-secondary'; button.textContent = `Cell ${cell + 1} · ${neighborState.nameEn}`;
+      button.setAttribute('aria-label', `Direct neighbor cell ${cell + 1}, ${neighborState.nameEn}, ${neighborState.domain}, Local Level ${number(neighborState.localLevel)}, Shared rank ${number(neighborState.aggregateRank)}, ${statusName(neighborState)}`);
+      button.addEventListener('click', () => navigate(cell)); return button;
     }));
+    const ready = nextReadyCell(); frontier.disabled = ready === null;
+    frontier.textContent = ready === null ? 'No ready cell' : 'Next ready cell';
+    frontier.setAttribute('aria-label', ready === null ? 'No reachable affordable Evolution cell'
+      : `Move to next reachable affordable Evolution cell, ${cellName(ready)}`);
   }
+
+  function nextReadyCell() {
+    if (!projection?.readyCells?.length) return null;
+    const ready = Array.from(projection.readyCells).filter((cell) => !projection.owned[cell]);
+    const candidates = ready.length ? ready : Array.from(projection.readyCells);
+    return candidates.find((cell) => cell > (selectedCell ?? -1)) ?? candidates[0] ?? null;
+  }
+
   function acquisition(preview, newly) {
     clearTimeout(feedbackTimer); change.hidden = false; change.classList.remove('skill-acquired'); void change.offsetWidth; change.classList.add('skill-acquired');
     const effect = preview?.changes?.map(formatChange).join(' · ') || 'Permanent ecological rule improved';
-    change.textContent = `${effect}. ${newly.length} adjacent ${newly.length === 1 ? 'skill is' : 'skills are'} now available.`;
+    change.textContent = `${effect}. Shared rank ${number(preview?.newAggregateRank ?? '0')}. ${newly.length} neighboring ${newly.length === 1 ? 'cell is' : 'cells are'} now reachable.`;
     feedbackTimer = setTimeout(() => { change.hidden = true; change.classList.remove('skill-acquired'); }, 5000);
   }
+
   return { panel,
-    openNode(node, nextMeta) { selected = node; meta = nextMeta; change.hidden = true; panel.hidden = false; renderNode(); renderTree(); },
-    refresh(nextMeta, newly = [], preview = null) { meta = nextMeta; if (selected) renderNode(); renderTree(); if (preview) acquisition(preview, newly); },
-    syncTree(nextMeta) { meta = nextMeta; renderTree(); },
-    closeNode() { panel.hidden = true; selected = null; clearTimeout(feedbackTimer); feedbackTimer = 0; change.hidden = true; },
-    get selectedId() { return selected?.id ?? null; },
+    openCell(cell, nextProjection) { selectedCell = cell; projection = nextProjection; change.hidden = true; panel.hidden = false; render(); },
+    refresh(nextProjection, newly = [], preview = null) { projection = nextProjection; if (selectedCell !== null) render(); if (preview) acquisition(preview, newly); },
+    sync(nextProjection) { projection = nextProjection; if (selectedCell !== null) render(); },
+    closeNode() { panel.hidden = true; selectedCell = null; projection = null; clearTimeout(feedbackTimer); feedbackTimer = 0; change.hidden = true; },
+    get selectedCell() { return selectedCell; },
   };
 }
+
+function cellName(cell) { const archetype = evolutionArchetypeForCell(cell); return `Cell ${cell + 1}, ${archetype?.nameEn ?? 'unknown ability'}`; }
+function statusName(state) { return state.owned ? state.affordable ? 'owned and affordable' : 'owned and unaffordable'
+  : state.reachable ? state.affordable ? 'reachable and affordable' : 'reachable and unaffordable' : 'locked'; }
 function formatChange(change) { return `${humanize(change.key)} ${decimal(change.before)} → ${decimal(change.after)}`; }
 function decimal(value) { return `${Math.round(value * 1000) / 1000}${typeof value === 'number' && value > 1.5 ? '' : '×'}`; }
 function number(value) { const exact = normalizeProgressionInteger(value, '0'); return exact.length <= 15 ? exact.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : formatProgressionEngineering(exact, 6); }

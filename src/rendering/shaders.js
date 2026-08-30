@@ -103,7 +103,12 @@ void main() {
   base = mix(base, depletedTint, depletedResource * 0.72);
   base = mix(base, exhaustedTint, exhaustedResource * 0.82);
   base = mix(base, waterCell > 0.5 ? vec3(0.035,0.220,0.390) : vec3(0.25,0.35,0.23), recoveringResource * 0.52);
-  base = mix(base, vec3(0.22, 0.23, 0.21) + nutrient * 0.05, uMemory * 0.82);
+  // Evolution shares the World's cellular material scale. Its immutable fields
+  // modulate a quiet substrate instead of flattening cells into owner regions.
+  vec3 memorySubstrate = vec3(0.135 + nutrient * 0.13 + ridge * 0.08,
+    0.145 + moisture * 0.12 + forest * 0.11,
+    0.125 + (1.0 - moisture) * 0.08 + ridge * 0.04);
+  base = mix(base, memorySubstrate, uMemory * 0.72);
   float stress = clamp(vLife.y, 0.0, 1.0);
   float state = floor(vLife.z + 0.5);
   float ordinary = 1.0 - uMemory;
@@ -147,13 +152,13 @@ void main() {
   else branchColor = vec3(0.847, 0.678, 0.298); // Luminous
   float fossil = fract(vLife.z); float emphasis = step(31.0, vLife.z);
   float broadGlyph = smoothstep(0.38, 0.60, abs(sin(dot(vPos, vec3(11.0, 7.0, 5.0)) * (1.0 + atlasKind * 0.12))));
-  vec3 atlasBase = mix(vec3(0.13, 0.14, 0.145), vec3(0.30, 0.27, 0.22), fossil * 0.48);
-  atlasBase = mix(atlasBase, branchColor * (0.38 + inset * 0.22), lockedCell * (0.58 + inset * 0.28));
-  atlasBase = mix(atlasBase, branchColor * 0.58, unaffordableCell * (0.40 + (1.0 - inset) * 0.26));
-  atlasBase = mix(atlasBase, branchColor * 1.22, affordableCell * (0.64 + inset * 0.30));
-  atlasBase = mix(atlasBase, branchColor * (0.82 + broadGlyph * 0.24), ownedCell * (0.58 + inset * 0.34));
-  atlasBase = mix(atlasBase, branchColor * (1.18 + inset * 0.18), ownedReadyCell * (0.30 + inset * 0.22));
-  atlasBase += selectedStatus * vec3(0.24, 0.30, 0.26) * (0.45 + inset * 0.35);
+  vec3 atlasBase = mix(memorySubstrate, vec3(0.30, 0.27, 0.22), fossil * 0.38);
+  atlasBase = mix(atlasBase, branchColor * (0.34 + inset * 0.13), lockedCell * (0.22 + inset * 0.12));
+  atlasBase = mix(atlasBase, branchColor * 0.54, unaffordableCell * (0.26 + (1.0 - inset) * 0.10));
+  atlasBase = mix(atlasBase, branchColor * 0.92, affordableCell * (0.36 + inset * 0.12));
+  atlasBase = mix(atlasBase, branchColor * (0.68 + broadGlyph * 0.13), ownedCell * (0.34 + inset * 0.18));
+  atlasBase = mix(atlasBase, branchColor * (1.02 + inset * 0.10), ownedReadyCell * (0.17 + inset * 0.12));
+  atlasBase += selectedStatus * vec3(0.19, 0.24, 0.20) * (0.24 + inset * 0.22);
   float readyCore = smoothstep(0.9970, 0.99976, centerDot);
   float readyRing = smoothstep(0.9925, 0.9972, centerDot) * (1.0 - readyCore);
   float readyPattern = step(0.58, broadGlyph) * (1.0 - readyCore);

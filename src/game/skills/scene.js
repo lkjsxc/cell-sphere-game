@@ -1,71 +1,102 @@
-/** Read-only authored-skill projection over the fine Evolution territories. */
-import { writeEvolutionTerritoryEdges } from './territories.js';
-export const MEMORY_STATUS = Object.freeze({
+/** Shared exact-cell Evolution material and edge projection for both renderers. */
+import { createRng } from '../../core/prng.js';
+import { smoothField, sphericalField } from '../../world/noise.js';
+import { EVOLUTION_ARCHETYPES } from './catalog.js';
+
+export const EVOLUTION_STATUS = Object.freeze({
   EMPTY: 0, LOCKED: 1, UNAFFORDABLE: 2, AFFORDABLE: 3, OWNED_UNAFFORDABLE: 4,
   SELECTED_LOCKED: 5, SELECTED_UNAFFORDABLE: 6, SELECTED_AFFORDABLE: 7,
   OWNED_AFFORDABLE: 8, SELECTED_OWNED_UNAFFORDABLE: 9, SELECTED_OWNED_AFFORDABLE: 10,
-  OWNED: 4, SELECTED_OWNED: 9,
 });
+export const EVOLUTION_CELL_EDGE = Object.freeze({ QUIET: 0, OWNED: 1, FRONTIER: 2, RECENT: 3, SELECTED: 4 });
+
 const KINDS = Object.freeze({ root: 1, specialization: 2, capstone: 3 });
 const DOMAINS = Object.freeze({ Foundation: 0, Fertility: 1, Freshwater: 2, Scarcity: 3, Cryogenic: 4, Marine: 5, Luminous: 6 });
 
-export function createMemoryFields(topo) {
-  const floats = () => new Float32Array(topo.nodeCount); const baseNutrient = floats(); const baseMoisture = floats();
-  const baseTemp = floats(); const altitude = floats();
-  baseNutrient.fill(.22); baseMoisture.fill(.18); baseTemp.fill(.35); altitude.fill(.43);
-  return Object.freeze({ baseNutrient, baseMoisture, baseTemp, altitude, biomeId: new Uint8Array(topo.nodeCount).fill(9),
-    forestDensity: floats(), lakeDepth: floats(), lakeShore: new Uint8Array(topo.nodeCount), freshwaterInfluence: floats(),
-    lakeId: new Int16Array(topo.nodeCount).fill(-1), ridgeStrength: floats(), landMask: new Uint8Array(topo.nodeCount).fill(1),
+export function createEvolutionFields(topology) {
+  const rng = createRng(0xe701c311); const count = topology.nodeCount;
+  const nutrientField = smoothField(sphericalField(rng, topology.positions, count, { lobes: 23, sharpness: 3, signed: true }), topology, 1);
+  const moistureField = smoothField(sphericalField(rng, topology.positions, count, { lobes: 19, sharpness: 2, signed: true }), topology, 1);
+  const temperatureField = smoothField(sphericalField(rng, topology.positions, count, { lobes: 17, sharpness: 2, signed: true }), topology, 1);
+  const reliefField = sphericalField(rng, topology.positions, count, { lobes: 29, sharpness: 4, signed: true });
+  const baseNutrient = scaled(nutrientField, .16, .62); const baseMoisture = scaled(moistureField, .12, .70);
+  const baseTemp = scaled(temperatureField, .18, .66); const altitude = scaled(reliefField, .27, .42);
+  const forestDensity = new Float32Array(count); const ridgeStrength = new Float32Array(count);
+  for (let cell = 0; cell < count; cell++) {
+    forestDensity[cell] = Math.fround(.08 + nutrientField[cell] * moistureField[cell] * .34);
+    ridgeStrength[cell] = Math.fround(.05 + Math.abs(reliefField[cell] - .5) * .32);
+  }
+  return Object.freeze({ baseNutrient, baseMoisture, baseTemp, altitude,
+    biomeId: new Uint8Array(count).fill(9), forestDensity,
+    lakeDepth: new Float32Array(count), lakeShore: new Uint8Array(count), freshwaterInfluence: new Float32Array(count),
+    lakeId: new Int16Array(count).fill(-1), ridgeStrength, landMask: new Uint8Array(count).fill(1),
     landmarks: Object.freeze([]), sources: Object.freeze([0]) });
 }
 
-export function renderMemorySnapshot(territories, meta, scene, emphasizedIds = []) {
-  const topo = territories.topology; const count = topo.nodeCount; const status = new Uint8Array(count); const branch = new Uint8Array(count);
-  const tier = new Uint8Array(count); const kind = new Uint8Array(count); const imprintWeight = new Float32Array(count);
-  const nodeIndex = new Int16Array(count).fill(-1); const emphasis = new Uint8Array(count); const marked = new Set(emphasizedIds);
-  const emphasizedSkills = new Uint8Array(territories.skillCount); const imprintSkills = new Uint8Array(territories.skillCount);
-  const focusSkills = []; let selectedSkill = -1;
-  for (const imprint of meta.imprints ?? []) for (const siteCell of imprint.cells ?? []) {
-    const skill = territories.skillBySiteCell[siteCell] ?? -1; if (skill >= 0) imprintSkills[skill] = 1;
+export function renderEvolutionSnapshot(layout, meta, projection) {
+  const { topology, archetypeByCell } = layout; const count = topology.nodeCount;
+  const status = new Uint8Array(count); const domain = new Uint8Array(count); const tier = new Uint8Array(count);
+  const kind = new Uint8Array(count); const imprintWeight = new Float32Array(count);
+  const archetypeIndex = new Uint8Array(archetypeByCell); const recent = new Uint8Array(projection.recent);
+  for (const imprint of meta.imprints ?? []) for (const cell of imprint.cells ?? []) {
+    if (Number.isInteger(cell) && cell >= 0 && cell < count) imprintWeight[cell] = .55;
   }
-  scene.nodes.forEach((node, index) => {
-    const skill = territories.skillBySiteCell[node.cell];
-    if (skill < 0) throw new Error(`Evolution skill ${node.id} has no presentation territory`);
-    const selected = node.id === scene.selectedId; if (selected) selectedSkill = skill;
-    const nodeStatus = statusFor(node, selected); const nodeBranch = DOMAINS[node.domain] ?? 0;
-    const nodeKind = KINDS[node.kind] ?? 2; const emphasized = marked.has(node.id);
-    if (emphasized) emphasizedSkills[skill] = 1;
-    for (let offset = territories.cellStart[skill]; offset < territories.cellStart[skill + 1]; offset++) {
-      const cell = territories.cells[offset]; status[cell] = nodeStatus; branch[cell] = nodeBranch;
-      tier[cell] = node.tier; kind[cell] = nodeKind; nodeIndex[cell] = index;
-      if (emphasized) emphasis[cell] = 1; if (imprintSkills[skill]) imprintWeight[cell] = .55;
-    }
-    if (node.owned || (node.reachable && node.affordable)) focusSkills.push(skill);
-  });
-  const territoryEdges = writeEvolutionTerritoryEdges(territories, selectedSkill, emphasizedSkills);
+  for (let cell = 0; cell < count; cell++) {
+    const archetype = archetypeByCell[cell]; const definition = EVOLUTION_ARCHETYPES[archetype];
+    status[cell] = statusFor(projection, cell); domain[cell] = DOMAINS[definition.domain] ?? 0;
+    tier[cell] = definition.tier; kind[cell] = KINDS[definition.kind] ?? 2;
+  }
+  const edges = writeEvolutionCellEdges(layout, projection);
+  const focusCells = [];
+  for (let cell = 0; cell < count; cell++) if (projection.owned[cell]
+    || (projection.reachable[cell] && projection.affordable[cell])) focusCells.push(cell);
+  if (!focusCells.length) focusCells.push(layout.rootCell);
   return Object.freeze({
-    tick: scene.nodes.filter((node) => node.owned).length * 16 + (scene.selectedId ? 1 : 0), entropy: .30, status: 'memory',
-    memoryStatus: status, memoryBranch: branch, memoryTier: tier, memoryKind: kind, memoryImprintWeight: imprintWeight,
-    memoryNodeIndex: nodeIndex, memoryEmphasis: emphasis, memoryScene: scene, nodeStates: scene.nodes,
-    memoryOwner: territories.ownerByCell, memoryTerritoryEdge: territoryEdges,
-    memoryTerritorySize: territories.territorySize, memoryTerritoryAnchor: territories.anchorCell,
-    memoryTerritoryCentroid: territories.centroid, memoryTerritoryDiagnostics: territories.diagnostics,
-    metrics: Object.freeze({ coverage: scene.nodes.filter((node) => node.owned).length / Math.max(1, scene.nodes.length), score: '0' }),
-    focus: focusDirection(territories, focusSkills.length ? focusSkills
-      : scene.nodes.filter((node) => node.kind === 'root').map((node) => territories.skillBySiteCell[node.cell])),
+    tick: projection.ownedCellCount * 16 + (projection.selectedCell === null ? 0 : 1), entropy: .30, status: 'evolution',
+    evolutionStatus: status, evolutionDomain: domain, evolutionTier: tier, evolutionKind: kind,
+    evolutionImprintWeight: imprintWeight, evolutionArchetypeIndex: archetypeIndex,
+    evolutionRecent: recent, evolutionEdge: edges, evolutionProjection: projection,
+    selectedEvolutionCell: projection.selectedCell,
+    metrics: Object.freeze({ coverage: projection.ownedCellCount / count, score: '0' }),
+    focus: focusDirection(topology, focusCells),
   });
 }
-function statusFor(node, selected) {
-  if (node.owned && node.affordable) return selected ? MEMORY_STATUS.SELECTED_OWNED_AFFORDABLE : MEMORY_STATUS.OWNED_AFFORDABLE;
-  if (node.owned) return selected ? MEMORY_STATUS.SELECTED_OWNED_UNAFFORDABLE : MEMORY_STATUS.OWNED_UNAFFORDABLE;
-  if (node.locked) return selected ? MEMORY_STATUS.SELECTED_LOCKED : MEMORY_STATUS.LOCKED;
-  if (node.affordable) return selected ? MEMORY_STATUS.SELECTED_AFFORDABLE : MEMORY_STATUS.AFFORDABLE;
-  return selected ? MEMORY_STATUS.SELECTED_UNAFFORDABLE : MEMORY_STATUS.UNAFFORDABLE;
-}
-function focusDirection(territories, skills) {
-  const focus = [0, 0, 0];
-  for (const skill of skills.length ? skills : [0]) for (let axis = 0; axis < 3; axis++) {
-    focus[axis] += territories.centroid[skill * 3 + axis];
+
+export function writeEvolutionCellEdges(layout, projection, out = null) {
+  const { topology } = layout; const target = out ?? new Uint8Array(topology.edgeCount);
+  if (!(target instanceof Uint8Array) || target.length !== topology.edgeCount) throw new Error('invalid Evolution edge output');
+  for (let edge = 0; edge < topology.edgeCount; edge++) {
+    const a = topology.edgeA[edge]; const b = topology.edgeB[edge];
+    if (a === projection.selectedCell || b === projection.selectedCell) target[edge] = EVOLUTION_CELL_EDGE.SELECTED;
+    else if (projection.recent[a] || projection.recent[b]) target[edge] = EVOLUTION_CELL_EDGE.RECENT;
+    else if ((!projection.owned[a] && projection.reachable[a]) || (!projection.owned[b] && projection.reachable[b])
+      || projection.owned[a] !== projection.owned[b]) target[edge] = EVOLUTION_CELL_EDGE.FRONTIER;
+    else if (projection.owned[a] || projection.owned[b]) target[edge] = EVOLUTION_CELL_EDGE.OWNED;
+    else target[edge] = EVOLUTION_CELL_EDGE.QUIET;
   }
-  const length = Math.hypot(...focus); return length ? focus.map((value) => value / length) : [0, 0, 1];
+  return target;
+}
+
+function statusFor(projection, cell) {
+  const selected = projection.selectedCell === cell; const owned = projection.owned[cell] === 1;
+  const affordable = projection.affordable[cell] === 1; const reachable = projection.reachable[cell] === 1;
+  if (owned && affordable) return selected ? EVOLUTION_STATUS.SELECTED_OWNED_AFFORDABLE : EVOLUTION_STATUS.OWNED_AFFORDABLE;
+  if (owned) return selected ? EVOLUTION_STATUS.SELECTED_OWNED_UNAFFORDABLE : EVOLUTION_STATUS.OWNED_UNAFFORDABLE;
+  if (!reachable) return selected ? EVOLUTION_STATUS.SELECTED_LOCKED : EVOLUTION_STATUS.LOCKED;
+  if (affordable) return selected ? EVOLUTION_STATUS.SELECTED_AFFORDABLE : EVOLUTION_STATUS.AFFORDABLE;
+  return selected ? EVOLUTION_STATUS.SELECTED_UNAFFORDABLE : EVOLUTION_STATUS.UNAFFORDABLE;
+}
+
+function focusDirection(topology, cells) {
+  const focus = [0, 0, 0];
+  for (const cell of cells) for (let axis = 0; axis < 3; axis++) focus[axis] += topology.positions[cell * 3 + axis];
+  const length = Math.hypot(...focus);
+  if (length > 1e-8) return focus.map((value) => value / length);
+  const fallback = cells[0] ?? 0; return Array.from(topology.positions.slice(fallback * 3, fallback * 3 + 3));
+}
+
+function scaled(source, offset, scale) {
+  const out = new Float32Array(source.length);
+  for (let index = 0; index < source.length; index++) out[index] = Math.fround(offset + source[index] * scale);
+  return out;
 }

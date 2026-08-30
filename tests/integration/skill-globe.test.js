@@ -1,65 +1,81 @@
-/** Authored Evolution graph and fine territorial presentation integration. */
-import { test } from 'node:test'; import assert from 'node:assert/strict';
-import { createGeodesicTopology, createTopology } from '../../src/world/icosphere.js';
-import { MEMORY_NODES, MEMORY_PHYSICAL_ADJACENCY, availableMemoryNodes, buildMemorySnapshot,
-  compileEvolution, createEvolutionTerritories, evolutionCellState, getMemoryAdjacentIds, getMemoryNode,
-  normalizeEvolutionLevels, purchaseEvolutionLevel, validateMemoryGraph } from '../../src/game/skills/index.js';
-import { createMemoryFields } from '../../src/game/skills/scene.js'; import { defaultMeta } from '../../src/platform/storage.js';
-import { createCamera } from '../../src/rendering/camera.js'; import { pickNode } from '../../src/rendering/picking.js';
+/** Fine Evolution authority, scene projection, picking, and Imprint integration. */
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  EVOLUTION_ARCHETYPES, EVOLUTION_CELL_EDGE, EVOLUTION_LAYOUT, EVOLUTION_ROOT_CELL, EVOLUTION_TOPOLOGY,
+  buildEvolutionProjection, buildEvolutionSnapshot, compileEvolution, createEvolutionFields,
+  evolutionCellState, getEvolutionAdjacentCells, newlyReachableEvolutionCells, purchaseEvolutionLevel,
+} from '../../src/game/skills/index.js';
+import { EVOLUTION_IMPRINT_VERSION, defaultMeta, validateMeta } from '../../src/platform/storage.js';
+import { createCamera } from '../../src/rendering/camera.js';
+import { pickNode } from '../../src/rendering/picking.js';
 
-test('frequency-2 Evolution topology has one root, real symmetric adjacency, and authored cells', () => {
-  const topology = createGeodesicTopology(2); const graph = validateMemoryGraph();
-  assert.equal(graph.valid, true); assert.deepEqual([topology.nodeCount, topology.edgeCount], [42, 120]); assert.equal(MEMORY_NODES.length, 42);
-  assert.equal(MEMORY_NODES.filter((node) => node.kind === 'root').map((node) => node.id).join(), 'first-division');
-  for (const node of MEMORY_NODES) for (const adjacentId of getMemoryAdjacentIds(node.id)) {
-    const adjacent = getMemoryNode(adjacentId); assert.ok(getMemoryAdjacentIds(adjacentId).includes(node.id));
-    assert.ok(topology.nodeNeighbors.slice(topology.nodeStart[node.cell], topology.nodeStart[node.cell + 1]).includes(adjacent.cell));
+test('the maintained level-4 sphere is the sole symmetric Evolution topology', () => {
+  assert.deepEqual([EVOLUTION_TOPOLOGY.nodeCount, EVOLUTION_TOPOLOGY.edgeCount], [2562, 7680]);
+  for (let cell = 0; cell < EVOLUTION_TOPOLOGY.nodeCount; cell++) for (const neighbor of getEvolutionAdjacentCells(cell)) {
+    assert.ok(getEvolutionAdjacentCells(neighbor).includes(cell), `${cell}:${neighbor}`);
   }
-  assert.equal(Object.keys(MEMORY_PHYSICAL_ADJACENCY).length, 42);
+  assert.equal(EVOLUTION_LAYOUT.archetypeByCell.length, EVOLUTION_TOPOLOGY.nodeCount);
+  assert.equal(new Set(EVOLUTION_LAYOUT.archetypeByCell).size, EVOLUTION_ARCHETYPES.length);
 });
-test('legal adjacency purchases traverse every authored cell and direct compilation remains bounded', () => {
-  let meta = { ...defaultMeta(), echoBalance: '100000', revision: '0' }; let guard = 0;
-  while (normalizeEvolutionLevels(meta).length < MEMORY_NODES.length && guard++ < 64) {
-    const node = availableMemoryNodes(meta).find((entry) => entry.currentLevel === '0'); assert.ok(node);
-    const transaction = purchaseEvolutionLevel(meta, node.id, { expectedLevel: '0', expectedRevision: meta.revision, transactionKey: `breadth-${guard}` });
-    assert.equal(transaction.ok, true); meta = transaction.meta;
+
+test('one exact-cell purchase changes local state and only truthful neighboring frontier semantics', () => {
+  const meta = { ...defaultMeta(), echoBalance: '10000' };
+  const beforeProjection = buildEvolutionProjection(meta, EVOLUTION_ROOT_CELL);
+  const before = buildEvolutionSnapshot(meta, EVOLUTION_ROOT_CELL);
+  const state = evolutionCellState(beforeProjection, EVOLUTION_ROOT_CELL, EVOLUTION_ROOT_CELL);
+  const purchase = purchaseEvolutionLevel(meta, EVOLUTION_ROOT_CELL, { transactionKey: 'exact-cell',
+    expectedLocalLevel: state.localLevel, expectedAggregateRank: state.aggregateRank, expectedRevision: meta.revision });
+  assert.equal(purchase.ok, true); assert.deepEqual(purchase.meta.evolutionLevels, [{ cell: EVOLUTION_ROOT_CELL, level: '1' }]);
+  const afterProjection = buildEvolutionProjection(purchase.meta, EVOLUTION_ROOT_CELL, [EVOLUTION_ROOT_CELL]);
+  const after = buildEvolutionSnapshot(purchase.meta, EVOLUTION_ROOT_CELL, [EVOLUTION_ROOT_CELL]);
+  const newly = newlyReachableEvolutionCells(beforeProjection, afterProjection);
+  assert.deepEqual(newly, getEvolutionAdjacentCells(EVOLUTION_ROOT_CELL));
+  const allowedCells = new Set([EVOLUTION_ROOT_CELL, ...newly]);
+  const changedCells = Array.from({ length: EVOLUTION_TOPOLOGY.nodeCount }, (_, cell) => cell)
+    .filter((cell) => before.evolutionStatus[cell] !== after.evolutionStatus[cell]);
+  assert.deepEqual(new Set(changedCells), allowedCells);
+  for (let edge = 0; edge < EVOLUTION_TOPOLOGY.edgeCount; edge++) if (before.evolutionEdge[edge] !== after.evolutionEdge[edge]) {
+    assert.ok(allowedCells.has(EVOLUTION_TOPOLOGY.edgeA[edge]) || allowedCells.has(EVOLUTION_TOPOLOGY.edgeB[edge]), `edge ${edge}`);
   }
-  assert.equal(normalizeEvolutionLevels(meta).length, 42); const full = compileEvolution(meta);
-  assert.equal(full.totalOwnedCells, 42); assert.equal(full.luminous.enabled, true); assert.equal(full.habitatCapabilities.length, 6);
-  assert.ok(Object.values(full.effects).every((value) => Number.isFinite(value) && value > 0 && value < 10));
+  assert.equal(after.evolutionRecent.reduce((sum, value) => sum + value, 0), 1);
+  assert.equal(after.evolutionEdge.filter((value) => value === EVOLUTION_CELL_EDGE.SELECTED).length,
+    getEvolutionAdjacentCells(EVOLUTION_ROOT_CELL).length);
 });
-test('Evolution scene projects 42 authored states over every level-4 presentation cell', () => {
-  const topology = createTopology(4); const territories = createEvolutionTerritories(topology);
-  const snapshot = buildMemorySnapshot(territories, { ...defaultMeta(), echoBalance: '8' });
-  assert.equal(snapshot.memoryStatus.length, 2562); assert.equal(snapshot.memoryNodeIndex.filter((index) => index >= 0).length, 2562);
-  assert.equal(snapshot.nodeStates.length, 42); assert.equal(createMemoryFields(topology).biomeId.length, 2562);
-  assert.equal(new Set(snapshot.memoryOwner).size, 42); assert.equal(snapshot.memoryTerritoryEdge.length, 7680);
-  for (let skill = 0; skill < 42; skill++) {
-    const values = snapshot.memoryStatus.filter((_, cell) => snapshot.memoryOwner[cell] === skill);
-    assert.equal(new Set(values).size, 1, `skill ${skill} had mixed territory state`);
-  }
+
+test('scene data covers every exact cell with varied immutable material and bounded edge arrays', () => {
+  const fields = createEvolutionFields(EVOLUTION_TOPOLOGY); const snapshot = buildEvolutionSnapshot({ ...defaultMeta(), echoBalance: '8' });
+  assert.equal(snapshot.status, 'evolution'); assert.equal(snapshot.evolutionStatus.length, 2562);
+  assert.equal(snapshot.evolutionArchetypeIndex.length, 2562); assert.equal(snapshot.evolutionEdge.length, 7680);
+  assert.equal(new Set(snapshot.evolutionArchetypeIndex).size, 42);
+  assert.ok(new Set(Array.from(fields.baseNutrient, (value) => value.toFixed(5))).size > 100);
+  assert.ok(new Set(Array.from(fields.baseMoisture, (value) => value.toFixed(5))).size > 100);
+  assert.equal(snapshot.evolutionProjection.readyCells.length, 1);
+});
+
+test('picking identifies the actual fine Evolution cell without an owner alias', () => {
   const canvas = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 1000 }) };
-  const hit = pickNode(canvas, 500, 500, createCamera(), topology); assert.ok(hit);
-  assert.ok(territories.ownerByCell[hit.node] >= 0 && territories.ownerByCell[hit.node] < 42);
-  const boundary = topology.edgeA.findIndex((cell, edge) => territories.ownerByCell[cell] !== territories.ownerByCell[topology.edgeB[edge]]);
-  assert.ok(boundary >= 0); assert.notEqual(territories.ownerByCell[topology.edgeA[boundary]], territories.ownerByCell[topology.edgeB[boundary]]);
+  const hit = pickNode(canvas, 500, 500, createCamera(), EVOLUTION_TOPOLOGY); assert.ok(hit);
+  assert.ok(Number.isInteger(hit.node) && hit.node >= 0 && hit.node < 2562);
+  assert.equal(EVOLUTION_LAYOUT.archetypeByCell[hit.node], buildEvolutionSnapshot(defaultMeta()).evolutionArchetypeIndex[hit.node]);
 });
-test('coarse Evolution Imprints project over owned fine territories without durable expansion', () => {
-  const topology = createTopology(4); const territories = createEvolutionTerritories(topology);
-  const imprintCells = Array.from({ length: 12 }, (_, cell) => cell);
-  const meta = { ...defaultMeta(), imprints: [{ kind: 'strongest-corridor', seed: 7, cells: imprintCells,
-    topology: { kind: 'geodesic', frequency: 2, nodeCount: 42, edgeCount: 120 } }] };
-  const snapshot = buildMemorySnapshot(territories, meta); const imprintedSkills = new Set(imprintCells.map((cell) => territories.skillBySiteCell[cell]));
-  for (let cell = 0; cell < topology.nodeCount; cell++) {
-    assert.equal(snapshot.memoryImprintWeight[cell] > 0, imprintedSkills.has(territories.ownerByCell[cell]));
-  }
-  assert.deepEqual(meta.imprints[0].cells, imprintCells); assert.equal(meta.imprints[0].topology.frequency, 2);
+
+test('current Imprints remain bounded marks on the fine topology and coarse predecessors reset', () => {
+  const cells = Array.from({ length: 16 }, (_, cell) => cell);
+  const current = validateMeta({ ...defaultMeta(), imprints: [{ kind: 'strongest-corridor', seed: 7, cells,
+    topology: { kind: 'icosphere', level: 4, nodeCount: 2562, edgeCount: 7680 } }] });
+  assert.equal(current.evolutionImprintVersion, EVOLUTION_IMPRINT_VERSION); assert.deepEqual(current.imprints[0].cells, cells);
+  const snapshot = buildEvolutionSnapshot(current);
+  assert.deepEqual(Array.from(snapshot.evolutionImprintWeight, (weight, cell) => weight > 0 ? cell : -1).filter((cell) => cell >= 0), cells);
+  const coarse = validateMeta({ ...defaultMeta(), evolutionImprintVersion: 1,
+    imprints: [{ kind: 'strongest-corridor', seed: 7, cells, topology: { kind: 'geodesic', frequency: 2, nodeCount: 42, edgeCount: 120 } }] });
+  assert.deepEqual(coarse.imprints, []);
 });
-test('a selected ready territory uses the same exact state for pointer and keyboard purchase paths', () => {
-  const meta = { ...defaultMeta(), echoBalance: '100' }; const state = evolutionCellState(meta, 'first-division', 'first-division');
-  assert.equal(state.selectedReady, true); const purchased = purchaseEvolutionLevel(meta, 'first-division', { expectedLevel: state.currentLevel,
-    expectedRevision: meta.revision, transactionKey: 'one-purchase' });
-  assert.equal(purchased.ok, true); assert.equal(purchased.spent, '8');
-  const stale = purchaseEvolutionLevel(purchased.meta, 'first-division', { expectedLevel: state.currentLevel, expectedRevision: meta.revision, transactionKey: 'keyboard-stale' });
-  assert.equal(stale.ok, false); assert.equal(stale.balanceAfter, purchased.meta.echoBalance);
+
+test('equal aggregate ranks compile identically across different cell distributions', () => {
+  const archetype = 7; const cells = Array.from(EVOLUTION_LAYOUT.archetypeByCell)
+    .flatMap((value, cell) => value === archetype ? [cell] : []).slice(0, 2);
+  assert.equal(cells.length, 2);
+  assert.deepEqual(compileEvolution({ evolutionLevels: [{ cell: cells[0], level: '9' }] }),
+    compileEvolution({ evolutionLevels: [{ cell: cells[0], level: '4' }, { cell: cells[1], level: '5' }] }));
 });

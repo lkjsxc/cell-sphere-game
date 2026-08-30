@@ -1,4 +1,4 @@
-/** Deterministic campaign policies over fair, player-visible Evolution skills. */
+/** Deterministic campaign policies over fair, player-visible Evolution cells. */
 import { hashStringU32 } from '../core/hash.js';
 import { compareProgressionIntegers } from '../core/progression-integer.js';
 import { AGENT_GOALS } from './schema.js';
@@ -15,49 +15,44 @@ export function choosePolicyAction(observation, requestedPolicy = observation?.g
   if (!legal.length) return runDecision(observation, policy, 'Started a new Level-0 World because no Evolution level was affordable.');
   const savingsTarget = unaffordableSpecialistTarget(reachable, policy);
   if (savingsTarget) return runDecision(observation, policy, `Saved Echoes for reachable ${savingsTarget.name} rather than diverting this specialist route.`);
-  const cell = selectCell(legal, observation, policy); return Object.freeze({ action: Object.freeze({ type: 'buy-evolution-level', cellId: cell.id,
-    expectedLevel: cell.currentLevel, expectedRevision: observation.metaRevision }), rationale: rationale(cell, policy), policy });
+  const cell = selectCell(legal, observation, policy); return Object.freeze({ action: Object.freeze({ type: 'buy-evolution-level', cell: cell.cell,
+    expectedLocalLevel: cell.localLevel, expectedAggregateRank: cell.aggregateRank,
+    expectedRevision: observation.metaRevision }), rationale: rationale(cell, policy), policy });
 }
 function unaffordableSpecialistTarget(reachable, policy) {
   const domains = PREFERENCES[policy] ?? []; const targets = reachable.filter((cell) => !cell.owned && domains.includes(cell.domain));
-  const target = targets.sort(costThenId)[0]; return target && !target.affordable ? target : null;
+  const target = targets.sort(costThenCell)[0]; return target && !target.affordable ? target : null;
 }
 function runDecision(observation, policy, rationale) { return Object.freeze({ action: Object.freeze({ type: 'run-world', expectedRevision: observation.metaRevision,
   expectedWorldOrdinal: observation.worldOrdinal, budgetTicks: 10_000 }), rationale, policy }); }
 function selectCell(legal, observation, policy) {
-  if (policy === 'random-legal') return deterministicChoice(legal, observation); if (policy === 'cheapest') return legal.slice().sort(costThenId)[0];
-  if (policy === 'breadth-first') return legal.slice().sort((a, b) => Number(a.owned) - Number(b.owned) || costThenId(a, b))[0];
-  if (policy === 'depth-first') return legal.slice().sort((a, b) => compareProgressionIntegers(b.currentLevel, a.currentLevel) || costThenId(a, b))[0];
+  if (policy === 'random-legal') return deterministicChoice(legal, observation); if (policy === 'cheapest') return legal.slice().sort(costThenCell)[0];
+  if (policy === 'breadth-first') return legal.slice().sort((a, b) => Number(a.owned) - Number(b.owned) || costThenCell(a, b))[0];
+  if (policy === 'depth-first') return legal.slice().sort((a, b) => compareProgressionIntegers(b.localLevel, a.localLevel) || costThenCell(a, b))[0];
   if (policy === 'diversity' || policy === 'balanced') return balancedChoice(legal, observation); return preferredChoice(legal, observation, policy);
 }
 function preferredChoice(legal, observation, policy) { const preferences = PREFERENCES[policy] ?? [];
-  return legal.slice().sort((a, b) => candidateScore(b, preferences, policy, observation.evolutionCells) - candidateScore(a, preferences, policy, observation.evolutionCells) || costThenId(a, b))[0]; }
-function balancedChoice(legal, observation) { const totals = new Map((observation.evolutionSummary?.domains ?? []).map((entry) => [entry.domain, entry.levels]));
+  return legal.slice().sort((a, b) => candidateScore(b, preferences, policy) - candidateScore(a, preferences, policy) || costThenCell(a, b))[0]; }
+function balancedChoice(legal, observation) { const totals = new Map((observation.evolutionSummary?.domains ?? []).map((entry) => [entry.domain, entry.aggregateLevels]));
   return legal.slice().sort((a, b) => compareProgressionIntegers(totals.get(a.domain) ?? '0', totals.get(b.domain) ?? '0')
-    || Number(a.owned) - Number(b.owned) || kindPriority(b.kind) - kindPriority(a.kind) || costThenId(a, b))[0]; }
-function candidateScore(cell, preferences, policy, visibleCells = []) { const index = preferences.indexOf(cell.domain); let score = index < 0 ? 0 : 100 - index * 12;
-  // The public sphere exposes physical neighbors, so specialists may plan an
-  // adjacent route instead of repeatedly buying an unrelated cheap foundation cell.
-  const route = routeDistance(cell.id, visibleCells, preferences);
-  if (route !== null) score += Math.max(0, 64 - route * 16);
+    || Number(a.owned) - Number(b.owned) || kindPriority(b.kind) - kindPriority(a.kind) || costThenCell(a, b))[0]; }
+function candidateScore(cell, preferences, policy) { let score = 0;
+  // Public hop counts keep specialist routes deterministic without exposing layout-generation fields.
+  for (let index = 0; index < preferences.length; index++) {
+    const distance = cell.domainDistance?.[preferences[index]];
+    if (Number.isInteger(distance)) score = Math.max(score, 240 - index * 24 - distance * 48);
+  }
+  score += Math.min(24, cell.rootDistance ?? 0);
   const text = `${cell.summary} ${cell.gameplay?.after ?? ''}`.toLowerCase(); for (const term of policyTerms(policy)) if (text.includes(term)) score += 18;
   if (cell.gameplay?.unlocks?.length) score += policy === 'reach-100' ? 35 : 12; return score + kindPriority(cell.kind) + (cell.owned ? 8 : 20); }
-function routeDistance(start, visibleCells, domains) {
-  if (!domains.length) return null; const byId = new Map(visibleCells.map((cell) => [cell.id, cell])); const pending = [[start, 0]]; const seen = new Set([start]);
-  for (let index = 0; index < pending.length; index++) { const [id, distance] = pending[index]; const cell = byId.get(id);
-    if (!cell) continue; if (domains.includes(cell.domain)) return distance;
-    for (const neighbor of cell.neighbors ?? []) if (!seen.has(neighbor)) { seen.add(neighbor); pending.push([neighbor, distance + 1]); }
-  }
-  return null;
-}
 function policyTerms(policy) { return ({ sustainability: ['maintenance', 'resource', 'recycl'], fertility: ['bud', 'uptake', 'divide'],
   freshwater: ['freshwater', 'lake', 'wet'], scarcity: ['scarcity', 'recycl', 'reserve'], cryogenic: ['cold', 'glacial', 'ice'],
   marine: ['marine', 'ocean', 'coast'], luminous: ['charge', 'powered', 'luminous'], worldmaking: ['reclaim', 'basin', 'coast'],
   'reach-100': ['habitat', 'access', 'reach', 'marine'] })[policy] ?? []; }
-function deterministicChoice(legal, observation) { const ordered = legal.slice().sort((a, b) => a.id.localeCompare(b.id));
-  const visible = `${observation.worldOrdinal}:${observation.bestEnvironmentLevelReached}:${observation.echoBalance}:${observation.bestScore}:${ordered.map((cell) => `${cell.id}@${cell.currentLevel}`).join('|')}`;
+function deterministicChoice(legal, observation) { const ordered = legal.slice().sort((a, b) => a.cell - b.cell);
+  const visible = `${observation.worldOrdinal}:${observation.bestEnvironmentLevelReached}:${observation.echoBalance}:${observation.bestScore}:${ordered.map((cell) => `${cell.cell}@${cell.localLevel}`).join('|')}`;
   return ordered[hashStringU32(visible) % ordered.length]; }
-function costThenId(a, b) { return compareProgressionIntegers(a.nextCost, b.nextCost) || a.id.localeCompare(b.id); }
+function costThenCell(a, b) { return compareProgressionIntegers(a.nextCost, b.nextCost) || a.cell - b.cell; }
 function kindPriority(kind) { return ({ capstone: 8, specialization: 3, root: 2 })[kind] ?? 0; }
 function rationale(cell, policy) { const unlock = cell.gameplay?.unlocks?.length ? ` and opens ${cell.gameplay.unlocks.join(', ')}` : '';
-  return `${cell.owned ? 'Upgraded' : 'Unlocked'} ${cell.name} to Level ${cell.nextLevel} because its ${cell.domain} ecology supports ${policy}${unlock}; cost ${cell.nextCost} Echoes.`; }
+  return `${cell.owned ? 'Strengthened' : 'Established'} cell ${cell.cell + 1}, ${cell.name}, to Local Level ${cell.nextLocalLevel} and shared rank ${cell.nextAggregateRank} because its ${cell.domain} ecology supports ${policy}${unlock}; cost ${cell.nextCost} Echoes.`; }

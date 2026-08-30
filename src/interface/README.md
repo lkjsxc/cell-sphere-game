@@ -12,16 +12,18 @@ mutates simulation arrays, consumes authoritative randomness, or changes SCORE.
 | `policies/camera-motion.js` | Presentation-only recent gesture samples, progressive bounded release, elapsed-time damping, idle orbit, and holds. |
 | `policies/continuation.js` | One-shot 13.5-second Result authority and its bounded visual/assistive projection. |
 | `surfaces.js` / `inspection/` | SCORE/REACH/Environment HUD, dynamic result evidence, metrics, and Inspector. |
-| `panel-surfaces.js` / `progression-spheres.js` | Evolution territory selection/detail and second-activation transaction. |
+| `panel-surfaces.js` / `progression-spheres.js` | Exact Evolution-cell selection, bounded navigation, detail, and transaction. |
 | `history-*` / `app-data.js` | Bounded History and validated import/export. |
 
 Evolution activation is select first, then a later discrete activation purchases
-one ready selected skill territory. Fine-cell picking resolves through the one
-shared owner map; the 42-item semantic tree enters the same state machine.
+one ready selected cell. Fine-cell picking returns that exact cell. A bounded
+native navigator exposes the current cell, its five or six direct neighbors,
+stable previous/next traversal, and the next actionable frontier without
+creating 2,562 persistent controls.
 During an active world, detail states that upgrades
 become available after that world and disables the transaction control. Drag,
 pinch, wheel, inertia, cancellation, blank taps, non-ready state, and stale
-level/revision never purchase.
+local-level/aggregate-rank/revision preconditions never purchase.
 
 The World HUD displays SCORE, REACH, and live within-world Environment
 Level/progress on stable grid tracks. Activating Environment Level opens a

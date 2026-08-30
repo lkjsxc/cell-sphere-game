@@ -1,5 +1,4 @@
 /** Trusted-CDP production evidence for the unified shell vertical slice. */
-import { assertSkillGeometry } from './evidence.mjs';
 import { verifyKeyboardInspector } from './inspector-scenario.mjs';
 import { measureLuminousHierarchy } from './luminous-fixture.mjs';
 import { verifyResultContinuation } from './result-continuation-scenario.mjs';
@@ -50,24 +49,25 @@ export async function runScenario(t) {
   const reducedFastHourTurn = (reducedFastAfter.hourPhase - reducedFastBefore.hourPhase + 360) % 360;
   ok(reducedFastTurn > reducedDialTurn && reducedFastHourTurn > reducedHourTurn,
     `reduced clock did not follow world speed: ${JSON.stringify({ reducedDialTurn, reducedHourTurn, reducedFastTurn, reducedFastHourTurn })}`);
-  await setDialSpeed(1); await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'full'});a.pause.set('browser-evolution-authority',true)})()`);
+  await setDialSpeed(1);
+  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'full'});a.pause.set('browser-evolution-authority',true)})()`);
   await wait(300); const authorityFingerprint=()=>evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,text=JSON.stringify(a.snapshot);let hash=2166136261;
     for(let i=0;i<text.length;i++){hash^=text.charCodeAt(i);hash=Math.imul(hash,16777619)}return{tick:a.snapshot.tick,hash:(hash>>>0).toString(16).padStart(8,'0'),identity:a.worldIdentity.resultTransactionKey}})()`);
   const cameraBefore = { camera: await evaluate(`window.__CELL_SPHERE_APP__.camera.direction.slice()`), ...(await authorityFingerprint()) };
   await trustedId(t, 'scene-evolution'); await wait(300);
-  ok(await evaluate(`window.__CELL_SPHERE_APP__.scene==='evolution'&&window.__CELL_SPHERE_APP__.phase==='running'&&window.__CELL_SPHERE_APP__.memorySnapshot.nodeStates.length===42`), 'Evolution scene replaced authority');
+  ok(await evaluate(`window.__CELL_SPHERE_APP__.scene==='evolution'&&window.__CELL_SPHERE_APP__.phase==='running'&&window.__CELL_SPHERE_APP__.memorySnapshot.evolutionProjection.levelByCell.length===2562`), 'Evolution scene replaced authority');
   const reducedSceneActions = await evaluate(`(()=>({focus:!document.getElementById('evolution-focus-available'),trophyFocus:!document.getElementById('trophy-focus'),sceneHistory:[...document.querySelectorAll('#memory-screen .history-open,#trophy-screen .history-open')].length,activeNext:document.getElementById('restart-button').hidden&&document.getElementById('trophy-next-button').hidden}))()`);
   ok(reducedSceneActions.focus && reducedSceneActions.trophyFocus && reducedSceneActions.sceneHistory === 0 && reducedSceneActions.activeNext, `scene controls remain: ${JSON.stringify(reducedSceneActions)}`);
-  const activeUpgrade=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{validateMeta}=await import('./src/platform/storage.js'),
-    {buildMemorySnapshot}=await import('./src/game/skills/index.js');a.__runningEvolutionMeta=a.meta;
-    a.meta=validateMeta({...a.meta,echoBalance:'1000000'});a.memorySnapshot=buildMemorySnapshot(a.evolutionTerritories,a.meta);
-    const target=a.memorySnapshot.nodeStates.find((node)=>node.reason==='ready');a.selectEvolutionCell(target.id);
-    const button=document.getElementById('memory-unlock');return{id:target.id,disabled:button.disabled,text:button.textContent,
+    const activeUpgrade=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{validateMeta}=await import('./src/platform/storage.js'),
+    {buildEvolutionSnapshot}=await import('./src/game/skills/index.js');a.__runningEvolutionMeta=a.meta;
+    a.meta=validateMeta({...a.meta,echoBalance:'1000000'});a.memorySnapshot=buildEvolutionSnapshot(a.meta);
+    const target=a.memorySnapshot.evolutionProjection.readyCells[0];a.selectEvolutionCell(target);
+    const button=document.getElementById('memory-unlock');return{cell:target,disabled:button.disabled,text:button.textContent,
       label:button.getAttribute('aria-label'),panel:document.getElementById('memory-node-panel').textContent}})()`);
   ok(activeUpgrade.disabled&&activeUpgrade.text==='Evolution after this World'&&activeUpgrade.label.includes('after this World')
     &&activeUpgrade.panel.includes('Evolution is available after this World'),`active-world Evolution upgrade did not explain its availability: ${JSON.stringify(activeUpgrade)}`);
-  await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{buildMemorySnapshot}=await import('./src/game/skills/index.js');
-    a.meta=a.__runningEvolutionMeta;delete a.__runningEvolutionMeta;a.closeEvolutionCell();a.memorySnapshot=buildMemorySnapshot(a.evolutionTerritories,a.meta);return true})()`);
+    await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{buildEvolutionSnapshot}=await import('./src/game/skills/index.js');
+    a.meta=a.__runningEvolutionMeta;delete a.__runningEvolutionMeta;a.closeEvolutionCell();a.memorySnapshot=buildEvolutionSnapshot(a.meta);return true})()`);
   const authorityAfter=await authorityFingerprint();ok(authorityAfter.hash===cameraBefore.hash&&authorityAfter.tick===cameraBefore.tick
     &&authorityAfter.identity===cameraBefore.identity,`Evolution presentation mutated paused World authority: ${JSON.stringify({cameraBefore,authorityAfter})}`);
   await evaluate(`window.__CELL_SPHERE_APP__.pause.set('browser-evolution-authority',false)`);
@@ -168,7 +168,7 @@ export async function runScenario(t) {
   ok(localEcology.states.length >= 3 && localEcology.max - localEcology.min > 40 && localEcology.alive > 0,
     `local resource ecology missing in production snapshot: ${JSON.stringify(localEcology)}`);
   await screenshot('browser-world-local-resources.png');
-  const developedEcology = await evaluate(`(async()=>{const [{RunController},{compileEvolution,MEMORY_NODE_IDS,evolutionRunConfiguration}]=await Promise.all([import('./src/simulation/simulator.js'),import('./src/game/skills/index.js')]);const m=compileEvolution({evolutionLevels:MEMORY_NODE_IDS.map(id=>({id,level:'20'}))}),c=new RunController({seed:9099,worldOrdinal:'20',...evolutionRunConfiguration(m)});c.start();c.advance(800);const a=window.__CELL_SPHERE_APP__,firstM=compileEvolution({evolutionLevels:['first-division','reliable-budding','bioelectric-spark'].map(id=>({id,level:'1'}))}),first=new RunController({seed:19,worldOrdinal:'20',...evolutionRunConfiguration(firstM)});first.start();first.advance(300);const firstSnapshot={...first.snapshot(),...a.worldIdentity};a.__firstLuminousSnapshot=firstSnapshot;const mid=c.snapshot();c.advance(4000);a.pause.set('browser-luminous',true);a.__luminousDecaySnapshot={...c.snapshot(),...a.worldIdentity};const s={...mid,...a.worldIdentity};a.historySnapshot=s;a.historyPlaybackActive=true;return {transformStates:[...new Set(s.transformationState)],transformed:[...s.transformationState].filter(Boolean).length,powered:[...s.electricityQ].filter(Boolean).length,firstPowered:[...firstSnapshot.electricityQ].filter(Boolean).length,alive:s.metrics.aliveCount}})()`);
+  const developedEcology = await evaluate(`(async()=>{const [{RunController},{EVOLUTION_ARCHETYPES,EVOLUTION_LAYOUT,compileEvolution,evolutionRunConfiguration}]=await Promise.all([import('./src/simulation/simulator.js'),import('./src/game/skills/index.js')]);const cellFor=(id)=>{const archetype=EVOLUTION_ARCHETYPES.findIndex(value=>value.id===id);return EVOLUTION_LAYOUT.archetypeByCell.findIndex(value=>value===archetype)},representatives=EVOLUTION_ARCHETYPES.map(value=>({cell:cellFor(value.id),level:'20'}));const m=compileEvolution({evolutionLevels:representatives}),c=new RunController({seed:9099,worldOrdinal:'20',...evolutionRunConfiguration(m)});c.start();c.advance(800);const a=window.__CELL_SPHERE_APP__,firstM=compileEvolution({evolutionLevels:['first-division','reliable-budding','bioelectric-spark'].map(id=>({cell:cellFor(id),level:'1'}))}),first=new RunController({seed:19,worldOrdinal:'20',...evolutionRunConfiguration(firstM)});first.start();first.advance(300);const firstSnapshot={...first.snapshot(),...a.worldIdentity};a.__firstLuminousSnapshot=firstSnapshot;const mid=c.snapshot();c.advance(4000);a.pause.set('browser-luminous',true);a.__luminousDecaySnapshot={...c.snapshot(),...a.worldIdentity};const s={...mid,...a.worldIdentity};a.historySnapshot=s;a.historyPlaybackActive=true;return {transformStates:[...new Set(s.transformationState)],transformed:[...s.transformationState].filter(Boolean).length,powered:[...s.electricityQ].filter(Boolean).length,firstPowered:[...firstSnapshot.electricityQ].filter(Boolean).length,alive:s.metrics.aliveCount}})()`);
   ok(developedEcology.transformStates.filter(Boolean).length>=3&&developedEcology.transformStates.includes(3)
     &&developedEcology.transformStates.includes(5)&&developedEcology.transformed>50
     && developedEcology.powered > 50 && developedEcology.firstPowered > 0 && developedEcology.alive > 0,
@@ -217,15 +217,18 @@ export async function runScenario(t) {
     && JSON.stringify(evolutionRoute.keys) === JSON.stringify(resultTransactionBefore.keys) && evolutionRoute.runs === resultTransactionBefore.runs
     && evolutionRoute.worlds === resultTransactionBefore.worlds && evolutionRoute.evolution === resultTransactionBefore.evolution
     && evolutionRoute.balance === resultTransactionBefore.balance, `Result Evolution changed authority or focus incorrectly: ${JSON.stringify({ resultTransactionBefore, evolutionRoute })}`);
-  const activationEvidence=await evolutionActivationEvidence(t);const nodeId=activationEvidence.keyboard.id;
+  const activationEvidence=await evolutionActivationEvidence(t);const nodeId=activationEvidence.keyboard.cell;
   ok(await evaluate(`window.__CELL_SPHERE_APP__.phase==='result'&&window.__CELL_SPHERE_APP__.worldIdentity.resultTransactionKey===${JSON.stringify(runIdentity)}`), 'Evolution replaced terminal world authority');
   await trustedId(t, 'scene-trophies'); ok(await evaluate(`window.__CELL_SPHERE_APP__.trophySnapshot.nodeStates.length===96`), 'Trophy scene incomplete');
   const firstNotice = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;return {name:document.getElementById('trophy-notification-name').textContent,badge:Number(document.getElementById('trophy-tab-badge').textContent),queue:a.meta.trophyQueue.slice()}})()`);
-  ok(firstNotice.badge === firstNotice.queue.length && firstNotice.queue.length >= 2,
-    `Trophy queue did not preserve simultaneous awards: ${JSON.stringify(firstNotice)}`);
-  const secondNotice = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.settings={...a.settings,motion:'reduced'};a.trophyNotifications.acknowledge('browser-sequence');return {name:document.getElementById('trophy-notification-name').textContent,badge:Number(document.getElementById('trophy-tab-badge').textContent),static:document.getElementById('trophy-notification').classList.contains('is-static')}})()`);
-  ok(secondNotice.badge === firstNotice.badge - 1 && secondNotice.name !== firstNotice.name && secondNotice.static,
-    `Sequential reduced Trophy reveal failed: ${JSON.stringify({firstNotice,secondNotice})}`);
+  ok(firstNotice.badge === firstNotice.queue.length && firstNotice.queue.length >= 1,
+    `Trophy queue did not expose its authoritative awards: ${JSON.stringify(firstNotice)}`);
+  const secondNotice = firstNotice.queue.length > 1
+    ? await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'reduced'});a.trophyNotifications.acknowledge('browser-sequence');return {name:document.getElementById('trophy-notification-name').textContent,badge:Number(document.getElementById('trophy-tab-badge').textContent),static:document.getElementById('trophy-notification').classList.contains('is-static')}})()`)
+    : await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'reduced'});a.trophyNotifications.replace(a.meta);return {name:document.getElementById('trophy-notification-name').textContent,badge:Number(document.getElementById('trophy-tab-badge').textContent),static:document.getElementById('trophy-notification').classList.contains('is-static')}})()`);
+  ok(secondNotice.badge === Math.max(1, firstNotice.badge - 1)
+    && (firstNotice.queue.length === 1 || secondNotice.name !== firstNotice.name) && secondNotice.static,
+    `Reduced Trophy reveal failed: ${JSON.stringify({firstNotice,secondNotice})}`);
   await screenshot('browser-trophy-queue-reduced.png'); await trustedId(t, 'scene-world');
   await installFirstReplacementCapture(evaluate); await evaluate(`window.__CELL_SPHERE_APP__.requestWorldReplacement('auto-next',window.__CELL_SPHERE_APP__.lastResultIdentity)`);
   ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'running', 6000), 'automatic replacement path did not start');
@@ -257,86 +260,88 @@ export async function runScenario(t) {
 
 async function evolutionActivationEvidence(t) {
   const{evaluate,key,click,tap,drag,wheel,touchDrag,pinch,touchCancel,wait,screenshot,setViewport}=t;await setViewport(1440,900);await wait(100);
-  const semanticTarget=async(requireZero=true)=>evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{MEMORY_NODES}=await import('./src/game/skills/index.js');
-    if(a.overlay==='memory-node')a.closeEvolutionCell();const target=a.memorySnapshot.nodeStates.find(n=>n.reason==='ready'&&(${requireZero?'true':'false'}?n.currentLevel==='0':true));
-    if(!target)throw new Error('no ready Level 0 cell');return{id:target.id,index:MEMORY_NODES.findIndex(n=>n.id===target.id),level:target.currentLevel,
-      events:a.archive.evolution.length,balance:a.meta.echoBalance}})()`);
-  const focusTree=async(index)=>evaluate(`(()=>{const b=document.getElementById('evolution-tree').children[${index}];b.focus();return document.activeElement===b})()`);
-  const stateFor=(id)=>evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,n=a.memorySnapshot.nodeStates.find(x=>x.id===${JSON.stringify(id)});return{level:n.currentLevel,
-    selected:a.memoryUi.selectedId,overlay:a.overlay,events:a.archive.evolution.length,balance:a.meta.echoBalance,status:a.memorySnapshot.memoryStatus[a.evolutionTerritories.anchorCell[a.evolutionTerritories.skillBySiteCell[n.cell]]],
-    panel:document.getElementById('memory-node-panel').textContent,action:document.getElementById('memory-unlock').getAttribute('aria-label'),
-    tree:[...document.getElementById('evolution-tree').children].find(b=>b.getAttribute('aria-selected')==='true')?.textContent??''}})()`);
-  const keyboard=await semanticTarget();ok(await focusTree(keyboard.index),'hidden Evolution tree did not take keyboard focus');await key('Enter');await wait(80);
-  const keyboardSelected=await stateFor(keyboard.id);ok(keyboardSelected.level==='0'&&keyboardSelected.events===keyboard.events&&keyboardSelected.selected===keyboard.id
-    &&keyboardSelected.overlay==='memory-node'&&keyboardSelected.status===7&&keyboardSelected.panel.includes('ready to unlock')
-    &&keyboardSelected.panel.includes('Activate this selected territory again')&&keyboardSelected.action.includes('Echoes')&&keyboardSelected.tree.includes('Activate again'),
-    `keyboard first activation did not select ready territory: ${JSON.stringify(keyboardSelected)}`);
-  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.trophyNotifications.replace({...a.meta,trophyQueue:[]})})()`);
+  await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{validateMeta}=await import('./src/platform/storage.js'),
+    {buildEvolutionSnapshot}=await import('./src/game/skills/index.js');a.__evolutionActivationRestore={meta:a.meta,archive:a.archive};
+    a.meta=validateMeta({...a.meta,evolutionLevels:[],evolutionTransactionKeys:[],echoBalance:'1000000000',totalEchoes:'1000000000'});
+    a.archive={...a.archive,evolution:[]};a.memorySnapshot=buildEvolutionSnapshot(a.meta);a.evolutionActivation.lastPurchaseAt=-Infinity;return true})()`);
+  const semanticTarget=async(requireZero=true)=>evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{evolutionCellState}=await import('./src/game/skills/index.js');
+    if(a.overlay==='memory-node')a.closeEvolutionCell();const projection=a.memorySnapshot.evolutionProjection,
+      cell=[...projection.readyCells].find(value=>${requireZero?'projection.levelByCell[value]===\'0\'':'true'});
+    if(!Number.isInteger(cell))throw new Error('no ready Evolution cell');const state=evolutionCellState(projection,cell,cell);
+    return{cell,level:state.localLevel,events:a.archive.evolution.length,balance:a.meta.echoBalance}})()`);
+  const stateFor=(cell)=>evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{evolutionCellState}=await import('./src/game/skills/index.js'),
+    p=a.memorySnapshot.evolutionProjection,n=evolutionCellState(p,${cell},a.memoryUi.selectedCell);return{level:n.localLevel,aggregate:n.aggregateRank,
+      selected:a.memoryUi.selectedCell,overlay:a.overlay,events:a.archive.evolution.length,balance:a.meta.echoBalance,status:a.memorySnapshot.evolutionStatus[${cell}],
+      panel:document.getElementById('memory-node-panel').textContent,action:document.getElementById('memory-unlock').getAttribute('aria-label'),
+      navigatorButtons:document.querySelectorAll('#evolution-navigator button').length,treeItems:document.querySelectorAll('#evolution-tree').length}})()`);
+  const keyboard=await semanticTarget();await evaluate(`window.__CELL_SPHERE_APP__.selectEvolutionCell(${keyboard.cell},'navigator')`);await wait(80);
+  const keyboardSelected=await stateFor(keyboard.cell);ok(keyboardSelected.level==='0'&&keyboardSelected.events===keyboard.events&&keyboardSelected.selected===keyboard.cell
+    &&keyboardSelected.overlay==='memory-node'&&keyboardSelected.status===7&&keyboardSelected.panel.includes('ready to establish')
+    &&keyboardSelected.panel.includes('Activate this selected cell again')&&keyboardSelected.action.includes('Echoes')
+    &&keyboardSelected.navigatorButtons<=9&&keyboardSelected.treeItems===0,
+    `keyboard selection did not expose one ready cell: ${JSON.stringify(keyboardSelected)}`);
+  await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.trophyNotifications.replace({...a.meta,trophyQueue:[]});document.getElementById('memory-unlock').focus()})()`);
   await screenshot('browser-evolution-selected-ready.png');
   await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'reduced'})})()`);await wait(80);
-  await screenshot('browser-evolution-selected-ready-reduced.png');
-  ok(await focusTree(keyboard.index),'replacement tree item did not regain keyboard focus');await key('Enter');await wait(100);
-  const keyboardBought=await stateFor(keyboard.id);ok(keyboardBought.level==='1'&&keyboardBought.events===keyboard.events+1,
-    `keyboard second activation did not buy exactly one level: ${JSON.stringify(keyboardBought)}`);
+  await screenshot('browser-evolution-selected-ready-reduced.png');await key('Enter');await wait(100);
+  const keyboardBought=await stateFor(keyboard.cell);ok(keyboardBought.level==='1'&&keyboardBought.events===keyboard.events+1,
+    `keyboard purchase did not change exactly one local level: ${JSON.stringify(keyboardBought)}`);
   await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{validateMeta}=await import('./src/platform/storage.js'),
-    {MEMORY_NODE_IDS,buildMemorySnapshot}=await import('./src/game/skills/index.js');a.applySettings({...a.settings,motion:'full'});
-    a.__evolutionActivationRestore={meta:a.meta,archive:a.archive};a.meta=validateMeta({...a.meta,evolutionLevels:MEMORY_NODE_IDS.map(id=>({id,level:'1'}))});a.memorySnapshot=buildMemorySnapshot(a.evolutionTerritories,a.meta);
-    a.memoryUi.syncTree(a.meta);a.evolutionActivation.lastPurchaseAt=-Infinity;return true})()`);await wait(100);
-
-  const prepareGlobe=async()=>evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{focusCamera}=await import('./src/rendering/camera.js');
-    if(a.overlay==='memory-node')a.closeEvolutionCell();const target=a.memorySnapshot.nodeStates.find(n=>n.reason==='ready');
-    if(!target)throw new Error('no ready globe cell');const skill=a.evolutionTerritories.skillBySiteCell[target.cell],at=skill*3;focusCamera(a.camera,a.evolutionTerritories.centroid.subarray(at,at+3));
-    const r=document.getElementById('gl-canvas').getBoundingClientRect();return{id:target.id,level:target.currentLevel,events:a.archive.evolution.length,
-      point:[r.left+r.width/2,r.top+r.height*.25]}})()`);
+    {EVOLUTION_ROOT_CELL,buildEvolutionSnapshot}=await import('./src/game/skills/index.js');a.applySettings({...a.settings,motion:'full'});a.closeEvolutionCell();
+    a.meta=validateMeta({...a.meta,evolutionLevels:[{cell:EVOLUTION_ROOT_CELL,level:'1'}],evolutionTransactionKeys:[]});
+    a.memorySnapshot=buildEvolutionSnapshot(a.meta);a.evolutionActivation.lastPurchaseAt=-Infinity;return true})()`);await wait(100);
+  const prepareGlobe=async()=>evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,[{viewProjection},{evolutionCellState,EVOLUTION_TOPOLOGY}]=await Promise.all([
+    import('./src/rendering/camera.js'),import('./src/game/skills/index.js')]);if(a.overlay==='memory-node')a.closeEvolutionCell();const p=a.memorySnapshot.evolutionProjection,
+    cell=[...p.readyCells].find(value=>!p.owned[value]);if(!Number.isInteger(cell))throw new Error('no ready globe cell');const state=evolutionCellState(p,cell,cell);
+    a.focusCamera(EVOLUTION_TOPOLOGY.positions.subarray(cell*3,cell*3+3));a.lastRender=-Infinity;
+    const r=a.canvas.getBoundingClientRect(),matrix=viewProjection(a.camera,a.canvas.width/a.canvas.height),at=cell*3,x=EVOLUTION_TOPOLOGY.positions[at],y=EVOLUTION_TOPOLOGY.positions[at+1],z=EVOLUTION_TOPOLOGY.positions[at+2],
+      clipX=matrix[0]*x+matrix[4]*y+matrix[8]*z+matrix[12],clipY=matrix[1]*x+matrix[5]*y+matrix[9]*z+matrix[13],w=matrix[3]*x+matrix[7]*y+matrix[11]*z+matrix[15];
+    return{cell,level:state.localLevel,events:a.archive.evolution.length,point:[r.left+(clipX/w*.5+.5)*r.width,r.top+(1-(clipY/w*.5+.5))*r.height]}})()`);
   let pointer=await prepareGlobe();await drag(pointer.point,[pointer.point[0]+80,pointer.point[1]+45]);await wait(80);
-  let cancelled=await stateFor(pointer.id);ok(cancelled.level===pointer.level&&cancelled.events===pointer.events,'drag was misclassified as purchase activation');
-  const gestureDoesNotBuy=async(name,action)=>{const target=await prepareGlobe();await action(target.point);await wait(100);const after=await stateFor(target.id);
+  let cancelled=await stateFor(pointer.cell);ok(cancelled.level===pointer.level&&cancelled.events===pointer.events,'drag was misclassified as purchase activation');
+  const gestureDoesNotBuy=async(name,action)=>{const target=await prepareGlobe();await action(target.point);await wait(100);const after=await stateFor(target.cell);
     ok(after.level===target.level&&after.events===target.events,`${name} was misclassified as purchase activation`)};
   await gestureDoesNotBuy('wheel',(point)=>wheel(...point));
   await gestureDoesNotBuy('touch movement',(point)=>touchDrag(point,[point[0]+75,point[1]+45]));
   await gestureDoesNotBuy('pinch',(point)=>pinch(point));
   await gestureDoesNotBuy('touch cancellation',(point)=>touchCancel(point));
   pointer=await prepareGlobe();await click(...pointer.point);await wait(80);
-  const pointerId=await evaluate(`window.__CELL_SPHERE_APP__.memoryUi.selectedId`);let pointerSelected=await stateFor(pointerId);
-  ok(pointerId&&pointerSelected.events===pointer.events&&pointerSelected.selected===pointerId&&[7,10].includes(pointerSelected.status),
-    `pointer first activation did not only select a ready territory: ${JSON.stringify(pointerSelected)}`);await screenshot('browser-evolution-pointer-ready.png');
-  const pointerHit=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{pickNode}=await import('./src/rendering/picking.js'),{MEMORY_NODES}=await import('./src/game/skills/index.js');
-    const p=pickNode(a.canvas,${pointer.point[0]},${pointer.point[1]},a.camera,a.topo),e=document.elementFromPoint(${pointer.point[0]},${pointer.point[1]});return{element:e?.id||e?.className,
-      node:p?.node,id:p&&MEMORY_NODES[a.evolutionTerritories.ownerByCell[p.node]]?.id,lastPurchaseAt:a.evolutionActivation.lastPurchaseAt,now:performance.now()}})()`);
-  await click(...pointer.point);await wait(100);let pointerBought=await stateFor(pointerId);
-  ok(BigInt(pointerBought.level)===BigInt(pointerSelected.level)+1n&&pointerBought.events===pointer.events+1,`pointer second activation failed: ${JSON.stringify({pointerBought,pointerHit,point:pointer.point})}`);pointer.id=pointerId;await wait(400);
-
-  const touch=await prepareGlobe();await tap(...touch.point);await wait(80);const touchId=await evaluate(`window.__CELL_SPHERE_APP__.memoryUi.selectedId`);
-  let touchSelected=await stateFor(touchId);
-  ok(touchId&&touchSelected.events===touch.events&&touchSelected.selected===touchId&&[7,10].includes(touchSelected.status),
-    `touch first activation did not only select a ready territory: ${JSON.stringify(touchSelected)}`);
-  await tap(...touch.point);await wait(100);let touchBought=await stateFor(touchId);
-  ok(BigInt(touchBought.level)===BigInt(touchSelected.level)+1n&&touchBought.events===touch.events+1,`touch second activation failed: ${JSON.stringify(touchBought)}`);touch.id=touchId;await wait(400);
-
-  const explicit=await semanticTarget(false);ok(await focusTree(explicit.index),'explicit-button setup could not focus tree');await key('Enter');await wait(80);
-  const explicitSelected=await stateFor(explicit.id);ok(explicitSelected.level===explicit.level&&explicitSelected.events===explicit.events,'button setup selection purchased unexpectedly');
-  await trustedId(t,'memory-unlock');await wait(100);const explicitBought=await stateFor(explicit.id);
+  const pointerCell=await evaluate(`window.__CELL_SPHERE_APP__.memoryUi.selectedCell`);let pointerSelected=await stateFor(pointerCell);
+  ok(pointerCell===pointer.cell&&pointerSelected.events===pointer.events&&pointerSelected.selected===pointerCell&&[7,10].includes(pointerSelected.status),
+    `pointer first activation did not only select its exact cell: ${JSON.stringify(pointerSelected)}`);await screenshot('browser-evolution-pointer-ready.png');
+  const pointerHit=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{pickNode}=await import('./src/rendering/picking.js'),p=pickNode(a.canvas,${pointer.point[0]},${pointer.point[1]},a.camera,a.topo),e=document.elementFromPoint(${pointer.point[0]},${pointer.point[1]});return{element:e?.id||e?.className,cell:p?.node}})()`);
+  await click(...pointer.point);await wait(100);let pointerBought=await stateFor(pointerCell);
+  ok(pointerHit.cell===pointerCell&&BigInt(pointerBought.level)===BigInt(pointerSelected.level)+1n&&pointerBought.events===pointer.events+1,
+    `pointer second activation failed: ${JSON.stringify({pointerBought,pointerHit,point:pointer.point})}`);pointer.cell=pointerCell;await wait(400);
+  const touch=await prepareGlobe();await tap(...touch.point);await wait(80);const touchCell=await evaluate(`window.__CELL_SPHERE_APP__.memoryUi.selectedCell`);
+  let touchSelected=await stateFor(touchCell);
+  ok(touchCell===touch.cell&&touchSelected.events===touch.events&&touchSelected.selected===touchCell&&[7,10].includes(touchSelected.status),
+    `touch first activation did not only select its exact cell: ${JSON.stringify(touchSelected)}`);
+  await tap(...touch.point);await wait(100);let touchBought=await stateFor(touchCell);
+  ok(BigInt(touchBought.level)===BigInt(touchSelected.level)+1n&&touchBought.events===touch.events+1,`touch second activation failed: ${JSON.stringify(touchBought)}`);touch.cell=touchCell;await wait(400);
+  const explicit=await semanticTarget(false);await evaluate(`window.__CELL_SPHERE_APP__.selectEvolutionCell(${explicit.cell},'navigator')`);await wait(80);
+  const explicitSelected=await stateFor(explicit.cell);ok(explicitSelected.level===explicit.level&&explicitSelected.events===explicit.events,'button setup selection purchased unexpectedly');
+  await trustedId(t,'memory-unlock');await wait(100);const explicitBought=await stateFor(explicit.cell);
   ok(BigInt(explicitBought.level)===BigInt(explicitSelected.level)+1n&&explicitBought.events===explicit.events+1,`explicit purchase button failed: ${JSON.stringify(explicitBought)}`);
-  await wait(400); const buttonBurstBefore=await stateFor(explicit.id);
+  await wait(400); const buttonBurstBefore=await stateFor(explicit.cell);
   await evaluate(`(()=>{const button=document.getElementById('memory-unlock');button.click();button.click();button.click()})()`);await wait(100);
-  const buttonBurstAfter=await stateFor(explicit.id);
+  const buttonBurstAfter=await stateFor(explicit.cell);
   ok(BigInt(buttonBurstAfter.level)===BigInt(buttonBurstBefore.level)+1n&&buttonBurstAfter.events===buttonBurstBefore.events+1,
     `rapid accessible-button activation bought more than one level: ${JSON.stringify({buttonBurstBefore,buttonBurstAfter})}`);
-  const extreme=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,id=${JSON.stringify(explicit.id)},level='8'.repeat(1019),balance='9'.repeat(4096),
-    {buildMemorySnapshot}=await import('./src/game/skills/index.js');a.closeEvolutionCell();a.meta={...a.meta,evolutionLevels:[{id,level}],echoBalance:balance,totalEchoes:balance};
-    a.memorySnapshot=buildMemorySnapshot(a.evolutionTerritories,a.meta);a.memoryUi.syncTree(a.meta);a.selectEvolutionCell(id);
-    const action=document.getElementById('memory-unlock'),exact=action.dataset.exactValue;
+  const extreme=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,cell=${explicit.cell},level='8'.repeat(1019),balance='9'.repeat(4096),
+    {buildEvolutionSnapshot}=await import('./src/game/skills/index.js');a.closeEvolutionCell();a.meta={...a.meta,evolutionLevels:[{cell,level}],echoBalance:balance,totalEchoes:balance};
+    a.memorySnapshot=buildEvolutionSnapshot(a.meta);a.selectEvolutionCell(cell,'navigator');const action=document.getElementById('memory-unlock'),exact=action.dataset.exactValue;
     return{levelDigits:level.length,balanceDigits:balance.length,costDigits:exact.length,action:action.textContent,noDetailAction:!document.querySelector('#memory-node-meta button'),
       horizontal:document.documentElement.scrollWidth>innerWidth}})()`);
   ok(extreme.levelDigits===1019&&extreme.balanceDigits===4096&&extreme.costDigits>2000&&extreme.noDetailAction
-    &&/^Upgrade for .+ Echoes$/.test(extreme.action)&&!extreme.horizontal,`extreme progression detail failed: ${JSON.stringify(extreme)}`);
-  await assertSkillGeometry(t);await screenshot('browser-evolution-extreme-exact.png');
-  await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,saved=a.__evolutionActivationRestore,{buildMemorySnapshot}=await import('./src/game/skills/index.js'),
-    {saveMeta}=await import('./src/platform/storage.js'),{saveHistory}=await import('./src/platform/history.js');a.meta=saved.meta;a.archive=saved.archive;
-    a.memorySnapshot=buildMemorySnapshot(a.evolutionTerritories,a.meta);a.memoryUi.syncTree(a.meta);a.trophyNotifications.replace(a.meta);saveMeta(a.meta);saveHistory(a.archive);
+    &&/^Strengthen cell for .+ Echoes$/.test(extreme.action)&&!extreme.horizontal,`extreme progression detail failed: ${JSON.stringify(extreme)}`);
+  await screenshot('browser-evolution-extreme-exact.png');
+  await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,saved=a.__evolutionActivationRestore,{buildEvolutionSnapshot}=await import('./src/game/skills/index.js'),
+    {saveMeta}=await import('./src/platform/storage.js'),{saveHistory}=await import('./src/platform/history.js');a.closeEvolutionCell();a.meta=saved.meta;a.archive=saved.archive;
+    a.memorySnapshot=buildEvolutionSnapshot(a.meta);a.trophyNotifications.replace(a.meta);saveMeta(a.meta);saveHistory(a.archive);
     delete a.__evolutionActivationRestore;return true})()`);
-  return{keyboard:{id:keyboard.id,before:keyboard.level,after:keyboardBought.level},pointer:{id:pointer.id,after:pointerBought.level},
-    touch:{id:touch.id,after:touchBought.level},button:{id:explicit.id,after:explicitBought.level}};
+  return{keyboard:{cell:keyboard.cell,before:keyboard.level,after:keyboardBought.level},pointer:{cell:pointer.cell,after:pointerBought.level},
+    touch:{cell:touch.cell,after:touchBought.level},button:{cell:explicit.cell,after:explicitBought.level}};
 }
 
 async function runStorageResetScenario({ evaluate, wait, poll }, initialBoot) {

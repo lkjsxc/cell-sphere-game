@@ -47,14 +47,15 @@ near, and far positions. They are evidence tooling, not player-facing modes.
 
 ## Globe scenes
 
-World and Evolution use the level-4 2,562-cell topology, while Evolution maps
-those cells into 42 authored skill territories and Trophy retains its own
-semantic projection. One pure territory owner supplies fine-cell picking,
-semantic centroids, compact membership, and edge classifications. Internal fine
-boundaries remain visible; territory, selected, and recently upgraded
+World and Evolution use the level-4 2,562-cell topology, while Trophy retains
+its own semantic projection. Every Evolution cell is an exact progression cell
+carrying one immutable archetype. One pure projection supplies local state,
+deterministic substrate, and quiet/owned/frontier/recent/selected edge classes
+to both backends. Internal fine boundaries remain visible; exact-cell state
 perimeters reuse the existing WebGL boundary draw and Canvas boundary phase.
-The authoritative frequency-2 skill graph—not rendered contact inference—still
-owns adjacency and purchases. Camera and picking infrastructure remain shared.
+Direct canonical cell adjacency—not rendered contact inference—owns reachability
+and purchases. Camera and picking infrastructure remain shared and picking
+returns the selected fine cell directly.
 The camera retains one orthonormal free-orbit frame; a
 single input path snapshots the projected sphere radius in CSS pixels and uses
 the same isotropic angular deltas for immediate manipulation and recent release
@@ -92,9 +93,10 @@ restoration: 10,242 vertices and 61,440 `Uint16` indices. Life classification
 uses one 7,680-byte canonical buffer; WebGL expands it once per accepted semantic
 snapshot into the existing four vertices per boundary edge, while Canvas reuses
 eight fixed typed style batches. Animation time alone never rebuilds either
-projection. Evolution territory ownership and geometry are immutable for one
-topology lifetime; unchanged animation frames do not rebuild the map, geometry,
-or 7,680-byte edge classification. High developer speeds execute every tick
+projection. Evolution topology, archetype layout, and substrate are immutable
+for one topology lifetime; accepted progression changes rebuild the bounded
+projection, while unchanged animation frames do not rebuild layout, geometry, or
+the 7,680-byte edge classification. High developer speeds execute every tick
 while coalescing bounded snapshots and render requests. Camera velocity samples
 use one fixed-capacity six-entry buffer; release state is constant-size, and one
 analytic inertia step rotates the reusable camera-basis arrays in place regardless

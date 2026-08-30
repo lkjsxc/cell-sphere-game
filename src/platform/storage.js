@@ -1,9 +1,10 @@
 /** Current-only, corruption-safe persistence for cross-run progression. */
-import { EVOLUTION_LEVEL_VECTOR_VERSION, MEMORY_GRAPH_VERSION, MEMORY_NODE_IDS,
-  normalizeEvolutionLevels } from '../game/skills/index.js';
+import {
+  EVOLUTION_CONTENT_HASH, EVOLUTION_LAYOUT_VERSION, EVOLUTION_LEVEL_VECTOR_VERSION,
+  EVOLUTION_TOPOLOGY, normalizeEvolutionLevels,
+} from '../game/skills/index.js';
 import { TROPHY_CATALOG_VERSION, TROPHY_IDS } from '../game/trophies/index.js';
 import { TROPHY_MAX_KEYS, TROPHY_SUM_KEYS } from '../game/trophies/keys.js';
-import { createGeodesicTopology, createTopology } from '../world/icosphere.js';
 import { SCORE_MODEL_VERSION } from '../game/scoring.js';
 import { ENVIRONMENT_MODEL_VERSION, normalizeEnvironmentLevel } from '../game/environment-level.js';
 import { ENVIRONMENT_EXPOSURE_VERSION } from '../game/environment-exposure.js';
@@ -11,11 +12,15 @@ import { maxProgressionInteger, normalizeProgressionInteger } from '../core/prog
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 
 const VALID_TROPHY_IDS = new Set(TROPHY_IDS);
-const EVOLUTION_TOPOLOGY = Object.freeze({ kind: 'geodesic', frequency: 2, nodeCount: 42, edgeCount: 120 });
+export const EVOLUTION_IMPRINT_VERSION = 2;
+const EVOLUTION_IMPRINT_CELL_LIMIT = 32;
+const EVOLUTION_IMPRINT_TOPOLOGY = Object.freeze({ kind: 'icosphere', level: 4,
+  nodeCount: EVOLUTION_TOPOLOGY.nodeCount, edgeCount: EVOLUTION_TOPOLOGY.edgeCount });
 
 export function defaultMeta() {
-  return { schema: 15, revision: '0', memoryGraphVersion: MEMORY_GRAPH_VERSION,
-    evolutionLevelVectorVersion: EVOLUTION_LEVEL_VECTOR_VERSION, trophyVersion: TROPHY_CATALOG_VERSION,
+  return { schema: 15, revision: '0', evolutionLevelVectorVersion: EVOLUTION_LEVEL_VECTOR_VERSION,
+    evolutionLayoutVersion: EVOLUTION_LAYOUT_VERSION, evolutionContentHash: EVOLUTION_CONTENT_HASH,
+    evolutionImprintVersion: EVOLUTION_IMPRINT_VERSION, trophyVersion: TROPHY_CATALOG_VERSION,
     scoreModelVersion: SCORE_MODEL_VERSION, bestScore: '0', totalEchoes: '0', echoBalance: '0',
     runs: '0', worldSeedIndex: '0', environmentRecordVersion: ENVIRONMENT_MODEL_VERSION,
     bestEnvironmentLevelReached: '0', bestEnvironmentExposure: defaultEnvironmentExposureRecord(), longestWorldTicks: '0',
@@ -39,11 +44,17 @@ export function validateMeta(raw) {
   out.bestEnvironmentExposure = validateEnvironmentExposureRecord(raw.bestEnvironmentExposure);
   out.longestWorldTicks = normalizeProgressionInteger(raw.longestWorldTicks, '0');
   if (Array.isArray(raw.resultKeys)) out.resultKeys = uniqueTransactionKeys(raw.resultKeys, 16);
-  if (Array.isArray(raw.evolutionTransactionKeys)) out.evolutionTransactionKeys = uniqueTransactionKeys(raw.evolutionTransactionKeys, 32);
-  out.evolutionLevels = Array.isArray(raw.evolutionLevels)
-    ? normalizeEvolutionLevels({ evolutionLevels: raw.evolutionLevels.slice(0, MEMORY_NODE_IDS.length * 2) })
-    : [];
-  if (Array.isArray(raw.imprints)) out.imprints = raw.imprints.slice(-16).map(validateImprint).filter(Boolean).slice(-8);
+  const evolutionIdentityMatches = raw.evolutionLevelVectorVersion === EVOLUTION_LEVEL_VECTOR_VERSION
+    && raw.evolutionLayoutVersion === EVOLUTION_LAYOUT_VERSION && raw.evolutionContentHash === EVOLUTION_CONTENT_HASH;
+  const normalizedLevels = evolutionIdentityMatches ? normalizeEvolutionLevels(raw) : [];
+  const levelDocumentValid = evolutionIdentityMatches && canonicalLevelDocument(raw.evolutionLevels, normalizedLevels);
+  if (levelDocumentValid) {
+    out.evolutionLevels = normalizedLevels;
+    if (Array.isArray(raw.evolutionTransactionKeys)) out.evolutionTransactionKeys = uniqueTransactionKeys(raw.evolutionTransactionKeys, 32);
+  }
+  if (evolutionIdentityMatches && raw.evolutionImprintVersion === EVOLUTION_IMPRINT_VERSION && Array.isArray(raw.imprints)) {
+    out.imprints = raw.imprints.slice(-16).map(validateImprint).filter(Boolean).slice(-8);
+  }
   const owned = new Set(Array.isArray(raw.trophyIds) ? raw.trophyIds.filter((id) => VALID_TROPHY_IDS.has(id)) : []);
   out.trophyIds = TROPHY_IDS.filter((id) => owned.has(id));
   const queued = new Set(Array.isArray(raw.trophyQueue) ? raw.trophyQueue.filter((id) => owned.has(id)) : []);
@@ -52,45 +63,39 @@ export function validateMeta(raw) {
   return out;
 }
 
-/** Convert a World-edge imprint to the compact authored Evolution graph. */
-export function convertImprintToAtlas(imprint) {
+/** Convert trusted World-edge evidence to bounded marks on the same fine topology. */
+export function convertImprintToEvolution(imprint) {
   if (!imprint || typeof imprint !== 'object' || imprint.kind !== 'strongest-corridor') return null;
   if (!Number.isInteger(imprint.seed) || imprint.seed < 0 || imprint.seed >= 0x100000000) return null;
-  const world = createTopology(4); const evolution = createGeodesicTopology(2);
-  const edges = uniqueCells(imprint.edges, world.edgeCount).slice(0, 20); if (!edges.length) return null;
-  const cells = morphologyCells(evolution, edges.map((edge) => nearestMidpointCell(world, evolution, edge)));
-  return cells.length >= 12 ? { kind: imprint.kind, seed: imprint.seed, cells, topology: { ...EVOLUTION_TOPOLOGY } } : null;
+  const edges = uniqueCells(imprint.edges, EVOLUTION_TOPOLOGY.edgeCount).slice(0, 20); if (!edges.length) return null;
+  const seeds = edges.flatMap((edge) => [EVOLUTION_TOPOLOGY.edgeA[edge], EVOLUTION_TOPOLOGY.edgeB[edge]]);
+  const cells = morphologyCells(EVOLUTION_TOPOLOGY, seeds);
+  return cells.length >= 12 ? { kind: imprint.kind, seed: imprint.seed, cells,
+    topology: { ...EVOLUTION_IMPRINT_TOPOLOGY } } : null;
 }
 
 function validateImprint(raw) {
   if (!raw || typeof raw !== 'object' || raw.kind !== 'strongest-corridor') return null;
   if (!Number.isInteger(raw.seed) || raw.seed < 0 || raw.seed >= 0x100000000) return null;
-  if (raw.topology?.frequency !== 2 || raw.topology?.nodeCount !== 42) return null;
-  const cells = uniqueCells(raw.cells, 42).slice(0, 20);
-  return cells.length >= 12 ? { kind: raw.kind, seed: raw.seed, cells, topology: { ...EVOLUTION_TOPOLOGY } } : null;
+  if (raw.topology?.level !== EVOLUTION_IMPRINT_TOPOLOGY.level
+    || raw.topology?.nodeCount !== EVOLUTION_IMPRINT_TOPOLOGY.nodeCount
+    || raw.topology?.edgeCount !== EVOLUTION_IMPRINT_TOPOLOGY.edgeCount) return null;
+  const cells = uniqueCells(raw.cells, EVOLUTION_TOPOLOGY.nodeCount).slice(0, EVOLUTION_IMPRINT_CELL_LIMIT);
+  return cells.length >= 12 ? { kind: raw.kind, seed: raw.seed, cells,
+    topology: { ...EVOLUTION_IMPRINT_TOPOLOGY } } : null;
 }
 function morphologyCells(atlas, seeds) {
   const cells = [];
   for (const target of seeds) { if (!cells.length) cells.push(target);
     else for (const cell of shortestPath(atlas, cells.at(-1), target)) if (!cells.includes(cell)) cells.push(cell);
-    if (cells.length >= 20) break;
+    if (cells.length >= EVOLUTION_IMPRINT_CELL_LIMIT) break;
   }
-  const occupied = new Set(cells.slice(0, 20)); const queue = [...occupied];
+  const occupied = new Set(cells.slice(0, EVOLUTION_IMPRINT_CELL_LIMIT)); const queue = [...occupied];
   for (let head = 0; occupied.size < 12 && head < queue.length; head++) for (let offset = atlas.nodeStart[queue[head]];
     offset < atlas.nodeStart[queue[head] + 1] && occupied.size < 12; offset++) {
     const next = atlas.nodeNeighbors[offset]; if (!occupied.has(next)) { occupied.add(next); queue.push(next); }
   }
-  return [...occupied].slice(0, 20);
-}
-function nearestMidpointCell(world, atlas, edge) {
-  const a = world.edgeA[edge] * 3; const b = world.edgeB[edge] * 3;
-  const x = world.positions[a] + world.positions[b]; const y = world.positions[a + 1] + world.positions[b + 1];
-  const z = world.positions[a + 2] + world.positions[b + 2]; let best = 0; let score = -Infinity;
-  for (let cell = 0; cell < atlas.nodeCount; cell++) { const at = cell * 3;
-    const dot = x * atlas.positions[at] + y * atlas.positions[at + 1] + z * atlas.positions[at + 2];
-    if (dot > score) { score = dot; best = cell; }
-  }
-  return best;
+  return [...occupied].slice(0, EVOLUTION_IMPRINT_CELL_LIMIT);
 }
 function shortestPath(topo, start, target) {
   if (start === target) return [target]; const previous = new Int16Array(topo.nodeCount).fill(-1); previous[start] = start; const queue = [start];
@@ -116,6 +121,10 @@ function validateTrophyProgress(raw) {
 }
 function uniqueTransactionKeys(values, limit) { return [...new Set(values.slice(-limit * 2).filter((key) =>
   typeof key === 'string' && key.length > 0 && key.length <= 128))].slice(-limit); }
+function canonicalLevelDocument(raw, normalized) {
+  return Array.isArray(raw) && raw.length === normalized.length && raw.every((entry, index) => entry
+    && Object.keys(entry).length === 2 && entry.cell === normalized[index].cell && entry.level === normalized[index].level);
+}
 function defaultEnvironmentExposureRecord() {
   return Object.freeze({ version: ENVIRONMENT_EXPOSURE_VERSION, totalTicks: '0', pressureTicksQ: '0',
     qualityPressureTicksQ: '0', timeAtPeakTicks: '0', peakPressureQ: 0, currentLevel: '0' });

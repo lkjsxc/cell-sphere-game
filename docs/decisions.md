@@ -389,3 +389,11 @@ WebGL remains four draws. The semantic tree remains 42 items. ID-based meta and
 the compact frequency-2 Imprint record do not change or reset, and no fine map is
 persisted. Consequence: Evolution gains World-density physical character without
 new skills, filler, economy changes, renderer authority, or active-World effects.
+
+## D33 — Every visible Evolution cell is progression authority
+
+Supersede D32 for current product behavior. The maintained level-4 topology is both Evolution's visible and progression topology: all 2,562 cells have stable identities, and its 7,680 direct edges are the sole frontier rule. Retain the 42 authored definitions as reusable archetypes. A deterministic stratified cellular weave assigns one archetype to every cell, with one `First Division` root and no large same-archetype region.
+
+Persist sparse exact local levels by cell. Sum them into exact aggregate archetype ranks; price the next occurrence through the existing target-level law at aggregate rank plus one; compile the same 42 ranks through the one production compiler. Repeated cells add spatial choice without multiplying cheap first levels or making location a hidden simulation rule.
+
+Picking, focus, transactions, fine Imprints, History, renderers, accessibility, and agents consume exact cells. One bounded native navigator replaces the 42-item tree. WebGL2 retains four draws and Canvas consumes the same edge semantics. Incompatible skill-ID levels, receipts, coarse Imprints, and Evolution History reset under current-only validation; no arbitrary migration maps old skills into new cells. D32 remains historical evidence for its terminal revision, but its graph/territory authority is deleted from current production.

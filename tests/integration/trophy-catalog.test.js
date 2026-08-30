@@ -5,7 +5,7 @@ import { TROPHY_ATLAS_HASH, TROPHY_ATLAS_REVERSE, validateTrophyAtlas } from '..
 import { reconcileTrophies, trophyConditionMet } from '../../src/game/trophies/evaluator.js';
 import { TROPHY_MAX_KEYS, TROPHY_SUM_KEYS } from '../../src/game/trophies/keys.js';
 import { buildTrophySnapshot } from '../../src/game/trophies/scene.js';
-import { MEMORY_NODE_IDS } from '../../src/game/skills/index.js';
+import { EVOLUTION_LAYOUT, EVOLUTION_TOPOLOGY } from '../../src/game/skills/index.js';
 import { defaultMeta } from '../../src/platform/storage.js'; import { createTopology } from '../../src/world/icosphere.js';
 
 test('catalog contains exactly 96 unique difficult frozen achievements in six families', () => {
@@ -38,8 +38,11 @@ test('maximal persisted proof recognizes all 96 while empty load data recognizes
   const empty = reconcileTrophies(defaultMeta(), { worlds: [] }); assert.deepEqual(empty.awardedIds, []);
   const aggregate = Object.fromEntries([...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS].map((key) => [key,
     key === 'environmentPressureTicksQ' ? 1_000_000_000 : 10_000_000]));
+  const firstByArchetype = new Map(); for (let cell = 0; cell < EVOLUTION_TOPOLOGY.nodeCount; cell++) {
+    if (!firstByArchetype.has(EVOLUTION_LAYOUT.archetypeByCell[cell])) firstByArchetype.set(EVOLUTION_LAYOUT.archetypeByCell[cell], cell);
+  }
   const meta = { ...defaultMeta(), runs:'240', bestScore:'2000000', totalEchoes:'4000',
-    evolutionLevels:MEMORY_NODE_IDS.map((id)=>({id,level:'1'})),
+    evolutionLevels:[...firstByArchetype.values()].map((cell)=>({cell,level:'1'})),
     imprints: Array.from({ length: 8 }, () => ({ kind: 'strongest-corridor' })),
     trophyProgress: { ...defaultMeta().trophyProgress, geographyMask: 63,
       lakeTypeMask: 31, lakeSalinityMask: 7, aggregate } };

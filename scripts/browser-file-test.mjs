@@ -12,7 +12,7 @@ import { runLifeBoundaryFixture } from './browser/life-boundary-fixture.mjs';
 import { runAtmosphereFixture } from './browser/atmosphere-fixture.mjs';
 import { measureLuminousHierarchy } from './browser/luminous-fixture.mjs';
 import { runCameraMotionScenario } from './browser/camera-motion-scenario.mjs';
-import { runEvolutionTerritoryFixture } from './browser/evolution-territory-fixture.mjs';
+import { runEvolutionCellProgressionFixture } from './browser/evolution-cell-progression-fixture.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROFILE = `/tmp/cell-sphere-game-browser-${process.pid}`;
@@ -22,7 +22,7 @@ const forceSimulationFallback=process.argv.includes('--simulation-fallback');
 const lifeBoundaryOnly=process.argv.includes('--life-boundary-only');
 const atmosphereOnly=process.argv.includes('--atmosphere-only');
 const environmentPressureOnly=process.argv.includes('--environment-pressure-only');
-const evolutionTerritoryOnly=process.argv.includes('--evolution-territory-only');
+const evolutionCellOnly=process.argv.includes('--evolution-cell-only');
 const recordBaseline=process.argv.includes('--record-baseline');
 const cohort=process.argv.find((value)=>value.startsWith('--cohort='))?.split('=')[1]?.replace(/[^a-z0-9-]/gi,'');
 const cdpTimeoutMs=Math.max(1000,Math.min(60000,Number(process.env.BROWSER_CDP_TIMEOUT_MS)||(atmosphereOnly?60000:10000)));
@@ -58,7 +58,7 @@ try {
   const configuredUrl = process.env.BROWSER_TEST_URL?.trim();
   const publicUrl = configuredUrl ? `${configuredUrl}${configuredUrl.includes('?') ? '&' : '?'}demo=1&browser-file-test=1`
     : `file://${ROOT}/index.html?demo=1&browser-file-test=1`;
-  await cdp.send('Page.navigate', { url: forceCanvas || lifeBoundaryOnly || atmosphereOnly || evolutionTerritoryOnly ? `${publicUrl}&dev=1` : publicUrl }, session);
+  await cdp.send('Page.navigate', { url: forceCanvas || lifeBoundaryOnly || atmosphereOnly || evolutionCellOnly ? `${publicUrl}&dev=1` : publicUrl }, session);
   await wait(4500);
 
   const evaluate = async (expression) => {
@@ -101,15 +101,16 @@ try {
     const report=JSON.stringify(evidence,null,2)+'\n';const name=`life-boundary-${label}-${evidence.backend}.json`;
     writeFileSync(resolve(REPORTS,name),report);const hash=createHash('sha256').update(report).digest('hex');
     console.log(`test:browser:life-boundaries — ${recordBaseline?'RECORDED':'PASS'} (${evidence.backend}; report ${name}; sha256 ${hash}; repeat noise ${evidence.repeat.noise.toFixed(6)}; threshold ${evidence.repeat.threshold.toFixed(6)}; steady p95 ${evidence.timing.steady.p95.toFixed(3)} ms; update p95 ${evidence.timing.update.p95.toFixed(3)} ms)`);
-  } else if (evolutionTerritoryOnly) {
-    const label=recordBaseline?'baseline':'final';const evidence=await runEvolutionTerritoryFixture(tools,{label,enforce:!recordBaseline});
+  } else if (evolutionCellOnly) {
+    const label=recordBaseline?'baseline':configuredUrl?'deployed':'final';
+    const evidence=await runEvolutionCellProgressionFixture(tools,{label,enforce:!recordBaseline});
     const report=JSON.stringify({sourceRevision:process.env.BROWSER_TEST_REVISION?.trim()||gitValue(['rev-parse','HEAD']),
       harnessRevision:gitValue(['rev-parse','HEAD']),branch:gitValue(['branch','--show-current']),workingTreeDirty:Boolean(gitValue(['status','--porcelain'])),
       sourceUrl:configuredUrl??`file://${ROOT}/index.html`,browser:browserIdentity.product,protocolVersion:browserIdentity.protocolVersion,
       browserErrors:cdp.errors.slice(0,20),browserStderr:cdp.stderr.slice(0,20),...evidence},null,2)+'\n';
-    const name=`evolution-cellular-territories-v1-${label}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
+    const name=`evolution-cell-progression-v1-${label}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
     writeFileSync(resolve(REPORTS,name),report);const hash=createHash('sha256').update(report).digest('hex');
-    console.log(`test:browser:evolution-territories — ${recordBaseline?'RECORDED':'PASS'} (${evidence.simulationPath}/${evidence.rendererPath}; ${evidence.semantic.presentationCells} cells; report ${name}; sha256 ${hash})`);
+    console.log(`test:browser:evolution-cells — ${recordBaseline?'RECORDED':'PASS'} (${evidence.simulationPath}/${evidence.rendererPath}; ${evidence.semantic.progressionCells} cells; report ${name}; sha256 ${hash})`);
   } else if (environmentPressureOnly) {
     const evidence = await runEnvironmentPressureScenario(tools);
     const receipt = writeEnvironmentPressureReport(evidence, browserIdentity, cdp, Boolean(configuredUrl), configuredUrl);
@@ -135,7 +136,8 @@ try {
   exitCode = 0;
 } catch (error) {
   console.error(`test:browser:file — FAIL: ${error.message}`);
-  for (const value of [...cdp.errors, ...cdp.stderr].slice(0, 12)) console.error(`  browser> ${value}`);
+  const severe = cdp.stderr.filter((value) => /FATAL|Received signal|ERROR/.test(value));
+  for (const value of [...cdp.errors, ...severe.slice(-8), ...cdp.stderr.slice(-8)].slice(-20)) console.error(`  browser> ${value}`);
 } finally {
   processChrome.kill('SIGTERM');
   await wait(250);
@@ -183,7 +185,7 @@ async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait
   await evaluate(`document.getElementById('begin-button').click()`);
   if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'running', 5000)) throw new Error('Canvas run did not start');
   const keyboardInspector=await verifyKeyboardInspector({ evaluate, key, poll, wait, setMedia });
-  const developed = await evaluate(`(async()=>{const [{RunController},{compileEvolution,MEMORY_NODE_IDS,evolutionRunConfiguration}]=await Promise.all([import('./src/simulation/simulator.js'),import('./src/game/skills/index.js')]);const m=compileEvolution({evolutionLevels:MEMORY_NODE_IDS.map(id=>({id,level:'20'}))}),c=new RunController({seed:9099,worldOrdinal:'20',...evolutionRunConfiguration(m)});c.start();c.advance(300);const a=window.__CELL_SPHERE_APP__,firstM=compileEvolution({evolutionLevels:['first-division','reliable-budding','bioelectric-spark'].map(id=>({id,level:'1'}))}),first=new RunController({seed:19,worldOrdinal:'20',...evolutionRunConfiguration(firstM)});first.start();first.advance(300);const firstSnapshot={...first.snapshot(),...a.worldIdentity};a.__firstLuminousSnapshot=firstSnapshot;const mid=c.snapshot();c.advance(4000);a.pause.set('browser-luminous',true);a.__luminousDecaySnapshot={...c.snapshot(),...a.worldIdentity};const s={...mid,...a.worldIdentity};a.historySnapshot=s;a.historyPlaybackActive=true;return {transformed:[...s.transformationState].filter(Boolean).length,powered:[...s.electricityQ].filter(Boolean).length,firstPowered:[...firstSnapshot.electricityQ].filter(Boolean).length}})()`);
+  const developed = await evaluate(`(async()=>{const [{RunController},{EVOLUTION_ARCHETYPES,EVOLUTION_LAYOUT,compileEvolution,evolutionRunConfiguration}]=await Promise.all([import('./src/simulation/simulator.js'),import('./src/game/skills/index.js')]);const cellFor=(id)=>{const archetype=EVOLUTION_ARCHETYPES.findIndex(value=>value.id===id);return EVOLUTION_LAYOUT.archetypeByCell.findIndex(value=>value===archetype)},m=compileEvolution({evolutionLevels:EVOLUTION_ARCHETYPES.map(value=>({cell:cellFor(value.id),level:'20'}))}),c=new RunController({seed:9099,worldOrdinal:'20',...evolutionRunConfiguration(m)});c.start();c.advance(300);const a=window.__CELL_SPHERE_APP__,firstM=compileEvolution({evolutionLevels:['first-division','reliable-budding','bioelectric-spark'].map(id=>({cell:cellFor(id),level:'1'}))}),first=new RunController({seed:19,worldOrdinal:'20',...evolutionRunConfiguration(firstM)});first.start();first.advance(300);const firstSnapshot={...first.snapshot(),...a.worldIdentity};a.__firstLuminousSnapshot=firstSnapshot;const mid=c.snapshot();c.advance(4000);a.pause.set('browser-luminous',true);a.__luminousDecaySnapshot={...c.snapshot(),...a.worldIdentity};const s={...mid,...a.worldIdentity};a.historySnapshot=s;a.historyPlaybackActive=true;return {transformed:[...s.transformationState].filter(Boolean).length,powered:[...s.electricityQ].filter(Boolean).length,firstPowered:[...firstSnapshot.electricityQ].filter(Boolean).length}})()`);
   if (developed.transformed <= 50 || developed.powered <= 50 || developed.firstPowered <= 0) throw new Error(`Canvas ecology fixture failed: ${JSON.stringify(developed)}`);
   await wait(120);await screenshot('browser-canvas-transformations.png');
   const focusCharge=async(day)=>evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{focusCamera}=await import('./src/rendering/camera.js'),s=a.historySnapshot,p=a.topo.positions,q=s.electricityQ,sun=[-.52,.72,.44];let cell=-1,charge=-1,dot=0;for(let i=0;i<q.length;i++){const d=p[i*3]*sun[0]+p[i*3+1]*sun[1]+p[i*3+2]*sun[2];if((${day?'true':'false'}?d>.55:d<-.7)&&q[i]>charge){cell=i;charge=q[i];dot=d}}if(cell<0)throw new Error('no charged visual focus');focusCamera(a.camera,p.subarray(cell*3,cell*3+3));a.lastRender=-Infinity;const accepted=a.renderer.render({snapshot:s,worldIdentity:a.worldIdentity,camera:a.camera,selectedNode:null,highlightedCells:[],time:performance.now()/1000,pulse:false});return{cell,charge,dot,accepted,camera:a.camera.direction.slice()}})()`);
@@ -209,16 +211,16 @@ async function runCanvasScenario({ evaluate, screenshot, setViewport, poll, wait
     ||!terminal.accessible.includes('Any interaction cancels it'))throw new Error(`Canvas terminal snapshot stale: ${JSON.stringify(terminal)}`);
   await evaluate("document.getElementById('result-history-button').click()"); await screenshot('browser-canvas-history-desktop.png');
   await evaluate("document.getElementById('scene-evolution').click()"); await wait(180); await screenshot('browser-canvas-evolution-desktop.png');
-  const selectedReady=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{validateMeta}=await import('./src/platform/storage.js');a.meta=validateMeta({...a.meta,echoBalance:'1000000'});
-    const target=a.memorySnapshot.nodeStates.find(n=>n.reason==='ready');a.selectEvolutionCell(target.id);a.trophyNotifications.replace({...a.meta,trophyQueue:[]});const next=a.memorySnapshot.nodeStates.find(n=>n.id===target.id);
-    const skill=a.evolutionTerritories.skillBySiteCell[next.cell];return{id:target.id,status:a.memorySnapshot.memoryStatus[a.evolutionTerritories.anchorCell[skill]],action:document.getElementById('memory-unlock').getAttribute('aria-label')}})()`);
+  const selectedReady=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,[{validateMeta},{buildEvolutionSnapshot}]=await Promise.all([import('./src/platform/storage.js'),import('./src/game/skills/index.js')]);
+    a.meta=validateMeta({...a.meta,echoBalance:'1000000'});a.memorySnapshot=buildEvolutionSnapshot(a.meta);const cell=a.memorySnapshot.evolutionProjection.readyCells[0];
+    a.selectEvolutionCell(cell);a.trophyNotifications.replace({...a.meta,trophyQueue:[]});return{cell,status:a.memorySnapshot.evolutionStatus[cell],action:document.getElementById('memory-unlock').getAttribute('aria-label')}})()`);
   if(![7,10].includes(selectedReady.status)||!selectedReady.action?.includes('Echoes'))throw new Error(`Canvas selected-ready state failed: ${JSON.stringify(selectedReady)}`);
   const pulseA=await screenshot('browser-canvas-evolution-selected-ready.png');await wait(450);
   const pulseB=await screenshot('browser-canvas-evolution-selected-ready-pulse.png');if(pulseA.hash===pulseB.hash)throw new Error('Canvas selected-ready normal-motion pulse was static');
   await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'reduced'})})()`);await wait(120);
   const staticA=await screenshot('browser-canvas-evolution-selected-ready-reduced.png');await wait(450);const staticB=await screenshot('browser-canvas-evolution-selected-ready-reduced-static.png');
   if(staticA.hash!==staticB.hash)throw new Error('Canvas selected-ready reduced-motion state was not static');
-  const atlas = await evaluate('window.__CELL_SPHERE_APP__.memorySnapshot.memoryStatus.length'); await evaluate("document.getElementById('scene-trophies').click()"); await wait(180); await screenshot('browser-canvas-trophies-desktop.png');
+  const atlas = await evaluate('window.__CELL_SPHERE_APP__.memorySnapshot.evolutionStatus.length'); await evaluate("document.getElementById('scene-trophies').click()"); await wait(180); await screenshot('browser-canvas-trophies-desktop.png');
   const trophies = await evaluate(`({cells:window.__CELL_SPHERE_APP__.trophySnapshot.memoryStatus.length,nodes:window.__CELL_SPHERE_APP__.trophySnapshot.nodeStates.length})`);
   await installFirstReplacementCapture(evaluate); const oldRun = await evaluate('window.__CELL_SPHERE_APP__.activeRunId'); await evaluate("document.getElementById('trophy-next-button').click()");
   if (!await poll(() => evaluate('window.__CELL_SPHERE_APP__.activeRunId'), (runId) => runId > oldRun, 5000)) throw new Error('Canvas replacement did not start');

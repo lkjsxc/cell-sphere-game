@@ -4,8 +4,8 @@
 
 A mobile-first passive-observation roguelite on a rich spherical ecology. The
 player watches autonomous network life discover geography, rotates and inspects
-without steering it, understands its story through visual History, and gardens
-adjacent permanent Evolution skills across connected territories between worlds.
+without steering it, understands its story through visual History, and strengthens
+adjacent permanent Evolution cells across the sphere between worlds.
 
 ## Product thesis
 

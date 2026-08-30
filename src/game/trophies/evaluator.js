@@ -1,5 +1,5 @@
 /** Monotonic Trophy evaluation; callers choose explicit transaction timing. */
-import { getMemoryNode, ownedEvolutionIds } from '../skills/index.js';
+import { evolutionArchetypeForCell, ownedEvolutionCells } from '../skills/index.js';
 import { normalizeProgressionInteger, projectProgressionInteger } from '../../core/progression-integer.js';
 import { HABITAT_TROPHIES } from './habitat.js'; import { ENDURANCE_TROPHIES } from './endurance.js';
 import { EVOLUTION_TROPHIES } from './evolution.js'; import { FORM_TROPHIES } from './form.js';
@@ -33,12 +33,12 @@ export function reconcileTrophies(meta, archive, newFacts = null) {
 }
 
 export function baseAggregate(meta) {
-  const skills = ownedEvolutionIds(meta); const branches = new Set();
-  for (const id of skills) { const domain = getMemoryNode(id)?.domain; if (domain && domain !== 'Foundation') branches.add(domain); }
+  const cells = ownedEvolutionCells(meta); const branches = new Set();
+  for (const cell of cells) { const domain = evolutionArchetypeForCell(cell)?.domain; if (domain && domain !== 'Foundation') branches.add(domain); }
   const progress = meta.trophyProgress ?? {}; const aggregate = Object.fromEntries([...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS].map((key) => [key, 0]));
   for (const key of [...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS]) aggregate[key] = finite(progress.aggregate?.[key]);
   Object.assign(aggregate, { runs: exactFinite(meta.runs), bestScore: exactFinite(meta.bestScore), totalEchoes: exactFinite(meta.totalEchoes),
-    skillCount: skills.length, skillBranchCount: branches.size, imprintCount: meta.imprints?.length ?? 0,
+    skillCount: cells.length, skillBranchCount: branches.size, imprintCount: meta.imprints?.length ?? 0,
     geographyMask: finite(progress.geographyMask), lakeTypeMask: finite(progress.lakeTypeMask), lakeSalinityMask: finite(progress.lakeSalinityMask) });
   return aggregate;
 }

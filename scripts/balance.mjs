@@ -10,6 +10,7 @@ import { scoreResult } from '../src/game/scoring.js';
 import * as challengeProfile from '../src/simulation/challenge-profile.js';
 import { ENVIRONMENT_SCHEDULE_HASH, ENVIRONMENT_SCHEDULE_VERSION } from '../src/game/environment-level.js';
 import { multiplyProgressionIntegers } from '../src/core/progression-integer.js';
+import { evolutionLevelsForCells, evolutionPathToArchetype } from './lib.mjs';
 
 const { CHALLENGE_PROFILE_VERSION, ENVIRONMENT_RATING_PER_LEVEL,
   compileChallengeProfile, pressureForNetRating } = challengeProfile;
@@ -31,13 +32,19 @@ const fixtureIds = Object.freeze({
     'powered-transport', 'luminous-recovery', 'luminous-canopy', 'deep-current', 'luminous-crown', 'glacial-basins',
     'coastal-succession', 'marine-bridge', 'world-shaper'],
 });
-const fixtures = Object.fromEntries(Object.entries(fixtureIds).map(([name, ids]) => [name, compileEvolution({ evolutionLevels: ids.map((id) => ({ id, level: '1' })) })]));
+const fixtureLevels = Object.freeze(Object.fromEntries(Object.entries(fixtureIds).map(([name, ids]) => [name,
+  evolutionLevelsForCells(ids.flatMap((id) => evolutionPathToArchetype(id)))])));
+const fixtures = Object.fromEntries(Object.entries(fixtureLevels)
+  .map(([name, evolutionLevels]) => [name, compileEvolution({ evolutionLevels })]));
 const started = performance.now(); const rows = Object.fromEntries(Object.keys(fixtures).map((name) => [name, []]));
 for (const seed of seeds) for (const [name, evolution] of Object.entries(fixtures)) rows[name].push(run(seed, evolution));
 const summary = Object.fromEntries(Object.entries(rows).map(([name, values]) => [name, summarize(values, rows.fresh)]));
 const fresh = summary.fresh; const upgraded = Object.entries(summary).filter(([name]) => name !== 'fresh');
 const validity = {
   allComplete: Object.values(rows).every((values) => values.every((row) => row.complete && row.finite)),
+  fixturesCompile: fixtures.fresh.totalEvolutionLevels === '0'
+    && Object.entries(fixtures).filter(([name]) => name !== 'fresh').every(([, fixture]) => fixture.totalEvolutionLevels !== '0')
+    && new Set(Object.values(fixtures).map((fixture) => fixture.totalEvolutionLevels)).size > 2,
   freshFragile: fresh.lifetime.median > 0 && fresh.lifetime.median <= 180 && fresh.peakReach.median < .08 && compareProgressionIntegers(fresh.environment.median, '2') < 0,
   foundationImproves: summary.foundation.paired.lifetimeWins >= .50 && summary.foundation.lifetime.median >= fresh.lifetime.median,
   luminousFirstVisible: rows.luminous.some((row) => row.everPoweredCells > 0 && row.poweredCellSeconds > 0),
@@ -45,7 +52,8 @@ const validity = {
   noImmortality: Object.values(rows).every((values) => values.every((row) => row.complete)),
 };
 const profileEvidence = profileContract();
-const report = { schema: 3, mode: smoke ? 'smoke' : 'deep', seedSet: holdout ? 'holdout' : 'development', seeds, fixtureIds,
+const report = { schema: 4, mode: smoke ? 'smoke' : 'deep', seedSet: holdout ? 'holdout' : 'development', seeds, fixtureIds,
+  fixtureCells: Object.fromEntries(Object.entries(fixtureLevels).map(([name, levels]) => [name, levels.map((entry) => entry.cell)])),
   command: process.argv.join(' '), runtime: { node: process.version, platform: process.platform, arch: process.arch,
     cpu: cpus()[0]?.model ?? 'unknown', logicalCpus: cpus().length },
   rule: { scoreModel: 6, ecology: 'direct-authored', luminous: 'whole-cell-authority',

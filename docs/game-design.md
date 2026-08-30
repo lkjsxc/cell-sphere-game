@@ -81,12 +81,17 @@ zoom survives a same-class resize; a new World restores the default geometry.
 
 Evolution changes ecology through actual mechanics such as reproduction, uptake,
 maintenance, reserve, recovery, habitat access, and whole-cell Luminous charge.
-Its 42 authored skills remain the progression units. On the globe each skill
-owns a connected territory within the same 2,562-cell topology family as World;
-every visible fine cell selects its owner, and stronger territory borders show
-the truthful purchase frontier. The semantic tree still exposes 42 skills, not
-2,562 controls. A first activation selects; only a later activation of that same
-ready territory or its explicit action can buy one exact level.
+Its 2,562 visible cells are the progression units. Each cell carries one of 42
+authored archetypes; repeated occurrences contribute their exact local levels to
+one aggregate archetype rank, one cost sequence, and one bounded effect
+compiler. A fresh profile exposes only the `First Division` root. Every owned
+cell opens its direct neighbors, with no domain, tier, World, or hidden graph
+gate. A first activation selects; only a later activation of that same ready
+cell or its explicit action can buy one exact local level.
+
+The bounded native navigator presents one current cell, its five or six direct
+neighbors, stable previous/next traversal, and a next-ready action. It keeps
+every cell keyboard-reachable without creating 2,562 persistent DOM controls.
 Scarcity defense protects the energy yield from nutrient already consumed; it
 does not create nutrient or energy. Evolution never changes the public
 Environment clock or creates infinite resources.

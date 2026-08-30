@@ -46,22 +46,31 @@ start one controller. Stale Worker/fallback messages are rejected.
 ## Persistence
 
 Current-only storage uses meta schema 15, History schema 10, settings schema 8,
-and transaction WAL schema 5. Old or mismatched documents start fresh; there are
-no migration maps. Worker protocol 12 carries a public relative speed whose
+and transaction WAL schema 6. Evolution subdocuments additionally bind the
+cell-level vector, layout, content, fine-Imprint, and Evolution-History
+identities. Incompatible Evolution channels reset selectively while independently
+valid non-Evolution meta survives; there is no old-skill-to-cell migration map.
+Worker protocol 12 carries a public relative speed whose
 meaning is converted once before clock accumulation. A terminal result validates
 its schedule, Level-0 start, exposure, profile evidence, and SCORE before one
 transaction applies Echoes, records, History, and Trophies.
 
-## Evolution graph and presentation
+## Evolution cell authority and presentation
 
-The frequency-2 graph in `src/game/skills/index.js` remains the sole authority
-for 42 skill IDs, roots, adjacency, costs, exact levels, transactions, and
-compiled effects. `src/game/skills/territories.js` is a pure observational
-projection over the shared level-4 topology: every one of 2,562 fine cells has
-one skill owner, every territory is connected, and visible cross-territory
-contacts equal the 120 authored graph edges exactly. Scene projection, picking,
-focus, WebGL2, and Canvas 2D consume that one map. ID-based meta and the compact
-frequency-2 Imprint record remain unchanged; no fine owner map is persisted.
+`src/game/skills/layout.js` binds the maintained level-4 topology to one
+immutable, versioned archetype assignment. Every one of its 2,562 visible cells
+is a progression identity; the 7,680 canonical edges are the sole adjacency
+authority. `src/game/skills/levels.js` validates the sparse exact per-cell
+vector, and `src/game/skills/index.js` derives ownership, direct frontier,
+affordability, exact aggregate ranks, previews, transactions, and one bounded
+projection. `effects.js` remains the single compiler and consumes only the 42
+aggregate archetype ranks. Scene projection, picking, focus, accessibility,
+agents, WebGL2, and Canvas 2D consume exact cells without an owner alias.
+
+The layout is deterministic and meta-independent. Fine Imprints record bounded
+paths on the same topology. Persistence stores no layout generator state or
+presentation-derived ownership; it validates matching version/content/digest
+identity and resets incompatible predecessor Evolution channels.
 
 ## Rendering and interaction
 

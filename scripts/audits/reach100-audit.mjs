@@ -2,10 +2,11 @@
 /** Exact all-authoritative-cell sustained REACH 100% feasibility and safety audit. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { RunController } from '../../src/simulation/simulator.js';
-import { compileEvolution, evolutionRunConfiguration, MEMORY_NODE_IDS } from '../../src/game/skills/index.js';
+import { compileEvolution, evolutionRunConfiguration } from '../../src/game/skills/index.js';
+import { evolutionRepresentativeLevels } from '../lib.mjs';
 import { REACH_100_REQUIRED_TICKS } from '../../src/simulation/lifecycle/reach-goal.js';
 
-const count=integerArg('--count=',300),breadth=compileEvolution({evolutionLevels:MEMORY_NODE_IDS.map((id)=>({id,level:'1'}))});
+const count=integerArg('--count=',300),breadth=compileEvolution({evolutionLevels:evolutionRepresentativeLevels('1')});
 const EXTERNAL_FINISH_BUDGET_TICKS = 10_000;
 const fresh=compileEvolution({evolutionLevels:[]}),rows=[],freshRows=[];const started=performance.now();
 for(let index=0;index<count;index++)rows.push(run((0x72656163+Math.imul(index,0x9e3779b1))>>>0,breadth,20));

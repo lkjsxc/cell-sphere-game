@@ -18,7 +18,7 @@ const deterministicChecks=[];for(const task of tasks.filter((task)=>task.seed===
  deterministicChecks.push({policy:task.policy,seed:task.seed,ok:rerun.ok&&original.ok&&rerun.summary.stateHash===original.summary.stateHash})}
 const summaries=results.filter((row)=>row.ok).map((row)=>row.summary),policySummary={};
 for(const policy of policies){const rows=summaries.filter((row)=>row.policy===policy),domains={};
- for(const domain of ['Fertility','Freshwater','Scarcity','Cryogenic','Marine','Luminous'])domains[domain]=dist(rows.map((row)=>row.finalDomains.find((entry)=>entry.domain===domain)?.cells??0));
+ for(const domain of ['Fertility','Freshwater','Scarcity','Cryogenic','Marine','Luminous'])domains[domain]=dist(rows.map((row)=>row.finalDomains.find((entry)=>entry.domain===domain)?.ownedCells??0));
  policySummary[policy]={campaigns:rows.length,worlds:rows.reduce((sum,row)=>sum+row.worlds,0),purchases:dist(rows.map((row)=>row.purchases)),
   ownedCells:dist(rows.map((row)=>row.finalEvolutionCellCount)),echoBalance:exactDist(rows.map((row)=>row.finalEchoBalance)),
   bestScore:exactDist(rows.map((row)=>row.bestScore)),domains, terminalCauses:counts(rows.map((row)=>row.lastResult.cause)),
@@ -29,7 +29,7 @@ const nonWeak=summaries.filter((row)=>row.policy!=='weak'),traceBounded=summarie
 const specialistValid=Object.entries(specialists).filter(([policy])=>policies.includes(policy)).every(([policy,domain])=>{
  const target=policySummary[policy].domains[domain].median,others=Object.entries(policySummary[policy].domains).filter(([name])=>name!==domain).map(([,row])=>row.median);
  return target>0&&target>=Math.max(...others)});
-const distinctDomains=new Set(summaries.flatMap((row)=>row.finalDomains.map((entry)=>entry.domain))).size,diversityValid=smoke||distinctDomains>=4;
+const distinctDomains=new Set(summaries.flatMap((row)=>row.finalDomains.filter((entry)=>entry.ownedCells>0).map((entry)=>entry.domain))).size,diversityValid=smoke||distinctDomains>=4;
 const expectedTasks=policies.length*cohort.length;
 const valid=!invalidPolicies.length&&policies.length>0&&tasks.length===expectedTasks&&results.length===expectedTasks&&!failures.length
  &&deterministicChecks.length===policies.length&&deterministicChecks.every((row)=>row.ok)&&traceBounded&&specialistValid&&diversityValid

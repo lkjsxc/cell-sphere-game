@@ -11,7 +11,7 @@ import { createHistoryLoadGuard, createHistoryPlayback } from '../../src/interfa
 import { createWorldIdentity, identityFields } from '../../src/core/world-session.js';
 import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_HASH, ENVIRONMENT_SCHEDULE_VERSION } from '../../src/game/environment-level.js';
 import { FRAME_FLAGS } from '../../src/history/recorder.js';
-import { loadHistory, normalizeHistoryEvents, serializeHistory, validateHistory } from '../../src/platform/history.js';
+import { defaultHistory, loadHistory, normalizeHistoryEvents, serializeHistory, validateHistory } from '../../src/platform/history.js';
 
 function frame(tick, flags = 0, count = 32) {
   const cells = new Uint8Array(count); const resources = new Uint8Array(count); const worldmaking = new Uint8Array(count);
@@ -114,7 +114,7 @@ test('current History normalizes bounded semantic cells and rejects mismatched s
     { tick: 3, type: 'resource-reserve', primaryCells }]);
   assert.deepEqual(events[0].primaryCells, [31]); assert.equal(events[0].cellId, 31);
   assert.deepEqual(events[1].primaryCells, [4, 5, 6, 7, 8, 9, 10, 11]);
-  assert.deepEqual(validateHistory({ schema: 8, worlds: [] }), { schema: 10, worlds: [], evolution: [], trophies: [] });
+  assert.deepEqual(validateHistory({ schema: 8, worlds: [] }), defaultHistory());
   const oversized = validateHistory({ schema: 10, worlds: Array.from({ length: 32 }, (_, seed) => ({ seed, tick: seed,
     environmentModelVersion: 2, startEnvironmentLevel: '0' })) }, 32);
   assert.equal(oversized.worlds.length, 24);
@@ -146,11 +146,13 @@ test('dynamic History retains bounded authoritative interpolation evidence', () 
 });
 
 test('semantic History enforces its byte bound even with maximum-width exact fields', () => {
-  const huge = '9'.repeat(4000); const evolution = Array.from({ length: 128 }, (_, seq) => ({ seq, nodeId: 'ecology-tempered-scars', oldLevel: huge, newLevel: huge,
-    cost: huge, balanceBefore: huge, balanceAfter: huge, run: huge, environmentLevel: '0', transactionKey: `wide-${seq}` }));
-  const archive = validateHistory({ schema: 10, worlds: [], evolution, trophies: [] }); const serialized = serializeHistory(archive);
+  const huge = '9'.repeat(4000); const evolution = Array.from({ length: 128 }, (_, seq) => ({ seq, cell: seq,
+    archetypeId: 'ecology-tempered-scars', oldLocalLevel: huge, newLocalLevel: huge,
+    oldAggregateRank: huge, newAggregateRank: huge, cost: huge, balanceBefore: huge, balanceAfter: huge,
+    run: huge, bestEnvironmentLevelReached: '0', transactionKey: `wide-${seq}` }));
+  const archive = validateHistory({ schema: 10, evolutionVersion: 2, worlds: [], evolution, trophies: [] }); const serialized = serializeHistory(archive);
   assert.ok(new TextEncoder().encode(serialized).byteLength <= 700000); assert.ok(archive.evolution.length > 0 && archive.evolution.length < 128);
-  assert.equal(archive.evolution.at(-1).newLevel, huge);
+  assert.equal(archive.evolution.at(-1).newLocalLevel, huge);
 });
 
 test('recent-runs rejects v1 buffers and gracefully degrades without IndexedDB', async () => {

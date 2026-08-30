@@ -4,7 +4,7 @@ import {compileEvolution, evolutionRunConfiguration} from '../../game/skills/ind
 import { RunController } from '../../simulation/simulator.js';
 import { REPLAY, REPLAY_VERSION } from '../../simulation/replay.js';
 import { appendTrophyEvents, appendWorld } from '../../platform/history.js';
-import { convertImprintToAtlas } from '../../platform/storage.js';
+import { convertImprintToEvolution } from '../../platform/storage.js';
 import { reconcileTrophies } from '../../game/trophies/evaluator.js';
 import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_HASH, ENVIRONMENT_SCHEDULE_VERSION,
   environmentScheduleAtTick, normalizeEnvironmentLevel } from '../../game/environment-level.js';
@@ -32,7 +32,7 @@ export function applyRunResult(meta,archive,result,lastKey=null){
   // from a message DTO whose mutable score/result fields may have been forged.
   result = { ...authority, resultTransactionKey: key };
   const score=scoreResult(result);const converted=result.imprint?.edges?.length
-    ? convertImprintToAtlas(result.imprint) : null;
+    ? convertImprintToEvolution(result.imprint) : null;
   const nextRuns=incrementProgressionInteger(runs);
   const nextMeta = {
     ...meta,

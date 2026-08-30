@@ -3,13 +3,15 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { RunController } from '../../src/simulation/simulator.js';
 import { compileEvolution, evolutionRunConfiguration } from '../../src/game/skills/index.js';
+import { evolutionLevelsForCells, evolutionPathToArchetype } from '../lib.mjs';
 
 const seeds = [1, 9099, 2693800525, 44123];
 const firstIds = ['first-division', 'reliable-budding', 'bioelectric-spark'];
 const matureIds = ['first-division', 'reliable-budding', 'nutrient-uptake', 'frugal-membrane', 'stable-transport',
   'bioelectric-spark', 'light-retention', 'powered-transport', 'luminous-recovery', 'luminous-canopy', 'deep-current', 'luminous-crown'];
-const configs = Object.freeze({ fresh: compileEvolution({}), first: compileEvolution({ evolutionLevels: levels(firstIds) }),
-  mature: compileEvolution({ evolutionLevels: levels(matureIds) }) });
+const levelFixtures = Object.freeze({ fresh: Object.freeze([]), first: levels(firstIds), mature: levels(matureIds) });
+const configs = Object.freeze(Object.fromEntries(Object.entries(levelFixtures)
+  .map(([name, evolutionLevels]) => [name, compileEvolution({ evolutionLevels })])));
 const rows = Object.fromEntries(Object.entries(configs).map(([name, evolution]) => [name, seeds.map((seed) => run(name, evolution, seed))]));
 const repeat = run('mature-repeat', configs.mature, seeds[1]); const first = rows.first; const mature = rows.mature; const fresh = rows.fresh;
 const shader = readFileSync(new URL('../../src/rendering/shaders.js', import.meta.url), 'utf8');
@@ -33,12 +35,14 @@ const invariants = {
   rendererHierarchy: ['webglChargeGate', 'webglDarkness', 'webglZeroChargeOrdinary', 'webglPoweredDarkBoost', 'canvasChargeGate', 'canvasDarkness', 'canvasZeroChargeOrdinary']
     .every((key) => rendererSourceContract[key]) && !rendererSourceContract.wireGeometry,
 };
-const report = { schema: 3, seeds, firstIds, configs: Object.fromEntries(Object.entries(configs).map(([name, value]) => [name, value.luminous])), rows,
+const report = { schema: 4, seeds, firstIds, fixtureCells: Object.fromEntries(Object.entries(levelFixtures)
+  .map(([name, entries]) => [name, entries.map((entry) => entry.cell)])),
+  configs: Object.fromEntries(Object.entries(configs).map(([name, value]) => [name, value.luminous])), rows,
   rendererSourceContract, browserVisualGate: 'test:browser:file and test:browser:canvas measure paired zero-charge, ordinary-night, powered-day, and powered-night luminance; paired deltas separate charge emission from daylight.',
   invariants, valid: Object.values(invariants).every(Boolean) };
 mkdirSync('reports', { recursive: true }); writeFileSync('reports/luminous-audit.json', `${JSON.stringify(report, null, 2)}\n`);
 console.log(JSON.stringify(report, null, 2)); if (!report.valid) process.exitCode = 1;
-function levels(ids) { return ids.map((id) => ({ id, level: '1' })); }
+function levels(ids) { return evolutionLevelsForCells(ids.flatMap((id) => evolutionPathToArchetype(id))); }
 function run(label, evolution, seed) {
   const controller = new RunController({ seed, worldOrdinal: '20', ...evolutionRunConfiguration(evolution) });
   controller.start(); let liveDecayCells = 0; const previous = Uint8Array.from(controller.state.electricityQ);

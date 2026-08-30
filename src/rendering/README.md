@@ -25,13 +25,14 @@ The WebGL world path remains exactly four steady-state draws.
   pointer-to-cell selection.
 - `blank-snapshot.js`: typed zero-life `starting` frame before new authority.
 
-Evolution renders the level-4 2,562-cell topology as 42 authored territories.
-The shared pure territory owner supplies both backends with fine-cell ownership
-and internal/territory/selected/emphasized edge classes. Fine boundaries come
-from the existing static boundary phase; stronger territory perimeters reuse the
-existing dynamic boundary draw and Canvas batches, so WebGL remains four draws.
+Evolution renders the level-4 2,562-cell topology as 2,562 authoritative
+progression cells carrying 42 repeated archetypes. The shared exact-cell
+projection supplies both backends with deterministic material variation and
+quiet/owned/frontier/recent/selected edge classes. Fine boundaries come from the
+existing static boundary phase; state perimeters reuse the existing dynamic
+boundary draw and Canvas batches, so WebGL remains four draws.
 Locked/reachable, affordable, selected-ready, owned, owned-ready,
-selected-owned-ready, recently upgraded, and coarse-Imprint states remain
+selected-owned-ready, recently upgraded, and fine-Imprint states remain
 text-backed and reduced-motion safe. Rendering never purchases; interface
 transaction authority handles select-first, later-second-activation behavior.
 

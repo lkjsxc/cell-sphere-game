@@ -5,7 +5,8 @@ import { TROPHIES, TROPHY_IDS, validateTrophyCatalog } from '../../src/game/trop
 import { validateTrophyAtlas } from '../../src/game/trophies/atlas.js';
 import { baseAggregate, reconcileTrophies, trophyConditionMet } from '../../src/game/trophies/evaluator.js';
 import { TROPHY_MAX_KEYS, TROPHY_SUM_KEYS } from '../../src/game/trophies/keys.js';
-import { availableMemoryNodes, compileEvolution, evolutionRunConfiguration, purchaseEvolutionLevel } from '../../src/game/skills/index.js';
+import { availableEvolutionCells, buildEvolutionProjection, compileEvolution, evolutionCellState,
+  evolutionRunConfiguration, purchaseEvolutionLevel } from '../../src/game/skills/index.js';
 import { RunController } from '../../src/simulation/simulator.js';
 import { compareProgressionIntegers, incrementProgressionInteger } from '../../src/core/progression-integer.js';
 import { applyRunResult } from '../../src/interface/policies/run-result.js';
@@ -64,11 +65,13 @@ function automaticRun(seed, meta) { const evolution=compileEvolution(meta);
   const rc=new RunController({seed,strainId:'pioneer',worldOrdinal:incrementProgressionInteger(meta.runs),
     ...evolutionRunConfiguration(evolution)});rc.start();
   while(rc.state.status!=='extinct')rc.advance(20);return rc.buildResult();}
-function buyOne(meta,run){const preferred=['Foundation','Fertility','Freshwater','Scarcity','Cryogenic','Marine','Luminous'][(run-1)%7],options=availableMemoryNodes(meta).slice()
+function buyOne(meta,run){const preferred=['Foundation','Fertility','Freshwater','Scarcity','Cryogenic','Marine','Luminous'][(run-1)%7],projection=buildEvolutionProjection(meta);
+  const options=availableEvolutionCells(projection).map((cell)=>evolutionCellState(projection,cell)).filter((state)=>state.reason==='ready')
     .sort((a,b)=>(a.domain===preferred?-1:0)-(b.domain===preferred?-1:0)||Number(a.owned)-Number(b.owned)||a.tier-b.tier
-      ||compareProgressionIntegers(a.nextCost,b.nextCost)||a.id.localeCompare(b.id));
-  if(!options.length)return{ok:false,meta};const state=options[0];return purchaseEvolutionLevel(meta,state.id,{expectedLevel:state.currentLevel,expectedRevision:meta.revision,
-    transactionKey:`trophy-audit:${run}:${state.id}:${state.currentLevel}`});}
+      ||compareProgressionIntegers(a.nextCost,b.nextCost)||a.cell-b.cell);
+  if(!options.length)return{ok:false,meta};const state=options[0];return purchaseEvolutionLevel(meta,state.cell,{expectedLocalLevel:state.localLevel,
+    expectedAggregateRank:state.aggregateRank,expectedRevision:meta.revision,
+    transactionKey:`trophy-audit:${run}:${state.cell}:${state.localLevel}:${state.aggregateRank}`});}
 function impossibleCriteria() { const aggregate = Object.fromEntries([...TROPHY_MAX_KEYS, ...TROPHY_SUM_KEYS].map((key) => [key,
   key === 'environmentPressureTicksQ' ? 1_000_000_000 : 10_000_000]));
   Object.assign(aggregate, { runs: 10000, bestScore: 2_000_000, totalEchoes: 1_000_000, skillCount: 42, skillBranchCount: 6,

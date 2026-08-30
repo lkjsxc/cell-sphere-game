@@ -1,6 +1,6 @@
-/** Direct bounded compilation from authored Evolution skills to ecology rules. */
+/** Direct bounded compilation from aggregate Evolution-archetype ranks. */
 import { addProgressionIntegers, normalizeProgressionInteger } from '../../core/progression-integer.js';
-import { boundedEvolutionLevelRefinement, levelMapFromVector } from './levels.js';
+import { boundedEvolutionLevelRefinement } from './levels.js';
 
 export const EVOLUTION_EFFECT_VERSION = 3;
 export const EVOLUTION_COMPILE_CACHE_LIMIT = 128;
@@ -16,29 +16,29 @@ const PRESSURE_DOMAINS = Object.freeze(['Fertility', 'Freshwater', 'Scarcity', '
 const CACHE = new Map(); const WEIGHTS = new Map();
 let cacheBytes = 0; let hits = 0; let misses = 0; let evictions = 0; let oversizeSkips = 0;
 
-export function compileEvolutionVector({ vector, canonicalKey, nodes, contentVersion }) {
+export function compileEvolutionRanks({ ranks, canonicalKey, archetypes, contentVersion }) {
   const key = `evolution-compile:v${EVOLUTION_EFFECT_VERSION}:content${contentVersion}|${canonicalKey}`;
   if (CACHE.has(key)) { hits++; return CACHE.get(key); }
   misses++;
-  const levels = levelMapFromVector(vector); const traits = {}; const ecology = defaultEcology();
+  const levels = new Map(ranks.map((entry) => [entry.id, entry.level])); const traits = {}; const ecology = defaultEcology();
   const worldmaking = { reclamation: false, cryolake: false, littoral: false };
   const luminous = { enabled: false, generation: 0, retention: 0, upkeep: 0, domain: 0, transport: 0, recovery: 0, visual: 0 };
   const habitats = new Set(); const affinityDefense = Object.fromEntries(PRESSURE_DOMAINS.map((domain) => [domain, '0']));
   const owned = [];
-  for (const node of nodes) {
+  for (const node of archetypes) {
     const level = levels.get(node.id); if (!level) continue;
     const refinement = boundedEvolutionLevelRefinement(level); owned.push(Object.freeze({ ...node, evolutionLevel: level }));
     for (const effect of node.effects) apply(effect, refinement, traits, ecology, worldmaking, luminous, habitats, affinityDefense);
   }
   boundTraits(traits);
-  const luminousEcology = compileLuminous(luminous, vector);
+  const luminousEcology = compileLuminous(luminous, ranks);
   const compiled = Object.freeze({
     effects: Object.freeze(traits), ecology: Object.freeze(ecology), worldmaking: Object.freeze(worldmaking),
     luminous: Object.freeze(luminousEcology),
     habitatCapabilities: Object.freeze([...habitats].sort()), affinityDefense: Object.freeze(affinityDefense),
     pressureDefense: Object.freeze({ scarcity: '0', renewal: '0', climate: '0', toxicity: '0', maintenance: '0' }),
-    totalOwnedCells: owned.length, totalEvolutionLevels: totalLevels(vector), ownedNodes: Object.freeze(owned),
-    levelVectorVersion: 2, effectVersion: EVOLUTION_EFFECT_VERSION, contentVersion,
+    totalEvolutionLevels: totalLevels(ranks), ownedArchetypes: Object.freeze(owned),
+    aggregateRankVersion: 1, effectVersion: EVOLUTION_EFFECT_VERSION, contentVersion,
   });
   cache(compiled, key); return compiled;
 }

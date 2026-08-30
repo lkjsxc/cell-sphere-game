@@ -92,8 +92,8 @@ class GameApp {
     this.historyUi = createHistorySurface({ onClose: () => this.panelClosed('history'),
       onWorld: (world) => this.historyPlayback.selectWorld(world), onSeek: (tick, event, world) => this.historyPlayback.seek(tick, event, world),
       onLive: () => this.historyPlayback.live() });
-    this.memoryUi = createMemorySurface({ onCloseNode: () => this.closeEvolutionCell(), onUnlock: (id) => this.buyEvolutionLevel(id),
-      onSelect: (id) => this.selectEvolutionCell(id), canUnlock: () => !['starting', 'running'].includes(this.phase) });
+    this.memoryUi = createMemorySurface({ onCloseNode: () => this.closeEvolutionCell(), onUnlock: (cell) => this.buyEvolutionLevel(cell),
+      onSelect: (cell, source) => this.selectEvolutionCell(cell, source), canUnlock: () => !['starting', 'running'].includes(this.phase) });
     this.trophyUi = createTrophySurface({ onClose: () => this.closeTrophy(), onSelect: (id) => this.selectTrophy(id) });
     this.trophyNotifications = createTrophyNotifications({ reduced: () => this.settings.motion === 'reduced',
       announce: (text) => { this.el.live.textContent = text; }, onSelect: (id) => { if (this.scene !== 'trophies') this.selectScene('trophies'); selectTrophy(this, id); },
@@ -107,7 +107,7 @@ class GameApp {
   }
   makeRenderer(seed, mode = 'world', identity = null) {
     this.visualSeed = seed; this.presentationMode = mode; this.topo = mode === 'trophies' ? this.topo2 : this.topo4;
-    if (mode === 'memory') this.fields = this.atlasFields; else if (mode === 'trophies') this.fields = this.trophyFields;
+    if (mode === 'memory') this.fields = this.evolutionFields; else if (mode === 'trophies') this.fields = this.trophyFields;
     else { this.worldFields = createFields(createRng(seed ^ 0x51ab3d71), this.topo4); this.fields = this.worldFields; }
     const binding = identity ?? (mode === 'world' && this.worldIdentity?.seed === seed ? this.worldIdentity : null);
     this.renderer?.dispose(); this.renderer = null;
@@ -228,7 +228,7 @@ class GameApp {
   failRun(message) { this.pause.set('worker-failed', true); ui.announce(this.el, `${message} Start a new world to continue.`); }
   enterEvolution(){return enterEvolution(this)}
   enterTrophies(){enterTrophies(this)}
-  selectEvolutionCell(id){selectEvolutionCell(this,id)}closeEvolutionCell(){closeEvolutionCell(this)}buyEvolutionLevel(id){buyEvolutionLevel(this,id)}
+  selectEvolutionCell(cell, source){selectEvolutionCell(this,cell,source)}closeEvolutionCell(){closeEvolutionCell(this)}buyEvolutionLevel(cell){buyEvolutionLevel(this,cell)}
   selectTrophy(id) { selectTrophy(this, id); } closeTrophy() { closeTrophy(this); }
   openHistory(scope = null) { if (this.surfaces.toggle('history')) return;
     this.historyPlayback.open(scope ?? (this.scene === 'world' ? 'current' : 'past')); }

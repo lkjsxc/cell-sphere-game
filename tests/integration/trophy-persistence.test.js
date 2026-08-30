@@ -2,7 +2,7 @@
 import { test } from 'node:test'; import assert from 'node:assert/strict';
 import { validateMeta, defaultMeta } from '../../src/platform/storage.js';
 import { validateHistory, appendAbandonedWorld, appendTrophyEvents, defaultHistory } from '../../src/platform/history.js';
-import { MEMORY_ROOT_IDS } from '../../src/game/skills/index.js';
+import { EVOLUTION_ROOT_CELL } from '../../src/game/skills/index.js';
 import { TROPHY_IDS } from '../../src/game/trophies/index.js';
 import { reconcileTrophies } from '../../src/game/trophies/evaluator.js';
 import { buildTrophyFacts, validateTrophyFacts } from '../../src/game/trophies/facts.js';
@@ -55,7 +55,7 @@ test('accepted terminal result stores facts, semantic awards, and persistent que
 });
 
 test('non-world Evolution recognition appends one bounded semantic Trophy event', () => {
-  const recognition = reconcileTrophies({ ...defaultMeta(), evolutionLevels: [{ id: MEMORY_ROOT_IDS[0], level: '1' }] }, defaultHistory());
+  const recognition = reconcileTrophies({ ...defaultMeta(), evolutionLevels: [{ cell: EVOLUTION_ROOT_CELL, level: '1' }] }, defaultHistory());
   assert.ok(recognition.awardedIds.includes('evolution-first-skill'));
   const archive = appendTrophyEvents(defaultHistory(), recognition.awardedIds);
   assert.equal(archive.trophies.length, recognition.awardedIds.length);

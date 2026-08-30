@@ -19,6 +19,6 @@ export async function exerciseTrophies(t) {
   const semantic = await evaluate(`(() => { document.getElementById('trophy-detail-close').click(); const b=document.querySelector('#trophy-grid [data-trophy-index="1"]'); b.click(); return window.__CELL_SPHERE_APP__.trophyUi.selectedId===b.dataset.trophyId; })()`);
   ok(semantic, 'semantic Trophy grid diverged from globe selection'); await screenshot('browser-trophy-mobile.png'); await setViewport(1440,900);
   await evaluate("document.getElementById('trophy-detail-close').click(); document.getElementById('trophy-evolution-button').click()"); await wait(160);
-  ok(await evaluate("window.__CELL_SPHERE_APP__.state==='memory' && window.__CELL_SPHERE_APP__.topo.levels===3 && window.__CELL_SPHERE_APP__.memorySnapshot.nodeStates.length===642"), 'Evolution did not restore after Trophy Sphere');
+  ok(await evaluate("window.__CELL_SPHERE_APP__.scene==='evolution' && window.__CELL_SPHERE_APP__.topo.levels===4 && window.__CELL_SPHERE_APP__.memorySnapshot.evolutionProjection.levelByCell.length===2562"), 'Evolution did not restore after Trophy Sphere');
 }
 function ok(value, message) { if (!value) throw new Error(message); }

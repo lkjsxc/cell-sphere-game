@@ -6,9 +6,9 @@ include `progression-integer.test.js`, `evolution-progression.test.js`,
 transaction tests, interface state-machine tests, and `simulation/` invariants.
 
 Coverage includes canonical/malformed/huge exact decimals and `2^53` boundaries;
-the authored 42-skill Evolution graph with one `First Division` root; connected
-level-4 territories with exact contact equivalence; physical-frontier and
-repeated-level transactions; direct bounded Environment compilation;
+the 2,562-cell Evolution topology with one `First Division` root; deterministic
+42-archetype weave invariants; direct fine-cell frontier, sparse local levels,
+aggregate-rank economics, and exact transactions; direct bounded Environment compilation;
 realized SCORE and procedural ranks; current-only persistence reset; whole-cell
 charge/zero-charge rendering; deterministic finite ecology; and the
 select-first/later-second-activation transaction state machine.
