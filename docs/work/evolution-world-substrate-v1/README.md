@@ -147,6 +147,14 @@ Status: active.
   continuous center/limb coverage, and responsive shells. Both WebGL runs retain
   four draws and the same authoritative SCORE `178012`; Canvas reports the same
   unified scene flow.
+- PASS — `npm run verify` from an isolated clean worktree at exact production
+  commit `9ee0e38daf067d2248e4d75d0af2c68e57d1032a` passed all 26 gates in
+  `423,011 ms`. The 130,397-byte retained log is
+  `/tmp/evolution-world-substrate-verify-9ee0e38.log`, SHA-256
+  `36095a64ca6fbdc6ac53927d1b461ac8b27538b9e566895fa8ce838d45c2bd1e`.
+  The benchmark is `12,378 ticks/s` against the `3,000` gate with deterministic
+  hash `15863d52`; `showcase:check` and all source, identity, ecology, balance,
+  persistence, agent, Trophy, unit, integration, structure, and link gates pass.
 - The first browser attempt without the cached library path failed before CDP
   because `libatk-1.0.so.0` was unavailable; it is not a pass. The cached
   dependency bundle resolved the environment and supersedes that attempt.
@@ -168,17 +176,22 @@ Status: active.
   the next CDP viewport command timed out; it did not reach product assertions
   and is not a pass. The configured 60-second-bounded Worker, fallback, and
   Canvas reruns above supersede it.
+- A direct `check:structure` in the primary checkout correctly failed on the four
+  preserved untracked user handoffs, each above the tracked-document hard cap.
+  The files were not moved, edited, hidden, or added. The isolated clean worktree
+  at the exact commit passed `check:structure`; this supersedes the contaminated
+  working-copy result for committed-content verification without claiming the
+  user files passed repository structure.
 
 ## Evidence not obtained
 
-- Complete verification, remote, CI, Pages, cache-busted deployed-byte, and
-  deployed-browser evidence are not yet run.
+- Remote, CI, Pages, cache-busted deployed-byte, and deployed-browser evidence
+  are not yet run.
 - Physical-device mouse, touch, pen, real screen-reader, high-refresh, thermal,
   and hardware safe-area evidence is unavailable in this environment.
 
 ## Exact next coherent step
 
-Run the focused source/audit gates and one fresh complete verification against
-stable final content, review and commit the exact dependency boundary, then
-perform the authorized fast-forward publication and verify its exact CI, Pages,
+Commit this local evidence, confirm the remote is still a fast-forward target,
+then perform the authorized publication and verify its exact CI, Pages,
 cache-busted bytes, and deployed browser paths before terminal closure.
