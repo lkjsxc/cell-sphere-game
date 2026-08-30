@@ -5,14 +5,13 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package:
-
-- [`evolution-world-substrate-v1/`](evolution-world-substrate-v1/) — active
-  presentation-only cutover from the uniform all-land Evolution material to one
-  fixed World-derived planet substrate beneath exact-cell progression.
+Active work package: none.
 
 Completed packages remain as historical or current implementation evidence:
 
+- [`evolution-world-substrate-v1/`](evolution-world-substrate-v1/) — terminal
+  evidence for one fixed World-derived Evolution planet substrate, secondary
+  exact-cell progression cues, renderer parity, and local/external closure.
 - [`evolution-cell-progression-v1/`](evolution-cell-progression-v1/) — terminal
   current evidence for exact level-4 Evolution cell authority, direct fine
   adjacency, aggregate archetype ranks, bounded navigation, current-only

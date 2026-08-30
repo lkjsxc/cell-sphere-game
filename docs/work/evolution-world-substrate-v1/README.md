@@ -1,6 +1,6 @@
 # Evolution World Substrate v1
 
-Status: active.
+Status: terminal when the exact-revision publication receipt in the final implementation handoff passes; otherwise this package remains active.
 
 ## Starting point
 
@@ -183,15 +183,18 @@ Status: active.
   working-copy result for committed-content verification without claiming the
   user files passed repository structure.
 
-## Evidence not obtained
+## Terminal disposition
 
-- Remote, CI, Pages, cache-busted deployed-byte, and deployed-browser evidence
-  are not yet run.
+- The local dependency boundary and stopping rule are met. The fixed World-derived
+  substrate, secondary exact-cell cues, backend parity, predecessor deletion,
+  accessibility, bounded performance, and World/Trophy/progression/persistence
+  non-regression evidence all pass.
+- This record is part of the one revision that receives the mandate's sole
+  authorized push, so its own CI/Pages receipt cannot be embedded in that commit.
+  The required final implementation handoff records the exact revision, workflow,
+  deployment, byte manifest, and deployed-browser classifications. Terminal status
+  is effective only when those checks pass; otherwise the exact next step is the
+  failed external postcondition.
 - Physical-device mouse, touch, pen, real screen-reader, high-refresh, thermal,
-  and hardware safe-area evidence is unavailable in this environment.
-
-## Exact next coherent step
-
-Commit this local evidence, confirm the remote is still a fast-forward target,
-then perform the authorized publication and verify its exact CI, Pages,
-cache-busted bytes, and deployed browser paths before terminal closure.
+  and hardware safe-area evidence remains unavailable and deferred.
+- Exact next coherent step: `none` when the publication receipt passes.
