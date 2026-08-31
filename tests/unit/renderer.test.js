@@ -31,6 +31,7 @@ import { BOUNDARY_VERTICES_PER_EDGE, LIFE_EDGE_STRIDE } from '../../src/renderin
 import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_HASH,
   ENVIRONMENT_SCHEDULE_VERSION } from '../../src/game/environment-level.js';
 import { RENDER_SCENE, renderSceneMode } from '../../src/rendering/scene-mode.js';
+import { EVOLUTION_CELL_EDGE, EVOLUTION_REGION_EDGE } from '../../src/game/skills/scene.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(here, p), 'utf8');
@@ -295,15 +296,19 @@ test('Evolution reuses the existing boundary buffer for shared exact-cell edge s
     edgeUpdateCount: 0, gl, lifeBuffer: {}, ecologyBuffer: {}, boundaryLifeBuffer: {} };
   const snapshot = { tick: 1, status: 'evolution', evolutionStatus: Uint8Array.from([7, 1]), evolutionDomain: new Uint8Array(2),
     evolutionKind: new Uint8Array(2), evolutionImprintWeight: new Float32Array(2), evolutionTier: new Uint8Array(2),
-    evolutionRecent: new Uint8Array(2), evolutionEdge: Uint8Array.from([4]) };
+    evolutionRecent: new Uint8Array(2),
+    evolutionEdge: Uint8Array.from([EVOLUTION_CELL_EDGE.SELECTED | (EVOLUTION_REGION_EDGE.DOMAIN << 3)]) };
   WorldPass.prototype.uploadLife.call(pass, snapshot);
-  assert.deepEqual([...pass.lifeEdgeData], [4]); assert.deepEqual([...pass.boundaryLifeData], [4, 4, 4, 4]);
+  assert.deepEqual([...pass.lifeEdgeData], [20]); assert.deepEqual([...pass.boundaryLifeData], [20, 20, 20, 20]);
   assert.deepEqual(uploads, [pass.lifeData.byteLength, pass.ecologyData.byteLength, pass.boundaryLifeData.byteLength]);
   WorldPass.prototype.uploadLife.call(pass, snapshot); assert.equal(uploads.length, 3);
   assert.match(read('../../src/rendering/fallback2d.js'), /evolutionEdge/);
+  assert.match(read('../../src/rendering/fallback2d.js'), /evolutionCellEdgeStatus/);
   assert.doesNotMatch(read('../../src/rendering/fallback2d.js'), /ownerByCell|memoryTerritoryEdge/);
   const boundaryShader = read('../../src/rendering/shaders-boundary.js');
   assert.match(boundaryShader, /uSceneMode/);
+  assert.match(boundaryShader, /EVOLUTION_REGION_EDGE\.ARCHETYPE/);
+  assert.match(boundaryShader, /EVOLUTION_REGION_EDGE\.DOMAIN/);
   assert.match(boundaryShader, /state < \$\{EVOLUTION_CELL_EDGE\.OWNED\}\.5/);
   assert.match(boundaryShader, /state < \$\{EVOLUTION_CELL_EDGE\.FRONTIER\}\.5/);
   assert.match(boundaryShader, /state < \$\{EVOLUTION_CELL_EDGE\.RECENT\}\.5/);

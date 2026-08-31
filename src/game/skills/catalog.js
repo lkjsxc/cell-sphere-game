@@ -50,7 +50,10 @@ export const EVOLUTION_ARCHETYPES = Object.freeze([
     'Life uses nearby freshwater support more efficiently.',
     'Wet catchments reduce local strain, especially around lakes and shores.',
     [ecology('freshwaterSupport', .12), defense('Freshwater', 80)]),
-  skill('stable-transport', 'Stable Transport', 'Foundation', 2, 24,
+  // The deterministic green root is a hex cell. Stable Transport is the sixth
+  // foundational first-ring identity; this presentation tier has no cost or
+  // production-effect authority.
+  skill('stable-transport', 'Stable Transport', 'Foundation', 1, 24,
     'Neighboring cells move usable energy more reliably.',
     'Transport strengthens the network after it has formed; isolated cells gain little.',
     [trait('conductance', 1.16), trait('reinforce', 1.08)]),
@@ -181,7 +184,10 @@ export const EVOLUTION_ARCHETYPES = Object.freeze([
     'A mature charge system becomes brighter, steadier, and cheaper to hold.',
     'The capstone remains an ecology: charge depends on living flux and falls away when the network dies.',
     [luminous('generation', .30), luminous('retention', .003), luminous('upkeep', -.14), luminous('visual', .18), defense('Luminous', 200)], 'capstone'),
-  skill('world-shaper', 'World Shaper', 'Foundation', 5, 90,
+  // The compact Foundation launch basin would otherwise pull the global tier-5
+  // median inside tier 4. World Shaper joins the existing tier-6 finale; this
+  // route label does not change its cost, effects, or compiled production law.
+  skill('world-shaper', 'World Shaper', 'Foundation', 6, 90,
     'Reclamation, cold basins, and coasts work together more reliably.',
     'Worldmaking stays bounded and costly, but a mature organism can leave a visible ecological history.',
     [worldmaking('reclamation'), worldmaking('cryolake'), worldmaking('littoral'), ecology('recycling', .18)] , 'capstone'),

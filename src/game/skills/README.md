@@ -7,22 +7,36 @@ occurs on exactly one root cell.
 
 - `catalog.js` contains the 42 reusable player-facing archetypes, text, direct effect, and
   bounded refinement cost.
-- `layout.js` owns and validates the deterministic stratified cellular weave.
+- `topology.js` owns the cached maintained level-4 topology.
+- `substrate.js` owns the cached fixed-seed World-derived substrate.
+- `layout.js` consumes that topology, substrate, and catalog to select the
+  favorable green root and build/validate one connected exact-capacity region
+  per archetype plus one connected macro-region per domain.
+- `layout-domain-partition.js` and `layout-archetype-partition.js` own the two
+  bounded construction stages; `layout-partition-core.js` owns their shared
+  connected-capacity transfers, and `layout-metrics.js` owns fixed-field scores
+  and independent graph diagnostics.
 - `index.js` owns direct fine adjacency, aggregate ranks, exact cell
   transactions, projections, previews, and the public compiler API.
 - `levels.js` keeps the sparse exact per-cell `evolutionLevels` vector.
 - `effects.js` compiles direct traits, habitats, ecology, worldmaking, Luminous,
   and bounded pressure defense with a bounded cache.
-- `scene.js` obtains one fixed-seed presentation-only planet from the maintained
-  World `createFields` owner, then projects exact-cell state, fine Imprints, and
-  one shared edge classification for WebGL2 and Canvas 2D. The substrate is
-  immutable for the topology lifetime and has no progression or World authority.
+- `scene.js` projects exact-cell state, fine Imprints, and one shared packed
+  dynamic-state/immutable-region edge classification for WebGL2 and Canvas 2D.
+  Substrate geography guides layout and presentation, but never costs, effects,
+  rewards, or World simulation.
 
 A fresh progression can buy only the `First Division` root cell. Owning a cell
 opens only its direct unowned neighbors; owned cells remain refinable. A later
 activation of the same selected ready cell purchases exactly one local level
 with expected local level, aggregate archetype rank, revision, and bounded
 transaction key.
+
+The root is chosen by stable green-land neighbor, growth, nutrient, moisture,
+and cell-index ordering. Each repeated archetype is one connected family of
+individually purchasable cells. Region and domain membership affects spatial
+routes and restrained boundary presentation only; it is not a purchase or
+compiler owner.
 
 All cells carrying one archetype contribute to one exact aggregate rank. The
 existing cost law prices target aggregate rank `r + 1`, and the one production

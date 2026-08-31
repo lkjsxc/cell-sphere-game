@@ -10,7 +10,7 @@ import {
 } from '../../src/game/skills/index.js';
 import { addProgressionIntegers, compareProgressionIntegers } from '../../src/core/progression-integer.js';
 import { defaultMeta } from '../../src/platform/storage.js';
-import { evolutionCellForArchetype } from '../lib.mjs';
+import { evolutionCellForArchetype, evolutionPathToArchetype } from '../lib.mjs';
 
 const started = performance.now(); const authority = validateEvolutionAuthority();
 const layoutStarted = performance.now(); const repeatedLayout = createEvolutionCellLayout(EVOLUTION_TOPOLOGY);
@@ -54,6 +54,15 @@ const concentrated = compileEvolution({ evolutionLevels: [{ cell: occurrences[0]
 const distributed = compileEvolution({ evolutionLevels: occurrences.map((cell) => ({ cell, level: '1' })) });
 const projectionAt = performance.now(); const projection = buildEvolutionProjection(meta); const projectionMs = performance.now() - projectionAt;
 const diagnostics = EVOLUTION_LAYOUT.diagnostics;
+const representativeRoutes = [
+  'cohesive-repair', 'fertility-crown', 'living-waters', 'scarcity-sanctuary',
+  'cryogenic-rest', 'marine-symbiosis', 'luminous-crown', 'living-biosphere',
+].map((archetype) => {
+  const path = evolutionPathToArchetype(archetype);
+  return { archetype, target: path.at(-1), hops: path.length - 1,
+    legal: path[0] === EVOLUTION_ROOT_CELL && path.every((cell, index) => index === 0
+      || getEvolutionAdjacentCells(path[index - 1]).includes(cell)) };
+});
 const report = {
   versions: EVOLUTION_COMPILER_VERSIONS,
   topology: { level: EVOLUTION_TOPOLOGY.levels, cells: EVOLUTION_TOPOLOGY.nodeCount, boundaries: EVOLUTION_TOPOLOGY.edgeCount,
@@ -62,10 +71,14 @@ const report = {
     authorityValid: authority.valid, rootCell: EVOLUTION_ROOT_CELL,
     firstRing: getEvolutionAdjacentCells(EVOLUTION_ROOT_CELL).map((cell) => EVOLUTION_ARCHETYPES[EVOLUTION_LAYOUT.archetypeByCell[cell]].domain) },
   layout: { version: EVOLUTION_LAYOUT.version, digest: diagnostics.digest,
-    repeatDigest: repeatedLayout.diagnostics.digest, constructionMs: Number(layoutConstructionMs.toFixed(3)),
+    edgeDigest: diagnostics.edgeDigest, repeatDigest: repeatedLayout.diagnostics.digest,
+    constructionMs: Number(layoutConstructionMs.toFixed(3)), construction: diagnostics.construction,
     archetypes: diagnostics.archetypes, rootCount: diagnostics.rootCount,
     minOccurrence: diagnostics.minNonRootCount, maxOccurrence: diagnostics.maxNonRootCount,
-    largestComponent: diagnostics.largestComponent, neighborhoodDiversity: diagnostics.neighborhoodDiversity },
+    archetypeComponents: Array.from(diagnostics.componentCount),
+    domainComponents: Array.from(diagnostics.domainComponentCount),
+    tierMedianRootDistance: diagnostics.tierMedianRootDistance,
+    root: diagnostics.root, substrateFit: diagnostics.substrateFit },
   authored: { archetypes: EVOLUTION_ARCHETYPES.length,
     completeText: EVOLUTION_ARCHETYPES.every((archetype) => archetype.nameEn && archetype.summary && archetype.description && archetype.effects.length),
     directEffects: EVOLUTION_ARCHETYPES.every((archetype) => archetype.effects.every((effect) =>
@@ -76,6 +89,7 @@ const report = {
     costsMonotone: repeat.every((row, index) => index === 0 || compareProgressionIntegers(row.cost, repeat[index - 1].cost) > 0) },
   aggregateEquivalence: { archetype: EVOLUTION_ARCHETYPES[repeatedArchetype].id, cells: occurrences,
     identicalCompiler: JSON.stringify(distributed) === JSON.stringify(concentrated) },
+  representativeRoutes,
   projection: { constructionMs: Number(projectionMs.toFixed(3)), ownedCells: projection.ownedCellCount,
     readyCells: projection.readyCells.length,
     bytes: projection.owned.byteLength + projection.reachable.byteLength + projection.affordable.byteLength + projection.recent.byteLength },
@@ -91,11 +105,19 @@ report.valid = report.topology.cells === 2562 && report.topology.boundaries === 
   && report.topology.pentagons === 12 && report.topology.hexagons === 2550 && report.topology.authorityValid
   && report.topology.firstRing.every((domain) => domain === 'Foundation')
   && report.layout.digest === report.layout.repeatDigest && report.layout.rootCount === 1
-  && report.layout.minOccurrence >= Math.ceil(2562 * .01) && report.layout.maxOccurrence <= Math.floor(2562 * .04)
-  && report.layout.largestComponent <= 8 && report.layout.neighborhoodDiversity >= .95 && report.layout.constructionMs < 100
+  && report.layout.minOccurrence === 62 && report.layout.maxOccurrence === 63
+  && report.layout.archetypeComponents.every((count) => count === 1)
+  && report.layout.domainComponents.every((count) => count === 1)
+  && report.layout.root.land && report.layout.root.greenBiome
+  && report.layout.root.greenNeighbors === report.layout.root.degree
+  && report.layout.tierMedianRootDistance.slice(1, 6).every((distance, index, values) => index === 0 || distance > values[index - 1])
+  && Object.values(report.layout.substrateFit.byDomain).every((fit) => fit.suitabilityMargin > .005)
+  && report.layout.substrateFit.byDomain.Fertility.waterFraction < report.layout.substrateFit.global.waterFraction
+  && report.layout.construction.visits <= report.layout.construction.budget && report.layout.constructionMs < 1500
   && report.authored.archetypes === 42 && report.authored.completeText && report.authored.directEffects
   && report.breadth.cells === 2562 && report.breadth.habitats === 6 && report.breadth.luminousEnabled
   && report.repeat.finalLocalLevel === '10' && report.repeat.costsMonotone && report.aggregateEquivalence.identicalCompiler
+  && report.representativeRoutes.every((route) => route.legal && route.hops >= 0)
   && report.projection.ownedCells === 2562 && report.projection.bytes === 10248
   && report.directExtreme.effectsFinite && report.directExtreme.compileMs < 100
   && report.directExtreme.cache.bytes <= report.directExtreme.cache.byteLimit && report.costsMonotone

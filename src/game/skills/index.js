@@ -24,8 +24,11 @@ import {
   EVOLUTION_TOPOLOGY_LEVEL, createEvolutionCellLayout, validateEvolutionCellLayout,
 } from './layout.js';
 
-export { EVOLUTION_CELL_EDGE, EVOLUTION_STATUS, EVOLUTION_SUBSTRATE_SEED,
-  createEvolutionFields, writeEvolutionCellEdges } from './scene.js';
+export {
+  EVOLUTION_CELL_EDGE, EVOLUTION_EDGE_REGION_SHIFT, EVOLUTION_EDGE_STATUS_MASK,
+  EVOLUTION_REGION_EDGE, EVOLUTION_STATUS, EVOLUTION_SUBSTRATE_SEED,
+  createEvolutionFields, evolutionCellEdgeStatus, evolutionRegionEdge, writeEvolutionCellEdges,
+} from './scene.js';
 export { EVOLUTION_COST_VERSION, evolutionCostForTargetLevel } from './cost.js';
 export {
   EVOLUTION_EFFECT_VERSION, EVOLUTION_COMPILE_CACHE_LIMIT, EVOLUTION_COMPILE_CACHE_BYTE_LIMIT,
@@ -43,8 +46,8 @@ export {
 } from './layout.js';
 export { evolutionRunConfiguration } from './run-config.js';
 
-export const EVOLUTION_PROGRESSION_VERSION = 7;
-export const EVOLUTION_CONTENT_VERSION = 9;
+export const EVOLUTION_PROGRESSION_VERSION = 8;
+export const EVOLUTION_CONTENT_VERSION = 10;
 export const HABITAT_CAPABILITIES = Object.freeze([
   'LAKE_ACCESS', 'TUNDRA_ACCESS', 'SNOW_ICE_ACCESS',
   'SHALLOW_OCEAN_EDGE_ACCESS', 'SHALLOW_OCEAN_ACCESS', 'DEEP_OCEAN_ACCESS',

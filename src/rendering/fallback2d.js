@@ -6,7 +6,9 @@ import { sameWorldIdentity } from '../core/world-session.js';
 import { continuityFixture } from './continuity-fixture.js';
 import { LIFE_EDGE_STRIDE, LIFE_EDGE_STYLE, LIFE_EDGE_STYLE_COUNT,
   lifeEdgeStyle, writeLifeEdges } from './life-edges.js';
-import { EVOLUTION_CELL_EDGE } from '../game/skills/scene.js';
+import {
+  EVOLUTION_CELL_EDGE, EVOLUTION_REGION_EDGE, evolutionCellEdgeStatus, evolutionRegionEdge,
+} from '../game/skills/scene.js';
 
 const WORLD_LIGHT = Object.freeze((() => { const value=[-.52,.72,.44]; const length=Math.hypot(...value); return value.map((axis)=>axis/length); })());
 const BIOME_COLOR = Object.freeze([
@@ -136,7 +138,7 @@ export class Canvas2DRenderer {
     } else if (!snapshot || snapshot.status === 'trophies') this.lifeEdgeData.fill(0);
     else writeLifeEdges(this.topo, snapshot.lifeState, this.lifeEdgeData);
     for (let edge = 0; edge < this.topo.edgeCount; edge++) {
-      const style = this.edgeMode === 'evolution' ? this.lifeEdgeData[edge * LIFE_EDGE_STRIDE]
+      const style = this.edgeMode === 'evolution' ? canvasEvolutionEdgeClass(this.lifeEdgeData[edge * LIFE_EDGE_STRIDE])
         : lifeEdgeStyle(this.lifeEdgeData[edge * LIFE_EDGE_STRIDE]);
       if (style === LIFE_EDGE_STYLE.NONE) continue;
       this.lifeEdgeBatches[style][this.lifeEdgeBatchCounts[style]++] = edge;
@@ -204,8 +206,15 @@ export class Canvas2DRenderer {
       ctx.beginPath(); const edges = this.lifeEdgeBatches[style];
       for (let index = 0; index < count; index++) {
         const edge = edges[index]; const a = dual.boundaryCornerA[edge]; const b = dual.boundaryCornerB[edge];
-        if (this.cornerFacing[a] <= 0 || this.cornerFacing[b] <= 0) continue;
-        ctx.moveTo(this.cornerX[a], this.cornerY[a]); ctx.lineTo(this.cornerX[b], this.cornerY[b]);
+        const facingA = this.cornerFacing[a]; const facingB = this.cornerFacing[b];
+        if (this.edgeMode !== 'evolution' && (facingA <= 0 || facingB <= 0)) continue;
+        if (facingA <= 0 && facingB <= 0) continue;
+        let ax = this.cornerX[a]; let ay = this.cornerY[a]; let bx = this.cornerX[b]; let by = this.cornerY[b];
+        if (facingA <= 0) { const amount = -facingA / (facingB - facingA);
+          ax += (bx - ax) * amount; ay += (by - ay) * amount; }
+        else if (facingB <= 0) { const amount = -facingB / (facingA - facingB);
+          bx += (ax - bx) * amount; by += (ay - by) * amount; }
+        ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
       }
       const visual = this.edgeMode === 'evolution' ? canvasEvolutionEdgeStyle(style, fade) : canvasLifeEdgeStyle(style, fade);
       ctx.strokeStyle = visual.stroke; ctx.lineWidth = visual.width; ctx.setLineDash(visual.dash ?? []); ctx.stroke(); ctx.setLineDash([]);
@@ -320,8 +329,21 @@ function canvasLifeEdgeStyle(style, fade) {
   return { stroke: `rgba(105,94,84,${0.46 * fade})`, width: .75 };
 }
 function canvasEvolutionEdgeStyle(style, fade) {
-  if (style === EVOLUTION_CELL_EDGE.OWNED) return { stroke: `rgba(164,181,157,${0.42 * fade})`, width: .75 };
-  if (style === EVOLUTION_CELL_EDGE.FRONTIER) return { stroke: `rgba(211,226,190,${0.78 * fade})`, width: 1.25 };
-  if (style === EVOLUTION_CELL_EDGE.RECENT) return { stroke: `rgba(235,204,111,${0.92 * fade})`, width: 1.65, dash: [3, 2] };
-  return { stroke: `rgba(229,248,234,${0.99 * fade})`, width: 2.35 };
+  if (style === EVOLUTION_CELL_EDGE.OWNED) return { stroke: `rgba(164,181,157,${0.68 * fade})`, width: 1.35 };
+  if (style === EVOLUTION_CELL_EDGE.FRONTIER) return { stroke: `rgba(211,226,190,${0.84 * fade})`, width: 1.65 };
+  if (style === EVOLUTION_CELL_EDGE.RECENT) return { stroke: `rgba(235,204,111,${0.94 * fade})`, width: 1.95, dash: [3, 2] };
+  if (style === EVOLUTION_CELL_EDGE.SELECTED) return { stroke: `rgba(229,248,234,${0.99 * fade})`, width: 2.6 };
+  if (style === EVOLUTION_CANVAS_REGION_ARCHETYPE) return { stroke: `rgba(157,171,151,${0.42 * fade})`, width: 1.05 };
+  return { stroke: `rgba(202,190,121,${0.62 * fade})`, width: 1.4, dash: [4, 2] };
+}
+
+const EVOLUTION_CANVAS_REGION_ARCHETYPE = 5;
+const EVOLUTION_CANVAS_REGION_DOMAIN = 6;
+function canvasEvolutionEdgeClass(code) {
+  const status = evolutionCellEdgeStatus(code);
+  if (status !== EVOLUTION_CELL_EDGE.QUIET) return status;
+  const region = evolutionRegionEdge(code);
+  if (region === EVOLUTION_REGION_EDGE.ARCHETYPE) return EVOLUTION_CANVAS_REGION_ARCHETYPE;
+  if (region === EVOLUTION_REGION_EDGE.DOMAIN) return EVOLUTION_CANVAS_REGION_DOMAIN;
+  return LIFE_EDGE_STYLE.NONE;
 }

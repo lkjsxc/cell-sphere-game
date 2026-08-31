@@ -10,18 +10,24 @@ import {
 import { compareProgressionIntegers } from '../../src/core/progression-integer.js';
 import { defaultMeta } from '../../src/platform/storage.js';
 
-test('Evolution uses one validated level-4 cell authority and a deterministic archetype weave', () => {
+test('Evolution uses one validated level-4 cell authority and deterministic connected regions', () => {
   const authority = validateEvolutionAuthority(); const layout = EVOLUTION_LAYOUT.diagnostics;
   assert.equal(authority.valid, true); assert.deepEqual([EVOLUTION_TOPOLOGY.nodeCount, EVOLUTION_TOPOLOGY.edgeCount], [2562, 7680]);
-  assert.equal(EVOLUTION_ARCHETYPES.length, 42); assert.equal(layout.rootCount, 1); assert.equal(EVOLUTION_ROOT_CELL, 0);
+  assert.equal(EVOLUTION_ARCHETYPES.length, 42); assert.equal(layout.rootCount, 1); assert.equal(EVOLUTION_ROOT_CELL, 2265);
   assert.equal(evolutionArchetypeForCell(EVOLUTION_ROOT_CELL).id, 'first-division');
   assert.deepEqual([layout.minNonRootCount, layout.maxNonRootCount], [62, 63]);
-  assert.ok(layout.largestComponent <= 8); assert.ok(layout.neighborhoodDiversity >= .95);
-  assert.match(layout.digest, /^[0-9a-f]{8}$/);
+  assert.ok([...layout.componentCount].every((count) => count === 1));
+  assert.ok([...layout.domainComponentCount].every((count) => count === 1));
+  assert.equal(layout.digest, '09da2261');
+  assert.equal(layout.root.land, true); assert.equal(layout.root.greenBiome, true);
+  assert.equal(layout.root.greenNeighbors, layout.root.degree);
+  for (let tier = 2; tier <= 5; tier++) {
+    assert.ok(layout.tierMedianRootDistance[tier] > layout.tierMedianRootDistance[tier - 1]);
+  }
   assert.ok(EVOLUTION_ARCHETYPES.every((archetype) => archetype.nameEn && archetype.summary
     && archetype.description && archetype.effects.length));
   const ring = getEvolutionAdjacentCells(EVOLUTION_ROOT_CELL).map(evolutionArchetypeForCell);
-  assert.ok(ring.every((archetype) => archetype.domain === 'Foundation'));
+  assert.ok(ring.every((archetype) => archetype.domain === 'Foundation' && archetype.tier === 1));
   assert.equal(new Set(ring.map((archetype) => archetype.id)).size, ring.length);
 });
 
@@ -59,7 +65,7 @@ test('one transaction changes one local level and rejects duplicate, stale, malf
 });
 
 test('repeated cells share one exact aggregate-rank cost sequence and one compiler', () => {
-  const archetypeIndex = EVOLUTION_LAYOUT.archetypeByCell.findIndex((index) => index > 0);
+  const archetypeIndex = EVOLUTION_LAYOUT.archetypeByCell.find((index) => index !== EVOLUTION_LAYOUT.rootArchetype);
   const cells = Array.from(EVOLUTION_LAYOUT.archetypeByCell).flatMap((index, cell) => index === archetypeIndex ? [cell] : []);
   assert.ok(cells.length >= 2); const archetype = EVOLUTION_ARCHETYPES[archetypeIndex]; const [left, right] = cells;
   const firstRank = { ...defaultMeta(), echoBalance: '999999', evolutionLevels: [{ cell: left, level: '1' }] };

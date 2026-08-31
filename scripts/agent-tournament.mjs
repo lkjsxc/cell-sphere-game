@@ -3,7 +3,11 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { AGENT_POLICIES } from '../src/agent/policies.js';
+import { AGENT_POLICIES, choosePolicyAction } from '../src/agent/policies.js';
+import { createAgentEnvironment } from '../src/agent/environment.js';
+import { defaultAgentSave } from '../src/agent/schema.js';
+import { EVOLUTION_ARCHETYPES, EVOLUTION_LAYOUT, EVOLUTION_TOPOLOGY,
+  evolutionArchetypeForCell } from '../src/game/skills/index.js';
 import { compareProgressionIntegers } from '../src/core/progression-integer.js';
 const exec=promisify(execFile),TRAINING=Object.freeze([104729,130363,155921,196613]),HOLDOUT=Object.freeze([1000003,1000033,1000037,1000039]);
 const holdout=process.argv.includes('--holdout'),smoke=process.argv.includes('--smoke');
@@ -26,18 +30,25 @@ for(const policy of policies){const rows=summaries.filter((row)=>row.policy===po
 const comparePath=stringOption('--compare'),comparison=comparePath&&existsSync(comparePath)?compare(JSON.parse(readFileSync(comparePath,'utf8')),policySummary):null;
 const nonWeak=summaries.filter((row)=>row.policy!=='weak'),traceBounded=summaries.every((row)=>row.trace.length<=12),specialists={
  fertility:'Fertility',freshwater:'Freshwater',scarcity:'Scarcity',cryogenic:'Cryogenic',marine:'Marine',luminous:'Luminous'};
-const specialistValid=Object.entries(specialists).filter(([policy])=>policies.includes(policy)).every(([policy,domain])=>{
+const specialistOwnedInCampaign=Object.entries(specialists).filter(([policy])=>policies.includes(policy)).every(([policy,domain])=>{
  const target=policySummary[policy].domains[domain].median,others=Object.entries(policySummary[policy].domains).filter(([name])=>name!==domain).map(([,row])=>row.median);
  return target>0&&target>=Math.max(...others)});
+const specialistRoutes=Object.entries(specialists).map(([policy,domain],index)=>specialistRouteCheck(policy,domain,index));
+const specialistValid=specialistRoutes.every((row)=>row.valid);
+const campaignSpecialistProgress=Object.entries(specialists).filter(([policy])=>policies.includes(policy)).every(([policy,domain])=>{
+ const distances=domainDistances(domain),start=distances[EVOLUTION_LAYOUT.rootCell];
+ return summaries.filter((row)=>row.policy===policy).every((row)=>Math.min(...row.trace
+  .filter((entry)=>entry.action.type==='buy-evolution-level').map((entry)=>distances[entry.action.cell]))<start)});
 const distinctDomains=new Set(summaries.flatMap((row)=>row.finalDomains.filter((entry)=>entry.ownedCells>0).map((entry)=>entry.domain))).size,diversityValid=smoke||distinctDomains>=4;
 const expectedTasks=policies.length*cohort.length;
 const valid=!invalidPolicies.length&&policies.length>0&&tasks.length===expectedTasks&&results.length===expectedTasks&&!failures.length
- &&deterministicChecks.length===policies.length&&deterministicChecks.every((row)=>row.ok)&&traceBounded&&specialistValid&&diversityValid
+ &&deterministicChecks.length===policies.length&&deterministicChecks.every((row)=>row.ok)&&traceBounded&&specialistValid&&campaignSpecialistProgress&&diversityValid
  &&nonWeak.every((row)=>row.worlds===worlds&&row.purchases>0)&&new Set(TRAINING).size===TRAINING.length&&HOLDOUT.every((seed)=>!TRAINING.includes(seed));
 const report={schema:1,cohort:holdout?'holdout':'training',productionAuthority:true,fairObservation:true,seeds:cohort,
  untouchedHoldoutSeeds:holdout?HOLDOUT:undefined,trainingSeeds:TRAINING,policies,invalidPolicies,worldsPerCampaign:worlds,concurrency,expectedTasks,
  taskOrder:tasks.map(({policy,seed})=>`${policy}:${seed}`),policySummary,deterministicChecks,
- invariants:{traceBounded,specialistValid,distinctDomains,diversityValid,trainingHoldoutDisjoint:HOLDOUT.every((seed)=>!TRAINING.includes(seed))},
+ specialistRoutes,invariants:{traceBounded,specialistValid,specialistOwnedInCampaign,campaignSpecialistProgress,
+  distinctDomains,diversityValid,trainingHoldoutDisjoint:HOLDOUT.every((seed)=>!TRAINING.includes(seed))},
  comparison,failures:failures.map((row)=>({policy:row.task.policy,seed:row.task.seed,error:row.error,reproduction:`node scripts/agent-play.mjs campaign --worlds ${worlds} --seed ${row.task.seed} --policies ${row.task.policy}`})),
  elapsedMs:Number((performance.now()-started).toFixed(1)),valid};
 mkdirSync('reports',{recursive:true});const path=`reports/agent-tournament-${holdout?'holdout':'training'}${smoke?'-smoke':''}.json`;
@@ -52,5 +63,29 @@ function compare(previous,current){const prior=previous.policySummary??{};return
 function exactDist(values){if(!values.length)return{min:null,median:null,p90:null,max:null};const rows=values.map(String).sort(compareProgressionIntegers),at=(p)=>rows[Math.floor((rows.length-1)*p)];return{min:rows[0],median:at(.5),p90:at(.9),max:rows.at(-1)}}
 function dist(values){if(!values.length)return{min:null,median:null,p90:null,max:null};const rows=values.slice().sort((a,b)=>a-b),at=(p)=>rows[Math.floor((rows.length-1)*p)];return{min:rows[0],median:at(.5),p90:at(.9),max:rows.at(-1)}}
 function counts(values){const out={};for(const value of values)out[value]=(out[value]??0)+1;return out}
+function specialistRouteCheck(policy,domain,index){
+ const path=shortestDomainPath(domain),target=path.at(-1),base=defaultAgentSave(7001+index),levels=path.slice(0,-1)
+  .sort((left,right)=>left-right).map((cell)=>({cell,level:'1'}));
+ const env=createAgentEnvironment({...base,goal:policy,meta:{...base.meta,revision:'1',echoBalance:'999999999',
+  totalEchoes:'999999999',evolutionLevels:levels}}),observation=env.observe(),decision=choosePolicyAction(observation,policy);
+ const selected=decision.action.type==='buy-evolution-level'?decision.action.cell:-1,response=env.act(decision.action),selectedArchetype=evolutionArchetypeForCell(selected);
+ const legalPath=path.every((cell,at)=>at===0||adjacent(path[at-1],cell));
+ return{policy,domain,hops:path.length-1,target,selected,candidateCount:observation.evolutionSummary.candidateCount,
+  candidateLimit:observation.evolutionSummary.candidateLimit,legalPath,accepted:response.accepted,
+  valid:legalPath&&path[0]===EVOLUTION_LAYOUT.rootCell&&selectedArchetype?.domain===domain&&response.accepted
+   &&response.purchase?.cell===selected&&observation.evolutionSummary.candidateCount<=observation.evolutionSummary.candidateLimit};}
+function shortestDomainPath(domain){
+ const previous=new Int32Array(EVOLUTION_TOPOLOGY.nodeCount).fill(-2),queue=new Uint16Array(EVOLUTION_TOPOLOGY.nodeCount);
+ let head=0,tail=0,target=-1;queue[tail++]=EVOLUTION_LAYOUT.rootCell;previous[EVOLUTION_LAYOUT.rootCell]=-1;
+ while(head<tail){const cell=queue[head++];if(EVOLUTION_ARCHETYPES[EVOLUTION_LAYOUT.archetypeByCell[cell]].domain===domain){target=cell;break}
+  for(let offset=EVOLUTION_TOPOLOGY.nodeStart[cell];offset<EVOLUTION_TOPOLOGY.nodeStart[cell+1];offset++){const next=EVOLUTION_TOPOLOGY.nodeNeighbors[offset];
+   if(previous[next]===-2){previous[next]=cell;queue[tail++]=next}}}
+ if(target<0)throw new Error(`no ${domain} route`);const path=[];for(let cell=target;cell>=0;cell=previous[cell])path.push(cell);return path.reverse();}
+function domainDistances(domain){
+ const distance=new Uint16Array(EVOLUTION_TOPOLOGY.nodeCount).fill(0xffff),queue=new Uint16Array(EVOLUTION_TOPOLOGY.nodeCount);let head=0,tail=0;
+ for(let cell=0;cell<EVOLUTION_TOPOLOGY.nodeCount;cell++)if(EVOLUTION_ARCHETYPES[EVOLUTION_LAYOUT.archetypeByCell[cell]].domain===domain){distance[cell]=0;queue[tail++]=cell}
+ while(head<tail){const cell=queue[head++];for(let offset=EVOLUTION_TOPOLOGY.nodeStart[cell];offset<EVOLUTION_TOPOLOGY.nodeStart[cell+1];offset++){const next=EVOLUTION_TOPOLOGY.nodeNeighbors[offset];
+  if(distance[next]===0xffff){distance[next]=distance[cell]+1;queue[tail++]=next}}}return distance;}
+function adjacent(left,right){for(let offset=EVOLUTION_TOPOLOGY.nodeStart[left];offset<EVOLUTION_TOPOLOGY.nodeStart[left+1];offset++)if(EVOLUTION_TOPOLOGY.nodeNeighbors[offset]===right)return true;return false;}
 function stringOption(name){const at=process.argv.indexOf(name);return at<0?null:process.argv[at+1]}
 function integerOption(name,fallback,min,max){const raw=stringOption(name);if(raw===null)return fallback;const value=Number(raw);return Number.isInteger(value)?Math.max(min,Math.min(max,value)):fallback}

@@ -3,22 +3,44 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import {
-  EVOLUTION_CELL_EDGE, EVOLUTION_LAYOUT, EVOLUTION_ROOT_CELL, EVOLUTION_TOPOLOGY,
+  EVOLUTION_CELL_EDGE, EVOLUTION_LAYOUT, EVOLUTION_REGION_EDGE, EVOLUTION_ROOT_CELL, EVOLUTION_TOPOLOGY,
   EVOLUTION_SUBSTRATE_SEED, buildEvolutionProjection, createEvolutionCellLayout, createEvolutionFields,
-  validateEvolutionCellLayout,
-  writeEvolutionCellEdges,
+  evolutionCellEdgeStatus, evolutionRegionEdge, validateEvolutionCellLayout, writeEvolutionCellEdges,
 } from '../../../src/game/skills/index.js';
 import { defaultMeta } from '../../../src/platform/storage.js';
 
-test('the immutable weave satisfies every product-shape gate and repeats deterministically', () => {
+test('the immutable connected layout satisfies every product-shape gate and repeats deterministically', () => {
   const diagnostics = validateEvolutionCellLayout(EVOLUTION_LAYOUT); const started = performance.now();
   const repeated = createEvolutionCellLayout(EVOLUTION_TOPOLOGY); const elapsed = performance.now() - started;
   assert.equal(diagnostics.rootCount, 1); assert.deepEqual([diagnostics.cells, diagnostics.edges], [2562, 7680]);
-  assert.ok(diagnostics.minNonRootCount >= Math.ceil(2562 * .01)); assert.ok(diagnostics.maxNonRootCount <= Math.floor(2562 * .04));
-  assert.ok(diagnostics.largestComponent <= 8); assert.ok(diagnostics.neighborhoodDiversity >= .95);
+  assert.deepEqual([diagnostics.minNonRootCount, diagnostics.maxNonRootCount], [62, 63]);
+  assert.ok([...diagnostics.componentCount].every((count) => count === 1));
+  assert.ok([...diagnostics.domainComponentCount].every((count) => count === 1));
+  assert.deepEqual(diagnostics.tierMedianRootDistance.slice(1, 6), [8, 20, 24, 29, 31.5]);
+  assert.deepEqual(diagnostics.root, {
+    cell: 2265, biome: 5, waterClass: 0, land: true, greenBiome: true,
+    greenNeighbors: 6, degree: 6, growthSuitability: 1.059999942779541,
+    baseNutrient: 0.7472620010375977, baseMoisture: 0.6074897646903992,
+    baseTemp: 0.4741906225681305,
+  });
+  assert.equal(diagnostics.digest, '09da2261'); assert.equal(diagnostics.edgeDigest, 'c03988ac');
+  assert.ok(diagnostics.construction.visits <= diagnostics.construction.budget);
   assert.deepEqual(repeated.archetypeByCell, EVOLUTION_LAYOUT.archetypeByCell);
+  assert.deepEqual(repeated.domainByCell, EVOLUTION_LAYOUT.domainByCell);
+  assert.deepEqual(repeated.edgeStructure, EVOLUTION_LAYOUT.edgeStructure);
   assert.equal(repeated.diagnostics.digest, diagnostics.digest);
-  assert.ok(elapsed < 100, `layout construction took ${elapsed} ms`);
+  assert.ok(elapsed < 1500, `layout construction took ${elapsed} ms`);
+
+  const { global, byDomain, nonMarineWaterFraction } = diagnostics.substrateFit;
+  for (const fit of Object.values(byDomain)) assert.ok(fit.suitabilityMargin > .005);
+  assert.ok(byDomain.Marine.waterFraction > nonMarineWaterFraction);
+  assert.ok(byDomain.Freshwater.freshwaterInfluence > global.freshwaterInfluence);
+  assert.ok(byDomain.Cryogenic.temperature < global.temperature);
+  assert.ok(byDomain.Scarcity.moisture < global.moisture
+    || byDomain.Scarcity.growthSuitability < global.growthSuitability);
+  assert.ok(byDomain.Fertility.greenFraction > global.greenFraction);
+  assert.ok(byDomain.Fertility.growthSuitability > global.growthSuitability);
+  assert.ok(byDomain.Fertility.waterFraction < global.waterFraction);
 });
 
 test('the fixed Evolution substrate uses coherent deterministic World geography', () => {
@@ -50,9 +72,11 @@ test('the fixed Evolution substrate uses coherent deterministic World geography'
 });
 
 test('Evolution has no duplicate placeholder geography owner', () => {
-  const source = readFileSync(new URL('../../../src/game/skills/scene.js', import.meta.url), 'utf8');
-  assert.match(source, /return createFields\(createRng\(EVOLUTION_SUBSTRATE_SEED\), topology\);/);
-  assert.doesNotMatch(source, /sphericalField|smoothField|lobes:|landMask:\s*new|biomeId:\s*new/);
+  const substrate = readFileSync(new URL('../../../src/game/skills/substrate.js', import.meta.url), 'utf8');
+  const scene = readFileSync(new URL('../../../src/game/skills/scene.js', import.meta.url), 'utf8');
+  assert.match(substrate, /createFields\(createRng\(EVOLUTION_SUBSTRATE_SEED\), EVOLUTION_TOPOLOGY\)/);
+  assert.match(scene, /from '\.\/substrate\.js'/);
+  assert.doesNotMatch(`${substrate}\n${scene}`, /sphericalField|smoothField|lobes:|landMask:\s*new|biomeId:\s*new/);
 });
 
 test('fine edges classify quiet, owned, frontier, recent, and selected from exact cells', () => {
@@ -62,17 +86,23 @@ test('fine edges classify quiet, owned, frontier, recent, and selected from exac
   for (let edge = 0; edge < EVOLUTION_TOPOLOGY.edgeCount; edge++) {
     if (EVOLUTION_TOPOLOGY.edgeA[edge] === EVOLUTION_ROOT_CELL || EVOLUTION_TOPOLOGY.edgeB[edge] === EVOLUTION_ROOT_CELL) incident.add(edge);
   }
-  assert.equal(edges.filter((value) => value === EVOLUTION_CELL_EDGE.SELECTED).length, incident.size);
-  for (const edge of incident) assert.equal(edges[edge], EVOLUTION_CELL_EDGE.SELECTED);
+  assert.equal(edges.filter((value) => evolutionCellEdgeStatus(value) === EVOLUTION_CELL_EDGE.SELECTED).length, incident.size);
+  for (const edge of incident) assert.equal(evolutionCellEdgeStatus(edges[edge]), EVOLUTION_CELL_EDGE.SELECTED);
+  for (let edge = 0; edge < EVOLUTION_TOPOLOGY.edgeCount; edge++) {
+    assert.equal(evolutionRegionEdge(edges[edge]), EVOLUTION_LAYOUT.edgeStructure[edge]);
+  }
+  assert.ok(EVOLUTION_LAYOUT.edgeStructure.includes(EVOLUTION_REGION_EDGE.ARCHETYPE));
+  assert.ok(EVOLUTION_LAYOUT.edgeStructure.includes(EVOLUTION_REGION_EDGE.DOMAIN));
   const ownedCell = EVOLUTION_LAYOUT.rootRing[0];
   const ownedMeta = { ...defaultMeta(), echoBalance: '1000',
     evolutionLevels: [{ cell: EVOLUTION_ROOT_CELL, level: '1' }, { cell: ownedCell, level: '1' }] };
   const projection = buildEvolutionProjection(ownedMeta);
   const classified = writeEvolutionCellEdges(EVOLUTION_LAYOUT, projection);
-  assert.ok(classified.includes(EVOLUTION_CELL_EDGE.QUIET)); assert.ok(classified.includes(EVOLUTION_CELL_EDGE.OWNED));
-  assert.ok(classified.includes(EVOLUTION_CELL_EDGE.FRONTIER));
+  const states = Array.from(classified, evolutionCellEdgeStatus);
+  assert.ok(states.includes(EVOLUTION_CELL_EDGE.QUIET)); assert.ok(states.includes(EVOLUTION_CELL_EDGE.OWNED));
+  assert.ok(states.includes(EVOLUTION_CELL_EDGE.FRONTIER));
   const recent = writeEvolutionCellEdges(EVOLUTION_LAYOUT, buildEvolutionProjection(ownedMeta, null, [ownedCell]));
-  assert.ok(recent.includes(EVOLUTION_CELL_EDGE.RECENT));
+  assert.ok(Array.from(recent, evolutionCellEdgeStatus).includes(EVOLUTION_CELL_EDGE.RECENT));
   assert.throws(() => writeEvolutionCellEdges(EVOLUTION_LAYOUT, projection, new Uint8Array(1)), /invalid Evolution edge output/);
 });
 

@@ -19,8 +19,8 @@ ES modules using Node built-ins only (Node >= 22).
 | `audits/no-disaster-audit.mjs` | `npm run audit:no-disaster` | Verifies chronic pressure and removed gameplay-disaster authority. |
 | `browser-test.mjs` | `npm run test:browser` | Same-origin headless-Chrome boot check; reports sandbox socket blocks as exit 77. |
 | `autonomous-world-feel-audit.mjs` | `npm run audit:autonomous-feel` | Structured six-speed pacing, Home/World geometry, camera, continuation, and accessibility evidence for Worker, fallback, or Canvas. |
-| `browser-file-test.mjs` | `npm run test:browser:file` / `test:browser:canvas` / focused commands | Socket-free real Chrome harness for WebGL2, forced Canvas 2D, and bounded atmosphere, life-edge, and Environment evidence. |
-| `browser/` | via file test | Responsive observational run, controlled atmosphere, life-edge, and Luminous fixtures, surfaces, visual History, Evolution/Trophy spheres, and continuation evidence. |
+| `browser-file-test.mjs` | `npm run test:browser:file` / `test:browser:canvas` / focused commands | Socket-free real Chrome harness for WebGL2, forced Canvas 2D, and bounded atmosphere, life-edge, Environment, and connected Evolution-region evidence. |
+| `browser/` | via file test | Responsive observational run, controlled atmosphere, life-edge, Luminous, and green-root/region fixtures, surfaces, visual History, Evolution/Trophy spheres, and continuation evidence. |
 
 Invariants:
 

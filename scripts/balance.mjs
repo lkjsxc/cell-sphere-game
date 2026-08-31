@@ -27,6 +27,7 @@ const fixtureIds = Object.freeze({
   fresh: [], foundation: ['first-division', 'frugal-membrane'],
   scarcity: ['first-division', 'frugal-membrane', 'scarcity-patience', 'recycling-matrix', 'deep-reserve'],
   luminous: ['first-division', 'reliable-budding', 'bioelectric-spark'],
+  marine: ['first-division', 'reliable-budding', 'tidal-tolerance', 'brackish-budding', 'marine-bridge'],
   mature: ['first-division', 'reliable-budding', 'nutrient-uptake', 'frugal-membrane', 'energy-reserve', 'local-repair',
     'scarcity-patience', 'recycling-matrix', 'lake-crossing', 'tidal-tolerance', 'bioelectric-spark', 'light-retention',
     'powered-transport', 'luminous-recovery', 'luminous-canopy', 'deep-current', 'luminous-crown', 'glacial-basins',

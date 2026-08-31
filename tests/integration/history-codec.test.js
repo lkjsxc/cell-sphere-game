@@ -12,6 +12,7 @@ import { createWorldIdentity, identityFields } from '../../src/core/world-sessio
 import { ENVIRONMENT_MODEL_VERSION, ENVIRONMENT_SCHEDULE_HASH, ENVIRONMENT_SCHEDULE_VERSION } from '../../src/game/environment-level.js';
 import { FRAME_FLAGS } from '../../src/history/recorder.js';
 import { defaultHistory, loadHistory, normalizeHistoryEvents, serializeHistory, validateHistory } from '../../src/platform/history.js';
+import { EVOLUTION_CONTENT_HASH, EVOLUTION_LAYOUT_VERSION, EVOLUTION_ROOT_CELL } from '../../src/game/skills/index.js';
 
 function frame(tick, flags = 0, count = 32) {
   const cells = new Uint8Array(count); const resources = new Uint8Array(count); const worldmaking = new Uint8Array(count);
@@ -147,12 +148,28 @@ test('dynamic History retains bounded authoritative interpolation evidence', () 
 
 test('semantic History enforces its byte bound even with maximum-width exact fields', () => {
   const huge = '9'.repeat(4000); const evolution = Array.from({ length: 128 }, (_, seq) => ({ seq, cell: seq,
-    archetypeId: 'ecology-tempered-scars', oldLocalLevel: huge, newLocalLevel: huge,
+    archetypeId: 'first-division', oldLocalLevel: huge, newLocalLevel: huge,
     oldAggregateRank: huge, newAggregateRank: huge, cost: huge, balanceBefore: huge, balanceAfter: huge,
     run: huge, bestEnvironmentLevelReached: '0', transactionKey: `wide-${seq}` }));
-  const archive = validateHistory({ schema: 10, evolutionVersion: 2, worlds: [], evolution, trophies: [] }); const serialized = serializeHistory(archive);
+  for (const event of evolution) event.cell = EVOLUTION_ROOT_CELL;
+  const archive = validateHistory({ schema: 10, evolutionVersion: 3,
+    evolutionLayoutVersion: EVOLUTION_LAYOUT_VERSION, evolutionContentHash: EVOLUTION_CONTENT_HASH,
+    worlds: [], evolution, trophies: [] }); const serialized = serializeHistory(archive);
   assert.ok(new TextEncoder().encode(serialized).byteLength <= 700000); assert.ok(archive.evolution.length > 0 && archive.evolution.length < 128);
   assert.equal(archive.evolution.at(-1).newLocalLevel, huge);
+});
+
+test('predecessor Evolution History resets while independent World and Trophy records survive', () => {
+  const current = defaultHistory();
+  const predecessor = validateHistory({ ...current, evolutionVersion: current.evolutionVersion - 1,
+    evolutionLayoutVersion: EVOLUTION_LAYOUT_VERSION - 1, evolutionContentHash: '00000000',
+    worlds: [{ seed: 7, tick: 12, environmentModelVersion: ENVIRONMENT_MODEL_VERSION, startEnvironmentLevel: '0' }],
+    evolution: [{ cell: 0, archetypeId: 'first-division', oldLocalLevel: '0', newLocalLevel: '1' }],
+    trophies: [{ key: 'trophy.earned', subjectId: 'first-world', tick: 12, run: '1' }] });
+  assert.equal(predecessor.worlds.length, 1); assert.equal(predecessor.trophies.length, 1);
+  assert.deepEqual(predecessor.evolution, []);
+  assert.equal(predecessor.evolutionLayoutVersion, EVOLUTION_LAYOUT_VERSION);
+  assert.equal(predecessor.evolutionContentHash, EVOLUTION_CONTENT_HASH);
 });
 
 test('recent-runs rejects v1 buffers and gracefully degrades without IndexedDB', async () => {

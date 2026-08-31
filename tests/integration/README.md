@@ -9,7 +9,7 @@ Production-module whole-run and cross-boundary tests.
   terminal behavior, exactly-once replacement/result/frontier transactions, and
   repeated lifecycle safety.
 - `skill-globe.test.js` protects the 2,562-cell authority, deterministic
-  42-archetype weave, single-root direct frontier, fine Imprints, unlimited
+  connected 42-archetype layout, green-root direct frontier, fine Imprints, unlimited
   owned-cell refinement, exact debit, stale local/aggregate/revision rejection,
   and aggregate-equivalent compiled effects.
 - `history-codec.test.js` protects current bounded History, exact decimal

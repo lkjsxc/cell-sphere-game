@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import {
   EVOLUTION_ARCHETYPES, EVOLUTION_CELL_EDGE, EVOLUTION_LAYOUT, EVOLUTION_ROOT_CELL, EVOLUTION_TOPOLOGY,
   buildEvolutionProjection, buildEvolutionSnapshot, compileEvolution, createEvolutionFields,
-  evolutionCellState, getEvolutionAdjacentCells, newlyReachableEvolutionCells, purchaseEvolutionLevel,
+  evolutionCellEdgeStatus, evolutionCellState, getEvolutionAdjacentCells, newlyReachableEvolutionCells,
+  purchaseEvolutionLevel,
 } from '../../src/game/skills/index.js';
 import { EVOLUTION_IMPRINT_VERSION, defaultMeta, validateMeta } from '../../src/platform/storage.js';
 import { createCamera } from '../../src/rendering/camera.js';
@@ -39,7 +40,7 @@ test('one exact-cell purchase changes local state and only truthful neighboring 
     assert.ok(allowedCells.has(EVOLUTION_TOPOLOGY.edgeA[edge]) || allowedCells.has(EVOLUTION_TOPOLOGY.edgeB[edge]), `edge ${edge}`);
   }
   assert.equal(after.evolutionRecent.reduce((sum, value) => sum + value, 0), 1);
-  assert.equal(after.evolutionEdge.filter((value) => value === EVOLUTION_CELL_EDGE.SELECTED).length,
+  assert.equal(after.evolutionEdge.filter((value) => evolutionCellEdgeStatus(value) === EVOLUTION_CELL_EDGE.SELECTED).length,
     getEvolutionAdjacentCells(EVOLUTION_ROOT_CELL).length);
 });
 

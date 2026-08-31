@@ -5,6 +5,7 @@ import { createAgentEnvironment } from '../../src/agent/environment.js';
 import { AGENT_POLICIES, choosePolicyAction } from '../../src/agent/policies.js';
 import { EVOLUTION_AGENT_CANDIDATE_LIMIT, OBSERVATION_KEYS, PUBLIC_CELL_KEYS } from '../../src/agent/observation.js';
 import { AGENT_SAVE_SCHEMA, defaultAgentSave, exportAgentSave, hashAgentSave, validateAgentSave } from '../../src/agent/schema.js';
+import { EVOLUTION_ROOT_CELL } from '../../src/game/skills/index.js';
 
 const sorted = (values) => [...values].sort();
 
@@ -22,7 +23,7 @@ test('fair observation uses explicit nested public allowlists and no hidden auth
     assert.match(cell.localLevel, /^\d+$/); assert.match(cell.aggregateRank, /^\d+$/); assert.match(cell.nextCost, /^\d+$/);
     assert.equal('predictiveMultiplier' in cell, false); assert.equal('unpublishedState' in cell, false);
   }
-  assert.equal(observation.availableEvolutionCells[0].cell, 0);
+  assert.equal(observation.availableEvolutionCells[0].cell, EVOLUTION_ROOT_CELL);
   assert.equal(observation.availableEvolutionCells[0].archetypeId, 'first-division');
   assert.equal(observation.environmentSchedule.idleStartEnvironmentLevel, '0');
   assert.equal(observation.activeWorld, null);

@@ -108,7 +108,7 @@ try {
       harnessRevision:gitValue(['rev-parse','HEAD']),branch:gitValue(['branch','--show-current']),workingTreeDirty:Boolean(gitValue(['status','--porcelain'])),
       sourceUrl:configuredUrl??`file://${ROOT}/index.html`,browser:browserIdentity.product,protocolVersion:browserIdentity.protocolVersion,
       browserErrors:cdp.errors.slice(0,20),browserStderr:cdp.stderr.slice(0,20),...evidence},null,2)+'\n';
-    const name=`evolution-world-substrate-v1-${label}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
+    const name=`evolution-ability-regions-v1-${label}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
     writeFileSync(resolve(REPORTS,name),report);const hash=createHash('sha256').update(report).digest('hex');
     console.log(`test:browser:evolution-cells — ${recordBaseline?'RECORDED':'PASS'} (${evidence.simulationPath}/${evidence.rendererPath}; ${evidence.semantic.progressionCells} cells; report ${name}; sha256 ${hash})`);
   } else if (environmentPressureOnly) {

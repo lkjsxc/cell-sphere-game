@@ -33,15 +33,16 @@ checks selected/ready/owned semantics, all six player relative multipliers from
 retired mid-run choice controls.
 
 `evolution-cell-progression-fixture.mjs` is the focused exact-cell oracle. It
-checks 2,562 progression cells, the deterministic 42-archetype weave, one-cell
-selection and purchase, truthful direct-neighbor frontier changes, shared edge
-classes, quiet/frontier/selected salience, bounded native navigation, unchanged
-four-draw WebGL composition, cached projection/geometry, stable reduced motion,
-forced colors, and the eight-viewport 200%-text matrix. It also records the
-fixed substrate digest and geography gates, proves stable field identity across
-progression and context loss, compares repeated land/water-versus-domain pixels
-at center/limb and far/close framing, and captures matched fixed-camera World,
-Evolution, and Trophy images. Canonical entry points are
+checks 2,562 progression cells, the deterministic green root, exact quotas, one
+component per archetype and domain, strict tier medians, and shared packed
+region/state edges. It proves one-cell selection and purchase, truthful
+direct-neighbor frontier changes, state priority, bounded native navigation,
+unchanged four-draw WebGL composition, cached projection/geometry, stable reduced
+motion, forced colors, and the eight-viewport 200%-text matrix. It also records
+the fixed substrate digest and root material, proves stable field/layout identity
+through progression and context loss, compares repeated geography, archetype,
+domain, and state signals at center/limb and far/close framing, and captures
+matched fixed-camera World, Evolution, and Trophy images. Canonical entry points are
 `test:browser:evolution-cells`,
 `test:browser:evolution-cells:fallback`, and
 `test:browser:evolution-cells:canvas`; structured reports and screenshots

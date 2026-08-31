@@ -89,15 +89,23 @@ cell opens its direct neighbors, with no domain, tier, World, or hidden graph
 gate. A first activation selects; only a later activation of that same ready
 cell or its explicit action can buy one exact local level.
 
+The root is selected deterministically from favorable green land on the fixed
+Evolution substrate. Each recurring archetype occupies one connected region of
+individually authoritative cells, and each domain occupies one connected
+macro-region fitted to existing geography. Lower tiers lead away from the root
+before higher tiers. Region membership never becomes a bulk purchase, effect
+owner, completion bonus, or location-dependent simulation rule.
+
 The bounded native navigator presents one current cell, its five or six direct
 neighbors, stable previous/next traversal, and a next-ready action. It keeps
 every cell keyboard-reachable without creating 2,562 persistent DOM controls.
-Evolution's immutable presentation substrate comes from the maintained World
-planet-field generator at one fixed seed. Large connected oceans and landmasses,
-coasts, relief, lakes, and biome regions remain visually primary; archetype,
-domain, ownership, readiness, selection, recent change, and Imprint remain
-truthful local cues and text. Geography has no purchase, persistence, reward, or
-World authority and is unchanged by progression.
+Evolution's immutable substrate comes from the maintained World planet-field
+generator at one fixed seed. Large connected oceans and landmasses, coasts,
+relief, lakes, and biome regions remain visually primary and guide the one
+immutable ability layout; archetype, domain, ownership, readiness, selection,
+recent change, and Imprint remain truthful local cues and text. Geography has no
+effect-magnitude, cost, reward, or World authority and is unchanged by
+progression.
 Scarcity defense protects the energy yield from nutrient already consumed; it
 does not create nutrient or energy. Evolution never changes the public
 Environment clock or creates infinite resources.

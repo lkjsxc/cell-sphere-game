@@ -54,16 +54,19 @@ Luminous charge keep distinct visual and textual meanings.
 
 Evolution uses the same 2,562-cell topology scale as World. Every visible cell
 is selectable, persistent, and purchasable; a fresh profile exposes only the
-`First Division` root, and owned cells open their direct neighbors. Cells carry
-42 repeated authored archetypes. Their exact local levels sum into one shared
+`First Division` root on favorable green land, and owned cells open their direct
+neighbors. Cells carry 42 repeated authored archetypes. Each archetype occupies
+one connected exact-cell region, and the seven domains form connected
+substrate-aligned macro-regions. Their exact local levels sum into one shared
 rank per archetype, so repeated occurrences follow one cost sequence and one
 bounded production compiler. A bounded native navigator exposes the selected
 cell, its direct neighbors, stable traversal, and the next actionable frontier.
-The scene rests on one immutable fixed-seed planet built by the maintained World
-field generator, so continents, oceans, coasts, relief, lakes, and biome-scale
-regions organize the sphere before restrained local progression marks and exact
-cell-state edges. That substrate is presentation-only and never changes with a
-purchase, profile, World, or renderer.
+The immutable layout consumes one fixed-seed planet built by the maintained
+World field generator, so continents, oceans, coasts, relief, lakes, and biomes
+guide routes while remaining visually primary beneath restrained region and
+exact-cell state edges. Geography never changes costs, effects, rewards, or
+World simulation, and neither substrate nor layout changes with a purchase,
+profile, World, or renderer.
 
 Result keeps native Next World, Evolution, and History actions beside one
 authority-driven World-cycle ring. Its visible copy has no changing seconds;
@@ -124,4 +127,4 @@ npm run test:browser:fallback
 ```
 
 Current implementation status is recorded in
-[`docs/work/evolution-world-substrate-v1/README.md`](docs/work/evolution-world-substrate-v1/README.md).
+[`docs/work/evolution-ability-regions-v1/README.md`](docs/work/evolution-ability-regions-v1/README.md).

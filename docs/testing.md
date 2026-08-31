@@ -76,15 +76,16 @@ prove 2,562 authoritative cells, one exact selected/purchased cell, direct
 neighbor frontier diffs, aggregate-rank detail, bounded DOM, shared edge classes,
 quiet < frontier < selected salience, four WebGL draws, cached layout/geometry,
 zero unchanged-frame edge updates, forced colors, stable reduced motion, and all
-eight maintained viewports at 200% text. They also digest the fixed World-derived
-fields, enforce connected land/water and biome/coast/lake gates, retain the exact
-field reference through selection, purchase, and WebGL context loss, and compare
-repeated center/limb and far/close pixel probes. Land/water or major-biome
-separation must exceed same-status cross-domain variation without eliminating a
-nonzero same-cell domain-only cue. Matched fixed-camera World, Evolution, and Trophy captures
-supplement those relative measurements. Ignored JSON receipts pair warm entry,
-projection, accepted update, steady frame, buffer costs, screenshot hashes, and
-the exact all-land predecessor baseline.
+eight maintained viewports at 200% text. They independently traverse the final
+map to require one component per archetype and domain, exact quotas, strict tier
+medians, a sole green `First Division` root, and correctly packed immutable
+region edges. They retain the exact fixed World-field and layout references
+through selection, purchase, and WebGL context loss, and compare region,
+geography, and state signals at center/limb and far/close framing. Matched
+fixed-camera World, Evolution, and Trophy captures supplement those relative
+measurements. Ignored JSON receipts pair warm entry, projection, accepted
+update, steady frame, buffer costs, screenshot hashes, and the exact scattered
+predecessor baseline.
 
 `benchmark.mjs` retains terminal and huge-Level checkpoints, and also measures
 seven deterministic samples of an alive fixed 1,000-tick production trace after

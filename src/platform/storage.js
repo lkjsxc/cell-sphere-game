@@ -12,7 +12,7 @@ import { maxProgressionInteger, normalizeProgressionInteger } from '../core/prog
 import { loadNamespacedDocument, saveNamespacedDocument } from './namespace-store.js';
 
 const VALID_TROPHY_IDS = new Set(TROPHY_IDS);
-export const EVOLUTION_IMPRINT_VERSION = 2;
+export const EVOLUTION_IMPRINT_VERSION = 3;
 const EVOLUTION_IMPRINT_CELL_LIMIT = 32;
 const EVOLUTION_IMPRINT_TOPOLOGY = Object.freeze({ kind: 'icosphere', level: 4,
   nodeCount: EVOLUTION_TOPOLOGY.nodeCount, edgeCount: EVOLUTION_TOPOLOGY.edgeCount });

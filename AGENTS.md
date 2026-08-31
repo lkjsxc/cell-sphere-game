@@ -79,9 +79,12 @@ Use these terms consistently:
 - `Evolution cell`: one visible and authoritative cell on the Evolution sphere.
 - `Evolution archetype`: an authored ability definition that may be carried by
   more than one Evolution cell.
-- `Evolution substrate`: the fixed deterministic presentation-only planet
-  beneath exact-cell progression. It has no World, simulation, reward, or
-  persistence authority.
+- `Evolution substrate`: the fixed deterministic World-derived planet beneath
+  exact-cell progression. It is an immutable input to ability placement and
+  presentation, not a live World, simulation, reward, or mutable persistence
+  authority.
+- `Evolution region`: one connected set of exact Evolution cells carrying the
+  same authored archetype. A region is never a hidden purchase or effect owner.
 - `Echoes`: permanent progression currency unless explicitly renamed.
 - `History`: durable observation of prior moments and completed Worlds.
 - `Result`: the terminal summary of one World.
@@ -141,11 +144,15 @@ Every visible Evolution cell is an actual selectable and purchasable progression
 cell. A many-cell territory must not masquerade as one purchase unit.
 
 Evolution must also read at first glance as the same kind of coherent living
-planet as World. Its immutable presentation substrate uses contiguous large-scale
-geography and climate/biome regions, including meaningful land-water contrast.
-Archetype, domain, ownership, affordability, selection, and recent-change cues
-are secondary overlays; they must not turn the globe into uniform all-land noise
-or a dominant cell-by-cell color mosaic.
+planet as World. Its immutable substrate uses contiguous large-scale geography
+and climate/biome regions, including meaningful land-water contrast. Ability
+placement agrees with that planet: each recurring archetype forms a coherent
+connected region, domains form coherent macro-regions fitted to substrate
+affordances, and the sole fresh `First Division` root begins on favorable green
+land. Region membership never becomes bulk purchase, hidden ownership, or a
+location-dependent effect law. Geography remains primary while archetype,
+domain, ownership, affordability, selection, and recent-change cues remain
+restrained and legible.
 
 WebGL2 and Canvas 2D communicate the same semantic state even when exact pixels
 differ. Accessibility, responsive behavior, reduced motion, forced colors,
@@ -173,9 +180,12 @@ is sufficient, or a generic Evolution graph editor.
 
 Do not add a renderer pass solely to conceal a defect that an existing pass can
 own. Do not add bloom merely to make Luminous visible. Do not increase simulation
-resolution to fix a cosmetic silhouette. Do not use Evolution archetype/domain
-layout as planetary geography or change purchase topology to repair a
-presentation problem when a renderer-owned substrate can solve it.
+resolution to fix a cosmetic silhouette. Do not replace the World-derived
+Evolution substrate with an arbitrary ability mosaic, restore many-cell hidden
+purchase territories, or change topology, costs, effects, or World rules merely
+to fake regionality. It is valid and required for the one immutable ability
+layout to consume the fixed substrate when choosing coherent regions and the
+green root.
 
 Do not create compatibility layers for retired current-only formats without an
 active maintained consumer. Do not maintain two authorities for the same rule.
@@ -203,9 +213,10 @@ second simulation authority.
 
 ### Progression authority
 
-The Evolution topology, immutable cell-to-archetype layout, sparse exact per-cell
-levels, direct topology adjacency, transactional purchase path, exact aggregate
-archetype ranks, cost law, and one progression compiler own:
+The Evolution topology, immutable substrate-guided cell-to-archetype layout and
+root, sparse exact per-cell levels, direct topology adjacency, transactional
+purchase path, exact aggregate archetype ranks, cost law, and one progression
+compiler own:
 
 - fresh-root and frontier reachability;
 - affordability;
@@ -220,7 +231,13 @@ archetype ranks, cost law, and one progression compiler own:
 Each visible Evolution cell has one stable topology identity and one authored
 archetype. Archetypes may recur. Repeated cells are not filler: each purchased
 level contributes exactly once to the archetype's explicit aggregate rank and
-therefore to the same bounded cost/effect model.
+therefore to the same bounded cost/effect model. Repeated cells of one archetype
+form a coherent connected region, and related domains form coherent macro-regions
+on the fixed substrate.
+
+The fixed substrate may guide where an archetype occurs and therefore the route
+through exact cells. It never changes effect magnitude, cost, reward, or World
+simulation according to location.
 
 The active World receives one immutable compiled configuration. Evolution cannot
 mutate it. UI, renderer, preview, agent, and audit code consume progression
@@ -583,13 +600,16 @@ node, or purchase action.
 
 Each cell carries one stable authored archetype. Archetypes may recur across the
 sphere. A compact archetype catalog owns player-facing name, domain, biological
-role, base cost parameters, and production effects. The cell layout owns only
-where those archetypes occur; it does not own simulation effects.
+role, base cost parameters, and production effects. The substrate-guided cell
+layout owns where those archetypes occur, how their connected regions meet, and
+which exact routes become available; it does not own simulation effects.
 
-Repeated abilities are intentional rather than filler. Exact local levels are
-summed into exact aggregate archetype ranks. One cost policy and one production
-compiler consume those ranks. Spatial distribution determines progression routes
-and which exact cells are owned; it must not create a second effect compiler or
+Repeated abilities are intentional rather than filler. Repeated cells of one
+archetype form one coherent connected region, and each domain forms a coherent
+macro-region fitted to the fixed substrate. Exact local levels are summed into
+exact aggregate archetype ranks. One cost policy and one production compiler
+consume those ranks. Spatial distribution determines progression routes and
+which exact cells are owned; it must not create a second effect compiler or a
 location-dependent hidden balance rule.
 
 Every archetype and repeated occurrence must have explicit economic meaning. A
@@ -609,24 +629,27 @@ unbounded loops, or unbounded compile cost. Bounded compiled effects and finite
 Worlds remain mandatory.
 
 The Evolution sphere must read immediately as a World-like living globe without
-copying the active or historical World. Use one fixed deterministic
-presentation-only planet substrate on the maintained topology, with coherent
-low-frequency land/water masses, coastlines, relief, climate, and biome-scale
-regions owned by maintained World-generation primitives or one deliberately
-shared pure presentation owner. Preserve World's cell scale, lighting, camera,
-material hierarchy, and renderer architecture. Archetype/domain identity and
-local progression state remain secondary local cues—perimeters, inset edges,
-small glyph or pattern accents, restrained material modulation, and text—not a
-dominant whole-cell patchwork. Do not change Evolution topology, adjacency, cell
-identity, persistence, economy, or compiled effects merely to repair
-presentation unless evidence proves one of those authorities is actually the
-cause.
+copying the active or historical World. Use one fixed deterministic World-derived
+substrate on the maintained topology, with coherent low-frequency land/water
+masses, coastlines, relief, climate, and biome-scale regions owned by maintained
+World-generation primitives or one deliberately shared pure owner. That
+substrate is both the presentation base and an immutable input to the one ability
+layout. Select the sole `First Division` root from favorable green land. Fit
+Foundation, Fertility, Freshwater, Scarcity, Cryogenic, Marine, Luminous, and
+their archetype regions to truthful fixed-field affordances while keeping every
+cell an exact purchase unit. Preserve World's cell scale, lighting, camera,
+material hierarchy, and renderer architecture. Region perimeters, restrained
+material modulation, local state edges, glyphs or patterns, and text may reveal
+abilities, but they must not erase planetary geography or become a dominant
+whole-cell patchwork.
 
-Selecting or strengthening one cell may affect that cell's secondary cue and its
-incident presentation edges. It must not regenerate the substrate or recolor or
-outline a many-cell territory. Ordinary cell material remains legible beneath
-progression state. Selection, recent change, Imprint, domain, and cost/readiness
-remain distinguishable through non-color cues as well as color.
+Selecting or strengthening one cell may affect that cell's local cue and its
+incident progression edges. It may also leave the immutable region perimeter
+visible. It must not regenerate the substrate, recolor an entire region as if it
+were purchased, or promote the region to a hidden owner. Ordinary cell material
+remains legible beneath progression state. Selection, recent change, Imprint,
+domain, archetype, and cost/readiness remain distinguishable through non-color
+cues as well as color.
 
 Do not expose thousands of simultaneous DOM controls. Accessibility uses a
 bounded native navigator for the selected cell, direct neighbors, stable
@@ -635,11 +658,13 @@ bounded mechanism. Every cell remains reachable to keyboard and assistive
 technology, and topology size does not cause unbounded DOM growth.
 
 Do not mutate Evolution during a World. Do not create a second compiler for
-agents, previews, fixtures, or migration. When changing topology, layout,
-catalog, level state, or transaction semantics, update together:
+agents, previews, fixtures, or migration. When changing topology, substrate,
+root, layout, catalog, level state, or transaction semantics, update together:
 
 - stable cell identity;
-- archetype layout;
+- substrate and layout policy identity;
+- root selection;
+- archetype and domain regions;
 - adjacency and reachability;
 - local levels and aggregate ranks;
 - costs and refinements;
@@ -653,9 +678,10 @@ catalog, level state, or transaction semantics, update together:
 - balance and performance evidence;
 - documentation.
 
-Use current-only reset when a coherent new topology, layout, catalog, or level
-model cannot truthfully map old state. Do not retain obsolete territory readers,
-writers, aliases, or current documentation after cutover.
+Use current-only reset when a coherent new topology, root, layout, catalog, or
+level model cannot truthfully map old state. Do not retain obsolete territory or
+scattered-layout readers, writers, aliases, or current documentation after
+cutover.
 
 ---
 
@@ -785,37 +811,41 @@ residual, not living or powered. Ordinary living interiors preserve biome and
 resource information. Luminous remains independent. Selection and History retain
 independent cues.
 
-Evolution uses one shared immutable planet substrate plus one shared cell/edge
-progression projection. Both renderers consume the same land/water, biome,
-relief, and exact-cell semantic inputs. Exact per-cell state, not a territory
-owner, drives progression cues. Selected and recently strengthened cells are
+Evolution uses one shared immutable World-derived substrate, one shared
+substrate-guided connected ability layout, and one shared cell/edge progression
+projection. Both renderers consume the same land/water, biome, relief, root,
+archetype/domain region, and exact-cell state inputs. Exact per-cell state, not a
+region owner, drives purchases and dynamic progression cues. Region boundaries
+are immutable restrained structure; selected and recently strengthened cells are
 local. Locked, reachable, owned, and affordable state must not erase macro
 geography or imply that a group of cells is one purchase. At normal far framing,
-coherent substrate geography must dominate arbitrary cross-domain color changes;
-at near framing, archetype and state cues remain legible.
+continents and coherent ability/domain regions must both read; at near framing,
+exact cells, archetype boundaries, and state cues remain legible.
 
-Verify this hierarchy with semantic field invariants and relative production-
-browser measurements, not screenshots alone: land and water both exist in
-coherent components, biome-scale regions survive both backends, substrate
-contrast exceeds same-substrate cross-domain variation, and progression edge
-ordering remains truthful.
+Verify this hierarchy with semantic layout/field invariants and relative
+production-browser measurements, not screenshots alone: the root is visibly on
+green favorable land, every archetype and domain satisfies its connectedness
+contract, substrate-fit directions hold, land and water remain coherent, region
+perimeters survive both backends, substrate contrast remains primary, and
+progression-edge ordering remains truthful.
 
-Geography and life may share an existing boundary pass, but neither replaces the
-other. Do not add a pass when an existing pass can own the replacement. Do not
-leave old and new visual authorities active together.
+Geography and progression may share the existing boundary pass, but neither
+replaces the other. Do not add a pass when the existing pass can own the
+replacement. Do not leave old and new visual authorities active together.
 
-Create or cache static geometry once. Do not rebuild it per frame. Avoid per-cell
-or per-edge object churn in hot render paths. Dynamic edge presentation uses
-reusable typed buffers, remains `O(edgeCount)` per accepted semantic snapshot,
-and does not rebuild only because animation time advances. Keep draw calls
-measured and bounded. Keep Canvas playable after WebGL context loss. Update
-picking coherently with renderer geometry.
+Create or cache static geometry, substrate, layout, and immutable region edges
+once. Do not rebuild them per frame. Avoid per-cell or per-edge object churn in
+hot render paths. Dynamic edge presentation uses reusable typed buffers, remains
+`O(edgeCount)` per accepted semantic snapshot, and does not rebuild only because
+animation time advances. Keep draw calls measured and bounded. Keep Canvas
+playable after WebGL context loss. Update picking coherently with renderer
+geometry.
 
 Use controlled fixtures and real browser evidence. Prefer relative measurements:
-edge versus interior contrast, frontier versus internal edge, state ordering,
-center and limb continuity, silhouette deviation, day/night visibility,
-close/far behavior, selection, zero-charge controls, backend ordering, draw
-count, buffer size and cadence, and frame cost.
+substrate versus region contrast, archetype perimeter versus internal cell edge,
+progression state ordering, root material, center and limb continuity, day/night
+visibility, close/far behavior, selection, backend ordering, draw count, buffer
+size and cadence, and frame cost.
 
 Screenshots supplement measurements; they do not replace geometry, contrast,
 state, performance, browser, or fallback evidence. Calibrate pixel thresholds
@@ -837,9 +867,10 @@ Test keyboard-only interaction, focus restoration, and reduced motion in a real
 browser.
 
 Evolution's semantic path stays bounded independently of cell count. The current
-cell, its exact status and archetype, its direct neighbors, and deterministic
-traversal/frontier actions must be operable without rendering every Evolution
-cell as a DOM control.
+cell, its exact status and archetype, its domain and region context, its direct
+neighbors, and deterministic traversal/frontier actions must be operable without
+rendering every Evolution cell as a DOM control. The green starting location must
+also be identified through text or structure rather than color alone.
 
 Required viewport evidence normally includes:
 
@@ -872,6 +903,12 @@ before arithmetic. Bound arrays, queues, History, Trophies, receipts, caches, an
 sparse Evolution state. Use transactional revision checks, reject stale expected
 revisions and stale aggregate ranks, and use bounded transaction keys for
 idempotence.
+
+A root or cell-to-archetype layout change changes the meaning of numeric
+Evolution cells. Include substrate/layout identity in current validation and
+reset incompatible Evolution levels, receipts, Imprints, and layout-bound History
+rather than silently reinterpreting them. Preserve independently valid unrelated
+facts through their existing owners.
 
 Do not persist presentation-only camera motion, developer mode, diagnostic speed,
 or untrusted reward projections.
@@ -908,7 +945,9 @@ loops.
 Evolution state projection should be linear in cells plus edges plus archetypes.
 Build normalized levels, aggregate ranks, frontier, costs, and renderer arrays
 once per accepted progression revision rather than invoking a full normalizer for
-each cell. Layout and substrate are immutable for a topology/content lifetime.
+each cell. Substrate, root, connected layout, memberships, and region-edge
+structure are immutable for a topology/content lifetime. Construct them with
+bounded deterministic work and never partition the graph during a frame.
 
 High diagnostic speed may reduce presentation frequency, never authoritative tick
 count.
@@ -919,9 +958,11 @@ count.
 
 Test at the layer that owns the property.
 
-Use pure and unit tests for schedules, validation, exact arithmetic, progression
-layout and compilation, scoring, camera math, layout geometry, continuation,
-accessibility projections, renderer-semantic projections, codecs, and bounds.
+Use pure and unit tests for schedules, validation, exact arithmetic, green-root
+selection, substrate-guided layout connectedness and capacity, domain fit, tier
+distance, progression compilation, scoring, camera math, layout geometry,
+continuation, accessibility projections, renderer-semantic projections, codecs,
+and bounds.
 
 Use integration tests for Worker/fallback agreement, stale identity rejection,
 settlement idempotence, settings reset, History switching, multi-World
@@ -931,7 +972,8 @@ hashes.
 Use browser tests for the real entry point, DOM, focus, keyboard, pointer, touch,
 pinch, wheel, cancellation, rectangles, rendering, controlled visual fixtures,
 context loss, WebGL2, Canvas, Worker, fallback, reduced motion, forced colors,
-`200%` text, and safe areas where available.
+`200%` text, green-root framing, coherent region readability, and safe areas where
+available.
 
 Use production authority, cohorts, holdout seeds, and multi-World campaigns for
 balance and agent evidence. Never reward budget exhaustion.

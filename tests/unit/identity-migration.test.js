@@ -2,7 +2,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EXPORT_FILENAME, PAGES_URL, PRODUCT, REPOSITORY, STORAGE_KEYS, TAGLINE } from '../../src/core/identity.js';
-import { EVOLUTION_CONTENT_HASH, EVOLUTION_LAYOUT_VERSION, EVOLUTION_LEVEL_VECTOR_VERSION } from '../../src/game/skills/index.js';
+import {
+  EVOLUTION_CONTENT_HASH, EVOLUTION_LAYOUT_VERSION, EVOLUTION_LEVEL_VECTOR_VERSION, EVOLUTION_ROOT_CELL,
+} from '../../src/game/skills/index.js';
 import { createExportData, IMPORT_DOCUMENT_BYTE_LIMIT, parseImportedData, serializeExportData } from '../../src/interface/app-data.js';
 import { defaultHistory, loadHistory } from '../../src/platform/history.js';
 import { initializeStorageNamespace, saveImportedNamespace } from '../../src/platform/namespace.js';
@@ -24,9 +26,9 @@ test('mismatched meta schemas start fresh without a compatibility migration', ()
   const old = { ...defaultMeta(), schema: 13, runs: '999', retiredField: true };
   assert.deepEqual(validateMeta(old), defaultMeta());
   const current = validateMeta({ ...defaultMeta(), revision: '7', runs: '4', worldSeedIndex: '5',
-    totalEchoes: '400', echoBalance: '100', bestScore: '999', evolutionLevels: [{ cell: 0, level: '2' }] });
+    totalEchoes: '400', echoBalance: '100', bestScore: '999', evolutionLevels: [{ cell: EVOLUTION_ROOT_CELL, level: '2' }] });
   assert.equal(current.schema, 15); assert.equal(current.runs, '4'); assert.equal(current.worldSeedIndex, '5');
-  assert.deepEqual(current.evolutionLevels, [{ cell: 0, level: '2' }]);
+  assert.deepEqual(current.evolutionLevels, [{ cell: EVOLUTION_ROOT_CELL, level: '2' }]);
 });
 
 test('incompatible Evolution channels reset selectively while independent meta survives', () => {
@@ -52,7 +54,7 @@ test('current exports round-trip exactly while old product documents are rejecte
   const huge = `9${'8'.repeat(999)}`;
   const meta = validateMeta({ ...defaultMeta(), revision: '9007199254740992', runs: '9007199254740993',
     worldSeedIndex: '9007199254740994', bestScore: huge, totalEchoes: huge, echoBalance: huge,
-    evolutionLevels: [{ cell: 0, level: huge }] });
+    evolutionLevels: [{ cell: EVOLUTION_ROOT_CELL, level: huge }] });
   const text = serializeExportData(meta, defaultHistory(), defaultSettings()); const imported = parseImportedData(text);
   assert.deepEqual(imported.meta, meta); assert.equal(imported.meta.runs, '9007199254740993');
   assert.throws(() => parseImportedData(JSON.stringify({ schema: 1, product: PRODUCT, meta: { schema: 13 } })), /current game export/);

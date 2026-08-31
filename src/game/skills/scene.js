@@ -1,7 +1,7 @@
 /** Shared exact-cell Evolution material and edge projection for both renderers. */
-import { createRng } from '../../core/prng.js';
-import { createFields } from '../../world/fields.js';
 import { EVOLUTION_ARCHETYPES } from './catalog.js';
+import { EVOLUTION_REGION_EDGE } from './layout.js';
+export { EVOLUTION_SUBSTRATE_SEED, createEvolutionFields } from './substrate.js';
 
 export const EVOLUTION_STATUS = Object.freeze({
   EMPTY: 0, LOCKED: 1, UNAFFORDABLE: 2, AFFORDABLE: 3, OWNED_UNAFFORDABLE: 4,
@@ -9,14 +9,12 @@ export const EVOLUTION_STATUS = Object.freeze({
   OWNED_AFFORDABLE: 8, SELECTED_OWNED_UNAFFORDABLE: 9, SELECTED_OWNED_AFFORDABLE: 10,
 });
 export const EVOLUTION_CELL_EDGE = Object.freeze({ QUIET: 0, OWNED: 1, FRONTIER: 2, RECENT: 3, SELECTED: 4 });
-export const EVOLUTION_SUBSTRATE_SEED = 0xe701c311;
+export const EVOLUTION_EDGE_STATUS_MASK = 7;
+export const EVOLUTION_EDGE_REGION_SHIFT = 3;
+export { EVOLUTION_REGION_EDGE } from './layout.js';
 
 const KINDS = Object.freeze({ root: 1, specialization: 2, capstone: 3 });
 const DOMAINS = Object.freeze({ Foundation: 0, Fertility: 1, Freshwater: 2, Scarcity: 3, Cryogenic: 4, Marine: 5, Luminous: 6 });
-
-export function createEvolutionFields(topology) {
-  return createFields(createRng(EVOLUTION_SUBSTRATE_SEED), topology);
-}
 
 export function renderEvolutionSnapshot(layout, meta, projection) {
   const { topology, archetypeByCell } = layout; const count = topology.nodeCount;
@@ -52,15 +50,20 @@ export function writeEvolutionCellEdges(layout, projection, out = null) {
   if (!(target instanceof Uint8Array) || target.length !== topology.edgeCount) throw new Error('invalid Evolution edge output');
   for (let edge = 0; edge < topology.edgeCount; edge++) {
     const a = topology.edgeA[edge]; const b = topology.edgeB[edge];
-    if (a === projection.selectedCell || b === projection.selectedCell) target[edge] = EVOLUTION_CELL_EDGE.SELECTED;
-    else if (projection.recent[a] || projection.recent[b]) target[edge] = EVOLUTION_CELL_EDGE.RECENT;
+    let status = EVOLUTION_CELL_EDGE.QUIET;
+    if (a === projection.selectedCell || b === projection.selectedCell) status = EVOLUTION_CELL_EDGE.SELECTED;
+    else if (projection.recent[a] || projection.recent[b]) status = EVOLUTION_CELL_EDGE.RECENT;
     else if ((!projection.owned[a] && projection.reachable[a]) || (!projection.owned[b] && projection.reachable[b])
-      || projection.owned[a] !== projection.owned[b]) target[edge] = EVOLUTION_CELL_EDGE.FRONTIER;
-    else if (projection.owned[a] || projection.owned[b]) target[edge] = EVOLUTION_CELL_EDGE.OWNED;
-    else target[edge] = EVOLUTION_CELL_EDGE.QUIET;
+      || projection.owned[a] !== projection.owned[b]) status = EVOLUTION_CELL_EDGE.FRONTIER;
+    else if (projection.owned[a] || projection.owned[b]) status = EVOLUTION_CELL_EDGE.OWNED;
+    const region = layout.edgeStructure?.[edge] ?? EVOLUTION_REGION_EDGE.INTERNAL;
+    target[edge] = status | (region << EVOLUTION_EDGE_REGION_SHIFT);
   }
   return target;
 }
+
+export function evolutionCellEdgeStatus(code) { return code & EVOLUTION_EDGE_STATUS_MASK; }
+export function evolutionRegionEdge(code) { return (code >>> EVOLUTION_EDGE_REGION_SHIFT) & 3; }
 
 function statusFor(projection, cell) {
   const selected = projection.selectedCell === cell; const owned = projection.owned[cell] === 1;

@@ -1,5 +1,39 @@
 # Current status
 
+## Evolution Ability Regions v1
+
+- Evolution layout version `2` deterministically selects cell `2265` as the
+  sole `First Division` root. It is Grass land with six of six green-land
+  neighbors, growth suitability `1.0599999428`, nutrient `0.7472620010`, and
+  moisture `0.6074897647`. Fresh entry focuses that cell and exposes no other
+  ready purchase.
+- Layout digest `09da2261` assigns all 2,562 exact cells to the retained 42
+  archetypes at the retained one-root and 62–63 non-root quotas. Every archetype
+  and every domain has exactly one direct-adjacency component. Tier 1–5 median
+  root distances are `8, 20, 24, 29, 31.5`; the six-cell root ring contains six
+  distinct tier-1 Foundation archetypes.
+- The fixed substrate remains digest `57eda917` at seed `0xe701c311`, but it is
+  now an immutable input to placement as well as presentation. Connected domain
+  regions favor their authored fixed-field affordances; location changes route
+  identity only and adds no cost, effect, reward, or World rule.
+- One shared immutable 7,680-byte edge classification contains 6,148 internal,
+  985 archetype-perimeter, and 547 domain-perimeter edges. WebGL2 and Canvas 2D
+  render those restrained structures in the existing boundary phase, with
+  selected/recent/frontier/owned state taking priority. WebGL remains four draws.
+- Current Evolution identities are progression `8`, layout `2`, content `10`
+  with hash `7fd92cf7`, Imprint `3`, and Evolution History `3`. A predecessor
+  identity selectively clears exact Evolution levels, transaction receipts,
+  Imprints, and Evolution History while independently valid meta and World
+  History remain under their existing validators.
+- Chrome 152 Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D receipts pass
+  green-root pixels and focus, connected-region visual probes at far/close and
+  center/limb framing, exact one-cell purchase locality, bounded navigation,
+  forced colors, reduced motion, eight viewports at 200% text, shared identity
+  through context loss, zero steady edge rebuilds, and empty browser errors.
+  The terminal work record owns exact local hashes; exact-revision publication
+  evidence is attached to the implementation handoff because the pushed
+  revision is itself the deployment subject.
+
 ## Evolution World Substrate v1
 
 - Evolution now constructs one immutable presentation-only level-4 planet by
@@ -9,10 +43,10 @@
   lakes, 206 coast edges, and 286 lake edges, with 97.32% land/water and 81.61%
   biome same-class adjacency. Deterministic browser digest is `57eda917`.
 - World fields provide the base land/water, biome, forest, relief, lake, shore,
-  and lighting material in WebGL2 and Canvas. Domain and progression state now
-  use restrained local glyphs, insets, exact-cell edges, Imprints, and text rather
-  than a dominant whole-cell mosaic. The all-land, one-biome Evolution placeholder
-  and the Canvas Evolution biome override are deleted.
+  and lighting material in WebGL2 and Canvas. Connected domain/archetype
+  perimeters, local glyphs, insets, exact-cell state edges, Imprints, and text
+  remain subordinate to that geography. The all-land, one-biome Evolution
+  placeholder and the Canvas Evolution biome override remain deleted.
 - One World/Evolution/Trophy scene discriminator replaces WebGL `uMemory`.
   WebGL remains exactly four draws with `1,838,196` static and `325,152`
   dynamic bytes; Canvas retains `133,132` static and `130,560` dynamic bytes.
@@ -25,11 +59,12 @@
   hierarchy, forced colors, reduced motion, and all eight maintained viewports
   at 200% text. In every probe, geographic separation exceeds same-status
   cross-domain variation while domain variation remains nonzero.
-- Trophy fields and controlled matched images are identical to the predecessor:
+- Trophy fields and controlled matched images remain independent of Evolution:
   WebGL2 SHA-256 `b98ca89587f026a000ccbf69e66af5be2fd17a9b55dd18be910335c91ea004ed`
   and Canvas SHA-256 `dba741f68c1b2a90a77d58496f5f5e72d8258a0649191eca5847ce6c722be49b`.
-  Progression topology/layout/economy/compiler/persistence, World simulation,
-  SCORE, Echoes, agents, and the bounded navigator have no changed owner.
+  Progression economy/compiler, World simulation, SCORE, Echoes, and Trophy
+  authority have no changed owner; the layout and its incompatible Evolution
+  persistence identity are intentionally superseded by Ability Regions v1.
 - The canonical work package owns focused commands, matched image/report hashes,
   performance investigation, complete verification, publication evidence, and
   unavailable physical-device evidence.
@@ -41,11 +76,11 @@
   purchase increments exactly one selected cell. Direct fine-cell adjacency is
   the only frontier rule; the predecessor frequency-2 purchase graph and owner
   projection are deleted.
-- A deterministic stratified cellular weave assigns the retained 42 authored
-  archetypes. Digest `db40b2ed` has one `First Division` root, 62–63 occurrences
-  of each non-root archetype, maximum same-archetype component size `1`, and
-  100% one-hop neighborhood diversity. Root neighbors are distinct Foundation
-  archetypes.
+- A deterministic substrate-guided layout assigns the retained 42 authored
+  archetypes. Digest `09da2261` has one green-land `First Division` root and
+  62–63 occurrences of each non-root archetype. Every archetype is one connected
+  exact-cell region, every domain is one connected macro-region, and root
+  neighbors are distinct tier-1 Foundation archetypes.
 - Sparse exact local levels sum into exact aggregate archetype ranks. The
   retained target-level cost law consumes aggregate rank plus one, and the one
   production compiler consumes the 42 ranks. Equal aggregate distributions

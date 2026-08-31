@@ -27,7 +27,7 @@ Resource ecology updates authoritative cells without skipping ticks. Chronic
 pressure retains current/next finite profiles and bounded exposure evidence;
 it has no gameplay-event arrays or render buffers.
 
-Evolution topology, immutable archetype layout, deterministic substrate, and
+Evolution topology, immutable connected archetype/domain layout, deterministic substrate, and
 static level-4 geometry are built once per module/topology lifetime. An accepted
 progression or selection change rebuilds one `O(cells + edges + archetypes)`
 projection; unchanged animation frames perform zero edge-buffer updates. The
@@ -67,6 +67,20 @@ updates. WebGL remains four draws with byte-identical `1,838,196` static and
 dynamic bytes. A direct same-process construction sample changed the obsolete
 placeholder's median/p95 `0.835/1.322 ms` to `3.185/3.755 ms` for the full
 cached World field pipeline; it is one-time topology-lifetime work.
+
+Ability Regions v1 replaces the `6.074 ms` scattered assignment with a bounded
+two-stage connected partition. The production skill audit constructs the final
+layout in `205.678 ms` using 7,048,903 accounted visits under an 80,000,000-visit
+hard bound, then caches it for the topology/content lifetime. This material
+one-time increase was investigated: two stable serial Chrome 152 p95
+entry/snapshot/update/steady samples span Worker/WebGL2
+`14.9–16.6/0.7–1.5/2.0–2.2/1.1–2.3 ms`, fallback/WebGL2
+`14.5–17.7/0.6/1.5–1.6/1.3–1.4 ms`, and fallback/Canvas
+`5.5–6.0/0.5–0.6/1.8–1.9/1.5–1.7 ms`. Percentage swings in these short samples
+do not reproduce consistently; absolute work remains bounded. The cached
+layout/geometry references remain stable, unchanged frames rebuild zero edge
+bytes, the shared edge projection remains 7,680 compact bytes, WebGL remains
+four draws, and static/dynamic renderer allocation totals are unchanged.
 
 The atmosphere silhouette cutover's same-host Chrome 152 median-of-three
 synchronized costs are baseline to fixed shell: steady p50 `0.800 -> 0.900 ms`,

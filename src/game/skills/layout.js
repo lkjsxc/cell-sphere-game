@@ -1,188 +1,190 @@
-/** Immutable cell-to-archetype weave on the maintained level-4 sphere. */
+/** Deterministic substrate-guided connected regions on the maintained sphere. */
 import { fnv1aBytes, hexU32 } from '../../core/hash.js';
-import { createTopology } from '../../world/icosphere.js';
-import { EVOLUTION_ARCHETYPES } from './catalog.js';
+import { EVOLUTION_ARCHETYPES, EVOLUTION_DOMAINS } from './catalog.js';
+import { EVOLUTION_SUBSTRATE } from './substrate.js';
+import { EVOLUTION_TOPOLOGY, EVOLUTION_TOPOLOGY_LEVEL } from './topology.js';
+import { buildDomainPartition } from './layout-domain-partition.js';
+import { buildArchetypePartition } from './layout-archetype-partition.js';
+import {
+  EVOLUTION_REGION_EDGE, buildDomainSuitability, buildMemberships, capacitiesByDomain,
+  classifyRegionEdges, compareRootFields, componentCounts, graphDistances, isGreenLand,
+  maximum, neighborsOf, quotas, rootDetails, substrateFitDiagnostics, tierMedians,
+  validateInputs, validateSubstrate,
+} from './layout-metrics.js';
 
-export const EVOLUTION_LAYOUT_VERSION = 1;
-export const EVOLUTION_TOPOLOGY_LEVEL = 4;
-export const EVOLUTION_ROOT_CELL = 0;
+export { EVOLUTION_TOPOLOGY, EVOLUTION_TOPOLOGY_LEVEL } from './topology.js';
+export { EVOLUTION_REGION_EDGE } from './layout-metrics.js';
 
-export const EVOLUTION_TOPOLOGY = createTopology(EVOLUTION_TOPOLOGY_LEVEL);
-export const EVOLUTION_LAYOUT = createEvolutionCellLayout(EVOLUTION_TOPOLOGY, EVOLUTION_ARCHETYPES);
+export const EVOLUTION_LAYOUT_VERSION = 2;
+const MAX_CONSTRUCTION_VISITS = 80_000_000;
+const MIN_SUBSTRATE_MARGIN = 0.005;
 
-export function createEvolutionCellLayout(topology, archetypes = EVOLUTION_ARCHETYPES) {
-  validateInputs(topology, archetypes);
-  const archetypeCount = archetypes.length;
+export const EVOLUTION_LAYOUT = createEvolutionCellLayout(
+  EVOLUTION_TOPOLOGY, EVOLUTION_ARCHETYPES, EVOLUTION_SUBSTRATE,
+);
+export const EVOLUTION_ROOT_CELL = EVOLUTION_LAYOUT.rootCell;
+
+/**
+ * Build calibrated connected domain macro-regions, then split each domain into
+ * deterministic connected exact-capacity archetype regions. All searches and
+ * capacity transfers are bounded; no runtime randomness or persisted owner map
+ * participates in the result.
+ */
+export function createEvolutionCellLayout(
+  topology,
+  archetypes = EVOLUTION_ARCHETYPES,
+  substrate = EVOLUTION_SUBSTRATE,
+) {
+  validateInputs(topology, archetypes, substrate);
+  const work = { frontierScans: 0, connectivityVisits: 0, connectivityChecks: 0, seedChecks: 0 };
   const rootArchetype = archetypes.findIndex((archetype) => archetype.kind === 'root');
-  if (rootArchetype < 0) throw new Error('Evolution layout requires one root archetype');
+  const rootCell = selectEvolutionRootCell(topology, substrate);
+  const rootDistance = graphDistances(topology, rootCell, work);
+  const maxRootDistance = maximum(rootDistance);
+  const rootRing = neighborsOf(topology, rootCell).sort((left, right) => left - right);
+  const archetypeQuota = quotas(topology.nodeCount - 1, archetypes.length, rootArchetype);
+  archetypeQuota[rootArchetype] = 1;
+  const domainCapacity = capacitiesByDomain(archetypes, archetypeQuota);
+  const suitability = buildDomainSuitability(topology, substrate);
 
-  const archetypeByCell = new Uint8Array(topology.nodeCount).fill(0xff);
-  const remaining = quotas(topology.nodeCount - 1, archetypeCount, rootArchetype);
-  archetypeByCell[EVOLUTION_ROOT_CELL] = rootArchetype;
+  const domainByCell = buildDomainPartition({
+    topology, substrate, archetypes, rootCell, rootDistance, maxRootDistance,
+    domainCapacity, suitability, work,
+  });
+  const archetypeByCell = buildArchetypePartition({
+    topology, archetypes, rootArchetype, rootCell, rootRing, rootDistance,
+    domainByCell, archetypeQuota, work,
+  });
+  const membership = buildMemberships(archetypeByCell, archetypes.length);
+  const domainMembership = buildMemberships(domainByCell, EVOLUTION_DOMAINS.length);
+  const edgeStructure = classifyRegionEdges(topology, archetypes, archetypeByCell);
+  const diagnostics = validateEvolutionCellLayout({
+    topology, substrate, archetypes, rootArchetype, rootCell, archetypeByCell,
+    archetypeCountByIndex: membership.count, rootRing, rootDistance, domainByCell,
+    domainCapacity, suitability, edgeStructure, work,
+  });
+  return Object.freeze({
+    version: EVOLUTION_LAYOUT_VERSION, topology, substrate, archetypes, rootCell, rootArchetype,
+    archetypeByCell, archetypeCountByIndex: membership.count,
+    archetypeStart: membership.start, cellsByArchetype: membership.cells,
+    domainByCell, domainCountByIndex: domainMembership.count,
+    domainStart: domainMembership.start, cellsByDomain: domainMembership.cells,
+    rootDistance, rootRing: Object.freeze(rootRing), edgeStructure, diagnostics,
+  });
+}
 
-  const rootRing = Array.from(topology.nodeNeighbors.slice(
-    topology.nodeStart[EVOLUTION_ROOT_CELL], topology.nodeStart[EVOLUTION_ROOT_CELL + 1],
-  )).sort((left, right) => left - right);
-  const foundation = archetypes.map((archetype, index) => ({ archetype, index }))
-    .filter(({ archetype, index }) => index !== rootArchetype && archetype.domain === 'Foundation')
-    .sort((left, right) => left.archetype.tier - right.archetype.tier || left.index - right.index);
-  if (foundation.length < rootRing.length) throw new Error('Evolution root ring lacks distinct Foundation archetypes');
-  for (let index = 0; index < rootRing.length; index++) {
-    const archetype = foundation[index].index;
-    archetypeByCell[rootRing[index]] = archetype;
-    remaining[archetype]--;
-  }
-
-  const rootDistance = graphDistances(topology, EVOLUTION_ROOT_CELL);
-  const maxRootDistance = rootDistance.reduce((maximum, value) => Math.max(maximum, value), 0);
-  const cells = Array.from({ length: topology.nodeCount }, (_, cell) => cell)
-    .filter((cell) => archetypeByCell[cell] === 0xff)
-    .sort((left, right) => rootDistance[left] - rootDistance[right]
-      || mix32(left ^ 0x51ab3d71) - mix32(right ^ 0x51ab3d71) || left - right);
-  for (const cell of cells) {
-    let selected = -1; let selectedScore = -Infinity;
-    const desiredTier = 1 + Math.min(5, Math.floor(rootDistance[cell] * 6 / (maxRootDistance + 1)));
-    for (let archetype = 0; archetype < archetypeCount; archetype++) {
-      if (archetype === rootArchetype || remaining[archetype] <= 0) continue;
-      let sameArchetype = 0; let sameDomain = 0;
-      for (let offset = topology.nodeStart[cell]; offset < topology.nodeStart[cell + 1]; offset++) {
-        const neighborArchetype = archetypeByCell[topology.nodeNeighbors[offset]];
-        if (neighborArchetype === 0xff) continue;
-        if (neighborArchetype === archetype) sameArchetype++;
-        if (archetypes[neighborArchetype]?.domain === archetypes[archetype].domain) sameDomain++;
-      }
-      const score = remaining[archetype] * 65_536
-        - Math.abs(archetypes[archetype].tier - desiredTier) * 2_048
-        + sameDomain * 384
-        - sameArchetype * 1_000_000_000
-        + (mix32(cell ^ Math.imul(archetype + 1, 0x45d9f3b)) & 0xffff);
-      if (score > selectedScore || (score === selectedScore && archetype < selected)) {
-        selected = archetype; selectedScore = score;
-      }
-    }
-    if (selected < 0) throw new Error(`Evolution cell ${cell} has no archetype candidate`);
-    archetypeByCell[cell] = selected; remaining[selected]--;
-  }
-  if (remaining.some((count) => count !== 0)) throw new Error('Evolution archetype quotas were not exhausted');
-
-  const archetypeCountByIndex = new Uint16Array(archetypeCount);
-  for (const archetype of archetypeByCell) archetypeCountByIndex[archetype]++;
-  const archetypeStart = new Uint32Array(archetypeCount + 1);
-  for (let index = 0; index < archetypeCount; index++) {
-    archetypeStart[index + 1] = archetypeStart[index] + archetypeCountByIndex[index];
-  }
-  const cellsByArchetype = new Uint16Array(topology.nodeCount);
-  const cursor = archetypeStart.slice(0, archetypeCount);
+export function selectEvolutionRootCell(topology, substrate) {
+  validateSubstrate(topology, substrate);
+  let selected = -1; let selectedComplete = false; let selectedGreenNeighbors = -1;
   for (let cell = 0; cell < topology.nodeCount; cell++) {
-    cellsByArchetype[cursor[archetypeByCell[cell]]++] = cell;
+    if (!isGreenLand(substrate, cell)) continue;
+    let greenNeighbors = 0;
+    for (let offset = topology.nodeStart[cell]; offset < topology.nodeStart[cell + 1]; offset++) {
+      if (isGreenLand(substrate, topology.nodeNeighbors[offset])) greenNeighbors++;
+    }
+    const complete = greenNeighbors === topology.degree[cell];
+    if (selected < 0
+      || Number(complete) > Number(selectedComplete)
+      || (complete === selectedComplete && (greenNeighbors > selectedGreenNeighbors
+        || (greenNeighbors === selectedGreenNeighbors && compareRootFields(substrate, cell, selected) < 0)))) {
+      selected = cell; selectedComplete = complete; selectedGreenNeighbors = greenNeighbors;
+    }
   }
-  const diagnostics = validateEvolutionCellLayout({ topology, archetypes, rootArchetype,
-    archetypeByCell, archetypeCountByIndex, rootRing, rootDistance });
-  return Object.freeze({ version: EVOLUTION_LAYOUT_VERSION, topology, archetypes, rootCell: EVOLUTION_ROOT_CELL,
-    rootArchetype, archetypeByCell, archetypeCountByIndex, archetypeStart, cellsByArchetype,
-    rootDistance, rootRing: Object.freeze(rootRing), diagnostics });
+  if (selected < 0) throw new Error('Evolution substrate has no favorable green root candidate');
+  return selected;
 }
 
 export function validateEvolutionCellLayout(layout) {
-  const { topology, archetypes, rootArchetype, archetypeByCell, archetypeCountByIndex,
-    rootRing, rootDistance } = layout;
+  const {
+    topology, substrate, archetypes, rootArchetype, rootCell, archetypeByCell,
+    archetypeCountByIndex, rootRing, rootDistance, domainByCell, domainCapacity,
+    suitability, edgeStructure,
+  } = layout;
+  const validatedDomainCapacity = domainCapacity ?? capacitiesByDomain(archetypes, archetypeCountByIndex);
+  const validatedSuitability = suitability ?? buildDomainSuitability(topology, substrate);
+  const work = layout.work ?? layout.diagnostics?.construction ?? {};
   const errors = [];
   if (archetypeByCell.length !== topology.nodeCount) errors.push('incomplete cell assignment');
   if (archetypeCountByIndex.length !== archetypes.length) errors.push('incomplete archetype counts');
-  const observedCounts = new Uint16Array(archetypes.length); let assignmentsValid = archetypeByCell.length === topology.nodeCount;
+  if (domainByCell.length !== topology.nodeCount) errors.push('incomplete domain assignment');
+  if (edgeStructure.length !== topology.edgeCount) errors.push('incomplete region-edge assignment');
+
+  const observedCounts = new Uint16Array(archetypes.length);
+  let assignmentsValid = archetypeByCell.length === topology.nodeCount;
   if (assignmentsValid) for (let cell = 0; cell < topology.nodeCount; cell++) {
-    const archetype = archetypeByCell[cell];
-    if (!Number.isInteger(archetype) || archetype < 0 || archetype >= archetypes.length) { assignmentsValid = false; break; }
+    const archetype = archetypeByCell[cell]; const domain = domainByCell[cell];
+    if (!Number.isInteger(archetype) || archetype < 0 || archetype >= archetypes.length
+      || domain !== EVOLUTION_DOMAINS.indexOf(archetypes[archetype].domain)) {
+      assignmentsValid = false; break;
+    }
     observedCounts[archetype]++;
   }
   if (!assignmentsValid) throw new Error('invalid Evolution cell layout: invalid cell assignment');
-  if (archetypeCountByIndex.length === archetypes.length) for (let index = 0; index < archetypes.length; index++) {
+  for (let index = 0; index < archetypes.length; index++) {
     if (archetypeCountByIndex[index] !== observedCounts[index]) errors.push(`archetype ${index} count mismatch`);
   }
+
   const rootCount = observedCounts[rootArchetype] ?? 0;
-  if (rootCount !== 1 || archetypeByCell[EVOLUTION_ROOT_CELL] !== rootArchetype) errors.push('invalid root assignment');
+  if (rootCell !== selectEvolutionRootCell(topology, substrate)
+    || rootCount !== 1 || archetypeByCell[rootCell] !== rootArchetype) errors.push('invalid green root assignment');
+  const rootDiagnostic = rootDetails(topology, substrate, rootCell);
+  if (!rootDiagnostic.land || !rootDiagnostic.greenBiome) errors.push('root is not favorable green land');
   const ringArchetypes = rootRing.map((cell) => archetypeByCell[cell]);
-  if (ringArchetypes.some((index) => archetypes[index]?.domain !== 'Foundation')) errors.push('root ring is not Foundation');
+  if (ringArchetypes.some((index) => archetypes[index]?.domain !== 'Foundation'
+    || archetypes[index]?.tier !== 1)) errors.push('root ring is not tier-1 Foundation');
   if (new Set(ringArchetypes).size !== ringArchetypes.length) errors.push('root ring repeats an archetype');
 
+  const expectedQuota = quotas(topology.nodeCount - 1, archetypes.length, rootArchetype);
+  expectedQuota[rootArchetype] = 1;
   let minNonRootCount = Infinity; let maxNonRootCount = 0;
-  const componentCount = new Uint16Array(archetypes.length);
-  const largestComponent = new Uint16Array(archetypes.length);
-  const seen = new Uint8Array(topology.nodeCount); const queue = new Uint16Array(topology.nodeCount);
-  for (let start = 0; start < topology.nodeCount; start++) {
-    if (seen[start]) continue;
-    const archetype = archetypeByCell[start]; componentCount[archetype]++;
-    let head = 0; let tail = 0; queue[tail++] = start; seen[start] = 1;
-    while (head < tail) {
-      const cell = queue[head++];
-      for (let offset = topology.nodeStart[cell]; offset < topology.nodeStart[cell + 1]; offset++) {
-        const next = topology.nodeNeighbors[offset];
-        if (!seen[next] && archetypeByCell[next] === archetype) { seen[next] = 1; queue[tail++] = next; }
-      }
-    }
-    largestComponent[archetype] = Math.max(largestComponent[archetype], tail);
-  }
   for (let index = 0; index < archetypes.length; index++) {
-    const count = observedCounts[index];
-    if (index === rootArchetype) continue;
-    minNonRootCount = Math.min(minNonRootCount, count); maxNonRootCount = Math.max(maxNonRootCount, count);
-    if (count < Math.ceil(topology.nodeCount * .01) || count > Math.floor(topology.nodeCount * .04)) {
-      errors.push(`archetype ${archetypes[index].id} count ${count} is outside 1–4%`);
+    if (observedCounts[index] !== expectedQuota[index]) errors.push(`archetype ${archetypes[index].id} quota mismatch`);
+    if (index !== rootArchetype) {
+      minNonRootCount = Math.min(minNonRootCount, observedCounts[index]);
+      maxNonRootCount = Math.max(maxNonRootCount, observedCounts[index]);
     }
-    if (largestComponent[index] > 8) errors.push(`archetype ${archetypes[index].id} component exceeds 8`);
   }
-  let diverseNeighborhoods = 0;
-  for (let cell = 0; cell < topology.nodeCount; cell++) {
-    if (cell === EVOLUTION_ROOT_CELL) continue;
-    const local = new Set([archetypeByCell[cell]]);
-    for (let offset = topology.nodeStart[cell]; offset < topology.nodeStart[cell + 1]; offset++) {
-      local.add(archetypeByCell[topology.nodeNeighbors[offset]]);
-    }
-    if (local.size >= 3) diverseNeighborhoods++;
+
+  const componentCount = componentCounts(topology, archetypeByCell, archetypes.length);
+  for (let index = 0; index < archetypes.length; index++) {
+    if (componentCount[index] !== 1) errors.push(`archetype ${archetypes[index].id} has ${componentCount[index]} components`);
   }
-  const neighborhoodDiversity = diverseNeighborhoods / Math.max(1, topology.nodeCount - 1);
-  if (neighborhoodDiversity < .95) errors.push('closed-neighborhood diversity is below 95%');
+  const domainComponentCount = componentCounts(topology, domainByCell, EVOLUTION_DOMAINS.length);
+  for (let index = 0; index < EVOLUTION_DOMAINS.length; index++) {
+    if (domainComponentCount[index] !== 1) errors.push(`domain ${EVOLUTION_DOMAINS[index]} has ${domainComponentCount[index]} components`);
+  }
+
   if (rootDistance?.length !== topology.nodeCount) errors.push('incomplete root distances');
-  const digest = hexU32(fnv1aBytes(archetypeByCell));
+  const tierMedianRootDistance = tierMedians(archetypes, archetypeByCell, rootDistance);
+  for (let tier = 2; tier <= 5; tier++) {
+    if (!(tierMedianRootDistance[tier] > tierMedianRootDistance[tier - 1])) errors.push(`tier ${tier} median root distance does not increase`);
+  }
+
+  const substrateFit = substrateFitDiagnostics({ topology, substrate, domainByCell,
+    domainCapacity: validatedDomainCapacity, suitability: validatedSuitability });
+  for (const domain of EVOLUTION_DOMAINS) {
+    if (!(substrateFit.byDomain[domain].suitabilityMargin > MIN_SUBSTRATE_MARGIN)) {
+      errors.push(`${domain} substrate fit ${substrateFit.byDomain[domain].suitabilityMargin} is not above global`);
+    }
+  }
+  if (!(substrateFit.byDomain.Marine.waterFraction > substrateFit.nonMarineWaterFraction)) errors.push('Marine water fit failed');
+  if (!(substrateFit.byDomain.Freshwater.freshwaterInfluence > substrateFit.global.freshwaterInfluence)) errors.push('Freshwater fit failed');
+  if (!(substrateFit.byDomain.Cryogenic.temperature < substrateFit.global.temperature)) errors.push('Cryogenic fit failed');
+  if (!(substrateFit.byDomain.Scarcity.moisture < substrateFit.global.moisture
+    || substrateFit.byDomain.Scarcity.growthSuitability < substrateFit.global.growthSuitability)) errors.push('Scarcity fit failed');
+  if (!(substrateFit.byDomain.Fertility.greenFraction > substrateFit.global.greenFraction
+    && substrateFit.byDomain.Fertility.growthSuitability > substrateFit.global.growthSuitability
+    && substrateFit.byDomain.Fertility.waterFraction < substrateFit.global.waterFraction)) errors.push('Fertility fit failed');
+
+  const constructionVisits = Number(work.frontierScans ?? 0) + Number(work.connectivityVisits ?? 0)
+    + Number(work.regionalVisits ?? 0) + Number(work.voronoiVisits ?? 0) + Number(work.boundaryScans ?? 0);
+  if (!Number.isSafeInteger(constructionVisits) || constructionVisits > MAX_CONSTRUCTION_VISITS) errors.push('layout construction work exceeded bound');
+  const digest = hexU32(fnv1aBytes(archetypeByCell)); const edgeDigest = hexU32(fnv1aBytes(edgeStructure));
   if (errors.length) throw new Error(`invalid Evolution cell layout: ${errors.join('; ')}`);
   return Object.freeze({ valid: true, layoutVersion: EVOLUTION_LAYOUT_VERSION,
     topologyLevel: topology.levels, cells: topology.nodeCount, edges: topology.edgeCount,
-    archetypes: archetypes.length, rootCount, minNonRootCount, maxNonRootCount,
-    largestComponent: Math.max(...largestComponent), neighborhoodDiversity,
-    digest, componentCount, largestComponentByArchetype: largestComponent });
-}
-
-function quotas(cellCount, archetypeCount, rootArchetype) {
-  const result = new Uint16Array(archetypeCount); const nonRoot = archetypeCount - 1;
-  const base = Math.floor(cellCount / nonRoot); let extra = cellCount % nonRoot;
-  for (let index = 0; index < archetypeCount; index++) if (index !== rootArchetype) {
-    result[index] = base + (extra-- > 0 ? 1 : 0);
-  }
-  return result;
-}
-
-function graphDistances(topology, root) {
-  const distance = new Uint16Array(topology.nodeCount).fill(0xffff); const queue = new Uint16Array(topology.nodeCount);
-  let head = 0; let tail = 0; queue[tail++] = root; distance[root] = 0;
-  while (head < tail) {
-    const cell = queue[head++];
-    for (let offset = topology.nodeStart[cell]; offset < topology.nodeStart[cell + 1]; offset++) {
-      const next = topology.nodeNeighbors[offset];
-      if (distance[next] === 0xffff) { distance[next] = distance[cell] + 1; queue[tail++] = next; }
-    }
-  }
-  return distance;
-}
-
-function mix32(value) {
-  let mixed = value >>> 0; mixed = Math.imul(mixed ^ mixed >>> 16, 0x7feb352d);
-  mixed = Math.imul(mixed ^ mixed >>> 15, 0x846ca68b); return (mixed ^ mixed >>> 16) >>> 0;
-}
-
-function validateInputs(topology, archetypes) {
-  if (!topology || topology.levels !== EVOLUTION_TOPOLOGY_LEVEL || topology.nodeCount > 0xffff
-    || topology.positions?.length !== topology.nodeCount * 3 || !Array.isArray(archetypes)
-    || archetypes.length < 2 || archetypes.length > 255) throw new Error('invalid Evolution cell-layout inputs');
-  const roots = archetypes.filter((archetype) => archetype.kind === 'root');
-  if (roots.length !== 1 || roots[0].id !== 'first-division') throw new Error('First Division must be the sole Evolution root archetype');
+    archetypes: archetypes.length, rootCount, rootCell, root: rootDiagnostic,
+    minNonRootCount, maxNonRootCount, digest, edgeDigest, componentCount, domainComponentCount,
+    tierMedianRootDistance, substrateFit,
+    construction: Object.freeze({ ...work, visits: constructionVisits, budget: MAX_CONSTRUCTION_VISITS }) });
 }

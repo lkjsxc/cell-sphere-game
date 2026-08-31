@@ -9,6 +9,12 @@ Active work package: none.
 
 Completed packages remain as historical or current implementation evidence:
 
+- [`evolution-ability-regions-v1/`](evolution-ability-regions-v1/) — terminal
+  implementation record for the green `First Division` root, one
+  substrate-guided connected region per archetype, connected domain
+  macro-regions, shared WebGL2/Canvas region semantics, and exact level-4 cell
+  authority. Its pushed revision's remote, CI, Pages, byte, and deployed-browser
+  evidence is necessarily carried by the exact-revision implementation handoff.
 - [`evolution-world-substrate-v1/`](evolution-world-substrate-v1/) — terminal
   evidence for one fixed World-derived Evolution planet substrate, secondary
   exact-cell progression cues, renderer parity, and local/external closure.

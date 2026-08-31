@@ -1,6 +1,7 @@
 import { test } from 'node:test';import assert from 'node:assert/strict';
 import { STORAGE_KEYS } from '../../src/core/identity.js';import { defaultMeta } from '../../src/platform/storage.js';
 import { appendEvolutionEvent, defaultHistory } from '../../src/platform/history.js';
+import { EVOLUTION_ROOT_CELL } from '../../src/game/skills/index.js';
 import { recoverRunTransaction, saveProgressionTransaction, saveRunTransaction } from '../../src/platform/run-transaction-store.js';
 import {applyRunResult} from '../../src/interface/policies/run-result.js';
 import { scoreResult } from '../../src/game/scoring.js';
@@ -22,9 +23,9 @@ test('current WAL schema validates current documents', () => {
  const recovered=recoverRunTransaction(storage);assert.equal(recovered.kind,'run');assert.equal(recovered.key,key);
  assert.equal(recovered.meta.schema,15);assert.equal(recovered.history.schema,10);
 });
-test('Evolution level, exact debit, and History recover from the same WAL',()=>{const storage=memoryStorage();const key='evolution:0:cell:0:1';
- const meta={...defaultMeta(),revision:'1',echoBalance:'92',evolutionLevels:[{cell:0,level:'1'}],evolutionTransactionKeys:[key]};
- const evidence={transactionKey:key,cell:0,archetypeId:'first-division',oldLocalLevel:'0',newLocalLevel:'1',
+test('Evolution level, exact debit, and History recover from the same WAL',()=>{const storage=memoryStorage();const key=`evolution:0:cell:${EVOLUTION_ROOT_CELL}:1`;
+ const meta={...defaultMeta(),revision:'1',echoBalance:'92',evolutionLevels:[{cell:EVOLUTION_ROOT_CELL,level:'1'}],evolutionTransactionKeys:[key]};
+ const evidence={transactionKey:key,cell:EVOLUTION_ROOT_CELL,archetypeId:'first-division',oldLocalLevel:'0',newLocalLevel:'1',
    oldAggregateRank:'0',newAggregateRank:'1',cost:'8',balanceBefore:'100',balanceAfter:'92',run:'0'};
  const history=appendEvolutionEvent(defaultHistory(),evidence);assert.equal(appendEvolutionEvent(history,evidence).evolution.length,1);
  storage.fail=STORAGE_KEYS.history;assert.equal(saveProgressionTransaction(meta,history,{kind:'evolution',key},storage),false);

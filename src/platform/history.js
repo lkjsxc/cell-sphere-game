@@ -6,6 +6,7 @@ import { ENVIRONMENT_EXPOSURE_VERSION } from '../game/environment-exposure.js';
 import { challengeDimensions, ENVIRONMENT_PROFILE_VERSION } from '../simulation/challenge-profile.js';
 import { addProgressionIntegers, compareProgressionIntegers, incrementProgressionInteger,
   normalizeProgressionInteger } from '../core/progression-integer.js';
+import { EVOLUTION_CONTENT_HASH, EVOLUTION_LAYOUT_VERSION, evolutionArchetypeForCell } from '../game/skills/index.js';
 const MAX_BYTES = 700_000;
 /** Fixed semantic-world ceiling; byte trimming adapts the actual retained count. */
 const HISTORY_WORLD_RETENTION = 24;
@@ -13,9 +14,10 @@ const MAX_EVENTS = 80;
 const MAX_MEMORY_EVENTS = 128;
 const MAX_TROPHY_EVENTS = 128;
 const CELL_COUNT = 2562;
-export const EVOLUTION_HISTORY_VERSION = 2;
+export const EVOLUTION_HISTORY_VERSION = 3;
 
 export function defaultHistory() { return { schema: 10, evolutionVersion: EVOLUTION_HISTORY_VERSION,
+  evolutionLayoutVersion: EVOLUTION_LAYOUT_VERSION, evolutionContentHash: EVOLUTION_CONTENT_HASH,
   worlds: [], evolution: [], trophies: [] }; }
 function finiteInt(value, min = 0) { return Number.isFinite(value) && value >= min ? Math.floor(value) : null; }
 
@@ -162,7 +164,9 @@ function validatePressureSummary(raw, worldProfileVersion = 0) {
 export function validateHistory(raw) {
   const out = defaultHistory(); if (!raw || typeof raw !== 'object' || raw.schema !== out.schema) return out;
   if(Array.isArray(raw.worlds))out.worlds=raw.worlds.slice(-HISTORY_WORLD_RETENTION*2).map(validateWorld).filter(Boolean).slice(-HISTORY_WORLD_RETENTION);
-  const evolution=raw.evolutionVersion === EVOLUTION_HISTORY_VERSION && Array.isArray(raw.evolution) ? raw.evolution : [];
+  const evolution=raw.evolutionVersion === EVOLUTION_HISTORY_VERSION
+    && raw.evolutionLayoutVersion === EVOLUTION_LAYOUT_VERSION
+    && raw.evolutionContentHash === EVOLUTION_CONTENT_HASH && Array.isArray(raw.evolution) ? raw.evolution : [];
   out.evolution=evolution.slice(-MAX_MEMORY_EVENTS*2).map(validateEvolutionEvent).filter(Boolean).slice(-MAX_MEMORY_EVENTS);
   if(Array.isArray(raw.trophies))out.trophies=raw.trophies.slice(-MAX_TROPHY_EVENTS*2).map(validateTrophyEvent).filter(Boolean).slice(-MAX_TROPHY_EVENTS);
   return trimValidatedHistory(out).value;
@@ -242,7 +246,8 @@ export function appendTrophyEvents(history, ids, worldId = history.worlds.at(-1)
 }
 function validateEvolutionEvent(raw, index) {
   if (!raw || typeof raw !== 'object' || !Number.isInteger(raw.cell) || raw.cell < 0 || raw.cell >= CELL_COUNT
-    || typeof raw.archetypeId !== 'string' || !/^[a-z][a-z-]{1,63}$/.test(raw.archetypeId)) return null;
+    || typeof raw.archetypeId !== 'string' || !/^[a-z][a-z-]{1,63}$/.test(raw.archetypeId)
+    || evolutionArchetypeForCell(raw.cell)?.id !== raw.archetypeId) return null;
   const oldLocalLevel = normalizeProgressionInteger(raw.oldLocalLevel, '0');
   const newLocalLevel=normalizeProgressionInteger(raw.newLocalLevel,safeIncrement(oldLocalLevel));
   const oldAggregateRank = normalizeProgressionInteger(raw.oldAggregateRank, '0');
