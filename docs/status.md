@@ -6,7 +6,7 @@
 - A valid new canvas or 44 CSS px `Drag globe` proxy release may carry while a nonmodal detail stays open. Detail, exact selection/levels, native focus, purchase isolation, and the surface's automatic-orbit hold remain stable.
 - Pure gentle/medium/strong/faster/extreme travel is about `0.0324 / 0.1911 / 1.2182 / 2.2009 / 4.4051` turns. The `32 rad/s` trace rests naturally near `6.2 s`; a `0.05 rad/s` precision trace stays still.
 - Chrome 152 Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D pass direct transfer, open-detail carry, lifecycle/reduced-motion/accessibility/responsive gates, fixed six-sample storage, orthonormality, four WebGL draws, zero browser errors, and unchanged paused authority.
-- Simulation, World identity, SCORE, Evolution, persistence, renderer semantics, game speed, and balance are unchanged. Final verifier and exact-revision publication evidence remain pending while the package is active.
+- Simulation, World identity, SCORE, Evolution, persistence, renderer semantics, game speed, and balance are unchanged. One fresh verifier passes all 26 gates, including `234/234` unit and `76/76` integration tests; exact publication evidence belongs to the final implementation handoff.
 
 ## Evolution Ownership Boundary v1
 

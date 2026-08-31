@@ -1,6 +1,8 @@
 # Kinetic Sphere Fidelity v3
 
-Status: active implementation package.
+Status: terminal local implementation record. Exact publication evidence is
+reported in the final implementation handoff because a commit cannot contain
+its own revision or workflow receipt.
 
 ## Starting state
 
@@ -15,6 +17,10 @@ Status: active implementation package.
   `202609010214.md`. They are preserved byte-for-byte in place as user work and
   excluded from campaign commits. The final file is this campaign's transfer
   artifact; it is not a second planning authority.
+- Exact local excludes keep those supplied artifacts untracked without moving or
+  modifying them. Their SHA-256 values, in the order above, are `eff0075d…`,
+  `156fffda…`, `e7045394…`, `3531b5e8…`, `982175d8…`, `6a3c8bf9…`, and
+  `d9cebff9…`; total size is `403,961` bytes.
 - No local commit is ahead of upstream and no local-only camera controller,
   setting, timer, event path, or other attributable Terra residue exists.
   Recent upstream Evolution graph-cut, connected-region, substrate, exact-cell,
@@ -72,6 +78,9 @@ Status: active implementation package.
   native focus, and the compatibility click following that same globe gesture
   no longer cancels velocity established on pointerup. It remains one input
   proxy into the existing camera owner.
+- Reconciled the root/mirror contract, D37, current architecture, design,
+  rendering, testing, accessibility, performance, browser, interface, status,
+  and work-index documentation. Historical package evidence remains historical.
 
 ## Focused verification
 
@@ -145,6 +154,25 @@ Status: active implementation package.
   starting sample (`-1.22%`, below the `10%` investigation threshold). Authority
   hash `15863d52`, fixed-trace hash `e32ad0ff`, and bounded-profile validity are
   unchanged.
+- PASS — clean exact-revision `b261f264cb5e100e668a60c5825f6e2dc0f9fc18`
+  camera receipts report both working-tree flags false for Worker/WebGL2,
+  fallback/WebGL2, and fallback/Canvas 2D. Their ignored JSON SHA-256 values are
+  `0360b955…`, `0104c749…`, and `7245bae9…`; sizes are `90,895`, `90,893`, and
+  `90,999` bytes. Extreme carry spans `4.4050–4.4227` turns and
+  `6,146.9–6,194.8 ms`; open-detail canvas carry spans `1.0167–1.0181` turns and
+  every path ends surface-held. WebGL remains four draws and browser errors are
+  zero.
+- PASS — clean exact-revision shared-shell receipts have SHA-256 `4a6316cf…`,
+  `f7b30a65…`, and `63d8617b…`. Release speed spans `5.3074–5.3141 rad/s`, path
+  `0.7278–0.7288` turns, and duration `4,607.7–4,644.4 ms`; rest drift is zero.
+  All preserve selected cell `578`, levels `[{cell:2265,level:1}]`,
+  `memory-node`, and `memory-node-heading`, and pass eight `200%`-text viewports,
+  forced colors, reduced motion, keyboard navigation, native targets, and zero
+  browser errors.
+- PASS — one fresh `npm run verify` clears all `26/26` gates on stable content:
+  structure, identity, all audits/soaks, title showcase, `234/234` unit tests,
+  `76/76` integration tests, links, and a valid `12,196 ticks/s` benchmark with
+  authority hash `15863d52` and fixed-trace hash `e32ad0ff`.
 - FAILED (superseded development iteration) — the first post-cutover shared-
   shell run captured the correct `5.314068073 rad/s` vector on pointerup, then
   the browser compatibility click cancelled it and pointerdown moved focus.
@@ -159,5 +187,6 @@ Status: active implementation package.
 
 ## Exact next coherent step
 
-Reconcile current documentation, capture the stable same-host benchmark, and
-commit the browser/input closure before the fresh repository-wide verifier.
+Commit this terminal evidence-only delta, perform the single authorized normal
+push, and verify the exact remote ref, CI, Pages deployment, cache-busted bytes,
+and deployed trusted browser behavior. No further product work is selected.

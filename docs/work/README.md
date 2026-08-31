@@ -5,12 +5,15 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package:
-[`kinetic-sphere-fidelity-v3/`](kinetic-sphere-fidelity-v3/) — direct measured-
-vector camera release, natural damping, and open-detail release fidelity.
+Active work package: none.
 
 Completed packages remain as historical or current implementation evidence:
 
+- [`kinetic-sphere-fidelity-v3/`](kinetic-sphere-fidelity-v3/) — terminal local
+  implementation evidence for direct measured-vector camera release, natural
+  damping, multi-turn carry, and stable open-detail release through the shared
+  canvas/detail-shell input owner. Exact remote, CI, Pages, byte, and deployed-
+  browser closure belongs to the final implementation handoff.
 - [`evolution-ownership-boundary-v1/`](evolution-ownership-boundary-v1/) —
   terminal evidence for the exact owned/unowned graph-cut perimeter, separate
   subordinate reachability, transient recovery, WebGL2/Canvas parity, retained
