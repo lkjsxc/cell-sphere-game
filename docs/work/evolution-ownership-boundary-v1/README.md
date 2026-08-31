@@ -117,11 +117,13 @@ simulation, pass-count, or byte-width change is permitted.
   `0.527520/0.263291/0.292536`, and
   `0.512367/0.273321/0.292536`. Interior dynamic signal is zero in every case;
   selected is strongest locally and every recent difference exceeds the margin.
-- Same-host p95 entry/snapshot/update/steady results are Worker/WebGL2
-  `16.2/0.8/1.7/1.2 ms`, fallback/WebGL2 `19.1/0.6/1.7/1.1 ms`, and repeated
-  fallback/Canvas ranges `5.5–7.6/0.4–3.4/1.7–2.7/2.3 ms`. The short Canvas
-  samples vary relative to baseline but do not reproduce a material steady
-  regression; all paths retain stable cached identities and zero steady updates.
+- Exact-commit p95 entry/snapshot/update/steady results are Worker/WebGL2
+  `17.9/0.5/1.3/1.2 ms`, fallback/WebGL2 `17.9/0.7/1.8/1.6 ms`, and
+  fallback/Canvas `5.1/0.4/1.7/1.6 ms`. A first exact fallback/WebGL2 run
+  measured a `3.7 ms` steady p95; it did not reproduce in the immediate serial
+  repeat or the pre-commit run (`1.6` and `1.1 ms`) and is retained as a host
+  outlier rather than a pass-sized-away result. Every run kept cached identities
+  stable and produced zero steady edge updates.
 - Detail-shell evidence remains selection `578`, direction travel `0.420832`
   radians, distance `5.5 -> 5.94 -> 1.7`, retained overlay and levels through
   drag/wheel/pinch/tap, and one subsequent native purchase. Context loss retains
@@ -131,19 +133,30 @@ simulation, pass-count, or byte-width change is permitted.
   `reports/evolution-ownership-boundary-v1-final-worker-webgl2.json`,
   `reports/evolution-ownership-boundary-v1-final-fallback-webgl2.json`, and
   `reports/evolution-ownership-boundary-v1-final-fallback-canvas2d.json`.
-  These working-tree receipts still name the starting revision and must be
-  regenerated against the coherent implementation commit before final use.
+  They name source and harness revision
+  `909cc2d1575a9487d7c8b3c6b38e55c26a216c18`; their dirty flag is explained
+  only by the six preserved untracked transfer files. SHA-256 is respectively
+  `04c06770045fb04bc16971ae81b1fe86a1a3b738a055489e851b272c7e8f41bb`,
+  `a8207bd4da04ca0c102985b826d3dfbd334258f7558327f7d9fcf12b5f60dbad`,
+  and `5bc317d6acd06af0ac561e1a67fb31271d0078e9a31528d572cf488c149fd5fb`.
+- The first clean `npm run verify` at `909cc2d` passed 25 of 26 gates: 233 unit
+  and 76 integration tests plus every audit, structure, link, balance, terminal,
+  and benchmark gate passed. `showcase:check` alone failed because its broad
+  source identity includes `src/game/skills/scene.js`; generated lifecycle bytes
+  and data hash `608dec09…` were unchanged. This is a failed full run, not a pass.
+  The checked-in generated source identity was refreshed for the next revision.
 
 ## Evidence not obtained or not yet final
 
-- Exact-commit browser receipts, complete verification, CI, Pages,
-  cache-busted deployed-byte, and deployed-browser evidence await the coherent
-  implementation revision.
+- Complete verification on the refreshed generated identity, CI, Pages,
+  cache-busted deployed-byte, and deployed-browser evidence remain pending.
 - Physical-device, real screen-reader, high-refresh, thermal, and hardware
   safe-area evidence are unavailable in this environment.
 
 ## Exact next coherent step
 
-Run the focused source gates once more after documentation reconciliation,
-review and commit the coherent implementation, then regenerate all three
-browser receipts against that exact revision before complete verification.
+Commit the refreshed title-showcase source identity and evidence reconciliation,
+then run the complete suite from that exact clean revision. Regenerate the three
+browser receipts only if runtime content changes; otherwise carry their exact
+implementation-revision proof forward and use CI/deployed browser for the final
+published revision.
