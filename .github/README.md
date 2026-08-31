@@ -40,6 +40,9 @@ supported layout and zoom. A valid release carries the measured angular velocity
 through one progressive bounded response: a deliberate fast flick carries about
 one additional turn, medium input carries less, and slow inspection stops on
 release. Elapsed-time damping and a hard lifetime always bring inertia to rest.
+When a detail shell is open, its 44 CSS px **Drag globe** strip relays drag,
+pinch, and wheel input to that same camera without selecting, purchasing, or
+dismissing a cell.
 Home or World begins a
 separate calm idle orbit only after inactivity. Reduced motion removes inertia
 and automatic orbit. Responsive framing derives the globe's distance from its

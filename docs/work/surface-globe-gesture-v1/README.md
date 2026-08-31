@@ -79,9 +79,13 @@ surface still suppresses release inertia as required by the camera policy.
   `reports/evolution-ability-regions-v1-final-fallback-canvas2d.json` (`29,456`
   bytes; SHA-256
   `9259cb08b1321a913cc1d0213efa285276ab51bcd495555ff7e38752a26fc0a4`).
-- PASS — `git diff --check`. `npm run check:structure` is deferred to a clean
-  verification worktree because the active checkout intentionally preserves five
-  untracked user transfer artifacts that exceed its document line cap.
+- PASS — `git diff --check`.
+- FAILED, not a pass — fresh `npm run verify` at
+  `f987efacac321cb974c128e55415b9fd4ceb69ca` passed its other `25/27` gates but
+  `check:structure` and `audit:identity` rejected the missing mirror update in
+  `.github/README.md`. The implementation, unit/integration, audits, agent
+  smoke, balance smoke, benchmark, and links gates all passed. This documented
+  mirror correction is the sole follow-up.
 
 ## Failed iteration
 
@@ -92,6 +96,6 @@ the failure is not counted as a pass.
 
 ## Exact next step
 
-Run integration and complete verification from a clean worktree at the coherent
-implementation commit. If those pass, mark this package terminal in a final
+Commit the README mirror correction, then rerun fresh complete verification from
+a clean worktree. If that passes, mark this package terminal in a final
 documentation-only commit; no push is authorized for this request.
