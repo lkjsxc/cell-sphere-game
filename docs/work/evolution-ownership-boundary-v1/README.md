@@ -86,6 +86,10 @@ simulation, pass-count, or byte-width change is permitted.
   fallback, the eight maintained 200%-text viewports, 44 CSS px controls,
   bounded scroll/DOM, four WebGL draws, stable layout/geometry identities, and
   zero unchanged-frame edge updates.
+- Milestone 4 local closure: current documentation and D36 supersede the live
+  overloaded-edge claims, the title-showcase source identity is current with
+  byte-identical lifecycle data, and the clean exact revision passes the full
+  repository gate. Publication and terminal package closure remain pending.
 
 ## Implementation and measured evidence
 
@@ -117,9 +121,9 @@ simulation, pass-count, or byte-width change is permitted.
   `0.527520/0.263291/0.292536`, and
   `0.512367/0.273321/0.292536`. Interior dynamic signal is zero in every case;
   selected is strongest locally and every recent difference exceeds the margin.
-- Exact-commit p95 entry/snapshot/update/steady results are Worker/WebGL2
-  `17.9/0.5/1.3/1.2 ms`, fallback/WebGL2 `17.9/0.7/1.8/1.6 ms`, and
-  fallback/Canvas `5.1/0.4/1.7/1.6 ms`. A first exact fallback/WebGL2 run
+- Final local p95 entry/snapshot/update/steady results are Worker/WebGL2
+  `15.5/0.5/1.5/1.6 ms`, fallback/WebGL2 `14.3/0.6/1.3/1.1 ms`, and
+  fallback/Canvas `5.3/0.7/2.1/1.7 ms`. A first exact fallback/WebGL2 run
   measured a `3.7 ms` steady p95; it did not reproduce in the immediate serial
   repeat or the pre-commit run (`1.6` and `1.1 ms`) and is retained as a host
   outlier rather than a pass-sized-away result. Every run kept cached identities
@@ -134,29 +138,38 @@ simulation, pass-count, or byte-width change is permitted.
   `reports/evolution-ownership-boundary-v1-final-fallback-webgl2.json`, and
   `reports/evolution-ownership-boundary-v1-final-fallback-canvas2d.json`.
   They name source and harness revision
-  `909cc2d1575a9487d7c8b3c6b38e55c26a216c18`; their dirty flag is explained
+  `7bee78c86b7db909f5865b60ecc3967b5f96cab1`; their dirty flag is explained
   only by the six preserved untracked transfer files. SHA-256 is respectively
-  `04c06770045fb04bc16971ae81b1fe86a1a3b738a055489e851b272c7e8f41bb`,
-  `a8207bd4da04ca0c102985b826d3dfbd334258f7558327f7d9fcf12b5f60dbad`,
-  and `5bc317d6acd06af0ac561e1a67fb31271d0078e9a31528d572cf488c149fd5fb`.
+  `0bfe57479b19c8ae4b1dcaad4a332f78eae9a55fabb8dc835a5c9a92d133a060`,
+  `5c5ca9277df69c454bf8a739379c6fa60f9194c96398d2cb65059131a8c0a549`,
+  and `5074919edec311a47d659e4ba380600f92aa93bd648c1f90c06ecd074ddbecc0`.
 - The first clean `npm run verify` at `909cc2d` passed 25 of 26 gates: 233 unit
   and 76 integration tests plus every audit, structure, link, balance, terminal,
   and benchmark gate passed. `showcase:check` alone failed because its broad
   source identity includes `src/game/skills/scene.js`; generated lifecycle bytes
   and data hash `608dec09…` were unchanged. This is a failed full run, not a pass.
   The checked-in generated source identity was refreshed for the next revision.
+- Clean revision `7bee78c86b7db909f5865b60ecc3967b5f96cab1` passes all 26
+  `npm run verify` gates: 233 unit tests, 76 integration tests, structure, links,
+  showcase identity, every authority/audit cohort, balance smoke, terminal soak,
+  and benchmark. Benchmark measured `10,877 ticks/s` against the `3,000`
+  minimum with unchanged hash `15863d52`.
+- Focused iteration also passed 29 edge/renderer unit tests, six skill-globe
+  integration tests, `check:links` (`144` modules, `11` HTML references), README
+  mirror equality, and `git diff --check`. Active-workspace `check:structure`
+  remains failed only by the six preserved untracked transfer artifacts; the
+  clean exact-revision structure gate passes.
 
 ## Evidence not obtained or not yet final
 
-- Complete verification on the refreshed generated identity, CI, Pages,
-  cache-busted deployed-byte, and deployed-browser evidence remain pending.
+- CI, Pages, cache-busted deployed-byte, and deployed-browser evidence remain
+  pending publication.
 - Physical-device, real screen-reader, high-refresh, thermal, and hardware
   safe-area evidence are unavailable in this environment.
 
 ## Exact next coherent step
 
-Commit the refreshed title-showcase source identity and evidence reconciliation,
-then run the complete suite from that exact clean revision. Regenerate the three
-browser receipts only if runtime content changes; otherwise carry their exact
-implementation-revision proof forward and use CI/deployed browser for the final
-published revision.
+Commit this local evidence record, fetch and confirm non-divergence, then perform
+the authorized normal push. Verify the exact remote revision, `verify` workflow,
+Pages deployment, cache-busted changed bytes, and all three deployed browser
+paths before marking this package terminal.

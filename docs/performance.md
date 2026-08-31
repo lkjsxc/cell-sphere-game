@@ -92,13 +92,14 @@ reachability inside the existing boundary pass, increasing WebGL static geometry
 from `1,838,196` to `1,961,076` bytes (`+122,880`, `+6.68%`); Canvas remains
 `133,132` static and `130,560` dynamic bytes. Exact-commit Chrome 152 p95
 entry/snapshot/update/steady measurements are Worker/WebGL2
-`17.9/0.5/1.3/1.2 ms`, fallback/WebGL2 `17.9/0.7/1.8/1.6 ms`, and
-fallback/Canvas `5.1/0.4/1.7/1.6 ms`. Compared with the starting measurements
+`15.5/0.5/1.5/1.6 ms`, fallback/WebGL2 `14.3/0.6/1.3/1.1 ms`, and
+fallback/Canvas `5.3/0.7/2.1/1.7 ms`. Compared with the starting measurements
 `18.0/0.7/2.0/1.6`, `21.7/0.6/1.8/1.6`, and `5.3/0.4/1.8/1.8 ms`, no stable
-material regression remains. One first exact fallback/WebGL2 sample measured
-`21.4/0.7/1.9/3.7 ms`; its steady outlier did not reproduce in the immediate
-serial repeat or the pre-commit run (`1.6` and `1.1 ms`). Layout/geometry
-identities remain stable and unchanged frames rebuild zero edge bytes.
+material render regression remains; the small Canvas projection/update deltas
+are sub-millisecond. One earlier fallback/WebGL2 sample measured
+`21.4/0.7/1.9/3.7 ms`; its steady outlier did not reproduce in later exact runs
+(`1.6` and `1.1 ms`) or the pre-commit run (`1.1 ms`). Layout/geometry identities
+remain stable and unchanged frames rebuild zero edge bytes.
 
 The atmosphere silhouette cutover's same-host Chrome 152 median-of-three
 synchronized costs are baseline to fixed shell: steady p50 `0.800 -> 0.900 ms`,
