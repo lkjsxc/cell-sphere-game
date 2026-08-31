@@ -53,6 +53,14 @@ Status: active implementation package.
 - Classified all starting differences without deleting or rewriting user work.
 - Captured the predecessor pure traces, trusted Worker/WebGL2 camera receipt,
   focused Evolution detail-shell receipt, and same-host benchmark.
+- Cut the sole production camera-motion owner over to the `0.08 rad/s`
+  inclusive threshold, exact measured-vector transfer, natural damping, and
+  surface-active inertia. Deleted D30's mapper, input knee, output cap,
+  mapped-speed duplicate, fixed lifetime, release veto, and frame-advance veto.
+- Replaced predecessor pure assertions with exact vector identity, controlled
+  precision-through-extreme classes, analytic/cadence/delay agreement, natural
+  multi-turn rest, bounded debt/storage, lifecycle cancellation, and open-
+  surface rest-state evidence. D37 explicitly supersedes D30.
 
 ## Focused verification
 
@@ -85,6 +93,22 @@ Status: active implementation package.
 - FAILED (environment start) — the first cached-Chrome launch lacked its cached
   runtime library path and never reached the app. The configured rerun above
   supersedes it for camera evidence.
+- PASS — current focused camera/state command: `25/25`. Exact component
+  identity error is at most `1e-12` through `32 rad/s`; sample high-water is
+  six; the open-surface pure trace advances inertia and naturally returns to
+  `held` without automatic orbit.
+- PASS — controlled 60 Hz current travel/duration is: precision `0/0`, gentle
+  `0.032399984 turns / 2,033.33 ms`, medium `0.191055982 / 3,500 ms`, strong
+  `1.218152397 / 5,083.33 ms`, faster `2.200858592 / 5,600 ms`, and extreme
+  `4.405134245 / 6,200 ms`. Measured and stored speeds are identical at
+  `0.26 / 1.411559421 / 8.867073925 / 16 / 32 rad/s`; precision measures
+  `0.05` and stores zero.
+- PASS — 30/60/120/144 Hz current travel spans respectively: gentle
+  `0.032377967–0.032399984`, medium `0.191022989–0.191055982`, strong
+  `1.218152397–1.218217994`, faster `2.200847609–2.200858592`, and extreme
+  `4.405112244–4.405134245` turns. Durations stay within one 30 Hz frame of the
+  analytic reference. Medium observation delays `0/150/350 ms` preserve the
+  exact vector, `0.191055982` turns, and `3,500 ms` duration.
 
 ## Evidence not obtained
 
@@ -94,4 +118,5 @@ Status: active implementation package.
 
 ## Exact next coherent step
 
-Cut over the single camera-motion owner and replace the D30-focused pure tests.
+Replace the D30 browser oracle and prove trusted canvas and shared-shell release
+through the maintained Worker/fallback and WebGL2/Canvas paths.

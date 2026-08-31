@@ -1,4 +1,4 @@
-/** Presentation motion is progressively bounded, frame-rate independent, and outside authority. */
+/** Presentation motion is faithful, naturally damped, constant-space, and outside authority. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createCamera, rotate } from '../../../src/rendering/camera.js';
@@ -10,7 +10,6 @@ import {
   cameraMotionSnapshot,
   createCameraMotion,
   endCameraDrag,
-  mapCameraReleaseSpeed,
   recordCameraDrag,
   resetCameraMotion,
   setCameraMotionHidden,
@@ -27,55 +26,53 @@ import {
 const TRACE = Object.freeze({
   strong: Object.freeze({ steps: 5, intervalMs: 16, dragX: 0.66 / 5, dragY: 0.26 / 5 }),
   medium: Object.freeze({ steps: 5, intervalMs: 20, dragX: 0.13 / 5, dragY: 0.055 / 5 }),
-  slow: Object.freeze({ steps: 12, intervalMs: 20, dragX: 0.005, dragY: 0.002 }),
+  gentle: Object.freeze({ steps: 12, intervalMs: 20, dragX: 0.005, dragY: 0.002 }),
   precision: Object.freeze({ steps: 12, intervalMs: 100, dragX: 0.005, dragY: 0.002 }),
-  extreme: Object.freeze({ steps: 5, intervalMs: 16, dragX: 200, dragY: -80 }),
+});
+const CONTROLLED_SPEEDS = Object.freeze({
+  precision: 0.05,
+  threshold: 0.08,
+  gentle: 0.26,
+  medium: 1.411559421,
+  strong: 8.867073925,
+  faster: 16,
+  extreme: 32,
 });
 
-test('progressive release response is finite, monotone, thresholded, directional, and saturated', () => {
+test('valid measured release vectors transfer directly without amplification or saturation', () => {
   assert.deepEqual(CAMERA_MOTION_DEFAULTS, {
-    sampleCapacity: 6, sampleWindowMs: 120, releaseThreshold: 0.3,
-    fullFlingInputSpeed: 2.2, maximumAngularSpeed: 8,
-    dampingHalfLifeMs: 600, stopSpeed: 0.025, maximumInertiaMs: 5000, idleDelayMs: 4500,
+    sampleCapacity: 6, sampleWindowMs: 120, releaseThreshold: 0.08,
+    dampingHalfLifeMs: 600, stopSpeed: 0.025, idleDelayMs: 4500,
     idleOrbitSpeed: 0.022, maximumFrameMs: 100,
   });
-
-  for (const value of [-1, 0, 0.3, 0.31, NaN, Infinity, -Infinity]) {
-    assert.equal(mapCameraReleaseSpeed(value), 0);
+  for (const speed of [CONTROLLED_SPEEDS.threshold, 0.4, 1, 2, 4, 8, 16, 32]) {
+    const outcome = releaseAtSpeed(speed);
+    assert.equal(outcome.entered, true);
+    assert.ok(Math.abs(outcome.release.velocityX - speed * 0.8) <= 1e-12, `${speed} x transfer`);
+    assert.ok(Math.abs(outcome.release.velocityY + speed * 0.6) <= 1e-12, `${speed} y transfer`);
+    assert.ok(Math.abs(outcome.release.releaseSpeed - speed) <= 1e-12, `${speed} magnitude`);
+    assert.ok(Math.abs(outcome.release.speed - speed) <= 1e-12, `${speed} stored speed`);
   }
-  let previous = 0;
-  for (let rawSpeed = 0; rawSpeed <= 4; rawSpeed += 0.01) {
-    const mapped = mapCameraReleaseSpeed(rawSpeed);
-    assert.ok(Number.isFinite(mapped)); assert.ok(mapped >= previous - 1e-14);
-    assert.ok(mapped <= CAMERA_MOTION_DEFAULTS.maximumAngularSpeed); previous = mapped;
-  }
-  assert.equal(mapCameraReleaseSpeed(2.2), 8);
-  assert.equal(mapCameraReleaseSpeed(Number.MAX_VALUE), 8);
-
-  const outcome = releaseAtSpeed(1.4);
-  assert.equal(outcome.entered, true); assert.ok(Math.abs(outcome.release.rawReleaseSpeed - 1.4) <= 1e-12);
-  assert.ok(outcome.release.mappedReleaseSpeed > outcome.release.rawReleaseSpeed);
-  const rawDirection = normalize([0.8, -0.6]);
-  const mappedDirection = normalize([outcome.release.velocityX, outcome.release.velocityY]);
-  assert.ok(Math.abs(dot(rawDirection, mappedDirection) - 1) < 1e-12);
+  const lower = releaseAtSpeed(8).release; const higher = releaseAtSpeed(16).release;
+  assert.ok(Math.abs(higher.speed - lower.speed * 2) <= 1e-12);
+  assert.ok(Math.abs(higher.velocityX - lower.velocityX * 2) <= 1e-12);
+  assert.ok(Math.abs(higher.velocityY - lower.velocityY * 2) <= 1e-12);
 });
 
-test('release sampling stays recent, finite, fixed-capacity, and progressively bounded', () => {
+test('release sampling stays recent, finite, and fixed-capacity', () => {
   const state = createCameraMotion({ now: 0, scene: 'world' }); beginCameraDrag(state, 0);
   for (let index = 1; index <= 20; index++) recordCameraDrag(state, 0.08, -0.04, index * 10);
   const sampled = cameraMotionSnapshot(state);
   assert.equal(sampled.sampleCount, 6); assert.equal(sampled.sampleHighWater, 6);
   assert.equal(endCameraDrag(state, 200, 'drag'), true);
   const release = cameraMotionSnapshot(state);
-  assert.equal(release.mode, 'inertia'); assert.ok(release.rawReleaseSpeed > release.mappedReleaseSpeed);
-  assert.equal(release.speed, release.mappedReleaseSpeed);
-  assert.ok(release.mappedReleaseSpeed <= CAMERA_MOTION_DEFAULTS.maximumAngularSpeed);
+  assert.equal(release.mode, 'inertia'); assert.equal(release.speed, release.releaseSpeed);
   assert.ok(Number.isFinite(release.velocityX) && Number.isFinite(release.velocityY));
 
   const stale = createCameraMotion({ now: 0, scene: 'world' }); beginCameraDrag(stale, 0);
   recordCameraDrag(stale, 1, 0, 500); assert.equal(endCameraDrag(stale, 500, 'drag'), false,
     'one movement after a long hold must not use the gesture start as a velocity sample');
-  assert.equal(cameraMotionSnapshot(stale).rawReleaseSpeed, 0);
+  assert.equal(cameraMotionSnapshot(stale).releaseSpeed, 0);
 
   const malformed = createCameraMotion({ now: 0, scene: 'world' }); beginCameraDrag(malformed, 0);
   assert.equal(recordCameraDrag(malformed, .2, 0, 10), true);
@@ -99,66 +96,80 @@ test('release sampling stays recent, finite, fixed-capacity, and progressively b
   assert.doesNotThrow(() => advanceCameraMotion(malformed, createCamera(), Infinity, NaN));
 });
 
-test('strong, medium, slow, and precision traces occupy distinct cumulative release classes', () => {
-  for (const speed of [0, 0.3, 0.31, NaN, Infinity, -Infinity]) {
+test('precision, gentle, medium, strong, faster, and extreme releases remain distinct', () => {
+  for (const speed of [0, CONTROLLED_SPEEDS.threshold - 1e-6, NaN, Infinity, -Infinity]) {
     const state = createCameraMotion({ now: 0, scene: 'world' }); beginCameraDrag(state, 0);
     if (Number.isFinite(speed)) recordCameraDrag(state, speed * 0.1, 0, 100);
     assert.equal(endCameraDrag(state, 100, 'drag'), false, String(speed));
   }
 
-  const strong = integrateTrace(TRACE.strong, 60);
-  assert.equal(strong.entered, true); assert.ok(strong.release.rawReleaseSpeed > 8.8);
-  assert.equal(strong.release.mappedReleaseSpeed, 8);
-  assert.ok(strong.turns >= 0.9 && strong.turns <= 1.25, `strong travel ${strong.turns} turns`);
-  assert.ok(strong.durationMs <= 5100); assert.equal(strong.final.speed, 0);
-  const medium = integrateTrace(TRACE.medium, 60);
-  assert.equal(medium.entered, true);
-  assert.ok(medium.release.rawReleaseSpeed >= 1.1 && medium.release.rawReleaseSpeed <= 1.5);
-  assert.ok(medium.release.mappedReleaseSpeed > medium.release.rawReleaseSpeed);
-  assert.ok(medium.turns >= 0.18 && medium.turns <= 0.5, `medium travel ${medium.turns} turns`);
-  assert.ok(medium.turns < strong.turns);
+  const outcomes = Object.fromEntries(Object.entries(CONTROLLED_SPEEDS)
+    .map(([name, speed]) => [name, integrateSpeed(speed, 60)]));
+  assert.equal(outcomes.precision.entered, false);
+  assert.ok(Math.abs(outcomes.precision.release.releaseSpeed - CONTROLLED_SPEEDS.precision) <= 1e-12);
+  assert.equal(outcomes.precision.turns, 0); assert.equal(outcomes.precision.durationMs, 0);
+  for (const name of ['threshold', 'gentle', 'medium', 'strong', 'faster', 'extreme']) {
+    assert.equal(outcomes[name].entered, true, name);
+    assert.ok(Math.abs(outcomes[name].release.releaseSpeed - CONTROLLED_SPEEDS[name]) <= 1e-12, name);
+    assert.ok(Math.abs(outcomes[name].release.speed - CONTROLLED_SPEEDS[name]) <= 1e-12, name);
+    assert.equal(outcomes[name].final.mode, 'idle-wait'); assert.equal(outcomes[name].final.speed, 0);
+  }
+  assert.ok(outcomes.gentle.turns >= 0.03 && outcomes.gentle.turns <= 0.04);
+  assert.ok(outcomes.medium.turns >= 0.18 && outcomes.medium.turns <= 0.21);
+  assert.ok(outcomes.strong.turns >= 1.20 && outcomes.strong.turns <= 1.23);
+  assert.ok(outcomes.faster.turns > 2 && outcomes.extreme.turns > 4.35);
+  const carried = ['threshold', 'gentle', 'medium', 'strong', 'faster', 'extreme'];
+  for (let index = 1; index < carried.length; index++) {
+    assert.ok(outcomes[carried[index]].turns > outcomes[carried[index - 1]].turns);
+    assert.ok(outcomes[carried[index]].durationMs > outcomes[carried[index - 1]].durationMs);
+  }
 
-  const slow = integrateTrace(TRACE.slow, 60);
-  assert.equal(slow.entered, false); assert.ok(slow.directTravel > 0);
-  assert.ok(slow.release.rawReleaseSpeed > 0.25
-    && slow.release.rawReleaseSpeed < CAMERA_MOTION_DEFAULTS.releaseThreshold);
-  assert.equal(slow.release.mappedReleaseSpeed, 0); assert.equal(slow.travelRadians, 0);
-  assert.equal(slow.durationMs, 0); assert.equal(slow.final.mode, 'idle-wait');
-  assert.ok(slow.final.idleUntil > slow.releaseAt);
-
-  const precision = integrateTrace(TRACE.precision, 60);
-  assert.equal(precision.entered, false); assert.ok(precision.directTravel > 0);
-  assert.ok(precision.release.rawReleaseSpeed > 0
-    && precision.release.rawReleaseSpeed < CAMERA_MOTION_DEFAULTS.releaseThreshold);
-  assert.equal(precision.release.mappedReleaseSpeed, 0);
-  assert.equal(precision.travelRadians, 0); assert.equal(precision.durationMs, 0);
-  assert.equal(precision.final.mode, 'idle-wait'); assert.ok(precision.final.idleUntil > precision.releaseAt);
+  const gentleTrace = integrateTrace(TRACE.gentle, 60);
+  assert.equal(gentleTrace.entered, true); assert.ok(gentleTrace.directTravel > 0);
+  assert.ok(gentleTrace.release.releaseSpeed > 0.25 && gentleTrace.release.releaseSpeed < 0.28);
+  const precisionTrace = integrateTrace(TRACE.precision, 60);
+  assert.equal(precisionTrace.entered, false); assert.ok(precisionTrace.directTravel > 0);
+  assert.ok(precisionTrace.release.releaseSpeed > 0
+    && precisionTrace.release.releaseSpeed < CAMERA_MOTION_DEFAULTS.releaseThreshold);
+  assert.equal(precisionTrace.travelRadians, 0); assert.equal(precisionTrace.durationMs, 0);
 });
 
-test('extreme finite releases stay inside absolute speed, path, and lifetime bounds', () => {
-  const outcome = integrateTrace(TRACE.extreme, 30);
-  assert.equal(outcome.entered, true);
-  assert.ok(outcome.release.mappedReleaseSpeed <= CAMERA_MOTION_DEFAULTS.maximumAngularSpeed
-    && outcome.release.mappedReleaseSpeed > CAMERA_MOTION_DEFAULTS.maximumAngularSpeed - 1e-12);
-  assert.ok(outcome.turns <= 1.35, `extreme travel ${outcome.turns} turns`);
-  assert.ok(outcome.durationMs <= 5100); assert.equal(outcome.final.mode, 'idle-wait');
-  assert.ok(outcome.basisError < 1e-12);
-  for (const vector of [outcome.camera.direction, outcome.camera.right, outcome.camera.up]) {
+test('fast finite releases exceed predecessor turn and lifetime bounds, then rest naturally', () => {
+  const strong = integrateSpeed(CONTROLLED_SPEEDS.strong, 60);
+  assert.equal(strong.afterFiveSeconds.mode, 'inertia');
+  assert.ok(strong.afterFiveSeconds.speed > CAMERA_MOTION_DEFAULTS.stopSpeed);
+  const faster = integrateSpeed(CONTROLLED_SPEEDS.faster, 60);
+  assert.ok(faster.turns > 2 && faster.durationMs > 5000);
+  const extreme = integrateSpeed(CONTROLLED_SPEEDS.extreme, 30);
+  assert.equal(extreme.afterFiveSeconds.mode, 'inertia');
+  assert.ok(extreme.afterFiveSeconds.speed > CAMERA_MOTION_DEFAULTS.stopSpeed);
+  assert.ok(Math.abs(extreme.durationMs - 6193.16) <= 1000 / 30 + 25, `duration ${extreme.durationMs}`);
+  assert.ok(Math.abs(extreme.turns - 4.40511) / 4.40511 <= 0.005, `travel ${extreme.turns}`);
+  assert.equal(extreme.final.mode, 'idle-wait'); assert.ok(extreme.basisError < 1e-12);
+  for (const vector of [extreme.camera.direction, extreme.camera.right, extreme.camera.up]) {
     assert.ok(vector.every(Number.isFinite));
   }
 });
 
-test('strong and medium damping agrees across 30, 60, 120, and 144 Hz', () => {
-  for (const trace of [TRACE.strong, TRACE.medium]) {
-    const outcomes = [30, 60, 120, 144].map((hz) => integrateTrace(trace, hz)); const reference = outcomes[1];
+test('natural damping agrees with its analytic reference across 30, 60, 120, and 144 Hz', () => {
+  for (const speed of [CONTROLLED_SPEEDS.gentle, CONTROLLED_SPEEDS.medium,
+    CONTROLLED_SPEEDS.strong, CONTROLLED_SPEEDS.faster, CONTROLLED_SPEEDS.extreme]) {
+    const outcomes = [30, 60, 120, 144].map((hz) => integrateSpeed(speed, hz)); const reference = outcomes[1];
+    const dampingPerMs = Math.log(2) / CAMERA_MOTION_DEFAULTS.dampingHalfLifeMs;
+    const referenceTurns = ((speed - CAMERA_MOTION_DEFAULTS.stopSpeed) / dampingPerMs / 1000) / (2 * Math.PI);
+    const referenceDuration = Math.log(speed / CAMERA_MOTION_DEFAULTS.stopSpeed) / dampingPerMs;
     for (const outcome of outcomes) {
       assert.ok(Math.abs(outcome.turns - reference.turns) / reference.turns <= 0.005,
-        `travel drift at ${outcome.hz} Hz`);
+        `travel drift at ${speed} rad/s and ${outcome.hz} Hz`);
+      assert.ok(Math.abs(outcome.turns - referenceTurns) / referenceTurns <= 0.005,
+        `analytic travel drift at ${speed} rad/s and ${outcome.hz} Hz`);
       assert.ok(Math.abs(outcome.durationMs - reference.durationMs) <= 1000 / 30 + 25,
-        `duration drift at ${outcome.hz} Hz`);
+        `duration drift at ${speed} rad/s and ${outcome.hz} Hz`);
+      assert.ok(Math.abs(outcome.durationMs - referenceDuration) <= 1000 / 30 + 25,
+        `analytic duration drift at ${speed} rad/s and ${outcome.hz} Hz`);
       for (const name of ['direction', 'right', 'up']) {
         const degrees = vectorAngle(outcome.camera[name], reference.camera[name]) * 180 / Math.PI;
-        assert.ok(degrees <= 1, `${name} drift at ${outcome.hz} Hz: ${degrees} degrees`);
+        assert.ok(degrees <= 1, `${name} drift at ${speed} rad/s and ${outcome.hz} Hz: ${degrees} degrees`);
       }
     }
   }
@@ -178,27 +189,29 @@ test('visible foreground elapsed debt drains through bounded integration slices'
   setCameraMotionHidden(outcome.state, true, 400);
   assert.equal(cameraMotionSnapshot(outcome.state).inertiaDebtMs, 0);
 
-  const bounded = releaseAtSpeed(32); const boundedCamera = createCamera();
-  assert.equal(advanceCameraMotion(bounded.state, boundedCamera, 10_000, 10_100), true);
-  for (let slice = 0; slice < 60 && cameraMotionSnapshot(bounded.state).mode === 'inertia'; slice++) {
-    advanceCameraMotion(bounded.state, boundedCamera, 0, 10_100);
+  const natural = releaseAtSpeed(32); const naturalCamera = createCamera();
+  assert.equal(advanceCameraMotion(natural.state, naturalCamera, 10_000, 10_100), true);
+  for (let slice = 0; slice < 100 && cameraMotionSnapshot(natural.state).mode === 'inertia'; slice++) {
+    advanceCameraMotion(natural.state, naturalCamera, 0, 10_100);
   }
-  assert.equal(cameraMotionSnapshot(bounded.state).mode, 'idle-wait');
-  assert.equal(cameraMotionSnapshot(bounded.state).inertiaDebtMs, 0);
+  assert.equal(cameraMotionSnapshot(natural.state).mode, 'idle-wait');
+  assert.equal(cameraMotionSnapshot(natural.state).inertiaDebtMs, 0);
 });
 
-test('queued handler observation preserves release class, path, and fresh idle deadline', () => {
+test('queued handler observation preserves release vector, path, duration, and fresh idle deadline', () => {
   const outcomes = [0, 150, 350].map((delay) => integrateTrace(TRACE.medium, 60, delay)); const reference = outcomes[0];
   for (const [index, outcome] of outcomes.entries()) {
     const delay = [0, 150, 350][index];
-    assert.ok(Math.abs(outcome.release.rawReleaseSpeed - reference.release.rawReleaseSpeed) <= 1e-12);
-    assert.ok(Math.abs(outcome.release.mappedReleaseSpeed - reference.release.mappedReleaseSpeed) <= 1e-12);
+    assert.ok(Math.abs(outcome.release.releaseSpeed - reference.release.releaseSpeed) <= 1e-12);
+    assert.ok(Math.abs(outcome.release.velocityX - reference.release.velocityX) <= 1e-12);
+    assert.ok(Math.abs(outcome.release.velocityY - reference.release.velocityY) <= 1e-12);
     assert.ok(Math.abs(outcome.turns - reference.turns) / reference.turns <= 0.005);
+    assert.ok(Math.abs(outcome.durationMs - reference.durationMs) <= 1000 / 60 + 1);
     assert.equal(outcome.release.idleUntil, outcome.releaseAt + delay + 4500);
   }
 });
 
-test('tap, pinch, cancellation, reduced motion, and lifecycle holds clear release motion', () => {
+test('tap, pinch, cancellation, reduced motion, and lifecycle transitions clear prior release motion', () => {
   for (const kind of ['tap', 'pinch', 'cancel']) {
     const state = preparedState(TRACE.strong); assert.equal(endCameraDrag(state, releaseAt(TRACE.strong), kind), false);
     assert.notEqual(cameraMotionSnapshot(state).mode, 'inertia'); assert.equal(cameraMotionSnapshot(state).speed, 0);
@@ -229,6 +242,34 @@ test('tap, pinch, cancellation, reduced motion, and lifecycle holds clear releas
   const replaced = integrateTrace(TRACE.strong, 60, 0, 2); resetCameraMotion(replaced.state, 200, 'world');
   const replacedDirection = replaced.camera.direction.slice(); advanceCameraMotion(replaced.state, replaced.camera, 100, 300);
   assert.equal(cameraMotionSnapshot(replaced.state).speed, 0); assert.ok(vectorAngle(replacedDirection, replaced.camera.direction) < 1e-12);
+});
+
+test('a fresh drag under an open surface carries naturally, then returns to held without orbit', () => {
+  const state = createCameraMotion({ now: 0, scene: 'world' }); const camera = createCamera();
+  setCameraMotionSurface(state, true, 50); beginCameraDrag(state, 100);
+  for (let step = 1; step <= TRACE.strong.steps; step++) {
+    recordCameraDrag(state, TRACE.strong.dragX, TRACE.strong.dragY, 100 + step * TRACE.strong.intervalMs);
+  }
+  const releasedAt = 100 + releaseAt(TRACE.strong);
+  assert.equal(endCameraDrag(state, releasedAt, 'drag', releasedAt), true);
+  const release = cameraMotionSnapshot(state);
+  assert.equal(release.surfaceOpen, true); assert.equal(release.mode, 'inertia');
+  assert.ok(Math.abs(release.speed - release.releaseSpeed) <= 1e-12);
+  const before = camera.direction.slice(); let now = releasedAt;
+  now += 100; assert.equal(advanceCameraMotion(state, camera, 100, now), true);
+  assert.ok(vectorAngle(before, camera.direction) > 0); assert.equal(cameraMotionSnapshot(state).mode, 'inertia');
+  for (let step = 0; step < 100 && cameraMotionSnapshot(state).mode === 'inertia'; step++) {
+    now += 100; advanceCameraMotion(state, camera, 100, now);
+  }
+  const rested = cameraMotionSnapshot(state);
+  assert.equal(rested.mode, 'held'); assert.equal(rested.speed, 0); assert.equal(rested.inertiaDebtMs, 0);
+  const atRest = camera.direction.slice();
+  assert.equal(advanceCameraMotion(state, camera, 100, now + 100_000), false);
+  assert.equal(cameraMotionSnapshot(state).mode, 'held');
+  assert.deepEqual(camera.direction, atRest);
+  setCameraMotionSurface(state, false, now + 100_100);
+  assert.equal(cameraMotionSnapshot(state).mode, 'idle-wait');
+  assert.equal(cameraMotionSnapshot(state).idleUntil, now + 104_600);
 });
 
 test('idle orbit keeps its calm delay and obeys scene, surface, hidden, and reduced holds', () => {
@@ -300,6 +341,9 @@ function releaseAtSpeed(speed) {
   const entered = endCameraDrag(state, 100, 'drag', 100);
   return { state, entered, release: cameraMotionSnapshot(state) };
 }
+function integrateSpeed(speed, hz, observedDelay = 0) {
+  return integrateTrace({ steps: 1, intervalMs: 100, dragX: speed * 0.08, dragY: -speed * 0.06 }, hz, observedDelay);
+}
 function integrateTrace(trace, hz, observedDelay = 0, maximumSteps = 4000) {
   const state = createCameraMotion({ now: 0, scene: 'world' }); const camera = createCamera();
   const initialDirection = camera.direction.slice(); beginCameraDrag(state, 0);
@@ -308,20 +352,20 @@ function integrateTrace(trace, hz, observedDelay = 0, maximumSteps = 4000) {
   }
   const directTravel = vectorAngle(initialDirection, camera.direction); const at = releaseAt(trace);
   const entered = endCameraDrag(state, at, 'drag', at + observedDelay); const release = cameraMotionSnapshot(state);
-  let travelRadians = 0; let durationMs = 0; let now = at + observedDelay; let steps = 0;
+  let travelRadians = 0; let durationMs = 0; let now = at + observedDelay; let steps = 0; let afterFiveSeconds = null;
   const frameMs = 1000 / hz; let previous = camera.direction.slice();
   while (cameraMotionSnapshot(state).mode === 'inertia' && steps++ < maximumSteps) {
     now += frameMs; durationMs += frameMs; advanceCameraMotion(state, camera, frameMs, now);
     travelRadians += vectorAngle(previous, camera.direction); previous = camera.direction.slice();
+    if (!afterFiveSeconds && durationMs >= 5000) afterFiveSeconds = cameraMotionSnapshot(state);
   }
   return { hz, state, camera, entered, releaseAt: at, release, final: cameraMotionSnapshot(state), directTravel,
-    travelRadians, turns: travelRadians / (2 * Math.PI), durationMs, basisError: basisError(camera) };
+    travelRadians, turns: travelRadians / (2 * Math.PI), durationMs, afterFiveSeconds, basisError: basisError(camera) };
 }
 function releaseAt(trace) { return trace.steps * trace.intervalMs; }
 function basisError(camera) {
   return Math.max(...[camera.direction, camera.right, camera.up].map((value) => Math.abs(Math.hypot(...value) - 1)),
     Math.abs(dot(camera.direction, camera.right)), Math.abs(dot(camera.direction, camera.up)), Math.abs(dot(camera.right, camera.up)));
 }
-function normalize(value) { const length = Math.hypot(...value); return value.map((entry) => entry / length); }
 function dot(a, b) { return a.reduce((sum, value, index) => sum + value * b[index], 0); }
 function vectorAngle(a, b) { return Math.acos(Math.max(-1, Math.min(1, dot(a, b)))); }

@@ -4,12 +4,9 @@ import { rotate, rotateByAngularDelta } from '../../rendering/camera.js';
 export const CAMERA_MOTION_DEFAULTS = Object.freeze({
   sampleCapacity: 6,
   sampleWindowMs: 120,
-  releaseThreshold: 0.3,
-  fullFlingInputSpeed: 2.2,
-  maximumAngularSpeed: 8,
+  releaseThreshold: 0.08,
   dampingHalfLifeMs: 600,
   stopSpeed: 0.025,
-  maximumInertiaMs: 5000,
   idleDelayMs: 4500,
   idleOrbitSpeed: 0.022,
   maximumFrameMs: 100,
@@ -28,8 +25,7 @@ export function createCameraMotion(options = {}) {
     idleUntil: now + config.idleDelayMs,
     velocityX: 0,
     velocityY: 0,
-    rawReleaseSpeed: 0,
-    mappedReleaseSpeed: 0,
+    releaseSpeed: 0,
     lastReleaseKind: null,
     releaseSampleCount: 0,
     inertiaElapsedMs: 0,
@@ -115,7 +111,7 @@ export function endCameraDrag(state, now, kind = 'drag', observedNow = now) {
   state.lastReleaseKind = kind;
   state.releaseSampleCount = state.sampleCount;
   if (kind !== 'drag' || time == null || !state.sampleTraceValid
-    || state.reduced || state.hidden || state.surfaceOpen) {
+    || state.reduced || state.hidden) {
     stopAutomaticMotion(state); state.mode = restingMode(state); return false;
   }
   discardOldSamples(state, time - state.config.sampleWindowMs);
@@ -125,60 +121,39 @@ export function endCameraDrag(state, now, kind = 'drag', observedNow = now) {
   }
   const firstAt = sampleValue(state, 0, 0); const elapsedSeconds = (latestAt - firstAt) / 1000;
   if (!(elapsedSeconds > 0)) { stopAutomaticMotion(state); state.mode = restingMode(state); return false; }
-  let velocityX = (sampleValue(state, state.sampleCount - 1, 1) - sampleValue(state, 0, 1)) / elapsedSeconds;
-  let velocityY = (sampleValue(state, state.sampleCount - 1, 2) - sampleValue(state, 0, 2)) / elapsedSeconds;
-  const rawSpeed = Math.hypot(velocityX, velocityY);
-  const mappedSpeed = mapCameraReleaseSpeed(rawSpeed, state.config);
-  if (!Number.isFinite(velocityX) || !Number.isFinite(velocityY) || !(mappedSpeed > 0)) {
-    stopAutomaticMotion(state); state.rawReleaseSpeed = Number.isFinite(rawSpeed) ? rawSpeed : 0;
+  const velocityX = (sampleValue(state, state.sampleCount - 1, 1) - sampleValue(state, 0, 1)) / elapsedSeconds;
+  const velocityY = (sampleValue(state, state.sampleCount - 1, 2) - sampleValue(state, 0, 2)) / elapsedSeconds;
+  const releaseSpeed = Math.hypot(velocityX, velocityY);
+  if (!Number.isFinite(velocityX) || !Number.isFinite(velocityY) || !Number.isFinite(releaseSpeed)
+    || releaseSpeed < state.config.releaseThreshold) {
+    stopAutomaticMotion(state); state.releaseSpeed = Number.isFinite(releaseSpeed) ? releaseSpeed : 0;
     state.mode = restingMode(state); return false;
   }
-  const scale = mappedSpeed / rawSpeed; velocityX *= scale; velocityY *= scale;
-  // Direction normalization can round a few ulps beyond the public ceiling.
-  // Correct only that exceptional result so diagnostics and integration remain bounded.
-  const roundedMagnitude = Math.hypot(velocityX, velocityY);
-  if (roundedMagnitude > state.config.maximumAngularSpeed) {
-    const inwardMaximum = Math.max(0, state.config.maximumAngularSpeed
-      - Number.EPSILON * Math.max(1, state.config.maximumAngularSpeed) * 8);
-    const correction = inwardMaximum / roundedMagnitude; velocityX *= correction; velocityY *= correction;
-  }
-  state.velocityX = velocityX; state.velocityY = velocityY; state.rawReleaseSpeed = rawSpeed;
-  state.mappedReleaseSpeed = Math.hypot(velocityX, velocityY);
+  state.velocityX = velocityX; state.velocityY = velocityY; state.releaseSpeed = releaseSpeed;
   state.inertiaElapsedMs = 0; state.inertiaDebtMs = 0; state.sampleCount = 0; state.sampleTraceValid = false;
   state.mode = 'inertia'; return true;
 }
 
-/** Progressive, bounded release response; direct manipulation never uses this mapping. */
-export function mapCameraReleaseSpeed(rawSpeed, config = CAMERA_MOTION_DEFAULTS) {
-  if (!Number.isFinite(rawSpeed) || rawSpeed <= config.releaseThreshold) return 0;
-  const inputRange = config.fullFlingInputSpeed - config.releaseThreshold;
-  if (!(inputRange > 0) || !(config.maximumAngularSpeed > 0)) return 0;
-  const normalized = Math.min(1, Math.max(0, (rawSpeed - config.releaseThreshold) / inputRange));
-  const mapped = config.maximumAngularSpeed * normalized * normalized;
-  return Number.isFinite(mapped) && mapped > config.stopSpeed ? mapped : 0;
-}
-
 export function advanceCameraMotion(state, camera, dtMs, now) {
   const time = finiteNow(now); const suppliedElapsed = finiteElapsed(dtMs);
-  if (state.hidden || state.surfaceOpen || state.reduced) { state.mode = restingMode(state); return false; }
+  if (state.hidden || state.reduced) { state.mode = restingMode(state); return false; }
   if (state.direct) return false;
   if (state.mode === 'inertia') {
     const nextDebt = state.inertiaDebtMs + suppliedElapsed;
     if (!Number.isFinite(nextDebt)) { stopInertia(state, time); return false; }
     state.inertiaDebtMs = nextDebt;
-    const remaining = Math.max(0, state.config.maximumInertiaMs - state.inertiaElapsedMs);
-    const elapsed = Math.min(state.inertiaDebtMs, state.config.maximumFrameMs, remaining);
-    if (!(elapsed > 0)) { if (!(remaining > 0)) stopInertia(state, time); return false; }
+    const elapsed = Math.min(state.inertiaDebtMs, state.config.maximumFrameMs);
+    if (!(elapsed > 0)) return false;
     state.inertiaDebtMs -= elapsed;
     const damping = Math.log(2) / state.config.dampingHalfLifeMs;
     const decay = Math.exp(-damping * elapsed);
     const integratedSeconds = (1 - decay) / damping / 1000;
     rotateByAngularDelta(camera, state.velocityX * integratedSeconds, state.velocityY * integratedSeconds);
     state.velocityX *= decay; state.velocityY *= decay; state.inertiaElapsedMs += elapsed;
-    if (Math.hypot(state.velocityX, state.velocityY) < state.config.stopSpeed
-      || state.inertiaElapsedMs >= state.config.maximumInertiaMs) stopInertia(state, time);
+    if (Math.hypot(state.velocityX, state.velocityY) < state.config.stopSpeed) stopInertia(state, time);
     return true;
   }
+  if (state.surfaceOpen) { state.mode = 'held'; return false; }
   const elapsed = Math.min(suppliedElapsed, state.config.maximumFrameMs);
   if (!(elapsed > 0)) return false;
   if (state.mode !== 'orbit' && automaticOrbitAllowed(state) && time >= state.idleUntil) {
@@ -194,7 +169,7 @@ export function cameraMotionSnapshot(state) {
     surfaceOpen: state.surfaceOpen, direct: state.direct, sampleCount: state.sampleCount,
     sampleHighWater: state.sampleHighWater, sampleTraceValid: state.sampleTraceValid,
     speed: Math.hypot(state.velocityX, state.velocityY),
-    rawReleaseSpeed: state.rawReleaseSpeed, mappedReleaseSpeed: state.mappedReleaseSpeed,
+    releaseSpeed: state.releaseSpeed,
     lastReleaseKind: state.lastReleaseKind, releaseSampleCount: state.releaseSampleCount,
     velocityX: state.velocityX, velocityY: state.velocityY,
     inertiaElapsedMs: state.inertiaElapsedMs, inertiaDebtMs: state.inertiaDebtMs,
@@ -206,13 +181,13 @@ function restingMode(state) { return state.hidden ? 'suspended' : state.surfaceO
 function stopAutomaticMotion(state) {
   state.velocityX = 0; state.velocityY = 0; state.inertiaElapsedMs = 0; state.inertiaDebtMs = 0;
   state.sampleCount = 0; state.sampleTraceValid = false;
-  state.rawReleaseSpeed = 0; state.mappedReleaseSpeed = 0;
+  state.releaseSpeed = 0;
   state.orbitStartedAt = null;
 }
 function stopInertia(state, now) {
-  state.velocityX = 0; state.velocityY = 0; state.rawReleaseSpeed = 0; state.mappedReleaseSpeed = 0;
+  state.velocityX = 0; state.velocityY = 0;
   state.inertiaElapsedMs = 0; state.inertiaDebtMs = 0;
-  state.idleUntil = finiteNow(now) + state.config.idleDelayMs; state.mode = 'idle-wait';
+  state.idleUntil = finiteNow(now) + state.config.idleDelayMs; state.mode = restingMode(state);
 }
 function discardOldSamples(state, cutoff) {
   while (state.sampleCount > 0 && sampleValue(state, 0, 0) < cutoff) shiftSamples(state);

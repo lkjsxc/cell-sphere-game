@@ -336,7 +336,7 @@ carry without amplification, while a genuine precision trace near `0.050 rad/s`
 must remain still after release. This is presentation-only and adds no setting,
 simulation input, allocation, or second motion owner.
 
-## D30 — Progressive bounded release is restored over visible-sphere input
+## D30 — Progressive bounded release is restored over visible-sphere input (superseded by D37)
 
 Retain D27's projected-radius-normalized immediate manipulation, strict input
 timestamps, exact applied-delta sampling, simultaneous body-frame integration,
@@ -397,3 +397,23 @@ Retain D33's 2,562 individually purchasable cells, direct frontier, aggregate ra
 ## D36 — Evolution ownership is the exact owned/unowned graph cut
 
 Retain D33's exact-cell authority and D35's connected substrate-guided layout; supersede only D34's overloaded `quiet/owned/frontier/recent/selected` presentation clause. After selected/recent incident overrides, the packed byte classifies ownership exactly when one endpoint is owned, reachability exactly when both endpoints are unowned and only one is reachable, or quiet otherwise; affordability stays local/textual. WebGL2 uses continuous ownership and subordinate segmented reachability in its existing boundary draw, while Canvas uses the same classes with continuous/dashed strokes. Immutable relation stays packed above dynamic state, the projection remains one byte per edge, WebGL remains four draws, and topology, layout, progression, persistence, reward, and World simulation do not change.
+
+## D37 — Faithful release transfer and natural damping are current
+
+Retain D27's projected-radius manipulation, strict timestamp validation, exact
+applied-delta sampling, simultaneous body-frame integration, and bounded
+foreground animation debt. Supersede D30's release policy with a `0.08 rad/s`
+precision threshold and direct component-for-component transfer of every finite
+qualifying measured velocity vector. Delete the response curve, input knee,
+output saturation, mapped-speed duplicate, turn ceiling, and fixed lifetime.
+The retained `600 ms` half-life and `0.025 rad/s` stillness threshold own natural
+rest.
+
+A nonmodal surface may cancel motion already in progress and continues to hold
+automatic idle orbit. Its presence does not veto a newly completed valid drag:
+inertia advances normally through either the exposed canvas or the shared
+detail-shell gesture route, then returns to surface-held rest. Reduced motion,
+hidden-page entry, trusted new interaction, scene or World replacement, and
+programmatic focus framing still clear velocity immediately. This is one
+presentation-only camera path; simulation, renderer semantics, progression,
+reward, persistence, balance, and public settings do not change.
