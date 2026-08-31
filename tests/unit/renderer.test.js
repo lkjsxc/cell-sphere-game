@@ -309,9 +309,13 @@ test('Evolution reuses the existing boundary buffer for shared exact-cell edge s
   assert.match(boundaryShader, /uSceneMode/);
   assert.match(boundaryShader, /EVOLUTION_REGION_EDGE\.ARCHETYPE/);
   assert.match(boundaryShader, /EVOLUTION_REGION_EDGE\.DOMAIN/);
-  assert.match(boundaryShader, /state < \$\{EVOLUTION_CELL_EDGE\.OWNED\}\.5/);
-  assert.match(boundaryShader, /state < \$\{EVOLUTION_CELL_EDGE\.FRONTIER\}\.5/);
+  assert.match(boundaryShader, /state < \$\{EVOLUTION_CELL_EDGE\.REACHABLE_PERIMETER\}\.5/);
+  assert.match(boundaryShader, /state < \$\{EVOLUTION_CELL_EDGE\.OWNERSHIP_PERIMETER\}\.5/);
   assert.match(boundaryShader, /state < \$\{EVOLUTION_CELL_EDGE\.RECENT\}\.5/);
+  assert.doesNotMatch(boundaryShader, /EVOLUTION_CELL_EDGE\.(OWNED|FRONTIER)/);
+  const fallback = read('../../src/rendering/fallback2d.js');
+  assert.match(fallback, /EVOLUTION_CELL_EDGE\.REACHABLE_PERIMETER[\s\S]*dash/);
+  assert.match(fallback, /EVOLUTION_CELL_EDGE\.OWNERSHIP_PERIMETER/);
 });
 
 test('production renderer keeps four draws and has no fine waterway machinery', () => {
@@ -350,7 +354,12 @@ test('dual-cell lakes use terrain material and cell-boundary edges only', () => 
     if (fields.lakeId[cell] >= 0) { lakeVertices++; assert.ok(material > 0 && material < 1.5); }
     if (fields.lakeShore[cell]) { shoreVertices++; assert.ok(material >= 2); }
   }
-  for (let vertex = 0; vertex < geometry.boundaryFeature.length / 2; vertex++) lakeEdges += geometry.boundaryFeature[vertex * 2] > 0;
+  assert.equal(geometry.boundaryFeature.length, topo.edgeCount * 12);
+  for (let vertex = 0; vertex < geometry.boundaryFeature.length / 3; vertex++) lakeEdges += geometry.boundaryFeature[vertex * 3] > 0;
+  for (let edge = 0; edge < topo.edgeCount; edge++) {
+    assert.deepEqual(Array.from(geometry.boundaryFeature.subarray(edge * 12 + 2, edge * 12 + 12).filter((_, index) => index % 3 === 0)),
+      [0, 0, 1, 1]);
+  }
   assert.ok(lakeVertices > 0 && shoreVertices > 0 && lakeEdges > 0);
 });
 

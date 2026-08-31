@@ -70,6 +70,9 @@ guide routes while remaining visually primary beneath restrained region and
 exact-cell state edges. Geography never changes costs, effects, rewards, or
 World simulation, and neither substrate nor layout changes with a purchase,
 profile, World, or renderer.
+Owned territory is the exact continuous boundary between owned and unowned
+cells. A separate thinner, segmented reachable boundary and text-backed local
+cues keep available cells actionable without presenting them as purchased.
 
 Result keeps native Next World, Evolution, and History actions beside one
 authority-driven World-cycle ring. Its visible copy has no changing seconds;

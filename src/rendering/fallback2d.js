@@ -329,12 +329,16 @@ function canvasLifeEdgeStyle(style, fade) {
   return { stroke: `rgba(105,94,84,${0.46 * fade})`, width: .75 };
 }
 function canvasEvolutionEdgeStyle(style, fade) {
-  if (style === EVOLUTION_CELL_EDGE.OWNED) return { stroke: `rgba(164,181,157,${0.68 * fade})`, width: 1.35 };
-  if (style === EVOLUTION_CELL_EDGE.FRONTIER) return { stroke: `rgba(211,226,190,${0.84 * fade})`, width: 1.65 };
+  if (style === EVOLUTION_CELL_EDGE.REACHABLE_PERIMETER) {
+    return { stroke: `rgba(151,176,166,${0.72 * fade})`, width: 1.05, dash: [2, 2.8] };
+  }
+  if (style === EVOLUTION_CELL_EDGE.OWNERSHIP_PERIMETER) {
+    return { stroke: `rgba(221,232,194,${0.96 * fade})`, width: 2.05 };
+  }
   if (style === EVOLUTION_CELL_EDGE.RECENT) return { stroke: `rgba(235,204,111,${0.94 * fade})`, width: 1.95, dash: [3, 2] };
   if (style === EVOLUTION_CELL_EDGE.SELECTED) return { stroke: `rgba(229,248,234,${0.99 * fade})`, width: 2.6 };
-  if (style === EVOLUTION_CANVAS_REGION_ARCHETYPE) return { stroke: `rgba(157,171,151,${0.42 * fade})`, width: 1.05 };
-  return { stroke: `rgba(202,190,121,${0.62 * fade})`, width: 1.4, dash: [4, 2] };
+  if (style === EVOLUTION_CANVAS_REGION_ARCHETYPE) return { stroke: `rgba(157,171,151,${0.38 * fade})`, width: .9 };
+  return { stroke: `rgba(202,190,121,${0.52 * fade})`, width: 1.15, dash: [4, 3] };
 }
 
 const EVOLUTION_CANVAS_REGION_ARCHETYPE = 5;

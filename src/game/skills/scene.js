@@ -8,7 +8,9 @@ export const EVOLUTION_STATUS = Object.freeze({
   SELECTED_LOCKED: 5, SELECTED_UNAFFORDABLE: 6, SELECTED_AFFORDABLE: 7,
   OWNED_AFFORDABLE: 8, SELECTED_OWNED_UNAFFORDABLE: 9, SELECTED_OWNED_AFFORDABLE: 10,
 });
-export const EVOLUTION_CELL_EDGE = Object.freeze({ QUIET: 0, OWNED: 1, FRONTIER: 2, RECENT: 3, SELECTED: 4 });
+export const EVOLUTION_CELL_EDGE = Object.freeze({
+  QUIET: 0, REACHABLE_PERIMETER: 1, OWNERSHIP_PERIMETER: 2, RECENT: 3, SELECTED: 4,
+});
 export const EVOLUTION_EDGE_STATUS_MASK = 7;
 export const EVOLUTION_EDGE_REGION_SHIFT = 3;
 export { EVOLUTION_REGION_EDGE } from './layout.js';
@@ -53,9 +55,9 @@ export function writeEvolutionCellEdges(layout, projection, out = null) {
     let status = EVOLUTION_CELL_EDGE.QUIET;
     if (a === projection.selectedCell || b === projection.selectedCell) status = EVOLUTION_CELL_EDGE.SELECTED;
     else if (projection.recent[a] || projection.recent[b]) status = EVOLUTION_CELL_EDGE.RECENT;
-    else if ((!projection.owned[a] && projection.reachable[a]) || (!projection.owned[b] && projection.reachable[b])
-      || projection.owned[a] !== projection.owned[b]) status = EVOLUTION_CELL_EDGE.FRONTIER;
-    else if (projection.owned[a] || projection.owned[b]) status = EVOLUTION_CELL_EDGE.OWNED;
+    else if (projection.owned[a] !== projection.owned[b]) status = EVOLUTION_CELL_EDGE.OWNERSHIP_PERIMETER;
+    else if (!projection.owned[a] && !projection.owned[b]
+      && projection.reachable[a] !== projection.reachable[b]) status = EVOLUTION_CELL_EDGE.REACHABLE_PERIMETER;
     const region = layout.edgeStructure?.[edge] ?? EVOLUTION_REGION_EDGE.INTERNAL;
     target[edge] = status | (region << EVOLUTION_EDGE_REGION_SHIFT);
   }

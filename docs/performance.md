@@ -48,7 +48,7 @@ millisecond projection samples and Canvas entry/update were investigated:
 absolute steady work stays at or below `1.7 ms` p95, the expensive immutable layout/geometry is stable,
 unchanged frames upload no edge bytes, and the measured product change replaces
 2,562 presentation subdivisions with 2,562 truthful purchase cells and bounded
-navigation. WebGL remains four draws with the same `1,838,196` static and
+navigation. That revision kept four WebGL draws with `1,838,196` static and
 `325,152` dynamic bytes. The production agent smoke is also bounded and improves
 from `19,790.6 ms` on the exact predecessor to `18,275.3 ms` on the final
 same-host working tree (`−7.7%`). Repeated final cohorts and the canonical work
@@ -65,7 +65,7 @@ predecessor ranges were `15.0–15.4/0.6/1.3–1.6/1.0–1.1 ms`,
 sub-millisecond relative swings to host/timer noise: all one-time entries remain
 below `30 ms`, steady work remains at or below `1.6 ms`, the substrate and
 static geometry references stay stable, and unchanged frames perform zero edge
-updates. WebGL remains four draws with byte-identical `1,838,196` static and
+updates. That revision kept four WebGL draws with byte-identical `1,838,196` static and
 `325,152` dynamic allocations; Canvas remains `133,132` static and `130,560`
 dynamic bytes. A direct same-process construction sample changed the obsolete
 placeholder's median/p95 `0.835/1.322 ms` to `3.185/3.755 ms` for the full
@@ -84,6 +84,20 @@ do not reproduce consistently; absolute work remains bounded. The cached
 layout/geometry references remain stable, unchanged frames rebuild zero edge
 bytes, the shared edge projection remains 7,680 compact bytes, WebGL remains
 four draws, and static/dynamic renderer allocation totals are unchanged.
+
+Ownership Boundary v1 keeps the projection at one 7,680-byte dynamic byte per
+edge, its WebGL expansion at 30,720 bytes, all reusable dynamic allocations at
+325,152 bytes, and four draws. A static `0..1` coordinate supports segmented
+reachability inside the existing boundary pass, increasing WebGL static geometry
+from `1,838,196` to `1,961,076` bytes (`+122,880`, `+6.68%`); Canvas remains
+`133,132` static and `130,560` dynamic bytes. Same-host Chrome 152 p95
+entry/snapshot/update/steady measurements are Worker/WebGL2
+`16.2/0.8/1.7/1.2 ms`, fallback/WebGL2 `19.1/0.6/1.7/1.1 ms`, and repeated
+fallback/Canvas ranges `5.5–7.6/0.4–3.4/1.7–2.7/2.3 ms`. Compared with the
+starting measurements `18.0/0.7/2.0/1.6`, `21.7/0.6/1.8/1.6`, and
+`5.3/0.4/1.8/1.8 ms`, the isolated small Canvas samples vary but do not show a
+reproducible material regression; layout/geometry identities remain stable and
+unchanged frames rebuild zero edge bytes.
 
 The atmosphere silhouette cutover's same-host Chrome 152 median-of-three
 synchronized costs are baseline to fixed shell: steady p50 `0.800 -> 0.900 ms`,

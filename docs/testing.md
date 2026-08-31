@@ -73,22 +73,30 @@ rectangles in Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D.
 The three focused Evolution-cell commands use the production entry point,
 level-4 topology, cell projection, renderers, and bounded native navigator. They
 prove 2,562 authoritative cells, one exact selected/purchased cell, direct
-neighbor frontier diffs, aggregate-rank detail, bounded DOM, shared edge classes,
-quiet < frontier < selected salience, four WebGL draws, cached layout/geometry,
-zero unchanged-frame edge updates, forced colors, stable reduced motion, and all
-eight maintained viewports at 200% text. They independently traverse the final
-map to require one component per archetype and domain, exact quotas, strict tier
-medians, a sole green `First Division` root, and correctly packed immutable
-region edges. They retain the exact fixed World-field and layout references
-through selection, purchase, and WebGL context loss, and compare region,
-geography, and state signals at center/limb and far/close framing. Matched
-fixed-camera World, Evolution, and Trophy captures supplement those relative
-measurements. Ignored JSON receipts pair warm entry, projection, accepted
-update, steady frame, buffer costs, screenshot hashes, and the exact scattered
-predecessor baseline. They also open the compact Evolution detail and require
-the shared 44 px Drag globe strip to rotate and zoom through the production
-camera input while retaining the exact selected cell, local levels, open detail,
-and reachable Unlock action.
+neighbor reachability, aggregate-rank detail, bounded DOM, and one shared packed
+edge authority. Deterministic fresh, root-only, and root-plus-ring fixtures prove
+the exact ownership and reachable graph cuts; selected/recent overrides are
+incident-local and clear back to byte-identical steady classifications. The
+browser oracle samples multiple ownership, reachable, interior, quiet, and
+immutable-region edges at center/limb and far/close framing. Repeat noise sets
+the relative margin: ownership must exceed reachable, owned-interior, and region
+signals; reachable remains structurally distinct through its segmented/dashed
+edge and the text-backed local inset/glyph. Selected is strongest locally and
+recent is distinct and transient. The same runs prove four WebGL draws, cached
+layout/geometry, zero unchanged-frame edge updates, forced colors, stable reduced
+motion, and all eight maintained viewports at 200% text.
+
+The fixture independently traverses the final map to require one component per
+archetype and domain, exact quotas, strict tier medians, a sole green `First
+Division` root, and correctly packed immutable region edges. It retains the
+exact fixed World-field and layout references through selection, purchase, and
+WebGL context loss. Matched fixed-camera World, Evolution, and Trophy captures
+supplement relative measurements. Campaign-specific ignored JSON receipts pair
+warm entry, projection, accepted update, steady frame, compact/expanded/static
+buffer costs, screenshot hashes, and semantic counts. The fixture also opens the
+compact Evolution detail and requires the shared 44 px Drag globe strip to
+rotate and zoom through the production camera input while retaining the exact
+selected cell, local levels, open detail, and reachable Unlock action.
 
 `benchmark.mjs` retains terminal and huge-Level checkpoints, and also measures
 seven deterministic samples of an alive fixed 1,000-tick production trace after

@@ -106,6 +106,10 @@ immutable ability layout; archetype, domain, ownership, readiness, selection,
 recent change, and Imprint remain truthful local cues and text. Geography has no
 effect-magnitude, cost, reward, or World authority and is unchanged by
 progression.
+Owned cells read as one continuous exact graph-cut perimeter: only an edge with
+one owned and one unowned endpoint belongs to it. The outer reachable/locked cut
+is thinner and structurally different, while local insets, glyphs, and text keep
+reachable and affordable cells actionable without making them look purchased.
 Scarcity defense protects the energy yield from nutrient already consumed; it
 does not create nutrient or energy. Evolution never changes the public
 Environment clock or creates infinite resources.

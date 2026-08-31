@@ -67,6 +67,13 @@ projection. `effects.js` remains the single compiler and consumes only the 42
 aggregate archetype ranks. Scene projection, picking, focus, accessibility,
 agents, WebGL2, and Canvas 2D consume exact cells without an owner alias.
 
+`src/game/skills/scene.js` is the sole renderer-semantic edge classifier. After
+selected and recent incident overrides, it assigns ownership exactly to an
+owned/unowned endpoint cut, reachability exactly to an unowned
+reachable/locked cut, and otherwise leaves dynamic state quiet while retaining
+the immutable internal/archetype/domain relation in the same byte. WebGL2 and
+Canvas 2D interpret those shared meanings without inferring progression rules.
+
 The layout is deterministic and meta-independent. Fine Imprints record bounded
 paths on the same topology. Persistence stores no layout generator state or
 presentation-derived ownership; it validates matching version/content/digest

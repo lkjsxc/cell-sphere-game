@@ -24,7 +24,7 @@ export async function captureMatchedEvolutionScenes(tools, label, simulationPath
       a.renderer.render({snapshot,worldIdentity:null,camera:a.camera,
         selectedNode:null,highlightedCells:[],time:0,pulse:false});return{scene:a.scene,status:snapshot.status??null,backend:a.renderer.backend,
         distance:a.camera.dist,direction:a.camera.direction.slice(),fields:a.fields===expectedFields}})()`);
-    await wait(60); const file = `evolution-ability-regions-${label}-${simulationPath}-${rendererPath}-${hyphenate(name)}.png`;
+    await wait(60); const file = `evolution-ownership-boundary-${label}-${simulationPath}-${rendererPath}-${hyphenate(name)}.png`;
     captures[name] = { ...receipt, ...await screenshot(file) };
   }
   return { orientations, normalDistance:distance, closeDistance:close, captures };

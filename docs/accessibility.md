@@ -91,11 +91,12 @@ bounded at 200% font scaling. Home copy has one bounded content scroll owner whe
 the enlarged text cannot fit, while exposed canvas remains directly manipulable.
 Evolution state is never canvas-color-only: the bounded navigator and detail name
 locked, reachable-unaffordable, ready, owned, owned-ready, and selected state;
-small kind-sensitive inset shapes and progressively stronger exact-cell
-perimeters provide non-color visual shape/weight cues over unchanged geographic
-material. Connected archetype perimeters differ from dashed domain perimeters in
-Canvas, while WebGL uses distinct restrained weight; exact progression-state
-perimeters remain stronger in both. Domain and archetype remain named in text;
+small kind-sensitive inset shapes accompany a continuous exact ownership graph
+cut and a thinner segmented or dashed reachable perimeter. Owned interiors do
+not form a strong honeycomb, and affordability remains explicit in the local cue
+and text. Connected archetype perimeters differ from dashed domain perimeters in
+Canvas, while WebGL uses distinct restrained weight; ownership remains the
+strongest steady progression perimeter in both. Domain and archetype remain named in text;
 the fresh detail explicitly names `First Division`, so green location is never
 the only start cue. Land, water, biome, and progression colors are not semantic
 substitutes for those names. Large exact
@@ -125,10 +126,11 @@ text in Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D. It proves bounde
 DOM independent of cell count, one exact selected cell, named direct neighbors,
 deterministic native traversal, forced colors, stable reduced motion, reachable
 actions, 44 px controls/tabs, canvas reachability, no horizontal page or panel
-overflow, and stable unchanged frames. It also proves the sole green-land root is
-focused and named, connected archetype/domain edge structure remains legible at
-far/close and center/limb views, and the same fixed geographic substrate remains
-beneath local state cues.
+overflow, and stable unchanged frames. It also proves exact ownership and
+reachable graph cuts, text-backed affordable and unaffordable cells, the sole
+green-land root focused and named, connected archetype/domain edge structure at
+far/close and center/limb views, and the same fixed geographic substrate beneath
+local state cues.
 
 The focused Environment matrix additionally covers 390×844, 768×1024,
 844×390, and 1440×900 in Worker/WebGL2, fallback/WebGL2, and

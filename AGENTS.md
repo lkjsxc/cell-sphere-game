@@ -154,6 +154,14 @@ location-dependent effect law. Geography remains primary while archetype,
 domain, ownership, affordability, selection, and recent-change cues remain
 restrained and legible.
 
+Evolution ownership must read immediately as one exact-cell territory boundary,
+not as an equally bright honeycomb around every owned or reachable cell. The
+steady ownership perimeter is exactly the graph cut whose edges have one owned
+endpoint and one unowned endpoint. Owned-owned edges are interior; unowned-
+unowned edges, including reachability transitions, are not ownership. Reachable,
+affordable, selected, and recently changed cells retain distinct subordinate
+local or edge cues with non-color equivalents.
+
 WebGL2 and Canvas 2D communicate the same semantic state even when exact pixels
 differ. Accessibility, responsive behavior, reduced motion, forced colors,
 keyboard access, and bounded performance are product requirements.
@@ -651,6 +659,13 @@ remains legible beneath progression state. Selection, recent change, Imprint,
 domain, archetype, and cost/readiness remain distinguishable through non-color
 cues as well as color.
 
+The shared Evolution cell/edge projection owns the ownership distinction for
+both renderers. Selection and recent-change emphasis may temporarily override
+incident edges, but when those transient states clear the exact ownership graph
+cut returns unchanged. Do not infer or render ownership from reachability,
+affordability, archetype or domain region, selection, fill brightness, or an
+entire connected region.
+
 Do not expose thousands of simultaneous DOM controls. Accessibility uses a
 bounded native navigator for the selected cell, direct neighbors, stable
 previous/next traversal, and a direct reachable-frontier action or equivalent
@@ -822,12 +837,21 @@ geography or imply that a group of cells is one purchase. At normal far framing,
 continents and coherent ability/domain regions must both read; at near framing,
 exact cells, archetype boundaries, and state cues remain legible.
 
+The steady owned/unowned perimeter is the exclusive-or of endpoint ownership.
+Edges internal to owned territory and edges among unowned cells never receive
+that class. A reachable/locked boundary, when drawn, is a separate lower-priority
+semantic and must not resemble the ownership perimeter. The renderer may use
+restrained cell-centered readiness cues, but must not reconstruct a bright
+per-cell frontier network.
+
 Verify this hierarchy with semantic layout/field invariants and relative
 production-browser measurements, not screenshots alone: the root is visibly on
 green favorable land, every archetype and domain satisfies its connectedness
 contract, substrate-fit directions hold, land and water remain coherent, region
-perimeters survive both backends, substrate contrast remains primary, and
-progression-edge ordering remains truthful.
+perimeters survive both backends, substrate contrast remains primary, the exact
+ownership cut matches source semantics, its steady signal exceeds owned-interior,
+reachable, and immutable-region cues by a noise-calibrated margin, and selection
+and recent change remain locally distinguishable.
 
 Geography and progression may share the existing boundary pass, but neither
 replaces the other. Do not add a pass when the existing pass can own the
@@ -961,8 +985,8 @@ Test at the layer that owns the property.
 Use pure and unit tests for schedules, validation, exact arithmetic, green-root
 selection, substrate-guided layout connectedness and capacity, domain fit, tier
 distance, progression compilation, scoring, camera math, layout geometry,
-continuation, accessibility projections, renderer-semantic projections, codecs,
-and bounds.
+continuation, accessibility projections, renderer-semantic projections, exact
+endpoint ownership/reachability edge truth tables, codecs, and bounds.
 
 Use integration tests for Worker/fallback agreement, stale identity rejection,
 settlement idempotence, settings reset, History switching, multi-World
@@ -972,8 +996,8 @@ hashes.
 Use browser tests for the real entry point, DOM, focus, keyboard, pointer, touch,
 pinch, wheel, cancellation, rectangles, rendering, controlled visual fixtures,
 context loss, WebGL2, Canvas, Worker, fallback, reduced motion, forced colors,
-`200%` text, green-root framing, coherent region readability, and safe areas where
-available.
+`200%` text, green-root framing, coherent region readability, exact Evolution
+ownership-perimeter hierarchy, and safe areas where available.
 
 Use production authority, cohorts, holdout seeds, and multi-World campaigns for
 balance and agent evidence. Never reward budget exhaustion.

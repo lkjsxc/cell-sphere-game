@@ -2,6 +2,7 @@
 import { captureMatchedEvolutionScenes,
   verifyEvolutionContextLoss } from './evolution-region-browser-support.mjs';
 import { measureDetailShellGesture } from './detail-shell-gesture-fixture.mjs';
+import { evolutionOwnershipBoundaryExpression } from './evolution-ownership-browser-support.mjs';
 
 export async function runEvolutionCellProgressionFixture(tools, { label = 'final', enforce = true } = {}) {
   const { click, drag, evaluate, key, pinch, poll, screenshot, setMedia, setViewport, tap, touchCancel, wait, wheel } = tools;
@@ -35,8 +36,10 @@ export async function runEvolutionCellProgressionFixture(tools, { label = 'final
   const actionPoint = await evaluate(`(()=>{const r=document.getElementById('memory-unlock').getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]})()`);
   await click(...actionPoint); await wait(160);
   const report = await evaluate(POST_EXPRESSION(tools.simulationFallback));
+  report.visual = await evaluate(evolutionOwnershipBoundaryExpression());
+  report.visual.hierarchy = report.hierarchy; delete report.hierarchy;
   report.interaction = { selected, shellGesture, manipulation, purchase: report.purchase };
-  report.screenshots = { selected: await screenshot(`evolution-ability-regions-${label}-${report.simulationPath}-${report.rendererPath}-selected-1440x900.png`) };
+  report.screenshots = { selected: await screenshot(`evolution-ownership-boundary-${label}-${report.simulationPath}-${report.rendererPath}-selected-1440x900.png`) };
 
   const nextButton = await evaluate(`(()=>{const e=document.getElementById('evolution-next'),r=e.getBoundingClientRect();e.focus();return[r.left+r.width/2,r.top+r.height/2]})()`);
   const beforeKeyboard = await evaluate('window.__CELL_SPHERE_APP__.memoryUi.selectedCell'); await key('Enter'); await wait(80);
@@ -76,8 +79,8 @@ export async function runEvolutionCellProgressionFixture(tools, { label = 'final
     && report.forcedColors.neighborBorder !== 'none' && report.forcedColors.current.includes('Local Level') && report.forcedColors.treeItems === 0,
   `Evolution forced colors failed: ${JSON.stringify(report.forcedColors)}`);
   await setMedia([]); await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'reduced'})})()`); await wait(80);
-  const reducedA = await screenshot(`evolution-ability-regions-${label}-${report.simulationPath}-${report.rendererPath}-reduced-a.png`); await wait(320);
-  const reducedB = await screenshot(`evolution-ability-regions-${label}-${report.simulationPath}-${report.rendererPath}-reduced-b.png`);
+  const reducedA = await screenshot(`evolution-ownership-boundary-${label}-${report.simulationPath}-${report.rendererPath}-reduced-a.png`); await wait(320);
+  const reducedB = await screenshot(`evolution-ownership-boundary-${label}-${report.simulationPath}-${report.rendererPath}-reduced-b.png`);
   report.reducedMotion = { stable: reducedA.hash === reducedB.hash, first: reducedA, second: reducedB };
   if (enforce) ok(report.reducedMotion.stable, 'Evolution reduced-motion rendering changed without state change');
 
@@ -234,39 +237,8 @@ function POST_EXPRESSION(simulationFallback) { return `(async()=>{
     &&substrate.largestWater>=substrate.waterCells*.70&&substrate.sameLandAdjacency>=.90&&substrate.biomes>=6
     &&substrate.landBiomes>=4&&substrate.oceanBiomes>=1&&substrate.sameBiomeAdjacency>=.65&&substrate.lakes>=1
     &&substrate.coastEdges>0&&substrate.lakeEdges>0&&substrate.digest===substrate.repeatDigest&&substrate.stableReference;
-  const visual=measureVisual(activeRenderer);visual.hierarchy=measureHierarchy(activeRenderer);return{schema:4,rendererPath:activeRenderer.backend,
-    simulationPath:${JSON.stringify(simulationFallback ? 'fallback' : 'worker')},rootEntry:f.rootEntry,semantic,substrate,purchase,performance:performanceReport,packing,visual};
-
-  function measureVisual(targetRenderer){const root=EVOLUTION_LAYOUT.rootCell,step=EVOLUTION_LAYOUT.rootRing[0],visualTarget=getEvolutionAdjacentCells(step)
-      .filter(cell=>cell!==root).sort((a,b)=>EVOLUTION_LAYOUT.rootDistance[b]-EVOLUTION_LAYOUT.rootDistance[a]||a-b)[0];
-    const baseMeta={...app.meta,evolutionLevels:[{cell:root,level:'1'}]},frontierMeta={...app.meta,evolutionLevels:[{cell:root,level:'1'},{cell:step,level:'1'}]};
-    const quiet=buildEvolutionSnapshot(baseMeta),frontier=buildEvolutionSnapshot(frontierMeta),selectedSnapshot=buildEvolutionSnapshot(frontierMeta,visualTarget);
-    let edge=-1;for(let index=0;index<EVOLUTION_TOPOLOGY.edgeCount;index++)if((EVOLUTION_TOPOLOGY.edgeA[index]===visualTarget||EVOLUTION_TOPOLOGY.edgeB[index]===visualTarget)
-      &&evolutionCellEdgeStatus(quiet.evolutionEdge[index])===EVOLUTION_CELL_EDGE.QUIET
-      &&evolutionCellEdgeStatus(frontier.evolutionEdge[index])===EVOLUTION_CELL_EDGE.FRONTIER
-      &&evolutionCellEdgeStatus(selectedSnapshot.evolutionEdge[index])===EVOLUTION_CELL_EDGE.SELECTED){edge=index;break;}
-    if(edge<0)return{available:true,valid:false,reason:'missing controlled exact-cell edge'};
-    const camera={...app.camera,direction:app.camera.direction.slice(),right:app.camera.right.slice(),up:app.camera.up.slice()};
-    focusCamera(camera,EVOLUTION_TOPOLOGY.positions.subarray(visualTarget*3,visualTarget*3+3));camera.dist=2.7;camera.offsetX=0;camera.offsetY=0;
-    const quietValue=probe(quiet,edge,camera),frontierValue=probe(frontier,edge,camera),selectedValue=probe(selectedSnapshot,edge,camera),
-      noise=Math.max(...[0,1,2].map(()=>Math.abs(probe(selectedSnapshot,edge,camera)-selectedValue))),margin=Math.max(.006,noise*4+.002);
-    return{available:true,edge,quiet:quietValue,frontier:frontierValue,selected:selectedValue,noise,margin,
-      valid:frontierValue>quietValue+margin&&selectedValue>frontierValue+margin};
-    function probe(snapshotValue,edgeValue,cameraValue){targetRenderer.render({snapshot:snapshotValue,worldIdentity:null,camera:cameraValue,selectedNode:null,highlightedCells:[],time:0,pulse:false});
-      const dual=targetRenderer.backend==='webgl2'?targetRenderer.world.geometry.dual:targetRenderer.dual,
-        a=project(dual.corners,dual.boundaryCornerA[edgeValue],cameraValue),b=project(dual.corners,dual.boundaryCornerB[edgeValue],cameraValue),
-        dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy)||1,nx=-dy/length,ny=dx/length,sides=[],center=[];
-      for(const along of [.3,.4,.5,.6,.7])for(const offset of [-6,-5,-4,-1,0,1,4,5,6]){const color=readPixel(a[0]+dx*along+nx*offset,a[1]+dy*along+ny*offset);
-        (Math.abs(offset)<=1?center:sides).push(color);}const side=mean(sides);return Math.max(...center.map(color=>distance(color,side)));}
-    function project(points,index,cameraValue){if(targetRenderer.backend==='canvas2d')return[targetRenderer.cornerX[index],targetRenderer.cornerY[index]];
-      const matrix=viewProjection(cameraValue,targetRenderer.canvas.width/targetRenderer.canvas.height),at=index*3,x=points[at],y=points[at+1],z=points[at+2],
-        clipX=matrix[0]*x+matrix[4]*y+matrix[8]*z+matrix[12],clipY=matrix[1]*x+matrix[5]*y+matrix[9]*z+matrix[13],w=matrix[3]*x+matrix[7]*y+matrix[11]*z+matrix[15];
-      return[(clipX/w*.5+.5)*targetRenderer.canvas.width,(1-(clipY/w*.5+.5))*targetRenderer.canvas.height];}
-    function readPixel(x,y){const px=Math.max(0,Math.min(targetRenderer.canvas.width-1,Math.round(x))),py=Math.max(0,Math.min(targetRenderer.canvas.height-1,Math.round(y)));
-      if(targetRenderer.backend==='webgl2'){const data=new Uint8Array(4);targetRenderer.gl.readPixels(px,targetRenderer.canvas.height-1-py,1,1,targetRenderer.gl.RGBA,targetRenderer.gl.UNSIGNED_BYTE,data);return[data[0],data[1],data[2]];}
-      const data=targetRenderer.ctx.getImageData(px,py,1,1).data;return[data[0],data[1],data[2]];}
-    function mean(values){return[0,1,2].map(axis=>values.reduce((sum,value)=>sum+value[axis],0)/values.length);}
-    function distance(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2])/(255*Math.sqrt(3));}}
+  const hierarchy=measureHierarchy(activeRenderer);return{schema:5,rendererPath:activeRenderer.backend,
+    simulationPath:${JSON.stringify(simulationFallback ? 'fallback' : 'worker')},rootEntry:f.rootEntry,semantic,substrate,purchase,performance:performanceReport,packing,hierarchy};
   function measureHierarchy(targetRenderer){
     const locked=buildEvolutionSnapshot({...app.meta,evolutionLevels:[],echoBalance:'0'},null,[]),fields=app.evolutionFields;
     let coastEdge=-1;for(let edge=0;edge<EVOLUTION_TOPOLOGY.edgeCount;edge++){const a=EVOLUTION_TOPOLOGY.edgeA[edge],b=EVOLUTION_TOPOLOGY.edgeB[edge];

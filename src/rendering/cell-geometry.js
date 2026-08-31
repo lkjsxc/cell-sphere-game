@@ -66,7 +66,7 @@ export function createCellGeometry(topo, fields) {
   }
 
   const boundaryPositions = new Float32Array(topo.edgeCount * 12);
-  const boundaryFeature = new Float32Array(topo.edgeCount * 8);
+  const boundaryFeature = new Float32Array(topo.edgeCount * 12);
   const boundaryIndices = new Uint16Array(topo.edgeCount * 6);
   for (let edge = 0; edge < topo.edgeCount; edge++) {
     const ai = dual.boundaryCornerA[edge] * 3;
@@ -84,7 +84,8 @@ export function createCellGeometry(topo, fields) {
     const coast = fields.landMask?.[cellA] !== fields.landMask?.[cellB] ? 1 : 0;
     const lakeA = fields.lakeId?.[cellA] ?? -1; const lakeB = fields.lakeId?.[cellB] ?? -1;
     const lakeEdge = lakeA !== lakeB && (lakeA >= 0 || lakeB >= 0) ? 1 : 0;
-    for (let corner = 0; corner < 4; corner++) boundaryFeature.set([lakeEdge, coast], (base + corner) * 2);
+    boundaryFeature.set([lakeEdge, coast, 0, lakeEdge, coast, 0,
+      lakeEdge, coast, 1, lakeEdge, coast, 1], base * 3);
     boundaryIndices.set([base, base + 1, base + 2, base + 1, base + 3, base + 2], edge * 6);
   }
 

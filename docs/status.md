@@ -1,5 +1,12 @@
 # Current status
 
+## Evolution Ownership Boundary v1
+
+- The shared 7,680-byte Evolution edge projection now classifies selected, recent, exact ownership perimeter, exact reachable perimeter, or quiet state. Steady ownership exists if and only if exactly one endpoint is owned; reachability appears only on an unowned reachable/locked cut.
+- Fresh/root-only/root-plus-ring fixtures have `0/6/18` ownership edges. The predecessor reported `6/30/60` strong frontier edges, including `6/24/42` with two unowned endpoints.
+- WebGL2 uses continuous ownership and thinner segmented reachability; Canvas uses continuous and dashed strokes. Selected/recent incident overrides clear to byte-identical steady graph cuts.
+- Chrome 152 Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D evidence measures ownership above reachable, owned-interior, and immutable-region signals at far/close and center/limb framing. Text-backed local cues remain actionable, WebGL stays at four draws, and unchanged frames rebuild no edges.
+
 ## Surface Globe Gesture v1
 
 - The one `bindGlobeInput` owner now accepts a gesture-only proxy in the shared
@@ -35,7 +42,8 @@
 - One shared immutable 7,680-byte edge classification contains 6,148 internal,
   985 archetype-perimeter, and 547 domain-perimeter edges. WebGL2 and Canvas 2D
   render those restrained structures in the existing boundary phase, with
-  selected/recent/frontier/owned state taking priority. WebGL remains four draws.
+  selected, recent, ownership-perimeter, and reachable-perimeter state taking
+  priority. WebGL remains four draws.
 - Current Evolution identities are progression `8`, layout `2`, content `10`
   with hash `7fd92cf7`, Imprint `3`, and Evolution History `3`. A predecessor
   identity selectively clears exact Evolution levels, transaction receipts,
@@ -64,17 +72,21 @@
   remain subordinate to that geography. The all-land, one-biome Evolution
   placeholder and the Canvas Evolution biome override remain deleted.
 - One World/Evolution/Trophy scene discriminator replaces WebGL `uMemory`.
-  WebGL remains exactly four draws with `1,838,196` static and `325,152`
-  dynamic bytes; Canvas retains `133,132` static and `130,560` dynamic bytes.
-  Unchanged frames rebuild no fields or geometry and perform zero progression
-  edge updates. WebGL context loss reaches Canvas with the same field reference
-  and digest.
+  The substrate revision measured four draws with `1,838,196` static and
+  `325,152` dynamic WebGL bytes; Ownership Boundary v1 adds one bounded static
+  along-edge coordinate, bringing current static bytes to `1,961,076` while
+  dynamic bytes, compact edge width, and draw count remain unchanged. Canvas
+  retains `133,132` static and `130,560` dynamic bytes. Unchanged frames rebuild
+  no fields or geometry and perform zero progression edge updates. WebGL context
+  loss reaches Canvas with the same field reference and digest.
 - Production-browser Worker/WebGL2, fallback/WebGL2, and fallback/Canvas
   receipts pass the fixed field gates, exact selection and purchase locality,
-  quiet < frontier < selected edges, repeated center/limb and far/close visual
-  hierarchy, forced colors, reduced motion, and all eight maintained viewports
-  at 200% text. In every probe, geographic separation exceeds same-status
-  cross-domain variation while domain variation remains nonzero.
+  repeated center/limb and far/close visual hierarchy, forced colors, reduced
+  motion, and all eight maintained viewports at 200% text. Their revision-scoped
+  one-edge frontier oracle is superseded by the current graph-aware ownership,
+  reachability, and transient-state oracle. In every retained geography probe,
+  geographic separation exceeds same-status cross-domain variation while
+  domain variation remains nonzero.
 - Trophy fields and controlled matched images remain independent of Evolution:
   WebGL2 SHA-256 `b98ca89587f026a000ccbf69e66af5be2fd17a9b55dd18be910335c91ea004ed`
   and Canvas SHA-256 `dba741f68c1b2a90a77d58496f5f5e72d8258a0649191eca5847ce6c722be49b`.
@@ -111,10 +123,11 @@
   Evolution History. The current representation writes only sparse `{cell,
   level}` entries with matching vector/layout/content identities.
 - Focused Chrome 152 Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D
-  receipts pass exact selection/purchase/frontier diffs, quiet < frontier <
-  selected edge salience, forced colors, reduced motion, 200% text at all eight
-  maintained viewports, bounded DOM, cached layout/geometry, zero steady edge
-  updates, and renderer parity.
+  revision-scoped receipts pass exact selection/purchase/frontier diffs, forced
+  colors, reduced motion, 200% text at all eight maintained viewports, bounded
+  DOM, cached layout/geometry, zero steady edge updates, and renderer parity.
+  Their one-edge salience check is superseded by Ownership Boundary v1's exact
+  graph-cut and territory-level browser oracle.
 - Published production-and-evidence revision
   `431e35820bba43bad8bd05d856634377729b9bfe` passes Actions run
   `33298418938`, verify job `99221958431`, Pages job `99223730991`, deployment

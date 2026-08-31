@@ -59,7 +59,7 @@ export class WorldPass {
 
     this.boundaryVao = this.vao();
     this.attribute(this.programs.boundary, 'aPos', this.buffer(gl.ARRAY_BUFFER, g.boundaryPositions), 3);
-    this.attribute(this.programs.boundary, 'aFeature', this.buffer(gl.ARRAY_BUFFER, g.boundaryFeature), 2);
+    this.attribute(this.programs.boundary, 'aFeature', this.buffer(gl.ARRAY_BUFFER, g.boundaryFeature), 3);
     this.boundaryLifeBuffer = this.buffer(gl.ARRAY_BUFFER, this.boundaryLifeData, gl.DYNAMIC_DRAW);
     this.attribute(this.programs.boundary, 'aLifeEdge', this.boundaryLifeBuffer, LIFE_EDGE_STRIDE, gl.UNSIGNED_BYTE);
     this.boundaryIndex = this.buffer(gl.ELEMENT_ARRAY_BUFFER, g.boundaryIndices);

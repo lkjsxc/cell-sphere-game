@@ -6,10 +6,10 @@ import { RENDER_SCENE } from './scene-mode.js';
 export const VS_BOUNDARY = `#version 300 es
 uniform mat4 uViewProj;
 in vec3 aPos;
-in vec2 aFeature;
+in vec3 aFeature;
 in float aLifeEdge;
 out vec3 vPos;
-out vec2 vFeature;
+out vec3 vFeature;
 flat out vec2 vLifeEdge;
 void main() {
   vPos = aPos;
@@ -22,7 +22,7 @@ void main() {
 export const FS_BOUNDARY = `#version 300 es
 precision mediump float;
 in vec3 vPos;
-in vec2 vFeature;
+in vec3 vFeature;
 flat in vec2 vLifeEdge;
 out vec4 outColor;
 uniform vec3 uEye;
@@ -50,11 +50,15 @@ void main() {
     } else if (state < ${EVOLUTION_CELL_EDGE.QUIET}.5 && relation > ${EVOLUTION_REGION_EDGE.ARCHETYPE}.5
       && relation < ${EVOLUTION_REGION_EDGE.DOMAIN}.5) {
       evolutionColor = vec3(0.73, 0.69, 0.45); evolutionAlpha = 0.32;
-    } else if (state > ${EVOLUTION_CELL_EDGE.QUIET}.5 && state < ${EVOLUTION_CELL_EDGE.OWNED}.5) {
-      evolutionColor = vec3(0.64, 0.71, 0.62); evolutionAlpha = 0.46;
-    } else if (state > ${EVOLUTION_CELL_EDGE.OWNED}.5 && state < ${EVOLUTION_CELL_EDGE.FRONTIER}.5) {
-      evolutionColor = vec3(0.82, 0.89, 0.74); evolutionAlpha = 0.69;
-    } else if (state > ${EVOLUTION_CELL_EDGE.FRONTIER}.5 && state < ${EVOLUTION_CELL_EDGE.RECENT}.5) {
+    } else if (state > ${EVOLUTION_CELL_EDGE.QUIET}.5 && state < ${EVOLUTION_CELL_EDGE.REACHABLE_PERIMETER}.5) {
+      // Reachability is a broken, subordinate outer cue; exact-cell readiness
+      // remains available through the cell-centered glyph and native detail.
+      float reachablePattern = 1.0 - smoothstep(0.54, 0.72, fract(vFeature.z * 2.0));
+      evolutionColor = vec3(0.58, 0.68, 0.63); evolutionAlpha = 0.43 * reachablePattern;
+    } else if (state > ${EVOLUTION_CELL_EDGE.REACHABLE_PERIMETER}.5
+      && state < ${EVOLUTION_CELL_EDGE.OWNERSHIP_PERIMETER}.5) {
+      evolutionColor = vec3(0.86, 0.92, 0.78); evolutionAlpha = 0.80;
+    } else if (state > ${EVOLUTION_CELL_EDGE.OWNERSHIP_PERIMETER}.5 && state < ${EVOLUTION_CELL_EDGE.RECENT}.5) {
       evolutionColor = vec3(0.92, 0.78, 0.38); evolutionAlpha = 0.86;
     } else if (state > ${EVOLUTION_CELL_EDGE.RECENT}.5) {
       evolutionColor = vec3(1.0); evolutionAlpha = 1.0;

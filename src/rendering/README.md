@@ -29,14 +29,19 @@ The WebGL world path remains exactly four steady-state draws.
 Evolution renders the level-4 2,562-cell topology as 2,562 authoritative
 progression cells carrying 42 repeated archetypes. The shared exact-cell
 projection supplies both backends with local state and
-quiet/owned/frontier/recent/selected edge classes. Beneath it, one fixed-seed
+quiet/reachable-perimeter/ownership-perimeter/recent/selected edge classes.
+Ownership is the exact owned/unowned graph cut; a separate subordinate
+reachable perimeter marks only the unowned reachable/locked cut. Owned-owned
+and same-reachability edges remain dynamically quiet. Beneath it, one fixed-seed
 call to the maintained World field owner supplies coherent oceans, landmasses,
 biomes, relief, lakes, and shores. Both backends begin from those same fields;
 domain/kind glyphs and state insets remain small local marks instead of broad
 whole-cell fills. Fine boundaries come from the existing static boundary phase;
-state perimeters reuse the existing dynamic boundary draw and Canvas batches,
-so WebGL remains four draws. Trophy retains its independent field and atlas
-material path.
+state perimeters reuse the existing dynamic boundary draw and Canvas batches.
+WebGL ownership is continuous while reachability uses the static along-edge
+coordinate for a segmented treatment; Canvas uses continuous and dashed strokes
+for the same classes. WebGL remains four draws. Trophy retains its independent
+field and atlas material path.
 Locked/reachable, affordable, selected-ready, owned, owned-ready,
 selected-owned-ready, recently upgraded, and fine-Imprint states remain
 text-backed and reduced-motion safe. Rendering never purchases; interface

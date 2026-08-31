@@ -56,10 +56,15 @@ one fixed-seed substrate through the maintained World `createFields` owner and
 reuses its land/water, biome, forest, relief, lake, shore, and lighting hierarchy
 in both backends. The one immutable layout consumes those fields to place each
 archetype as a connected exact-cell region and each domain as a connected
-macro-region. A shared edge byte packs quiet/owned/frontier/recent/selected state
-in its low bits and immutable internal/archetype/domain relation in its high
-bits. Dynamic state dominates restrained region structure in the existing WebGL
-boundary draw and Canvas boundary phase; domain edges also use a dash in Canvas.
+macro-region. A shared edge byte packs quiet, reachable-perimeter,
+ownership-perimeter, recent, or selected state in its low bits and immutable
+internal/archetype/domain relation in its high bits. Ownership is exactly the
+owned/unowned graph cut. The separate reachable perimeter is only the unowned
+reachable/locked cut, so owned interiors and reachable interiors stay quiet.
+Dynamic state dominates restrained region structure in the existing WebGL
+boundary draw and Canvas boundary phase. Ownership is continuous; reachability
+is thinner and segmented in WebGL or dashed in Canvas, while domain edges also
+use a distinct dash in Canvas.
 Cell-centered glyphs and insets preserve domain and state meaning without
 replacing geography with a whole-cell mosaic. Canvas clips boundary segments at
 the projected limb rather than dropping a crossing edge.
