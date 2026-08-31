@@ -3,15 +3,18 @@ import { rotate, zoom } from '../rendering/camera.js';
 import { projectedSphereDiameter } from './policies/layout-policy.js';
 
 export function bindGlobeInput(canvas, camera, options) {
+  const targets = inputTargets(canvas, options.gestureTargets);
   const pointers = new Map(); let pinchDistance = 0; let pinched = false;
   let gestureRadiusCssPx = null; let gesturePointerTravelCssPx = 0; let gestureAngularTravelRadians = 0;
   let gesturePointerType = null; let lastGesture = emptyGesture();
 
   const down = (event) => {
     if (!options.canInteract() || !isPrimaryPointer(event)) return;
+    const target = event.currentTarget ?? canvas; const proxy = target !== canvas;
     // A focusable canvas emits focusin after pointerdown. Focus it first so the
     // trusted-activity reset happens before release-velocity sampling begins.
-    if (document.activeElement !== canvas) canvas.focus({ preventScroll: true });
+    // A detail-shell proxy deliberately retains its current native focus.
+    if (!proxy && document.activeElement !== canvas) canvas.focus({ preventScroll: true });
     const observedNow = performance.now(); const inputNow = inputAnimationTime(event, observedNow);
     if (!pointers.size) {
       pinched = false; gesturePointerTravelCssPx = 0; gestureAngularTravelRadians = 0;
@@ -20,8 +23,9 @@ export function bindGlobeInput(canvas, camera, options) {
       options.onDirectStart?.(inputNow);
     }
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY,
-      startX: event.clientX, startY: event.clientY, travel: 0, at: inputNow });
-    canvas.setPointerCapture(event.pointerId);
+      startX: event.clientX, startY: event.clientY, travel: 0, at: inputNow,
+      target, tapEnabled: !proxy });
+    capturePointer(target, event.pointerId);
     if (pointers.size === 2) { pinched = true; finishGesture('pinch'); options.onDirectEnd?.(inputNow, 'pinch', observedNow);
       pinchDistance = distance([...pointers.values()]); }
   };
@@ -50,20 +54,20 @@ export function bindGlobeInput(canvas, camera, options) {
     const observedNow = performance.now(); const inputNow = inputAnimationTime(event, observedNow);
     const tap = isTapGesture(pointer, pointer ? inputNow - pointer.at : Infinity, invalidTap);
     pointers.delete(event.pointerId);
-    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    releasePointer(pointer?.target, event.pointerId);
     if (!pointers.size) pinchDistance = 0;
     if (!invalidTap) finishGesture(tap ? 'tap' : 'drag');
     options.onDirectEnd?.(inputNow, invalidTap ? 'pinch' : tap ? 'tap' : 'drag', observedNow);
     if (!pointer || !options.canInteract()) return;
-    if (tap) options.onTap(event.clientX, event.clientY);
+    if (tap && pointer.tapEnabled) options.onTap(event.clientX, event.clientY);
   };
 
   const cancel = (event) => {
-    pointers.delete(event.pointerId); pinched = true; pinchDistance = 0;
+    const pointer = pointers.get(event.pointerId); pointers.delete(event.pointerId); pinched = true; pinchDistance = 0;
     const observedNow = performance.now();
     finishGesture('cancel');
     options.onDirectEnd?.(inputAnimationTime(event, observedNow), 'cancel', observedNow);
-    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    releasePointer(pointer?.target, event.pointerId);
   };
   const wheel = (event) => {
     if (!options.canInteract()) return;
@@ -73,22 +77,26 @@ export function bindGlobeInput(canvas, camera, options) {
     if (!options.canInteract() || event.repeat || !['Enter', ' '].includes(event.key)) return;
     event.preventDefault(); options.onTap(...keyboardActivationPoint(canvas, camera));
   };
-  canvas.addEventListener('pointerdown', down); canvas.addEventListener('pointermove', move);
-  canvas.addEventListener('pointerup', finish); canvas.addEventListener('pointercancel', cancel);
-  canvas.addEventListener('wheel', wheel, { passive: false }); canvas.addEventListener('keydown', keydown);
+  for (const target of targets) {
+    target.addEventListener('pointerdown', down); target.addEventListener('pointermove', move);
+    target.addEventListener('pointerup', finish); target.addEventListener('pointercancel', cancel);
+    target.addEventListener('wheel', wheel, { passive: false });
+  }
+  canvas.addEventListener('keydown', keydown);
   const reset = () => {
-    for (const pointerId of pointers.keys()) {
-      if (canvas.hasPointerCapture(pointerId)) canvas.releasePointerCapture(pointerId);
-    }
+    for (const [pointerId, pointer] of pointers) releasePointer(pointer.target, pointerId);
     pointers.clear(); pinchDistance = 0; pinched = false; finishGesture('reset');
   };
   return { isActive: () => pointers.size > 0, reset,
     snapshot: () => Object.freeze({ pointerCount: pointers.size, pinched,
       gestureRadiusCssPx, ...lastGesture }), dispose() {
     reset();
-    canvas.removeEventListener('pointerdown', down); canvas.removeEventListener('pointermove', move);
-    canvas.removeEventListener('pointerup', finish); canvas.removeEventListener('pointercancel', cancel);
-    canvas.removeEventListener('wheel', wheel); canvas.removeEventListener('keydown', keydown);
+    for (const target of targets) {
+      target.removeEventListener('pointerdown', down); target.removeEventListener('pointermove', move);
+      target.removeEventListener('pointerup', finish); target.removeEventListener('pointercancel', cancel);
+      target.removeEventListener('wheel', wheel);
+    }
+    canvas.removeEventListener('keydown', keydown);
   } };
 
   function finishGesture(kind) {
@@ -100,6 +108,15 @@ export function bindGlobeInput(canvas, camera, options) {
     gestureRadiusCssPx = null; gesturePointerTravelCssPx = 0; gestureAngularTravelRadians = 0;
     gesturePointerType = null;
   }
+}
+
+function inputTargets(canvas, gestureTargets) {
+  const extra = Array.isArray(gestureTargets) ? gestureTargets : [];
+  return [...new Set([canvas, ...extra].filter((target) => typeof target?.addEventListener === 'function'))];
+}
+function capturePointer(target, pointerId) { target?.setPointerCapture?.(pointerId); }
+function releasePointer(target, pointerId) {
+  if (target?.hasPointerCapture?.(pointerId)) target.releasePointerCapture(pointerId);
 }
 
 export function isPrimaryPointer(event) { return event.pointerType !== 'mouse' || event.button === 0; }

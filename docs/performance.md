@@ -15,6 +15,9 @@
 - Camera release sampling uses at most six entries from the latest 120 ms.
   Gesture and motion state remain constant-size; the progressive mapping and
   five-second bound add no path history, timer set, or per-frame allocation.
+- The shared detail shell's Drag globe proxy is one static 44 CSS px element and
+  reuses that same input state; it adds no render pass, static renderer buffer,
+  or per-frame work.
 - Result continuation updates its progress style at no more than about 30 Hz,
   exact assistive text only at second/state boundaries, and owns no second timer.
 - Hidden documents suspend rendering; replacement renders one blank frame before

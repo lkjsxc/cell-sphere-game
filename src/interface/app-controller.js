@@ -151,6 +151,7 @@ class GameApp {
     document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key === ',') { event.preventDefault(); this.openMenu(); } });
   }
   bindCanvas() { this.input = bindGlobeInput(this.canvas, this.camera, { canInteract: () => true,
+    gestureTargets: [document.getElementById('surface-globe-gesture')].filter(Boolean),
     onTap: (x, y) => this.tapGlobe(x, y),
     onDirectStart: (now) => beginCameraDrag(this.cameraMotion, now),
     onDirectDelta: (dragX, dragY, now) => recordCameraDrag(this.cameraMotion, dragX, dragY, now),

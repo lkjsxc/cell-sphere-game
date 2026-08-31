@@ -1,11 +1,13 @@
 /** Focused production-browser evidence for exact-cell Evolution authority. */
 import { captureMatchedEvolutionScenes,
   verifyEvolutionContextLoss } from './evolution-region-browser-support.mjs';
+import { measureDetailShellGesture } from './detail-shell-gesture-fixture.mjs';
 
 export async function runEvolutionCellProgressionFixture(tools, { label = 'final', enforce = true } = {}) {
-  const { click, drag, evaluate, key, pinch, poll, screenshot, setMedia, setViewport, touchCancel, wait, wheel } = tools;
+  const { click, drag, evaluate, key, pinch, poll, screenshot, setMedia, setViewport, tap, touchCancel, wait, wheel } = tools;
   const originalViewport = await evaluate('({width:innerWidth,height:innerHeight})');
   await setViewport(1440, 900); await wait(100);
+  const detailViewport = await evaluate('({width:innerWidth,height:innerHeight})');
   const entryPoint = await evaluate(`(()=>{const e=document.getElementById('scene-evolution'),r=e.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]})()`);
   await click(...entryPoint); await wait(150);
   const prepared = await evaluate(PREPARE_EXPRESSION); const target = prepared.targetPoint;
@@ -19,6 +21,9 @@ export async function runEvolutionCellProgressionFixture(tools, { label = 'final
     && selected.treeItems === 0 && selected.navigatorButtons <= 12 && selected.neighborButtons >= 5 && selected.neighborButtons <= 6,
   `Evolution exact-cell selection failed: ${JSON.stringify(selected)}`);
 
+  const shellGesture = await measureDetailShellGesture({ drag, evaluate, pinch, setViewport, tap, wait, wheel }, detailViewport);
+  if (enforce) ok(shellGesture.valid, `Evolution detail-shell globe gesture failed: ${JSON.stringify(shellGesture)}`);
+
   const interactionPoint = prepared.canvasPoint;
   await drag([interactionPoint[0] - 55, interactionPoint[1]], [interactionPoint[0] + 65, interactionPoint[1] + 12]);
   await wheel(...interactionPoint); await pinch(interactionPoint); await touchCancel(interactionPoint); await wait(120);
@@ -30,7 +35,7 @@ export async function runEvolutionCellProgressionFixture(tools, { label = 'final
   const actionPoint = await evaluate(`(()=>{const r=document.getElementById('memory-unlock').getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]})()`);
   await click(...actionPoint); await wait(160);
   const report = await evaluate(POST_EXPRESSION(tools.simulationFallback));
-  report.interaction = { selected, manipulation, purchase: report.purchase };
+  report.interaction = { selected, shellGesture, manipulation, purchase: report.purchase };
   report.screenshots = { selected: await screenshot(`evolution-ability-regions-${label}-${report.simulationPath}-${report.rendererPath}-selected-1440x900.png`) };
 
   const nextButton = await evaluate(`(()=>{const e=document.getElementById('evolution-next'),r=e.getBoundingClientRect();e.focus();return[r.left+r.width/2,r.top+r.height/2]})()`);

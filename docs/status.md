@@ -1,5 +1,21 @@
 # Current status
 
+## Surface Globe Gesture v1
+
+- The one `bindGlobeInput` owner now accepts a gesture-only proxy in the shared
+  detail shell. Its 44 CSS px `Drag globe` strip preserves native detail focus
+  and routes drag, pinch, and wheel to the existing presentation camera; proxy
+  taps cannot inspect, purchase, or dismiss a cell.
+- The surface coordinator classifies that strip separately from blank chrome, so
+  a short proxy tap cannot close the open detail. The detail slot reserves the
+  strip's height, keeping Close and the intrinsic Evolution Unlock control
+  inside the bounded shell.
+- Starting-revision Chrome 152 Worker/WebGL2 evidence measured zero camera
+  movement and unchanged `5.5` distance from a compact-detail gesture. The
+  current Worker/WebGL2, fallback/WebGL2, and fallback/Canvas receipts measure
+  `0.420832` direct camera movement, wheel/pinch distance `5.5 → 5.94 → 1.7`,
+  retained exact selection, and empty browser errors. WebGL remains four draws.
+
 ## Evolution Ability Regions v1
 
 - Evolution layout version `2` deterministically selects cell `2265` as the

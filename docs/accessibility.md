@@ -31,8 +31,11 @@
 
 Result, History, Menu, metrics, Inspector, Evolution detail, Trophy
 detail, and New World confirmation use one bounded nonmodal shell. The selected
-globe remains visible and draggable. Evolution detail reserves a dedicated
-intrinsic footer
+globe remains visible and draggable. A 44 CSS px **Drag globe** strip at the
+top of that shell passes drag, pinch, and wheel gestures to the same globe input
+owner without becoming a focusable control, moving native detail focus, or
+turning a tap into inspection, purchase, or dismissal. Evolution detail reserves
+a dedicated intrinsic footer
 track, so its 44 CSS px Unlock action cannot be collapsed or clipped by the
 scrolling evidence body. In short landscape at enlarged text, the complete
 Evolution detail becomes the sole scroll owner; Close is reachable at scroll-top
@@ -46,7 +49,8 @@ Interaction contract:
 - another trigger replaces the current detail in one gesture;
 - Escape and Close dismiss;
 - opening a pane does not move or zoom the camera;
-- drag, pinch, and wheel preserve the open detail;
+- drag, pinch, and wheel on the globe or the shell's Drag globe strip preserve
+  the open detail;
 - focus moves to the new heading and returns to a sensible trigger on close.
 
 Result actions are ordered **Next World**, **Evolution**, and **History**. Its
@@ -110,7 +114,8 @@ overflow, 44px selector/metric targets, no dock or shell overlap, stable
 production-formatted metric geometry (including an exact accessible large SCORE),
 terminal footer visibility at 200% text, projected globe geometry, mouse/touch
 release parity, one-radius direct travel, post-zoom and resize-stable gesture
-geometry, surface-held direct manipulation, reduced motion, and camera/detail
+geometry, surface-held direct manipulation (including the detail-shell Drag
+globe strip), reduced motion, and camera/detail
 behavior. The native Game speed select exposes all six ordinary
 values with visible focus and a 44px target at 320×568 and 200% text. Canvas 2D
 runs the same mobile-to-desktop path.

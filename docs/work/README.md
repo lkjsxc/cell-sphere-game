@@ -5,7 +5,9 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package: none.
+Active work package: [`surface-globe-gesture-v1/`](surface-globe-gesture-v1/)
+— local interaction correction for direct sphere manipulation while the shared
+detail shell is open.
 
 Completed packages remain as historical or current implementation evidence:
 

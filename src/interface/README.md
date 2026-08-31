@@ -10,6 +10,7 @@ mutates simulation arrays, consumes authoritative randomness, or changes SCORE.
 | `policies/run-session.js` | First-wins replacement, neutral Level-0 blank frame, immutable start identity. |
 | `policies/run-result.js` | Validated SCORE/Echo/best-record/History/Trophy transaction. |
 | `policies/camera-motion.js` | Presentation-only recent gesture samples, progressive bounded release, elapsed-time damping, idle orbit, and holds. |
+| `globe-input.js` | One canvas input owner plus the shared detail shell's gesture-only camera proxy. |
 | `policies/continuation.js` | One-shot 13.5-second Result authority and its bounded visual/assistive projection. |
 | `surfaces.js` / `inspection/` | SCORE/REACH/Environment HUD, dynamic result evidence, metrics, and Inspector. |
 | `panel-surfaces.js` / `progression-spheres.js` | Exact Evolution-cell selection, bounded navigation, detail, and transaction. |

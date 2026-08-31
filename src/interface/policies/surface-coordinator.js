@@ -3,6 +3,7 @@ const CONTROL_SELECTOR = 'button,a[href],input,select,textarea,label,[role="butt
 export function classifySurfaceTarget(path, surface, currentTriggers) {
   if (surface && path.includes(surface)) return 'inside';
   if (currentTriggers.some((trigger) => path.includes(trigger))) return 'current-trigger';
+  if (path.some((node) => node?.matches?.('[data-globe-gesture]'))) return 'globe-gesture';
   if (path.some((node) => node?.matches?.('[data-surface-trigger]'))) return 'control';
   if (path.some((node) => node?.matches?.(CONTROL_SELECTOR))) return 'control';
   if (path.some((node) => node?.matches?.('canvas'))) return 'canvas';

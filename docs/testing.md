@@ -85,7 +85,10 @@ geography, and state signals at center/limb and far/close framing. Matched
 fixed-camera World, Evolution, and Trophy captures supplement those relative
 measurements. Ignored JSON receipts pair warm entry, projection, accepted
 update, steady frame, buffer costs, screenshot hashes, and the exact scattered
-predecessor baseline.
+predecessor baseline. They also open the compact Evolution detail and require
+the shared 44 px Drag globe strip to rotate and zoom through the production
+camera input while retaining the exact selected cell, local levels, open detail,
+and reachable Unlock action.
 
 `benchmark.mjs` retains terminal and huge-Level checkpoints, and also measures
 seven deterministic samples of an alive fixed 1,000-tick production trace after
