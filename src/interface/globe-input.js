@@ -14,7 +14,8 @@ export function bindGlobeInput(canvas, camera, options) {
     // A focusable canvas emits focusin after pointerdown. Focus it first so the
     // trusted-activity reset happens before release-velocity sampling begins.
     // A detail-shell proxy deliberately retains its current native focus.
-    if (!proxy && document.activeElement !== canvas) canvas.focus({ preventScroll: true });
+    if (proxy) event.preventDefault();
+    else if (document.activeElement !== canvas) canvas.focus({ preventScroll: true });
     const observedNow = performance.now(); const inputNow = inputAnimationTime(event, observedNow);
     if (!pointers.size) {
       pinched = false; gesturePointerTravelCssPx = 0; gestureAngularTravelRadians = 0;

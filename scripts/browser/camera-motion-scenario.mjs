@@ -45,40 +45,43 @@ export async function runCameraMotionScenario(t) {
 
   const mouseStrong = await measuredRelease(t, 'strong-mouse', () => normalizedFlick(t, 'mouse', .66, .26,
     { steps: 5, intervalMs: 16 }));
-  assertBoundedRelease(mouseStrong, 8.4, 9.3, 7.99, 0.9, 1.25);
+  assertFaithfulRelease(mouseStrong, 8.4, 9.3, 1.15, 1.28);
   const touchStrong = await measuredRelease(t, 'strong-touch', () => normalizedFlick(t, 'touch', -.66, .26,
     { steps: 5, intervalMs: 16 }));
-  assertBoundedRelease(touchStrong, 8.4, 9.3, 7.99, 0.9, 1.25);
-  const speedParity = Math.abs(mouseStrong.release.rawReleaseSpeed - touchStrong.release.rawReleaseSpeed)
-    / mouseStrong.release.rawReleaseSpeed;
+  assertFaithfulRelease(touchStrong, 8.4, 9.3, 1.15, 1.28);
+  const speedParity = Math.abs(mouseStrong.release.releaseSpeed - touchStrong.release.releaseSpeed)
+    / mouseStrong.release.releaseSpeed;
   const pathParity = Math.abs(mouseStrong.cumulativeTurns - touchStrong.cumulativeTurns) / mouseStrong.cumulativeTurns;
   ok(speedParity <= .1 && pathParity <= .1,
     `mouse/touch normalized release diverged: ${JSON.stringify({ mouseStrong, touchStrong })}`);
 
-  const extreme = await measuredRelease(t, 'extreme-mouse', () => normalizedFlick(t, 'mouse', 1.2, .48,
+  const faster = await measuredRelease(t, 'faster-mouse', () => normalizedFlick(t, 'mouse', 1.2, .48,
     { steps: 5, intervalMs: 16 }));
-  assertBoundedRelease(extreme, 15.4, 16.9, 7.99, 0.9, 1.25);
-  ok(extreme.release.rawReleaseSpeed > mouseStrong.release.rawReleaseSpeed * 1.7
-    && Math.abs(extreme.release.mappedReleaseSpeed - mouseStrong.release.mappedReleaseSpeed) < 1e-12
-    && extreme.cumulativeTurns <= 1.35,
-  `extreme release did not saturate safely: ${JSON.stringify({ mouseStrong, extreme })}`);
+  assertFaithfulRelease(faster, 15.4, 16.9, 2.05, 2.35);
+  const extreme = await measuredRelease(t, 'extreme-mouse', () => normalizedFlick(t, 'mouse', .744, .294,
+    { steps: 5, intervalMs: 5 }));
+  assertFaithfulRelease(extreme, 30.5, 33.5, 4.15, 4.65);
+  ok(faster.release.releaseSpeed > mouseStrong.release.releaseSpeed * 1.7
+    && extreme.release.releaseSpeed > faster.release.releaseSpeed * 1.8
+    && faster.cumulativeTurns > mouseStrong.cumulativeTurns * 1.7
+    && extreme.cumulativeTurns > faster.cumulativeTurns * 1.8,
+  `faithful release strength plateaued: ${JSON.stringify({ mouseStrong, faster, extreme })}`);
 
   const medium = await measuredRelease(t, 'medium-mouse', () => normalizedFlick(t, 'mouse', .13, .055,
     { steps: 5, intervalMs: 20 }));
-  assertBoundedRelease(medium, 1.25, 1.55, 2.3, .18, .5);
+  assertFaithfulRelease(medium, 1.25, 1.55, .175, .21);
   ok(medium.cumulativeTurns < mouseStrong.cumulativeTurns,
     `medium release did not remain below strong: ${JSON.stringify({ medium, mouseStrong })}`);
 
-  const slow = await stoppedDragEvidence(t, 'slow-mouse', .078, { steps: 15, intervalMs: 20 });
-  ok(slow.directTravel > .07 && slow.rawReleaseSpeed >= .24 && slow.rawReleaseSpeed <= .28
-    && slow.mappedReleaseSpeed === 0 && slow.input.lastGestureKind === 'drag'
-    && slow.finalState.mode === 'idle-wait' && slow.finalState.speed === 0
-    && slow.cumulativeRadians < 1e-8 && slow.selectedBefore === slow.selectedAfter,
-  `slow inspection drag became slippery or selected: ${JSON.stringify(slow)}`);
+  const gentle = await measuredRelease(t, 'gentle-mouse', () => normalizedFlick(t, 'mouse', .078, 0,
+    { steps: 15, intervalMs: 20 }));
+  assertFaithfulRelease(gentle, .24, .28, .025, .045);
+  ok(gentle.directBasisRadians > .07 && gentle.immediate.input.lastGestureKind === 'drag',
+  `gentle release lost direct manipulation or selection: ${JSON.stringify(gentle)}`);
 
   const precision = await stoppedDragEvidence(t, 'precision-mouse', .06, { steps: 15, intervalMs: 80 });
-  ok(precision.directTravel > .05 && precision.rawReleaseSpeed > 0 && precision.rawReleaseSpeed < .08
-    && precision.mappedReleaseSpeed === 0 && precision.input.lastGestureKind === 'drag'
+  ok(precision.directTravel > .05 && precision.releaseSpeed > 0 && precision.releaseSpeed < .08
+    && precision.input.lastGestureKind === 'drag'
     && precision.finalState.mode === 'idle-wait' && precision.finalState.speed === 0
     && precision.cumulativeRadians < 1e-8 && precision.selectedBefore === precision.selectedAfter,
   `sub-threshold precision drag became slippery or selected: ${JSON.stringify(precision)}`);
@@ -161,12 +164,18 @@ export async function runCameraMotionScenario(t) {
   `wide release was not visible and cancellable: ${JSON.stringify({ wideMoving, wideStopped })}`);
 
   await trustedId(t, 'score-button');
-  const heldStart = await motion(evaluate);
-  await normalizedFlick(t, 'mouse', .55, .22); const heldRelease = await motion(evaluate); await wait(220);
-  const heldAfter = await motion(evaluate);
-  ok(heldStart.state.surfaceOpen && heldRelease.state.mode === 'held' && heldRelease.state.speed === 0
-    && distance(heldStart.direction, heldRelease.direction) > .08 && distance(heldRelease.direction, heldAfter.direction) < 1e-8,
-  `surface did not allow direct drag while suppressing release motion: ${JSON.stringify({ heldStart, heldRelease, heldAfter })}`);
+  const heldStart = await surfaceMotion(evaluate);
+  const surfaceRelease = await measuredRelease(t, 'open-detail-canvas', () => normalizedFlick(t, 'mouse', .55, .22,
+    { steps: 5, intervalMs: 16 }));
+  assertFaithfulRelease(surfaceRelease, 6.9, 7.8, .9, 1.1, { finalMode: 'held' });
+  await wait(260); const heldAfter = await surfaceMotion(evaluate);
+  ok(heldStart.state.surfaceOpen && surfaceRelease.release.surfaceOpen
+    && surfaceRelease.finalState?.mode === 'held' && surfaceRelease.finalState?.surfaceOpen
+    && heldAfter.state.mode === 'held' && heldAfter.state.speed === 0
+    && surfaceRelease.finalBasis && basisAngle(surfaceRelease.finalBasis, heldAfter.basis) < 1e-8
+    && heldStart.surface.overlay === heldAfter.surface.overlay && heldAfter.surface.overlay === 'metric'
+    && heldAfter.surface.activeElement === 'gl-canvas',
+  `open-detail canvas release lost surface, focus, rest, or orbit hold: ${JSON.stringify({ heldStart, surfaceRelease, heldAfter })}`);
   await trustedId(t, 'score-button'); const closed = await motion(evaluate);
   ok(!closed.state.surfaceOpen && closed.state.mode === 'idle-wait' && closed.state.idleUntil > closed.now,
     `surface close did not start a fresh idle delay: ${JSON.stringify(closed.state)}`);
@@ -202,30 +211,31 @@ export async function runCameraMotionScenario(t) {
   const zoom = await zoomGestureEvidence(t);
   const frozenResize = await frozenResizeEvidence(t);
   const authorityAfter = await authorityFingerprint(evaluate);
-  ok(authorityBefore.hash === authorityAfter.hash && authorityBefore.tick === authorityAfter.tick,
+  ok(authorityBefore.hash === authorityAfter.hash && authorityBefore.tick === authorityAfter.tick
+    && JSON.stringify(authorityBefore.worldIdentity) === JSON.stringify(authorityAfter.worldIdentity),
     `camera activity changed paused authority: ${JSON.stringify({ authorityBefore, authorityAfter })}`);
 
   await evaluate(`localStorage.clear();location.reload();true`); await wait(1700);
   ok(await poll(() => evaluate('Boolean(window.__CELL_SPHERE_BOOT__?.playable)'), Boolean, 5000), 'camera scenario cleanup reload failed');
   return { policy: await evaluate(`(()=>{const c=window.__CELL_SPHERE_APP__.cameraMotion.config;return{
       sampleCapacity:c.sampleCapacity,sampleWindowMs:c.sampleWindowMs,releaseThreshold:c.releaseThreshold,
-      fullFlingInputSpeed:c.fullFlingInputSpeed,maximumAngularSpeed:c.maximumAngularSpeed,
-      dampingHalfLifeMs:c.dampingHalfLifeMs,stopSpeed:c.stopSpeed,maximumInertiaMs:c.maximumInertiaMs,
+      dampingHalfLifeMs:c.dampingHalfLifeMs,stopSpeed:c.stopSpeed,
       idleDelayMs:c.idleDelayMs,idleOrbitSpeed:c.idleOrbitSpeed,maximumFrameMs:c.maximumFrameMs}})()`),
     homeText, homeOrbitTravel: distance(beforeIdle, homeOrbit.direction), homeOrbitRate, cameraEvidencePaused,
     authority: { before: authorityBefore, after: authorityAfter, unchanged: true },
-    releases: { mouseStrong, touchStrong, extreme, medium, slow, precision,
+    releases: { mouseStrong, touchStrong, faster, extreme, medium, gentle, precision,
       parity: { speed: speedParity, path: pathParity } },
     cancellations: { pointerDown: pointerPressed.state, wheel: wheelStopped.state, tap: tapState.state, pinch: pinchState.state,
       pointerCancel: cancelled.state, keyboard: keyboardStopped.state, focus: focusStopped.state,
       sceneChange: sceneStopped.state, worldReplacementReset: worldReset.state,
-      repeated: repeatedCancellations, surface: heldRelease.state, focusFraming: focused.state,
+      repeated: repeatedCancellations, surface: surfaceRelease, focusFraming: focused.state,
       hidden: hidden.state, landscape: landscapeStopped.state, wide: wideStopped.state },
     accessibility: { reduced: reducedRelease.state }, geometry, sameClass, zoom, frozenResize,
     viewportMotion: { portrait: [390,844], landscape: [844,390], wide: [1440,900],
       landscapeImage: { path: `reports/${landscapeName}`, ...landscapeImage },
       wideImage: { path: `reports/${wideName}`, ...wideImage } },
-    backend: await evaluate('window.__CELL_SPHERE_BOOT__.renderer') };
+    renderer: await evaluate(`(()=>{const renderer=window.__CELL_SPHERE_APP__.renderer;return{
+      backend:window.__CELL_SPHERE_BOOT__.renderer,drawCalls:renderer.drawCalls??null}})()`) };
 }
 
 async function geometryMatrix(t) {
@@ -304,7 +314,7 @@ async function frozenResizeEvidence(t) {
 
 async function measuredRelease({ evaluate, poll }, label, performGesture) {
   await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,prior=window.__KINETIC_RELEASE_OBSERVER__;
-    if(prior?.raf)cancelAnimationFrame(prior.raf);if(prior?.releaseListener)document.removeEventListener('pointerup',prior.releaseListener,true);
+    if(prior?.raf)cancelAnimationFrame(prior.raf);if(prior?.releaseListener)document.removeEventListener('pointerup',prior.releaseListener);
     const dot=(x,y)=>x[0]*y[0]+x[1]*y[1]+x[2]*y[2],
     angle=(x,y)=>Math.acos(Math.max(-1,Math.min(1,dot(x,y)))),copy=()=>({direction:a.camera.direction.slice(),right:a.camera.right.slice(),up:a.camera.up.slice()}),
     error=b=>Math.max(Math.abs(Math.hypot(...b.direction)-1),Math.abs(Math.hypot(...b.right)-1),Math.abs(Math.hypot(...b.up)-1),
@@ -312,38 +322,39 @@ async function measuredRelease({ evaluate, poll }, label, performGesture) {
     record={label:${JSON.stringify(label)},status:'armed',armedAt:performance.now(),startedAt:null,completedAt:null,
       cumulativeRadians:0,cumulativeTurns:0,releaseDurationMs:0,samples:0,sampleHighWater:0,basisError:0,
       release:null,input:null,gesture:null,directStartBasis:copy(),directBasisRadians:0,releaseBasis:null,releasedAt:null,
-      releaseListener:null,finalState:null,startBasis:null,finalBasis:null,previous:null,raf:0};
-    record.releaseListener=()=>{record.releaseBasis=copy();record.releasedAt=performance.now();};
-    document.addEventListener('pointerup',record.releaseListener,{capture:true,once:true});
-    const cleanup=()=>{document.removeEventListener('pointerup',record.releaseListener,true);record.releaseListener=null;};
+      releaseListener:null,pointerupState:null,finalState:null,startBasis:null,finalBasis:null,previous:null,raf:0};
+    record.releaseListener=()=>{record.releaseBasis=copy();record.releasedAt=performance.now();
+      record.pointerupState=a.worldResourceAudit().cameraMotion;};
+    document.addEventListener('pointerup',record.releaseListener,{once:true});
+    const cleanup=()=>{document.removeEventListener('pointerup',record.releaseListener);record.releaseListener=null;};
     const step=now=>{const audit=a.worldResourceAudit(),state=audit.cameraMotion,current=copy();record.sampleHighWater=Math.max(record.sampleHighWater,state.sampleHighWater??0);
       record.basisError=Math.max(record.basisError,error(current));
       if(record.status==='armed'&&state.mode==='inertia'){const origin=record.releaseBasis??current;record.status='tracking';record.startedAt=record.releasedAt??now;
         record.startBasis=record.directStartBasis;record.directBasisRadians=angle(record.directStartBasis.direction,origin.direction);
         record.input=audit.globeInput;record.previous=current;record.cumulativeRadians=angle(origin.direction,current.direction);record.samples=1;
-        record.release={rawReleaseSpeed:state.rawReleaseSpeed,mappedReleaseSpeed:state.mappedReleaseSpeed,speed:state.speed,
-          velocityX:state.velocityX,velocityY:state.velocityY,idleUntil:state.idleUntil};}
+        const initial=record.pointerupState??state;record.release={releaseSpeed:initial.releaseSpeed,speed:initial.speed,
+          velocityX:initial.velocityX,velocityY:initial.velocityY,idleUntil:initial.idleUntil,surfaceOpen:initial.surfaceOpen};}
       else if(record.status==='tracking'){record.cumulativeRadians+=angle(record.previous.direction,current.direction);record.samples++;record.previous=current;
         if(state.mode!=='inertia'){record.status='complete';record.completedAt=now;record.releaseDurationMs=now-record.startedAt;
           record.cumulativeTurns=record.cumulativeRadians/(2*Math.PI);record.finalState=state;record.finalBasis=current;record.previous=null;record.raf=0;cleanup();return;}}
-      if(now-record.armedAt>6800||record.samples>=480){record.status='timed-out';record.completedAt=now;record.finalState=state;record.finalBasis=current;record.previous=null;record.raf=0;cleanup();return;}
+      if(now-record.armedAt>8000||record.samples>=600){record.status='timed-out';record.completedAt=now;record.finalState=state;record.finalBasis=current;record.previous=null;record.raf=0;cleanup();return;}
       record.raf=requestAnimationFrame(step);};window.__KINETIC_RELEASE_OBSERVER__=record;record.raf=requestAnimationFrame(step);return true})()`);
   const gesture = await performGesture();
   const immediate = await motion(evaluate);
   await evaluate(`(()=>{const r=window.__KINETIC_RELEASE_OBSERVER__;if(r){r.immediate=${JSON.stringify(immediate)};r.gesture=${JSON.stringify(gesture)}}return true})()`);
   if (immediate.state.mode !== 'inertia') {
     await evaluate(`(()=>{const r=window.__KINETIC_RELEASE_OBSERVER__;if(!r)return false;if(r.raf)cancelAnimationFrame(r.raf);
-      if(r.releaseListener)document.removeEventListener('pointerup',r.releaseListener,true);r.releaseListener=null;
+      if(r.releaseListener)document.removeEventListener('pointerup',r.releaseListener);r.releaseListener=null;
       r.raf=0;r.status='no-inertia';r.completedAt=performance.now();r.finalState=r.immediate.state;r.finalBasis=r.immediate.basis;return true})()`);
   }
   const completed = await poll(() => evaluate('window.__KINETIC_RELEASE_OBSERVER__?.status'),
-    (status) => status === 'complete' || status === 'timed-out' || status === 'no-inertia', 7000, 25);
+    (status) => status === 'complete' || status === 'timed-out' || status === 'no-inertia', 8500, 25);
   ok(completed, `${label} cumulative release observer did not finish`);
   return evaluate(`(()=>{const r=window.__KINETIC_RELEASE_OBSERVER__;return{label:r.label,status:r.status,completedAt:r.completedAt,
     cumulativeRadians:r.cumulativeRadians,cumulativeTurns:r.cumulativeTurns,releaseDurationMs:r.releaseDurationMs,
     samples:r.samples,sampleHighWater:r.sampleHighWater,basisError:r.basisError,release:r.release,input:r.input,
     gesture:r.gesture,directBasisRadians:r.directBasisRadians,
-    finalState:r.finalState,startBasis:r.startBasis,finalBasis:r.finalBasis,immediate:r.immediate}})()`);
+    pointerupState:r.pointerupState,finalState:r.finalState,startBasis:r.startBasis,finalBasis:r.finalBasis,immediate:r.immediate}})()`);
 }
 
 async function stoppedDragEvidence(t, label, travelRadii, options) {
@@ -352,32 +363,41 @@ async function stoppedDragEvidence(t, label, travelRadii, options) {
   const release = await motion(t.evaluate); await t.wait(260); const after = await motion(t.evaluate);
   const cumulativeRadians = basisAngle(release.basis, after.basis);
   return { label, status: release.state.mode === 'inertia' ? 'unexpected-inertia' : 'no-inertia', gesture,
-    rawReleaseSpeed: release.state.rawReleaseSpeed, mappedReleaseSpeed: release.state.mappedReleaseSpeed,
+    releaseSpeed: release.state.releaseSpeed,
     directTravel: release.input.lastAngularTravelRadians, directBasisTravel: basisAngle(before.basis, release.basis),
     cumulativeRadians, cumulativeTurns: cumulativeRadians / (2 * Math.PI), releaseDurationMs: 0,
     sampleHighWater: release.state.sampleHighWater, basisError: basisError(after.basis), input: release.input,
     selectedBefore: before.selectedNode, selectedAfter: after.selectedNode, finalState: after.state };
 }
 
-function assertBoundedRelease(evidence, minimumRawSpeed, maximumRawSpeed, minimumMappedSpeed, minimumTurns, maximumTurns) {
-  ok(evidence.status === 'complete' && evidence.release?.rawReleaseSpeed >= minimumRawSpeed
-    && evidence.release.rawReleaseSpeed <= maximumRawSpeed
-    && evidence.release.mappedReleaseSpeed >= minimumMappedSpeed
-    && evidence.release.mappedReleaseSpeed <= 8 && evidence.release.speed > 0
+function assertFaithfulRelease(evidence, minimumSpeed, maximumSpeed, minimumTurns, maximumTurns, options = {}) {
+  const expectedSpeed = Math.hypot(evidence.gesture?.expectedVelocityX, evidence.gesture?.expectedVelocityY);
+  const vectorError = Math.hypot(evidence.release?.velocityX - evidence.gesture?.expectedVelocityX,
+    evidence.release?.velocityY - evidence.gesture?.expectedVelocityY) / expectedSpeed;
+  const expectedDuration = Math.log(evidence.release?.releaseSpeed / .025) / (Math.log(2) / 600);
+  const finalMode = options.finalMode ?? 'idle-wait';
+  ok(evidence.status === 'complete' && evidence.release?.releaseSpeed >= minimumSpeed
+    && evidence.release.releaseSpeed <= maximumSpeed
+    && Math.abs(evidence.release.speed - evidence.release.releaseSpeed) <= 1e-12
+    && Math.abs(evidence.release.releaseSpeed - expectedSpeed) / expectedSpeed <= .01
+    && vectorError <= .01
     && evidence.cumulativeTurns >= minimumTurns && evidence.cumulativeTurns <= maximumTurns
-    && evidence.cumulativeTurns <= 1.35 && evidence.releaseDurationMs <= 5100
+    && Math.abs(evidence.releaseDurationMs - expectedDuration) <= 350
     && Math.abs(evidence.input?.lastGestureRadiusCssPx - evidence.gesture?.gestureRadiusCssPx) <= .01
     && Math.abs(evidence.input?.lastPointerTravelCssPx - evidence.gesture?.pointerTravelCssPx) <= .01
     && Math.abs(evidence.input?.lastAngularTravelRadians - evidence.gesture?.pointerTravelRadii) <= .01
-    && evidence.samples > 0 && evidence.samples <= 480 && evidence.sampleHighWater <= 6
-    && evidence.basisError < 1e-10 && evidence.finalState?.mode === 'idle-wait'
+    && evidence.samples > 0 && evidence.samples <= 600 && evidence.sampleHighWater <= 6
+    && evidence.basisError < 1e-10 && evidence.finalState?.mode === finalMode
     && evidence.finalState?.speed === 0 && evidence.finalState?.idleUntil > evidence.completedAt,
-  `bounded release failed ${minimumRawSpeed}-${maximumRawSpeed} raw rad/s: ${JSON.stringify(evidence)}`);
+  `faithful release failed ${minimumSpeed}-${maximumSpeed} rad/s: ${JSON.stringify({ evidence, expectedSpeed, vectorError, expectedDuration })}`);
 }
 
 async function motion(evaluate) { return evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,audit=a.worldResourceAudit();return{now:performance.now(),
   direction:a.camera.direction.slice(),basis:{direction:a.camera.direction.slice(),right:a.camera.right.slice(),up:a.camera.up.slice()},
   selectedNode:a.selectedNode??null,state:audit.cameraMotion,input:audit.globeInput}})()`); }
+async function surfaceMotion(evaluate) { return evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,audit=a.worldResourceAudit();return{now:performance.now(),
+  basis:{direction:a.camera.direction.slice(),right:a.camera.right.slice(),up:a.camera.up.slice()},state:audit.cameraMotion,input:audit.globeInput,
+  surface:{overlay:a.overlay,active:a.surfaces.active,activeElement:document.activeElement?.id??document.activeElement?.tagName??null}}})()`); }
 async function direction(evaluate) { return evaluate('window.__CELL_SPHERE_APP__.camera.direction.slice()'); }
 async function globeCenter(evaluate) { return evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,r=a.canvas.getBoundingClientRect();return[r.left+r.width*(1+a.camera.offsetX)/2,r.top+r.height*(1-a.camera.offsetY)/2]})()`); }
 async function trustedId({ evaluate, click }, id) { const point = await evaluate(`(()=>{const r=document.getElementById(${JSON.stringify(id)}).getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]})()`); await click(...point); }

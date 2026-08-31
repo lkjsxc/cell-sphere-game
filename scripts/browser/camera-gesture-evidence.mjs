@@ -16,7 +16,9 @@ export async function normalizedFlick(t, pointerType, horizontalRadii, verticalR
   return { pointerType, viewport: geometry.viewport, projectedDiameterCssPx: geometry.projectedDiameterCssPx,
     gestureRadiusCssPx: geometry.radius, from, to, pointerTravelCssPx: Math.hypot(dx, dy),
     pointerTravelRadii: Math.hypot(horizontalRadii, verticalRadii), steps: options.steps ?? 5,
-    intervalMs: options.intervalMs ?? 16 };
+    intervalMs: options.intervalMs ?? 16,
+    expectedVelocityX: horizontalRadii / ((options.steps ?? 5) * (options.intervalMs ?? 16) / 1000),
+    expectedVelocityY: verticalRadii / ((options.steps ?? 5) * (options.intervalMs ?? 16) / 1000) };
 }
 
 export async function authorityFingerprint(evaluate) {

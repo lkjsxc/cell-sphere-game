@@ -126,20 +126,22 @@ test('detail-shell gesture proxies rotate and zoom without turning a tap into a 
   const canvas = { ...pointerTarget(canvasListeners), getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 600 }),
     focusCalls: 0, focus() { this.focusCalls++; } };
   const proxy = pointerTarget(proxyListeners); globalThis.document = { activeElement: proxy };
-  const camera = createCamera(); const direct = []; let taps = 0; let prevented = false;
+  const camera = createCamera(); const direct = []; let taps = 0; let wheelPrevented = false; let pointerPreventions = 0;
   const input = bindGlobeInput(canvas, camera, { canInteract: () => true, gestureTargets: [proxy], onTap: () => { taps++; },
     onDirectDelta: (x, y) => direct.push([x, y]) });
   try {
     const startedAt = performance.now(); const down = proxyListeners.get('pointerdown'); const move = proxyListeners.get('pointermove');
     const up = proxyListeners.get('pointerup'); const event = (pointerId, clientX, clientY, timeStamp) =>
-      ({ currentTarget: proxy, pointerType: 'mouse', button: 0, pointerId, clientX, clientY, timeStamp });
+      ({ currentTarget: proxy, pointerType: 'mouse', button: 0, pointerId, clientX, clientY, timeStamp,
+        preventDefault() { pointerPreventions++; } });
     down(event(1, 100, 100, startedAt)); move(event(1, 170, 118, startedAt + 20)); up(event(1, 170, 118, startedAt + 40));
-    assert.equal(direct.length, 1); assert.equal(taps, 0); assert.equal(canvas.focusCalls, 0); assert.equal(proxy.captured.size, 0);
+    assert.equal(direct.length, 1); assert.equal(taps, 0); assert.equal(canvas.focusCalls, 0);
+    assert.equal(pointerPreventions, 1); assert.equal(proxy.captured.size, 0);
     const afterDrag = camera.dist;
-    proxyListeners.get('wheel')({ deltaY: 180, preventDefault() { prevented = true; } });
-    assert.equal(prevented, true); assert.notEqual(camera.dist, afterDrag);
+    proxyListeners.get('wheel')({ deltaY: 180, preventDefault() { wheelPrevented = true; } });
+    assert.equal(wheelPrevented, true); assert.notEqual(camera.dist, afterDrag);
     down(event(2, 130, 120, startedAt + 60)); up(event(2, 130, 120, startedAt + 80));
-    assert.equal(taps, 0); assert.equal(input.snapshot().lastGestureKind, 'tap');
+    assert.equal(taps, 0); assert.equal(pointerPreventions, 2); assert.equal(input.snapshot().lastGestureKind, 'tap');
   } finally {
     input.dispose();
     if (originalDocument === undefined) delete globalThis.document; else globalThis.document = originalDocument;

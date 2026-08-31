@@ -5,7 +5,7 @@ import { measureDetailShellGesture } from './detail-shell-gesture-fixture.mjs';
 import { evolutionOwnershipBoundaryExpression } from './evolution-ownership-browser-support.mjs';
 
 export async function runEvolutionCellProgressionFixture(tools, { label = 'final', enforce = true } = {}) {
-  const { click, drag, evaluate, key, pinch, poll, screenshot, setMedia, setViewport, tap, touchCancel, wait, wheel } = tools;
+  const { click, drag, evaluate, flick, key, pinch, poll, screenshot, setMedia, setViewport, tap, touchCancel, wait, wheel } = tools;
   const originalViewport = await evaluate('({width:innerWidth,height:innerHeight})');
   await setViewport(1440, 900); await wait(100);
   const detailViewport = await evaluate('({width:innerWidth,height:innerHeight})');
@@ -22,7 +22,7 @@ export async function runEvolutionCellProgressionFixture(tools, { label = 'final
     && selected.treeItems === 0 && selected.navigatorButtons <= 12 && selected.neighborButtons >= 5 && selected.neighborButtons <= 6,
   `Evolution exact-cell selection failed: ${JSON.stringify(selected)}`);
 
-  const shellGesture = await measureDetailShellGesture({ drag, evaluate, pinch, setViewport, tap, wait, wheel }, detailViewport);
+  const shellGesture = await measureDetailShellGesture({ evaluate, flick, pinch, poll, setViewport, tap, wait, wheel }, detailViewport);
   if (enforce) ok(shellGesture.valid, `Evolution detail-shell globe gesture failed: ${JSON.stringify(shellGesture)}`);
 
   const interactionPoint = prepared.canvasPoint;

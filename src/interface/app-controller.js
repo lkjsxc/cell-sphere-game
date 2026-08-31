@@ -296,10 +296,12 @@ class GameApp {
     globeInput: this.input?.snapshot() ?? null, layout: this.layout,
     continuationPresentation: Object.freeze({ ...this.continuationAudit }) }); }
   handleTrustedInteraction(type, event) {
-    // A browser click follows a completed canvas pointer sequence. Pointerdown already stopped automatic motion;
+    // A browser click follows a completed globe pointer sequence. Pointerdown already stopped automatic motion;
     // treating the duplicate click as new activity would erase the release velocity created on pointerup.
     const now = performance.now();
-    if (!(event?.type === 'click' && event.target === this.canvas)) cameraMotionActivity(this.cameraMotion, now);
+    const duplicateGlobeClick = event?.type === 'click'
+      && (event.target === this.canvas || event.target?.matches?.('[data-globe-gesture]'));
+    if (!duplicateGlobeClick) cameraMotionActivity(this.cameraMotion, now);
     this.cancelAutoNext(type, now);
   }
   cancelAutoNext(reason, now = performance.now()) { if (this.phase !== 'result') return false;

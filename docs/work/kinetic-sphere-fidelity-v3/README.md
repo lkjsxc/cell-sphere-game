@@ -61,6 +61,17 @@ Status: active implementation package.
   precision-through-extreme classes, analytic/cadence/delay agreement, natural
   multi-turn rest, bounded debt/storage, lifecycle cancellation, and open-
   surface rest-state evidence. D37 explicitly supersedes D30.
+- Replaced the D30 browser oracle with one focused production scenario shared by
+  Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D. It records the exact
+  initial vector, cumulative basis travel to natural rest, duration, sample
+  high-water, orthonormal error, renderer draw count, and paused authority.
+- Extended the maintained Evolution fixture so its shared detail-shell route
+  proves release carry and surface-held natural rest while retaining detail,
+  selection, exact levels, focus, native controls, and purchase isolation.
+- Corrected the existing shared input route narrowly: proxy pointerdown retains
+  native focus, and the compatibility click following that same globe gesture
+  no longer cancels velocity established on pointerup. It remains one input
+  proxy into the existing camera owner.
 
 ## Focused verification
 
@@ -109,6 +120,32 @@ Status: active implementation package.
   `4.405112244–4.405134245` turns. Durations stay within one 30 Hz frame of the
   analytic reference. Medium observation delays `0/150/350 ms` preserve the
   exact vector, `0.191055982` turns, and `3,500 ms` duration.
+- PASS — focused Chrome 152 camera scenario on Worker/WebGL2,
+  fallback/WebGL2, and fallback/Canvas 2D. Representative browser values are:
+  gentle `0.260000057 rad/s / 0.032465 turns`, medium `1.411558596 /
+  0.191121`, strong `8.878171168 / 1.219742`, faster `16.175712877 /
+  2.225093`, and extreme `31.999301096 / 4.405166`. Extreme motion rests
+  naturally after about `6,191 ms`; all vector and expected-speed errors are
+  below the enforced `1%` browser-noise margin. Precision near `0.05 rad/s`
+  remains still.
+- PASS — open World-detail canvas release stores the measured vector directly,
+  travels about `1.02` turns, naturally returns to `held`, preserves the detail
+  and canvas focus, and shows zero rest drift. Paused tick, snapshot hash, and
+  exact World identity remain unchanged; WebGL draw count remains four;
+  browser errors are zero; sample high-water remains six.
+- PASS — shared Evolution detail-shell release on all three maintained paths.
+  Worker/WebGL2 measures `5.314068073 rad/s`, `0.728703` turns, and
+  `4,615.3 ms`; fallback/WebGL2 and fallback/Canvas stay within `0.14%` of its
+  path. Every path ends `held` with zero rest drift while retaining cell `578`,
+  exact levels, `memory-node`, and `memory-node-heading`. The same fixture passes
+  reduced motion, forced colors, keyboard adjacency, native 44 px controls,
+  `200%` text across eight maintained viewports, tap/pinch/wheel isolation, and
+  no browser errors.
+- FAILED (superseded development iteration) — the first post-cutover shared-
+  shell run captured the correct `5.314068073 rad/s` vector on pointerup, then
+  the browser compatibility click cancelled it and pointerdown moved focus.
+  The narrow existing-route correction above resolved both failures; this run
+  is not counted as a pass.
 
 ## Evidence not obtained
 
@@ -118,5 +155,5 @@ Status: active implementation package.
 
 ## Exact next coherent step
 
-Replace the D30 browser oracle and prove trusted canvas and shared-shell release
-through the maintained Worker/fallback and WebGL2/Canvas paths.
+Reconcile current documentation, capture the stable same-host benchmark, and
+commit the browser/input closure before the fresh repository-wide verifier.

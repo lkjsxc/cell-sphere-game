@@ -23,6 +23,7 @@ const lifeBoundaryOnly=process.argv.includes('--life-boundary-only');
 const atmosphereOnly=process.argv.includes('--atmosphere-only');
 const environmentPressureOnly=process.argv.includes('--environment-pressure-only');
 const evolutionCellOnly=process.argv.includes('--evolution-cell-only');
+const cameraMotionOnly=process.argv.includes('--camera-motion-only');
 const recordBaseline=process.argv.includes('--record-baseline');
 const cohort=process.argv.find((value)=>value.startsWith('--cohort='))?.split('=')[1]?.replace(/[^a-z0-9-]/gi,'');
 const cdpTimeoutMs=Math.max(1000,Math.min(60000,Number(process.env.BROWSER_CDP_TIMEOUT_MS)||((atmosphereOnly||evolutionCellOnly)?60000:10000)));
@@ -106,6 +107,7 @@ try {
     const evidence=await runEvolutionCellProgressionFixture(tools,{label,enforce:!recordBaseline});
     const report=JSON.stringify({sourceRevision:process.env.BROWSER_TEST_REVISION?.trim()||gitValue(['rev-parse','HEAD']),
       harnessRevision:gitValue(['rev-parse','HEAD']),branch:gitValue(['branch','--show-current']),workingTreeDirty:Boolean(gitValue(['status','--porcelain'])),
+      trackedWorkingTreeDirty:trackedWorkingTreeDirty(),
       sourceUrl:configuredUrl??`file://${ROOT}/index.html`,browser:browserIdentity.product,protocolVersion:browserIdentity.protocolVersion,
       browserErrors:cdp.errors.slice(0,20),browserStderr:cdp.stderr.slice(0,20),...evidence},null,2)+'\n';
     const name=`evolution-ownership-boundary-v1-${label}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
@@ -116,6 +118,12 @@ try {
     const receipt = writeEnvironmentPressureReport(evidence, browserIdentity, cdp, Boolean(configuredUrl), configuredUrl);
     console.log(`test:browser:environment-pressure — PASS (${evidence.simulationPath}/${evidence.rendererPath}; `
       +`profile v${evidence.profileVersion}; report ${receipt.path}; sha256 ${receipt.sha256})`);
+  } else if (cameraMotionOnly) {
+    const evidence = await runCameraMotionScenario(tools);
+    const receipt = writeKineticReleaseReport(evidence, browserIdentity, cdp,
+      forceSimulationFallback, forceCanvas, Boolean(configuredUrl));
+    console.log(`test:browser:camera — PASS (${receipt.simulationPath}/${receipt.rendererPath}; `
+      +`report ${receipt.path}; sha256 ${receipt.sha256})`);
   } else {
     if (!forceCanvas) await runDeveloperSpeedChecks(tools, publicUrl);
     else tools.continuity = await runContinuityFixture(tools);
@@ -266,10 +274,14 @@ function protocol(child) {
 
 function writeKineticReleaseReport(evidence, browserIdentity, cdp, fallback, canvas, deployed) {
   const simulationPath = fallback ? 'fallback' : 'worker';
-  const rendererPath = canvas ? 'canvas2d' : evidence.backend;
-  const name = `kinetic-sphere-release-${deployed ? 'deployed' : 'final'}-${simulationPath}-${rendererPath}.json`;
-  const report = `${JSON.stringify({ schema: 3, capturedAt: new Date().toISOString(),
-    revision: gitValue(['rev-parse', 'HEAD']), branch: gitValue(['branch', '--show-current']),
+  const rendererPath = canvas ? 'canvas2d' : evidence.renderer.backend;
+  const name = `kinetic-sphere-fidelity-v3-${deployed ? 'deployed' : 'final'}-${simulationPath}-${rendererPath}.json`;
+  const report = `${JSON.stringify({ schema: 4, capturedAt: new Date().toISOString(),
+    revision: process.env.BROWSER_TEST_REVISION?.trim() || gitValue(['rev-parse', 'HEAD']),
+    harnessRevision: gitValue(['rev-parse', 'HEAD']), branch: gitValue(['branch', '--show-current']),
+    workingTreeDirty: Boolean(gitValue(['status', '--porcelain'])),
+    trackedWorkingTreeDirty: trackedWorkingTreeDirty(),
+    sourceUrl: process.env.BROWSER_TEST_URL?.trim() || `file://${ROOT}/index.html`,
     browser: browserIdentity.product, protocolVersion: browserIdentity.protocolVersion,
     simulationPath, rendererPath, deployed, ...evidence,
     browserErrors: cdp.errors.slice(0, 20), browserStderr: cdp.stderr.slice(0, 20) }, null, 2)}\n`;
@@ -293,6 +305,10 @@ function writeEnvironmentPressureReport(evidence, browserIdentity, cdp, deployed
 function gitValue(args) {
   const result = spawnSync('git', args, { cwd: ROOT, encoding: 'utf8' });
   return result.status === 0 ? result.stdout.trim() : null;
+}
+
+function trackedWorkingTreeDirty() {
+  return Boolean(gitValue(['diff', '--name-only']) || gitValue(['diff', '--cached', '--name-only']));
 }
 
 async function key(cdp, session, value) {
