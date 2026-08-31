@@ -1,5 +1,13 @@
 # Current status
 
+## Kinetic Sphere Fidelity v3
+
+- One presentation-only owner transfers every finite release vector at or above `0.08 rad/s` directly. D30's map, input knee, output saturation, mapped-speed duplicate, and fixed lifetime are deleted; a `600 ms` half-life and `0.025 rad/s` threshold own natural rest.
+- A valid new canvas or 44 CSS px `Drag globe` proxy release may carry while a nonmodal detail stays open. Detail, exact selection/levels, native focus, purchase isolation, and the surface's automatic-orbit hold remain stable.
+- Pure gentle/medium/strong/faster/extreme travel is about `0.0324 / 0.1911 / 1.2182 / 2.2009 / 4.4051` turns. The `32 rad/s` trace rests naturally near `6.2 s`; a `0.05 rad/s` precision trace stays still.
+- Chrome 152 Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D pass direct transfer, open-detail carry, lifecycle/reduced-motion/accessibility/responsive gates, fixed six-sample storage, orthonormality, four WebGL draws, zero browser errors, and unchanged paused authority.
+- Simulation, World identity, SCORE, Evolution, persistence, renderer semantics, game speed, and balance are unchanged. Final verifier and exact-revision publication evidence remain pending while the package is active.
+
 ## Evolution Ownership Boundary v1
 
 - The shared 7,680-byte Evolution edge projection now classifies selected, recent, exact ownership perimeter, exact reachable perimeter, or quiet state. Steady ownership exists if and only if exactly one endpoint is owned; reachability appears only on an unowned reachable/locked cut.
@@ -20,8 +28,9 @@
 - Starting-revision Chrome 152 Worker/WebGL2 evidence measured zero camera
   movement and unchanged `5.5` distance from a compact-detail gesture. The
   current Worker/WebGL2, fallback/WebGL2, and fallback/Canvas receipts measure
-  `0.420832` direct camera movement, wheel/pinch distance `5.5 → 5.94 → 1.7`,
-  retained exact selection, and empty browser errors. WebGL remains four draws.
+  a `5.31 rad/s` release carrying about `0.729` turns before natural surface-
+  held rest, wheel/pinch distance `5.5 → 5.94 → 1.7`, retained exact selection,
+  levels, detail and focus, and empty browser errors. WebGL remains four draws.
 
 ## Evolution Ability Regions v1
 
@@ -178,35 +187,12 @@
   receipts pass all controlled percentages, accessibility, focus, responsive,
   forced-color, reduced-motion, parity, and zero-error gates.
 
-## Kinetic Sphere Release v1
+## Kinetic Sphere Release v1 (historical D30 policy; superseded by v3)
 
-- One camera-motion owner retains projected-radius-normalized immediate drag,
-  strict input timestamps, a six-entry/120 ms sample window, and simultaneous
-  body-frame integration. Release alone uses the current quadratic
-  `0.30 / 2.20 / 8.00 rad/s` response, `600 ms` half-life, `0.025 rad/s` rest
-  threshold, and `5,000 ms` hard lifetime.
-- Pure 60 Hz traces measure strong raw/mapped `8.86707/8.00000 rad/s` at
-  `1.09872` turns, medium `1.41156/2.73809 rad/s` at `0.37378` turns, slow
-  `0.26926/0` at zero turns, and extreme `32/8` at `1.09872` turns. Results
-  agree at 30/60/120/144 Hz and handler delays of 0/150/350 ms.
-- Exact implementation revision `5259ba95ea0dbaa0f18177d38d09f8a37c04ca05`
-  passes Chrome 152 Worker/WebGL2, fallback/WebGL2, and Worker/Canvas 2D with
-  strong mouse/touch parity, medium and slow classes, every selected
-  cancellation, reduced motion, responsive layouts, unchanged idle orbit,
-  SCORE `192,888`, paused-authority identity, and zero browser errors.
-- All 26 fresh `npm run verify` gates pass, including unit `211/211`, integration
-  `72/72`, and a valid `10,777 ticks/s` loaded benchmark. The isolated final
-  benchmark is `11,393 ticks/s` versus the same-host `12,145` baseline, with
-  authority/profile hashes unchanged.
-- Exact behavior-and-evidence revision `5ac24ed7639fe8733cdee809c1bfb3e47a50479c`
-  is published. Actions run `33261241378`, verify job `99123444160`, Pages job
-  `99125484703`, deployment `6157542582`, and status `17502842882` succeed.
-  Four cache-busted source/identity owners match local bytes. Deployed Chrome
-  152 Worker/WebGL2 repeats strong mouse/touch `1.098721/1.098720` turns,
-  medium `0.373781`, slow and precision zero, unchanged authority, four draws,
-  and zero browser errors; receipt SHA-256 is `87619a70…`.
+- This terminal package preserves exact local, CI, Pages, byte, and deployed-browser evidence for D30's now-superseded `0.30 / 2.20 / 8.00 rad/s` mapped response and `5,000 ms` lifetime at revision `5ac24ed7639fe8733cdee809c1bfb3e47a50479c`.
+- D37 and Kinetic Sphere Fidelity v3 replace that historical policy; the package README remains the unmodified evidence archive.
 
-## Inertial Rotation Regression v1 (historical predecessor; superseded)
+## Inertial Rotation Regression v1 (selected threshold foundation)
 
 - The faithful camera release threshold is `0.08 rad/s`. The former `0.30 rad/s`
   value was retained from the deleted progressive response and made a deliberate
@@ -271,7 +257,7 @@
   or frame errors. The canonical terminal package preserves exact report sizes,
   digests, failed-attempt classification, and remaining physical evidence gaps.
 
-## Kinetic Sphere Fidelity v2 (retained input base; release policy superseded)
+## Kinetic Sphere Fidelity v2 (selected geometry and motion foundation)
 
 - One input owner freezes the projected sphere radius in CSS pixels at
   pointerdown. Both axes use the same `delta / radius` mapping, and the exact

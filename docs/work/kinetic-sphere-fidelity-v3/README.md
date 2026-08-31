@@ -141,6 +141,10 @@ Status: active implementation package.
   reduced motion, forced colors, keyboard adjacency, native 44 px controls,
   `200%` text across eight maintained viewports, tap/pinch/wheel isolation, and
   no browser errors.
+- PASS — stable same-host benchmark is `12,188 ticks/s` versus the `12,338`
+  starting sample (`-1.22%`, below the `10%` investigation threshold). Authority
+  hash `15863d52`, fixed-trace hash `e32ad0ff`, and bounded-profile validity are
+  unchanged.
 - FAILED (superseded development iteration) — the first post-cutover shared-
   shell run captured the correct `5.314068073 rad/s` vector on pointerup, then
   the browser compatibility click cancelled it and pointerdown moved focus.

@@ -10,15 +10,19 @@ canvas focus in WebGL2, fallback, and Canvas runs.
 
 `camera-motion-scenario.mjs` authors pointer traces in projected globe radii and
 measures release travel by accumulating incremental camera-direction angles from
-the pointer-up basis through bounded rest. The constant-space observer cannot
-mistake a wrapped roughly-full-turn path for a small endpoint displacement. It
-proves high-speed saturation, strong mouse/touch parity, proportional medium
-carry, separate slow and precision drags with no release motion,
+the pointer-up basis through natural rest. The bounded observer cannot mistake a
+wrapped multi-turn path for a small endpoint displacement. It proves exact
+initial measured-vector transfer, no plateau through near-`32 rad/s`, strong
+mouse/touch parity, distinct gentle/medium/strong/faster/extreme carry, and a
+separate precision drag with no release motion,
 one-radian direct travel at eight viewports and after
 zoom, pointerdown-scale freezing across resize, cancellation, reduced motion,
-paused-authority neutrality, and the unchanged idle orbit.
-`browser-file-test.mjs` writes the bounded structured receipt under
-ignored `reports/` for Worker/WebGL2, fallback/WebGL2, and Worker/Canvas runs.
+hidden-page suspension, open-detail canvas release, paused-authority neutrality,
+unchanged WebGL draw count, and the separate idle orbit. Canonical entry points
+are `test:browser:camera`, `test:browser:camera:fallback`, and
+`test:browser:camera:canvas`.
+`browser-file-test.mjs` writes the bounded schema-4 receipt under ignored
+`reports/` for Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D runs.
 Any endpoint camera displacement retained in the broader autonomous-feel audit
 is supplemental smoke evidence; only the cumulative trace decides release
 distance.
@@ -47,6 +51,10 @@ matched fixed-camera World, Evolution, and Trophy images. Canonical entry points
 `test:browser:evolution-cells:fallback`, and
 `test:browser:evolution-cells:canvas`; structured reports and screenshots
 remain ignored under `reports/`.
+The fixture's shared detail-shell gesture records the exact release vector,
+cumulative travel, duration, final held state, and post-rest drift while proving
+the detail, exact selection and levels, native focus, tap isolation, and Unlock
+target remain unchanged.
 
 Renderer fixtures bind production-generated deep-Luminous snapshots to the
 current presentation identity, focus comparable charged day/night cells, then

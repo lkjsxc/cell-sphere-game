@@ -23,6 +23,9 @@ npm run test:browser:environment-pressure:canvas
 npm run test:browser:evolution-cells
 npm run test:browser:evolution-cells:fallback
 npm run test:browser:evolution-cells:canvas
+npm run test:browser:camera
+npm run test:browser:camera:fallback
+npm run test:browser:camera:canvas
 npm run test:browser:file
 npm run test:browser:canvas
 npm run test:browser:fallback
@@ -95,8 +98,10 @@ supplement relative measurements. Campaign-specific ignored JSON receipts pair
 warm entry, projection, accepted update, steady frame, compact/expanded/static
 buffer costs, screenshot hashes, and semantic counts. The fixture also opens the
 compact Evolution detail and requires the shared 44 px Drag globe strip to
-rotate and zoom through the production camera input while retaining the exact
-selected cell, local levels, open detail, and reachable Unlock action.
+rotate, zoom, and release into naturally damped inertia through the production
+camera input while retaining native focus, the exact selected cell, local
+levels, open detail, and reachable Unlock action. Natural rest must return to
+the surface-held state without automatic orbit.
 
 `benchmark.mjs` retains terminal and huge-Level checkpoints, and also measures
 seven deterministic samples of an alive fixed 1,000-tick production trace after
@@ -104,11 +109,15 @@ one warm-up. Use that fixed-work median for cross-profile hot-path comparisons;
 terminal ticks-per-second is not comparable when an intended ecology change
 changes extinction length.
 
-The shared camera scenario authors gestures in projected sphere radii, verifies
-one-radian direct travel at all eight responsive viewports and after zoom,
-freezes gesture scale through a mid-drag resize, and accumulates release travel
-through bounded rest. Strong and extreme traces prove the roughly-full-turn
-ceiling, medium input proves proportional carry, and separate slow and precision
-drags must stop. Mouse/touch parity, lifecycle cancellation, reduced motion,
-fixed sample high-water, basis error, and a paused authoritative snapshot
-fingerprint are recorded in bounded ignored reports.
+The three focused camera commands author gestures in projected sphere radii,
+verify one-radian direct travel at all eight responsive viewports and after
+zoom, freeze gesture scale through a mid-drag resize, and accumulate incremental
+camera-basis travel from pointer-up through natural rest. A precision trace near
+`0.05 rad/s` stays still; gentle, medium, strong, faster, and near-`32 rad/s`
+traces prove direct vector transfer, strict monotonic travel without saturation,
+multi-turn carry beyond five seconds, and finite natural rest. The same scenario
+proves release from exposed canvas under an open detail, mouse/touch parity,
+lifecycle cancellation, reduced motion, hidden-page suspension, fixed sample
+high-water, basis error, unchanged WebGL draw count, and a paused authoritative
+tick/hash/World-identity fingerprint. Bounded ignored schema-4 receipts cover
+Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D.

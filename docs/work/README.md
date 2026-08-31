@@ -16,9 +16,10 @@ Completed packages remain as historical or current implementation evidence:
   subordinate reachability, transient recovery, WebGL2/Canvas parity, retained
   shared-shell gestures, and exact local/CI/Pages/deployed-browser closure.
 - [`surface-globe-gesture-v1/`](surface-globe-gesture-v1/) — terminal local
-  evidence for direct sphere manipulation from an open shared detail shell,
+  input-routing foundation for direct sphere manipulation from an open shared detail shell,
   including proxy tap suppression, native-control retention, and Worker/WebGL2,
-  fallback/WebGL2, and fallback/Canvas browser proof.
+  fallback/WebGL2, and fallback/Canvas browser proof. Its surface-wide release
+  suppression is superseded by `kinetic-sphere-fidelity-v3`.
 - [`evolution-ability-regions-v1/`](evolution-ability-regions-v1/) — terminal
   implementation record for the green `First Division` root, one
   substrate-guided connected region per archetype, connected domain
@@ -40,19 +41,20 @@ Completed packages remain as historical or current implementation evidence:
   production consumers, truthful live percentages, bounded balance, and exact
   local/CI/Pages/deployed-browser closure.
 - [`kinetic-sphere-release-v1/`](kinetic-sphere-release-v1/) — completed
-  current evidence for the explicitly reaffirmed progressive bounded release
-  response on top of the radius-normalized input path, including exact local,
-  CI, Pages, deployed-byte, and deployed-browser proof.
+  historical evidence for the D30 progressive bounded response, including exact
+  local, CI, Pages, deployed-byte, and deployed-browser proof at that revision.
+  Its current-policy claim is superseded by `kinetic-sphere-fidelity-v3`.
 - [`inertial-rotation-regression-v1/`](inertial-rotation-regression-v1/) —
-  completed local evidence for faithful gentle-drag inertia, retained
+  selected threshold foundation for faithful gentle-drag inertia, retained
   sub-threshold precision, reduced-motion suppression, and cross-backend parity.
 - [`atmosphere-silhouette-independence-v1/`](atmosphere-silhouette-independence-v1/) —
   completed current evidence for fixed renderer-owned WebGL2 atmosphere
   geometry, topology-independent Canvas semantic parity, four-draw preservation,
   and controlled local and deployed silhouette proof.
 - [`kinetic-sphere-fidelity-v2/`](kinetic-sphere-fidelity-v2/) — completed
-  current evidence for visible-sphere-normalized direct manipulation, faithful
-  release-velocity transfer, natural damping, and cross-backend browser proof.
+  selected geometry and motion foundation for visible-sphere-normalized direct
+  manipulation, faithful release-velocity transfer, natural damping, and cross-
+  backend browser proof. Version 3 closes its detail-surface boundary.
 - [`living-boundary-semantics-v1/`](living-boundary-semantics-v1/) — completed
   current evidence for one shared WebGL2/Canvas life-edge projection, retained
   terrain and resource interiors, and the four-draw World renderer.

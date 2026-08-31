@@ -74,15 +74,17 @@ returns the selected fine cell directly.
 The camera retains one orthonormal free-orbit frame; a
 single input path snapshots the projected sphere radius in CSS pixels and uses
 the same isotropic angular deltas for immediate manipulation and recent release
-sampling. The presentation-only motion policy transfers every valid measured
-direction through one quadratic response: zero through `0.30 rad/s`, saturation
-at `8 rad/s` by `2.20 rad/s` input, a `600 ms` damping half-life,
-`0.025 rad/s` rest threshold, and `5,000 ms` hard lifetime. This mapping applies
-only after release; direct manipulation remains immediate. The separate
+sampling. At release, the presentation-only motion policy leaves precision
+traces below `0.08 rad/s` still and transfers every finite qualifying measured
+vector directly. A `600 ms` damping half-life and `0.025 rad/s` rest threshold
+own natural termination without remapping, output saturation, or a fixed
+lifetime. Direct manipulation remains immediate. The separate
 Home/World idle orbit remains calm and
 begins only after a fresh delay. Opening a surface never changes camera direction
-or zoom and clears nonessential motion. Reduced motion keeps direct drag and zoom
-while disabling inertia and automatic orbit.
+or zoom and may clear motion already in progress. A fresh valid canvas or shared-
+shell drag can carry after release while the nonmodal detail remains stable;
+the surface still holds automatic idle orbit. Reduced motion keeps direct drag
+and zoom while disabling release inertia and automatic orbit.
 
 World/Home default distance is the inverse projection of a target sphere
 diameter using the camera field of view and usable canvas. The target varies

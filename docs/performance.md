@@ -13,8 +13,9 @@
 - History, notifications, transaction receipts, visual checkpoints, and profile
   caches are bounded.
 - Camera release sampling uses at most six entries from the latest 120 ms.
-  Gesture and motion state remain constant-size; the progressive mapping and
-  five-second bound add no path history, timer set, or per-frame allocation.
+  Gesture, finite release velocity, and bounded foreground-debt state remain
+  constant-size. Direct transfer and analytic damping to natural rest add no
+  path history, timer set, fixed-lifetime branch, or per-frame allocation.
 - The shared detail shell's Drag globe proxy is one static 44 CSS px element and
   reuses that same input state; it adds no render pass, static renderer buffer,
   or per-frame work.
@@ -22,6 +23,15 @@
   exact assistive text only at second/state boundaries, and owns no second timer.
 - Hidden documents suspend rendering; replacement renders one blank frame before
   a new World.
+
+Kinetic Sphere Fidelity v3 changes only constant-size presentation state. Its
+stable same-host benchmark measures `12,188 ticks/s` versus the `12,338`
+starting sample (`-1.22%`), below the `10%` investigation threshold, with the
+same authority hash `15863d52`, fixed-trace hash `e32ad0ff`, and valid bounded
+profiles. Focused Chrome 152 receipts retain six samples at high-water, four
+WebGL draws, zero unchanged-frame renderer work attributable to the camera, and
+zero browser errors across Worker/WebGL2, fallback/WebGL2, and fallback/Canvas
+2D.
 
 ## Data layout
 
@@ -124,6 +134,9 @@ npm run test:browser:atmosphere:canvas
 npm run test:browser:evolution-cells
 npm run test:browser:evolution-cells:fallback
 npm run test:browser:evolution-cells:canvas
+npm run test:browser:camera
+npm run test:browser:camera:fallback
+npm run test:browser:camera:canvas
 npm run terminal:soak
 npm run test:browser:file
 npm run test:browser:canvas

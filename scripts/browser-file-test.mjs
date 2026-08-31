@@ -120,10 +120,8 @@ try {
       +`profile v${evidence.profileVersion}; report ${receipt.path}; sha256 ${receipt.sha256})`);
   } else if (cameraMotionOnly) {
     const evidence = await runCameraMotionScenario(tools);
-    const receipt = writeKineticReleaseReport(evidence, browserIdentity, cdp,
-      forceSimulationFallback, forceCanvas, Boolean(configuredUrl));
-    console.log(`test:browser:camera — PASS (${receipt.simulationPath}/${receipt.rendererPath}; `
-      +`report ${receipt.path}; sha256 ${receipt.sha256})`);
+    const receipt = writeKineticReleaseReport(evidence, browserIdentity, cdp, forceSimulationFallback, forceCanvas, Boolean(configuredUrl));
+    console.log(`test:browser:camera — PASS (${receipt.simulationPath}/${receipt.rendererPath}; report ${receipt.path}; sha256 ${receipt.sha256})`);
   } else {
     if (!forceCanvas) await runDeveloperSpeedChecks(tools, publicUrl);
     else tools.continuity = await runContinuityFixture(tools);
@@ -277,11 +275,9 @@ function writeKineticReleaseReport(evidence, browserIdentity, cdp, fallback, can
   const rendererPath = canvas ? 'canvas2d' : evidence.renderer.backend;
   const name = `kinetic-sphere-fidelity-v3-${deployed ? 'deployed' : 'final'}-${simulationPath}-${rendererPath}.json`;
   const report = `${JSON.stringify({ schema: 4, capturedAt: new Date().toISOString(),
-    revision: process.env.BROWSER_TEST_REVISION?.trim() || gitValue(['rev-parse', 'HEAD']),
-    harnessRevision: gitValue(['rev-parse', 'HEAD']), branch: gitValue(['branch', '--show-current']),
-    workingTreeDirty: Boolean(gitValue(['status', '--porcelain'])),
-    trackedWorkingTreeDirty: trackedWorkingTreeDirty(),
-    sourceUrl: process.env.BROWSER_TEST_URL?.trim() || `file://${ROOT}/index.html`,
+    revision: process.env.BROWSER_TEST_REVISION?.trim() || gitValue(['rev-parse', 'HEAD']), harnessRevision: gitValue(['rev-parse', 'HEAD']),
+    branch: gitValue(['branch', '--show-current']), workingTreeDirty: Boolean(gitValue(['status', '--porcelain'])),
+    trackedWorkingTreeDirty: trackedWorkingTreeDirty(), sourceUrl: process.env.BROWSER_TEST_URL?.trim() || `file://${ROOT}/index.html`,
     browser: browserIdentity.product, protocolVersion: browserIdentity.protocolVersion,
     simulationPath, rendererPath, deployed, ...evidence,
     browserErrors: cdp.errors.slice(0, 20), browserStderr: cdp.stderr.slice(0, 20) }, null, 2)}\n`;
@@ -307,9 +303,7 @@ function gitValue(args) {
   return result.status === 0 ? result.stdout.trim() : null;
 }
 
-function trackedWorkingTreeDirty() {
-  return Boolean(gitValue(['diff', '--name-only']) || gitValue(['diff', '--cached', '--name-only']));
-}
+function trackedWorkingTreeDirty() { return Boolean(gitValue(['diff', '--name-only']) || gitValue(['diff', '--cached', '--name-only'])); }
 
 async function key(cdp, session, value) {
   const code = value; const virtual = value === 'Enter' ? 13 : value === ' ' ? 32

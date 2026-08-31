@@ -215,16 +215,9 @@ reset and a single protocol revision replace old semantics. Evidence: conversion
 settings, protocol, all-speed/mixed-speed determinism, and eight-second Worker and
 fallback pacing measurements.
 
-## D22 — Default camera-motion architecture and projected World framing (release policy current in D30)
+## D22 — Default camera-motion architecture and projected World framing (release policy current in D37)
 
-A watchable autonomous ecology should remain tactile after release and quietly
-alive without input, without returning camera-tuning preferences to the Menu.
-This decision established the orthonormal free-orbit frame, fixed recent sample
-storage, elapsed-time damping, lifecycle cancellation, separate calm Home/World
-orbit, and projected framing. Its clamped velocity and hard lifetime were first
-recalibrated by D26 and then deleted by D27. Retain the 4.5-second idle delay and
-derive World/Home distance from field of view and a smooth 1.08/0.98/0.90
-projected-diameter target.
+A watchable autonomous ecology should remain tactile after release and quietly alive without input, without returning camera-tuning preferences to the Menu. This decision established the orthonormal free-orbit frame, fixed recent sample storage, elapsed-time damping, lifecycle cancellation, separate calm Home/World orbit, and projected framing. Its clamped velocity and hard lifetime were first recalibrated by D26 and then deleted by D27. Retain the 4.5-second idle delay and derive World/Home distance from field of view and a smooth 1.08/0.98/0.90 projected-diameter target.
 
 ## D23 — Result cycle is one accessible projection of continuation authority (duration superseded by D24)
 
@@ -272,7 +265,7 @@ simulation, or fifth-draw change is introduced. Evidence: exhaustive pair and
 reversal tests, source-negative audit, calibrated Chrome 152 WebGL2/Canvas
 interior/edge/resource/overlap measurements, four-draw and context-loss paths.
 
-## D26 — Deliberate flicks use one progressive bounded release response (historical; restored by D30)
+## D26 — Deliberate flicks use one progressive bounded release response (historical; superseded by D37)
 
 D22 remains the camera architecture decision, but its conservative release
 calibration is historical. Keep immediate direct drag, the six-sample/120 ms
@@ -289,9 +282,10 @@ orientation, is the release-distance oracle. Trusted activity and every existing
 hold/reset boundary still clear velocity; reduced motion disables release and
 orbit. No simulation, renderer-backend, input-scale, idle-speed, persistence, or
 player-setting authority is added. D27 later replaced this response curve and
-hard-lifetime policy; D30 restores them on top of D27's retained input geometry.
+hard-lifetime policy; D30 briefly restored them on top of D27's retained input
+geometry before D37 superseded that release policy.
 
-## D27 — Visible-sphere input and faithful release transfer (input retained; release transfer superseded by D30)
+## D27 — Visible-sphere input and faithful release transfer (foundation restored by D37)
 
 Ordinary direct manipulation uses the object the player can see as its scale.
 At the first one-pointer down, snapshot half the projected sphere diameter in
@@ -324,17 +318,9 @@ or draw-count authority changes. Evidence: deterministic geometry bounds,
 source-negative audit, calibrated Chrome contour cohorts, topology probes,
 four-draw lifecycle, Canvas state response, and same-host frame measurements.
 
-## D29 — Faithful low-speed release has a perceptible threshold (superseded by D30)
+## D29 — Faithful low-speed release has a perceptible threshold (restored by D37)
 
-Supersede only D27's `0.30 rad/s` release threshold with `0.08 rad/s`. The larger
-value belonged to D26's deleted progressive response and left a broad dead zone
-after measured-vector transfer became direct. Keep the six-sample/120 ms
-estimator, exact vector transfer, `600 ms` damping half-life, `0.025 rad/s` rest
-threshold, natural termination, cancellation boundaries, and reduced-motion
-suppression unchanged. A deliberate release near `0.260 rad/s` must therefore
-carry without amplification, while a genuine precision trace near `0.050 rad/s`
-must remain still after release. This is presentation-only and adds no setting,
-simulation input, allocation, or second motion owner.
+Supersede only D27's `0.30 rad/s` release threshold with `0.08 rad/s`. The larger value belonged to D26's deleted progressive response and left a broad dead zone after measured-vector transfer became direct. Keep the six-sample/120 ms estimator, exact vector transfer, `600 ms` damping half-life, `0.025 rad/s` rest threshold, natural termination, cancellation boundaries, and reduced-motion suppression unchanged. A deliberate release near `0.260 rad/s` must therefore carry without amplification, while a genuine precision trace near `0.050 rad/s` must remain still after release. This is presentation-only and adds no setting, simulation input, allocation, or second motion owner.
 
 ## D30 — Progressive bounded release is restored over visible-sphere input (superseded by D37)
 
@@ -400,20 +386,6 @@ Retain D33's exact-cell authority and D35's connected substrate-guided layout; s
 
 ## D37 — Faithful release transfer and natural damping are current
 
-Retain D27's projected-radius manipulation, strict timestamp validation, exact
-applied-delta sampling, simultaneous body-frame integration, and bounded
-foreground animation debt. Supersede D30's release policy with a `0.08 rad/s`
-precision threshold and direct component-for-component transfer of every finite
-qualifying measured velocity vector. Delete the response curve, input knee,
-output saturation, mapped-speed duplicate, turn ceiling, and fixed lifetime.
-The retained `600 ms` half-life and `0.025 rad/s` stillness threshold own natural
-rest.
+Retain D27's projected-radius manipulation, strict timestamp validation, exact applied-delta sampling, simultaneous body-frame integration, and bounded foreground animation debt. Supersede D30's release policy with a `0.08 rad/s` precision threshold and direct component-for-component transfer of every finite qualifying measured velocity vector. Delete the response curve, input knee, output saturation, mapped-speed duplicate, turn ceiling, and fixed lifetime. The retained `600 ms` half-life and `0.025 rad/s` stillness threshold own natural rest.
 
-A nonmodal surface may cancel motion already in progress and continues to hold
-automatic idle orbit. Its presence does not veto a newly completed valid drag:
-inertia advances normally through either the exposed canvas or the shared
-detail-shell gesture route, then returns to surface-held rest. Reduced motion,
-hidden-page entry, trusted new interaction, scene or World replacement, and
-programmatic focus framing still clear velocity immediately. This is one
-presentation-only camera path; simulation, renderer semantics, progression,
-reward, persistence, balance, and public settings do not change.
+A nonmodal surface may cancel motion already in progress and continues to hold automatic idle orbit. Its presence does not veto a newly completed valid drag: inertia advances normally through either the exposed canvas or the shared detail-shell gesture route, then returns to surface-held rest. Reduced motion, hidden-page entry, trusted new interaction, scene or World replacement, and programmatic focus framing still clear velocity immediately. This is one presentation-only camera path; simulation, renderer semantics, progression, reward, persistence, balance, and public settings do not change.

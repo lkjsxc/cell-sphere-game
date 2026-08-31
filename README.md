@@ -36,13 +36,14 @@ semantic-only. Bounded notifications remain presentation-only.
 
 The globe is the primary interface. A drag turns it immediately, with one
 projected globe radius of pointer travel corresponding to one radian on every
-supported layout and zoom. A valid release carries the measured angular velocity
-through one progressive bounded response: a deliberate fast flick carries about
-one additional turn, medium input carries less, and slow inspection stops on
-release. Elapsed-time damping and a hard lifetime always bring inertia to rest.
+supported layout and zoom. A finite release at or above `0.08 rad/s` carries the
+measured angular-velocity vector directly: gentle input carries a little, and a
+fast deliberate flick may turn several times. Elapsed-time damping brings every
+finite release naturally to the `0.025 rad/s` stillness threshold.
 When a detail shell is open, its 44 CSS px **Drag globe** strip relays drag,
 pinch, and wheel input to that same camera without selecting, purchasing, or
-dismissing a cell.
+dismissing a cell. A valid new drag may carry after release while the detail
+remains open; the detail continues to hold automatic idle orbit.
 Home or World begins a
 separate calm idle orbit only after inactivity. Reduced motion removes inertia
 and automatic orbit. Responsive framing derives the globe's distance from its

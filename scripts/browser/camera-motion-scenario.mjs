@@ -15,7 +15,6 @@ export async function runCameraMotionScenario(t) {
   `Home autonomous copy failed at 200% text: ${JSON.stringify(homeText)}`);
   await screenshot('shell-home-320x568-text-200.png');
   await evaluate(`(()=>{document.documentElement.style.fontSize='';document.querySelector('.title-content').scrollTop=0;return true})()`);
-
   await setViewport(390, 844); await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.resetCameraMotion('home');return true})()`);
   const homeStart = await direction(evaluate); await wait(4200); const beforeIdle = await direction(evaluate);
   ok(distance(homeStart, beforeIdle) < 1e-8, `Home moved before idle delay: ${distance(homeStart, beforeIdle)}`);
@@ -31,7 +30,6 @@ export async function runCameraMotionScenario(t) {
   await key('Shift'); const activity = await motion(evaluate); await wait(220); const afterActivity = await direction(evaluate);
   ok(activity.state.mode === 'idle-wait' && activity.state.speed === 0 && distance(activity.direction, afterActivity) < 1e-8,
     `trusted keyboard activity did not stop Home orbit: ${JSON.stringify(activity)}`);
-
   await trustedId(t, 'begin-button');
   ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'running', 5000), 'camera World did not start');
   const newWorld = await motion(evaluate);
@@ -42,7 +40,6 @@ export async function runCameraMotionScenario(t) {
   ok(cameraEvidencePaused, 'camera-only evidence did not pause authoritative World time');
   const authorityBefore = await authorityFingerprint(evaluate);
   const point = await globeCenter(evaluate);
-
   const mouseStrong = await measuredRelease(t, 'strong-mouse', () => normalizedFlick(t, 'mouse', .66, .26,
     { steps: 5, intervalMs: 16 }));
   assertFaithfulRelease(mouseStrong, 8.4, 9.3, 1.15, 1.28);
@@ -54,7 +51,6 @@ export async function runCameraMotionScenario(t) {
   const pathParity = Math.abs(mouseStrong.cumulativeTurns - touchStrong.cumulativeTurns) / mouseStrong.cumulativeTurns;
   ok(speedParity <= .1 && pathParity <= .1,
     `mouse/touch normalized release diverged: ${JSON.stringify({ mouseStrong, touchStrong })}`);
-
   const faster = await measuredRelease(t, 'faster-mouse', () => normalizedFlick(t, 'mouse', 1.2, .48,
     { steps: 5, intervalMs: 16 }));
   assertFaithfulRelease(faster, 15.4, 16.9, 2.05, 2.35);
@@ -66,39 +62,33 @@ export async function runCameraMotionScenario(t) {
     && faster.cumulativeTurns > mouseStrong.cumulativeTurns * 1.7
     && extreme.cumulativeTurns > faster.cumulativeTurns * 1.8,
   `faithful release strength plateaued: ${JSON.stringify({ mouseStrong, faster, extreme })}`);
-
   const medium = await measuredRelease(t, 'medium-mouse', () => normalizedFlick(t, 'mouse', .13, .055,
     { steps: 5, intervalMs: 20 }));
   assertFaithfulRelease(medium, 1.25, 1.55, .175, .21);
   ok(medium.cumulativeTurns < mouseStrong.cumulativeTurns,
     `medium release did not remain below strong: ${JSON.stringify({ medium, mouseStrong })}`);
-
   const gentle = await measuredRelease(t, 'gentle-mouse', () => normalizedFlick(t, 'mouse', .078, 0,
     { steps: 15, intervalMs: 20 }));
   assertFaithfulRelease(gentle, .24, .28, .025, .045);
   ok(gentle.directBasisRadians > .07 && gentle.immediate.input.lastGestureKind === 'drag',
   `gentle release lost direct manipulation or selection: ${JSON.stringify(gentle)}`);
-
   const precision = await stoppedDragEvidence(t, 'precision-mouse', .06, { steps: 15, intervalMs: 80 });
   ok(precision.directTravel > .05 && precision.releaseSpeed > 0 && precision.releaseSpeed < .08
     && precision.input.lastGestureKind === 'drag'
     && precision.finalState.mode === 'idle-wait' && precision.finalState.speed === 0
     && precision.cumulativeRadians < 1e-8 && precision.selectedBefore === precision.selectedAfter,
   `sub-threshold precision drag became slippery or selected: ${JSON.stringify(precision)}`);
-
   await normalizedFlick(t, 'mouse', -.66, .26); await wait(70); await pointerDown(...point);
   const pointerPressed = await motion(evaluate); await wait(220); const pointerHeld = await motion(evaluate);
   ok(pointerPressed.state.mode === 'direct' && pointerPressed.state.speed === 0
     && basisAngle(pointerPressed.basis, pointerHeld.basis) < 1e-8,
   `pointer-down did not stop and hold release motion: ${JSON.stringify({ pointerPressed, pointerHeld })}`);
   await pointerUp(...point); await wait(80); await evaluate(`window.__CELL_SPHERE_APP__.closeActiveOverlay()`);
-
   await normalizedFlick(t, 'mouse', .66, -.26); await wait(70); await wheel(...point);
   const wheelStopped = await motion(evaluate); await wait(220); const wheelAfter = await motion(evaluate);
   ok(wheelStopped.state.mode === 'idle-wait' && wheelStopped.state.speed === 0
     && basisAngle(wheelStopped.basis, wheelAfter.basis) < 1e-8,
   `wheel did not cancel camera motion: ${JSON.stringify({ wheelStopped, wheelAfter })}`);
-
   await tap(...point); await wait(80); const tapState = await motion(evaluate);
   ok(tapState.state.mode !== 'inertia', `tap produced inertia: ${JSON.stringify(tapState.state)}`);
   await evaluate(`window.__CELL_SPHERE_APP__.closeActiveOverlay()`);
@@ -108,13 +98,11 @@ export async function runCameraMotionScenario(t) {
   await touchCancel(point); await wait(60); const cancelled = await motion(evaluate);
   ok(cancelled.state.mode !== 'inertia' && cancelled.state.speed === 0,
     `pointer cancellation retained velocity: ${JSON.stringify(cancelled.state)}`);
-
   await normalizedFlick(t, 'mouse', .66, -.26); await wait(70); await key('Shift');
   const keyboardStopped = await motion(evaluate); await wait(220); const keyboardAfter = await motion(evaluate);
   ok(keyboardStopped.state.mode === 'idle-wait' && keyboardStopped.state.speed === 0
     && basisAngle(keyboardStopped.basis, keyboardAfter.basis) < 1e-8,
   `trusted keyboard activity did not cancel inertia: ${JSON.stringify({ keyboardStopped, keyboardAfter })}`);
-
   await normalizedFlick(t, 'mouse', -.66, .26); await wait(70);
   await evaluate(`document.getElementById('speed-select').focus()`); const focusStopped = await motion(evaluate);
   await wait(220); const focusAfter = await motion(evaluate);

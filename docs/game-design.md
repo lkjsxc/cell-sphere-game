@@ -60,15 +60,16 @@ authority and the game makes no offline-progress promise.
 Direct drag remains immediate on the free-orbit camera. One projected globe
 radius of pointer travel supplies about one radian on both axes, with the scale
 frozen for the gesture. The exact applied angular deltas enter recent release
-sampling. Slow inspection stops; a valid stronger release transfers its measured
-direction through one progressive bounded response. Deliberate fast input carries
-about one additional turn, medium input carries less, and elapsed animation-time
-damping plus a hard lifetime guarantees rest. A fresh idle wait then begins.
+sampling. A precision release below `0.08 rad/s` stops; every finite qualifying
+release transfers its measured vector directly. Deliberate fast input can carry
+through multiple turns, and elapsed animation-time damping to the stillness
+threshold owns natural rest. A fresh idle wait then begins.
 Home and World
 retain their separate slow orbit only after 4.5 seconds of inactivity. Trusted
-activity, a surface, focus framing, scene or World replacement, hidden
-visibility, and reduced motion clear or hold automatic motion. Evolution and
-Trophies never auto-orbit.
+activity, surface transitions, focus framing, scene or World replacement,
+hidden visibility, and reduced motion clear existing motion. A new valid drag
+may release into inertia while a nonmodal detail stays open, but that surface
+continues to hold automatic orbit. Evolution and Trophies never auto-orbit.
 
 World and Home framing target an observable projected globe diameter: about
 1.08 of the shorter canvas dimension in portrait, 0.98 around tablet/square,
