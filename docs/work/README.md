@@ -5,7 +5,9 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package: none.
+Active work package:
+[`kinetic-sphere-fidelity-v3/`](kinetic-sphere-fidelity-v3/) — direct measured-
+vector camera release, natural damping, and open-detail release fidelity.
 
 Completed packages remain as historical or current implementation evidence:
 

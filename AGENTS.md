@@ -422,33 +422,50 @@ The camera is presentation-only. Keep an orthonormal free-orbit frame or an
 equivalently robust representation. Do not regress to clamped yaw/pitch when the
 current frame supports repeated pole traversal.
 
-Support mouse, touch, pen through Pointer Events, tap selection, drag rotation,
-pinch zoom, wheel zoom, and cancellation. Tap and drag remain distinct. Dragging,
-pinching, or residual motion must not select or purchase. Programmatic focus
-framing clears old velocity. Camera state never alters simulation authority.
+Support mouse, touch, and pen through Pointer Events, tap selection, drag
+rotation, pinch zoom, wheel zoom, and cancellation. Tap and drag remain distinct.
+Dragging, pinching, or residual motion must not select or purchase. Programmatic
+focus framing clears old velocity. Camera state never alters simulation
+authority.
 
 Use monotonic input timing for release-velocity estimation and distinguish event
 time from observed animation time when delivery may be delayed.
 
 One narrow controller owns the sequence:
 
-`direct manipulation → bounded release inertia → damping → idle wait → calm automatic orbit`
+`direct manipulation → faithful release inertia → damping → idle wait → calm automatic orbit`
 
-A deliberate fast flick may carry an energetic but bounded rotation of roughly a
-full turn. Do not accelerate calm idle orbit to compensate for weak release.
-Slow drags remain precise. Reduced motion suppresses nonessential carried motion.
+Normalize direct drag by the projected visible sphere so the same relative
+gesture has the same angular meaning across maintained viewports and zoom states.
+Estimate release velocity from a fixed-capacity, time-bounded recent trace. Every
+finite deliberate release above the precision threshold transfers its measured
+angular-velocity vector directly. Do not apply a nonlinear response curve,
+arbitrary output-speed or turn ceiling, or fixed inertia lifetime. Elapsed-
+animation-time damping owns natural rest.
 
-Required invariants include fixed-capacity recent samples, finite clamped release
-velocity, elapsed-time damping, convergence to stillness, a hard lifetime,
-bounded automatic speed, immediate cancellation by trusted activity, no hidden
-velocity under a surface, a fresh idle delay after cancellation or visibility
-return, and clearing on scene change, World replacement, or focus framing.
-Evolution and Trophies do not auto-orbit.
+Release inertia and automatic idle orbit are separate modes. Do not accelerate
+idle orbit to compensate for weak release. Slow drags remain precise. A nonmodal
+detail surface is not a blanket release-inertia hold: a valid drag on exposed
+canvas or the shared detail-shell globe gesture path may carry naturally after
+release while the detail remains open. The surface may continue to suppress
+automatic idle orbit. Trusted interaction that opens, replaces, or closes a
+surface may cancel already-running motion, but surface presence alone must not
+veto a newly completed valid drag or accumulate hidden velocity.
+
+Required invariants include fixed-capacity recent samples, finite direct release
+velocity, elapsed-time damping, convergence to stillness, bounded frame/debt
+integration, bounded automatic speed, immediate cancellation by trusted new
+interaction, no hidden-page or surface-held catch-up, a fresh idle delay after
+cancellation or visibility return, and clearing on scene change, World
+replacement, or focus framing. Reduced motion preserves direct manipulation and
+zoom while suppressing release inertia and automatic orbit. Evolution and
+Trophies do not auto-orbit.
 
 Home and World may rotate calmly after inactivity. A new World begins still and
-enters orbit only after the established idle delay. Test equivalent elapsed
-behavior at multiple frame cadences, long-run orthonormality, and fallback input
-delay.
+enters orbit only after the established idle delay. Test identity transfer,
+precision-threshold behavior, natural multi-turn damping, equivalent elapsed
+behavior across frame cadences and delayed delivery, long-run orthonormality,
+detail-shell releases, and fallback input.
 
 Use one document-level trusted-interaction capture path when several policies
 need it. Normalize trusted interaction types, ignore programmatic focus through a
@@ -783,14 +800,17 @@ camera inertia, orbit speed, idle delay, sphere position, continuation duration,
 simulation internals, or visual boundary styling. Choose good defaults.
 
 Use one coordinator for transient surfaces. A surface owns open state, focus
-entry and restoration, Escape, backdrop behavior, scroll ownership, camera hold,
-and trusted-interaction implications. Do not let several modules open or close
-the same surface.
+entry and restoration, Escape, backdrop behavior, scroll ownership, automatic-
+orbit hold, and trusted-interaction implications. Do not let several modules open
+or close the same surface.
 
-Native controls remain interactive. Direct globe manipulation may remain
-available on exposed canvas. Opening a surface does not rotate or zoom the globe,
-alter simulation, retain stale velocity, or fire a hidden purchase. Closing
-restores focus predictably.
+Native controls remain interactive. Direct globe manipulation remains available
+on exposed canvas and, where the shared detail shell covers the globe, through
+one non-control gesture route owned by the same globe-input policy. Opening a
+surface does not itself rotate or zoom the globe, alter simulation, retain stale
+velocity, or fire a hidden purchase. It may cancel prior motion through trusted
+activity and may hold automatic idle orbit, but it does not create a permanent
+release-inertia veto for a new valid drag. Closing restores focus predictably.
 
 ---
 
