@@ -1,6 +1,6 @@
 # Surface Globe Gesture v1
 
-Status: active local implementation.
+Status: terminal local implementation; no external publication was authorized.
 
 ## Starting state
 
@@ -86,6 +86,11 @@ surface still suppresses release inertia as required by the camera policy.
   `.github/README.md`. The implementation, unit/integration, audits, agent
   smoke, balance smoke, benchmark, and links gates all passed. This documented
   mirror correction is the sole follow-up.
+- PASS — fresh clean-worktree `npm run verify` at
+  `d4bbe836c365282a78c73474e8e2054c351a0ce1`: all `27/27` gates passed in
+  `322.329 s`. This includes `232/232` unit tests, `76/76` integration tests,
+  production audits, agent and balance smoke, benchmark, link checks, and the
+  corrected structure and identity audits.
 
 ## Failed iteration
 
@@ -96,6 +101,5 @@ the failure is not counted as a pass.
 
 ## Exact next step
 
-Commit the README mirror correction, then rerun fresh complete verification from
-a clean worktree. If that passes, mark this package terminal in a final
-documentation-only commit; no push is authorized for this request.
+None. The local implementation and its fresh complete verification are closed;
+no push is authorized for this request.

@@ -5,12 +5,14 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package: [`surface-globe-gesture-v1/`](surface-globe-gesture-v1/)
-— local interaction correction for direct sphere manipulation while the shared
-detail shell is open.
+Active work package: none.
 
 Completed packages remain as historical or current implementation evidence:
 
+- [`surface-globe-gesture-v1/`](surface-globe-gesture-v1/) — terminal local
+  evidence for direct sphere manipulation from an open shared detail shell,
+  including proxy tap suppression, native-control retention, and Worker/WebGL2,
+  fallback/WebGL2, and fallback/Canvas browser proof.
 - [`evolution-ability-regions-v1/`](evolution-ability-regions-v1/) — terminal
   implementation record for the green `First Division` root, one
   substrate-guided connected region per archetype, connected domain
