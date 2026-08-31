@@ -5,11 +5,14 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package:
-[`evolution-ownership-boundary-v1/`](evolution-ownership-boundary-v1/).
+Active work package: none.
 
 Completed packages remain as historical or current implementation evidence:
 
+- [`evolution-ownership-boundary-v1/`](evolution-ownership-boundary-v1/) —
+  terminal evidence for the exact owned/unowned graph-cut perimeter, separate
+  subordinate reachability, transient recovery, WebGL2/Canvas parity, retained
+  shared-shell gestures, and exact local/CI/Pages/deployed-browser closure.
 - [`surface-globe-gesture-v1/`](surface-globe-gesture-v1/) — terminal local
   evidence for direct sphere manipulation from an open shared detail shell,
   including proxy tap suppression, native-control retention, and Worker/WebGL2,

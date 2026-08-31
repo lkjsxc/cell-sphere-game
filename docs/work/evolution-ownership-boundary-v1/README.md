@@ -1,6 +1,6 @@
 # Evolution Ownership Boundary v1
 
-Status: active.
+Status: terminal.
 
 ## Starting state
 
@@ -86,10 +86,11 @@ simulation, pass-count, or byte-width change is permitted.
   fallback, the eight maintained 200%-text viewports, 44 CSS px controls,
   bounded scroll/DOM, four WebGL draws, stable layout/geometry identities, and
   zero unchanged-frame edge updates.
-- Milestone 4 local closure: current documentation and D36 supersede the live
+- Milestone 4 closure: current documentation and D36 supersede the live
   overloaded-edge claims, the title-showcase source identity is current with
-  byte-identical lifecycle data, and the clean exact revision passes the full
-  repository gate. Publication and terminal package closure remain pending.
+  byte-identical lifecycle data, the clean exact revision passes the full
+  repository gate, and the published implementation has exact CI, Pages,
+  deployed-byte, and deployed-browser evidence.
 
 ## Implementation and measured evidence
 
@@ -160,16 +161,69 @@ simulation, pass-count, or byte-width change is permitted.
   remains failed only by the six preserved untracked transfer artifacts; the
   clean exact-revision structure gate passes.
 
-## Evidence not obtained or not yet final
+## Evidence unavailable in this environment
 
-- CI, Pages, cache-busted deployed-byte, and deployed-browser evidence remain
-  pending publication.
 - Physical-device, real screen-reader, high-refresh, thermal, and hardware
   safe-area evidence are unavailable in this environment.
 
+## Publication and terminal closure
+
+- Coherent commits are `909cc2d` (`fix: render exact Evolution ownership
+  perimeter`), `7bee78c` (`docs: record Evolution boundary verification`), and
+  `c0b5065` (`docs: record Evolution boundary local closure`). The published
+  implementation/evidence revision is
+  `c0b5065c10ba889e5e469b19a371965c80b275ed`; remote `main` resolved to that
+  exact SHA with local/remote ahead-behind `0/0`.
+- Actions run `33401206077` succeeds for that SHA. Verify job `99517652057`
+  passes every step in `10m00s`; dependent Pages job `99520888521` succeeds in
+  `25s`. The only annotations are non-failing GitHub Node-action deprecation
+  notices.
+- Pages deployment `6182954491` and status `17572585810` report `success` at
+  `https://lkjsxc.github.io/cell-sphere-game/` for exact SHA `c0b5065`.
+- Cache-busted deployed bytes exactly match all six changed browser-runtime
+  owners. SHA-256/bytes are: `scene.js` `f5c6ff4f…`/`5,418`,
+  `cell-geometry.js` `5779f026…`/`4,751`, `fallback2d.js`
+  `2ae09953…`/`23,088`, `shaders-boundary.js` `71bdfefc…`/`4,943`,
+  `world-pass.js` `2a338f45…`/`11,883`, and generated `data.js`
+  `afb0753c…`/`308,454`.
+- Cache-busted deployed Chrome 152 passes Worker/WebGL2, fallback/WebGL2, and
+  fallback/Canvas 2D. Ignored receipts are
+  `reports/evolution-ownership-boundary-v1-deployed-worker-webgl2.json`
+  (`795000b0…`),
+  `reports/evolution-ownership-boundary-v1-deployed-fallback-webgl2.json`
+  (`b859964c…`), and
+  `reports/evolution-ownership-boundary-v1-deployed-fallback-canvas2d.json`
+  (`26d86b46…`). Each names source and harness `c0b5065`, has empty browser
+  errors, and repeats the exact semantic, transient, gesture, accessibility,
+  responsive, forced-color, reduced-motion, packing, and context-loss passes.
+- Deployed WebGL ownership/reachable/region values remain
+  `0.342137/0.137963/0.158892`, `0.356036/0.143678/0.160577`,
+  `0.064239/0.020997/0.021360`, and
+  `0.031536/0.007843/0.010620` across far/close center/limb. Canvas remains
+  `0.497370/0.268592/0.292142`, `0.498384/0.289551/0.272231`,
+  `0.527520/0.263291/0.292536`, and
+  `0.512367/0.273321/0.292536`. Repeat noise is zero, margin is `0.006`, owned
+  and reachable interiors have zero dynamic signal, selected is strongest, and
+  recent is distinct.
+- The exposed canvas drag/wheel/pinch/touch-cancel path was exercised with the
+  open detail and retained selection/levels/overlay. The shared-shell path also
+  measured camera motion and zoom. Neither path purchased; only the subsequent
+  native Unlock action changed one exact cell.
+- No Evolution topology, root, substrate, layout, level, adjacency, rank, cost,
+  effect, transaction, persistence, Imprint, History, reward, SCORE, Echoes,
+  World simulation, RNG, or active-World identity changed. The only added
+  renderer storage is the bounded static WebGL along-edge coordinate; compact
+  dynamic storage, Canvas allocation, and draw count remain fixed.
+- The stopping rule is met: the exact ownership graph cut is the sole steady
+  ownership boundary, false unowned honeycomb edges are gone, reachability is
+  separately actionable, both renderers and all maintained execution paths pass,
+  and no severe selected-scope regression remains. Historical terminal packages
+  retain their revision-scoped predecessor terminology and were not rewritten.
+- Final terminal documentation changes no runtime behavior. Its exact remote,
+  CI, Pages, deployed-byte, and deployed-browser postconditions are carried by
+  the implementation handoff because a commit cannot contain evidence of its
+  own future publication.
+
 ## Exact next coherent step
 
-Commit this local evidence record, fetch and confirm non-divergence, then perform
-the authorized normal push. Verify the exact remote revision, `verify` workflow,
-Pages deployment, cache-busted changed bytes, and all three deployed browser
-paths before marking this package terminal.
+None.
