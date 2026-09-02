@@ -1,6 +1,6 @@
 # Current status
 
-## Planetary Sky Composition v2 — active
+## Planetary Sky Composition v2
 
 - Fresh and invalid settings now select public Balanced quality; valid stored
   Automatic, Eco, Balanced, and High choices remain authoritative. One shared
@@ -21,6 +21,10 @@
 - Chrome 152 checks cover all three maintained paths, settings/accessibility,
   responsive 200% text, stable motion/occlusion, fixed resources, and semantic
   hierarchy. Simulation, rewards, camera policy, and persistence are unchanged.
+- Unit and integration suites pass `246/246` and `76/76`; camera, life-boundary,
+  atmosphere, cell-visual, context-loss, and all three planetary-sky fixtures
+  pass. The final benchmark retains authority hash `15863d52` and trace
+  `e32ad0ff` at `12,048 ticks/s`, `+1.24%` from the same-host baseline.
 
 ## Kinetic Sphere Fidelity v3
 
@@ -209,11 +213,6 @@
   receipts pass all controlled percentages, accessibility, focus, responsive,
   forced-color, reduced-motion, parity, and zero-error gates.
 
-## Kinetic Sphere Release v1 (historical D30 policy; superseded by v3)
-
-- This terminal package preserves exact local, CI, Pages, byte, and deployed-browser evidence for D30's now-superseded `0.30 / 2.20 / 8.00 rad/s` mapped response and `5,000 ms` lifetime at revision `5ac24ed7639fe8733cdee809c1bfb3e47a50479c`.
-- D37 and Kinetic Sphere Fidelity v3 replace that historical policy; the package README remains the unmodified evidence archive.
-
 ## Inertial Rotation Regression v1 (selected threshold foundation)
 
 - The faithful camera release threshold is `0.08 rad/s`. The former `0.30 rad/s`
@@ -278,52 +277,6 @@
   authoritative ticks, drag, wheel zoom, four draws, one canvas, and no browser
   or frame errors. The canonical terminal package preserves exact report sizes,
   digests, failed-attempt classification, and remaining physical evidence gaps.
-
-## Kinetic Sphere Fidelity v2 (selected geometry and motion foundation)
-
-- One input owner freezes the projected sphere radius in CSS pixels at
-  pointerdown. Both axes use the same `delta / radius` mapping, and the exact
-  immediately applied angular delta enters the fixed six-sample/120 ms release
-  estimator.
-- Every finite valid release above the current `0.08 rad/s` threshold transfers
-  its measured vector directly. The former response curve, `8 rad/s` ceiling,
-  duplicate mapped-speed
-  diagnostic, and five-second lifetime are deleted. A `600 ms` half-life and
-  `0.025 rad/s` rest threshold dissipate finite motion naturally; lifecycle and
-  trusted-interaction cancellation remain immediate.
-- Pure references pass exact identity transfer through `32 rad/s`. That release
-  remains active after five seconds, rests near `6,193.16 ms`, and travels about
-  `4.40511` turns. The `8.86707 rad/s` reference rests near `5,082.23 ms` after
-  about `1.21815` turns. Paths agree across 30/60/120/144 Hz and handler delays
-  of 0/150/350 ms.
-- Base implementation revision `526d4b39e5c3774fc68caafda57326d932f13226`
-  passed Chrome 152 Worker/WebGL2, fallback/WebGL2, and Worker/Canvas 2D.
-  One-radius direct paths across all eight viewports are
-  `0.99999996–1.00000017 rad`; post-wheel zoom and mid-gesture resize paths also
-  remain one radian. Strong, faster, medium, and slow measured releases are
-  approximately `8.867`, `16.155`, `1.412`, and `0.260 rad/s`, then producing
-  about `1.218`, `2.222`, `0.191`, and zero release turns. The last result is the
-  superseded threshold baseline corrected above. Mouse/touch parity differs
-  by at most `0.125%`, basis error is below `4.5e-16`, sample high-water is six,
-  every cancellation ends at zero speed, SCORE remains `192,888`, both WebGL2
-  runs retain four draws, and browser errors are zero. Ignored report digests are
-  `c8eea74c…`, `21c3437d…`, and `fdd907cb…`.
-- The paused authoritative snapshot fingerprint and tick remain unchanged across
-  every camera gesture in all three browser paths. Unit tests pass `207/207`,
-  integration tests pass `72/72`, and the restored structure gate passes.
-- One fresh `npm run verify` passes all 26 gates on stable implementation
-  content. Its benchmark is `12,454 ticks/s` with unchanged authority/profile
-  hashes; the separately isolated final benchmark is `12,351 ticks/s` versus
-  the `12,323` predecessor baseline (`+0.23%`).
-- Simulation, Worker protocol, World identity, renderer semantics, game time,
-  Environment, Evolution, History, SCORE, Echoes, settings, persistence, and
-  balance are unchanged. Actions run `33244212716` and Pages deployment
-  `6154220329` pass for exact behavior-and-evidence revision `e5559729…`;
-  cache-busted bytes match all four changed player owners, and deployed Chrome
-  152 Worker/WebGL2 report `400dc5fe…` passes with zero browser errors.
-- Pen and physical-device mouse, touch, high-refresh, thermal, screen-reader,
-  forced-colors, and safe-area evidence remain unavailable; emulated evidence is
-  not classified as physical.
 
 ## Living Boundary Semantics v1 (retained)
 

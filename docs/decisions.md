@@ -391,31 +391,9 @@ Retain D27's projected-radius manipulation, strict timestamp validation, exact a
 A nonmodal surface may cancel motion already in progress and continues to hold automatic idle orbit. Its presence does not veto a newly completed valid drag: inertia advances normally through either the exposed canvas or the shared detail-shell gesture route, then returns to surface-held rest. Reduced motion, hidden-page entry, trusted new interaction, scene or World replacement, and programmatic focus framing still clear velocity immediately. This is one presentation-only camera path; simulation, renderer semantics, progression, reward, persistence, balance, and public settings do not change.
 
 ## D38 — Planetary sky uses one eligible-time presentation authority
-
-Home and World consume one deterministic celestial projection: a fixed stable star catalog, a seamless 128×64 World-seeded cloud byte field with a 50-minute eligible-time wrap, and exactly one shooting-star event in each 300-second slot. Eligible time advances only in visible Full-motion Home or World frames, integrates at most 100 ms per frame, and is independent of game speed. Reduced motion retains static stars and clouds while suppressing travel. Fresh Motion is Full regardless of OS preference; stored explicit choices remain authoritative.
-
-WebGL2 samples clouds in its existing globe draw and adds stars/streaks to its existing background draw, preserving four draws and natural occlusion. Canvas consumes the exact field bytes and event in its existing bounded phases. Renderers own no clock, schedule, RNG, timer, or second loop. The projection is decorative: simulation, RNG, ecology, identity, SCORE, rewards, progression, Trophies, History meaning, picking, and persistence do not consume it. The automatic-camera preference and path redesign remain a separate deferred decision.
+Historical field and motion details are superseded by D39. Its retained decision is one eligible visible Full-motion Home/World clock, no hidden or game-speed catch-up, a static Reduced projection, one deterministic shooting-star schedule, four WebGL draws, Canvas semantic parity, and no simulation, reward, persistence, History, or input authority.
 
 ## D39 — Planetary sky composition uses layered space and directional clouds
+Supersede D38's point field, equirectangular cloud, and single-phase motion details while retaining its eligible-time, authority, shooting schedule, Reduced, and four-draw boundaries. One stable generated `256×128` RGB field owns broad chromatic depth and negative structure. One fixed catalog owns faint, bright, and anchor star strata at Eco/Balanced/High totals of `124/210/300`; WebGL evaluates three constant-cost strata, while Canvas draws the bounded catalog. Fresh or invalid Quality is public Balanced, and every valid stored choice remains authoritative without a schema reset.
 
-Supersede D38's point-field, equirectangular cloud, and single-phase motion
-details while retaining its eligible-time, authority, shooting schedule,
-reduced-motion, and four-draw boundaries. One stable generated `256×128` RGB
-field owns broad chromatic depth and negative structure. One fixed catalog owns
-faint, bright, and anchor star strata at Eco/Balanced/High totals of
-`124/210/300`; WebGL evaluates a constant three strata rather than looping over
-the catalog per fragment, while Canvas draws the bounded catalog. Fresh or
-invalid Quality is public Balanced, and all four valid stored choices remain
-authoritative without a settings-schema reset.
-
-One World-seeded `64×64×6` byte field generated from smooth three-dimensional
-direction replaces latitude/longitude storage. Direct rotations around two
-non-cardinal axes separated by `78.40°` use coprime whole-minute periods of 52
-and 109 eligible foreground minutes plus one authored starting composition.
-Angles are derived from bounded phase state, never an incrementally multiplied
-matrix. WebGL samples one cube texture in the existing globe draw; Canvas
-samples the exact bytes from cached unit directions using 2,048 angle buckets.
-No renderer owns time, generation, random state, or a second authority. The
-deep-space field, stars, clouds, and shooting star remain decorative and absent
-from simulation, identity, rewards, History meaning, persistence, and picking.
-Activity-aware automatic camera work remains a separate deferred decision.
+One World-seeded `64×64×6` directional byte field replaces latitude/longitude storage. Direct rotations around non-cardinal axes separated by `78.40°` use bounded 52- and 109-minute phases and an authored starting composition. WebGL samples one cube texture in the existing globe draw; Canvas samples the exact bytes from cached unit directions using 2,048 angle buckets. No renderer owns time, generation, random state, or a second authority; all celestial state remains absent from simulation, identity, rewards, History meaning, persistence, and picking. Activity-aware automatic camera work remains deferred.

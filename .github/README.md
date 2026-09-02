@@ -56,12 +56,15 @@ while terrain and finite local resources remain visible inside occupied cells.
 Stress, critical state, remains, selection, History, coastlines, and whole-cell
 Luminous charge keep distinct visual and textual meanings.
 
-Home and World are cloud-bearing planets against one stable deterministic star
-field. Broad seamless clouds drift once every 50 eligible foreground minutes in
-Full motion, and one deterministic shooting star is scheduled in each 300-second slot
-of eligible Home/World time. Hidden pages, other scenes, Reduced motion, and
-game speed cannot advance or backfill that decorative schedule. Reduced motion
-keeps the stars and a static cloud-bearing planet while suppressing travel.
+Home and World are cloud-bearing planets against one stable deterministic deep-
+space composition: a broad chromatic field with dark structure plus faint,
+bright, and sparse anchor stars. A six-face directional cloud field moves by
+two nonparallel 52- and 109-minute rotations in Full motion, so it has no fixed
+longitude seam or permanent World-axis pole. One deterministic shooting star is
+scheduled in each 300-second slot of eligible Home/World time. Hidden pages,
+other scenes, Reduced motion, and game speed cannot advance or backfill that
+decorative schedule. Reduced motion keeps the composed sky and cloud-bearing
+planet still while suppressing travel.
 
 Evolution uses the same 2,562-cell topology scale as World. Every visible cell
 is selectable, persistent, and purchasable; a fresh profile exposes only the
@@ -105,7 +108,9 @@ interaction cancels the 13.5-second automatic continuation for that Result.
   preserves each material hierarchy, and Canvas 2D consumes the same geography
   and deterministic edge and celestial projections as a semantic fallback.
 - Fresh settings select Full motion regardless of operating-system preference;
-  an explicit stored Full or Reduced choice remains authoritative.
+  an explicit stored Full or Reduced choice remains authoritative. Fresh or
+  invalid Quality is Balanced; stored Automatic, Eco, Balanced, or High remains
+  authoritative.
 - Current-only persistence intentionally starts fresh for old or mismatched
   documents. Visual History is a reset-only device-local cache.
 - Closing the page does not advance a World and no offline progress is promised.
@@ -147,4 +152,4 @@ npm run test:browser:fallback
 ```
 
 Current implementation status is recorded in
-[`docs/work/planetary-sky-v1/README.md`](docs/work/planetary-sky-v1/README.md).
+[`docs/work/planetary-sky-composition-v2/README.md`](docs/work/planetary-sky-composition-v2/README.md).

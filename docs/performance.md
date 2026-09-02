@@ -45,17 +45,22 @@ WebGL draws, zero unchanged-frame renderer work attributable to the camera, and
 zero browser errors across Worker/WebGL2, fallback/WebGL2, and fallback/Canvas
 2D.
 
-Planetary Sky v1 same-process Chrome 152 profiles interleave 120 full-sky and
-empty-sky frames. Worker/WebGL2 p95 is `2.1/2.0 ms`, fallback/WebGL2 is
-`2.1/2.2 ms`, and fallback/Canvas is `2.0/2.0 ms`; medians differ by at most
-`0.1 ms`. WebGL remains four draws and one cloud upload across 360 interleaved
-renders. An earlier all-72-stars-per-fragment prototype starved the bounded
-camera integrator and was deleted in favor of one deterministic procedural grid
-evaluation per background pixel. An initial uncached Canvas cloud sampler also
-produced noisy p95 samples up to `3.7 ms`; the fixed phase cache removed that
-per-frame resampling. Current life/material cohorts retain zero repeat noise;
-their cross-process Canvas p95 is host-noisy, while paired full/empty samples
-show no material selected-scope regression.
+Planetary Sky Composition v2 same-process Chrome 152 profiles interleave 120
+full-sky and neutral-sky frames. Worker/WebGL2 p95 is `2.1/2.2 ms`,
+fallback/WebGL2 is `2.2/2.2 ms`, and fallback/Canvas is `2.2/2.4 ms`; selected
+full-sky p95 changes by at most `0.1 ms` (`5%`) from the same-host v1 baseline.
+WebGL remains four draws with one deep-space upload and one cloud-field/six-face
+upload set; Canvas builds one deep-space raster and retains bounded typed cloud
+caches. The isolated final benchmark is `12,048 ticks/s` versus `11,900`
+baseline (`+1.24%`) with unchanged authority hash `15863d52` and fixed trace
+`e32ad0ff`. The post-verifier benchmark is `12,374 ticks/s` with the same hashes.
+
+Historical Planetary Sky v1 evidence measured a single point grid and
+equirectangular phase model. Its Worker/WebGL2, fallback/WebGL2, and
+fallback/Canvas full/neutral p95 values were `2.0/2.0`, `2.1/2.0`, and
+`2.1/3.3 ms` in the v2 starting baseline. An all-stars-per-fragment prototype
+and uncached Canvas cloud sampler were already rejected in that historical
+work; neither is a current production path.
 
 ## Data layout
 

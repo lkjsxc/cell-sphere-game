@@ -1,6 +1,6 @@
 # Planetary Sky Composition v2
 
-Status: active implementation.
+Status: terminal local implementation evidence.
 
 ## Starting state
 
@@ -123,13 +123,22 @@ Status: active implementation.
 
 ## Focused verification
 
-PASSED — `19/19` selected settings/celestial/field/renderer unit tests and the
-cell visual audit. PASSED — directional-cloud Worker/WebGL2, fallback/WebGL2, and
-fallback/Canvas production-browser paths, including fresh/stored settings,
-field/star isolation, lifecycle bounds, semantic hierarchy, context loss on the
+PASSED — unit `246/246`, integration `76/76`, `19/19` selected
+settings/celestial/field/renderer tests, and the cell-visual audit. PASSED —
+camera Worker/WebGL2, fallback/WebGL2, and fallback/Canvas reports
+`2829a3f0…`, `90d46ace…`, and `809e66a2…`; life-boundary WebGL/Canvas reports
+`eced4084…` and `888c21fd…`; atmosphere WebGL/Canvas reports `21bbf60a…` and
+`3d1130f9…`. Picking/manipulation, life edges, material hierarchy, atmosphere,
+and context-loss behavior therefore remain on their maintained production
+paths.
+
+PASSED — directional-cloud Worker/WebGL2, fallback/WebGL2, and fallback/Canvas
+production-browser paths, including fresh/stored settings, field/star
+isolation, lifecycle bounds, semantic hierarchy, real context loss on the
 Worker path, four draws, forced colors, high contrast, touch/keyboard access,
-four responsive viewports, both rotation components, and all six cube-face/
-former-seam/pole camera families. Milestone reports under
+four responsive viewports at 200% text, Full/Reduced, hidden time, both rotation
+components, and all six cube-face/former-seam/pole camera families. Milestone
+reports under
 `reports/planetary-sky-composition-v2/final/` have SHA-256
 `6c499bf5d9fe4a5c676a3d3033d8e22008495b6475030c5cb93b79c4683d78ba`
 (Worker/WebGL2),
@@ -148,15 +157,37 @@ and `1472×1240` / 593,606 bytes /
 They are ignored evidence under `reports/planetary-sky-composition-v2/final/`,
 not repository assets.
 
+The three final same-process full/neutral p95 samples are `2.1/2.2 ms`
+(Worker/WebGL2), `2.2/2.2 ms` (fallback/WebGL2), and `2.2/2.4 ms`
+(fallback/Canvas). Selected-path full-sky p95 changed from baseline by at most
+`0.1 ms` (`5%`), below the investigation threshold. Deep-space generation and
+upload/raster counts remain one; WebGL cloud field/face upload counts remain
+one/six; unchanged frames do not increase them. WebGL remains four draws.
+
+PASSED — isolated final benchmark `12,048 ticks/s` versus baseline `11,900`
+(`+1.24%`) with authority hash `15863d52` and fixed trace `e32ad0ff`; fixed-trace
+median `10,237` versus `10,518` (`−2.67%`). PASSED — one fresh `npm run verify`
+completed all 26 gates on stable content; its post-suite benchmark is
+`12,374 ticks/s` with the same authority hash and a `10,426 ticks/s`
+deterministic fixed trace. PASSED — README identity, structure, links, predecessor search,
+`git diff --check`, and ignored-report/transfer-artifact exclusion checks.
+
+The old point-grid constants, `celestial-constants.js`, `uCloudPhase`,
+equirectangular dimensions/sampler, Canvas `u/v` maps, and old phase-bucket
+assumptions have no production consumer. D39 supersedes D38's visual/field
+details while retaining the eligible-time and authority boundary. The camera
+policy and simulation/reward/persistence authorities are unchanged.
+
 ## Evidence not obtained
 
 - No physical-device, thermal, physical screen-reader, or physical forced-color
   evidence is claimed.
 - No v2 CI, Pages, deployment, deployed-byte, or deployed-browser evidence
-  exists before the implementation revision is pushed.
+  is claimed by this pre-publication local record. Exact revision publication
+  evidence belongs to the final implementation handoff.
 
 ## Exact next coherent step
 
-Run camera, picking, life-boundary, atmosphere, benchmark, authority, and full
-verification gates against the stable combined content; reconcile all current
-documentation and predecessor searches, then close and publish only if safe.
+Publish normally only if a fresh fetch confirms the expected upstream, then
+verify the exact remote revision, Actions, Pages, cache-busted bytes, and focused
+deployed browser paths. No further local product or source step remains.
