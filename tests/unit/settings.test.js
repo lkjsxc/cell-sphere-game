@@ -20,12 +20,16 @@ test('settings omit retired menu choices and reject mismatched schemas', () => {
   assert.deepEqual(validateSettings({ ...settings, schema: SETTINGS_SCHEMA_VERSION - 1, motion: 'reduced', autoContinue: false }), defaultSettings());
 });
 
-test('fresh Motion is Full regardless of operating-system preference', () => {
+test('fresh Motion is Full and fresh Quality is Balanced regardless of operating-system preference', () => {
   const prior = globalThis.matchMedia;
   try {
     globalThis.matchMedia = () => ({ matches: false }); assert.equal(defaultSettings().motion, 'full');
+    assert.equal(defaultSettings().quality, 'balanced');
     globalThis.matchMedia = () => ({ matches: true }); assert.equal(defaultSettings().motion, 'full');
+    assert.equal(defaultSettings().quality, 'balanced');
     assert.equal(validateSettings({ ...defaultSettings(), motion: 'reduced', contrast: 'high', autoContinue: false }).motion, 'reduced');
+    for (const quality of ['auto', 'eco', 'balanced', 'high'])
+      assert.equal(validateSettings({ ...defaultSettings(), quality }).quality, quality);
   } finally {
     if (prior === undefined) delete globalThis.matchMedia; else globalThis.matchMedia = prior;
   }
@@ -55,7 +59,7 @@ test('settings reject garbage and preserve independent accessibility preferences
   assert.equal(value.motion, defaultSettings().motion); assert.equal(value.contrast, 'high'); assert.equal(value.quality, 'high');
   assert.equal(value.speed, 1); assert.equal(value.autoContinue, false);
   assert.equal(validateSettings({ ...defaultSettings(), speed: 2 }).speed, 1, 'developer-only speed persisted');
-  assert.equal(validateSettings({ ...defaultSettings(), quality: 'luminous' }).quality, 'auto');
+  assert.equal(validateSettings({ ...defaultSettings(), quality: 'luminous' }).quality, 'balanced');
   const caps = { dpr: 3, saveData: false, memoryHint: 8 };
   assert.equal(qualityDpr({ quality: 'high' }, caps), 2); assert.equal(qualityDpr({ quality: 'luminous' }, caps), 1.5);
 });

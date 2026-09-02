@@ -21,12 +21,15 @@ playable after WebGL context loss without replacing world authority.
 
 ## Planetary sky
 
-One presentation policy supplies both backends with a stable fixed star catalog,
-one active-or-inactive shooting-star projection, one Home/World cloud identity,
-and its eligible-time phase. The WebGL background draw adds stars and the active
-streak before the globe, so later globe draws occlude it naturally. Canvas draws
-the same semantic catalog and event in its existing background phase. Neither
-backend owns a clock, slot calculation, random source, timer, or render loop.
+One presentation policy supplies both backends with a stable generated
+`256×128` RGB deep-space field, a fixed three-stratum star catalog, one
+active-or-inactive shooting-star projection, one Home/World cloud identity, and
+its eligible-time phase. The WebGL background draw samples the broad field and
+adds its constant-cost faint, bright, and anchor star strata plus the active
+streak before the globe, so later globe draws occlude it naturally. Canvas
+rasters the exact field bytes once per identity and draws the same catalog and
+event in its existing background phase. Neither backend owns a clock, slot
+calculation, random source, timer, or render loop.
 
 Cloud opacity is one deterministic seamless `128×64` byte field independent of
 cell count. WebGL uploads it as one repeating `R8` texture at renderer/seed

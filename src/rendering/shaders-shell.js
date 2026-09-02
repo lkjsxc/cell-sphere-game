@@ -15,7 +15,9 @@ uniform float uFixture;
 uniform vec3 uFixtureColor;
 uniform vec2 uResolution;
 uniform float uSkySeed;
-uniform float uStarCount;
+uniform sampler2D uDeepSpaceField;
+uniform float uDeepSpaceEnabled;
+uniform vec3 uStarCounts;
 uniform float uShootingActive;
 uniform vec4 uShootingPath;
 uniform vec4 uShootingState;
@@ -27,24 +29,36 @@ float segmentDistance(vec2 point, vec2 start, vec2 end, out float along) {
 float skyHash(vec2 cell, float stream) {
   return fract(sin(dot(cell + vec2(stream * 17.13, uSkySeed * 31.71), vec2(127.1, 311.7))) * 43758.5453);
 }
+vec3 starTemperature(float value) {
+  vec3 warm = vec3(0.97, 0.78, 0.61);
+  vec3 neutral = vec3(0.84, 0.89, 0.91);
+  vec3 cool = vec3(0.67, 0.82, 0.96);
+  return value < 0.5 ? mix(warm, neutral, value * 2.0) : mix(neutral, cool, (value - 0.5) * 2.0);
+}
+vec3 starLayer(vec2 uv, vec2 grid, float count, float stream, vec2 sizeRange, float fieldInfluence, float haloWeight) {
+  vec2 starCell = floor(uv * grid); vec2 starLocal = fract(uv * grid);
+  float density = mix(0.70, 1.34, fieldInfluence);
+  float chance = clamp(count / (grid.x * grid.y) * density, 0.0, 0.92);
+  float present = 1.0 - step(chance, skyHash(starCell, stream));
+  vec2 starPoint = vec2(skyHash(starCell, stream + 1.0), skyHash(starCell, stream + 2.0)) * 0.92 + 0.04;
+  float sizePx = mix(sizeRange.x, sizeRange.y, skyHash(starCell, stream + 3.0));
+  float distancePx = length((starLocal - starPoint) * (uResolution / grid));
+  float core = 1.0 - smoothstep(sizePx * 0.18, sizePx, distancePx);
+  float halo = (1.0 - smoothstep(sizePx, sizePx * 2.8, distancePx)) * haloWeight;
+  float intensity = 0.38 + skyHash(starCell, stream + 4.0) * 0.60;
+  return starTemperature(skyHash(starCell, stream + 5.0)) * (core + halo) * intensity * present;
+}
 void main() {
   if (uFixture > 0.5) { outColor = vec4(uFixtureColor, 1.0); return; }
-  vec2 p = vUv - 0.5;
-  float dawn = exp(-4.8 * length(p - vec2(-0.42, -0.34)));
-  float deep = smoothstep(-0.45, 0.65, p.y);
-  vec3 col = mix(vec3(0.035, 0.041, 0.052), vec3(0.009, 0.014, 0.023), deep);
-  col += vec3(0.16, 0.095, 0.052) * dawn * 0.18;
-  float starLight = 0.0;
-  if (uStarCount > 0.5) {
-    vec2 starGrid = vec2(20.0, 12.0); vec2 starCell = floor(vUv * starGrid); vec2 starLocal = fract(vUv * starGrid);
-    float starIdentity = skyHash(starCell, 1.0); float starChance = clamp(uStarCount / (starGrid.x * starGrid.y), 0.0, 1.0);
-    vec2 starPoint = vec2(skyHash(starCell, 2.0), skyHash(starCell, 3.0)) * 0.74 + 0.13;
-    float starSize = 0.55 + skyHash(starCell, 4.0) * 1.05;
-    float starDistancePx = length((starLocal - starPoint) * (uResolution / starGrid));
-    starLight = (1.0 - smoothstep(starSize * 0.22, starSize, starDistancePx))
-      * (0.36 + skyHash(starCell, 5.0) * 0.62) * (1.0 - step(starChance, starIdentity));
-  }
-  col += vec3(0.61, 0.72, 0.78) * starLight * 0.72;
+  float targetAspect = uResolution.x / max(1.0, uResolution.y); const float fieldAspect = 2.0;
+  vec2 cropScale = targetAspect > fieldAspect ? vec2(1.0, fieldAspect / targetAspect) : vec2(targetAspect / fieldAspect, 1.0);
+  vec2 fieldUv = (vUv - 0.5) * cropScale + 0.5;
+  vec3 neutral = mix(vec3(0.025, 0.031, 0.043), vec3(0.008, 0.013, 0.024), smoothstep(0.05, 0.95, vUv.y));
+  vec3 col = mix(neutral, texture(uDeepSpaceField, fieldUv).rgb, uDeepSpaceEnabled);
+  float fieldInfluence = smoothstep(0.025, 0.13, dot(col, vec3(0.2126, 0.7152, 0.0722)));
+  col += starLayer(vUv, vec2(32.0, 18.0), uStarCounts.x, 11.0, vec2(0.42, 0.92), fieldInfluence, 0.0) * 0.72;
+  col += starLayer(vUv, vec2(21.0, 12.0), uStarCounts.y, 31.0, vec2(0.90, 1.75), fieldInfluence, 0.04) * 0.86;
+  col += starLayer(vUv, vec2(13.0, 7.0), uStarCounts.z, 59.0, vec2(1.85, 3.15), fieldInfluence, 0.22);
   if (uShootingActive > 0.5) {
     float progress = uShootingState.x;
     vec2 head = mix(uShootingPath.xy, uShootingPath.zw, progress) * uResolution;

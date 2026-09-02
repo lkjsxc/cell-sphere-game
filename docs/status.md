@@ -1,15 +1,20 @@
 # Current status
 
-## Planetary Sky v1
+## Planetary Sky Composition v2 — active
 
-- Home and World now use one deterministic 128×64 seamless cloud field, a stable
-  48/72/96-star catalog, and one shooting star per 300 seconds of eligible time.
-  Clouds wrap in 50 minutes with at most 0.18 material contribution.
+- Fresh and invalid settings now select public Balanced quality; valid stored
+  Automatic, Eco, Balanced, and High choices remain authoritative. One shared
+  deterministic `256×128` RGB field supplies broad chromatic space structure,
+  and fixed faint/bright/anchor star strata scale to `124/210/300` stars.
+- Home and World still use the v1 deterministic `128×64` cloud field while the
+  active package replaces its longitude translation with directional clouds.
+  One shooting star remains scheduled per 300 seconds of eligible time.
 - One bounded policy owns time, seeds, phase, and the active event. Hidden time,
   Reduced, Evolution, Trophies, and game speed cannot advance or backfill it.
   Fresh Motion is Full; explicit stored Reduced and unrelated settings persist.
-- WebGL2 remains four draws with lifecycle-only cloud upload. Canvas consumes the
-  exact field and projection; real context loss preserves celestial identity.
+- WebGL2 remains four draws with lifecycle-only deep-space and cloud uploads.
+  Canvas consumes the exact deep-space bytes and celestial semantics through a
+  lifecycle-owned raster; real context loss preserves celestial identity.
 - Chrome 152 checks cover all three maintained paths, settings/accessibility,
   responsive 200% text, stable motion/occlusion, fixed resources, and semantic
   hierarchy. Simulation, rewards, camera policy, and persistence are unchanged.

@@ -74,17 +74,23 @@ test('visual seed replacement is lifecycle-bound and quality changes only the fi
   const state = createCelestialPresentation({ now: 0, scene: 'home', visualSeed: 8, quality: 'auto',
     caps: { cpuHint: 8, memoryHint: 4, dpr: 1, saveData: false } });
   const first = celestialProjection(state); assert.equal(first.starCount, STAR_BUDGETS.balanced);
+  assert.deepEqual(first.starCounts, [160, 42, 8]); assert.equal(first.deepSpace.byteLength, 98_304);
+  assert.equal(state.deepSpaceGenerations, 1); assert.equal(state.starGenerations, 1);
   assert.equal(setCelestialVisualSeed(state, 8), false); assert.equal(state.cloudGenerations, 1);
   assert.equal(setCelestialVisualSeed(state, 9), true); assert.equal(state.cloudGenerations, 2);
-  assert.notEqual(first.cloud.signature, state.cloud.signature);
-  setCelestialQuality(state, 'high'); assert.equal(celestialProjection(state).starCount, 96);
+  assert.notEqual(first.cloud.signature, state.cloud.signature); assert.equal(first.deepSpace, state.deepSpace);
+  assert.equal(first.stars, state.stars);
+  setCelestialQuality(state, 'high'); assert.equal(celestialProjection(state).starCount, 300);
   setCelestialVisualSeed(state, 0, false); const disabled = celestialProjection(state);
-  assert.equal(disabled.cloudEnabled, false); assert.equal(disabled.cloud, null); assert.equal(disabled.starCount, 96);
+  assert.equal(disabled.cloudEnabled, false); assert.equal(disabled.cloud, null); assert.equal(disabled.starCount, 300);
 
   const degraded = createCelestialPresentation({ scene: 'home', visualSeed: 12,
-    cloudFactory: () => { throw new Error('synthetic cloud failure'); } });
+    cloudFactory: () => { throw new Error('synthetic cloud failure'); },
+    deepSpaceFactory: () => { throw new Error('synthetic deep-space failure'); } });
   assert.equal(celestialProjection(degraded).cloudEnabled, false);
   assert.equal(celestialPresentationSnapshot(degraded).cloudError, 'synthetic cloud failure');
+  assert.equal(celestialProjection(degraded).deepSpace, null);
+  assert.equal(celestialPresentationSnapshot(degraded).deepSpaceError, 'synthetic deep-space failure');
 });
 
 test('ineligible scenes pause one active event and defensive projection rejects nonfinite inputs', () => {
@@ -103,4 +109,5 @@ test('ineligible scenes pause one active event and defensive projection rejects 
   assert.equal(normalizeCelestialProjection({ ...valid, cloudPhase: Infinity }).cloudPhase, 0);
   assert.equal(normalizeCelestialProjection({ ...valid, shootingStar: { ...active, progress: NaN } }).shootingStar, null);
   assert.equal(normalizeCelestialProjection({ ...valid, stars: [] }).starCount, 0);
+  assert.equal(normalizeCelestialProjection({ ...valid, deepSpace: { bytes: new Uint8Array(3) } }).deepSpace, null);
 });

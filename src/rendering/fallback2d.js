@@ -11,7 +11,7 @@ import {
 } from '../game/skills/scene.js';
 import { normalizeCelestialProjection } from './celestial-projection.js';
 import { CANVAS_CLOUD_PHASE_BUCKETS, canvasCloudAmount, canvasCloudMaterial,
-  createCanvasCloudMap, drawCanvasCelestialBackground } from './fallback-celestial.js';
+  createCanvasCloudMap, createCanvasDeepSpaceRaster, drawCanvasCelestialBackground } from './fallback-celestial.js';
 
 const WORLD_LIGHT = Object.freeze((() => { const value=[-.52,.72,.44]; const length=Math.hypot(...value); return value.map((axis)=>axis/length); })());
 const BIOME_COLOR = Object.freeze([
@@ -42,6 +42,8 @@ export class Canvas2DRenderer {
     this.cloudU = cloudMap.u; this.cloudV = cloudMap.v; this.cloudDaylight = cloudMap.daylight;
     this.cloudAmount = new Uint8Array(topo.nodeCount); this.cloudSampleEpoch = new Int16Array(topo.nodeCount); this.cloudSampleEpoch.fill(-1);
     const initialCelestial = normalizeCelestialProjection(opts.celestial);
+    this.deepSpaceField = initialCelestial.deepSpace; this.deepSpaceRaster = createCanvasDeepSpaceRaster(this.deepSpaceField);
+    this.deepSpaceFieldChanges = this.deepSpaceField ? 1 : 0; this.deepSpaceRasterBuilds = this.deepSpaceRaster ? 1 : 0;
     this.cloudField = initialCelestial.cloud; this.cloudFieldChanges = this.cloudField ? 1 : 0;
     this.cloudSamples = 0; this.cloudCacheRefreshes = 0; this.cloudPhaseBucket = -1;
     this.lifeEdgeData = new Uint8Array(topo.edgeCount * LIFE_EDGE_STRIDE);
@@ -71,6 +73,9 @@ export class Canvas2DRenderer {
     if (this.disposed || !this.accepts(scene)) { this.rejectedFrames++; return false; }
     const { ctx, canvas, topo, fields } = this; const { snapshot, camera } = scene;
     const celestial = normalizeCelestialProjection(scene.celestial);
+    if (celestial.deepSpace !== this.deepSpaceField) { this.deepSpaceField = celestial.deepSpace;
+      this.deepSpaceRaster = createCanvasDeepSpaceRaster(this.deepSpaceField); this.deepSpaceFieldChanges++;
+      if (this.deepSpaceRaster) this.deepSpaceRasterBuilds++; }
     if (celestial.cloud && celestial.cloud !== this.cloudField) { this.cloudField = celestial.cloud; this.cloudFieldChanges++;
       this.cloudSampleEpoch.fill(-1); this.cloudPhaseBucket = -1; }
     this.updateLifeEdges(snapshot);
@@ -88,7 +93,7 @@ export class Canvas2DRenderer {
     } else {
       const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#070b14'); bg.addColorStop(1, '#0d1421');
       ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
-      drawCanvasCelestialBackground(ctx, canvas, celestial);
+      drawCanvasCelestialBackground(ctx, canvas, celestial, this.deepSpaceRaster);
       const glow = ctx.createRadialGradient(cx, cy, radius * 0.9, cx, cy, radius * 1.25);
       glow.addColorStop(0, `rgba(64,140,158,${0.28 - entropy * 0.12})`); glow.addColorStop(1, 'rgba(64,140,158,0)');
       ctx.fillStyle = glow; ctx.fillRect(cx - radius * 1.3, cy - radius * 1.3, radius * 2.6, radius * 2.6);
@@ -139,6 +144,9 @@ export class Canvas2DRenderer {
       highlights: scene.highlightedCells?.length ?? 0, lifeEdges: countEdgeSignals(this.lifeEdgeData),
       edgeBytes: this.lifeEdgeData.byteLength, edgeUpdates: this.edgeUpdateCount,
       clearCount: this.clearCount, celestial: Object.freeze({ starCount: celestial.starCount,
+        starCounts: celestial.starCounts, deepSpaceSignature: this.deepSpaceField?.signature ?? null,
+        deepSpaceBytes: this.deepSpaceField?.byteLength ?? 0, deepSpaceRgbaBytes: this.deepSpaceRaster?.rgbaBytes ?? 0,
+        deepSpaceFieldChanges: this.deepSpaceFieldChanges, deepSpaceRasterBuilds: this.deepSpaceRasterBuilds,
         shootingStarId: celestial.shootingStar?.id ?? null, cloudSignature: this.cloudField?.signature ?? null,
         cloudPhase: celestial.cloudPhase, cloudFieldChanges: this.cloudFieldChanges, cloudSamples: this.cloudSamples,
         cloudCacheRefreshes: this.cloudCacheRefreshes, cloudPhaseBucket: this.cloudPhaseBucket }) }); return true;

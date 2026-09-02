@@ -4,12 +4,13 @@
 
 - Simulation benchmark gate: at least 3,000 ticks/s on the audit host.
 - WebGL2 world draw count: exactly four.
-- Celestial state is fixed-size: one 1,536-byte maximum star catalog, one
-  active-or-inactive event, and one 8,192-byte `128×64` cloud field. WebGL owns
-  one 8,192-byte `R8` texture uploaded only at context/seed lifecycle boundaries;
-  Canvas owns three fixed 2,562-entry coordinate/light arrays plus byte-amount
-  and phase-epoch caches (38,430 bytes total). Its 1,024 phase buckets refresh
-  at most once per approximately 2.93 seconds of eligible Full-motion time.
+- Celestial state is fixed-size: one 98,304-byte `256×128` RGB deep-space field,
+  one 7,200-byte maximum three-stratum star catalog, one active-or-inactive
+  event, and one 8,192-byte `128×64` cloud field. WebGL owns lifecycle-only RGB
+  and `R8` texture uploads; Canvas owns one lifecycle-only deep-space raster plus
+  three fixed 2,562-entry coordinate/light arrays and byte-amount/phase-epoch
+  caches. Its 1,024 cloud phase buckets refresh at most once per approximately
+  2.93 seconds of eligible Full-motion time.
   Neither backend adds a draw, timer, loop, Worker, DOM node, or per-frame field
   generation/upload.
 - The WebGL2 atmosphere owns one module-scoped refinement-5 unit sphere:

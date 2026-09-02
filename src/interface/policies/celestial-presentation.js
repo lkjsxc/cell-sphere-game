@@ -1,24 +1,29 @@
 /** Bounded animation-time authority for stars, clouds, and shooting stars. */
 import { createCloudField, validCloudField } from '../../rendering/cloud-field.js';
-import { MAX_SKY_STARS, SKY_STAR_STRIDE } from '../../rendering/celestial-constants.js';
+import { createDeepSpaceField, validDeepSpaceField } from '../../rendering/deep-space-field.js';
+import { createStarCatalog, MAX_SKY_STARS, SKY_STAR_STRIDE, STAR_BUDGETS, starCountsForQuality,
+  validStarCatalog } from '../../rendering/star-field.js';
 
 export const CELESTIAL_SKY_SEED = 0x6e5a91c3;
 export const SHOOTING_STAR_SLOT_MS = 300_000;
 export const CLOUD_WRAP_MS = 3_000_000;
 export const MAX_CELESTIAL_FRAME_MS = 100;
 export const MAX_STARS = MAX_SKY_STARS;
-export const STAR_BUDGETS = Object.freeze({ eco: 48, balanced: 72, high: 96 });
-
-const STAR_CATALOG = createStarCatalog(CELESTIAL_SKY_SEED);
+export { STAR_BUDGETS };
 
 export function createCelestialPresentation(options = {}) {
   const now = finiteTime(options.now);
   const state = { lastNow: now, elapsedMs: 0, droppedMs: 0, scene: validScene(options.scene),
     hidden: options.hidden === true, reduced: options.reduced === true,
     quality: resolveCelestialQuality(options.quality, options.caps), skySeed: CELESTIAL_SKY_SEED,
+    deepSpaceFactory: typeof options.deepSpaceFactory === 'function' ? options.deepSpaceFactory : createDeepSpaceField,
+    starFactory: typeof options.starFactory === 'function' ? options.starFactory : createStarCatalog,
     cloudFactory: typeof options.cloudFactory === 'function' ? options.cloudFactory : createCloudField,
-    stars: STAR_CATALOG, visualSeed: null, cloudSeed: null, cloud: null, cloudsEnabled: false,
+    deepSpace: null, deepSpaceError: null, deepSpaceGenerations: 0,
+    stars: new Float32Array(MAX_SKY_STARS * SKY_STAR_STRIDE), starError: null, starGenerations: 0,
+    visualSeed: null, cloudSeed: null, cloud: null, cloudsEnabled: false,
     cloudError: null, cloudGenerations: 0, scheduledSlot: -1, scheduledEvent: null, frames: 0 };
+  initializeStableSky(state);
   setCelestialVisualSeed(state, options.visualSeed, options.cloudsEnabled !== false);
   return state;
 }
@@ -29,9 +34,11 @@ export function advanceCelestialPresentation(state, now) {
 
 export function celestialProjection(state) {
   const eligible = isCelestialEligible(state); const event = eligible ? activeShootingStar(state) : null;
-  return Object.freeze({ version: 1, eligible, eligibleTimeMs: state.elapsedMs,
+  return Object.freeze({ version: 2, eligible, eligibleTimeMs: state.elapsedMs,
     cloudPhase: wrap01(state.elapsedMs / CLOUD_WRAP_MS), cloudEnabled: state.cloudsEnabled,
-    cloudSeed: state.cloudSeed, cloud: state.cloud, skySeed: state.skySeed, stars: state.stars,
+    cloudSeed: state.cloudSeed, cloud: state.cloud, skySeed: state.skySeed, deepSpace: state.deepSpace,
+    deepSpaceEnabled: state.deepSpace !== null,
+    stars: state.stars, starCounts: starCountsForQuality(state.quality),
     starCount: STAR_BUDGETS[state.quality], quality: state.quality, shootingStar: event });
 }
 
@@ -39,6 +46,9 @@ export function celestialPresentationSnapshot(state) {
   return Object.freeze({ scene: state.scene, hidden: state.hidden, reduced: state.reduced,
     eligible: isCelestialEligible(state), eligibleTimeMs: state.elapsedMs, droppedMs: state.droppedMs,
     quality: state.quality, starCount: STAR_BUDGETS[state.quality], skySeed: state.skySeed,
+    deepSpaceSignature: state.deepSpace?.signature ?? null, deepSpaceBytes: state.deepSpace?.byteLength ?? 0,
+    deepSpaceError: state.deepSpaceError, deepSpaceGenerations: state.deepSpaceGenerations,
+    starBytes: state.stars.byteLength, starError: state.starError, starGenerations: state.starGenerations,
     visualSeed: state.visualSeed, cloudSeed: state.cloudSeed, cloudSignature: state.cloud?.signature ?? null,
     cloudBytes: state.cloud?.byteLength ?? 0, cloudError: state.cloudError, cloudGenerations: state.cloudGenerations,
     scheduledSlot: state.scheduledSlot, scheduledEventId: state.scheduledEvent?.id ?? null, frames: state.frames });
@@ -61,6 +71,24 @@ export function setCelestialVisualSeed(state, visualSeed, cloudsEnabled = true) 
     state.cloud = field; state.cloudsEnabled = true; state.cloudError = null; state.cloudGenerations++; return true; }
   catch (error) { state.cloud = null; state.cloudsEnabled = false;
     state.cloudError = error instanceof Error ? error.message : 'cloud field unavailable'; return false; }
+}
+
+function initializeStableSky(state) {
+  try {
+    const field = state.deepSpaceFactory(mix32(state.skySeed ^ 0x473bc91d));
+    if (!validDeepSpaceField(field)) throw new Error('invalid deep-space field');
+    state.deepSpace = field; state.deepSpaceGenerations++; state.deepSpaceError = null;
+  } catch (error) {
+    state.deepSpace = null; state.deepSpaceError = error instanceof Error ? error.message : 'deep-space field unavailable';
+  }
+  try {
+    const stars = state.starFactory(state.skySeed, state.deepSpace);
+    if (!validStarCatalog(stars)) throw new Error('invalid star catalog');
+    state.stars = stars; state.starGenerations++; state.starError = null;
+  } catch (error) {
+    state.stars = new Float32Array(MAX_SKY_STARS * SKY_STAR_STRIDE);
+    state.starError = error instanceof Error ? error.message : 'star catalog unavailable';
+  }
 }
 
 export function shootingStarForSlot(seed, slotIndex) {
@@ -104,16 +132,6 @@ function accrue(state, value) {
   state.droppedMs += Math.max(0, elapsed - MAX_CELESTIAL_FRAME_MS);
 }
 function isCelestialEligible(state) { return !state.hidden && !state.reduced && (state.scene === 'home' || state.scene === 'world'); }
-function createStarCatalog(seed) {
-  const values = new Float32Array(MAX_STARS * SKY_STAR_STRIDE);
-  for (let star = 0; star < MAX_STARS; star++) {
-    values[star * SKY_STAR_STRIDE] = 0.018 + unit(seed, star, 20) * 0.964;
-    values[star * SKY_STAR_STRIDE + 1] = 0.018 + unit(seed, star, 21) * 0.964;
-    values[star * SKY_STAR_STRIDE + 2] = 0.55 + unit(seed, star, 22) * 1.05;
-    values[star * SKY_STAR_STRIDE + 3] = Math.min(1, 0.34 + unit(seed, star, 23) * 0.54 + (star % 13 === 0 ? 0.12 : 0));
-  }
-  return values;
-}
 function unit(seed, index, stream) { return mix32((seed >>> 0) ^ Math.imul(index + 1, 0x9e3779b1) ^ Math.imul(stream + 17, 0x85ebca77)) / 4294967296; }
 function mix32(input) { let value = input >>> 0; value ^= value >>> 16; value = Math.imul(value, 0x7feb352d) >>> 0;
   value ^= value >>> 15; value = Math.imul(value, 0x846ca68b) >>> 0; return (value ^ (value >>> 16)) >>> 0; }

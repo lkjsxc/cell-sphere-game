@@ -79,12 +79,39 @@ Status: active implementation.
   external state, source owners, tests, audits, and current documentation.
 - Captured and inspected comparable starting browser frames, numeric/resource
   reports, context loss, timing, and authoritative benchmark evidence.
+- Cut fresh and invalid Quality directly to public Balanced without changing
+  schema `8`; unit and browser reload checks preserve every valid stored quality
+  value and the independent Motion, Contrast, Auto-continue, and speed fields.
+- Replaced the point-only background with one deterministic `256×128×3`
+  (98,304-byte) generated field, signature `afe9c9db` for browser sky seed
+  `1851429315`, and three fixed faint/bright/anchor strata. Balanced uses
+  `160/42/8` stars, Eco `96/24/4`, and High `224/64/12`.
+- WebGL samples the field in its existing background draw; Canvas constructs one
+  cached raster from the exact bytes. Generation, upload, and raster counters
+  remain unchanged across steady frames and diagnostic sky isolation. WebGL
+  remains exactly four draws.
+- Rejected candidate 1 because its broad field was technically measurable but
+  visually too subdued at normal display size. Its 401,935-byte Home frame is
+  `reports/planetary-sky-composition-v2/candidate-1-subdued-nebula/home-worker-webgl2.png`,
+  SHA-256 `1326e3baee773a95b2bddcb1273b397bfc5a7cd64b1155aa8e783e55f8af2238`.
+- Selected candidate 2 after WebGL2 and Canvas inspection: the asymmetric cool
+  band, warm concentration, and negative rift are legible without outranking
+  the globe. WebGL background-only deltas change `86.56%` of 163,401 sampled
+  outside-globe pixels at mean `14.79`, while repeat noise is exactly zero;
+  star-only deltas locate all three bounded strata without a grid owner.
 
 ## Focused verification
 
-Current focused commands are the three `test:browser:planetary-sky*` paths,
-selected unit files, `audit:cell-visuals`, and `benchmark`. No production v2
-check has run yet.
+PASSED — `17/17` selected settings/celestial/field/renderer unit tests and the
+cell visual audit. PASSED — candidate-2 Worker/WebGL2, fallback/WebGL2, and
+fallback/Canvas production-browser paths, including fresh/stored settings,
+field/star isolation, lifecycle bounds, semantic hierarchy, context loss on the
+Worker path, four draws, forced colors, high contrast, touch/keyboard access,
+and four responsive viewports. The preserved candidate-2 fallback reports have
+SHA-256 `277a07c9bc10443b5c48c7b930a8d8e631ee2ba0d59239c6ff286b83cdc787da`
+(WebGL2) and
+`706a184f8fc1598a288e47de1da113ca0f85a33bf8d9024744acfa2df67ccaf4`
+(Canvas).
 
 ## Evidence not obtained
 
@@ -95,7 +122,6 @@ check has run yet.
 
 ## Exact next coherent step
 
-Cut fresh/invalid Quality to explicit Balanced and replace the background with
-one shared generated layered deep-space field plus bounded varied star strata in
-both existing background phases, then run focused cross-backend evidence before
-starting the directional-cloud cutover.
+Replace the equirectangular cloud bytes, longitude offset, and Canvas `u/v`
+phase cache in one cross-backend cutover with the selected six-face directional
+field and two finite nonparallel rotations; then capture seam/pole/time evidence.

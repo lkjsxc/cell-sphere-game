@@ -56,9 +56,16 @@ if (!/drawCalls = 4/.test(renderer)) violations.push('src/rendering/renderer.js:
 const shellShader = sources.get('src/rendering/shaders-shell.js');
 const celestialPolicy = read('src/interface/policies/celestial-presentation.js');
 const cloudField = sources.get('src/rendering/cloud-field.js');
+const deepSpaceField = sources.get('src/rendering/deep-space-field.js');
+const starField = sources.get('src/rendering/star-field.js');
 const fallbackCelestial = sources.get('src/rendering/fallback-celestial.js');
-if (!/uSkySeed/.test(shellShader) || !/uShootingPath/.test(shellShader))
+if (!/uDeepSpaceField/.test(shellShader) || !/uStarCounts/.test(shellShader) || !/uShootingPath/.test(shellShader))
   violations.push('src/rendering/shaders-shell.js: existing background phase does not own the planetary sky');
+if (!/DEEP_SPACE_FIELD_WIDTH = 256/.test(deepSpaceField) || !/DEEP_SPACE_FIELD_COMPONENTS = 3/.test(deepSpaceField)
+    || !/createCanvasDeepSpaceRaster/.test(fallbackCelestial) || !/gl\.RGB8/.test(renderer))
+  violations.push('production backends do not consume the shared layered deep-space field');
+if (!/STAR_STRATA/.test(starField) || !/STAR_STRATA_COUNTS/.test(starField) || /vec2\(20\.0, 12\.0\)/.test(shellShader))
+  violations.push('shared varied star strata are missing or the predecessor point grid returned');
 if (!/uCloudField/.test(shader) || !/sampleValidCloudField/.test(fallbackCelestial))
   violations.push('production backends do not consume the shared cloud field');
 if (!/SHOOTING_STAR_SLOT_MS = 300_000/.test(celestialPolicy) || !/MAX_CELESTIAL_FRAME_MS = 100/.test(celestialPolicy))
@@ -78,7 +85,8 @@ const report = { scannedFiles: sources.size, renderingFiles: renderingFiles.leng
     fourDraws: /drawCalls = 4/.test(renderer), fullCellLakes: !/cellPath\(cell\s*,/.test(staticGeography),
   localResourceColor: /aEcology/.test(shader) && /resourceState/.test(shader), sharedLifeEdges: /writeLifeEdges\(this\.topo/.test(worldPass)
     && /writeLifeEdges\(this\.topo/.test(fallback), fixedAtmosphereGeometry: /this\.atmosphereGeometry\.positions/.test(worldPass), ordinaryLifeInteriorFill: false,
-  globalEntropyTerrainFade: false, planetarySky: /uSkySeed/.test(shellShader) && /uCloudField/.test(shader),
+  globalEntropyTerrainFade: false, planetarySky: /uDeepSpaceField/.test(shellShader) && /uCloudField/.test(shader),
+  layeredDeepSpace: /DEEP_SPACE_FIELD_WIDTH = 256/.test(deepSpaceField) && /STAR_STRATA/.test(starField),
   sharedCloudField: /sampleValidCloudField/.test(fallbackCelestial) && /CLOUD_FIELD_WIDTH = 128/.test(cloudField),
   boundedCelestialPolicy: /MAX_CELESTIAL_FRAME_MS = 100/.test(celestialPolicy), violations };
 console.log(JSON.stringify(report, null, 2)); if (violations.length) process.exitCode = 1;

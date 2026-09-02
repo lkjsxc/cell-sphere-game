@@ -9,7 +9,7 @@ export function defaultSettings() {
     schema: SETTINGS_SCHEMA_VERSION,
     motion: 'full',
     contrast: 'normal',
-    quality: 'auto',
+    quality: 'balanced',
     autoContinue: true,
     speed: DEFAULT_RUNTIME_SPEED,
   };
