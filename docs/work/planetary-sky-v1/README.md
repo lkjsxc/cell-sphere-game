@@ -1,7 +1,8 @@
 # Planetary Sky v1
 
-Status: implementation and fresh complete local verification are complete;
-coherent commits and authorized exact-revision publication are pending.
+Status: terminal local implementation evidence. The implementation commit is
+`ba0fa2320b84800646255e931ddaf29871f62c5c`; exact-revision remote, CI, Pages,
+byte, and deployed-browser receipts belong to the final implementation handoff.
 
 ## Starting state
 
@@ -263,8 +264,7 @@ browser input/media/layout evidence is not represented as physical evidence.
 
 ## Exact next coherent step
 
-Commit the fully accounted implementation and local evidence, close this active
-package in one documentation commit, rerun the verifier on that exact terminal
-content, then perform only the authorized normal push and exact-revision
-CI/Pages/cache-busted/deployed-browser closure. Stop after recording those
-results; do not enter the deferred camera campaign.
+Run one fresh verifier on the exact terminal documentation commit, then perform
+only the authorized normal push and exact-revision CI/Pages/cache-busted/deployed-
+browser closure. Stop after recording those results in the implementation
+handoff; do not enter the deferred camera campaign.

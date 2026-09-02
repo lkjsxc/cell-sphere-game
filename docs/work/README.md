@@ -5,10 +5,16 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package: [`planetary-sky-v1/`](planetary-sky-v1/).
+Active work package: none.
 
 Completed packages remain as historical or current implementation evidence:
 
+- [`planetary-sky-v1/`](planetary-sky-v1/) — terminal local implementation
+  evidence for one deterministic eligible celestial clock, stable stars, shared
+  sphere-adherent clouds, exact twelve-per-hour shooting-star scheduling, fresh
+  Full Motion, four-draw WebGL2, Canvas/context-loss parity, and bounded local
+  browser/performance proof. Exact remote, CI, Pages, byte, and deployed-browser
+  closure belongs to the final implementation handoff.
 - [`kinetic-sphere-fidelity-v3/`](kinetic-sphere-fidelity-v3/) — terminal local
   implementation evidence for direct measured-vector camera release, natural
   damping, multi-turn carry, and stable open-detail release through the shared
