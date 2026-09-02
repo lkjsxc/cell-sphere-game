@@ -152,7 +152,7 @@
 .continuation-track { stroke: var(--border-strong); }
 .continuation-trace { stroke: currentColor; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--continuation-progress)); }
 .continuation-marker { position: absolute; inset: 0; transform: rotate(calc(var(--continuation-progress) * 1turn)); }
-.continuation-marker::after { position: absolute; top: 0; left: 50%; width: 6px; height: 6px; content: ""; background: currentColor; border: 1px solid var(--bg-panel-solid); border-radius: 50%; transform: translate(-50%, -1px); }
+.continuation-marker::after { position: absolute; top: 10%; left: 50%; width: 5px; height: 5px; content: ""; background: currentColor; border: 1px solid var(--bg-panel-solid); border-radius: 50%; transform: translate(-50%, -50%); }
 .continuation-copy { min-width: 0; line-height: 1.25; }
 .result-continuation[data-state="cancelled"], .result-continuation[data-state="disabled"] { color: var(--text-secondary); }
 .result-continuation[data-state="paused-hidden"] .continuation-marker,

@@ -131,6 +131,7 @@ test('History, visible metric affordances, restrained Result, and compact dock k
   assert.match(css, /\.hud-metrics:has\(#result-control:not\(\[hidden\]\)\)[^}]*grid-template-columns: repeat\(2/s);
   assert.match(css, /\.result-actions \{[\s\S]*?display: grid;/); assert.match(css, /\.result-continuation \{/);
   assert.match(css, /\.continuation-trace \{[^}]*stroke-dasharray: 1/s);
+  assert.match(css, /\.continuation-marker::after \{[^}]*top: 10%;[^}]*width: 5px; height: 5px;[^}]*transform: translate\(-50%, -50%\);/s);
   assert.match(css, /:root\[data-motion="reduced"\] \.continuation-marker/);
   const layout = readFileSync(new URL('../../styles/layout.css', import.meta.url), 'utf8');
   assert.match(layout, /\.hud-metrics \{\s+  display: grid;\s+  grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/);
