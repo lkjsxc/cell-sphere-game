@@ -60,7 +60,9 @@ while left alone, and through visible ecological cause and consequence.
 
 The presentation should feel rich, calm, and planetary rather than flat or
 ornamental. Home and World should read as cloud-bearing living planets against a
-stable deep-space field. Decorative celestial motion remains subordinate to
+visibly layered deep-space field with varied star scales and restrained broad
+nebular structure. The sky should have real presence without flattening the
+globe's visual hierarchy. Decorative celestial motion remains subordinate to
 cellular ecology, legibility, accessibility, and bounded performance.
 
 The product is autonomous and incremental. It does not promise offline progress.
@@ -171,11 +173,19 @@ WebGL2 and Canvas 2D communicate the same semantic state even when exact pixels
 differ. Accessibility, responsive behavior, reduced motion, forced colors,
 keyboard access, and bounded performance are product requirements.
 
-A stable star field belongs behind the globe. Home and World carry a restrained
-presentation-only cloud field, and Full motion may include sparse shooting stars
-at a long-run target of about twelve per eligible foreground hour. These effects
-never enter simulation, RNG, scoring, progression, History authority, or input
-hit testing.
+Fresh or invalid settings default Quality to `Balanced`. `Automatic` remains an
+explicit valid quality choice, and valid stored choices remain authoritative.
+Quality changes presentation budgets only; it never changes simulation
+resolution, tick content, rewards, progression, or other authority.
+
+A stable, visually present deep-space field belongs behind the globe. It uses
+varied star scales and density plus broad non-repeating nebular structure rather
+than an obvious lattice or a nearly empty gradient. Home and World carry a
+presentation-only cloud field whose motion does not expose a fixed longitude
+axis, polar pinwheel, or texture seam. Full motion may include sparse shooting
+stars at a long-run target of about twelve per eligible foreground hour. These
+effects never enter simulation, RNG, scoring, progression, History authority, or
+input hit testing.
 
 ---
 
@@ -286,8 +296,9 @@ motion, responsive framing, trusted interaction, surfaces, focus, speed
 selection, continuation, accessible announcements, and rendering cadence.
 
 One narrow celestial presentation policy owns its eligible foreground clock,
-visual seeds, cloud phase, quality budget, and shooting-star schedule. It is not
-a simulation, reward, persistence, or History owner.
+visual seeds, immutable deep-space and cloud field identities, cloud advection,
+quality budget, and shooting-star schedule. It is not a simulation, reward,
+persistence, or History owner.
 
 Presentation never changes simulation rules. Keep each policy narrow. Do not let
 the app controller become a second owner of a rule already expressed in a pure
@@ -499,10 +510,20 @@ automatic camera work is enabled, it should be composition-aware and
 observational: use slow bounded direction changes and occasional gentle
 reframing rather than an endless fixed-axis turn, avoid abrupt cuts and
 disorienting zoom, preserve picking and responsive framing, and cancel
-immediately on trusted interaction. Test identity transfer, precision-threshold
-behavior, natural multi-turn damping, equivalent elapsed behavior across frame
-cadences and delayed delivery, long-run orthonormality, detail-shell releases,
-automatic-camera enable/disable behavior, and fallback input.
+immediately on trusted interaction.
+
+In World, automatic camera work should preferentially reveal stable meaningful
+ecological activity supplied by an immutable presentation projection, such as a
+living frontier or recent meaningful change. Use bounded target scoring,
+hysteresis, dwell time, and cooldowns. Do not chase single-cell noise, infer a
+target from rendered pixels, or let camera targeting alter simulation authority.
+When no eligible target exists, follow a calm composition-aware path. Home uses
+only non-ecological composition.
+
+Test identity transfer, precision-threshold behavior, natural multi-turn damping,
+equivalent elapsed behavior across frame cadences and delayed delivery, long-run
+orthonormality, detail-shell releases, automatic-camera enable/disable and target
+fallback behavior, and fallback input.
 
 Use one document-level trusted-interaction capture path when several policies
 need it. Normalize trusted interaction types, ignore programmatic focus through a
@@ -878,21 +899,24 @@ selection, History, Evolution, and Trophy state. Semantic parity does not requir
 pixel identity.
 
 The sky and clouds are presentation-only renderer semantics. The background
-phase owns a stable deterministic deep-space field in every sphere scene. Home
-and World additionally own a restrained cloud-bearing planet treatment and, in
-Full motion, sparse shooting stars with a long-run target near twelve per
-eligible foreground hour. A shooting star is decorative: it has no sound,
-notification, reward, event, input, or History authority, never catches up after
-hidden time, and at most one is active at once.
+phase owns a stable deterministic layered deep-space field in every sphere scene.
+It combines broad restrained nebular or galactic structure, dark depth, and
+varied stars without an obvious procedural lattice. Home and World additionally
+own a cloud-bearing planet treatment and, in Full motion, sparse shooting stars
+with a long-run target near twelve per eligible foreground hour. A shooting star
+is decorative: it has no sound, notification, reward, event, input, or History
+authority, never catches up after hidden time, and at most one is active at once.
 
 Cloud structure is independent of gameplay-cell count and simulation topology.
-Prefer one bounded deterministic seamless field shared by both backends, sampled
-in world space so it adheres to the sphere and drifts only in animation time.
-Blend clouds after geography and resource material and before life, stress,
-critical state, remains, Luminous, selection, History, and boundary semantics.
-Reduced motion freezes cloud phase and suppresses shooting-star travel; static
-stars and cloud presence remain. Quality modes may reduce sampling complexity or
-star density but must preserve the intended semantic presence.
+Use one bounded deterministic field shared by both backends, sampled from the
+sphere's world-space direction so it adheres to the planet. Animate it only in
+animation time through seam-safe spherical advection that does not reveal a fixed
+longitude axis, persistent motion pole, polar pinwheel, or UV seam. Blend clouds
+after geography and resource material and before life, stress, critical state,
+remains, Luminous, selection, History, and boundary semantics. Reduced motion
+freezes cloud motion and suppresses shooting-star travel; static stars, nebular
+structure, and cloud presence remain. Quality modes may reduce sampling
+complexity or star density but must preserve the intended semantic presence.
 
 Keep celestial work in existing render phases. Do not add a post-processing
 stack, DOM particle layer, second render loop, remote texture, runtime dependency,
@@ -940,9 +964,10 @@ Geography and progression may share the existing boundary pass, but neither
 replaces the other. Do not add a pass when the existing pass can own the
 replacement. Do not leave old and new visual authorities active together.
 
-Create or cache static geometry, substrate, layout, cloud fields, sky budgets, and
-immutable region edges once at their real lifecycle boundaries. Do not rebuild
-them per frame. Avoid per-cell or per-edge object churn in hot render paths.
+Create or cache static geometry, substrate, layout, deep-space fields, cloud
+fields, sky budgets, and immutable region edges once at their real lifecycle
+boundaries. Do not rebuild them per frame. Avoid per-cell or per-edge object
+churn in hot render paths.
 Dynamic edge presentation uses reusable typed buffers, remains `O(edgeCount)` per
 accepted semantic snapshot, and does not rebuild only because animation time
 advances. Celestial state is fixed-size and at most one shooting star is active.
@@ -952,14 +977,21 @@ loss. Update picking coherently with renderer geometry.
 Use controlled fixtures and real browser evidence. Prefer relative measurements:
 substrate versus region contrast, archetype perimeter versus internal cell edge,
 progression state ordering, root material, center and limb continuity, day/night
-visibility, close/far behavior, cloud coverage and seam continuity, static versus
-moving cloud phase, background star presence, shooting-star occlusion and event
-identity, selection, backend ordering, draw count, buffer or texture size and
-cadence, and frame cost.
+visibility, close/far behavior, broad-scale sky structure, star-density and size
+variation, cloud coverage and spherical seam continuity, static versus moving
+cloud state, shooting-star occlusion and event identity, selection, backend
+ordering, draw count, buffer or texture size and cadence, and frame cost.
 
-Screenshots supplement measurements; they do not replace geometry, contrast,
-state, performance, browser, or fallback evidence. Calibrate pixel thresholds
-against repeat noise with a meaningful margin.
+For material visual changes, do not stop at the first technically passing frame.
+Capture repeatable baseline and candidate contact sheets at representative
+scenes, states, camera orientations, viewports, motion modes, and renderer paths
+after each substantive visual candidate. Inspect them at normal display size and
+iterate until every selected composition, hierarchy, continuity, parity, and
+performance criterion passes and no identified visual defect remains. Retain the
+final contact sheet and evidence digest. Screenshots supplement measurements;
+they do not replace geometry, contrast, state, performance, browser, or fallback
+evidence. Calibrate pixel thresholds against repeat noise with a meaningful
+margin.
 
 ---
 
@@ -1028,10 +1060,11 @@ reset incompatible Evolution levels, receipts, Imprints, and layout-bound Histor
 rather than silently reinterpreting them. Preserve independently valid unrelated
 facts through their existing owners.
 
-Persist explicit `Full` or `Reduced` motion and the automatic-camera boolean
-through the validated settings owner. A fresh or invalid settings document uses
-Full motion and automatic camera on. Preserve valid stored explicit choices; do
-not use an OS media query as a hidden settings writer.
+Persist explicit `Full` or `Reduced` motion, the automatic-camera boolean, and
+Quality through the validated settings owner. A fresh or invalid settings
+document uses Full motion, automatic camera on, and Balanced quality. Preserve
+valid stored explicit choices, including an explicit Automatic quality choice;
+do not use an OS media query or capability probe as a hidden settings writer.
 
 Do not persist presentation-only camera motion, celestial clock, cloud phase,
 shooting-star state, developer mode, diagnostic speed, or untrusted reward
@@ -1059,9 +1092,9 @@ product gain justifies it.
 
 Keep tick debt, work per slice, camera samples, continuation state, History,
 reports, caches, agent traces, notifications, Trophy queues, DOM size,
-renderer-semantic buffers, cloud fields, star budgets, celestial clocks, and
-shooting-star state bounded. At most one shooting star is active. Do not rebuild
-or upload static sky or cloud data per animation frame.
+renderer-semantic buffers, deep-space fields, cloud fields, star budgets,
+celestial clocks, and shooting-star state bounded. At most one shooting star is
+active. Do not rebuild or upload static sky or cloud data per animation frame.
 
 Avoid per-frame static-geometry rebuild, per-cell or per-edge object churn,
 unbounded DOM growth, unbounded listeners, duplicate render loops, duplicate
@@ -1091,9 +1124,11 @@ continuation, accessibility projections, renderer-semantic projections, exact
 endpoint ownership/reachability edge truth tables, codecs, and bounds.
 
 Use pure tests for celestial eligible-time accumulation, deterministic
-shooting-star slots, bounded event projection, seamless cloud-field generation,
-cloud seed and phase behavior, fresh Full settings under both OS media states,
-explicit Reduced preservation, fixed-size state, and nonfinite rejection.
+shooting-star slots, bounded event projection, deterministic layered deep-space
+field generation, spherical cloud-field continuity and advection, cloud seed and
+motion behavior, fresh Full and Balanced settings under both OS media states,
+explicit Reduced and stored Quality preservation, fixed-size state, and
+nonfinite rejection.
 
 Use integration tests for Worker/fallback agreement, stale identity rejection,
 settlement idempotence, settings reset, History switching, multi-World
@@ -1107,12 +1142,13 @@ context loss, WebGL2, Canvas, Worker, fallback, reduced motion, forced colors,
 ownership-perimeter hierarchy, and safe areas where available.
 
 For celestial rendering, use the production entry point and controlled time.
-Verify stable stars behind the globe, cloud adherence and seam continuity,
-Full-motion cloud change, Reduced-motion stillness, exact shooting-star identity
-and occlusion, no hidden or scene catch-up, all renderer/execution paths, four
-WebGL draws, lifecycle-only field upload, semantic hierarchy under clouds, and
-bounded frame cost. Do not wait an hour; advance the pure schedule
-deterministically.
+Verify a visibly layered stable deep-space field, varied non-lattice stars,
+cloud adherence and spherical continuity through former longitude and pole
+regions, Full-motion non-axial cloud change, Reduced-motion stillness, exact
+shooting-star identity and occlusion, no hidden or scene catch-up, all
+renderer/execution paths, four WebGL draws, lifecycle-only field upload, semantic
+hierarchy under clouds, and bounded frame cost. Do not wait an hour; advance the
+pure schedule deterministically.
 
 Use production authority, cohorts, holdout seeds, and multi-World campaigns for
 balance and agent evidence. Never reward budget exhaustion.
