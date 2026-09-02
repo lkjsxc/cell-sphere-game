@@ -6,14 +6,18 @@ import { createStarCatalog, MAX_SKY_STARS, SKY_STAR_STRIDE, STAR_BUDGETS, starCo
 
 export const CELESTIAL_SKY_SEED = 0x6e5a91c3;
 export const SHOOTING_STAR_SLOT_MS = 300_000;
-export const CLOUD_WRAP_MS = 3_000_000;
+export const CLOUD_PRIMARY_PERIOD_MS = 3_120_000;
+export const CLOUD_SECONDARY_PERIOD_MS = 6_540_000;
+export const CLOUD_PRIMARY_INITIAL_ANGLE = Math.PI * 15 / 8;
+export const CLOUD_SECONDARY_INITIAL_ANGLE = Math.PI * 3 / 8;
 export const MAX_CELESTIAL_FRAME_MS = 100;
 export const MAX_STARS = MAX_SKY_STARS;
 export { STAR_BUDGETS };
 
 export function createCelestialPresentation(options = {}) {
   const now = finiteTime(options.now);
-  const state = { lastNow: now, elapsedMs: 0, droppedMs: 0, scene: validScene(options.scene),
+  const state = { lastNow: now, elapsedMs: 0, cloudPrimaryMs: 0, cloudSecondaryMs: 0,
+    droppedMs: 0, scene: validScene(options.scene),
     hidden: options.hidden === true, reduced: options.reduced === true,
     quality: resolveCelestialQuality(options.quality, options.caps), skySeed: CELESTIAL_SKY_SEED,
     deepSpaceFactory: typeof options.deepSpaceFactory === 'function' ? options.deepSpaceFactory : createDeepSpaceField,
@@ -34,8 +38,9 @@ export function advanceCelestialPresentation(state, now) {
 
 export function celestialProjection(state) {
   const eligible = isCelestialEligible(state); const event = eligible ? activeShootingStar(state) : null;
-  return Object.freeze({ version: 2, eligible, eligibleTimeMs: state.elapsedMs,
-    cloudPhase: wrap01(state.elapsedMs / CLOUD_WRAP_MS), cloudEnabled: state.cloudsEnabled,
+  return Object.freeze({ version: 3, eligible, eligibleTimeMs: state.elapsedMs,
+    cloudPrimaryAngle: radians(state.cloudPrimaryMs, CLOUD_PRIMARY_PERIOD_MS, CLOUD_PRIMARY_INITIAL_ANGLE),
+    cloudSecondaryAngle: radians(state.cloudSecondaryMs, CLOUD_SECONDARY_PERIOD_MS, CLOUD_SECONDARY_INITIAL_ANGLE), cloudEnabled: state.cloudsEnabled,
     cloudSeed: state.cloudSeed, cloud: state.cloud, skySeed: state.skySeed, deepSpace: state.deepSpace,
     deepSpaceEnabled: state.deepSpace !== null,
     stars: state.stars, starCounts: starCountsForQuality(state.quality),
@@ -44,7 +49,9 @@ export function celestialProjection(state) {
 
 export function celestialPresentationSnapshot(state) {
   return Object.freeze({ scene: state.scene, hidden: state.hidden, reduced: state.reduced,
-    eligible: isCelestialEligible(state), eligibleTimeMs: state.elapsedMs, droppedMs: state.droppedMs,
+    eligible: isCelestialEligible(state), eligibleTimeMs: state.elapsedMs,
+    cloudPrimaryAngle: radians(state.cloudPrimaryMs, CLOUD_PRIMARY_PERIOD_MS, CLOUD_PRIMARY_INITIAL_ANGLE),
+    cloudSecondaryAngle: radians(state.cloudSecondaryMs, CLOUD_SECONDARY_PERIOD_MS, CLOUD_SECONDARY_INITIAL_ANGLE), droppedMs: state.droppedMs,
     quality: state.quality, starCount: STAR_BUDGETS[state.quality], skySeed: state.skySeed,
     deepSpaceSignature: state.deepSpace?.signature ?? null, deepSpaceBytes: state.deepSpace?.byteLength ?? 0,
     deepSpaceError: state.deepSpaceError, deepSpaceGenerations: state.deepSpaceGenerations,
@@ -128,7 +135,10 @@ function activeShootingStar(state) {
 function accrue(state, value) {
   const now = finiteTime(value, state.lastNow); const elapsed = Math.max(0, now - state.lastNow); state.lastNow = now;
   if (!isCelestialEligible(state) || elapsed <= 0) return;
-  state.elapsedMs += Math.min(elapsed, MAX_CELESTIAL_FRAME_MS);
+  const applied = Math.min(elapsed, MAX_CELESTIAL_FRAME_MS);
+  state.elapsedMs += applied;
+  state.cloudPrimaryMs = (state.cloudPrimaryMs + applied) % CLOUD_PRIMARY_PERIOD_MS;
+  state.cloudSecondaryMs = (state.cloudSecondaryMs + applied) % CLOUD_SECONDARY_PERIOD_MS;
   state.droppedMs += Math.max(0, elapsed - MAX_CELESTIAL_FRAME_MS);
 }
 function isCelestialEligible(state) { return !state.hidden && !state.reduced && (state.scene === 'home' || state.scene === 'world'); }
@@ -138,5 +148,5 @@ function mix32(input) { let value = input >>> 0; value ^= value >>> 16; value = 
 function finiteSeed(value) { return Number.isFinite(value) ? Math.trunc(value) >>> 0 : 0; }
 function finiteTime(value, fallback = 0) { return Number.isFinite(value) ? Math.max(0, value) : fallback; }
 function validScene(value) { return ['home', 'world', 'evolution', 'trophies'].includes(value) ? value : 'home'; }
-function wrap01(value) { return value - Math.floor(value); }
+function radians(value, period, offset) { return (offset + value / period * Math.PI * 2) % (Math.PI * 2); }
 function smoothstep(low, high, value) { const amount = Math.max(0, Math.min(1, (value - low) / (high - low))); return amount * amount * (3 - 2 * amount); }

@@ -10,7 +10,7 @@ import {
   EVOLUTION_CELL_EDGE, EVOLUTION_REGION_EDGE, evolutionCellEdgeStatus, evolutionRegionEdge,
 } from '../game/skills/scene.js';
 import { normalizeCelestialProjection } from './celestial-projection.js';
-import { CANVAS_CLOUD_PHASE_BUCKETS, canvasCloudAmount, canvasCloudMaterial,
+import { canvasCloudAngleBucket, canvasCloudAmount, canvasCloudCacheKey, canvasCloudMaterial,
   createCanvasCloudMap, createCanvasDeepSpaceRaster, drawCanvasCelestialBackground } from './fallback-celestial.js';
 
 const WORLD_LIGHT = Object.freeze((() => { const value=[-.52,.72,.44]; const length=Math.hypot(...value); return value.map((axis)=>axis/length); })());
@@ -39,13 +39,13 @@ export class Canvas2DRenderer {
     this.cornerY = new Float32Array(this.dual.cornerCount);
     this.cornerFacing = new Float32Array(this.dual.cornerCount);
     const cloudMap = createCanvasCloudMap(topo, WORLD_LIGHT);
-    this.cloudU = cloudMap.u; this.cloudV = cloudMap.v; this.cloudDaylight = cloudMap.daylight;
-    this.cloudAmount = new Uint8Array(topo.nodeCount); this.cloudSampleEpoch = new Int16Array(topo.nodeCount); this.cloudSampleEpoch.fill(-1);
+    this.cloudDirection = cloudMap.direction; this.cloudDaylight = cloudMap.daylight;
+    this.cloudAmount = new Uint8Array(topo.nodeCount); this.cloudSampleEpoch = new Int32Array(topo.nodeCount); this.cloudSampleEpoch.fill(-1);
     const initialCelestial = normalizeCelestialProjection(opts.celestial);
     this.deepSpaceField = initialCelestial.deepSpace; this.deepSpaceRaster = createCanvasDeepSpaceRaster(this.deepSpaceField);
     this.deepSpaceFieldChanges = this.deepSpaceField ? 1 : 0; this.deepSpaceRasterBuilds = this.deepSpaceRaster ? 1 : 0;
     this.cloudField = initialCelestial.cloud; this.cloudFieldChanges = this.cloudField ? 1 : 0;
-    this.cloudSamples = 0; this.cloudCacheRefreshes = 0; this.cloudPhaseBucket = -1;
+    this.cloudSamples = 0; this.cloudCacheRefreshes = 0; this.cloudOrientationKey = -1;
     this.lifeEdgeData = new Uint8Array(topo.edgeCount * LIFE_EDGE_STRIDE);
     this.lifeEdgeBatches = Array.from({ length: LIFE_EDGE_STYLE_COUNT }, () => new Uint16Array(topo.edgeCount));
     this.lifeEdgeBatchCounts = new Uint16Array(LIFE_EDGE_STYLE_COUNT);
@@ -77,16 +77,18 @@ export class Canvas2DRenderer {
       this.deepSpaceRaster = createCanvasDeepSpaceRaster(this.deepSpaceField); this.deepSpaceFieldChanges++;
       if (this.deepSpaceRaster) this.deepSpaceRasterBuilds++; }
     if (celestial.cloud && celestial.cloud !== this.cloudField) { this.cloudField = celestial.cloud; this.cloudFieldChanges++;
-      this.cloudSampleEpoch.fill(-1); this.cloudPhaseBucket = -1; }
+      this.cloudSampleEpoch.fill(-1); this.cloudOrientationKey = -1; }
     this.updateLifeEdges(snapshot);
     const w = canvas.width; const h = canvas.height;
     const cx = w * (0.5 + camera.offsetX * 0.5); const cy = h * (0.5 - camera.offsetY * 0.5);
     const sizeScale = canvas.clientWidth < 600 ? 0.76 : 0.52;
     const radius = Math.min(w, h) * sizeScale * (3.1 / camera.dist);
     const basis = this.basis(camera); const entropy = snapshot?.entropy ?? 0; const fixture = continuityFixture(scene, this.developerMode);
-    const cloudPhaseBucket = Math.floor(celestial.cloudPhase * CANVAS_CLOUD_PHASE_BUCKETS) % CANVAS_CLOUD_PHASE_BUCKETS;
-    if (celestial.cloudEnabled && this.cloudField && cloudPhaseBucket !== this.cloudPhaseBucket) {
-      this.cloudPhaseBucket = cloudPhaseBucket; this.cloudCacheRefreshes++;
+    const cloudPrimaryBucket = canvasCloudAngleBucket(celestial.cloudPrimaryAngle);
+    const cloudSecondaryBucket = canvasCloudAngleBucket(celestial.cloudSecondaryAngle);
+    const cloudOrientationKey = canvasCloudCacheKey(cloudPrimaryBucket, cloudSecondaryBucket);
+    if (celestial.cloudEnabled && this.cloudField && cloudOrientationKey !== this.cloudOrientationKey) {
+      this.cloudOrientationKey = cloudOrientationKey; this.cloudCacheRefreshes++;
     }
     if (fixture) {
       ctx.fillStyle = cssColor(fixture.background); ctx.fillRect(0, 0, w, h);
@@ -117,10 +119,11 @@ export class Canvas2DRenderer {
       let local = resourceColor(base, snapshot?.resourceState?.[cell] ?? 0,
         (snapshot?.resourceRichnessQ?.[cell] ?? 128) / 255, isWater);
       if (celestial.cloudEnabled && this.cloudField) {
-        if (this.cloudSampleEpoch[cell] !== cloudPhaseBucket) {
-          this.cloudAmount[cell] = canvasCloudAmount(this.cloudField, this.cloudU[cell], this.cloudV[cell], cloudPhaseBucket,
-            this.cloudDaylight[cell]);
-          this.cloudSampleEpoch[cell] = cloudPhaseBucket; this.cloudSamples++;
+        if (this.cloudSampleEpoch[cell] !== cloudOrientationKey) {
+          const at = cell * 3;
+          this.cloudAmount[cell] = canvasCloudAmount(this.cloudField, this.cloudDirection[at], this.cloudDirection[at + 1],
+            this.cloudDirection[at + 2], cloudPrimaryBucket, cloudSecondaryBucket, this.cloudDaylight[cell]);
+          this.cloudSampleEpoch[cell] = cloudOrientationKey; this.cloudSamples++;
         }
         local = canvasCloudMaterial(local, this.cloudAmount[cell]);
       }
@@ -148,8 +151,9 @@ export class Canvas2DRenderer {
         deepSpaceBytes: this.deepSpaceField?.byteLength ?? 0, deepSpaceRgbaBytes: this.deepSpaceRaster?.rgbaBytes ?? 0,
         deepSpaceFieldChanges: this.deepSpaceFieldChanges, deepSpaceRasterBuilds: this.deepSpaceRasterBuilds,
         shootingStarId: celestial.shootingStar?.id ?? null, cloudSignature: this.cloudField?.signature ?? null,
-        cloudPhase: celestial.cloudPhase, cloudFieldChanges: this.cloudFieldChanges, cloudSamples: this.cloudSamples,
-        cloudCacheRefreshes: this.cloudCacheRefreshes, cloudPhaseBucket: this.cloudPhaseBucket }) }); return true;
+        cloudPrimaryAngle: celestial.cloudPrimaryAngle, cloudSecondaryAngle: celestial.cloudSecondaryAngle,
+        cloudFieldChanges: this.cloudFieldChanges, cloudSamples: this.cloudSamples,
+        cloudCacheRefreshes: this.cloudCacheRefreshes, cloudOrientationKey: this.cloudOrientationKey }) }); return true;
   }
 
   project(points, outX, outY, outFacing, basis, cx, cy, radius) {

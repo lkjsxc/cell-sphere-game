@@ -9,7 +9,8 @@ import { BOUNDARY_VERTICES_PER_EDGE, LIFE_EDGE_STRIDE, writeBoundaryLifeVertices
   writeLifeEdges } from './life-edges.js';
 import { ATMOSPHERE_GEOMETRY } from './atmosphere-geometry.js';
 import { RENDER_SCENE, renderSceneMode } from './scene-mode.js';
-import { validCloudField } from './cloud-field.js';
+import { cloudFaceBytes, CLOUD_FACE_COUNT, CLOUD_PRIMARY_AXIS, CLOUD_SECONDARY_AXIS,
+  validCloudField } from './cloud-field.js';
 
 const EMPTY_CLOUD = new Uint8Array(1);
 
@@ -34,7 +35,7 @@ export class WorldPass {
     this.zero3 = new Float32Array(3);
     this.historyCenters = new Float32Array(24);
     this.initialCloudField = options.cloudField ?? null; this.cloudField = null; this.cloudTexture = null;
-    this.cloudTextureUploads = 0; this.cloudFieldUploads = 0; this.cloudError = null;
+    this.cloudTextureUploads = 0; this.cloudFaceUploads = 0; this.cloudFieldUploads = 0; this.cloudError = null;
     this.buffers = [];
     this.vaos = [];
     this.initialize();
@@ -82,18 +83,22 @@ export class WorldPass {
   initializeCloudTexture(field) {
     const gl = this.gl; this.cloudTexture = gl.createTexture();
     if (!this.cloudTexture) { this.cloudError = 'cloud texture unavailable'; return false; }
-    gl.bindTexture(gl.TEXTURE_2D, this.cloudTexture); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.cloudTexture); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
     return this.uploadCloudTexture(validCloudField(field) ? field : null);
   }
   uploadCloudTexture(field) {
     if (!this.cloudTexture) return false; const gl = this.gl; const valid = validCloudField(field);
-    const width = valid ? field.width : 1; const height = valid ? field.height : 1; const bytes = valid ? field.bytes : EMPTY_CLOUD;
-    gl.bindTexture(gl.TEXTURE_2D, this.cloudTexture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, width, height, 0, gl.RED, gl.UNSIGNED_BYTE, bytes);
+    const size = valid ? field.faceSize : 1; gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.cloudTexture);
+    for (let face = 0; face < CLOUD_FACE_COUNT; face++) {
+      gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, gl.R8, size, size, 0, gl.RED,
+        gl.UNSIGNED_BYTE, valid ? cloudFaceBytes(field, face) : EMPTY_CLOUD);
+      this.cloudFaceUploads++;
+    }
     this.cloudTextureUploads++; this.cloudField = valid ? field : null; if (valid) this.cloudFieldUploads++; return valid;
   }
   setCloudField(field) {
@@ -129,6 +134,7 @@ export class WorldPass {
     ecology: nonZero(this.ecologyData), lifeEdges: nonZero(this.lifeEdgeData), edgeBytes: this.boundaryLifeData.byteLength,
     edgeUpdates: this.edgeUpdateCount, tick: this.lastTick, cloudSignature: this.cloudField?.signature ?? null,
     cloudBytes: this.cloudField?.byteLength ?? 0, cloudTextureUploads: this.cloudTextureUploads,
+    cloudFaceUploads: this.cloudFaceUploads,
     cloudFieldUploads: this.cloudFieldUploads, cloudError: this.cloudError }); }
   uploadLife(snapshot) {
     if (snapshot === this.lastSnapshot && (snapshot?.tick ?? -1) === this.lastTick) return;
@@ -192,10 +198,13 @@ export class WorldPass {
     gl.uniform1f(globe.u.get('uFixture'), fixture ? 1 : 0);
     gl.uniform3fv(globe.u.get('uFixtureColor'), fixture?.surface ?? this.zero3);
     this.setCloudField(celestial?.cloud);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.cloudTexture);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.cloudTexture);
     gl.uniform1i(globe.u.get('uCloudField'), 0);
     gl.uniform1f(globe.u.get('uCloudEnabled'), !fixture && celestial?.cloudEnabled && this.cloudField ? 1 : 0);
-    gl.uniform1f(globe.u.get('uCloudPhase'), Number.isFinite(celestial?.cloudPhase) ? celestial.cloudPhase : 0);
+    gl.uniform3fv(globe.u.get('uCloudPrimaryAxis'), CLOUD_PRIMARY_AXIS);
+    gl.uniform3fv(globe.u.get('uCloudSecondaryAxis'), CLOUD_SECONDARY_AXIS);
+    gl.uniform1f(globe.u.get('uCloudPrimaryAngle'), celestial?.cloudPrimaryAngle ?? 0);
+    gl.uniform1f(globe.u.get('uCloudSecondaryAngle'), celestial?.cloudSecondaryAngle ?? 0);
     gl.bindVertexArray(this.globeVao);
     gl.drawElements(gl.TRIANGLES, this.geometry.indices.length, gl.UNSIGNED_SHORT, 0);
 

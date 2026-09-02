@@ -99,19 +99,54 @@ Status: active implementation.
   the globe. WebGL background-only deltas change `86.56%` of 163,401 sampled
   outside-globe pixels at mean `14.79`, while repeat noise is exactly zero;
   star-only deltas locate all three bounded strata without a grid owner.
+- Replaced the equirectangular producer, longitude uniform, Canvas `u/v` maps,
+  and phase cache with one `64×64×6` directional field. Browser World seed
+  `3531364387` produces signature `d5b85ea2`, 24,576 bytes, and `36.03%`
+  thresholded coverage. The shared directional sampler's maximum calibrated
+  cube-edge delta is below `0.000009`.
+- Selected normalized axes
+  `[0.429442, 0.788975, 0.439429]` and
+  `[-0.708232, 0.279303, 0.648381]`: their separation is `78.40°`, and their
+  nearest-cardinal separations are above `37°`. Direct 52- and 109-minute
+  eligible-time rotations use bounded phase state and selected starting angles
+  `15π/8` and `3π/8`; no accumulated matrix or World-cardinal pole exists.
+- Rejected the first zero-angle cloud composition because the opening view was
+  an excessively clear patch even though the cube was continuous. A second
+  candidate improved distribution but still left the deterministic opening too
+  clear. The selected coverage and starting orientation make both Home and
+  World visibly cloud-bearing while retaining terrain, resources, life edges,
+  selection, atmosphere, and text hierarchy.
+- Canvas caches exact unit directions in typed storage and uses 2,048 buckets
+  per angle. Its fastest interval is approximately `1.52 s`; adjacent spherical
+  probes change the opacity byte by at most `4/255` with mean below `0.26/255`.
+  The hot sampler allocates no object per cell.
 
 ## Focused verification
 
-PASSED — `17/17` selected settings/celestial/field/renderer unit tests and the
-cell visual audit. PASSED — candidate-2 Worker/WebGL2, fallback/WebGL2, and
+PASSED — `19/19` selected settings/celestial/field/renderer unit tests and the
+cell visual audit. PASSED — directional-cloud Worker/WebGL2, fallback/WebGL2, and
 fallback/Canvas production-browser paths, including fresh/stored settings,
 field/star isolation, lifecycle bounds, semantic hierarchy, context loss on the
 Worker path, four draws, forced colors, high contrast, touch/keyboard access,
-and four responsive viewports. The preserved candidate-2 fallback reports have
-SHA-256 `277a07c9bc10443b5c48c7b930a8d8e631ee2ba0d59239c6ff286b83cdc787da`
-(WebGL2) and
-`706a184f8fc1598a288e47de1da113ca0f85a33bf8d9024744acfa2df67ccaf4`
-(Canvas).
+four responsive viewports, both rotation components, and all six cube-face/
+former-seam/pole camera families. Milestone reports under
+`reports/planetary-sky-composition-v2/final/` have SHA-256
+`6c499bf5d9fe4a5c676a3d3033d8e22008495b6475030c5cb93b79c4683d78ba`
+(Worker/WebGL2),
+`79bf1e7366764f11e1edcba4914b63cf2a277f1dea0bda743449b6be7d170dd4`
+(fallback/WebGL2), and
+`bcbb9ce85db5436482d9e3adc1ee5bb5f533b0a3a64fb641b2067834ef025a18`
+(fallback/Canvas).
+
+The inspected final composition, orientation, and responsive contact sheets are
+respectively `1472×1856` / 1,243,463 bytes / SHA-256
+`d9b4429ac1cda51d3df670b0950bca481484844168bf490aabe44091dcc1126d`,
+`1472×1856` / 989,161 bytes /
+`1b7a2d7cd78567c60f3b12a104b2f0673844375e0dbff6e2d305cbf26ce9c23d`,
+and `1472×1240` / 593,606 bytes /
+`d555383c34d99bf9217ca8dcbd68137569f819ed9488557e52c5a2431ba9ede0`.
+They are ignored evidence under `reports/planetary-sky-composition-v2/final/`,
+not repository assets.
 
 ## Evidence not obtained
 
@@ -122,6 +157,6 @@ SHA-256 `277a07c9bc10443b5c48c7b930a8d8e631ee2ba0d59239c6ff286b83cdc787da`
 
 ## Exact next coherent step
 
-Replace the equirectangular cloud bytes, longitude offset, and Canvas `u/v`
-phase cache in one cross-backend cutover with the selected six-face directional
-field and two finite nonparallel rotations; then capture seam/pole/time evidence.
+Run camera, picking, life-boundary, atmosphere, benchmark, authority, and full
+verification gates against the stable combined content; reconcile all current
+documentation and predecessor searches, then close and publish only if safe.

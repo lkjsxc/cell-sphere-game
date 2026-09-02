@@ -66,12 +66,15 @@ if (!/DEEP_SPACE_FIELD_WIDTH = 256/.test(deepSpaceField) || !/DEEP_SPACE_FIELD_C
   violations.push('production backends do not consume the shared layered deep-space field');
 if (!/STAR_STRATA/.test(starField) || !/STAR_STRATA_COUNTS/.test(starField) || /vec2\(20\.0, 12\.0\)/.test(shellShader))
   violations.push('shared varied star strata are missing or the predecessor point grid returned');
-if (!/uCloudField/.test(shader) || !/sampleValidCloudField/.test(fallbackCelestial))
+if (!/samplerCube uCloudField/.test(shader) || !/sampleAdvectedCloudField/.test(fallbackCelestial))
   violations.push('production backends do not consume the shared cloud field');
 if (!/SHOOTING_STAR_SLOT_MS = 300_000/.test(celestialPolicy) || !/MAX_CELESTIAL_FRAME_MS = 100/.test(celestialPolicy))
   violations.push('celestial presentation policy lost its exact cadence or bounded foreground integration');
-if (!/CLOUD_FIELD_WIDTH = 128/.test(cloudField) || !/CLOUD_FIELD_HEIGHT = 64/.test(cloudField))
+if (!/CLOUD_FACE_SIZE = 64/.test(cloudField) || !/CLOUD_FACE_COUNT = 6/.test(cloudField)
+    || !/CLOUD_PRIMARY_AXIS/.test(cloudField) || !/CLOUD_SECONDARY_AXIS/.test(cloudField))
   violations.push('shared cloud field lost its selected fixed-size representation');
+if (/uCloudPhase|atan\(|Math\.atan2|Math\.acos/.test(`${shader}\n${fallbackCelestial}`))
+  violations.push('superseded longitude cloud sampler returned');
 for (const [file, source] of [['src/rendering/renderer.js', renderer], ['src/rendering/world-pass.js', worldPass],
   ['src/rendering/fallback2d.js', fallback], ['src/rendering/fallback-celestial.js', fallbackCelestial]]) {
   if (/Math\.random|setInterval|setTimeout|requestAnimationFrame/.test(source))
@@ -87,7 +90,7 @@ const report = { scannedFiles: sources.size, renderingFiles: renderingFiles.leng
     && /writeLifeEdges\(this\.topo/.test(fallback), fixedAtmosphereGeometry: /this\.atmosphereGeometry\.positions/.test(worldPass), ordinaryLifeInteriorFill: false,
   globalEntropyTerrainFade: false, planetarySky: /uDeepSpaceField/.test(shellShader) && /uCloudField/.test(shader),
   layeredDeepSpace: /DEEP_SPACE_FIELD_WIDTH = 256/.test(deepSpaceField) && /STAR_STRATA/.test(starField),
-  sharedCloudField: /sampleValidCloudField/.test(fallbackCelestial) && /CLOUD_FIELD_WIDTH = 128/.test(cloudField),
+  sharedCloudField: /sampleAdvectedCloudField/.test(fallbackCelestial) && /CLOUD_FACE_SIZE = 64/.test(cloudField),
   boundedCelestialPolicy: /MAX_CELESTIAL_FRAME_MS = 100/.test(celestialPolicy), violations };
 console.log(JSON.stringify(report, null, 2)); if (violations.length) process.exitCode = 1;
 function jsFiles(directory) { return readdirSync(resolve(root, directory)).filter((name) => name.endsWith('.js')).sort().map((name) => `${directory}/${name}`); }

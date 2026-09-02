@@ -87,7 +87,7 @@ direct globe manipulation, world-time meaning in the clock, and the informative
 continuation trace while disabling camera inertia, automatic orbit, and the
 ring's travelling marker. Fresh settings select Full motion regardless of the
 operating-system media preference; a valid explicit stored Full or Reduced
-choice remains authoritative. Reduced motion also freezes cloud phase and
+choice remains authoritative. Reduced motion also freezes both cloud rotations and
 suppresses shooting-star travel while retaining static stars and a static
 cloud-bearing Home/World planet. These effects are decorative and add no focus
 target, live-region update, sound, or invented screen-reader narration. Ordinary life boundaries are static snapshot

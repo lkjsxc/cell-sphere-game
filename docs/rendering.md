@@ -24,18 +24,21 @@ playable after WebGL context loss without replacing world authority.
 One presentation policy supplies both backends with a stable generated
 `256×128` RGB deep-space field, a fixed three-stratum star catalog, one
 active-or-inactive shooting-star projection, one Home/World cloud identity, and
-its eligible-time phase. The WebGL background draw samples the broad field and
+two finite eligible-time rotation angles. The WebGL background draw samples the broad field and
 adds its constant-cost faint, bright, and anchor star strata plus the active
 streak before the globe, so later globe draws occlude it naturally. Canvas
 rasters the exact field bytes once per identity and draws the same catalog and
 event in its existing background phase. Neither backend owns a clock, slot
 calculation, random source, timer, or render loop.
 
-Cloud opacity is one deterministic seamless `128×64` byte field independent of
-cell count. WebGL uploads it as one repeating `R8` texture at renderer/seed
-lifecycle boundaries and samples it in the existing globe draw. Canvas samples
-the exact bytes through cached spherical coordinates and a fixed 1,024-bucket
-phase cache inside its existing visible-cell material loop. Geography and resource material are applied first; clouds
+Cloud opacity is one deterministic `64×64×6` byte field generated from smooth
+three-dimensional direction, independent of cell count. WebGL uploads its six
+faces as one `R8` cube texture at renderer/seed lifecycle boundaries and samples
+transformed world normals in the existing globe draw. Canvas caches each cell's
+unit direction and samples the exact bytes through two fixed 2,048-bucket angle
+caches inside its existing visible-cell material loop. The two direct rotations
+use non-cardinal axes separated by `78.40°`, periods of 52 and 109 eligible
+foreground minutes, and no incrementally accumulated matrix. Geography and resource material are applied first; clouds
 then contribute at most `0.18` of the local material before life stress, remains,
 Luminous, selection, History, Evolution, Trophy, and boundary meanings. Home and
 World use clouds; Evolution and Trophy do not. The field does not participate in

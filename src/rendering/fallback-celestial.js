@@ -1,27 +1,36 @@
 /** Canvas-specific drawing and fixed caches for the shared celestial projection. */
-import { sampleValidCloudField } from './cloud-field.js';
+import { sampleAdvectedCloudField } from './cloud-field.js';
 import { validDeepSpaceField } from './deep-space-field.js';
 import { SKY_STAR_STRIDE, STAR_STRATA } from './star-field.js';
 
 const CANVAS_CLOUD_COLOR = Object.freeze([174, 184, 179]);
-export const CANVAS_CLOUD_PHASE_BUCKETS = 1024;
+export const CANVAS_CLOUD_ANGLE_BUCKETS = 2048;
 
 export function createCanvasCloudMap(topo, light) {
-  const u = new Float32Array(topo.nodeCount); const v = new Float32Array(topo.nodeCount);
+  const direction = new Float32Array(topo.nodeCount * 3);
   const daylight = new Float32Array(topo.nodeCount);
   for (let cell = 0; cell < topo.nodeCount; cell++) {
     const at = cell * 3; const x = topo.positions[at]; const y = topo.positions[at + 1]; const z = topo.positions[at + 2];
-    u[cell] = Math.atan2(z, x) / (Math.PI * 2) + 0.5;
-    v[cell] = Math.acos(Math.max(-1, Math.min(1, y))) / Math.PI;
+    direction[at] = x; direction[at + 1] = y; direction[at + 2] = z;
     const localLight = x * light[0] + y * light[1] + z * light[2];
     daylight[cell] = Math.max(0, Math.min(1, (localLight + .16) / .30));
   }
-  return Object.freeze({ u, v, daylight });
+  return Object.freeze({ direction, daylight });
 }
 
-export function canvasCloudAmount(field, u, v, phaseBucket, daylight) {
-  const phase = phaseBucket / CANVAS_CLOUD_PHASE_BUCKETS;
-  const opacity = sampleValidCloudField(field, u, v, phase);
+export function canvasCloudAngleBucket(angle) {
+  const wrapped = Number.isFinite(angle) ? modulo(angle, Math.PI * 2) : 0;
+  return Math.floor(wrapped / (Math.PI * 2) * CANVAS_CLOUD_ANGLE_BUCKETS) % CANVAS_CLOUD_ANGLE_BUCKETS;
+}
+
+export function canvasCloudCacheKey(primaryBucket, secondaryBucket) {
+  return primaryBucket * CANVAS_CLOUD_ANGLE_BUCKETS + secondaryBucket;
+}
+
+export function canvasCloudAmount(field, x, y, z, primaryBucket, secondaryBucket, daylight) {
+  const primary = primaryBucket / CANVAS_CLOUD_ANGLE_BUCKETS * Math.PI * 2;
+  const secondary = secondaryBucket / CANVAS_CLOUD_ANGLE_BUCKETS * Math.PI * 2;
+  const opacity = sampleAdvectedCloudField(field, x, y, z, primary, secondary);
   return Math.round(Math.max(0, Math.min(.18, opacity * (.05 + daylight * .13))) * 255);
 }
 
@@ -96,3 +105,4 @@ function drawDeepSpace(ctx, width, height, raster) {
 }
 
 function mix(a, b, amount) { return a + (b - a) * amount; }
+function modulo(value, divisor) { return ((value % divisor) + divisor) % divisor; }

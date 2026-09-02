@@ -112,7 +112,8 @@ function frameAudit(scene, dynamic, celestial, background) {
       starCounts: celestial.starCounts, deepSpaceSignature: celestial.deepSpace?.signature ?? null,
       deepSpaceBytes: celestial.deepSpace?.byteLength ?? 0,
       shootingStarId: celestial.shootingStar?.id ?? null, cloudSignature: celestial.cloud?.signature ?? null,
-      cloudPhase: celestial.cloudPhase, skySeed: celestial.skySeed, starCatalogBytes: celestial.stars.byteLength,
+      cloudPrimaryAngle: celestial.cloudPrimaryAngle, cloudSecondaryAngle: celestial.cloudSecondaryAngle,
+      skySeed: celestial.skySeed, starCatalogBytes: celestial.stars.byteLength,
       background }), dynamic });
 }
 function count(values) { let result = 0; if (values) for (const value of values) if (value) result++; return result; }

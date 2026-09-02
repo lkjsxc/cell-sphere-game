@@ -74,7 +74,9 @@ eligible time proves one event per 300-second slot without waiting an hour;
 matched pixel probes independently isolate the broad deep-space field, three
 stable star strata, measurable cloud movement, selected projected coverage,
 camera adherence, near/far continuity, streak visibility and globe occlusion,
-and static Reduced behavior. The matrix also checks explicit fresh Balanced and
+and static Reduced behavior. Six cardinal camera families cover every cube face,
+both former equirectangular poles, and the former longitude-seam family; separate
+controlled states exercise each nonparallel rotation. The matrix also checks explicit fresh Balanced and
 stored Automatic quality, fresh/stored Motion, browser visibility, scene, visual
 History, quality and speed independence, exact field/event identity across
 execution and renderer paths, four WebGL draws, lifecycle-only resource upload

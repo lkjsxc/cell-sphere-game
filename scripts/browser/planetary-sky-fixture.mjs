@@ -1,6 +1,7 @@
 /** Focused production-shell evidence for the shared planetary sky policy. */
 export async function runPlanetarySkyFixture(t) {
   const { evaluate, wait, poll, key, tap, setMedia, setViewport, screenshot, errors } = t;
+  const simulationLabel = t.simulationFallback ? 'fallback' : 'worker';
   ok(await poll(() => evaluate('window.__CELL_SPHERE_BOOT__?.playable'), Boolean, 5000), 'planetary sky page did not boot');
   const reducedOsFresh = await settingsState(evaluate);
   ok(reducedOsFresh.osReduced && reducedOsFresh.motion === 'full' && reducedOsFresh.documentMotion === 'full'
@@ -47,7 +48,7 @@ export async function runPlanetarySkyFixture(t) {
     return{renderer:a.renderer.backend,cloudSignature:p.cloud?.signature,cloudBytes:p.cloud?.byteLength,coverage:p.cloud?.coverage,
       deepSpaceSignature:p.deepSpace?.signature,deepSpaceBytes:p.deepSpace?.byteLength,deepSpaceReference:a.celestial.deepSpace===p.deepSpace,
       skySeed:p.skySeed,starCount:p.starCount,starCounts:p.starCounts,starReference:a.celestial.stars===p.stars,scene:s.scene,eligible:s.eligible}})()`);
-  const homeShot = await screenshot(`planetary-sky-home-${home.renderer}.png`);
+  const homeShot = await screenshot(`planetary-sky-home-${simulationLabel}-${home.renderer}.png`);
   await trustedSelector(t, '#begin-button');
   ok(await poll(() => evaluate('window.__CELL_SPHERE_APP__.phase'), (phase) => phase === 'running', 5000), 'planetary sky World did not start');
   const path = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.pause.set('browser-planetary-sky',true);const p=a.currentCelestialProjection();return{
@@ -77,18 +78,32 @@ export async function runPlanetarySkyFixture(t) {
       width:innerWidth,height:innerHeight,pageWidth:document.documentElement.scrollWidth,canvas:[canvas.left,canvas.top,canvas.right,canvas.bottom],
       controlsInside:controls.every(r=>r.left>=-1&&r.top>=-1&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1),
       targets:controls.every(r=>r.width>=43&&r.height>=43)}})()`);
+    row.screenshot = await screenshot(`planetary-sky-responsive-${width}x${height}-${simulationLabel}-${path.renderer}.png`);
     responsive.push(row); ok(row.pageWidth <= width && row.controlsInside && row.targets,
       `planetary sky responsive controls failed: ${JSON.stringify(row)}`);
   }
   await evaluate(`document.documentElement.style.fontSize=''`); await setViewport(1440, 900); await wait(120);
 
   const visual = await evaluate(visualExpression());
+  const orientationShots = [];
+  for (let index = 0; index < 6; index++) {
+    await evaluate(`window.__CSG_PLANETARY_SKY_FIXTURE__.showOrientation(${index},'cloud',4.1)`); await wait(25);
+    orientationShots.push(await screenshot(`planetary-sky-direction-${index}-${simulationLabel}-${path.renderer}.png`));
+  }
+  await evaluate(`window.__CSG_PLANETARY_SKY_FIXTURE__.showOrientation(0,'cloud',2.2)`); await wait(25);
+  const nearShot = await screenshot(`planetary-sky-near-${simulationLabel}-${path.renderer}.png`);
+  await evaluate(`window.__CSG_PLANETARY_SKY_FIXTURE__.showOrientation(0,'cloud',6.2)`); await wait(25);
+  const farShot = await screenshot(`planetary-sky-far-${simulationLabel}-${path.renderer}.png`);
   await evaluate(`window.__CSG_PLANETARY_SKY_FIXTURE__.show('cloud')`); await wait(60);
-  const worldShot = await screenshot(`planetary-sky-world-${path.renderer}.png`);
+  const worldShot = await screenshot(`planetary-sky-world-${simulationLabel}-${path.renderer}.png`);
+  await evaluate(`window.__CSG_PLANETARY_SKY_FIXTURE__.show('primary')`); await wait(40);
+  const primaryShot = await screenshot(`planetary-sky-primary-${simulationLabel}-${path.renderer}.png`);
+  await evaluate(`window.__CSG_PLANETARY_SKY_FIXTURE__.show('secondary')`); await wait(40);
+  const secondaryShot = await screenshot(`planetary-sky-secondary-${simulationLabel}-${path.renderer}.png`);
   await evaluate(`window.__CSG_PLANETARY_SKY_FIXTURE__.show('shooting')`); await wait(40);
-  const shootingShot = await screenshot(`planetary-sky-shooting-${path.renderer}.png`);
+  const shootingShot = await screenshot(`planetary-sky-shooting-${simulationLabel}-${path.renderer}.png`);
   await evaluate(`window.__CSG_PLANETARY_SKY_FIXTURE__.show('reduced')`); await wait(40);
-  const reducedShot = await screenshot(`planetary-sky-reduced-${path.renderer}.png`);
+  const reducedShot = await screenshot(`planetary-sky-reduced-${simulationLabel}-${path.renderer}.png`);
   await evaluate(`window.__CSG_PLANETARY_SKY_FIXTURE__.restore()`);
   ok(visual.valid, `planetary sky visual oracle failed: ${JSON.stringify(visual)}`);
 
@@ -123,17 +138,17 @@ export async function runPlanetarySkyFixture(t) {
   let contextLoss = { attempted: false };
   if (path.renderer === 'webgl2' && !t.simulationFallback) {
     contextLoss = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,before=a.currentCelestialProjection(),ext=a.renderer.gl.getExtension('WEBGL_lose_context');
-      if(!ext)return{attempted:false};ext.loseContext();return{attempted:true,before:{cloud:before.cloud?.signature,deepSpace:before.deepSpace?.signature,phase:before.cloudPhase,starCount:before.starCount,skySeed:before.skySeed,event:before.shootingStar?.id??null}}})()`);
+      if(!ext)return{attempted:false};ext.loseContext();return{attempted:true,before:{cloud:before.cloud?.signature,deepSpace:before.deepSpace?.signature,angles:[before.cloudPrimaryAngle,before.cloudSecondaryAngle],starCount:before.starCount,skySeed:before.skySeed,event:before.shootingStar?.id??null}}})()`);
     if (contextLoss.attempted) {
       const before = contextLoss.before;
       ok(await poll(() => evaluate(`window.__CELL_SPHERE_APP__.renderer.backend`), (value) => value === 'canvas2d', 5000), 'context loss did not reach Canvas');
       contextLoss = await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,p=a.currentCelestialProjection();return{attempted:true,backend:a.renderer.backend,
-        cloud:p.cloud?.signature,deepSpace:p.deepSpace?.signature,phase:p.cloudPhase,starCount:p.starCount,skySeed:p.skySeed,event:p.shootingStar?.id??null,field:a.renderer.cloudField?.signature,rendererDeepSpace:a.renderer.deepSpaceField?.signature,playable:Boolean(a.snapshot)}})()`);
-      contextLoss = { ...contextLoss, before, phaseDelta: Math.abs(contextLoss.phase - before.phase) };
+        cloud:p.cloud?.signature,deepSpace:p.deepSpace?.signature,angles:[p.cloudPrimaryAngle,p.cloudSecondaryAngle],starCount:p.starCount,skySeed:p.skySeed,event:p.shootingStar?.id??null,field:a.renderer.cloudField?.signature,rendererDeepSpace:a.renderer.deepSpaceField?.signature,playable:Boolean(a.snapshot)}})()`);
+      contextLoss = { ...contextLoss, before, angleDelta: Math.max(...contextLoss.angles.map((value,index)=>Math.abs(value-before.angles[index]))) };
       ok(contextLoss.backend === 'canvas2d' && contextLoss.cloud === contextLoss.field && contextLoss.cloud === before.cloud
         && contextLoss.deepSpace === contextLoss.rendererDeepSpace && contextLoss.deepSpace === before.deepSpace
         && contextLoss.starCount === before.starCount && contextLoss.skySeed === before.skySeed && contextLoss.event === before.event
-        && contextLoss.phaseDelta < .01 && contextLoss.playable,
+        && contextLoss.angleDelta < .01 && contextLoss.playable,
         `context-loss celestial transfer failed: ${JSON.stringify(contextLoss)}`);
     }
   }
@@ -141,43 +156,51 @@ export async function runPlanetarySkyFixture(t) {
   return Object.freeze({ schema: 1, rendererPath: path.renderer, simulationPath: path.fallback ? 'fallback' : 'worker',
     settings: { reducedOsFresh, explicitReduced, storedReduced, storedAutomatic, noPreferenceFresh, osChange, touchMenu }, visibility,
     seeds: { home, world: path, scenes, historyAndQuality }, visual, responsive, forcedColors, highContrast, contextLoss,
-    screenshots: { home: homeShot, world: worldShot, shooting: shootingShot, reduced: reducedShot } });
+    screenshots: { home: homeShot, world: worldShot, primary: primaryShot, secondary: secondaryShot,
+      shooting: shootingShot, reduced: reducedShot, directions: orientationShots, near: nearShot, far: farShot } });
 }
 
 function visualExpression() {
   return `(async()=>{const a=window.__CELL_SPHERE_APP__,renderer=a.renderer,canvas=a.canvas,snapshot=a.snapshot,identity=a.worldIdentity;
-    const [{shootingStarForSlot,SHOOTING_STAR_SLOT_MS,setCelestialReduced,advanceCelestialPresentation,celestialProjection},{projectedSphereDiameter},{rotate}]=await Promise.all([
+    const [{shootingStarForSlot,SHOOTING_STAR_SLOT_MS,CLOUD_PRIMARY_PERIOD_MS,CLOUD_SECONDARY_PERIOD_MS,setCelestialReduced,advanceCelestialPresentation,celestialProjection},{projectedSphereDiameter},{focusCamera,rotate}]=await Promise.all([
       import('./src/interface/policies/celestial-presentation.js'),import('./src/interface/policies/layout-policy.js'),import('./src/rendering/camera.js')]);
-    cancelAnimationFrame(a.rafId);const state=a.celestial,saved={elapsed:state.elapsedMs,lastNow:state.lastNow,reduced:state.reduced,camera:{...a.camera,direction:a.camera.direction.slice(),right:a.camera.right.slice(),up:a.camera.up.slice()}};
-    state.elapsedMs=0;state.lastNow=performance.now();const base=celestialProjection(state),savedSpeed=a.speed,scheduled=shootingStarForSlot(base.skySeed,4);
+    cancelAnimationFrame(a.rafId);const state=a.celestial,saved={elapsed:state.elapsedMs,primaryMs:state.cloudPrimaryMs,secondaryMs:state.cloudSecondaryMs,lastNow:state.lastNow,reduced:state.reduced,camera:{...a.camera,direction:a.camera.direction.slice(),right:a.camera.right.slice(),up:a.camera.up.slice()}};
+    state.elapsedMs=0;state.cloudPrimaryMs=0;state.cloudSecondaryMs=0;state.lastNow=performance.now();const base=celestialProjection(state),savedSpeed=a.speed,scheduled=shootingStarForSlot(base.skySeed,4);
     state.elapsedMs=4*SHOOTING_STAR_SLOT_MS+scheduled.startOffsetMs+scheduled.durationMs*.5;const speedBefore=celestialProjection(state);a.setSpeed(.25);const slow=celestialProjection(state);a.setSpeed(1.5);const fast=celestialProjection(state);a.setSpeed(savedSpeed);state.elapsedMs=0;
-    const speedInvariant={before:speedBefore.shootingStar?.id,slow:slow.shootingStar?.id,fast:fast.shootingStar?.id,phase:[speedBefore.cloudPhase,slow.cloudPhase,fast.cloudPhase],restored:a.speed===savedSpeed};
+    const speedInvariant={before:speedBefore.shootingStar?.id,slow:slow.shootingStar?.id,fast:fast.shootingStar?.id,angles:[speedBefore.cloudPrimaryAngle,speedBefore.cloudSecondaryAngle,slow.cloudPrimaryAngle,slow.cloudSecondaryAngle,fast.cloudPrimaryAngle,fast.cloudSecondaryAngle],restored:a.speed===savedSpeed};
     const neutral={...base,deepSpaceEnabled:false,starCounts:[0,0,0],starCount:0,cloudEnabled:false,shootingStar:null};
     const field={...base,starCounts:[0,0,0],starCount:0,cloudEnabled:false,shootingStar:null};
-    const stars={...base,cloudEnabled:false,shootingStar:null},cloud={...base,cloudPhase:0,shootingStar:null},moving={...cloud,cloudPhase:30000/3000000};
+    const stars={...base,cloudEnabled:false,shootingStar:null},cloud={...base,shootingStar:null};
+    const primary={...cloud,cloudPrimaryAngle:(cloud.cloudPrimaryAngle+Math.PI*.5)%(Math.PI*2)},secondary={...cloud,cloudSecondaryAngle:(cloud.cloudSecondaryAngle+Math.PI*.5)%(Math.PI*2)};
+    const controlledMs=30*60000,moving={...cloud,cloudPrimaryAngle:(cloud.cloudPrimaryAngle+controlledMs/CLOUD_PRIMARY_PERIOD_MS*Math.PI*2)%(Math.PI*2),cloudSecondaryAngle:(cloud.cloudSecondaryAngle+controlledMs/CLOUD_SECONDARY_PERIOD_MS*Math.PI*2)%(Math.PI*2)};
     const width=canvas.width,height=canvas.height,cx=width*(.5+a.camera.offsetX*.5),cy=height*(.5-a.camera.offsetY*.5);
     const radius=renderer.backend==='canvas2d'?Math.min(width,height)*(canvas.clientWidth<600?.76:.52)*(3.1/a.camera.dist):projectedSphereDiameter(a.camera.dist,height)/2;
     let event=null;for(let slot=0;slot<64&&!event;slot++){const candidate=shootingStarForSlot(base.skySeed,slot),entry=circleEntry(candidate,[cx/width,cy/height],radius/width,width/height);if(entry!=null){const p=Math.min(.96,entry+candidate.tailLength*.55);event={...candidate,progress:p,visibility:1}}}
     if(!event)throw new Error('no shooting-star occlusion path');const shooting={...cloud,shootingStar:event};
     const before=a.worldResourceAudit().celestial,resourceBefore=renderer.backend==='webgl2'?{world:renderer.world.dynamicState(),background:renderer.backgroundState()}:renderer.lastFrameAudit;
-    const neutralFrame=capture(neutral),fieldA=capture(field),fieldB=capture(field),starsA=capture(stars),starsB=capture(stars),cloudFrame=capture(cloud),movingFrame=capture(moving),shootingFrame=capture(shooting);
+    const neutralFrame=capture(neutral),fieldA=capture(field),fieldB=capture(field),starsA=capture(stars),starsB=capture(stars),cloudFrame=capture(cloud),primaryFrame=capture(primary),secondaryFrame=capture(secondary),movingFrame=capture(moving),shootingFrame=capture(shooting);
     rotate(a.camera,.47,.19);const rotatedStars=capture(stars),rotatedCloud=capture(cloud),cameraCloud=layerShift(starsA.data,cloudFrame.data,rotatedStars.data,rotatedCloud.data);Object.assign(a.camera,saved.camera);
     a.camera.dist=2.2;const nearCloud=diff(capture(stars).data,capture(cloud).data,'all',12);a.camera.dist=6.2;const farCloud=diff(capture(stars).data,capture(cloud).data,'all',12);Object.assign(a.camera,saved.camera);
-    const broad=diff(neutralFrame.data,fieldA.data,'outside',2),fieldRepeat=diff(fieldA.data,fieldB.data,'all',0),star=diff(fieldA.data,starsA.data,'outside',2),repeat=diff(starsA.data,starsB.data,'all',0),cover=diff(starsA.data,cloudFrame.data,'inside',18),motion=diff(cloudFrame.data,movingFrame.data,'inside',1),meteorOutside=diff(cloudFrame.data,shootingFrame.data,'outside',2),meteorInside=diff(cloudFrame.data,shootingFrame.data,'inside',0);
+    const broad=diff(neutralFrame.data,fieldA.data,'outside',2),fieldRepeat=diff(fieldA.data,fieldB.data,'all',0),star=diff(fieldA.data,starsA.data,'outside',2),repeat=diff(starsA.data,starsB.data,'all',0),cover=diff(starsA.data,cloudFrame.data,'inside',18),primaryMotion=diff(cloudFrame.data,primaryFrame.data,'inside',1),secondaryMotion=diff(cloudFrame.data,secondaryFrame.data,'inside',1),motion=diff(cloudFrame.data,movingFrame.data,'inside',1),meteorOutside=diff(cloudFrame.data,shootingFrame.data,'outside',2),meteorInside=diff(cloudFrame.data,shootingFrame.data,'inside',0);
+    const orientationProbes=[];for(const direction of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]){focusCamera(a.camera,direction);const plain=capture(stars),atZero=capture(cloud),atPrimary=capture(primary),atSecondary=capture(secondary);orientationProbes.push({direction,coverage:diff(plain.data,atZero.data,'inside',8),primary:diff(atZero.data,atPrimary.data,'inside',1),secondary:diff(atZero.data,atSecondary.data,'inside',1)})}Object.assign(a.camera,saved.camera);
     const times=[],offTimes=[],emptyTimes=[],pairedDeltas=[],fullDeltas=[];for(let index=0;index<120;index++){let on,off,empty;const order=index%3;if(order===0){empty=capture(neutral).elapsed;off=capture(stars).elapsed;on=capture(moving).elapsed}else if(order===1){off=capture(stars).elapsed;on=capture(moving).elapsed;empty=capture(neutral).elapsed}else{on=capture(moving).elapsed;empty=capture(neutral).elapsed;off=capture(stars).elapsed}times.push(on);offTimes.push(off);emptyTimes.push(empty);pairedDeltas.push(on-off);fullDeltas.push(on-empty)}const after=renderer.backend==='webgl2'?{world:renderer.world.dynamicState(),background:renderer.backgroundState()}:renderer.lastFrameAudit;
-    const phaseBefore=celestialProjection(state).cloudPhase;setCelestialReduced(state,true,state.lastNow);advanceCelestialPresentation(state,state.lastNow+60000);const reduced=celestialProjection(state);setCelestialReduced(state,false,state.lastNow);
+    const anglesBefore=[celestialProjection(state).cloudPrimaryAngle,celestialProjection(state).cloudSecondaryAngle];setCelestialReduced(state,true,state.lastNow);advanceCelestialPresentation(state,state.lastNow+60000);const reduced=celestialProjection(state);setCelestialReduced(state,false,state.lastNow);
     const checks={deepSpaceVisible:broad.changed>10000&&broad.mean>1,deepSpaceStable:fieldRepeat.maximum===0,
-      starsVisible:star.changed>60&&star.mean>0,starsStable:repeat.maximum===0,cloudCoverage:base.cloud.coverage>=.18&&base.cloud.coverage<=.42&&cover.fraction>=.18&&cover.fraction<=.42,
-      cloudMoves:motion.changed>100&&motion.mean>0,shootingVisible:meteorOutside.changed>5,shootingOccluded:meteorInside.maximum===0,
+      starsVisible:star.changed>60&&star.mean>0,starsStable:repeat.maximum===0,
+      cloudCoverage:base.cloud.coverage>=.18&&base.cloud.coverage<=.42&&cover.changed>1000&&cover.mean>1,
+      cloudMoves:motion.changed>100&&motion.mean>0&&primaryMotion.changed>100&&secondaryMotion.changed>100,
+      allDirections:orientationProbes.every(value=>value.primary.changed>100&&value.secondary.changed>100),
+      shootingVisible:meteorOutside.changed>5,shootingOccluded:meteorInside.maximum===0,
       cloudAdheres:cameraCloud.changed>100&&nearCloud.changed>100&&farCloud.changed>100,
-      reducedStatic:reduced.cloudEnabled&&reduced.cloudPhase===phaseBefore&&reduced.shootingStar===null,
-      speedIndependent:speedInvariant.before===speedInvariant.slow&&speedInvariant.slow===speedInvariant.fast&&new Set(speedInvariant.phase).size===1&&speedInvariant.restored,
-      fixedResources:base.deepSpace?.byteLength===98304&&base.cloud?.byteLength===8192&&base.stars?.byteLength===7200,
+      reducedStatic:reduced.cloudEnabled&&reduced.cloudPrimaryAngle===anglesBefore[0]&&reduced.cloudSecondaryAngle===anglesBefore[1]&&reduced.shootingStar===null,
+      speedIndependent:speedInvariant.before===speedInvariant.slow&&speedInvariant.slow===speedInvariant.fast&&new Set(speedInvariant.angles).size<=2&&speedInvariant.restored,
+      fixedResources:base.deepSpace?.byteLength===98304&&base.cloud?.byteLength===24576&&base.stars?.byteLength===7200,
       fourDraws:renderer.backend==='canvas2d'||renderer.drawCalls===4,
       lifecycleOnly:renderer.backend==='canvas2d'?after?.celestial?.cloudFieldChanges===resourceBefore?.celestial?.cloudFieldChanges&&after?.celestial?.deepSpaceFieldChanges===resourceBefore?.celestial?.deepSpaceFieldChanges&&after?.celestial?.deepSpaceRasterBuilds===resourceBefore?.celestial?.deepSpaceRasterBuilds:after.world.cloudFieldUploads===resourceBefore.world.cloudFieldUploads&&after.background.deepSpaceFieldUploads===resourceBefore.background.deepSpaceFieldUploads};
-    const api={show(kind){capture(kind==='shooting'?shooting:kind==='reduced'?{...cloud,shootingStar:null}:cloud)},restore(){state.elapsedMs=saved.elapsed;state.lastNow=performance.now();state.reduced=saved.reduced;Object.assign(a.camera,saved.camera);delete window.__CSG_PLANETARY_SKY_FIXTURE__;}};window.__CSG_PLANETARY_SKY_FIXTURE__=api;
-    return{backend:renderer.backend,scene:a.scene,center:[cx,cy],radius,deepSpace:{width:base.deepSpace?.width,height:base.deepSpace?.height,components:base.deepSpace?.components,bytes:base.deepSpace?.byteLength,signature:base.deepSpace?.signature,minimumLuminance:base.deepSpace?.minimumLuminance,maximumLuminance:base.deepSpace?.maximumLuminance,meanLuminance:base.deepSpace?.meanLuminance,delta:broad,repeat:fieldRepeat},field:{width:base.cloud?.width,height:base.cloud?.height,bytes:base.cloud?.byteLength,signature:base.cloud?.signature,coverage:base.cloud?.coverage},stars:{count:base.starCount,counts:base.starCounts,bytes:base.stars?.byteLength,delta:star,repeat},cloud:{enabled:base.cloudEnabled,coverage:cover,motion,phase30s:moving.cloudPhase,cameraCloud,nearCloud,farCloud},shooting:{id:event.id,slot:event.slotIndex,durationMs:event.durationMs,path:[event.startX,event.startY,event.endX,event.endY],progress:event.progress,outside:meteorOutside,inside:meteorInside},
-      reduced:{phaseBefore,phaseAfter:reduced.cloudPhase,event:reduced.shootingStar},speedInvariant,timing:{fullSky:summarize(times),starsOnly:summarize(offTimes),emptySky:summarize(emptyTimes),cloudDelta:summarize(pairedDeltas),fullDelta:summarize(fullDeltas)},resources:{before:resourceBefore,after},clockBefore:before,checks,valid:Object.values(checks).every(Boolean)};
+    const directions=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]],stateFor=(kind)=>kind==='shooting'?shooting:kind==='primary'?primary:kind==='secondary'?secondary:kind==='reduced'?{...cloud,shootingStar:null}:cloud;
+    const api={show(kind){Object.assign(a.camera,saved.camera);capture(stateFor(kind))},showOrientation(index,kind,distance){Object.assign(a.camera,saved.camera);focusCamera(a.camera,directions[index]??directions[0]);a.camera.dist=distance;capture(stateFor(kind))},restore(){state.elapsedMs=saved.elapsed;state.cloudPrimaryMs=saved.primaryMs;state.cloudSecondaryMs=saved.secondaryMs;state.lastNow=performance.now();state.reduced=saved.reduced;Object.assign(a.camera,saved.camera);delete window.__CSG_PLANETARY_SKY_FIXTURE__;}};window.__CSG_PLANETARY_SKY_FIXTURE__=api;
+    return{backend:renderer.backend,scene:a.scene,center:[cx,cy],radius,deepSpace:{width:base.deepSpace?.width,height:base.deepSpace?.height,components:base.deepSpace?.components,bytes:base.deepSpace?.byteLength,signature:base.deepSpace?.signature,minimumLuminance:base.deepSpace?.minimumLuminance,maximumLuminance:base.deepSpace?.maximumLuminance,meanLuminance:base.deepSpace?.meanLuminance,delta:broad,repeat:fieldRepeat},field:{faceSize:base.cloud?.faceSize,faceCount:base.cloud?.faceCount,bytes:base.cloud?.byteLength,signature:base.cloud?.signature,coverage:base.cloud?.coverage},stars:{count:base.starCount,counts:base.starCounts,bytes:base.stars?.byteLength,delta:star,repeat},cloud:{enabled:base.cloudEnabled,coverage:cover,motion,primaryMotion,secondaryMotion,controlledAngles:[moving.cloudPrimaryAngle,moving.cloudSecondaryAngle],orientationProbes,cameraCloud,nearCloud,farCloud},shooting:{id:event.id,slot:event.slotIndex,durationMs:event.durationMs,path:[event.startX,event.startY,event.endX,event.endY],progress:event.progress,outside:meteorOutside,inside:meteorInside},
+      reduced:{anglesBefore,anglesAfter:[reduced.cloudPrimaryAngle,reduced.cloudSecondaryAngle],event:reduced.shootingStar},speedInvariant,timing:{fullSky:summarize(times),starsOnly:summarize(offTimes),emptySky:summarize(emptyTimes),cloudDelta:summarize(pairedDeltas),fullDelta:summarize(fullDeltas)},resources:{before:resourceBefore,after},clockBefore:before,checks,valid:Object.values(checks).every(Boolean)};
     function capture(celestial){const started=performance.now();renderer.render({snapshot,worldIdentity:identity,camera:a.camera,selectedNode:null,highlightedCells:[],time:0,pulse:false,celestial});const elapsed=performance.now()-started;let data;if(renderer.backend==='webgl2'){data=new Uint8Array(width*height*4);renderer.gl.readPixels(0,0,width,height,renderer.gl.RGBA,renderer.gl.UNSIGNED_BYTE,data)}else data=renderer.ctx.getImageData(0,0,width,height).data;return{data,elapsed}}
     function diff(left,right,mask,threshold){let samples=0,changed=0,sum=0,maximum=0;const levels={d2:0,d6:0,d10:0,d14:0,d18:0,d22:0};for(let y=1;y<height;y+=2)for(let x=1;x<width;x+=2){const distance=Math.hypot(x-cx,y-cy),inside=distance<radius*.70,outside=distance>radius*1.12;if(mask==='inside'&&!inside||mask==='outside'&&!outside)continue;const row=renderer.backend==='webgl2'?height-1-y:y,at=(row*width+x)*4,d=Math.max(Math.abs(left[at]-right[at]),Math.abs(left[at+1]-right[at+1]),Math.abs(left[at+2]-right[at+2]));samples++;sum+=d;maximum=Math.max(maximum,d);if(d>threshold)changed++;for(const level of [2,6,10,14,18,22])if(d>level)levels['d'+level]++}return{samples,changed,fraction:changed/Math.max(1,samples),mean:sum/Math.max(1,samples),maximum,levels}}
     function layerShift(baseA,cloudA,baseB,cloudB){let samples=0,changed=0,sum=0;for(let y=1;y<height;y+=2)for(let x=1;x<width;x+=2){if(Math.hypot(x-cx,y-cy)>=radius*.7)continue;const row=renderer.backend==='webgl2'?height-1-y:y,at=(row*width+x)*4,a=Math.max(Math.abs(baseA[at]-cloudA[at]),Math.abs(baseA[at+1]-cloudA[at+1]),Math.abs(baseA[at+2]-cloudA[at+2])),b=Math.max(Math.abs(baseB[at]-cloudB[at]),Math.abs(baseB[at+1]-cloudB[at+1]),Math.abs(baseB[at+2]-cloudB[at+2])),d=Math.abs(a-b);if(Math.max(a,b)>4){samples++;sum+=d;if(d>3)changed++}}return{samples,changed,fraction:changed/Math.max(1,samples),mean:sum/Math.max(1,samples)}}

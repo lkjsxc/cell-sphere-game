@@ -6,15 +6,18 @@
   Automatic, Eco, Balanced, and High choices remain authoritative. One shared
   deterministic `256×128` RGB field supplies broad chromatic space structure,
   and fixed faint/bright/anchor star strata scale to `124/210/300` stars.
-- Home and World still use the v1 deterministic `128×64` cloud field while the
-  active package replaces its longitude translation with directional clouds.
-  One shooting star remains scheduled per 300 seconds of eligible time.
-- One bounded policy owns time, seeds, phase, and the active event. Hidden time,
+- Home and World use one `64×64×6` directional byte field shared by WebGL2 and
+  Canvas. Direct 52- and 109-minute rotations around non-cardinal axes replace
+  longitude translation; the selected field is continuous across cube edges
+  and has no equirectangular seam or World-axis motion pole.
+- One bounded policy owns time, seeds, finite rotation angles, and the active
+  event. Hidden time,
   Reduced, Evolution, Trophies, and game speed cannot advance or backfill it.
   Fresh Motion is Full; explicit stored Reduced and unrelated settings persist.
 - WebGL2 remains four draws with lifecycle-only deep-space and cloud uploads.
-  Canvas consumes the exact deep-space bytes and celestial semantics through a
-  lifecycle-owned raster; real context loss preserves celestial identity.
+  Canvas consumes the exact deep-space and directional-cloud bytes through
+  lifecycle-owned resources and a quantized typed cache; real context loss
+  preserves field identities and both rotation angles.
 - Chrome 152 checks cover all three maintained paths, settings/accessibility,
   responsive 200% text, stable motion/occlusion, fixed resources, and semantic
   hierarchy. Simulation, rewards, camera policy, and persistence are unchanged.
