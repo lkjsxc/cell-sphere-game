@@ -120,6 +120,12 @@ Status: terminal local implementation evidence.
   per angle. Its fastest interval is approximately `1.52 s`; adjacent spherical
   probes change the opacity byte by at most `4/255` with mean below `0.26/255`.
   The hot sampler allocates no object per cell.
+- Revision `be464212910f5c26518c10cc029f439af54965f6` passed local verification,
+  exact-revision Actions/Pages, deployed-byte equality, and all three deployed
+  browser paths, but it is superseded as terminal evidence: review found that
+  its browser fixture had visual inspection and catalog dispersion checks but no
+  independent rendered-image Fourier/autocorrelation oracle. This was an
+  acceptance-evidence gap, not a diagnosed product or composition defect.
 
 ## Focused verification
 
@@ -146,6 +152,19 @@ reports under
 (fallback/WebGL2), and
 `bcbb9ce85db5436482d9e3adc1ee5bb5f533b0a3a64fb641b2067834ef025a18`
 (fallback/Canvas).
+
+PASSED — the corrective browser oracle finds connected star centroids in the
+actual field-only versus star-composed pixels, then measures axial Fourier
+frequencies `8–28`. Worker and fallback WebGL2 each report 93 rendered
+components and peak `0.20572`, below deterministic-control mean `0.21163`, p95
+`0.24805`, and calibrated limit `0.26805`. Canvas reports 70 components and peak
+`0.28508`, below control p95 `0.29577` and limit `0.31577`. Each limit is the
+matched 64-cohort random p95 plus `0.02` raster-centroid headroom. A deterministic
+jittered `20×12` lattice sensitivity control reports `0.94883` (WebGL2) and
+`0.94863` (Canvas), so the oracle independently distinguishes the selected
+rendered distribution from an axial lattice. All 64-control-cohort checks pass
+on Worker/WebGL2, fallback/WebGL2, and fallback/Canvas; precommit receipts are
+`9d1ee06f…`, `8907ac89…`, and `91cf9fe8…` respectively.
 
 The inspected final composition, orientation, and responsive contact sheets are
 respectively `1472×1856` / 1,243,463 bytes / SHA-256
@@ -189,5 +208,5 @@ policy and simulation/reward/persistence authorities are unchanged.
 ## Exact next coherent step
 
 Publish normally only if a fresh fetch confirms the expected upstream, then
-verify the exact remote revision, Actions, Pages, cache-busted bytes, and focused
-deployed browser paths. No further local product or source step remains.
+verify the replacement exact revision through Actions, Pages, cache-busted bytes,
+and focused deployed browser paths. No further local product step remains.

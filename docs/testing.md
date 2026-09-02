@@ -74,7 +74,10 @@ eligible time proves one event per 300-second slot without waiting an hour;
 matched pixel probes independently isolate the broad deep-space field, three
 stable star strata, measurable cloud movement, selected projected coverage,
 camera adherence, near/far continuity, streak visibility and globe occlusion,
-and static Reduced behavior. Six cardinal camera families cover every cube face,
+and static Reduced behavior. A rendered-star oracle extracts connected point
+centroids and compares axial Fourier peaks with 64 deterministic random cohorts
+and a jittered lattice sensitivity control. Six cardinal camera families cover
+every cube face,
 both former equirectangular poles, and the former longitude-seam family; separate
 controlled states exercise each nonparallel rotation. The matrix also checks explicit fresh Balanced and
 stored Automatic quality, fresh/stored Motion, browser visibility, scene, visual
