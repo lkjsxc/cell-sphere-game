@@ -85,7 +85,12 @@ motion uses static emphasis rather than removing information.
 Motion settings use centralized duration variables. Reduced motion preserves
 direct globe manipulation, world-time meaning in the clock, and the informative
 continuation trace while disabling camera inertia, automatic orbit, and the
-ring's travelling marker. Ordinary life boundaries are static snapshot
+ring's travelling marker. Fresh settings select Full motion regardless of the
+operating-system media preference; a valid explicit stored Full or Reduced
+choice remains authoritative. Reduced motion also freezes cloud phase and
+suppresses shooting-star travel while retaining static stars and a static
+cloud-bearing Home/World planet. These effects are decorative and add no focus
+target, live-region update, sound, or invented screen-reader narration. Ordinary life boundaries are static snapshot
 projections and use the same implementation under reduced motion. Stress and
 critical edges differ through static contrast/coverage as well as hue. Forced
 colors keeps controls, focus, selection access, and textual inspection in system
@@ -143,6 +148,13 @@ The focused Environment matrix additionally covers 390×844, 768×1024,
 fallback/Canvas 2D. It records percentage text and accessible names, keyboard
 open/Escape/focus restoration, forced colors, reduced motion, 200% text,
 surface rectangles, and scroll ownership.
+
+The focused planetary-sky matrix covers `320×568`, `390×844`, `844×390`, and
+`1440×900` at 200% text across Worker/WebGL2, fallback/WebGL2, and
+fallback/Canvas 2D. It exercises keyboard and touch access to the native Motion
+select, fresh Full behavior under both emulated OS preferences, explicit Reduced
+persistence and immediate effect, forced colors, high contrast, 44 px targets,
+page bounds, and unchanged decorative focus semantics.
 
 ## Visibility and storage
 

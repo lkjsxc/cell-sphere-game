@@ -56,6 +56,13 @@ while terrain and finite local resources remain visible inside occupied cells.
 Stress, critical state, remains, selection, History, coastlines, and whole-cell
 Luminous charge keep distinct visual and textual meanings.
 
+Home and World are cloud-bearing planets against one stable deterministic star
+field. Broad seamless clouds drift once every 50 eligible foreground minutes in
+Full motion, and one deterministic shooting star is scheduled in each 300-second slot
+of eligible Home/World time. Hidden pages, other scenes, Reduced motion, and
+game speed cannot advance or backfill that decorative schedule. Reduced motion
+keeps the stars and a static cloud-bearing planet while suppressing travel.
+
 Evolution uses the same 2,562-cell topology scale as World. Every visible cell
 is selectable, persistent, and purchasable; a fresh profile exposes only the
 `First Division` root on favorable green land, and owned cells open their direct
@@ -92,10 +99,13 @@ interaction cancels the 13.5-second automatic continuation for that Result.
   diagnostic multipliers through 64× without skipping authoritative ticks.
 - Game time owns ecology, Environment Level, SCORE, and History meaning.
   Wall-clock time delivers game time. Animation time owns camera and Result
-  presentation, so changing speed cannot accelerate either one.
+  presentation. A separately bounded eligible foreground-animation clock owns
+  clouds and shooting stars, so changing speed cannot accelerate any of them.
 - WebGL2 uses four World draw calls; one World/Evolution/Trophy discriminator
   preserves each material hierarchy, and Canvas 2D consumes the same geography
-  and deterministic edge semantics as a semantic fallback.
+  and deterministic edge and celestial projections as a semantic fallback.
+- Fresh settings select Full motion regardless of operating-system preference;
+  an explicit stored Full or Reduced choice remains authoritative.
 - Current-only persistence intentionally starts fresh for old or mismatched
   documents. Visual History is a reset-only device-local cache.
 - Closing the page does not advance a World and no offline progress is promised.
@@ -128,10 +138,13 @@ npm run test:browser:environment-pressure:canvas
 npm run test:browser:evolution-cells
 npm run test:browser:evolution-cells:fallback
 npm run test:browser:evolution-cells:canvas
+npm run test:browser:planetary-sky
+npm run test:browser:planetary-sky:fallback
+npm run test:browser:planetary-sky:canvas
 npm run test:browser:file
 npm run test:browser:canvas
 npm run test:browser:fallback
 ```
 
 Current implementation status is recorded in
-[`docs/work/evolution-ability-regions-v1/README.md`](docs/work/evolution-ability-regions-v1/README.md).
+[`docs/work/planetary-sky-v1/README.md`](docs/work/planetary-sky-v1/README.md).

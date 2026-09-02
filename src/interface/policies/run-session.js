@@ -58,11 +58,13 @@ export function performWorldReplacement(app) {
   app.worldIdentity = identity; app.activeRunId = identity.runId; app.runSeed = seed;
   app.makeRenderer(seed, 'world', identity); const blank = createBlankSnapshot(app.topo4.nodeCount, identity);
   app.snapshot = blank; app.driver.installSnapshot(blank); app.flow.send(transitionFor(phaseOf(app))); app.flow.select?.('world');
+  app.setCelestialScene?.('world');
   app.resetCameraMotion?.('world');
   app.sceneSelector?.update?.('world'); ui.show(app.el, 'world'); ui.resetWorldPresentation(app.el, blank); app.updateSceneActions?.(); app.resize(false);
   app.renderer.bindWorldSession(identity); app.renderer.resetDynamicState();
   const rendered = app.renderer.render({ snapshot: blank, worldIdentity: identity, camera: app.camera,
-    selectedNode: null, highlightedCells: [], time: performance.now() / 1000, pulse: false });
+    selectedNode: null, highlightedCells: [], time: performance.now() / 1000, pulse: false,
+    celestial: app.currentCelestialProjection?.() });
   app.presentationAudit.blankFrames++; app.presentationAudit.lastBlank = Object.freeze({ ...identityFields(identity), rendered,
     renderer: app.renderer.backend, audit: app.renderer.lastFrameAudit });
   ui.announce(app.el, 'Environment Level 0 is choosing a suitable place to begin.');

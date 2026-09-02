@@ -27,6 +27,8 @@ const LINE_EXCEPTIONS = new Map([
     'the user-supplied canonical implementation mandate must remain intact'],
   ['docs/work/living-boundary-semantics-v1/README.md',
     'the user-supplied canonical implementation mandate must remain intact'],
+  ['scripts/browser-file-test.mjs',
+    'one shared production-browser transport and focused dispatcher avoids duplicated browser harnesses'],
 ]);
 
 /** Directories allowed to exceed the 24-child hard cap: path -> reason. */

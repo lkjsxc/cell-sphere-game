@@ -4,6 +4,14 @@
 
 - Simulation benchmark gate: at least 3,000 ticks/s on the audit host.
 - WebGL2 world draw count: exactly four.
+- Celestial state is fixed-size: one 1,536-byte maximum star catalog, one
+  active-or-inactive event, and one 8,192-byte `128×64` cloud field. WebGL owns
+  one 8,192-byte `R8` texture uploaded only at context/seed lifecycle boundaries;
+  Canvas owns three fixed 2,562-entry coordinate/light arrays plus byte-amount
+  and phase-epoch caches (38,430 bytes total). Its 1,024 phase buckets refresh
+  at most once per approximately 2.93 seconds of eligible Full-motion time.
+  Neither backend adds a draw, timer, loop, Worker, DOM node, or per-frame field
+  generation/upload.
 - The WebGL2 atmosphere owns one module-scoped refinement-5 unit sphere:
   10,242 vertices, 61,440 `Uint16` indices, and 245,784 static buffer bytes.
   It is constructed once and uploaded only during renderer initialization or
@@ -32,6 +40,18 @@ profiles. Focused Chrome 152 receipts retain six samples at high-water, four
 WebGL draws, zero unchanged-frame renderer work attributable to the camera, and
 zero browser errors across Worker/WebGL2, fallback/WebGL2, and fallback/Canvas
 2D.
+
+Planetary Sky v1 same-process Chrome 152 profiles interleave 120 full-sky and
+empty-sky frames. Worker/WebGL2 p95 is `2.1/2.0 ms`, fallback/WebGL2 is
+`2.1/2.2 ms`, and fallback/Canvas is `2.0/2.0 ms`; medians differ by at most
+`0.1 ms`. WebGL remains four draws and one cloud upload across 360 interleaved
+renders. An earlier all-72-stars-per-fragment prototype starved the bounded
+camera integrator and was deleted in favor of one deterministic procedural grid
+evaluation per background pixel. An initial uncached Canvas cloud sampler also
+produced noisy p95 samples up to `3.7 ms`; the fixed phase cache removed that
+per-frame resampling. Current life/material cohorts retain zero repeat noise;
+their cross-process Canvas p95 is host-noisy, while paired full/empty samples
+show no material selected-scope regression.
 
 ## Data layout
 
@@ -131,6 +151,9 @@ time and are not multiplied by speed.
 npm run benchmark
 npm run test:browser:atmosphere
 npm run test:browser:atmosphere:canvas
+npm run test:browser:planetary-sky
+npm run test:browser:planetary-sky:fallback
+npm run test:browser:planetary-sky:canvas
 npm run test:browser:evolution-cells
 npm run test:browser:evolution-cells:fallback
 npm run test:browser:evolution-cells:canvas

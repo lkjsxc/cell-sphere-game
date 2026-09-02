@@ -48,6 +48,9 @@ uniform vec3 uHistoryCenter[8];
 uniform int uHistoryCount;
 uniform float uFixture;
 uniform vec3 uFixtureColor;
+uniform sampler2D uCloudField;
+uniform float uCloudEnabled;
+uniform float uCloudPhase;
 void main() {
   if (uFixture > 0.5) { outColor = vec4(uFixtureColor, 1.0); return; }
   float nutrient = vMaterial.x;
@@ -104,6 +107,11 @@ void main() {
   base = mix(base, depletedTint, depletedResource * 0.72);
   base = mix(base, exhaustedTint, exhaustedResource * 0.82);
   base = mix(base, waterCell > 0.5 ? vec3(0.035,0.220,0.390) : vec3(0.25,0.35,0.23), recoveringResource * 0.52);
+  vec3 cloudNormal = normalize(vPos);
+  vec2 cloudUv = vec2(fract(atan(cloudNormal.z, cloudNormal.x) / 6.28318530718 + 0.5 + uCloudPhase),
+    acos(clamp(cloudNormal.y, -1.0, 1.0)) / 3.14159265359);
+  float cloudOpacity = texture(uCloudField, cloudUv).r * uCloudEnabled;
+  base = mix(base, vec3(0.68, 0.72, 0.70), cloudOpacity * 0.18);
   float worldScene = 1.0 - step(0.5, abs(uSceneMode - ${RENDER_SCENE.WORLD}.0));
   float evolutionScene = 1.0 - step(0.5, abs(uSceneMode - ${RENDER_SCENE.EVOLUTION}.0));
   float trophyScene = 1.0 - step(0.5, abs(uSceneMode - ${RENDER_SCENE.TROPHY}.0));

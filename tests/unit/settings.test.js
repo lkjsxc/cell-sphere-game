@@ -20,6 +20,17 @@ test('settings omit retired menu choices and reject mismatched schemas', () => {
   assert.deepEqual(validateSettings({ ...settings, schema: SETTINGS_SCHEMA_VERSION - 1, motion: 'reduced', autoContinue: false }), defaultSettings());
 });
 
+test('fresh Motion is Full regardless of operating-system preference', () => {
+  const prior = globalThis.matchMedia;
+  try {
+    globalThis.matchMedia = () => ({ matches: false }); assert.equal(defaultSettings().motion, 'full');
+    globalThis.matchMedia = () => ({ matches: true }); assert.equal(defaultSettings().motion, 'full');
+    assert.equal(validateSettings({ ...defaultSettings(), motion: 'reduced', contrast: 'high', autoContinue: false }).motion, 'reduced');
+  } finally {
+    if (prior === undefined) delete globalThis.matchMedia; else globalThis.matchMedia = prior;
+  }
+});
+
 test('runtime speed policy is standard by default and developer-only by explicit URL flag', () => {
   assert.deepEqual(runtimeSpeedOptions(false), STANDARD_SPEEDS); assert.deepEqual(runtimeSpeedOptions(true), DEVELOPER_SPEEDS);
   assert.deepEqual(STANDARD_SPEEDS, [0.25, 0.5, 0.75, 1, 1.25, 1.5]);

@@ -9,6 +9,9 @@ import { LIFE_EDGE_STRIDE, LIFE_EDGE_STYLE, LIFE_EDGE_STYLE_COUNT,
 import {
   EVOLUTION_CELL_EDGE, EVOLUTION_REGION_EDGE, evolutionCellEdgeStatus, evolutionRegionEdge,
 } from '../game/skills/scene.js';
+import { normalizeCelestialProjection } from './celestial-projection.js';
+import { CANVAS_CLOUD_PHASE_BUCKETS, canvasCloudAmount, canvasCloudMaterial,
+  createCanvasCloudMap, drawCanvasCelestialBackground } from './fallback-celestial.js';
 
 const WORLD_LIGHT = Object.freeze((() => { const value=[-.52,.72,.44]; const length=Math.hypot(...value); return value.map((axis)=>axis/length); })());
 const BIOME_COLOR = Object.freeze([
@@ -35,6 +38,12 @@ export class Canvas2DRenderer {
     this.cornerX = new Float32Array(this.dual.cornerCount);
     this.cornerY = new Float32Array(this.dual.cornerCount);
     this.cornerFacing = new Float32Array(this.dual.cornerCount);
+    const cloudMap = createCanvasCloudMap(topo, WORLD_LIGHT);
+    this.cloudU = cloudMap.u; this.cloudV = cloudMap.v; this.cloudDaylight = cloudMap.daylight;
+    this.cloudAmount = new Uint8Array(topo.nodeCount); this.cloudSampleEpoch = new Int16Array(topo.nodeCount); this.cloudSampleEpoch.fill(-1);
+    const initialCelestial = normalizeCelestialProjection(opts.celestial);
+    this.cloudField = initialCelestial.cloud; this.cloudFieldChanges = this.cloudField ? 1 : 0;
+    this.cloudSamples = 0; this.cloudCacheRefreshes = 0; this.cloudPhaseBucket = -1;
     this.lifeEdgeData = new Uint8Array(topo.edgeCount * LIFE_EDGE_STRIDE);
     this.lifeEdgeBatches = Array.from({ length: LIFE_EDGE_STYLE_COUNT }, () => new Uint16Array(topo.edgeCount));
     this.lifeEdgeBatchCounts = new Uint16Array(LIFE_EDGE_STYLE_COUNT);
@@ -61,17 +70,25 @@ export class Canvas2DRenderer {
   render(scene) {
     if (this.disposed || !this.accepts(scene)) { this.rejectedFrames++; return false; }
     const { ctx, canvas, topo, fields } = this; const { snapshot, camera } = scene;
+    const celestial = normalizeCelestialProjection(scene.celestial);
+    if (celestial.cloud && celestial.cloud !== this.cloudField) { this.cloudField = celestial.cloud; this.cloudFieldChanges++;
+      this.cloudSampleEpoch.fill(-1); this.cloudPhaseBucket = -1; }
     this.updateLifeEdges(snapshot);
     const w = canvas.width; const h = canvas.height;
     const cx = w * (0.5 + camera.offsetX * 0.5); const cy = h * (0.5 - camera.offsetY * 0.5);
     const sizeScale = canvas.clientWidth < 600 ? 0.76 : 0.52;
     const radius = Math.min(w, h) * sizeScale * (3.1 / camera.dist);
     const basis = this.basis(camera); const entropy = snapshot?.entropy ?? 0; const fixture = continuityFixture(scene, this.developerMode);
+    const cloudPhaseBucket = Math.floor(celestial.cloudPhase * CANVAS_CLOUD_PHASE_BUCKETS) % CANVAS_CLOUD_PHASE_BUCKETS;
+    if (celestial.cloudEnabled && this.cloudField && cloudPhaseBucket !== this.cloudPhaseBucket) {
+      this.cloudPhaseBucket = cloudPhaseBucket; this.cloudCacheRefreshes++;
+    }
     if (fixture) {
       ctx.fillStyle = cssColor(fixture.background); ctx.fillRect(0, 0, w, h);
     } else {
       const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#070b14'); bg.addColorStop(1, '#0d1421');
       ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+      drawCanvasCelestialBackground(ctx, canvas, celestial);
       const glow = ctx.createRadialGradient(cx, cy, radius * 0.9, cx, cy, radius * 1.25);
       glow.addColorStop(0, `rgba(64,140,158,${0.28 - entropy * 0.12})`); glow.addColorStop(1, 'rgba(64,140,158,0)');
       ctx.fillStyle = glow; ctx.fillRect(cx - radius * 1.3, cy - radius * 1.3, radius * 2.6, radius * 2.6);
@@ -92,8 +109,16 @@ export class Canvas2DRenderer {
         Math.round((color[1] * (1 - canopy) + 54 * canopy) * (1 - shore) + 100 * shore),
         Math.round((color[2] * (1 - canopy) + 30 * canopy) * (1 - shore) + 76 * shore)];
       const isWater = fields.biomeId?.[cell] <= 1 || fields.biomeId?.[cell] === 13 || transform === 3;
-      const local = resourceColor(base, snapshot?.resourceState?.[cell] ?? 0,
+      let local = resourceColor(base, snapshot?.resourceState?.[cell] ?? 0,
         (snapshot?.resourceRichnessQ?.[cell] ?? 128) / 255, isWater);
+      if (celestial.cloudEnabled && this.cloudField) {
+        if (this.cloudSampleEpoch[cell] !== cloudPhaseBucket) {
+          this.cloudAmount[cell] = canvasCloudAmount(this.cloudField, this.cloudU[cell], this.cloudV[cell], cloudPhaseBucket,
+            this.cloudDaylight[cell]);
+          this.cloudSampleEpoch[cell] = cloudPhaseBucket; this.cloudSamples++;
+        }
+        local = canvasCloudMaterial(local, this.cloudAmount[cell]);
+      }
       this.cellPath(cell); ctx.fillStyle = `rgba(${local[0]},${local[1]},${local[2]},${.58 + this.facing[cell] * .34})`; ctx.fill();
     }
     if (!fixture) {
@@ -113,7 +138,10 @@ export class Canvas2DRenderer {
       presentationGeneration: snapshot?.presentationGeneration ?? null, lifeCells: count(snapshot?.alive),
       highlights: scene.highlightedCells?.length ?? 0, lifeEdges: countEdgeSignals(this.lifeEdgeData),
       edgeBytes: this.lifeEdgeData.byteLength, edgeUpdates: this.edgeUpdateCount,
-      clearCount: this.clearCount }); return true;
+      clearCount: this.clearCount, celestial: Object.freeze({ starCount: celestial.starCount,
+        shootingStarId: celestial.shootingStar?.id ?? null, cloudSignature: this.cloudField?.signature ?? null,
+        cloudPhase: celestial.cloudPhase, cloudFieldChanges: this.cloudFieldChanges, cloudSamples: this.cloudSamples,
+        cloudCacheRefreshes: this.cloudCacheRefreshes, cloudPhaseBucket: this.cloudPhaseBucket }) }); return true;
   }
 
   project(points, outX, outY, outFacing, basis, cx, cy, radius) {
@@ -311,6 +339,7 @@ function resourceColor(base, state, richness, water) {
   return base.map((value, index) => Math.round(value * (1 - amount) + target[index] * amount));
 }
 function mean(values) { return values.reduce((sum, value) => sum + value, 0) / values.length; }
+function mix(a, b, amount) { return a + (b - a) * amount; }
 function count(values) { let result = 0; if (values) for (const value of values) if (value) result++; return result; }
 function countEdgeSignals(values) { let result = 0; for (let edge = 0; edge < values.length; edge += LIFE_EDGE_STRIDE) if (values[edge]) result++; return result; }
 function lifeInteriorStyle(state, fade) {

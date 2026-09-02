@@ -33,7 +33,7 @@ function fixtureExpression() {
     if(!app?.developerMode)throw new Error('life-boundary fixture requires developer mode');
     const [{focusCamera,viewProjection},{LIFE_STATE}]=await Promise.all([
       import('./src/rendering/camera.js'),import('./src/core/life-state.js')]);
-    const source=app.snapshot,topo=app.topo,fields=app.fields,renderer=app.renderer;
+    const source=app.snapshot,topo=app.topo,fields=app.fields,renderer=app.renderer,celestial=app.currentCelestialProjection();
     if(!source?.lifeState?.length)throw new Error('life-boundary fixture has no production snapshot');
     const saved={historySnapshot:app.historySnapshot,historyPlaybackActive:app.historyPlaybackActive,
       selectedNode:app.selectedNode,historyHighlights:app.historyHighlights.slice(),lastRender:app.lastRender,
@@ -146,14 +146,14 @@ function fixtureExpression() {
     function activate(snapshot,cell,state,stress){snapshot.alive[cell]=1;snapshot.biomass[cell]=.72;snapshot.stress[cell]=stress;snapshot.lifeState[cell]=state;}
     function probe(snapshot,edge,mode,key,options={}){const camera=cameraFor(edge,mode);let first=null,noise=0;
       for(let repeat=0;repeat<3;repeat++){const started=performance.now();const accepted=renderer.render({snapshot,worldIdentity:app.worldIdentity,camera,
-        selectedNode:options.selectedNode??null,highlightedCells:options.highlightedCells??[],time:0,pulse:false});const elapsed=performance.now()-started;
+        selectedNode:options.selectedNode??null,highlightedCells:options.highlightedCells??[],time:0,pulse:false,celestial});const elapsed=performance.now()-started;
         (repeat?timings.steady:timings.update).push(elapsed);if(!accepted)throw new Error('fixture snapshot rejected: '+key);
         const masks=masksFor(edge,topo.edgeA[edge],camera),sample=readMasks(masks);if(!first)first=sample;
         else noise=Math.max(noise,distance(first.edge,sample.edge),distance(first.interior,sample.interior),distance(first.overlay,sample.overlay));}
       repeatNoise=Math.max(repeatNoise,noise);return first;}
     function show(snapshot,edge,mode,options={}){const camera=cameraFor(edge,mode);Object.assign(app.camera,camera);app.historySnapshot=snapshot;app.historyPlaybackActive=true;
       app.selectedNode=options.selectedNode??null;app.historyHighlights=options.highlightedCells??[];app.lastRender=-Infinity;renderer.render({snapshot,worldIdentity:app.worldIdentity,
-        camera:app.camera,selectedNode:app.selectedNode,highlightedCells:app.historyHighlights,time:0,pulse:false});}
+        camera:app.camera,selectedNode:app.selectedNode,highlightedCells:app.historyHighlights,time:0,pulse:false,celestial});}
     function cameraFor(edge,mode){const camera={...app.camera,direction:app.camera.direction.slice(),right:app.camera.right.slice(),up:app.camera.up.slice()},mid=midpointFor(edge);
       let direction=mid;if(mode==='limb'){const reference=Math.abs(mid[1])<.85?[0,1,0]:[1,0,0],tangent=normalize(cross(reference,mid));direction=normalize(mid.map((value,index)=>value*.72+tangent[index]*.694));}
       focusCamera(camera,direction);camera.dist=mode==='far'?4.1:2.2;camera.offsetX=0;camera.offsetY=0;return camera;}

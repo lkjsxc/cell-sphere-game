@@ -1,5 +1,19 @@
 # Current status
 
+## Planetary Sky v1
+
+- Home and World now use one deterministic 128×64 seamless cloud field, a stable
+  48/72/96-star catalog, and one shooting star per 300 seconds of eligible time.
+  Clouds wrap in 50 minutes with at most 0.18 material contribution.
+- One bounded policy owns time, seeds, phase, and the active event. Hidden time,
+  Reduced, Evolution, Trophies, and game speed cannot advance or backfill it.
+  Fresh Motion is Full; explicit stored Reduced and unrelated settings persist.
+- WebGL2 remains four draws with lifecycle-only cloud upload. Canvas consumes the
+  exact field and projection; real context loss preserves celestial identity.
+- Chrome 152 checks cover all three maintained paths, settings/accessibility,
+  responsive 200% text, stable motion/occlusion, fixed resources, and semantic
+  hierarchy. Simulation, rewards, camera policy, and persistence are unchanged.
+
 ## Kinetic Sphere Fidelity v3
 
 - One presentation-only owner transfers every finite release vector at or above `0.08 rad/s` directly. D30's map, input knee, output saturation, mapped-speed duplicate, and fixed lifetime are deleted; a `600 ms` half-life and `0.025 rad/s` threshold own natural rest.

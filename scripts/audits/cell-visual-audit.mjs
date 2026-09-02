@@ -53,6 +53,23 @@ if (/programs\.atmosphere[\s\S]{0,500}this\.topo\.(?:positions|triangles)/.test(
   violations.push('src/rendering/world-pass.js: gameplay topology still owns atmosphere geometry or draw count');
 const renderer = sources.get('src/rendering/renderer.js');
 if (!/drawCalls = 4/.test(renderer)) violations.push('src/rendering/renderer.js: steady-state draw count changed');
+const shellShader = sources.get('src/rendering/shaders-shell.js');
+const celestialPolicy = read('src/interface/policies/celestial-presentation.js');
+const cloudField = sources.get('src/rendering/cloud-field.js');
+const fallbackCelestial = sources.get('src/rendering/fallback-celestial.js');
+if (!/uSkySeed/.test(shellShader) || !/uShootingPath/.test(shellShader))
+  violations.push('src/rendering/shaders-shell.js: existing background phase does not own the planetary sky');
+if (!/uCloudField/.test(shader) || !/sampleValidCloudField/.test(fallbackCelestial))
+  violations.push('production backends do not consume the shared cloud field');
+if (!/SHOOTING_STAR_SLOT_MS = 300_000/.test(celestialPolicy) || !/MAX_CELESTIAL_FRAME_MS = 100/.test(celestialPolicy))
+  violations.push('celestial presentation policy lost its exact cadence or bounded foreground integration');
+if (!/CLOUD_FIELD_WIDTH = 128/.test(cloudField) || !/CLOUD_FIELD_HEIGHT = 64/.test(cloudField))
+  violations.push('shared cloud field lost its selected fixed-size representation');
+for (const [file, source] of [['src/rendering/renderer.js', renderer], ['src/rendering/world-pass.js', worldPass],
+  ['src/rendering/fallback2d.js', fallback], ['src/rendering/fallback-celestial.js', fallbackCelestial]]) {
+  if (/Math\.random|setInterval|setTimeout|requestAnimationFrame/.test(source))
+    violations.push(`${file}: renderer-local celestial clock, schedule, or RNG detected`);
+}
 const fields = sources.get('src/world/fields.js');
 for (const name of ['lakeId', 'lakeDepth', 'lakeShore', 'freshwaterInfluence', 'freshwaterTier', 'freshwaterLakeId', 'lakes']) {
   if (!new RegExp(`\\b${name}\\b`).test(fields)) violations.push(`src/world/fields.js: missing ${name}`);
@@ -61,7 +78,9 @@ const report = { scannedFiles: sources.size, renderingFiles: renderingFiles.leng
     fourDraws: /drawCalls = 4/.test(renderer), fullCellLakes: !/cellPath\(cell\s*,/.test(staticGeography),
   localResourceColor: /aEcology/.test(shader) && /resourceState/.test(shader), sharedLifeEdges: /writeLifeEdges\(this\.topo/.test(worldPass)
     && /writeLifeEdges\(this\.topo/.test(fallback), fixedAtmosphereGeometry: /this\.atmosphereGeometry\.positions/.test(worldPass), ordinaryLifeInteriorFill: false,
-  globalEntropyTerrainFade: false, violations };
+  globalEntropyTerrainFade: false, planetarySky: /uSkySeed/.test(shellShader) && /uCloudField/.test(shader),
+  sharedCloudField: /sampleValidCloudField/.test(fallbackCelestial) && /CLOUD_FIELD_WIDTH = 128/.test(cloudField),
+  boundedCelestialPolicy: /MAX_CELESTIAL_FRAME_MS = 100/.test(celestialPolicy), violations };
 console.log(JSON.stringify(report, null, 2)); if (violations.length) process.exitCode = 1;
 function jsFiles(directory) { return readdirSync(resolve(root, directory)).filter((name) => name.endsWith('.js')).sort().map((name) => `${directory}/${name}`); }
 function read(file) { return readFileSync(resolve(root, file), 'utf8'); }

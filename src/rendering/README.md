@@ -8,6 +8,10 @@ The WebGL world path remains exactly four steady-state draws.
 
 - `renderer.js`: four-draw composition, world/scene binding, blank-frame and
   context-loss teardown.
+- `cloud-field.js` and `celestial-projection.js`: one shared seamless fixed byte
+  field and defensive immutable semantic projection for both backends.
+- `fallback-celestial.js`: Canvas drawing/caches for that shared projection;
+  it owns no independent clock, schedule, field, or random source.
 - `atmosphere-geometry.js`: one fixed, argument-free unit icosphere for the
   decorative WebGL atmosphere silhouette; it has no gameplay-topology input.
 - `life-edges.js`: the pure one-byte-per-canonical-edge ordinary-life
@@ -65,7 +69,8 @@ Canvas rebuilds its fixed batches only for an accepted snapshot change.
 
 Gates: renderer unit tests, `test:browser:atmosphere`,
 `test:browser:atmosphere:canvas`, `test:browser:life-boundaries`,
-`test:browser:life-boundaries:canvas`, `test:browser:file`, `test:browser:canvas`,
+`test:browser:life-boundaries:canvas`, the three `test:browser:planetary-sky*`
+paths, `test:browser:file`, `test:browser:canvas`,
 `audit:cell-visuals`, and `audit:luminous`; browser runs measure a developer-only
 uniform fixture at center and limb plus an isolated radial atmosphere contour,
 and normal WebGL evidence must retain four draws.

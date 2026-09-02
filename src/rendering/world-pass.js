@@ -9,9 +9,12 @@ import { BOUNDARY_VERTICES_PER_EDGE, LIFE_EDGE_STRIDE, writeBoundaryLifeVertices
   writeLifeEdges } from './life-edges.js';
 import { ATMOSPHERE_GEOMETRY } from './atmosphere-geometry.js';
 import { RENDER_SCENE, renderSceneMode } from './scene-mode.js';
+import { validCloudField } from './cloud-field.js';
+
+const EMPTY_CLOUD = new Uint8Array(1);
 
 export class WorldPass {
-  constructor(gl, topo, fields) {
+  constructor(gl, topo, fields, options = {}) {
     this.gl = gl;
     this.topo = topo;
     this.geometry = createCellGeometry(topo, fields);
@@ -30,6 +33,8 @@ export class WorldPass {
     this.lastTick = -1;
     this.zero3 = new Float32Array(3);
     this.historyCenters = new Float32Array(24);
+    this.initialCloudField = options.cloudField ?? null; this.cloudField = null; this.cloudTexture = null;
+    this.cloudTextureUploads = 0; this.cloudFieldUploads = 0; this.cloudError = null;
     this.buffers = [];
     this.vaos = [];
     this.initialize();
@@ -71,7 +76,29 @@ export class WorldPass {
     this.atmosphereCount = this.atmosphereGeometry.indexCount;
     this.atmosphereIndexType = gl.UNSIGNED_SHORT;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.atmosphereIndex);
+    this.initializeCloudTexture(this.initialCloudField); this.initialCloudField = null;
     gl.bindVertexArray(null);
+  }
+  initializeCloudTexture(field) {
+    const gl = this.gl; this.cloudTexture = gl.createTexture();
+    if (!this.cloudTexture) { this.cloudError = 'cloud texture unavailable'; return false; }
+    gl.bindTexture(gl.TEXTURE_2D, this.cloudTexture); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return this.uploadCloudTexture(validCloudField(field) ? field : null);
+  }
+  uploadCloudTexture(field) {
+    if (!this.cloudTexture) return false; const gl = this.gl; const valid = validCloudField(field);
+    const width = valid ? field.width : 1; const height = valid ? field.height : 1; const bytes = valid ? field.bytes : EMPTY_CLOUD;
+    gl.bindTexture(gl.TEXTURE_2D, this.cloudTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, width, height, 0, gl.RED, gl.UNSIGNED_BYTE, bytes);
+    this.cloudTextureUploads++; this.cloudField = valid ? field : null; if (valid) this.cloudFieldUploads++; return valid;
+  }
+  setCloudField(field) {
+    if (!validCloudField(field) || field === this.cloudField) return field === this.cloudField;
+    return this.uploadCloudTexture(field);
   }
   vao() {
     const vao = this.gl.createVertexArray();
@@ -100,7 +127,9 @@ export class WorldPass {
   }
   dynamicState() { return Object.freeze({ life: nonZero(this.lifeData),
     ecology: nonZero(this.ecologyData), lifeEdges: nonZero(this.lifeEdgeData), edgeBytes: this.boundaryLifeData.byteLength,
-    edgeUpdates: this.edgeUpdateCount, tick: this.lastTick }); }
+    edgeUpdates: this.edgeUpdateCount, tick: this.lastTick, cloudSignature: this.cloudField?.signature ?? null,
+    cloudBytes: this.cloudField?.byteLength ?? 0, cloudTextureUploads: this.cloudTextureUploads,
+    cloudFieldUploads: this.cloudFieldUploads, cloudError: this.cloudError }); }
   uploadLife(snapshot) {
     if (snapshot === this.lastSnapshot && (snapshot?.tick ?? -1) === this.lastTick) return;
     this.lastSnapshot = snapshot;
@@ -141,7 +170,7 @@ export class WorldPass {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.ecologyBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.ecologyData);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.boundaryLifeBuffer); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.boundaryLifeData);
   }
-  draw(vp, eye, snapshot, selectedNode, highlightedCells = [], time = 0, pulse = false, fixture = null) {
+  draw(vp, eye, snapshot, selectedNode, highlightedCells = [], time = 0, pulse = false, fixture = null, celestial = null) {
     if (this.disposed || !this.accepts(snapshot)) return false;
     const gl = this.gl; const sceneMode = renderSceneMode(snapshot); this.uploadLife(snapshot);
     const globe = this.programs.globe;
@@ -162,6 +191,11 @@ export class WorldPass {
     gl.uniform1i(globe.u.get('uHistoryCount'), count); gl.uniform3fv(globe.u.get('uHistoryCenter'), this.historyCenters);
     gl.uniform1f(globe.u.get('uFixture'), fixture ? 1 : 0);
     gl.uniform3fv(globe.u.get('uFixtureColor'), fixture?.surface ?? this.zero3);
+    this.setCloudField(celestial?.cloud);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.cloudTexture);
+    gl.uniform1i(globe.u.get('uCloudField'), 0);
+    gl.uniform1f(globe.u.get('uCloudEnabled'), !fixture && celestial?.cloudEnabled && this.cloudField ? 1 : 0);
+    gl.uniform1f(globe.u.get('uCloudPhase'), Number.isFinite(celestial?.cloudPhase) ? celestial.cloudPhase : 0);
     gl.bindVertexArray(this.globeVao);
     gl.drawElements(gl.TRIANGLES, this.geometry.indices.length, gl.UNSIGNED_SHORT, 0);
 
@@ -191,8 +225,9 @@ export class WorldPass {
     if (this.disposed) return; this.disposed = true;
     for (const vao of this.vaos) this.gl.deleteVertexArray(vao);
     for (const buffer of this.buffers) this.gl.deleteBuffer(buffer);
+    if (this.cloudTexture) this.gl.deleteTexture(this.cloudTexture);
     for (const value of Object.values(this.programs)) this.gl.deleteProgram(value.program);
-    this.vaos.length = 0; this.buffers.length = 0;
+    this.cloudTexture = null; this.cloudField = null; this.vaos.length = 0; this.buffers.length = 0;
   }
 }
 function nonZero(values) { let count = 0; for (const value of values) if (value !== 0) count++; return count; }

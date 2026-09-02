@@ -1,7 +1,7 @@
 /** Controlled browser luminance probe for the authoritative whole-cell charge hierarchy. */
 export async function measureLuminousHierarchy(evaluate) {
   return evaluate(`(async()=>{
-    const a=window.__CELL_SPHERE_APP__,{focusCamera}=await import('./src/rendering/camera.js');
+    const a=window.__CELL_SPHERE_APP__,{focusCamera}=await import('./src/rendering/camera.js'),celestial=a.currentCelestialProjection();
     const source=a.historySnapshot,positions=a.topo.positions;
     if(!source?.electricityQ?.length)return{valid:false,reason:'missing charged snapshot'};
     const sun=[-.52,.72,.44];
@@ -19,7 +19,7 @@ export async function measureLuminousHierarchy(evaluate) {
       else pixels=a.renderer.ctx.getImageData(x,y,size,size).data;
       let sum=0;for(let index=0;index<pixels.length;index+=4)sum+=(pixels[index]*.2126+pixels[index+1]*.7152+pixels[index+2]*.0722)/255;return sum/(pixels.length/4);};
     const probe=(mode,cell)=>{focusCamera(a.camera,positions.subarray(cell*3,cell*3+3));a.camera.offsetX=0;a.camera.offsetY=0;a.camera.dist=2.5;a.lastRender=-Infinity;
-      const accepted=a.renderer.render({snapshot:variant(mode,cell),worldIdentity:a.worldIdentity,camera:a.camera,selectedNode:null,highlightedCells:[],time:performance.now()/1000,pulse:false});return{value:luminance(),accepted,cell,charge:source.electricityQ[cell]};};
+      const accepted=a.renderer.render({snapshot:variant(mode,cell),worldIdentity:a.worldIdentity,camera:a.camera,selectedNode:null,highlightedCells:[],time:performance.now()/1000,pulse:false,celestial});return{value:luminance(),accepted,cell,charge:source.electricityQ[cell]};};
     try{const unoccupiedDark=probe('unoccupied',nightCell),ordinaryDark=probe('ordinary',nightCell),ordinaryDay=probe('ordinary',dayCell),poweredDay=probe('powered',dayCell),poweredDark=probe('powered',nightCell);
       const values={unoccupiedDark,ordinaryDark,ordinaryDay,poweredDay,poweredDark};const dayEmission=poweredDay.value-ordinaryDay.value,nightEmission=poweredDark.value-ordinaryDark.value;
       const zeroChargeDelta=ordinaryDark.value-unoccupiedDark.value;

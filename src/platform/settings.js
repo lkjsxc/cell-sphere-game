@@ -5,11 +5,9 @@ import { DEFAULT_RUNTIME_SPEED, STANDARD_SPEEDS } from '../core/runtime-speed.js
 export const SETTINGS_SCHEMA_VERSION = 8;
 
 export function defaultSettings() {
-  const reduced = typeof matchMedia === 'function'
-    && matchMedia('(prefers-reduced-motion: reduce)').matches;
   return {
     schema: SETTINGS_SCHEMA_VERSION,
-    motion: reduced ? 'reduced' : 'full',
+    motion: 'full',
     contrast: 'normal',
     quality: 'auto',
     autoContinue: true,

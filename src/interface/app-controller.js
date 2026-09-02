@@ -24,6 +24,9 @@ import { createTrustedInteractionGuard } from './policies/trusted-interaction.js
 import { advanceCameraMotion, beginCameraDrag, cameraMotionActivity, cameraMotionSnapshot, createCameraMotion,
   endCameraDrag, recordCameraDrag, resetCameraMotion, setCameraMotionHidden, setCameraMotionReduced,
   setCameraMotionScene, setCameraMotionSurface } from './policies/camera-motion.js';
+import { advanceCelestialPresentation, celestialPresentationSnapshot, celestialProjection, createCelestialPresentation,
+  setCelestialHidden, setCelestialQuality, setCelestialReduced, setCelestialScene,
+  setCelestialVisualSeed } from './policies/celestial-presentation.js';
 import { sameWorldIdentity } from '../core/world-session.js';
 import { effectiveGameRateForSpeed, isStandardSpeed, renderIntervalForSpeed, validateRuntimeSpeed } from '../core/runtime-speed.js';
 import { createWorldReplacementState, finishAbandoned, finishRun, requestWorldReplacement,
@@ -50,6 +53,9 @@ class GameApp {
     Object.assign(this, { canvas, caps, settings, storageStatus, developerMode }); this.el = ui.elements(); this.topo4 = createTopology(4); this.topo = this.topo4; initializeProgression(this);
     this.camera = createCamera(); this.cameraMotion = createCameraMotion({ now: performance.now(), scene: 'home',
       reduced: settings.motion === 'reduced', hidden: document.hidden }); this.runTransactionRecovery = recoverRunTransaction();
+    this.celestial = createCelestialPresentation({ now: performance.now(), scene: 'home',
+      reduced: settings.motion === 'reduced', hidden: document.hidden, quality: settings.quality,
+      caps, visualSeed: TITLE_SEED, cloudsEnabled: true });
     this.meta = this.runTransactionRecovery?.meta ?? loadMeta(); this.archive = this.runTransactionRecovery?.history ?? loadHistory();
     this.resultKeys = new Set(this.meta.resultKeys); this.flow = createAppState();
     this.speed = validateRuntimeSpeed(settings.speed, { developerMode, fallback: 1 }); this.snapshot = null; this.selectedNode = null;
@@ -109,21 +115,24 @@ class GameApp {
     this.visualSeed = seed; this.presentationMode = mode; this.topo = mode === 'trophies' ? this.topo2 : this.topo4;
     if (mode === 'memory') this.fields = this.evolutionFields; else if (mode === 'trophies') this.fields = this.trophyFields;
     else { this.worldFields = createFields(createRng(seed ^ 0x51ab3d71), this.topo4); this.fields = this.worldFields; }
+    setCelestialVisualSeed(this.celestial, seed, mode !== 'memory' && mode !== 'trophies');
+    const celestial = celestialProjection(this.celestial);
     const binding = identity ?? (mode === 'world' && this.worldIdentity?.seed === seed ? this.worldIdentity : null);
     this.renderer?.dispose(); this.renderer = null;
     const fallback = () => {
       if (this.renderer?.backend === 'canvas2d') return;
       this.renderer?.dispose(); this.renderer = null; let next;
-      try { next = new Canvas2DRenderer(this.canvas, this.topo, this.fields, { developerMode: this.developerMode }); }
+      try { next = new Canvas2DRenderer(this.canvas, this.topo, this.fields, { developerMode: this.developerMode, celestial }); }
       catch (firstError) {
         this.replaceRenderCanvas();
-        try { next = new Canvas2DRenderer(this.canvas, this.topo, this.fields, { developerMode: this.developerMode }); }
+        try { next = new Canvas2DRenderer(this.canvas, this.topo, this.fields, { developerMode: this.developerMode, celestial }); }
         catch { throw firstError; }
       }
       next.bindWorldSession(binding); this.renderer = next;
       ui.announce(this.el, 'WebGL was lost. The observational Canvas renderer is continuing.');
     };
-    try { const next = new GLRenderer(this.canvas, this.topo, this.fields, { onContextLoss: fallback, developerMode: this.developerMode });
+    try { const next = new GLRenderer(this.canvas, this.topo, this.fields, { onContextLoss: fallback,
+      developerMode: this.developerMode, celestial });
       next.bindWorldSession(binding); this.renderer = next; }
     catch (error) { console.warn('WebGL2 unavailable; Canvas 2D active', error); fallback(); }
   }
@@ -165,6 +174,7 @@ class GameApp {
       if (document.hidden) this.input?.reset();
       this.pause.set('hidden', document.hidden && ['starting', 'running'].includes(this.phase));
       setContinuationHidden(this.continuation, document.hidden, now); setCameraMotionHidden(this.cameraMotion, document.hidden, now);
+      setCelestialHidden(this.celestial, document.hidden, now);
       this.updateContinuation(now, true); });
   }
   tapGlobe(x, y) {
@@ -174,7 +184,8 @@ class GameApp {
   selectScene(next) {
     if (!['home', 'world', 'evolution', 'trophies'].includes(next)) return false;
     const previous = this.scene; if (previous === next) { ui.show(this.el, next); this.sceneSelector.update(next); return true; }
-    this.input?.reset(); this.cameraByScene.set(previous, cloneCamera(this.camera)); this.closeActiveOverlay(); this.flow.select(next); const saved = this.cameraByScene.get(next);
+    this.input?.reset(); this.cameraByScene.set(previous, cloneCamera(this.camera)); this.closeActiveOverlay(); this.flow.select(next);
+    setCelestialScene(this.celestial, next, performance.now()); const saved = this.cameraByScene.get(next);
     if (next === 'home') this.makeRenderer(TITLE_SEED);
     else if (next === 'world') this.makeRenderer(this.worldIdentity ? this.runSeed : TITLE_SEED, 'world', this.worldIdentity);
     else if (next === 'evolution') presentEvolution(this, Boolean(saved));
@@ -215,6 +226,8 @@ class GameApp {
     ui.announce(this.el, `${this.historyHighlights.length} History ${this.historyHighlights.length === 1 ? 'cell' : 'cells'} highlighted.`); }
   focusCamera(direction, now = performance.now()) { orientCamera(this.camera, direction); this.resetCameraMotion(this.scene, now); }
   resetCameraMotion(scene = this.scene, now = performance.now()) { this.input?.reset(); resetCameraMotion(this.cameraMotion, now, scene); }
+  setCelestialScene(scene = this.scene, now = performance.now()) { setCelestialScene(this.celestial, scene, now); }
+  currentCelestialProjection() { return celestialProjection(this.celestial); }
   setSpeed(value) {
     const next = validateRuntimeSpeed(value, { developerMode: this.developerMode, fallback: this.speed });
     this.speed = next; this.el.speed.value = String(next);
@@ -272,7 +285,10 @@ class GameApp {
     const requestedSpeed = validateRuntimeSpeed(value?.speed, { developerMode: this.developerMode, fallback: this.speed });
     const durableSpeed = isStandardSpeed(requestedSpeed) ? requestedSpeed : before.speed;
     this.settings = validateSettings({ ...value, speed: durableSpeed }); if (persist) saveSettings(this.settings); applySettingsToDocument(this.settings);
-    if (this.settings.motion !== before.motion) setCameraMotionReduced(this.cameraMotion, this.settings.motion === 'reduced', performance.now());
+    if (this.settings.motion !== before.motion) { const now = performance.now();
+      setCameraMotionReduced(this.cameraMotion, this.settings.motion === 'reduced', now);
+      setCelestialReduced(this.celestial, this.settings.motion === 'reduced', now); }
+    if (this.settings.quality !== before.quality) setCelestialQuality(this.celestial, this.settings.quality, this.caps);
     if (requestedSpeed !== this.speed) { this.speed = requestedSpeed; this.el.speed.value = String(requestedSpeed); this.driver.setSpeed(requestedSpeed); }
     if (this.phase === 'result' && this.settings.autoContinue !== before.autoContinue && !this.settings.autoContinue) {
       disableContinuation(this.continuation, this.worldIdentity); this.updateContinuation(performance.now(), true); }
@@ -293,6 +309,7 @@ class GameApp {
   availableEvolutionLevels(){return availableEvolutionLevels(this)}
   worldResourceAudit() { return Object.freeze({ interactionListeners: this.interactionGuard.listenerCount,
     historyRequests: this.historyPlayback.pendingRequests, cameraMotion: cameraMotionSnapshot(this.cameraMotion),
+    celestial: celestialPresentationSnapshot(this.celestial),
     globeInput: this.input?.snapshot() ?? null, layout: this.layout,
     continuationPresentation: Object.freeze({ ...this.continuationAudit }) }); }
   handleTrustedInteraction(type, event) {
@@ -343,6 +360,7 @@ class GameApp {
     finally { this.frameAudit.scheduled++; this.rafId = requestAnimationFrame((time) => this.frame(time)); }
   }
   frameStep(now) { const dt = Math.max(0, now - this.last); this.last = now;
+    const celestial = advanceCelestialPresentation(this.celestial, now);
     this.timeDial.frame(now, { running: this.phase === 'running', paused: this.pause.paused,
       effectiveGameRate: effectiveGameRateForSpeed(this.speed), reduced: this.settings.motion === 'reduced' }); this.driver.frame(dt, now);
     advanceCameraMotion(this.cameraMotion, this.camera, dt, now);
@@ -362,7 +380,7 @@ class GameApp {
     const cadence = this.scene === 'world' ? renderIntervalForSpeed(this.speed) : 0;
     if (!cadence || now - this.lastRender >= cadence) { this.renderer.render({ snapshot: snap ?? null, worldIdentity: renderIdentity,
       camera: this.camera, selectedNode: this.selectedNode,
-      highlightedCells: this.historyHighlights, time: now / 1000, pulse: this.settings.motion !== 'reduced' }); this.lastRender = now; }
+      highlightedCells: this.historyHighlights, time: now / 1000, pulse: this.settings.motion !== 'reduced', celestial }); this.lastRender = now; }
   }
 }
 function cloneCamera(camera) { return { ...camera, direction: [...camera.direction], right: [...camera.right], up: [...camera.up] }; }

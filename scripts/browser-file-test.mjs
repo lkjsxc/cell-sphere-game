@@ -13,6 +13,7 @@ import { runAtmosphereFixture } from './browser/atmosphere-fixture.mjs';
 import { measureLuminousHierarchy } from './browser/luminous-fixture.mjs';
 import { runCameraMotionScenario } from './browser/camera-motion-scenario.mjs';
 import { runEvolutionCellProgressionFixture } from './browser/evolution-cell-progression-fixture.mjs';
+import { runPlanetarySkyFixture } from './browser/planetary-sky-fixture.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROFILE = `/tmp/cell-sphere-game-browser-${process.pid}`;
@@ -24,9 +25,10 @@ const atmosphereOnly=process.argv.includes('--atmosphere-only');
 const environmentPressureOnly=process.argv.includes('--environment-pressure-only');
 const evolutionCellOnly=process.argv.includes('--evolution-cell-only');
 const cameraMotionOnly=process.argv.includes('--camera-motion-only');
+const planetarySkyOnly=process.argv.includes('--planetary-sky-only');
 const recordBaseline=process.argv.includes('--record-baseline');
 const cohort=process.argv.find((value)=>value.startsWith('--cohort='))?.split('=')[1]?.replace(/[^a-z0-9-]/gi,'');
-const cdpTimeoutMs=Math.max(1000,Math.min(60000,Number(process.env.BROWSER_CDP_TIMEOUT_MS)||((atmosphereOnly||evolutionCellOnly)?60000:10000)));
+const cdpTimeoutMs=Math.max(1000,Math.min(60000,Number(process.env.BROWSER_CDP_TIMEOUT_MS)||((atmosphereOnly||evolutionCellOnly||planetarySkyOnly)?60000:10000)));
 const chrome = findChrome();
 if (!chrome) {
   console.log('test:browser:file — SKIP (Chrome/Chromium unavailable) [exit 77]');
@@ -53,13 +55,14 @@ try {
   await cdp.send('Page.enable', {}, session);
   await cdp.send('Log.enable',{},session);
   if(forceSimulationFallback)await cdp.send('Page.addScriptToEvaluateOnNewDocument',{source:"Object.defineProperty(globalThis,'Worker',{value:undefined,configurable:false})"},session);
+  if(planetarySkyOnly)await cdp.send('Emulation.setEmulatedMedia',{media:'screen',features:[{name:'prefers-reduced-motion',value:'reduce'}]},session);
   await cdp.send('Emulation.setDeviceMetricsOverride', {
     width: 390, height: 844, deviceScaleFactor: 1, mobile: true,
   }, session);
   const configuredUrl = process.env.BROWSER_TEST_URL?.trim();
   const publicUrl = configuredUrl ? `${configuredUrl}${configuredUrl.includes('?') ? '&' : '?'}demo=1&browser-file-test=1`
     : `file://${ROOT}/index.html?demo=1&browser-file-test=1`;
-  await cdp.send('Page.navigate', { url: forceCanvas || lifeBoundaryOnly || atmosphereOnly || evolutionCellOnly ? `${publicUrl}&dev=1` : publicUrl }, session);
+  await cdp.send('Page.navigate', { url: forceCanvas || lifeBoundaryOnly || atmosphereOnly || evolutionCellOnly || planetarySkyOnly ? `${publicUrl}&dev=1` : publicUrl }, session);
   await wait(4500);
 
   const evaluate = async (expression) => {
@@ -85,7 +88,16 @@ try {
     navigate: async (url) => { await cdp.send('Page.navigate', { url }, session); await wait(2200); },
     setViewport: (width, height) => cdp.send('Emulation.setDeviceMetricsOverride',
       { width, height, deviceScaleFactor: 1, mobile: width < 600 }, session) };
-  if (atmosphereOnly) {
+  if (planetarySkyOnly) {
+    const evidence=await runPlanetarySkyFixture(tools);
+    const report=JSON.stringify({sourceRevision:process.env.BROWSER_TEST_REVISION?.trim()||gitValue(['rev-parse','HEAD']),
+      harnessRevision:gitValue(['rev-parse','HEAD']),branch:gitValue(['branch','--show-current']),workingTreeDirty:Boolean(gitValue(['status','--porcelain'])),
+      trackedWorkingTreeDirty:trackedWorkingTreeDirty(),sourceUrl:configuredUrl??`file://${ROOT}/index.html`,browser:browserIdentity.product,
+      protocolVersion:browserIdentity.protocolVersion,browserErrors:cdp.errors.slice(0,20),browserStderr:cdp.stderr.slice(0,20),...evidence},null,2)+'\n';
+    const name=`planetary-sky-v1-${configuredUrl?'deployed':'final'}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
+    writeFileSync(resolve(REPORTS,name),report);const hash=createHash('sha256').update(report).digest('hex');
+    console.log(`test:browser:planetary-sky — PASS (${evidence.simulationPath}/${evidence.rendererPath}; report ${name}; sha256 ${hash}; cloud ${evidence.visual.field.signature}; stars ${evidence.visual.stars.count}; full p95 ${evidence.visual.timing.fullSky.p95.toFixed(3)} ms; empty ${evidence.visual.timing.emptySky.p95.toFixed(3)} ms)`);
+  } else if (atmosphereOnly) {
     const label=`${recordBaseline?'baseline':'final'}${cohort?`-cohort-${cohort}`:''}`;
     const evidence=await runAtmosphereFixture(tools,{label,enforce:!recordBaseline});
     const report=JSON.stringify({...evidence,sourceRevision:process.env.BROWSER_TEST_REVISION?.trim()||gitValue(['rev-parse','HEAD']),

@@ -15,6 +15,9 @@ npm run audit:trophies
 npm run showcase:check
 npm run test:browser:atmosphere
 npm run test:browser:atmosphere:canvas
+npm run test:browser:planetary-sky
+npm run test:browser:planetary-sky:fallback
+npm run test:browser:planetary-sky:canvas
 npm run test:browser:life-boundaries
 npm run test:browser:life-boundaries:canvas
 npm run test:browser:environment-pressure
@@ -65,6 +68,18 @@ the production Inspector as a non-color oracle. The full WebGL2, fallback, and
 Canvas scenarios focus the canvas, open that Inspector with Enter, verify its
 state/role/resource/stress/charge fields, close it with Escape, and require focus
 to return to the canvas.
+
+The three planetary-sky commands share one production-browser fixture. Synthetic
+eligible time proves one event per 300-second slot without waiting an hour;
+matched pixel probes prove stable stars, measurable 30-second cloud movement,
+selected projected coverage, camera adherence, near/far continuity, streak
+visibility and globe occlusion, and static Reduced behavior. The matrix also
+checks fresh/stored Motion, browser visibility, scene, visual History, quality, and speed
+independence, exact field/event identity across execution and renderer paths,
+four WebGL draws, lifecycle-only texture upload, fixed resources, real context
+loss to playable Canvas, forced colors, high contrast, touch/keyboard access,
+and the maintained focused responsive/200% viewports. Ignored JSON receipts and
+screenshots live under `reports/`.
 
 The three focused Environment commands inject production `RunController`
 snapshots and one terminal Result through the real metric shell. They prove

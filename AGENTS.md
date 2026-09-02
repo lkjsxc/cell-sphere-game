@@ -58,6 +58,11 @@ Meaningful intervention occurs chiefly between Worlds through Evolution.
 The World should feel alive when directly manipulated, after a natural release,
 while left alone, and through visible ecological cause and consequence.
 
+The presentation should feel rich, calm, and planetary rather than flat or
+ornamental. Home and World should read as cloud-bearing living planets against a
+stable deep-space field. Decorative celestial motion remains subordinate to
+cellular ecology, legibility, accessibility, and bounded performance.
+
 The product is autonomous and incremental. It does not promise offline progress.
 Closing the page does not advance authoritative time or award progress.
 
@@ -166,6 +171,12 @@ WebGL2 and Canvas 2D communicate the same semantic state even when exact pixels
 differ. Accessibility, responsive behavior, reduced motion, forced colors,
 keyboard access, and bounded performance are product requirements.
 
+A stable star field belongs behind the globe. Home and World carry a restrained
+presentation-only cloud field, and Full motion may include sparse shooting stars
+at a long-run target of about twelve per eligible foreground hour. These effects
+never enter simulation, RNG, scoring, progression, History authority, or input
+hit testing.
+
 ---
 
 ## Non-goals
@@ -197,9 +208,12 @@ green root.
 
 Do not create compatibility layers for retired current-only formats without an
 active maintained consumer. Do not maintain two authorities for the same rule.
-Do not add settings instead of choosing a good default. Do not use more UI as a
-substitute for clarity. Do not generate meaningless filler to reach a catalog,
-feature, file, or line count.
+Do not add tuning settings instead of choosing a good default. One high-level
+persistent switch for inactivity-driven automatic camera work is permitted and
+required by product policy; do not expose orbit speed, idle delay, path, cloud,
+star, or shooting-star tuning. Do not use more UI as a substitute for clarity.
+Do not generate meaningless filler to reach a catalog, feature, file, or line
+count.
 
 Do not perform a broad rewrite without a cutover, deletion, evidence, and recovery
 story.
@@ -270,6 +284,10 @@ extinctions.
 The app controller and narrow presentation policies own scene selection, camera
 motion, responsive framing, trusted interaction, surfaces, focus, speed
 selection, continuation, accessible announcements, and rendering cadence.
+
+One narrow celestial presentation policy owns its eligible foreground clock,
+visual seeds, cloud phase, quality budget, and shooting-star schedule. It is not
+a simulation, reward, persistence, or History owner.
 
 Presentation never changes simulation rules. Keep each policy narrow. Do not let
 the app controller become a second owner of a rule already expressed in a pure
@@ -377,9 +395,17 @@ Keep game time, wall-clock time, and animation time explicit.
 Game time is authoritative and owns ecology, Environment Level, SCORE, History
 semantics, and extinction. Wall-clock time determines how quickly foreground
 presentation supplies game time. Animation time owns camera inertia, idle delay,
-automatic orbit, Result continuation, panel motion, focus timing, and decorative
-effects. Animation time is not multiplied by game speed, and hidden-page time
-does not produce camera or UI catch-up.
+automatic camera work, Result continuation, panel motion, focus timing, cloud
+drift, shooting-star motion, and other decorative effects. Animation time is not
+multiplied by game speed, and hidden-page time does not produce camera, celestial,
+or UI catch-up.
+
+Fresh settings default to `Full` motion regardless of operating-system motion
+preference. `Reduced` remains an explicit durable player choice; it suppresses
+release inertia, automatic camera work, cloud drift, shooting-star travel, and
+other nonessential motion while preserving direct manipulation, zoom, static
+stars, static cloud presence, and semantic state. Do not silently change a stored
+explicit choice when the OS preference changes.
 
 Never say `faster` without naming the time domain.
 
@@ -433,7 +459,7 @@ time from observed animation time when delivery may be delayed.
 
 One narrow controller owns the sequence:
 
-`direct manipulation → faithful release inertia → damping → idle wait → calm automatic orbit`
+`direct manipulation → faithful release inertia → damping → idle wait → calm automatic camera work`
 
 Normalize direct drag by the projected visible sphere so the same relative
 gesture has the same angular meaning across maintained viewports and zoom states.
@@ -443,14 +469,20 @@ angular-velocity vector directly. Do not apply a nonlinear response curve,
 arbitrary output-speed or turn ceiling, or fixed inertia lifetime. Elapsed-
 animation-time damping owns natural rest.
 
-Release inertia and automatic idle orbit are separate modes. Do not accelerate
-idle orbit to compensate for weak release. Slow drags remain precise. A nonmodal
-detail surface is not a blanket release-inertia hold: a valid drag on exposed
-canvas or the shared detail-shell globe gesture path may carry naturally after
-release while the detail remains open. The surface may continue to suppress
-automatic idle orbit. Trusted interaction that opens, replaces, or closes a
-surface may cancel already-running motion, but surface presence alone must not
-veto a newly completed valid drag or accumulate hidden velocity.
+Release inertia and automatic camera work are separate modes. Do not accelerate
+automatic camera work to compensate for weak release. Slow drags remain precise.
+A nonmodal detail surface is not a blanket release-inertia hold: a valid drag on
+exposed canvas or the shared detail-shell globe gesture path may carry naturally
+after release while the detail remains open. The surface may continue to
+suppress automatic camera work. Trusted interaction that opens, replaces, or
+closes a surface may cancel already-running motion, but surface presence alone
+must not veto a newly completed valid drag or accumulate hidden velocity.
+
+Automatic camera work is independently optional through one persistent on/off
+preference whose default is on. Disabling it suppresses only inactivity-driven
+camera motion; it does not suppress direct manipulation, release inertia, or
+decorative celestial motion. Reduced motion overrides the automatic-camera
+preference and suppresses automatic camera work.
 
 Required invariants include fixed-capacity recent samples, finite direct release
 velocity, elapsed-time damping, convergence to stillness, bounded frame/debt
@@ -458,14 +490,19 @@ integration, bounded automatic speed, immediate cancellation by trusted new
 interaction, no hidden-page or surface-held catch-up, a fresh idle delay after
 cancellation or visibility return, and clearing on scene change, World
 replacement, or focus framing. Reduced motion preserves direct manipulation and
-zoom while suppressing release inertia and automatic orbit. Evolution and
-Trophies do not auto-orbit.
+zoom while suppressing release inertia and automatic camera work. Evolution and
+Trophies do not move automatically.
 
-Home and World may rotate calmly after inactivity. A new World begins still and
-enters orbit only after the established idle delay. Test identity transfer,
-precision-threshold behavior, natural multi-turn damping, equivalent elapsed
-behavior across frame cadences and delayed delivery, long-run orthonormality,
-detail-shell releases, and fallback input.
+Home and World may move calmly after inactivity. A new World begins still and
+enters automatic camera work only after the established idle delay. When
+automatic camera work is enabled, it should be composition-aware and
+observational: use slow bounded direction changes and occasional gentle
+reframing rather than an endless fixed-axis turn, avoid abrupt cuts and
+disorienting zoom, preserve picking and responsive framing, and cancel
+immediately on trusted interaction. Test identity transfer, precision-threshold
+behavior, natural multi-turn damping, equivalent elapsed behavior across frame
+cadences and delayed delivery, long-run orthonormality, detail-shell releases,
+automatic-camera enable/disable behavior, and fallback input.
 
 Use one document-level trusted-interaction capture path when several policies
 need it. Normalize trusted interaction types, ignore programmatic focus through a
@@ -795,21 +832,23 @@ it does not expose raw coefficients without player meaning.
 World speed belongs to its direct in-World control and is not duplicated in Menu.
 
 Keep Menu small. Use it for persistent preferences and destructive lifecycle
-actions that do not belong on the World rail. Do not add tuning controls for
-camera inertia, orbit speed, idle delay, sphere position, continuation duration,
-simulation internals, or visual boundary styling. Choose good defaults.
+actions that do not belong on the World rail. It may expose one persistent
+`Automatic camera` on/off preference in addition to Motion. Do not add tuning
+controls for camera inertia, orbit speed, idle delay, automatic path, sphere
+position, cloud behavior, shooting-star rate, continuation duration, simulation
+internals, or visual boundary styling. Choose good defaults.
 
 Use one coordinator for transient surfaces. A surface owns open state, focus
 entry and restoration, Escape, backdrop behavior, scroll ownership, automatic-
-orbit hold, and trusted-interaction implications. Do not let several modules open
-or close the same surface.
+camera hold, and trusted-interaction implications. Do not let several modules
+open or close the same surface.
 
 Native controls remain interactive. Direct globe manipulation remains available
 on exposed canvas and, where the shared detail shell covers the globe, through
 one non-control gesture route owned by the same globe-input policy. Opening a
 surface does not itself rotate or zoom the globe, alter simulation, retain stale
 velocity, or fire a hidden purchase. It may cancel prior motion through trusted
-activity and may hold automatic idle orbit, but it does not create a permanent
+activity and may hold automatic camera work, but it does not create a permanent
 release-inertia veto for a new valid drag. Closing restores focus predictably.
 
 ---
@@ -837,6 +876,30 @@ fallback. Both preserve whole-cell geography, local resource condition, ordinary
 life, stress and critical state, dead remains, transformations, Luminous charge,
 selection, History, Evolution, and Trophy state. Semantic parity does not require
 pixel identity.
+
+The sky and clouds are presentation-only renderer semantics. The background
+phase owns a stable deterministic deep-space field in every sphere scene. Home
+and World additionally own a restrained cloud-bearing planet treatment and, in
+Full motion, sparse shooting stars with a long-run target near twelve per
+eligible foreground hour. A shooting star is decorative: it has no sound,
+notification, reward, event, input, or History authority, never catches up after
+hidden time, and at most one is active at once.
+
+Cloud structure is independent of gameplay-cell count and simulation topology.
+Prefer one bounded deterministic seamless field shared by both backends, sampled
+in world space so it adheres to the sphere and drifts only in animation time.
+Blend clouds after geography and resource material and before life, stress,
+critical state, remains, Luminous, selection, History, and boundary semantics.
+Reduced motion freezes cloud phase and suppresses shooting-star travel; static
+stars and cloud presence remain. Quality modes may reduce sampling complexity or
+star density but must preserve the intended semantic presence.
+
+Keep celestial work in existing render phases. Do not add a post-processing
+stack, DOM particle layer, second render loop, remote texture, runtime dependency,
+or simulation-resolution increase for it. Preserve the four-draw WebGL
+composition unless a separate measured campaign explicitly changes that
+contract. Generate or upload bounded immutable fields only at their real
+lifecycle boundaries, not per frame.
 
 Within World, ordinary life is edge-primary. One deterministic projection from
 the two cells adjacent to each topology edge owns life-edge classification for
@@ -877,19 +940,22 @@ Geography and progression may share the existing boundary pass, but neither
 replaces the other. Do not add a pass when the existing pass can own the
 replacement. Do not leave old and new visual authorities active together.
 
-Create or cache static geometry, substrate, layout, and immutable region edges
-once. Do not rebuild them per frame. Avoid per-cell or per-edge object churn in
-hot render paths. Dynamic edge presentation uses reusable typed buffers, remains
-`O(edgeCount)` per accepted semantic snapshot, and does not rebuild only because
-animation time advances. Keep draw calls measured and bounded. Keep Canvas
-playable after WebGL context loss. Update picking coherently with renderer
-geometry.
+Create or cache static geometry, substrate, layout, cloud fields, sky budgets, and
+immutable region edges once at their real lifecycle boundaries. Do not rebuild
+them per frame. Avoid per-cell or per-edge object churn in hot render paths.
+Dynamic edge presentation uses reusable typed buffers, remains `O(edgeCount)` per
+accepted semantic snapshot, and does not rebuild only because animation time
+advances. Celestial state is fixed-size and at most one shooting star is active.
+Keep draw calls measured and bounded. Keep Canvas playable after WebGL context
+loss. Update picking coherently with renderer geometry.
 
 Use controlled fixtures and real browser evidence. Prefer relative measurements:
 substrate versus region contrast, archetype perimeter versus internal cell edge,
 progression state ordering, root material, center and limb continuity, day/night
-visibility, close/far behavior, selection, backend ordering, draw count, buffer
-size and cadence, and frame cost.
+visibility, close/far behavior, cloud coverage and seam continuity, static versus
+moving cloud phase, background star presence, shooting-star occlusion and event
+identity, selection, backend ordering, draw count, buffer or texture size and
+cadence, and frame cost.
 
 Screenshots supplement measurements; they do not replace geometry, contrast,
 state, performance, browser, or fallback evidence. Calibrate pixel thresholds
@@ -904,11 +970,19 @@ accessible names, visible focus, keyboard access to every meaningful action,
 non-hover affordances, non-color cues, sufficient touch targets, reduced-motion
 support, forced colors, high contrast, and `200%` text.
 
+Fresh profiles default to Full motion by explicit product policy, not by an OS
+media query. The Motion control must remain clearly named, keyboard- and
+touch-operable, persistent, and immediately effective. Reduced motion is a
+complete in-product way to stop nonessential travel; do not require an OS setting.
+The automatic-camera preference is independent, clearly named, and controls only
+inactivity-driven camera work.
+
 Do not create high-frequency live-region updates or move focus whenever a metric
 changes. Do not trap focus outside a real modal surface. Canvas-only meaning that
 matters to player understanding has a truthful textual or structural equivalent.
-Test keyboard-only interaction, focus restoration, and reduced motion in a real
-browser.
+Decorative stars, clouds, and shooting stars do not need invented announcements
+or focus targets. Test keyboard-only interaction, focus restoration, and reduced
+motion in a real browser.
 
 Evolution's semantic path stays bounded independently of cell count. The current
 cell, its exact status and archetype, its domain and region context, its direct
@@ -954,8 +1028,14 @@ reset incompatible Evolution levels, receipts, Imprints, and layout-bound Histor
 rather than silently reinterpreting them. Preserve independently valid unrelated
 facts through their existing owners.
 
-Do not persist presentation-only camera motion, developer mode, diagnostic speed,
-or untrusted reward projections.
+Persist explicit `Full` or `Reduced` motion and the automatic-camera boolean
+through the validated settings owner. A fresh or invalid settings document uses
+Full motion and automatic camera on. Preserve valid stored explicit choices; do
+not use an OS media query as a hidden settings writer.
+
+Do not persist presentation-only camera motion, celestial clock, cloud phase,
+shooting-star state, developer mode, diagnostic speed, or untrusted reward
+projections.
 
 Treat imported data as hostile. Validate type, version, size, count, exact integer
 syntax, enums, IDs, checksums where used, namespace, and nesting. Reject or reset
@@ -978,8 +1058,10 @@ Investigate a same-host regression around `10%` or greater unless a measured
 product gain justifies it.
 
 Keep tick debt, work per slice, camera samples, continuation state, History,
-reports, caches, agent traces, notifications, Trophy queues, DOM size, and
-renderer-semantic buffers bounded.
+reports, caches, agent traces, notifications, Trophy queues, DOM size,
+renderer-semantic buffers, cloud fields, star budgets, celestial clocks, and
+shooting-star state bounded. At most one shooting star is active. Do not rebuild
+or upload static sky or cloud data per animation frame.
 
 Avoid per-frame static-geometry rebuild, per-cell or per-edge object churn,
 unbounded DOM growth, unbounded listeners, duplicate render loops, duplicate
@@ -1008,6 +1090,11 @@ distance, progression compilation, scoring, camera math, layout geometry,
 continuation, accessibility projections, renderer-semantic projections, exact
 endpoint ownership/reachability edge truth tables, codecs, and bounds.
 
+Use pure tests for celestial eligible-time accumulation, deterministic
+shooting-star slots, bounded event projection, seamless cloud-field generation,
+cloud seed and phase behavior, fresh Full settings under both OS media states,
+explicit Reduced preservation, fixed-size state, and nonfinite rejection.
+
 Use integration tests for Worker/fallback agreement, stale identity rejection,
 settlement idempotence, settings reset, History switching, multi-World
 continuation, progression transactions, persistence cutover, and authority
@@ -1018,6 +1105,14 @@ pinch, wheel, cancellation, rectangles, rendering, controlled visual fixtures,
 context loss, WebGL2, Canvas, Worker, fallback, reduced motion, forced colors,
 `200%` text, green-root framing, coherent region readability, exact Evolution
 ownership-perimeter hierarchy, and safe areas where available.
+
+For celestial rendering, use the production entry point and controlled time.
+Verify stable stars behind the globe, cloud adherence and seam continuity,
+Full-motion cloud change, Reduced-motion stillness, exact shooting-star identity
+and occlusion, no hidden or scene catch-up, all renderer/execution paths, four
+WebGL draws, lifecycle-only field upload, semantic hierarchy under clouds, and
+bounded frame cost. Do not wait an hour; advance the pure schedule
+deterministically.
 
 Use production authority, cohorts, holdout seeds, and multi-World campaigns for
 balance and agent evidence. Never reward budget exhaustion.
