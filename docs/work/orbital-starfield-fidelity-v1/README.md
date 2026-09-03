@@ -102,6 +102,12 @@ Status: active.
   detection retains the established outside-globe mask. The passing rerun is
   the product evidence; the failed run is retained only as oracle-calibration
   evidence.
+- FAILED — the first added Evolution/Trophies contact-sheet captures ran after
+  the controlled fixture had cancelled the production frame loop, so WebGL
+  retained its last World pixels and Canvas showed a cleared frame. The fixture
+  now resumes exactly one production loop on restore and navigates with trusted
+  scene buttons; inspected Canvas reruns show the Evolution and Trophy globes.
+  The stale captures are not scene evidence.
 - No physical-device, thermal, physical screen-reader, or physical
   forced-colors evidence is claimed.
 - No implementation-revision CI, Pages, deployed-byte, or deployed-browser
