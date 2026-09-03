@@ -71,22 +71,25 @@ to return to the canvas.
 
 The three planetary-sky commands share one production-browser fixture. Synthetic
 eligible time proves one event per 300-second slot without waiting an hour;
-matched pixel probes independently isolate the broad deep-space field, three
+matched pixel probes independently isolate the near-black orbital field, three
 stable star strata, measurable cloud movement, selected projected coverage,
 camera adherence, near/far continuity, streak visibility and globe occlusion,
-and static Reduced behavior. A rendered-star oracle extracts connected point
-centroids and compares axial Fourier peaks with 64 deterministic random cohorts
-and a jittered lattice sensitivity control. Six cardinal camera families cover
-every cube face,
-both former equirectangular poles, and the former longitude-seam family; separate
-controlled states exercise each nonparallel rotation. The matrix also checks explicit fresh Balanced and
-stored Automatic quality, fresh/stored Motion, browser visibility, scene, visual
-History, quality and speed independence, exact field/event identity across
-execution and renderer paths, four WebGL draws, lifecycle-only resource upload
-or raster construction, fixed resources, real context loss to playable Canvas,
-forced colors, high contrast, touch/keyboard access, and the maintained focused
-responsive/200% viewports. Ignored JSON receipts and screenshots live under
-`reports/`.
+and static Reduced behavior. The rendered hierarchy oracle measures absolute
+outside-limb luminance, black fraction, low-frequency block spread, detected
+star components/core pixels, and star prominence over bright backdrop. A
+separate distribution oracle extracts connected point centroids and compares
+axial Fourier peaks with 64 deterministic random cohorts and a jittered lattice
+sensitivity control. Six cardinal camera families cover every cube face, both
+former equirectangular poles, and the former longitude-seam family; separate
+controlled states exercise each nonparallel rotation. The matrix also checks
+actual Home, World, Evolution, and Trophies compositions, explicit fresh
+Balanced and stored Automatic quality, fresh/stored Motion, browser visibility,
+scene, visual History, quality and speed independence, exact field/event
+identity across execution and renderer paths, four WebGL draws, lifecycle-only
+resource upload or raster construction, fixed resources, real context loss to
+playable Canvas, forced colors, high contrast, touch/keyboard access, and all
+eight maintained responsive/200% text viewports. Ignored JSON receipts and
+screenshots live under `reports/`.
 
 The three focused Environment commands inject production `RunController`
 snapshots and one terminal Result through the real metric shell. They prove

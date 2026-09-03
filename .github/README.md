@@ -56,9 +56,10 @@ while terrain and finite local resources remain visible inside occupied cells.
 Stress, critical state, remains, selection, History, coastlines, and whole-cell
 Luminous charge keep distinct visual and textual meanings.
 
-Home and World are cloud-bearing planets against one stable deterministic deep-
-space composition: a broad chromatic field with dark structure plus faint,
-bright, and sparse anchor stars. A six-face directional cloud field moves by
+Home and World are cloud-bearing planets against one stable deterministic
+orbital composition: near-black space with subtle non-directional variation
+plus clearly present faint, bright, and sparse anchor stars. A six-face
+directional cloud field moves by
 two nonparallel 52- and 109-minute rotations in Full motion, so it has no fixed
 longitude seam or permanent World-axis pole. One deterministic shooting star is
 scheduled in each 300-second slot of eligible Home/World time. Hidden pages,
@@ -152,4 +153,4 @@ npm run test:browser:fallback
 ```
 
 Current implementation status is recorded in
-[`docs/work/planetary-sky-composition-v2/README.md`](docs/work/planetary-sky-composition-v2/README.md).
+[`docs/work/orbital-starfield-fidelity-v1/README.md`](docs/work/orbital-starfield-fidelity-v1/README.md).

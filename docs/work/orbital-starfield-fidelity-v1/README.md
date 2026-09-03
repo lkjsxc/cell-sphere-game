@@ -1,6 +1,6 @@
 # Orbital Starfield Fidelity v1
 
-Status: active.
+Status: terminal local implementation evidence.
 
 ## Starting state
 
@@ -92,6 +92,33 @@ Status: active.
   under `reports/orbital-starfield-fidelity-v1/candidate-1/`.
 - PASSED — full unit/integration suites `246/246` and `76/76`, cell-visual
   audit, structure gate, and link gate after the cutover.
+- PASSED — exact clean implementation revision
+  `e7c66f8ea1519a880774fd268af974d34f09ac60` on Chrome 152:
+  Worker/WebGL2 report SHA-256 `10769f8b6df871164bb19850aa3f3a02c5d94c02d6d983e4ed98ea6fdf5d3421`,
+  fallback/WebGL2 `8d00b498ee7e8eac2fb695d233e612348d6fd5678f93458d0f2fe5549f7dd97b`,
+  and fallback/Canvas 2D `c01be000aed350ddf919586e8ae90d794cea672f0614f0ac9fba50980c909d31`.
+  All three have empty browser errors, all eight 200% text viewports, reduced
+  motion, forced colors, high contrast, touch/keyboard checks, bounded
+  resources, and actual Home/World/Evolution/Trophies frames. Worker context
+  loss restores a playable Canvas path without changing the field identities.
+- PASSED — exact WebGL atmosphere silhouette on WebGL2/Canvas, report SHA-256
+  `c298f67a9c0d30e92b56fdb2806f486893a154b342b94b56bd9506336b22368c` /
+  `04a8af53a831db933b6256e55801c58256508eda39f305ba0de58d8642304d70`;
+  life-boundary WebGL2/Canvas reports
+  `b7cf08d784a66d883616c53d19f6207b0b93eede1b08473a8bfd25a9889f5d95` /
+  `d70e4c09bd12318be6a0c9ac121f06b90b6eb58d849eeced6d8b62e73db40218`
+  have zero repeat noise and steady p95 `1.3/1.9 ms`.
+- PASSED — final isolated benchmark `12,616 ticks/s` versus starting `12,083`
+  (`+4.41%`), with authority hash `15863d52`, deterministic fixed trace
+  `e32ad0ff` at median `10,686 ticks/s`, and every bounded profile valid.
+- Inspected ignored exact-revision composition and baseline/final contact sheets
+  are SHA-256 `2e1c889cf487495fca346f7d6708e8df99337ab7943e45b7fabb80453c5311e4` and
+  `b02b32c6329fd65ab4765d38e4880abed3cebc5a2536341bdc8056cfe2a762b7`.
+  The former shows coherent star-led backdrops in all four sphere scenes on all
+  three paths; the latter makes deletion of the broad blue ribbon directly
+  observable.
+- The coherent production/test cutover is commit `58b06e5`; trusted scene
+  navigation and restored production-loop evidence is commit `e7c66f8`.
 
 ## Evidence not obtained
 
@@ -108,13 +135,25 @@ Status: active.
   now resumes exactly one production loop on restore and navigates with trusted
   scene buttons; inspected Canvas reruns show the Evolution and Trophy globes.
   The stale captures are not scene evidence.
+- FAILED (unrelated known broad baseline) — `npm run test:browser:file` reached
+  the established `1024×600` Result-action bottom at `600.1875 px`. Sky code
+  cannot affect that DOM rectangle, the same `0.1875 px` issue is recorded in
+  the predecessor sky and camera baselines, and the selected eight-viewport sky
+  matrix passes. The broad run is not counted as campaign evidence; fallback
+  variants were not repeated after the shared scenario failed at the same
+  pre-existing gate.
+- FAILED (evidence tooling only) — the first contact-sheet command created both
+  images correctly, then returned nonzero because this host has no `file`
+  executable. SHA-256 receipts and direct image inspection supersede that final
+  informational subcommand; it is not a browser or product pass.
 - No physical-device, thermal, physical screen-reader, or physical
   forced-colors evidence is claimed.
-- No implementation-revision CI, Pages, deployed-byte, or deployed-browser
-  evidence exists while this package is active.
+- Exact-revision CI, Pages, deployed-byte, and deployed-browser evidence belongs
+  to the final implementation handoff after publication; this package does not
+  pre-claim a future commit's result.
 
 ## Exact next coherent step
 
-Commit the coherent source/test cutover, then capture clean exact-revision final
-browser receipts on all three paths and run the directly implicated atmosphere,
-life-boundary, context-loss, accessibility, responsive, and performance gates.
+None for the selected implementation. Publish only after the final verifier is
+clean, then verify the exact served revision and carry those external receipts
+in the implementation handoff without rewriting this historical package.

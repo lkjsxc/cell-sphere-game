@@ -2,6 +2,11 @@
 
 Status: terminal local implementation evidence.
 
+Current visual calibration is superseded by
+[`../orbital-starfield-fidelity-v1/`](../orbital-starfield-fidelity-v1/).
+This package remains historical evidence only; its broad chromatic field and
+`124/210/300` star totals are not present-tense product authority.
+
 ## Starting state
 
 - Branch `main` began at `f22cb34a8dfcd268adaa0dade2bdbc045eb0e384`,

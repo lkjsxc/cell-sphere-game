@@ -22,14 +22,17 @@ playable after WebGL context loss without replacing world authority.
 ## Planetary sky
 
 One presentation policy supplies both backends with a stable generated
-`256×128` RGB deep-space field, a fixed three-stratum star catalog, one
+`256×128` RGB near-black orbital field, a fixed three-stratum star catalog, one
 active-or-inactive shooting-star projection, one Home/World cloud identity, and
-two finite eligible-time rotation angles. The WebGL background draw samples the broad field and
-adds its constant-cost faint, bright, and anchor star strata plus the active
-streak before the globe, so later globe draws occlude it naturally. Canvas
-rasters the exact field bytes once per identity and draws the same catalog and
-event in its existing background phase. Neither backend owns a clock, slot
-calculation, random source, timer, or render loop.
+two finite eligible-time rotation angles. The field uses low-amplitude,
+non-directional tonal variation rather than a ribbon, nebula, or cloud-bank
+structure. The WebGL background draw samples it and adds constant-cost faint,
+bright, and anchor star strata plus the active streak before the globe, so later
+globe draws occlude it naturally. Canvas rasters the exact field bytes once per
+identity and draws the same catalog and event in its existing background phase.
+Eco, Balanced, and High use `224/356/500` catalog entries from one maximum
+`500`-star catalog. Neither backend owns a clock, slot calculation, random
+source, timer, or render loop.
 
 Cloud opacity is one deterministic `64×64×6` byte field generated from smooth
 three-dimensional direction, independent of cell count. WebGL uploads its six

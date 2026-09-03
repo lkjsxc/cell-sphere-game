@@ -1,30 +1,31 @@
 # Current status
 
-## Planetary Sky Composition v2
+## Orbital Starfield Fidelity v1
 
-- Fresh and invalid settings now select public Balanced quality; valid stored
-  Automatic, Eco, Balanced, and High choices remain authoritative. One shared
-  deterministic `256×128` RGB field supplies broad chromatic space structure,
-  and fixed faint/bright/anchor star strata scale to `124/210/300` stars.
-- Home and World use one `64×64×6` directional byte field shared by WebGL2 and
-  Canvas. Direct 52- and 109-minute rotations around non-cardinal axes replace
-  longitude translation; the selected field is continuous across cube edges
-  and has no equirectangular seam or World-axis motion pole.
-- One bounded policy owns time, seeds, finite rotation angles, and the active
-  event. Hidden time,
-  Reduced, Evolution, Trophies, and game speed cannot advance or backfill it.
-  Fresh Motion is Full; explicit stored Reduced and unrelated settings persist.
-- WebGL2 remains four draws with lifecycle-only deep-space and cloud uploads.
-  Canvas consumes the exact deep-space and directional-cloud bytes through
-  lifecycle-owned resources and a quantized typed cache; real context loss
-  preserves field identities and both rotation angles.
-- Chrome 152 checks cover all three maintained paths, settings/accessibility,
-  responsive 200% text, stable motion/occlusion, fixed resources, and semantic
-  hierarchy. Simulation, rewards, camera policy, and persistence are unchanged.
-- Unit and integration suites pass `246/246` and `76/76`; camera, life-boundary,
-  atmosphere, cell-visual, context-loss, and all three planetary-sky fixtures
-  pass. The final benchmark retains authority hash `15863d52` and trace
-  `e32ad0ff` at `12,048 ticks/s`, `+1.24%` from the same-host baseline.
+- One shared deterministic `256×128` RGB field now supplies low-amplitude,
+  non-directional near-black orbital depth. The predecessor gas ribbon, warm
+  concentration, violet structure, dark rift, and their stale calibration are
+  deleted. Fixed faint/bright/anchor strata scale to `224/356/500` stars.
+- The clean Chrome 152 render oracle measures outside-limb mean/p95 luminance
+  near `0.99/1.86`, black fraction `1.0`, and block spread below `0.42` on both
+  backends. It detects `163` WebGL star components with `945` core pixels and
+  `121` Canvas components with `385` core pixels; normal-size contact sheets
+  show the globe leading in Home, World, Evolution, and Trophies.
+- One bounded policy still owns field/catalog identities, cloud angles, eligible
+  time, and the active event. WebGL2 still uses four draws; Canvas consumes the
+  same field bytes and shared star definitions. Clouds, sparse shooting stars,
+  atmosphere, quality behavior, reduced motion, and context-loss recovery retain
+  their established semantics.
+- Exact-revision Worker/WebGL2, fallback/WebGL2, and fallback/Canvas fixtures
+  pass the orbital hierarchy, eight responsive viewports at 200% text, forced
+  colors, high contrast, keyboard/touch access, fixed resources, and empty
+  browser-error gates. Focused atmosphere and life-boundary regressions pass on
+  both renderers.
+- Unit and integration suites pass `246/246` and `76/76`; cell-visual, structure,
+  and link gates pass. The final benchmark is `12,616 ticks/s`, `+4.41%` from
+  the same-host baseline, with unchanged authority hash `15863d52` and fixed
+  trace `e32ad0ff`. Simulation, rewards, progression, persistence, balance,
+  camera, atmosphere, and event scheduling are unchanged.
 
 ## Kinetic Sphere Fidelity v3
 

@@ -16,7 +16,7 @@ framing, result actions, and atomic world replacement.
   analytically damped elapsed-time inertia to natural rest, and calm idle orbit,
   plus one normalized trusted-activity path.
 - `celestial-presentation.js`: one bounded eligible foreground clock, stable
-  layered-sky identities, Home/World directional-cloud identity and two finite
+  orbital-sky identities, Home/World directional-cloud identity and two finite
   advection angles, quality budget, and exact one-per-300-second-slot shooting-
   star projection. Renderers only consume it.
 - `continuation.js` / `new-world-surface.js`: one-shot Result continuation, its

@@ -4,13 +4,13 @@
 
 - Simulation benchmark gate: at least 3,000 ticks/s on the audit host.
 - WebGL2 world draw count: exactly four.
-- Celestial state is fixed-size: one 98,304-byte `256×128` RGB deep-space field,
-  one 7,200-byte maximum three-stratum star catalog, one active-or-inactive
+- Celestial state is fixed-size: one 98,304-byte `256×128` RGB orbital field,
+  one 12,000-byte maximum three-stratum star catalog, one active-or-inactive
   event, and one 24,576-byte `64×64×6` directional cloud field. WebGL owns
   lifecycle-only RGB and six-face `R8` texture uploads; selected celestial CPU
-  plus GPU field/catalog storage is 252,960 bytes. Canvas owns one lifecycle-
-  only deep-space raster plus fixed 2,562-entry direction, daylight, byte-amount,
-  and `Int32` angle-epoch caches; selected static storage is 304,954 bytes. Its
+  plus GPU field/catalog storage is 257,760 bytes. Canvas owns one lifecycle-
+  only orbital-field raster plus fixed 2,562-entry direction, daylight, byte-amount,
+  and `Int32` angle-epoch caches; selected static storage is 309,754 bytes. Its
   2,048 angle buckets refresh no faster than once per approximately 1.52 seconds
   of eligible Full-motion time. An adjacent selected cache step changes sampled
   opacity by at most 4/255 with mean below 0.26/255.
@@ -45,7 +45,17 @@ WebGL draws, zero unchanged-frame renderer work attributable to the camera, and
 zero browser errors across Worker/WebGL2, fallback/WebGL2, and fallback/Canvas
 2D.
 
-Planetary Sky Composition v2 same-process Chrome 152 profiles interleave 120
+Orbital Starfield Fidelity v1 retains lifecycle-only field/catalog resources and
+four WebGL draws while increasing the bounded maximum catalog from 300 to 500
+entries. Exact clean-revision Chrome 152 full/neutral p95 is `2.1/1.3 ms` for
+Worker/WebGL2, `2.0/2.1 ms` for fallback/WebGL2, and `1.9/2.1 ms` for
+fallback/Canvas. Against the same-host starting full-sky p95 values of
+`2.0/2.1/3.1 ms`, no path reaches the `10%` investigation threshold. The
+isolated final benchmark is `12,616 ticks/s` versus `12,083` at baseline
+(`+4.41%`), with unchanged authority hash `15863d52` and fixed trace
+`e32ad0ff`; the minimum remains `3,000 ticks/s`.
+
+Historical Planetary Sky Composition v2 same-process Chrome 152 profiles interleave 120
 full-sky and neutral-sky frames. Worker/WebGL2 p95 is `2.1/2.2 ms`,
 fallback/WebGL2 is `2.2/2.2 ms`, and fallback/Canvas is `2.2/2.4 ms`; selected
 full-sky p95 changes by at most `0.1 ms` (`5%`) from the same-host v1 baseline.

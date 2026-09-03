@@ -2,10 +2,7 @@
 
 Concise architecture/product records: context → decision → consequence → evidence.
 
-> **Historical record.** Entries below describe superseded releases and may
-> mention retired migration, event, Evolution, SCORE, or persistence behavior.
-> They are not current product policy. Follow `AGENTS.md`, current source/tests,
-> and `docs/status.md` for current authority.
+> **Historical record.** Entries below describe superseded releases and may mention retired migration, event, Evolution, SCORE, or persistence behavior. They are not current product policy. Follow `AGENTS.md`, current source/tests, and `docs/status.md` for current authority.
 
 ## D0 — 2026-08-07 Environment Progression v2 supersedes static frontier records
 
@@ -397,3 +394,6 @@ Historical field and motion details are superseded by D39. Its retained decision
 Supersede D38's point field, equirectangular cloud, and single-phase motion details while retaining its eligible-time, authority, shooting schedule, Reduced, and four-draw boundaries. One stable generated `256×128` RGB field owns broad chromatic depth and negative structure. One fixed catalog owns faint, bright, and anchor star strata at Eco/Balanced/High totals of `124/210/300`; WebGL evaluates three constant-cost strata, while Canvas draws the bounded catalog. Fresh or invalid Quality is public Balanced, and every valid stored choice remains authoritative without a schema reset.
 
 One World-seeded `64×64×6` directional byte field replaces latitude/longitude storage. Direct rotations around non-cardinal axes separated by `78.40°` use bounded 52- and 109-minute phases and an authored starting composition. WebGL samples one cube texture in the existing globe draw; Canvas samples the exact bytes from cached unit directions using 2,048 angle buckets. No renderer owns time, generation, random state, or a second authority; all celestial state remains absent from simulation, identity, rewards, History meaning, persistence, and picking. Activity-aware automatic camera work remains deferred.
+
+## D40 — Planetary sky uses a star-led orbital composition
+D39's broad chromatic gas band, warm concentration, violet structure, rift, and `124/210/300` catalog totals are superseded; its single eligible-time authority, directional clouds, shooting schedule, Balanced default, Reduced behavior, renderer parity, and four-draw boundaries remain current. One stable generated `256×128` RGB field now owns only low-amplitude non-directional near-black variation. One shared faint/bright/anchor definition owns WebGL2 and Canvas size, intensity, opacity, halo, and Eco/Balanced/High totals of `224/356/500`; lifecycle bounds, simulation, rewards, progression, persistence, History meaning, and picking remain unchanged.

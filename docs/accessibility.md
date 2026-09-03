@@ -149,12 +149,13 @@ fallback/Canvas 2D. It records percentage text and accessible names, keyboard
 open/Escape/focus restoration, forced colors, reduced motion, 200% text,
 surface rectangles, and scroll ownership.
 
-The focused planetary-sky matrix covers `320×568`, `390×844`, `844×390`, and
-`1440×900` at 200% text across Worker/WebGL2, fallback/WebGL2, and
-fallback/Canvas 2D. It exercises keyboard and touch access to the native Motion
-select, fresh Full behavior under both emulated OS preferences, explicit Reduced
-persistence and immediate effect, forced colors, high contrast, 44 px targets,
-page bounds, and unchanged decorative focus semantics.
+The focused planetary-sky matrix covers `320×568`, `360×640`, `390×844`,
+`430×932`, `768×1024`, `844×390`, `1024×600`, and `1440×900` at 200% text
+across Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D. It exercises
+keyboard and touch access to the native Motion select, fresh Full behavior under
+both emulated OS preferences, explicit Reduced persistence and immediate effect,
+forced colors, high contrast, 44 px targets, page bounds, and unchanged
+decorative focus semantics.
 
 ## Visibility and storage
 

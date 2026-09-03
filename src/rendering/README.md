@@ -9,7 +9,7 @@ The WebGL world path remains exactly four steady-state draws.
 - `renderer.js`: four-draw composition, world/scene binding, blank-frame and
   context-loss teardown.
 - `deep-space-field.js`, `star-field.js`, `cloud-field.js`, and
-  `celestial-projection.js`: one shared bounded layered sky, fixed star strata,
+  `celestial-projection.js`: one shared bounded near-black orbital sky, fixed star strata,
   six-face directional cloud field, and defensive immutable semantic projection
   for both backends.
 - `fallback-celestial.js`: Canvas drawing/caches for that shared projection;

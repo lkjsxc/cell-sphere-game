@@ -5,16 +5,18 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package:
-[`orbital-starfield-fidelity-v1/`](orbital-starfield-fidelity-v1/) — replacing
-the superseded broad chromatic-field target with a restrained, star-led orbital
-sky while preserving one celestial owner and renderer parity.
+Active work package: none.
 
 Completed packages remain as historical or current implementation evidence:
 
-- [`planetary-sky-composition-v2/`](planetary-sky-composition-v2/) — terminal
-  local implementation evidence for fresh Balanced quality, layered generated
-  deep space, three bounded star strata, one shared directional cloud field,
+- [`orbital-starfield-fidelity-v1/`](orbital-starfield-fidelity-v1/) — terminal
+  local implementation evidence for a restrained near-black orbital field,
+  strengthened shared star strata, rendered hierarchy oracles, all four sphere
+  scenes, four-draw WebGL2, Canvas/context-loss parity, and bounded local proof.
+  Exact revision publication evidence belongs to the final implementation handoff.
+- [`planetary-sky-composition-v2/`](planetary-sky-composition-v2/) — historical
+  implementation evidence for fresh Balanced quality, the now-superseded broad
+  chromatic field and `124/210/300` star calibration, one shared directional cloud field,
   non-axial eligible-time advection, four-draw WebGL2, Canvas/context-loss
   parity, and controlled browser convergence. Exact revision publication
   evidence belongs to the final implementation handoff.

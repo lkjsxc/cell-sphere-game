@@ -60,10 +60,11 @@ while left alone, and through visible ecological cause and consequence.
 
 The presentation should feel rich, calm, and planetary rather than flat or
 ornamental. Home and World should read as cloud-bearing living planets against a
-visibly layered deep-space field with varied star scales and restrained broad
-nebular structure. The sky should have real presence without flattening the
-globe's visual hierarchy. Decorative celestial motion remains subordinate to
-cellular ecology, legibility, accessibility, and bounded performance.
+predominantly near-black orbital sky with clearly present varied stars and only
+subtle low-frequency chromatic structure. The sky should have real presence
+without flattening the globe's visual hierarchy. Decorative celestial motion
+remains subordinate to cellular ecology, legibility, accessibility, and bounded
+performance.
 
 The product is autonomous and incremental. It does not promise offline progress.
 Closing the page does not advance authoritative time or award progress.
@@ -178,14 +179,15 @@ explicit valid quality choice, and valid stored choices remain authoritative.
 Quality changes presentation budgets only; it never changes simulation
 resolution, tick content, rewards, progression, or other authority.
 
-A stable, visually present deep-space field belongs behind the globe. It uses
-varied star scales and density plus broad non-repeating nebular structure rather
-than an obvious lattice or a nearly empty gradient. Home and World carry a
-presentation-only cloud field whose motion does not expose a fixed longitude
-axis, polar pinwheel, or texture seam. Full motion may include sparse shooting
-stars at a long-run target of about twelve per eligible foreground hour. These
-effects never enter simulation, RNG, scoring, progression, History authority, or
-input hit testing.
+A stable, predominantly near-black orbital field belongs behind the globe. It
+uses varied star scales, density, and contrast without an obvious lattice or a
+nearly empty gradient. Any low-frequency chromatic structure is subtle,
+non-directional, and subordinate to stars and globe rather than reading as a
+nebula, ribbon, or cloud bank. Home and World carry a presentation-only cloud
+field whose motion does not expose a fixed longitude axis, polar pinwheel, or
+texture seam. Full motion may include sparse shooting stars at a long-run target
+of about twelve per eligible foreground hour. These effects never enter
+simulation, RNG, scoring, progression, History authority, or input hit testing.
 
 ---
 
@@ -899,13 +901,15 @@ selection, History, Evolution, and Trophy state. Semantic parity does not requir
 pixel identity.
 
 The sky and clouds are presentation-only renderer semantics. The background
-phase owns a stable deterministic layered deep-space field in every sphere scene.
-It combines broad restrained nebular or galactic structure, dark depth, and
-varied stars without an obvious procedural lattice. Home and World additionally
-own a cloud-bearing planet treatment and, in Full motion, sparse shooting stars
-with a long-run target near twelve per eligible foreground hour. A shooting star
-is decorative: it has no sound, notification, reward, event, input, or History
-authority, never catches up after hidden time, and at most one is active at once.
+phase owns one stable deterministic orbital field in every sphere scene. It
+combines near-black depth, subtle non-directional low-frequency variation, and
+clearly present varied stars without an obvious procedural lattice. It must not
+read as a painted Milky Way ribbon, fog bank, cloud sea, or decorative wallpaper.
+Home and World additionally own a cloud-bearing planet treatment and, in Full
+motion, sparse shooting stars with a long-run target near twelve per eligible
+foreground hour. A shooting star is decorative: it has no sound, notification,
+reward, event, input, or History authority, never catches up after hidden time,
+and at most one is active at once.
 
 Cloud structure is independent of gameplay-cell count and simulation topology.
 Use one bounded deterministic field shared by both backends, sampled from the
@@ -914,8 +918,8 @@ animation time through seam-safe spherical advection that does not reveal a fixe
 longitude axis, persistent motion pole, polar pinwheel, or UV seam. Blend clouds
 after geography and resource material and before life, stress, critical state,
 remains, Luminous, selection, History, and boundary semantics. Reduced motion
-freezes cloud motion and suppresses shooting-star travel; static stars, nebular
-structure, and cloud presence remain. Quality modes may reduce sampling
+freezes cloud motion and suppresses shooting-star travel; static stars, subtle
+orbital-field variation, and cloud presence remain. Quality modes may reduce sampling
 complexity or star density but must preserve the intended semantic presence.
 
 Keep celestial work in existing render phases. Do not add a post-processing
@@ -1124,7 +1128,7 @@ continuation, accessibility projections, renderer-semantic projections, exact
 endpoint ownership/reachability edge truth tables, codecs, and bounds.
 
 Use pure tests for celestial eligible-time accumulation, deterministic
-shooting-star slots, bounded event projection, deterministic layered deep-space
+shooting-star slots, bounded event projection, deterministic near-black orbital
 field generation, spherical cloud-field continuity and advection, cloud seed and
 motion behavior, fresh Full and Balanced settings under both OS media states,
 explicit Reduced and stored Quality preservation, fixed-size state, and
@@ -1142,7 +1146,8 @@ context loss, WebGL2, Canvas, Worker, fallback, reduced motion, forced colors,
 ownership-perimeter hierarchy, and safe areas where available.
 
 For celestial rendering, use the production entry point and controlled time.
-Verify a visibly layered stable deep-space field, varied non-lattice stars,
+Verify a predominantly near-black stable orbital field, restrained
+low-frequency variation, clearly present varied non-lattice stars,
 cloud adherence and spherical continuity through former longitude and pole
 regions, Full-motion non-axial cloud change, Reduced-motion stillness, exact
 shooting-star identity and occlusion, no hidden or scene catch-up, all
