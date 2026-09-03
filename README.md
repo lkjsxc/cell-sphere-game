@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/lkjsxc/cell-sphere-game/main/assets/mark.svg" width="112" height="112" alt="The cell-sphere-game mark">
-</p>
-
 # cell-sphere-game
 
 <p align="center">
