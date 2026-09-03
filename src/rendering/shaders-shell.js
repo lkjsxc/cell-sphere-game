@@ -1,4 +1,8 @@
 /** Quiet background field and atmosphere shell GLSL. */
+import { STAR_STRATA } from './star-field.js';
+
+const star = STAR_STRATA.map((value) => Object.freeze({ grid: glslPair(value.grid), size: glslPair(value.size),
+  intensity: glslPair(value.intensity), opacity: glslNumber(value.opacity), halo: glslNumber(value.halo) }));
 export const VS_BACKGROUND = `#version 300 es
 out vec2 vUv;
 void main() {
@@ -35,9 +39,10 @@ vec3 starTemperature(float value) {
   vec3 cool = vec3(0.67, 0.82, 0.96);
   return value < 0.5 ? mix(warm, neutral, value * 2.0) : mix(neutral, cool, (value - 0.5) * 2.0);
 }
-vec3 starLayer(vec2 uv, vec2 grid, float count, float stream, vec2 sizeRange, float fieldInfluence, float haloWeight) {
+vec3 starLayer(vec2 uv, vec2 grid, float count, float stream, vec2 sizeRange, vec2 intensityRange,
+    float fieldInfluence, float haloWeight) {
   vec2 starCell = floor(uv * grid); vec2 starLocal = fract(uv * grid);
-  float density = mix(0.70, 1.34, fieldInfluence);
+  float density = mix(0.94, 1.06, fieldInfluence);
   float chance = clamp(count / (grid.x * grid.y) * density, 0.0, 0.92);
   float present = 1.0 - step(chance, skyHash(starCell, stream));
   vec2 starPoint = vec2(skyHash(starCell, stream + 1.0), skyHash(starCell, stream + 2.0)) * 0.92 + 0.04;
@@ -45,7 +50,7 @@ vec3 starLayer(vec2 uv, vec2 grid, float count, float stream, vec2 sizeRange, fl
   float distancePx = length((starLocal - starPoint) * (uResolution / grid));
   float core = 1.0 - smoothstep(sizePx * 0.18, sizePx, distancePx);
   float halo = (1.0 - smoothstep(sizePx, sizePx * 2.8, distancePx)) * haloWeight;
-  float intensity = 0.38 + skyHash(starCell, stream + 4.0) * 0.60;
+  float intensity = mix(intensityRange.x, intensityRange.y, skyHash(starCell, stream + 4.0));
   return starTemperature(skyHash(starCell, stream + 5.0)) * (core + halo) * intensity * present;
 }
 void main() {
@@ -53,12 +58,15 @@ void main() {
   float targetAspect = uResolution.x / max(1.0, uResolution.y); const float fieldAspect = 2.0;
   vec2 cropScale = targetAspect > fieldAspect ? vec2(1.0, fieldAspect / targetAspect) : vec2(targetAspect / fieldAspect, 1.0);
   vec2 fieldUv = (vUv - 0.5) * cropScale + 0.5;
-  vec3 neutral = mix(vec3(0.025, 0.031, 0.043), vec3(0.008, 0.013, 0.024), smoothstep(0.05, 0.95, vUv.y));
+  vec3 neutral = mix(vec3(0.008, 0.011, 0.016), vec3(0.002, 0.004, 0.008), smoothstep(0.05, 0.95, vUv.y));
   vec3 col = mix(neutral, texture(uDeepSpaceField, fieldUv).rgb, uDeepSpaceEnabled);
-  float fieldInfluence = smoothstep(0.025, 0.13, dot(col, vec3(0.2126, 0.7152, 0.0722)));
-  col += starLayer(vUv, vec2(32.0, 18.0), uStarCounts.x, 11.0, vec2(0.42, 0.92), fieldInfluence, 0.0) * 0.72;
-  col += starLayer(vUv, vec2(21.0, 12.0), uStarCounts.y, 31.0, vec2(0.90, 1.75), fieldInfluence, 0.04) * 0.86;
-  col += starLayer(vUv, vec2(13.0, 7.0), uStarCounts.z, 59.0, vec2(1.85, 3.15), fieldInfluence, 0.22);
+  float fieldInfluence = smoothstep(0.002, 0.025, dot(col, vec3(0.2126, 0.7152, 0.0722)));
+  col += starLayer(vUv, vec2(${star[0].grid}), uStarCounts.x, 11.0, vec2(${star[0].size}),
+    vec2(${star[0].intensity}), fieldInfluence, ${star[0].halo}) * ${star[0].opacity};
+  col += starLayer(vUv, vec2(${star[1].grid}), uStarCounts.y, 31.0, vec2(${star[1].size}),
+    vec2(${star[1].intensity}), fieldInfluence, ${star[1].halo}) * ${star[1].opacity};
+  col += starLayer(vUv, vec2(${star[2].grid}), uStarCounts.z, 59.0, vec2(${star[2].size}),
+    vec2(${star[2].intensity}), fieldInfluence, ${star[2].halo}) * ${star[2].opacity};
   if (uShootingActive > 0.5) {
     float progress = uShootingState.x;
     vec2 head = mix(uShootingPath.xy, uShootingPath.zw, progress) * uResolution;
@@ -93,3 +101,6 @@ void main() {
   vec3 tint = mix(vec3(0.20, 0.43, 0.46), vec3(0.34, 0.24, 0.21), uEntropy);
   outColor = vec4(tint * rim * (0.58 - uEntropy * 0.24), 1.0);
 }`;
+
+function glslPair(values) { return values.map(glslNumber).join(', '); }
+function glslNumber(value) { return Number(value).toFixed(4); }

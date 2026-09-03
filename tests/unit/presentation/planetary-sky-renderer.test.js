@@ -29,7 +29,8 @@ test('planetary sky extends existing draws and has one bounded presentation auth
   assert.match(renderer, /gl\.RGB8/); assert.match(renderer, /deepSpaceFieldUploads/); assert.match(renderer, /deleteTexture/);
   assert.match(canvasSky, /createCanvasDeepSpaceRaster/); assert.match(canvasSky, /drawDeepSpace/);
   assert.match(deepSpace, /DEEP_SPACE_FIELD_WIDTH = 256/); assert.match(deepSpace, /DEEP_SPACE_FIELD_COMPONENTS = 3/);
-  assert.match(stars, /STAR_STRATA/); assert.match(stars, /balanced: Object\.freeze\(\[160, 42, 8\]\)/);
+  assert.match(stars, /STAR_STRATA/); assert.match(stars, /balanced: Object\.freeze\(\[280, 64, 12\]\)/);
+  assert.match(shell, /import \{ STAR_STRATA \} from '\.\/star-field\.js'/);
   assert.match(world, /gl\.R8/); assert.match(world, /gl\.TEXTURE_CUBE_MAP/); assert.match(world, /deleteTexture/);
   assert.equal((world.match(/texImage2D/g) ?? []).length, 1, 'cloud upload has more than one owner');
   assert.match(policy, /SHOOTING_STAR_SLOT_MS = 300_000/); assert.match(policy, /CLOUD_PRIMARY_PERIOD_MS = 3_120_000/);

@@ -94,7 +94,7 @@ try {
       harnessRevision:gitValue(['rev-parse','HEAD']),branch:gitValue(['branch','--show-current']),workingTreeDirty:Boolean(gitValue(['status','--porcelain'])),
       trackedWorkingTreeDirty:trackedWorkingTreeDirty(),sourceUrl:configuredUrl??`file://${ROOT}/index.html`,browser:browserIdentity.product,
       protocolVersion:browserIdentity.protocolVersion,browserErrors:cdp.errors.slice(0,20),browserStderr:cdp.stderr.slice(0,20),...evidence},null,2)+'\n';
-    const name=`planetary-sky-composition-v2-${configuredUrl?'deployed':'final'}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
+    const name=`orbital-starfield-fidelity-v1-${configuredUrl?'deployed':'final'}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
     writeFileSync(resolve(REPORTS,name),report);const hash=createHash('sha256').update(report).digest('hex');
     console.log(`test:browser:planetary-sky — PASS (${evidence.simulationPath}/${evidence.rendererPath}; report ${name}; sha256 ${hash}; sky ${evidence.visual.deepSpace.signature}; cloud ${evidence.visual.field.signature}; stars ${evidence.visual.stars.count}; full p95 ${evidence.visual.timing.fullSky.p95.toFixed(3)} ms; neutral ${evidence.visual.timing.emptySky.p95.toFixed(3)} ms)`);
   } else if (atmosphereOnly) {

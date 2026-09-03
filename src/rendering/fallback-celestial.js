@@ -65,12 +65,12 @@ export function drawCanvasCelestialBackground(ctx, canvas, celestial, deepSpaceR
       const size = Math.max(.55 * dpr, celestial.stars[at + 2] * dpr);
       const x = celestial.stars[at] * width; const y = celestial.stars[at + 1] * height;
       const temperature = celestial.stars[at + 4]; const color = temperature < -.28 ? 0 : temperature > .28 ? 2 : 1;
-      ctx.globalAlpha = celestial.stars[at + 3] * (stratum === 0 ? .72 : stratum === 1 ? .84 : .92);
+      ctx.globalAlpha = celestial.stars[at + 3] * definition.opacity;
       ctx.fillStyle = STAR_COLORS[stratum][color];
       if (stratum === 0) ctx.fillRect(x - size * .5, y - size * .5, size, size);
       else {
-        if (stratum === 2) { ctx.globalAlpha *= .22; ctx.beginPath(); ctx.arc(x, y, size * 1.75, 0, Math.PI * 2); ctx.fill();
-          ctx.globalAlpha = celestial.stars[at + 3] * .96; }
+        if (stratum === 2) { ctx.globalAlpha *= definition.halo; ctx.beginPath(); ctx.arc(x, y, size * 1.75, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = celestial.stars[at + 3] * definition.opacity; }
         ctx.beginPath(); ctx.arc(x, y, size * .5, 0, Math.PI * 2); ctx.fill();
       }
     }

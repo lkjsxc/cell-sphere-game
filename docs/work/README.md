@@ -5,7 +5,10 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package: none.
+Active work package:
+[`orbital-starfield-fidelity-v1/`](orbital-starfield-fidelity-v1/) — replacing
+the superseded broad chromatic-field target with a restrained, star-led orbital
+sky while preserving one celestial owner and renderer parity.
 
 Completed packages remain as historical or current implementation evidence:
 

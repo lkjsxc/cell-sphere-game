@@ -63,7 +63,9 @@ if (!/uDeepSpaceField/.test(shellShader) || !/uStarCounts/.test(shellShader) || 
   violations.push('src/rendering/shaders-shell.js: existing background phase does not own the planetary sky');
 if (!/DEEP_SPACE_FIELD_WIDTH = 256/.test(deepSpaceField) || !/DEEP_SPACE_FIELD_COMPONENTS = 3/.test(deepSpaceField)
     || !/createCanvasDeepSpaceRaster/.test(fallbackCelestial) || !/gl\.RGB8/.test(renderer))
-  violations.push('production backends do not consume the shared layered deep-space field');
+  violations.push('production backends do not consume the shared orbital deep-space field');
+if (!/deep-space-field-v3/.test(deepSpaceField) || !/balanced: Object\.freeze\(\[280, 64, 12\]\)/.test(starField))
+  violations.push('the superseded broad-field or sparse-star calibration returned');
 if (!/STAR_STRATA/.test(starField) || !/STAR_STRATA_COUNTS/.test(starField) || /vec2\(20\.0, 12\.0\)/.test(shellShader))
   violations.push('shared varied star strata are missing or the predecessor point grid returned');
 if (!/samplerCube uCloudField/.test(shader) || !/sampleAdvectedCloudField/.test(fallbackCelestial))
@@ -89,7 +91,7 @@ const report = { scannedFiles: sources.size, renderingFiles: renderingFiles.leng
   localResourceColor: /aEcology/.test(shader) && /resourceState/.test(shader), sharedLifeEdges: /writeLifeEdges\(this\.topo/.test(worldPass)
     && /writeLifeEdges\(this\.topo/.test(fallback), fixedAtmosphereGeometry: /this\.atmosphereGeometry\.positions/.test(worldPass), ordinaryLifeInteriorFill: false,
   globalEntropyTerrainFade: false, planetarySky: /uDeepSpaceField/.test(shellShader) && /uCloudField/.test(shader),
-  layeredDeepSpace: /DEEP_SPACE_FIELD_WIDTH = 256/.test(deepSpaceField) && /STAR_STRATA/.test(starField),
+  orbitalStarfield: /deep-space-field-v3/.test(deepSpaceField) && /STAR_STRATA/.test(starField),
   sharedCloudField: /sampleAdvectedCloudField/.test(fallbackCelestial) && /CLOUD_FACE_SIZE = 64/.test(cloudField),
   boundedCelestialPolicy: /MAX_CELESTIAL_FRAME_MS = 100/.test(celestialPolicy), violations };
 console.log(JSON.stringify(report, null, 2)); if (violations.length) process.exitCode = 1;
