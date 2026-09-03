@@ -21,6 +21,8 @@ import { advanceContinuation, cancelContinuation, completeContinuation, continua
   createContinuation, createContinuationPresentationCadence, disableContinuation,
   planContinuationPresentation, setContinuationHidden } from './policies/continuation.js';
 import { createTrustedInteractionGuard } from './policies/trusted-interaction.js';
+import { evolutionNavigationCommand, evolutionNavigationTarget,
+  isReadyEvolutionNavigation } from './policies/evolution-navigation.js';
 import { advanceCameraMotion, beginCameraDrag, cameraMotionActivity, cameraMotionSnapshot, createCameraMotion,
   endCameraDrag, recordCameraDrag, resetCameraMotion, setCameraMotionHidden, setCameraMotionReduced,
   setCameraMotionScene, setCameraMotionSurface } from './policies/camera-motion.js';
@@ -99,7 +101,7 @@ class GameApp {
       onWorld: (world) => this.historyPlayback.selectWorld(world), onSeek: (tick, event, world) => this.historyPlayback.seek(tick, event, world),
       onLive: () => this.historyPlayback.live() });
     this.memoryUi = createMemorySurface({ onCloseNode: () => this.closeEvolutionCell(), onUnlock: (cell) => this.buyEvolutionLevel(cell),
-      onSelect: (cell, source) => this.selectEvolutionCell(cell, source), canUnlock: () => !['starting', 'running'].includes(this.phase) });
+      canUnlock: () => !['starting', 'running'].includes(this.phase) });
     this.trophyUi = createTrophySurface({ onClose: () => this.closeTrophy(), onSelect: (id) => this.selectTrophy(id) });
     this.trophyNotifications = createTrophyNotifications({ reduced: () => this.settings.motion === 'reduced',
       announce: (text) => { this.el.live.textContent = text; }, onSelect: (id) => { if (this.scene !== 'trophies') this.selectScene('trophies'); selectTrophy(this, id); },
@@ -157,7 +159,24 @@ class GameApp {
     this.el.resultHistory.addEventListener('click', () => this.openHistory('current')); this.el.resultControl.addEventListener('click', () => this.openResult());
     document.getElementById('result-close')?.addEventListener('click', () => this.panelClosed('result'));
     for (const button of [this.el.scoreButton, this.el.reachButton]) button.addEventListener('click', () => this.openMetric(button.dataset.metric));
+    document.addEventListener('keydown', (event) => this.navigateEvolutionByKeyboard(event));
     document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key === ',') { event.preventDefault(); this.openMenu(); } });
+  }
+  navigateEvolutionByKeyboard(event) {
+    const command = evolutionNavigationCommand(event); if (!command || this.scene !== 'evolution') return false;
+    const heading = document.getElementById('memory-node-heading');
+    if (event.target !== this.canvas && !(this.overlay === 'memory-node' && event.target === heading)) return false;
+    event.preventDefault();
+    const projection = this.memorySnapshot?.evolutionProjection;
+    const cell = evolutionNavigationTarget(command, { nodeCount: this.topo4.nodeCount,
+      rootCell: this.evolutionLayout.rootCell, selectedCell: this.memoryUi.selectedCell ?? this.selectedNode,
+      readyCells: projection?.readyCells, owned: projection?.owned });
+    if (cell === null) {
+      if (isReadyEvolutionNavigation(command)) ui.announce(this.el, 'No ready Evolution cell.');
+      return true;
+    }
+    if (selectEvolutionCell(this, cell, 'keyboard')) ui.announce(this.el, this.memoryUi.accessibleDescription);
+    return true;
   }
   bindCanvas() { this.input = bindGlobeInput(this.canvas, this.camera, { canInteract: () => true,
     gestureTargets: [document.getElementById('surface-globe-gesture')].filter(Boolean),
@@ -242,7 +261,7 @@ class GameApp {
   failRun(message) { this.pause.set('worker-failed', true); ui.announce(this.el, `${message} Start a new world to continue.`); }
   enterEvolution(){return enterEvolution(this)}
   enterTrophies(){enterTrophies(this)}
-  selectEvolutionCell(cell, source){selectEvolutionCell(this,cell,source)}closeEvolutionCell(){closeEvolutionCell(this)}buyEvolutionLevel(cell){buyEvolutionLevel(this,cell)}
+  selectEvolutionCell(cell, source){return selectEvolutionCell(this,cell,source)}closeEvolutionCell(){closeEvolutionCell(this)}buyEvolutionLevel(cell){buyEvolutionLevel(this,cell)}
   selectTrophy(id) { selectTrophy(this, id); } closeTrophy() { closeTrophy(this); }
   openHistory(scope = null) { if (this.surfaces.toggle('history')) return;
     this.historyPlayback.open(scope ?? (this.scene === 'world' ? 'current' : 'past')); }

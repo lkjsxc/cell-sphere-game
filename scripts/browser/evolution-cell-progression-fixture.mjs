@@ -19,8 +19,12 @@ export async function runEvolutionCellProgressionFixture(tools, { label = 'final
   await click(...target); await wait(120);
   const selected = await evaluate(SELECTION_EXPRESSION);
   if (enforce) ok(selected.exactCell && selected.selectedCells === 1 && selected.levelEntriesUnchanged
-    && selected.treeItems === 0 && selected.navigatorButtons <= 12 && selected.neighborButtons >= 5 && selected.neighborButtons <= 6,
+    && selected.treeItems === 0 && selected.obsoleteControls === 0 && selected.detailButtons === 2
+    && selected.navigationTextAbsent && selected.focus === 'memory-node-heading',
   `Evolution exact-cell selection failed: ${JSON.stringify(selected)}`);
+
+  const keyboard = await runEvolutionKeyboardNavigation({ evaluate, key, wait });
+  if (enforce) ok(keyboard.valid, `Evolution globe-first keyboard navigation failed: ${JSON.stringify(keyboard)}`);
 
   const shellGesture = await measureDetailShellGesture({ evaluate, flick, pinch, poll, setViewport, tap, wait, wheel }, detailViewport);
   if (enforce) ok(shellGesture.valid, `Evolution detail-shell globe gesture failed: ${JSON.stringify(shellGesture)}`);
@@ -39,48 +43,57 @@ export async function runEvolutionCellProgressionFixture(tools, { label = 'final
   report.visual = await evaluate(evolutionOwnershipBoundaryExpression());
   report.visual.hierarchy = report.hierarchy; delete report.hierarchy;
   report.interaction = { selected, shellGesture, manipulation, purchase: report.purchase };
-  report.screenshots = { selected: await screenshot(`evolution-ownership-boundary-${label}-${report.simulationPath}-${report.rendererPath}-selected-1440x900.png`) };
-
-  const nextButton = await evaluate(`(()=>{const e=document.getElementById('evolution-next'),r=e.getBoundingClientRect();e.focus();return[r.left+r.width/2,r.top+r.height/2]})()`);
-  const beforeKeyboard = await evaluate('window.__CELL_SPHERE_APP__.memoryUi.selectedCell'); await key('Enter'); await wait(80);
-  const afterKeyboard = await evaluate('window.__CELL_SPHERE_APP__.memoryUi.selectedCell');
-  report.keyboard = { before: beforeKeyboard, after: afterKeyboard, expected: (beforeKeyboard + 1) % 2562,
-    nativeButtonPoint: nextButton, valid: afterKeyboard === (beforeKeyboard + 1) % 2562 };
-  if (enforce) ok(report.keyboard.valid, `Evolution native traversal failed: ${JSON.stringify(report.keyboard)}`);
+  report.keyboard = keyboard;
+  report.screenshots = { selected: await screenshot(`evolution-globe-first-navigation-${label}-${report.simulationPath}-${report.rendererPath}-selected-1440x900.png`) };
 
   const responsive = []; await evaluate(`document.documentElement.style.fontSize='200%'`);
   for (const [width, height] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[844,390],[1024,600],[1440,900]]) {
     await setViewport(width, height); await wait(100);
     const value = await evaluate(`(()=>{const rect=(node)=>{const r=node.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}},
-      canvas=document.getElementById('gl-canvas'),panel=document.getElementById('memory-node-panel'),action=document.getElementById('memory-unlock'),
+      canvas=document.getElementById('gl-canvas'),panel=document.getElementById('memory-node-panel'),action=document.getElementById('memory-unlock'),close=document.getElementById('memory-node-close'),
       body=panel.querySelector('.surface-body'),tabs=[...document.querySelectorAll('#scene-selector [role=tab]')],buttons=[...panel.querySelectorAll('button')].filter(e=>e.getClientRects().length);
-      body.scrollTop=body.scrollHeight;action.scrollIntoView({block:'nearest'});const c=rect(canvas),p=rect(panel),a=rect(action);
+      panel.scrollTop=0;body.scrollTop=0;close.scrollIntoView({block:'nearest'});const c=rect(canvas),p=rect(panel),x=rect(close),closePanelScrollTop=panel.scrollTop,closeBodyScrollTop=body.scrollTop;
+      body.scrollTop=body.scrollHeight;action.scrollIntoView({block:'nearest'});const a=rect(action),
+        panelOverflow=getComputedStyle(panel).overflowY,bodyOverflow=getComputedStyle(body).overflowY,
+        panelScrollable=panel.scrollHeight>panel.clientHeight+1&&['auto','scroll'].includes(panelOverflow),
+        bodyScrollable=body.scrollHeight>body.clientHeight+1&&['auto','scroll'].includes(bodyOverflow),selector=rect(document.getElementById('scene-selector'));
       return{viewport:{width:innerWidth,height:innerHeight},canvas:c,panel:p,action:a,treeItems:document.querySelectorAll('#evolution-tree').length,
-        navigatorButtons:document.querySelectorAll('#evolution-navigator button').length,neighborButtons:document.querySelectorAll('#evolution-neighbors button').length,
+        close:x,closePanelScrollTop,closeBodyScrollTop,detailButtons:buttons.length,panelNodes:panel.querySelectorAll('*').length,
+        obsoleteControls:document.querySelectorAll('#evolution-navigator,#evolution-current,#evolution-previous,#evolution-next,#evolution-frontier,#evolution-neighbors').length,
+        navigationTextAbsent:!/(Previous cell|Next cell|Next ready cell|DIRECT NEIGHBORS)/.test(panel.textContent),liveRegions:document.querySelectorAll('[aria-live]').length,
         noHorizontalScroll:document.documentElement.scrollWidth<=innerWidth&&document.body.scrollWidth<=innerWidth,
         panelHorizontalScroll:panel.scrollWidth>panel.clientWidth,panelScrollTop:panel.scrollTop,bodyScrollTop:body.scrollTop,
-        panelOverflowY:getComputedStyle(panel).overflowY,bodyOverflowY:getComputedStyle(body).overflowY,
+        panelOverflowY:panelOverflow,bodyOverflowY:bodyOverflow,panelScrollable,bodyScrollable,oneScrollOwner:!(panelScrollable&&bodyScrollable),
         actionReachable:a.width>=44&&a.height>=44&&a.left>=p.left-1&&a.right<=p.right+1&&a.top>=p.top-1&&a.bottom<=Math.min(innerHeight,p.bottom)+1,
+        closeReachable:x.width>=44&&x.height>=44&&x.left>=p.left-1&&x.right<=p.right+1&&x.top>=p.top-1&&x.bottom<=Math.min(innerHeight,p.bottom)+1,
+        sceneControlsClear:p.top>=selector.bottom-1||p.right<=selector.left+1||p.left>=selector.right-1,
         canvasReachable:c.width>0&&c.height>0&&c.right>0&&c.bottom>0,minimumButton:Math.min(...buttons.map(button=>button.getBoundingClientRect().height)),
-        minimumTab:Math.min(...tabs.map(tab=>tab.getBoundingClientRect().height))}})()`);
+        minimumTab:Math.min(...tabs.map(tab=>tab.getBoundingClientRect().height)),focusVisible:close.matches(':focus-visible')}})()`);
     responsive.push(value);
-    if (enforce) ok(value.treeItems === 0 && value.navigatorButtons <= 9 && value.neighborButtons <= 6
-      && value.noHorizontalScroll && !value.panelHorizontalScroll && value.actionReachable && value.canvasReachable
+    if (enforce) ok(value.treeItems === 0 && value.obsoleteControls === 0 && value.detailButtons === 2
+      && value.navigationTextAbsent && value.liveRegions === 2 && value.noHorizontalScroll && !value.panelHorizontalScroll
+      && value.oneScrollOwner && value.actionReachable && value.closeReachable && value.sceneControlsClear && value.canvasReachable
       && value.minimumButton >= 44 && value.minimumTab >= 44,
     `Evolution responsive failure ${width}x${height}: ${JSON.stringify(value)}`);
   }
   report.responsive = responsive; await evaluate(`document.documentElement.style.fontSize=''`);
-  await setViewport(390, 844); await wait(80); await setMedia([{ name: 'forced-colors', value: 'active' }]); await wait(80);
-  report.forcedColors = await evaluate(`(()=>{const action=document.getElementById('memory-unlock'),neighbor=document.querySelector('#evolution-neighbors button');
+  await setViewport(390, 844); await wait(80); await setMedia([{ name: 'forced-colors', value: 'active' }]);
+  await evaluate(`document.getElementById('memory-node-heading').focus({preventScroll:true})`); await key('Tab'); await wait(80);
+  report.forcedColors = await evaluate(`(()=>{const action=document.getElementById('memory-unlock'),close=document.getElementById('memory-node-close'),heading=document.getElementById('memory-node-heading');
     return{active:matchMedia('(forced-colors: active)').matches,actionBorder:getComputedStyle(action).borderTopStyle,
-      neighborBorder:neighbor?getComputedStyle(neighbor).borderTopStyle:null,current:document.getElementById('evolution-current').textContent,
+      closeBorder:getComputedStyle(close).borderTopStyle,current:window.__CELL_SPHERE_APP__.memoryUi.accessibleDescription,
+      focused:document.activeElement?.id,actionFocusVisible:action.matches(':focus-visible'),headingShortcuts:heading.getAttribute('aria-keyshortcuts'),
+      canvasShortcuts:document.getElementById('gl-canvas').getAttribute('aria-keyshortcuts'),
+      obsoleteControls:document.querySelectorAll('#evolution-navigator,#evolution-current,#evolution-previous,#evolution-next,#evolution-frontier,#evolution-neighbors').length,
       treeItems:document.querySelectorAll('#evolution-tree').length}})()`);
   if (enforce) ok(report.forcedColors.active && report.forcedColors.actionBorder !== 'none'
-    && report.forcedColors.neighborBorder !== 'none' && report.forcedColors.current.includes('Local Level') && report.forcedColors.treeItems === 0,
+    && report.forcedColors.closeBorder !== 'none' && report.forcedColors.focused === 'memory-unlock' && report.forcedColors.actionFocusVisible
+    && report.forcedColors.current.includes('Local Level') && report.forcedColors.headingShortcuts.includes('PageDown')
+    && report.forcedColors.canvasShortcuts.includes('ArrowLeft') && report.forcedColors.obsoleteControls === 0 && report.forcedColors.treeItems === 0,
   `Evolution forced colors failed: ${JSON.stringify(report.forcedColors)}`);
   await setMedia([]); await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.applySettings({...a.settings,motion:'reduced'})})()`); await wait(80);
-  const reducedA = await screenshot(`evolution-ownership-boundary-${label}-${report.simulationPath}-${report.rendererPath}-reduced-a.png`); await wait(320);
-  const reducedB = await screenshot(`evolution-ownership-boundary-${label}-${report.simulationPath}-${report.rendererPath}-reduced-b.png`);
+  const reducedA = await screenshot(`evolution-globe-first-navigation-${label}-${report.simulationPath}-${report.rendererPath}-reduced-a.png`); await wait(320);
+  const reducedB = await screenshot(`evolution-globe-first-navigation-${label}-${report.simulationPath}-${report.rendererPath}-reduced-b.png`);
   report.reducedMotion = { stable: reducedA.hash === reducedB.hash, first: reducedA, second: reducedB };
   if (enforce) ok(report.reducedMotion.stable, 'Evolution reduced-motion rendering changed without state change');
 
@@ -108,6 +121,122 @@ export async function runEvolutionCellProgressionFixture(tools, { label = 'final
   ok(tools.errors.length === 0, `Evolution browser errors: ${tools.errors.join(' | ')}`); return report;
 }
 
+async function runEvolutionKeyboardNavigation({ evaluate, key, wait }) {
+  const topology = await evaluate(`(async()=>{const {EVOLUTION_LAYOUT,EVOLUTION_TOPOLOGY}=await import('./src/game/skills/index.js');
+    const a=window.__CELL_SPHERE_APP__;window.__CSG_EVOLUTION_KEYBOARD_RESTORE__={meta:a.meta,archive:a.archive,
+      selectedCell:a.memoryUi.selectedCell,selectedNode:a.selectedNode,scene:a.scene,live:document.getElementById('live-region').textContent,
+      lastPurchaseAt:a.evolutionActivation.lastPurchaseAt,camera:{...a.camera,direction:a.camera.direction.slice(),right:a.camera.right.slice(),up:a.camera.up.slice()}};
+    return{nodeCount:EVOLUTION_TOPOLOGY.nodeCount,root:EVOLUTION_LAYOUT.rootCell,ring:Array.from(EVOLUTION_LAYOUT.rootRing)}})()`);
+  const prepare = async (mode, selectedCell = null, focus = 'canvas') => {
+    const value = await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,[{defaultMeta,validateMeta},{EVOLUTION_LAYOUT,EVOLUTION_TOPOLOGY,buildEvolutionSnapshot}]=await Promise.all([
+      import('./src/platform/storage.js'),import('./src/game/skills/index.js')]);a.selectScene('evolution');if(a.overlay==='memory-node')a.closeEvolutionCell();
+      const mode=${JSON.stringify(mode)},levels=mode==='all-owned'?Array.from({length:EVOLUTION_TOPOLOGY.nodeCount},(_,cell)=>({cell,level:'1'}))
+        :mode==='root-ring'?[EVOLUTION_LAYOUT.rootCell,...EVOLUTION_LAYOUT.rootRing].sort((left,right)=>left-right).map(cell=>({cell,level:'1'}))
+          :mode==='root' || mode==='poor'?[{cell:EVOLUTION_LAYOUT.rootCell,level:'1'}]:[],
+        balance=mode==='poor'?'0':'999999999999999999999999999999999999999999999999999999999999';
+      a.meta=validateMeta({...defaultMeta(),echoBalance:balance,totalEchoes:balance,evolutionLevels:levels,evolutionTransactionKeys:[]});
+      a.archive={...a.archive,evolution:[]};a.selectedNode=null;a.memorySnapshot=buildEvolutionSnapshot(a.meta);a.evolutionActivation.lastPurchaseAt=-Infinity;
+      const selected=${JSON.stringify(selectedCell)};if(Number.isInteger(selected))a.selectEvolutionCell(selected,'keyboard');
+      const p=a.memorySnapshot.evolutionProjection,ready=Array.from(p.readyCells).sort((left,right)=>left-right);
+      return{mode,ownedCount:p.ownedCellCount,ready,unownedReady:ready.filter(cell=>!p.owned[cell]),ownedReady:ready.filter(cell=>p.owned[cell]),
+        levels:JSON.stringify(a.meta.evolutionLevels),events:a.archive.evolution.length}})()`);
+    await wait(60);
+    await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__,target=${JSON.stringify(focus)}==='heading'
+      ?document.getElementById('memory-node-heading'):a.canvas;target.focus({preventScroll:true})})()`);
+    await wait(20); return value;
+  };
+  const read = () => evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,{EVOLUTION_TOPOLOGY,evolutionCellState}=await import('./src/game/skills/index.js'),
+    cell=a.memoryUi.selectedCell??a.selectedNode,valid=Number.isInteger(cell)&&cell>=0&&cell<EVOLUTION_TOPOLOGY.nodeCount,
+    state=valid?evolutionCellState(a.memorySnapshot.evolutionProjection,cell,cell):null,active=document.activeElement,panel=document.getElementById('memory-node-panel');
+    let cameraAlignment=null;if(valid){const at=cell*3;cameraAlignment=a.camera.direction[0]*EVOLUTION_TOPOLOGY.positions[at]
+      +a.camera.direction[1]*EVOLUTION_TOPOLOGY.positions[at+1]+a.camera.direction[2]*EVOLUTION_TOPOLOGY.positions[at+2];}
+    return{scene:a.scene,selected:valid?cell:null,localLevel:state?.localLevel??null,owned:state?.owned??null,
+      overlay:a.overlay,focus:active?.id??null,focusVisible:Boolean(active?.matches?.(':focus-visible')),cameraAlignment,
+      heading:document.getElementById('memory-node-heading').textContent,description:a.memoryUi.accessibleDescription,
+      live:document.getElementById('live-region').textContent,levels:JSON.stringify(a.meta.evolutionLevels),events:a.archive.evolution.length,
+      detailButtons:panel.querySelectorAll('button').length,liveRegions:document.querySelectorAll('[aria-live]').length,
+      obsoleteControls:document.querySelectorAll('#evolution-navigator,#evolution-current,#evolution-previous,#evolution-next,#evolution-frontier,#evolution-neighbors').length,
+      canvasShortcuts:a.canvas.getAttribute('aria-keyshortcuts'),headingShortcuts:document.getElementById('memory-node-heading').getAttribute('aria-keyshortcuts')}})()`);
+  const press = async (name, keyName, expected, expectedFocus, options = {}) => {
+    const before = await read(); await key(keyName, options); await wait(70); const after = await read();
+    const navigated = after.selected === expected && after.focus === expectedFocus && after.overlay === 'memory-node'
+      && after.levels === before.levels && after.events === before.events && after.cameraAlignment > .999
+      && after.description.includes(`Cell ${expected + 1} of ${topology.nodeCount}`) && after.live === after.description
+      && after.detailButtons === 2 && after.obsoleteControls === 0 && after.liveRegions === 2 && after.focusVisible;
+    return { name, key: keyName, options, expected, before, after, valid: navigated };
+  };
+  const reports = []; let focus = null; let boundaries = null; let activation = null; let noReady = null;
+  try {
+    await prepare('fresh', null, 'canvas');
+    reports.push(await press('invalid selection enters backward order', 'ArrowLeft', topology.nodeCount - 1, 'gl-canvas'));
+    reports.push(await press('last cell wraps forward', 'ArrowRight', 0, 'gl-canvas'));
+    reports.push(await press('authored root', 'Home', topology.root, 'gl-canvas'));
+    reports.push(await press('one ready cell forward', 'PageDown', topology.root, 'gl-canvas'));
+    reports.push(await press('one ready cell backward', 'PageUp', topology.root, 'gl-canvas'));
+
+    let fixture = await prepare('root', topology.root, 'canvas');
+    const nextUnowned = fixture.unownedReady.find((cell) => cell > topology.root) ?? fixture.unownedReady[0];
+    reports.push(await press('root-only unowned preference', 'PageDown', nextUnowned, 'gl-canvas'));
+    fixture = await prepare('root', fixture.unownedReady[0], 'heading');
+    reports.push(await press('ready backward wrap on detail', 'PageUp', fixture.unownedReady.at(-1), 'memory-node-heading'));
+    reports.push(await press('ready forward wrap on detail', 'PageDown', fixture.unownedReady[0], 'memory-node-heading'));
+    reports.push(await press('numeric traversal on detail', 'ArrowRight', (fixture.unownedReady[0] + 1) % topology.nodeCount, 'memory-node-heading'));
+
+    fixture = await prepare('root-ring', topology.root, 'canvas');
+    const ringTarget = fixture.unownedReady.find((cell) => cell > topology.root) ?? fixture.unownedReady[0];
+    const ringStep = await press('root-plus-ring unowned preference', 'PageDown', ringTarget, 'gl-canvas');
+    ringStep.fixture = fixture; ringStep.valid &&= fixture.ownedCount === 7 && fixture.unownedReady.length > 0 && ringStep.after.owned === false; reports.push(ringStep);
+
+    fixture = await prepare('all-owned', topology.nodeCount - 1, 'canvas');
+    const ownedForward = await press('owned refinement fallback forward', 'PageDown', 0, 'gl-canvas');
+    ownedForward.fixture = { ownedCount:fixture.ownedCount, unownedReady:fixture.unownedReady.length, ownedReady:fixture.ownedReady.length };
+    ownedForward.valid &&= fixture.ownedCount === topology.nodeCount && fixture.unownedReady.length === 0 && ownedForward.after.owned === true; reports.push(ownedForward);
+    const ownedBackward = await press('owned refinement fallback backward', 'PageUp', topology.nodeCount - 1, 'gl-canvas');
+    ownedBackward.valid &&= ownedBackward.after.owned === true; reports.push(ownedBackward);
+
+    await prepare('poor', topology.root, 'heading'); const noReadyBefore = await read(); await key('PageDown'); await wait(70);
+    const noReadyAfter = await read(); noReady = { before:noReadyBefore, after:noReadyAfter,
+      valid:noReadyAfter.selected===noReadyBefore.selected&&noReadyAfter.focus==='memory-node-heading'
+        &&noReadyAfter.levels===noReadyBefore.levels&&noReadyAfter.events===noReadyBefore.events
+        &&noReadyAfter.live==='No ready Evolution cell.'&&noReadyAfter.focusVisible };
+
+    await prepare('fresh', topology.root, 'canvas'); const ignored=[];
+    for (const [name, options] of [['repeat',{repeat:true}],['shift',{shift:true}],['control',{ctrl:true}],['alt',{alt:true}],['meta',{meta:true}]]) {
+      const before=await read();await key('ArrowRight',options);await wait(40);const after=await read();
+      ignored.push({name,options,before,after,valid:after.selected===before.selected&&after.focus===before.focus
+        &&after.levels===before.levels&&after.events===before.events&&after.live===before.live});
+    }
+    const native=[];for(const id of ['memory-unlock','memory-node-close']){await evaluate(`document.getElementById(${JSON.stringify(id)}).focus({preventScroll:true})`);
+      const before=await read();await key('ArrowRight');await wait(40);const after=await read();native.push({id,before,after,
+        valid:after.selected===before.selected&&after.focus===id&&after.levels===before.levels&&after.events===before.events});}
+    await evaluate(`document.getElementById('scene-evolution').focus({preventScroll:true})`);const tabBefore=await read();await key('Home');await wait(70);const tabAfter=await read();
+    await evaluate(`window.__CELL_SPHERE_APP__.canvas.focus({preventScroll:true})`);const outsideBefore=await read();await key('ArrowRight');await wait(50);const outsideAfter=await read();
+    boundaries={ignored,native,tablist:{before:tabBefore,after:tabAfter,valid:tabAfter.scene==='home'&&tabAfter.focus==='scene-home'},
+      outsideEvolution:{before:outsideBefore,after:outsideAfter,valid:outsideAfter.scene==='home'&&outsideAfter.selected===outsideBefore.selected},
+      valid:ignored.every(value=>value.valid)&&native.every(value=>value.valid)&&tabAfter.scene==='home'&&tabAfter.focus==='scene-home'
+        &&outsideAfter.scene==='home'&&outsideAfter.selected===outsideBefore.selected};
+
+    await prepare('fresh', null, 'canvas'); await key('Home'); await wait(70); const selected = await read(); await key('Enter'); await wait(140); const entered = await read();
+    await wait(400); await key(' '); await wait(140); const spaced = await read(); activation={selected,entered,spaced,
+      valid:selected.selected===topology.root&&selected.localLevel==='0'&&entered.localLevel==='1'&&entered.events===selected.events+1
+        &&spaced.localLevel==='2'&&spaced.events===entered.events+1&&spaced.focus==='gl-canvas'};
+
+    await prepare('fresh', null, 'canvas');await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.canvas.focus({preventScroll:true});a.selectEvolutionCell(${topology.root},'cell')})()`);await wait(80);
+    const enteredFocus=await read();await key('Escape');await wait(80);const restoredFocus=await read();focus={entered:enteredFocus,restored:restoredFocus,
+      valid:enteredFocus.focus==='memory-node-heading'&&enteredFocus.focusVisible&&restoredFocus.focus==='gl-canvas'&&restoredFocus.overlay===null};
+  } finally {
+    await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,saved=window.__CSG_EVOLUTION_KEYBOARD_RESTORE__,{buildEvolutionSnapshot}=await import('./src/game/skills/index.js');
+      a.selectScene('evolution');if(a.overlay==='memory-node')a.closeEvolutionCell();a.meta=saved.meta;a.archive=saved.archive;a.selectedNode=null;
+      a.memorySnapshot=buildEvolutionSnapshot(a.meta);a.evolutionActivation.lastPurchaseAt=saved.lastPurchaseAt;
+      if(Number.isInteger(saved.selectedCell))a.selectEvolutionCell(saved.selectedCell,'cell');
+      Object.assign(a.camera,saved.camera);document.getElementById('live-region').textContent=saved.live;delete window.__CSG_EVOLUTION_KEYBOARD_RESTORE__;return true})()`);
+    await wait(80);
+  }
+  return { schema:1, commands:reports, noReady, boundaries, activation, focus,
+    shortcuts:{canvas:reports[0]?.after.canvasShortcuts,heading:reports.find(value=>value.after.focus==='memory-node-heading')?.after.headingShortcuts},
+    valid:reports.every(value=>value.valid)&&noReady?.valid&&boundaries?.valid&&activation?.valid&&focus?.valid };
+}
+
 const PREPARE_EXPRESSION = `(async()=>{
   const app=window.__CELL_SPHERE_APP__,original={meta:app.meta,archive:app.archive,selectedNode:app.selectedNode,
     historySnapshot:app.historySnapshot,historyPlaybackActive:app.historyPlaybackActive,
@@ -132,8 +261,8 @@ const PREPARE_EXPRESSION = `(async()=>{
       app.renderer.gl.RGBA,app.renderer.gl.UNSIGNED_BYTE,data);}else data=app.renderer.ctx.getImageData(left,top,size,size).data;
     const color=[0,0,0];for(let at=0;at<data.length;at+=4){color[0]+=data[at];color[1]+=data[at+1];color[2]+=data[at+2];}
     return color.map(value=>value/(data.length/4));})();
-  app.selectEvolutionCell(root,'navigator');
-  const rootText={heading:document.getElementById('memory-node-heading').textContent,current:document.getElementById('evolution-current').textContent,
+  app.selectEvolutionCell(root,'keyboard');
+  const rootText={heading:document.getElementById('memory-node-heading').textContent,current:app.memoryUi.accessibleDescription,
     description:document.getElementById('memory-node-description')?.textContent??''};
   app.closeActiveOverlay();
   const rootFields=EVOLUTION_LAYOUT.diagnostics.root,rootAlignment=app.camera.direction[0]*rootX+app.camera.direction[1]*rootY+app.camera.direction[2]*rootZ,
@@ -169,9 +298,11 @@ const SELECTION_EXPRESSION = `(()=>{const app=window.__CELL_SPHERE_APP__,f=windo
   const selectedCells=[...app.memorySnapshot.evolutionStatus].flatMap((status,cell)=>[5,6,7,9,10].includes(status)?[cell]:[]);
   return{exactCell:app.memoryUi.selectedCell===f.targetCell&&app.selectedNode===f.targetCell,selectedCells:selectedCells.length,
     selectedCell:selectedCells[0]??null,levelEntriesUnchanged:JSON.stringify(app.meta.evolutionLevels)===f.levelsBefore,
-    heading:document.getElementById('memory-node-heading').textContent,current:document.getElementById('evolution-current').textContent,
-    treeItems:document.querySelectorAll('#evolution-tree').length,navigatorButtons:document.querySelectorAll('#evolution-navigator button').length,
-    neighborButtons:document.querySelectorAll('#evolution-neighbors button').length,ready:p.reachable[f.targetCell]===1&&p.affordable[f.targetCell]===1}})()`;
+    heading:document.getElementById('memory-node-heading').textContent,current:app.memoryUi.accessibleDescription,
+    focus:document.activeElement?.id,detailButtons:document.querySelectorAll('#memory-node-panel button').length,
+    obsoleteControls:document.querySelectorAll('#evolution-navigator,#evolution-current,#evolution-previous,#evolution-next,#evolution-frontier,#evolution-neighbors').length,
+    navigationTextAbsent:!/(Previous cell|Next cell|Next ready cell|DIRECT NEIGHBORS)/.test(document.getElementById('memory-node-panel').textContent),
+    treeItems:document.querySelectorAll('#evolution-tree').length,ready:p.reachable[f.targetCell]===1&&p.affordable[f.targetCell]===1}})()`;
 
 function POST_EXPRESSION(simulationFallback) { return `(async()=>{
   const app=window.__CELL_SPHERE_APP__,f=window.__CSG_EVOLUTION_CELL_FIXTURE__,renderer=app.renderer;
@@ -200,17 +331,20 @@ function POST_EXPRESSION(simulationFallback) { return `(async()=>{
     domainComponents=Array.from(EVOLUTION_LAYOUT.diagnostics.domainComponentCount);
   const semantic={presentationCells:EVOLUTION_TOPOLOGY.nodeCount,presentationEdges:EVOLUTION_TOPOLOGY.edgeCount,
     progressionCells:afterProjection.levelByCell.length,archetypes:EVOLUTION_ARCHETYPES.length,selectedCells,
-    treeItems:document.querySelectorAll('#evolution-tree').length,navigatorButtons:document.querySelectorAll('#evolution-navigator button').length,
-    neighborButtons:document.querySelectorAll('#evolution-neighbors button').length,layoutDigest:EVOLUTION_LAYOUT.diagnostics.digest,
+    treeItems:document.querySelectorAll('#evolution-tree').length,detailButtons:document.querySelectorAll('#memory-node-panel button').length,
+    obsoleteControls:document.querySelectorAll('#evolution-navigator,#evolution-current,#evolution-previous,#evolution-next,#evolution-frontier,#evolution-neighbors').length,
+    layoutDigest:EVOLUTION_LAYOUT.diagnostics.digest,
     edgeDigest:EVOLUTION_LAYOUT.diagnostics.edgeDigest,rootCell:EVOLUTION_LAYOUT.rootCell,components,domainComponents,tierMedians,edgeStructure,packedRegionMatches,
     valid:EVOLUTION_TOPOLOGY.nodeCount===2562&&EVOLUTION_TOPOLOGY.edgeCount===7680&&afterProjection.levelByCell.length===2562
       &&EVOLUTION_ARCHETYPES.length===42&&selectedCells===1&&document.querySelectorAll('#evolution-tree').length===0
-      &&document.querySelectorAll('#evolution-navigator button').length<=9&&components.every(value=>value===1)
+      &&document.querySelectorAll('#memory-node-panel button').length===2
+      &&document.querySelectorAll('#evolution-navigator,#evolution-current,#evolution-previous,#evolution-next,#evolution-frontier,#evolution-neighbors').length===0
+      &&components.every(value=>value===1)
       &&domainComponents.every(value=>value===1)&&tierMedians.every((value,index)=>index===0||value>tierMedians[index-1])
       &&edgeStructure.archetype>0&&edgeStructure.domain>0&&packedRegionMatches};
   const entrySamples=[];for(let sample=0;sample<6;sample++){app.selectScene('home');const at=performance.now();app.selectScene('evolution');
     app.renderer.render({snapshot:app.memorySnapshot,worldIdentity:null,camera:app.camera,selectedNode:null,highlightedCells:[],time:0,pulse:false});if(sample)entrySamples.push(performance.now()-at);}
-  app.selectEvolutionCell(target,'navigator');const activeRenderer=app.renderer,layoutReference=app.evolutionLayout,
+  app.selectEvolutionCell(target,'keyboard');const activeRenderer=app.renderer,layoutReference=app.evolutionLayout,
     geometry=activeRenderer.backend==='webgl2'?activeRenderer.world.geometry:activeRenderer.dual;
   const buildSamples=[],updateSamples=[],steadySamples=[];let snapshot=app.memorySnapshot;
   for(let sample=0;sample<12;sample++){const cell=(target+sample*137)%EVOLUTION_TOPOLOGY.nodeCount,buildAt=performance.now();
@@ -237,7 +371,7 @@ function POST_EXPRESSION(simulationFallback) { return `(async()=>{
     &&substrate.largestWater>=substrate.waterCells*.70&&substrate.sameLandAdjacency>=.90&&substrate.biomes>=6
     &&substrate.landBiomes>=4&&substrate.oceanBiomes>=1&&substrate.sameBiomeAdjacency>=.65&&substrate.lakes>=1
     &&substrate.coastEdges>0&&substrate.lakeEdges>0&&substrate.digest===substrate.repeatDigest&&substrate.stableReference;
-  const hierarchy=measureHierarchy(activeRenderer);return{schema:5,rendererPath:activeRenderer.backend,
+  const hierarchy=measureHierarchy(activeRenderer);return{schema:6,rendererPath:activeRenderer.backend,
     simulationPath:${JSON.stringify(simulationFallback ? 'fallback' : 'worker')},rootEntry:f.rootEntry,semantic,substrate,purchase,performance:performanceReport,packing,hierarchy};
   function measureHierarchy(targetRenderer){
     const locked=buildEvolutionSnapshot({...app.meta,evolutionLevels:[],echoBalance:'0'},null,[]),fields=app.evolutionFields;

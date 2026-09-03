@@ -20,7 +20,8 @@
 </head>
 <body>
   <div id="app">
-    <canvas id="gl-canvas" tabindex="0" aria-label="An autonomous living world. Drag to rotate or zoom, select a cell to inspect it, or press Enter or Space to inspect the centered cell." role="img"></canvas>
+    <canvas id="gl-canvas" tabindex="0" aria-label="An autonomous living world. Drag to rotate or zoom, select a cell to inspect it, or press Enter or Space to inspect the centered cell." aria-describedby="evolution-navigation-help" aria-keyshortcuts="ArrowLeft ArrowRight Home PageUp PageDown Enter Space" role="img"></canvas>
+    <p id="evolution-navigation-help" class="sr-only">In Evolution, Left and Right Arrow move by exact cell number, Home moves to First Division, and Page Up or Page Down move among ready cells. These commands select and center cells without purchasing.</p>
 
     <nav id="scene-selector" class="scene-selector material-clear" role="tablist" aria-label="Scenes">
       <button id="scene-home" role="tab" type="button" data-scene="home" aria-controls="title-screen" aria-selected="true" tabindex="0">Home</button>
@@ -104,13 +105,7 @@
 
     <section id="memory-node-panel" class="context-surface skill-detail material-regular" hidden aria-labelledby="memory-node-heading">
       <header><p id="memory-node-branch" class="eyebrow">EVOLUTION CELL</p><button id="memory-node-close" class="close-btn" data-action="quiet" type="button">Close</button></header>
-      <div class="surface-body"><h2 id="memory-node-heading" tabindex="-1">Evolution cell</h2><p id="memory-node-summary" class="panel-copy"></p><p id="memory-node-detail" class="panel-copy"></p><p id="memory-node-change" class="skill-change" hidden></p><dl id="memory-node-meta" class="inspection-grid"></dl>
-        <nav id="evolution-navigator" class="evolution-navigator" aria-label="Evolution cell navigation">
-          <p id="evolution-current" class="panel-copy"></p>
-          <div class="evolution-traversal"><button id="evolution-previous" class="btn btn-secondary" type="button">Previous cell</button><button id="evolution-next" class="btn btn-secondary" type="button">Next cell</button><button id="evolution-frontier" class="btn btn-secondary" type="button">Next ready cell</button></div>
-          <p class="eyebrow">DIRECT NEIGHBORS</p><div id="evolution-neighbors" class="evolution-neighbors"></div>
-        </nav>
-      </div>
+      <div class="surface-body"><h2 id="memory-node-heading" tabindex="-1" aria-describedby="evolution-navigation-help" aria-keyshortcuts="ArrowLeft ArrowRight Home PageUp PageDown">Evolution cell</h2><p id="memory-node-summary" class="panel-copy"></p><p id="memory-node-detail" class="panel-copy"></p><p id="memory-node-change" class="skill-change" hidden></p><dl id="memory-node-meta" class="inspection-grid"></dl></div>
       <footer class="surface-actions"><button id="memory-unlock" class="btn btn-primary" data-action="recommended" type="button">Unlock</button></footer>
     </section>
 

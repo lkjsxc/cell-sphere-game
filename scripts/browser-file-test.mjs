@@ -79,7 +79,7 @@ try {
   const tools={evaluate,wait,poll,errors:cdp.errors,click,simulationFallback:forceSimulationFallback,browserIdentity,
     pointerDown:(x,y)=>pointerDown(cdp,session,x,y),pointerMove:(x,y)=>pointerMove(cdp,session,x,y),
     pointerUp:(x,y)=>pointerUp(cdp,session,x,y),
-    key:(value)=>key(cdp,session,value),tap:(x,y)=>tap(cdp,session,x,y),drag:(from,to)=>drag(cdp,session,from,to),
+    key:(value,options)=>key(cdp,session,value,options),tap:(x,y)=>tap(cdp,session,x,y),drag:(from,to)=>drag(cdp,session,from,to),
     flick:(from,to,options)=>flick(cdp,session,from,to,options),
     touchFlick:(from,to,options)=>touchFlick(cdp,session,from,to,options),
     wheel:(x,y)=>wheel(cdp,session,x,y),touchDrag:(from,to)=>touchDrag(cdp,session,from,to),
@@ -122,7 +122,7 @@ try {
       trackedWorkingTreeDirty:trackedWorkingTreeDirty(),
       sourceUrl:configuredUrl??`file://${ROOT}/index.html`,browser:browserIdentity.product,protocolVersion:browserIdentity.protocolVersion,
       browserErrors:cdp.errors.slice(0,20),browserStderr:cdp.stderr.slice(0,20),...evidence},null,2)+'\n';
-    const name=`evolution-ownership-boundary-v1-${label}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
+    const name=`evolution-globe-first-navigation-v1-${label}-${evidence.simulationPath}-${evidence.rendererPath}.json`;
     writeFileSync(resolve(REPORTS,name),report);const hash=createHash('sha256').update(report).digest('hex');
     console.log(`test:browser:evolution-cells — ${recordBaseline?'RECORDED':'PASS'} (${evidence.simulationPath}/${evidence.rendererPath}; ${evidence.semantic.progressionCells} cells; report ${name}; sha256 ${hash})`);
   } else if (environmentPressureOnly) {
@@ -317,10 +317,13 @@ function gitValue(args) {
 
 function trackedWorkingTreeDirty() { return Boolean(gitValue(['diff', '--name-only']) || gitValue(['diff', '--cached', '--name-only'])); }
 
-async function key(cdp, session, value) {
-  const code = value; const virtual = value === 'Enter' ? 13 : value === ' ' ? 32
-    : value === 'ArrowLeft' ? 37 : value === 'ArrowUp' ? 38 : value === 'ArrowRight' ? 39 : value === 'ArrowDown' ? 40 : 0;
-  const common = { key:value, code, ...(virtual ? { windowsVirtualKeyCode:virtual, nativeVirtualKeyCode:virtual } : {}) };
+async function key(cdp, session, value, options = {}) {
+  const code = value; const virtual = value === 'Tab' ? 9 : value === 'Enter' ? 13 : value === ' ' ? 32
+    : value === 'PageUp' ? 33 : value === 'PageDown' ? 34 : value === 'End' ? 35 : value === 'Home' ? 36
+      : value === 'ArrowLeft' ? 37 : value === 'ArrowUp' ? 38 : value === 'ArrowRight' ? 39 : value === 'ArrowDown' ? 40 : 0;
+  const modifiers = (options.alt ? 1 : 0) | (options.ctrl ? 2 : 0) | (options.meta ? 4 : 0) | (options.shift ? 8 : 0);
+  const common = { key:value, code, modifiers, autoRepeat:Boolean(options.repeat),
+    ...(virtual ? { windowsVirtualKeyCode:virtual, nativeVirtualKeyCode:virtual } : {}) };
   await cdp.send('Input.dispatchKeyEvent', { type:'rawKeyDown', ...common }, session);
   if (value === 'Enter' || value === ' ') await cdp.send('Input.dispatchKeyEvent', { type:'char', ...common, text:value === 'Enter' ? '\r' : ' ' }, session);
   await cdp.send('Input.dispatchKeyEvent', { type:'keyUp', ...common }, session);

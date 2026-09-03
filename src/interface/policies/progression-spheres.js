@@ -36,15 +36,21 @@ export function presentEvolution(app, restoreCamera = false) {
 export function selectEvolutionCell(app, cell, source = 'cell') {
   const projection = app.memorySnapshot?.evolutionProjection ?? buildEvolutionProjection(app.meta);
   const state = evolutionCellState(projection, cell, cell); if (state.cell === null) return false;
-  if (app.overlay === 'memory-node' && app.memoryUi.selectedCell === cell) return activateSelectedEvolutionCell(app, cell, source);
+  const keyboardNavigation = source === 'keyboard';
+  if (app.overlay === 'memory-node' && app.memoryUi.selectedCell === cell) {
+    if (!keyboardNavigation) return activateSelectedEvolutionCell(app, cell, source);
+    app.focusCamera(app.topo4.positions.subarray(cell * 3, cell * 3 + 3));
+    app.memoryUi.openCell(cell, projection); app.resize(true); return true;
+  }
   const surfaceOpen = app.overlay === 'memory-node';
   if (!surfaceOpen) app.closeActiveOverlay();
   app.selectedNode = cell; app.memorySnapshot = buildEvolutionSnapshot(app.meta, cell);
-  if (source === 'navigator') app.focusCamera(app.topo4.positions.subarray(cell * 3, cell * 3 + 3));
+  if (keyboardNavigation) app.focusCamera(app.topo4.positions.subarray(cell * 3, cell * 3 + 3));
   if (surfaceOpen) app.memoryUi.openCell(cell, app.memorySnapshot.evolutionProjection);
   else {
     app.memoryUi.openCell(cell, app.memorySnapshot.evolutionProjection); app.overlay = 'memory-node';
-    app.surfaces.open('memory-node', app.memoryUi.panel, document.getElementById('memory-node-heading'));
+    app.surfaces.open('memory-node', app.memoryUi.panel,
+      keyboardNavigation ? null : document.getElementById('memory-node-heading'));
   }
   app.resize(true); return true;
 }

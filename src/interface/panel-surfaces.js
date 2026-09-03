@@ -1,28 +1,17 @@
-/** Bounded exact-cell Evolution detail and native topology navigation. */
+/** Bounded exact-cell Evolution detail and native purchase action. */
 import {
-  EVOLUTION_TOPOLOGY, evolutionCellState, evolutionArchetypeForCell,
+  EVOLUTION_TOPOLOGY, evolutionCellState,
   previewEvolutionLevel,
 } from '../game/skills/index.js';
 import { formatProgressionEngineering, normalizeProgressionInteger } from '../core/progression-integer.js';
 
 export function createMemorySurface(options) {
   const panel = byId('memory-node-panel'); const unlock = /** @type {HTMLButtonElement} */ (byId('memory-unlock'));
-  const change = byId('memory-node-change'); const neighbors = byId('evolution-neighbors');
-  const previous = /** @type {HTMLButtonElement} */ (byId('evolution-previous'));
-  const next = /** @type {HTMLButtonElement} */ (byId('evolution-next'));
-  const frontier = /** @type {HTMLButtonElement} */ (byId('evolution-frontier'));
-  let selectedCell = null; let projection = null; let feedbackTimer = 0;
+  const change = byId('memory-node-change');
+  let selectedCell = null; let projection = null; let feedbackTimer = 0; let accessibleDescription = '';
   byId('memory-node-close').addEventListener('click', options.onCloseNode);
   unlock.addEventListener('click', () => { if (selectedCell !== null) options.onUnlock(selectedCell); });
-  previous.addEventListener('click', () => navigate((selectedCell - 1 + EVOLUTION_TOPOLOGY.nodeCount) % EVOLUTION_TOPOLOGY.nodeCount));
-  next.addEventListener('click', () => navigate((selectedCell + 1) % EVOLUTION_TOPOLOGY.nodeCount));
-  frontier.addEventListener('click', () => { const cell = nextReadyCell(); if (cell !== null) navigate(cell); });
-  byId('evolution-navigator').addEventListener('keydown', (event) => {
-    if (event.key === 'Home') { event.preventDefault(); navigate(0); }
-    if (event.key === 'End') { event.preventDefault(); navigate(EVOLUTION_TOPOLOGY.nodeCount - 1); }
-  });
 
-  function navigate(cell) { if (Number.isInteger(cell)) options.onSelect(cell, 'navigator'); }
   function render() {
     if (selectedCell === null || !projection) return;
     const state = evolutionCellState(projection, selectedCell, selectedCell);
@@ -37,7 +26,6 @@ export function createMemorySurface(options) {
         : state.locked ? 'Local Level 0 · locked by direct cell adjacency' : state.affordable ? 'Local Level 0 · ready to establish' : 'Local Level 0 · reachable · more Echoes required';
     const changes = preview?.changes?.map(formatChange).join(' · ') || 'No further change can be represented';
     const unlocked = preview?.unlocked?.map(humanize).join(', ') || 'No new habitat';
-    const readyNeighbors = state.neighbors.filter((cell) => projection.reachable[cell] && !projection.owned[cell]);
     const instruction = state.selectedReady && purchasesOpen ? `Activate this selected cell again to ${state.owned ? 'strengthen' : 'establish'} it.`
       : state.owned ? 'Activate to select this cell.' : state.reachable ? 'Activate to select this reachable cell.' : 'Establish a directly adjacent cell first.';
     byId('memory-node-meta').replaceChildren(...definitionRows([
@@ -46,7 +34,6 @@ export function createMemorySurface(options) {
       ['Shared archetype rank', boundary ? `Rank ${number(state.aggregateRank)} · unavailable` : `Rank ${number(state.aggregateRank)} → ${number(state.nextAggregateRank)}`],
       ['Exact next cost', boundary ? `${number(projection.balance)} Echoes held` : `${number(state.nextCost)} Echoes · ${number(projection.balance)} held`],
       ['Before → after', changes], ['New habitat', unlocked], ['Purchase', instruction],
-      ['Ready neighboring cells', readyNeighbors.length ? readyNeighbors.map(cellName).join(', ') : 'No additional ready neighbor'],
     ]));
     unlock.hidden = false; unlock.disabled = !state.selectedReady || !purchasesOpen;
     const verb = state.owned ? 'Strengthen' : 'Establish';
@@ -57,30 +44,7 @@ export function createMemorySurface(options) {
         : `${verb} ${state.nameEn} at cell ${state.cell + 1} for ${number(state.nextCost)} Echoes`);
     if (state.nextCost === null) delete unlock.dataset.exactValue; else unlock.dataset.exactValue = state.nextCost;
     unlock.dataset.action = state.selectedReady && purchasesOpen ? 'recommended' : 'normal';
-    renderNavigator(state);
-  }
-
-  function renderNavigator(state) {
-    byId('evolution-current').textContent = `Cell ${state.cell + 1} of ${EVOLUTION_TOPOLOGY.nodeCount}. ${state.nameEn}. ${state.domain}. Local Level ${number(state.localLevel)}. Shared rank ${number(state.aggregateRank)}. ${statusName(state)}.`;
-    previous.setAttribute('aria-label', `Previous Evolution cell, ${cellName((state.cell - 1 + EVOLUTION_TOPOLOGY.nodeCount) % EVOLUTION_TOPOLOGY.nodeCount)}`);
-    next.setAttribute('aria-label', `Next Evolution cell, ${cellName((state.cell + 1) % EVOLUTION_TOPOLOGY.nodeCount)}`);
-    neighbors.replaceChildren(...state.neighbors.map((cell) => {
-      const neighborState = evolutionCellState(projection, cell, state.cell); const button = document.createElement('button');
-      button.type = 'button'; button.className = 'btn btn-secondary'; button.textContent = `Cell ${cell + 1} · ${neighborState.nameEn}`;
-      button.setAttribute('aria-label', `Direct neighbor cell ${cell + 1}, ${neighborState.nameEn}, ${neighborState.domain}, Local Level ${number(neighborState.localLevel)}, Shared rank ${number(neighborState.aggregateRank)}, ${statusName(neighborState)}`);
-      button.addEventListener('click', () => navigate(cell)); return button;
-    }));
-    const ready = nextReadyCell(); frontier.disabled = ready === null;
-    frontier.textContent = ready === null ? 'No ready cell' : 'Next ready cell';
-    frontier.setAttribute('aria-label', ready === null ? 'No reachable affordable Evolution cell'
-      : `Move to next reachable affordable Evolution cell, ${cellName(ready)}`);
-  }
-
-  function nextReadyCell() {
-    if (!projection?.readyCells?.length) return null;
-    const ready = Array.from(projection.readyCells).filter((cell) => !projection.owned[cell]);
-    const candidates = ready.length ? ready : Array.from(projection.readyCells);
-    return candidates.find((cell) => cell > (selectedCell ?? -1)) ?? candidates[0] ?? null;
+    accessibleDescription = `Cell ${state.cell + 1} of ${EVOLUTION_TOPOLOGY.nodeCount}. ${state.nameEn}. ${state.domain}. Local Level ${number(state.localLevel)}. Shared rank ${number(state.aggregateRank)}. ${statusName(state)}.`;
   }
 
   function acquisition(preview, newly) {
@@ -94,12 +58,12 @@ export function createMemorySurface(options) {
     openCell(cell, nextProjection) { selectedCell = cell; projection = nextProjection; change.hidden = true; panel.hidden = false; render(); },
     refresh(nextProjection, newly = [], preview = null) { projection = nextProjection; if (selectedCell !== null) render(); if (preview) acquisition(preview, newly); },
     sync(nextProjection) { projection = nextProjection; if (selectedCell !== null) render(); },
-    closeNode() { panel.hidden = true; selectedCell = null; projection = null; clearTimeout(feedbackTimer); feedbackTimer = 0; change.hidden = true; },
+    closeNode() { panel.hidden = true; selectedCell = null; projection = null; accessibleDescription = ''; clearTimeout(feedbackTimer); feedbackTimer = 0; change.hidden = true; },
     get selectedCell() { return selectedCell; },
+    get accessibleDescription() { return accessibleDescription; },
   };
 }
 
-function cellName(cell) { const archetype = evolutionArchetypeForCell(cell); return `Cell ${cell + 1}, ${archetype?.nameEn ?? 'unknown ability'}`; }
 function statusName(state) { return state.owned ? state.affordable ? 'owned and affordable' : 'owned and unaffordable'
   : state.reachable ? state.affordable ? 'reachable and affordable' : 'reachable and unaffordable' : 'locked'; }
 function formatChange(change) { return `${humanize(change.key)} ${decimal(change.before)} → ${decimal(change.after)}`; }

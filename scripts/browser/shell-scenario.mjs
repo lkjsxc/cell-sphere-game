@@ -273,12 +273,14 @@ async function evolutionActivationEvidence(t) {
     p=a.memorySnapshot.evolutionProjection,n=evolutionCellState(p,${cell},a.memoryUi.selectedCell);return{level:n.localLevel,aggregate:n.aggregateRank,
       selected:a.memoryUi.selectedCell,overlay:a.overlay,events:a.archive.evolution.length,balance:a.meta.echoBalance,status:a.memorySnapshot.evolutionStatus[${cell}],
       panel:document.getElementById('memory-node-panel').textContent,action:document.getElementById('memory-unlock').getAttribute('aria-label'),
-      navigatorButtons:document.querySelectorAll('#evolution-navigator button').length,treeItems:document.querySelectorAll('#evolution-tree').length}})()`);
-  const keyboard=await semanticTarget();await evaluate(`window.__CELL_SPHERE_APP__.selectEvolutionCell(${keyboard.cell},'navigator')`);await wait(80);
+      detailButtons:document.querySelectorAll('#memory-node-panel button').length,
+      obsoleteControls:document.querySelectorAll('#evolution-navigator,#evolution-current,#evolution-previous,#evolution-next,#evolution-frontier,#evolution-neighbors').length,
+      treeItems:document.querySelectorAll('#evolution-tree').length}})()`);
+  const keyboard=await semanticTarget();await evaluate(`window.__CELL_SPHERE_APP__.canvas.focus({preventScroll:true})`);await key('PageDown');await wait(80);
   const keyboardSelected=await stateFor(keyboard.cell);ok(keyboardSelected.level==='0'&&keyboardSelected.events===keyboard.events&&keyboardSelected.selected===keyboard.cell
     &&keyboardSelected.overlay==='memory-node'&&keyboardSelected.status===7&&keyboardSelected.panel.includes('ready to establish')
     &&keyboardSelected.panel.includes('Activate this selected cell again')&&keyboardSelected.action.includes('Echoes')
-    &&keyboardSelected.navigatorButtons<=9&&keyboardSelected.treeItems===0,
+    &&keyboardSelected.detailButtons===2&&keyboardSelected.obsoleteControls===0&&keyboardSelected.treeItems===0,
     `keyboard selection did not expose one ready cell: ${JSON.stringify(keyboardSelected)}`);
   await evaluate(`(()=>{const a=window.__CELL_SPHERE_APP__;a.trophyNotifications.replace({...a.meta,trophyQueue:[]});document.getElementById('memory-unlock').focus()})()`);
   await screenshot('browser-evolution-selected-ready.png');
@@ -319,7 +321,7 @@ async function evolutionActivationEvidence(t) {
     `touch first activation did not only select its exact cell: ${JSON.stringify(touchSelected)}`);
   await tap(...touch.point);await wait(100);let touchBought=await stateFor(touchCell);
   ok(BigInt(touchBought.level)===BigInt(touchSelected.level)+1n&&touchBought.events===touch.events+1,`touch second activation failed: ${JSON.stringify(touchBought)}`);touch.cell=touchCell;await wait(400);
-  const explicit=await semanticTarget(false);await evaluate(`window.__CELL_SPHERE_APP__.selectEvolutionCell(${explicit.cell},'navigator')`);await wait(80);
+  const explicit=await semanticTarget(false);await evaluate(`window.__CELL_SPHERE_APP__.selectEvolutionCell(${explicit.cell},'keyboard')`);await wait(80);
   const explicitSelected=await stateFor(explicit.cell);ok(explicitSelected.level===explicit.level&&explicitSelected.events===explicit.events,'button setup selection purchased unexpectedly');
   await trustedId(t,'memory-unlock');await wait(100);const explicitBought=await stateFor(explicit.cell);
   ok(BigInt(explicitBought.level)===BigInt(explicitSelected.level)+1n&&explicitBought.events===explicit.events+1,`explicit purchase button failed: ${JSON.stringify(explicitBought)}`);
@@ -330,7 +332,7 @@ async function evolutionActivationEvidence(t) {
     `rapid accessible-button activation bought more than one level: ${JSON.stringify({buttonBurstBefore,buttonBurstAfter})}`);
   const extreme=await evaluate(`(async()=>{const a=window.__CELL_SPHERE_APP__,cell=${explicit.cell},level='8'.repeat(1019),balance='9'.repeat(4096),
     {buildEvolutionSnapshot}=await import('./src/game/skills/index.js');a.closeEvolutionCell();a.meta={...a.meta,evolutionLevels:[{cell,level}],echoBalance:balance,totalEchoes:balance};
-    a.memorySnapshot=buildEvolutionSnapshot(a.meta);a.selectEvolutionCell(cell,'navigator');const action=document.getElementById('memory-unlock'),exact=action.dataset.exactValue;
+    a.memorySnapshot=buildEvolutionSnapshot(a.meta);a.selectEvolutionCell(cell,'keyboard');const action=document.getElementById('memory-unlock'),exact=action.dataset.exactValue;
     return{levelDigits:level.length,balanceDigits:balance.length,costDigits:exact.length,action:action.textContent,noDetailAction:!document.querySelector('#memory-node-meta button'),
       horizontal:document.documentElement.scrollWidth>innerWidth}})()`);
   ok(extreme.levelDigits===1019&&extreme.balanceDigits===4096&&extreme.costDigits>2000&&extreme.noDetailAction

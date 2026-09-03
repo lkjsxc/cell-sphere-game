@@ -49,7 +49,7 @@ export function evolutionOwnershipBoundaryExpression() { return `(async()=>{
     ['locked',poor(ringLevels),lockedCell,'locked'],
   ]);
   nativeText.valid=Object.values(nativeText).filter(value=>typeof value==='object').every(value=>value.valid)
-    &&nativeText.navigatorButtons<=9&&nativeText.neighborButtons<=6;
+    &&nativeText.detailButtons===2&&nativeText.obsoleteControls===0;
 
   const categoryEdges={ownership:sample(ownershipEdges,2),
     reachable:sample(edgesWith(snapshots.ring,EVOLUTION_CELL_EDGE.REACHABLE_PERIMETER),2),
@@ -122,10 +122,10 @@ export function evolutionOwnershipBoundaryExpression() { return `(async()=>{
   function collectNativeText(entries){const saved={meta:app.meta,snapshot:app.memorySnapshot,selectedNode:app.selectedNode,
       selectedCell:app.memoryUi.selectedCell},result={};
     for(const [name,meta,cell,expected] of entries){const snapshot=buildEvolutionSnapshot(meta,cell);app.meta=meta;app.memorySnapshot=snapshot;
-      app.selectedNode=cell;app.memoryUi.openCell(cell,snapshot.evolutionProjection);const text=document.getElementById('evolution-current').textContent;
+      app.selectedNode=cell;app.memoryUi.openCell(cell,snapshot.evolutionProjection);const text=app.memoryUi.accessibleDescription;
       result[name]={cell,text,expected,valid:text.includes('Local Level')&&text.includes('Shared rank')&&text.includes(expected)};}
-    result.navigatorButtons=document.querySelectorAll('#evolution-navigator button').length;
-    result.neighborButtons=document.querySelectorAll('#evolution-neighbors button').length;
+    result.detailButtons=document.querySelectorAll('#memory-node-panel button').length;
+    result.obsoleteControls=document.querySelectorAll('#evolution-navigator,#evolution-current,#evolution-previous,#evolution-next,#evolution-frontier,#evolution-neighbors').length;
     app.meta=saved.meta;app.memorySnapshot=saved.snapshot;app.selectedNode=saved.selectedNode;
     app.memoryUi.openCell(saved.selectedCell,saved.snapshot.evolutionProjection);return result;}
   function probeGroup(snapshot,edges,distanceValue,limb,mode){const probes=edges.map(edge=>probeEdge(snapshot,edge,distanceValue,limb,mode));
