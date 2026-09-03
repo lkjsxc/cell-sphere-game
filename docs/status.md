@@ -21,9 +21,11 @@
   matrices pass real keyboard boundaries and wrapping, ready-set variants,
   exact purchase isolation, two-button/zero-retired-control DOM assertions,
   forced colors, reduced motion, context loss, and all eight maintained
-  viewports at 200% text. WebGL remains four draws. Final exact-revision broad
-  verification and publication evidence are recorded by the active work package
-  and implementation handoff.
+  viewports at 200% text. WebGL remains four draws. Clean candidate `98967ec`
+  passes all 26 verifier gates, including `252/252` unit and `76/76`
+  integration tests and a valid `12,134 ticks/s` benchmark with unchanged hash
+  `15863d52`; exact final-revision publication evidence belongs to the
+  implementation handoff.
 
 ## Orbital Starfield Fidelity v1
 

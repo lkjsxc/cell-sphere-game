@@ -5,11 +5,16 @@ product and engineering truth belongs in root documentation and source; packages
 record inventories, invariants, migration plans, decisions, and measured work
 evidence while a migration is active.
 
-Active work package:
-[`evolution-globe-first-navigation-v1/`](evolution-globe-first-navigation-v1/).
+Active work package: none.
 
 Completed packages remain as historical or current implementation evidence:
 
+- [`evolution-globe-first-navigation-v1/`](evolution-globe-first-navigation-v1/)
+  — terminal local evidence for removing visible Evolution traversal/neighbor
+  chrome, one bounded keyboard target policy, exact-cell purchase preservation,
+  responsive/accessibility proof, and publication-ready current documentation.
+  Exact final-revision remote, CI, Pages, byte, and deployed-browser evidence
+  necessarily belongs to the implementation handoff.
 - [`orbital-starfield-fidelity-v1/`](orbital-starfield-fidelity-v1/) — terminal
   local implementation evidence for a restrained near-black orbital field,
   strengthened shared star strata, rendered hierarchy oracles, all four sphere
@@ -51,9 +56,10 @@ Completed packages remain as historical or current implementation evidence:
   evidence for one fixed World-derived Evolution planet substrate, secondary
   exact-cell progression cues, renderer parity, and local/external closure.
 - [`evolution-cell-progression-v1/`](evolution-cell-progression-v1/) — terminal
-  current evidence for exact level-4 Evolution cell authority, direct fine
-  adjacency, aggregate archetype ranks, bounded navigation, current-only
-  persistence, and exact local/CI/Pages/deployed-browser closure.
+  historical foundation for exact level-4 Evolution cell authority, direct fine
+  adjacency, aggregate archetype ranks, current-only persistence, and exact
+  local/CI/Pages/deployed-browser closure. Its interim detail navigation catalog
+  is superseded by `evolution-globe-first-navigation-v1`.
 - [`evolution-cellular-territories-v1/`](evolution-cellular-territories-v1/)
   — terminal historical evidence for the superseded 42-territory projection,
   including exact local/CI/Pages/deployed-browser closure at its final revision.

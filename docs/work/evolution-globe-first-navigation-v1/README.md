@@ -1,6 +1,7 @@
 # Evolution Globe-First Navigation v1
 
-Status: active.
+Status: terminal local implementation evidence. Exact final-revision publication
+evidence necessarily belongs to the implementation handoff.
 
 ## Starting point
 
@@ -94,6 +95,13 @@ Status: active.
   px and `844x390` panel scroll falls from `4,120` to `2,383` px, with one
   scroll owner, reachable Close and Unlock, no horizontal overflow, and no
   scene-control overlap.
+- Milestone 2 installs the supplied root contract, makes D41 and all current
+  player/design/accessibility/testing/interface/status docs globe-first, keeps
+  the README mirror byte-identical, and leaves the predecessor terminal package
+  untouched. Commits are `16d6629` (baseline package), `205f476` (atomic
+  cutover), `242c22f` (cohesive browser-oracle boundary), and `98967ec`
+  (current documentation and root contract); the terminal evidence commit
+  cannot name itself.
 
 ## Focused verification
 
@@ -106,14 +114,16 @@ Status: active.
   tests/unit/evolution-progression.test.js tests/integration/skill-globe.test.js`
   passes `18/18`, including numeric/root wrap, ready ordering and preference,
   invalid/empty inputs, finite scanning, and command filtering.
-- PASS — final-content focused reports pass Worker/WebGL2 (`3e7ba178...`,
-  494,067 bytes), fallback/WebGL2 (`bc12afd9...`, 494,103 bytes), and
-  fallback/Canvas (`ed3584f3...`, 494,256 bytes). Each proves zero retired
+- PASS — exact candidate `98967ec` focused reports under `reports/evolution-globe-first-navigation-v1/final/`
+  pass Worker/WebGL2 (`e1f88565...`, 494,133 bytes), fallback/WebGL2
+  (`200da074...`, 494,206 bytes), and fallback/Canvas (`9043c5dc...`,
+  494,289 bytes). Each proves zero retired
   controls, exactly two detail buttons, real key boundaries, all ready-set
   fixtures, selection/detail/camera agreement, exact purchases, forced colors,
   reduced motion, eight 200%-text viewports, empty browser errors, and unchanged
   cached layout/geometry. Both WebGL paths retain four draws; context loss is
-  playable.
+  playable. Source and harness revision agree; tracked work is clean, while the
+  intentional untracked transfer artifact makes the broad dirty flag true.
 - FAILED / corrected — early fixture iterations respectively required
   `:focus-visible` on a programmatically focused native Close button, measured
   Close only after scrolling Unlock, and sent forced-color Tab from body rather
@@ -147,18 +157,50 @@ Status: active.
   hard-cap violation, but rejects the preserved user transfer artifact
   `docs/work/202609031509.md` at 802 lines. A clean tracked checkout must pass;
   the campaign input will not be edited, deleted, or committed as product docs.
+- PASS — a detached clean checkout of candidate `98967ec` passes all 26
+  `npm run verify` gates: structure, identity, every renderer/progression/
+  persistence/ecology audit, showcase, `252/252` unit tests, `76/76`
+  integration tests, 500-seed lakes, balance, terminal soak, benchmark, and
+  links. Benchmark is `12,134 ticks/s` with authority hash `15863d52` and fixed
+  trace `e32ad0ff`. The 143,846-byte log is
+  `reports/evolution-globe-first-navigation-v1/verify-98967ec.log`, SHA-256
+  `454eecf7...`.
+- PASS / performance investigation — predecessor-to-final selected-path p95
+  entry is `20.0→15.0`, `15.2→14.4`, and `6.8→6.8` ms for Worker/WebGL2,
+  fallback/WebGL2, and fallback/Canvas. Snapshot/update p95 improves or holds;
+  Canvas steady improves `5.2→2.2` ms. Worker steady changes `1.2→1.8` ms and
+  fallback steady `1.2→1.3` ms, both within ordinary sub-millisecond process
+  noise. The earlier fallback entry `21.9` ms sample is superseded by the exact
+  committed rerun; no final regression meets both the 10% and absolute-noise
+  investigation thresholds.
+- PASS — final source search leaves retired IDs/labels only in explicit
+  zero-presence browser oracles, this package's predecessor record, the preserved
+  terminal predecessor package, and the untracked transfer artifact. Current
+  product code, CSS, and docs contain no positive catalog authority.
 
 ## Evidence not obtained
 
 - Physical-device mouse, touch, pen, screen-reader, safe-area, high-refresh, and
   thermal evidence is unavailable in this environment.
-- Clean-checkout structure and complete verifier, final exact-revision focused
-  receipts, CI/Pages, cache-busted bytes, and deployed-browser evidence remain
-  pending.
+- The exact final revision's remote ref, CI/Pages jobs, cache-busted bytes, and
+  deployed-browser behavior are not claimed in this tracked package because
+  publication makes that revision the evidence subject. The implementation
+  handoff must report them exactly or classify them unavailable.
+
+## Deferred evidence and reassessment
+
+- The known `1024x600` Result-footer fractional overrun remains a separate
+  current issue; this campaign neither fixes nor weakens its browser gate.
+- A future campaign-design turn should reassess the repository's explicitly
+  deferred composition-aware automatic camera preference/activity targeting,
+  the separate Result fractional layout edge, and any newly changed remote
+  state. It should not reopen globe-first navigation, exact-cell topology,
+  progression economy, renderer styling, or balance without newer user policy.
 
 ## Exact next coherent step
 
-Commit the reconciled current documentation and supplied root contract, run
-clean-checkout closure gates and a fresh complete verifier, record those local
-results, then create and verify the final evidence revision before the
-authorized fast-forward publication.
+No repository implementation step remains. The final implementation handoff
+must freshly verify the exact terminal evidence revision, perform the authorized
+fast-forward publication when prerequisites hold, and report exact CI, Pages,
+byte, and deployed-browser results without another self-referential evidence
+commit.
