@@ -224,6 +224,9 @@ Do not add tuning settings instead of choosing a good default. One high-level
 persistent switch for inactivity-driven automatic camera work is permitted and
 required by product policy; do not expose orbit speed, idle delay, path, cloud,
 star, or shooting-star tuning. Do not use more UI as a substitute for clarity.
+Do not put a persistent previous/next/frontier or direct-neighbor button matrix
+inside ordinary Evolution cell detail. Keep the globe primary and provide bounded
+keyboard and assistive navigation without recreating a visible control catalog.
 Do not generate meaningless filler to reach a catalog, feature, file, or line
 count.
 
@@ -743,11 +746,14 @@ cut returns unchanged. Do not infer or render ownership from reachability,
 affordability, archetype or domain region, selection, fill brightness, or an
 entire connected region.
 
-Do not expose thousands of simultaneous DOM controls. Accessibility uses a
-bounded native navigator for the selected cell, direct neighbors, stable
-previous/next traversal, and a direct reachable-frontier action or equivalent
-bounded mechanism. Every cell remains reachable to keyboard and assistive
-technology, and topology size does not cause unbounded DOM growth.
+Do not expose thousands of simultaneous DOM controls. The Evolution globe is the
+primary selection and traversal interface. Ordinary cell detail must not contain
+a persistent previous/next/frontier or direct-neighbor button matrix.
+Accessibility uses one bounded keyboard and assistive path that keeps every exact
+cell and actionable frontier reachable without rendering every cell or a large
+neighbor catalog as DOM controls. Current cell identity, archetype, status, cost,
+and the native purchase action remain available through concise text and
+structure.
 
 Do not mutate Evolution during a World. Do not create a second compiler for
 agents, previews, fixtures, or migration. When changing topology, substrate,
@@ -1020,11 +1026,13 @@ Decorative stars, clouds, and shooting stars do not need invented announcements
 or focus targets. Test keyboard-only interaction, focus restoration, and reduced
 motion in a real browser.
 
-Evolution's semantic path stays bounded independently of cell count. The current
-cell, its exact status and archetype, its domain and region context, its direct
-neighbors, and deterministic traversal/frontier actions must be operable without
-rendering every Evolution cell as a DOM control. The green starting location must
-also be identified through text or structure rather than color alone.
+Evolution's semantic path stays bounded independently of cell count. The globe
+remains the primary selector. Current cell identity, exact status and archetype,
+domain and region context, purchase readiness, and deterministic keyboard access
+to every cell and the next actionable frontier must remain operable without a
+persistent visible navigation matrix or thousands of DOM controls. The green
+starting location must also be identified through text or structure rather than
+color alone.
 
 Required viewport evidence normally includes:
 

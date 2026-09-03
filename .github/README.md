@@ -74,8 +74,13 @@ neighbors. Cells carry 42 repeated authored archetypes. Each archetype occupies
 one connected exact-cell region, and the seven domains form connected
 substrate-aligned macro-regions. Their exact local levels sum into one shared
 rank per archetype, so repeated occurrences follow one cost sequence and one
-bounded production compiler. A bounded native navigator exposes the selected
-cell, its direct neighbors, stable traversal, and the next actionable frontier.
+bounded production compiler. The globe is the primary exact-cell selector.
+Pointer and touch select visible cells directly; on the focusable globe or cell
+detail heading, Left/Right move in stable numeric order, Home returns to `First
+Division`, and Page Up/Down move among ready cells. These bounded commands center
+and describe one exact cell without purchasing. Cell detail retains only Close
+and its native Unlock/Strengthen action rather than a persistent traversal or
+neighbor catalog.
 The immutable layout consumes one fixed-seed planet built by the maintained
 World field generator, so continents, oceans, coasts, relief, lakes, and biomes
 guide routes while remaining visually primary beneath restrained region and
@@ -153,4 +158,4 @@ npm run test:browser:fallback
 ```
 
 Current implementation status is recorded in
-[`docs/work/orbital-starfield-fidelity-v1/README.md`](docs/work/orbital-starfield-fidelity-v1/README.md).
+[`docs/work/evolution-globe-first-navigation-v1/README.md`](docs/work/evolution-globe-first-navigation-v1/README.md).

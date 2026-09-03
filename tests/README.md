@@ -11,7 +11,7 @@ screenshots are generated evidence, not authority.
 | `scripts/browser-file-test.mjs` | Trusted pointer/touch/keyboard WebGL2 acceptance, including normalized direct travel, faithful cumulative release, cancellation, speed pacing, framing, Result cycle, real Evolution second activation, and four draws. |
 | forced Canvas scenario | Matching camera geometry and semantic Evolution, History, worldmaking, charge/zero-charge, continuation, and no-wire evidence. |
 | atmosphere fixture | Deterministic fixed-shell geometry plus calibrated WebGL2 contour, topology-independence, buffer lifecycle, four-draw, frame-cost, and Canvas semantic-halo evidence. |
-| Evolution-region fixture | Green-root focus/material, exact-cell transactions, graph invariants, shared region/state edges, far/close center/limb contrast, context loss, bounded navigation, and 200% text in Worker/WebGL2, fallback/WebGL2, and fallback/Canvas. |
+| Evolution-region fixture | Green-root focus/material, exact-cell transactions, graph invariants, shared region/state edges, far/close center/limb contrast, context loss, globe-first trusted keyboard navigation, retired-DOM absence, and 200% text in Worker/WebGL2, fallback/WebGL2, and fallback/Canvas. |
 
 Focused non-suite release gates are `audit:evolution-levels`,
 `audit:environment-levels`, `audit:luminous`, `audit:progression-numbers`,

@@ -10,15 +10,11 @@ This entry is archived evidence, not current authority.
 
 ## D1 — Zero runtime dependencies
 
-Contest rules limit external libraries and authorship matters. Use native
-HTML/CSS/ES modules, Node built-ins for tooling, no framework/CDN/runtime
-package. Consequence: every deployed byte is repository-authored and static.
-Evidence: `package.json`, link gate, contest rules fetch recorded in status.
+Contest rules limit external libraries and authorship matters. Use native HTML/CSS/ES modules, Node built-ins for tooling, no framework/CDN/runtime package. Consequence: every deployed byte is repository-authored and static. Evidence: `package.json`, link gate, contest rules fetch recorded in status.
 
 ## D2 — WebGL2 primary, Canvas 2D fallback
 
-Desktop/smartphone Chrome support WebGL2 broadly, while a blank unsupported
-page is unacceptable. WebGL2 owns the four-draw authored cellular presentation;
+Desktop/smartphone Chrome support WebGL2 broadly, while a blank unsupported page is unacceptable. WebGL2 owns the four-draw authored cellular presentation;
 Canvas keeps geography, cellular life, selection, events, History, and Memory
 playable without drawing organism routes. Evidence: renderer unit contracts and
 dedicated real-Chrome WebGL2 and forced-Canvas scenarios.
@@ -366,7 +362,7 @@ Fine cell boundaries remain visible. Territory, selected, and recently upgraded 
 
 Supersede D32 for current product behavior. The maintained level-4 topology is both Evolution's visible and progression topology: all 2,562 cells have stable identities, and its 7,680 direct edges are the sole frontier rule. Retain the 42 authored definitions as reusable archetypes. A deterministic stratified cellular weave assigns one archetype to every cell, with one `First Division` root and no large same-archetype region.
 Persist sparse exact local levels by cell. Sum them into exact aggregate archetype ranks; price the next occurrence through the existing target-level law at aggregate rank plus one; compile the same 42 ranks through the one production compiler. Repeated cells add spatial choice without multiplying cheap first levels or making location a hidden simulation rule.
-Picking, focus, transactions, fine Imprints, History, renderers, accessibility, and agents consume exact cells. One bounded native navigator replaces the 42-item tree. WebGL2 retains four draws and Canvas consumes the same edge semantics. Incompatible skill-ID levels, receipts, coarse Imprints, and Evolution History reset under current-only validation; no arbitrary migration maps old skills into new cells. D32 remains historical evidence for its terminal revision, but its graph/territory authority is deleted from current production.
+Picking, focus, transactions, fine Imprints, History, renderers, accessibility, and agents consume exact cells. The 42-item tree was replaced by an interim bounded detail-control catalog; D41 supersedes that catalog while retaining exact-cell authority. WebGL2 retains four draws and Canvas consumes the same edge semantics. Incompatible skill-ID levels, receipts, coarse Imprints, and Evolution History reset under current-only validation; no arbitrary migration maps old skills into new cells. D32 remains historical evidence for its terminal revision, but its graph/territory authority is deleted from current production.
 
 ## D34 — Evolution presentation rests on one fixed World-derived planet
 
@@ -397,3 +393,7 @@ One World-seeded `64×64×6` directional byte field replaces latitude/longitude 
 
 ## D40 — Planetary sky uses a star-led orbital composition
 D39's broad chromatic gas band, warm concentration, violet structure, rift, and `124/210/300` catalog totals are superseded; its single eligible-time authority, directional clouds, shooting schedule, Balanced default, Reduced behavior, renderer parity, and four-draw boundaries remain current. One stable generated `256×128` RGB field now owns only low-amplitude non-directional near-black variation. One shared faint/bright/anchor definition owns WebGL2 and Canvas size, intensity, opacity, halo, and Eco/Balanced/High totals of `224/356/500`; lifecycle bounds, simulation, rewards, progression, persistence, History meaning, and picking remain unchanged.
+
+## D41 — Evolution exact-cell navigation is globe-first
+
+Supersede only D33's interim visible navigation-catalog conclusion. Ordinary Evolution cell detail contains no persistent previous/next/frontier controls, direct-neighbor heading, generated neighbor buttons, relocated menu, or hidden interactive duplicate; the globe is primary and detail retains Close plus one native Unlock/Strengthen action. One pure presentation policy maps unmodified, non-repeated Left/Right to wrapped numeric order, Home to the authored `First Division` root, and Page Up/Down to wrapped ready-cell order with unowned cells preferred. The focusable globe and open detail heading consume that same policy. Navigation keeps focus stable, centers and describes one exact cell through existing selection/camera/detail and polite-announcement owners, and never purchases. D33's exact topology, adjacency, local levels, aggregate ranks, transactions, compiler, persistence, History, renderer, and World authority remain current.

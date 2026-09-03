@@ -1,5 +1,30 @@
 # Current status
 
+## Evolution Globe-First Navigation v1
+
+- Evolution cell detail no longer renders the interim previous/next/frontier
+  controls, direct-neighbor heading, or five/six generated neighbor buttons.
+  Its native actions are exactly Close and Unlock/Strengthen; the globe remains
+  the primary spatial selector.
+- One pure presentation policy maps unmodified, non-repeated Left/Right, Home,
+  Page Up, and Page Down commands to an exact cell. Numeric traversal wraps,
+  Home targets the authored green-land `First Division` root, and ready
+  traversal prefers unowned cells before owned refinements. Navigation centers
+  and describes its target without purchasing or moving focus away from the
+  current globe/detail keyboard surface.
+- Pointer and touch selection, centered-cell Enter/Space activation, the native
+  transaction action, direct-adjacency progression, exact levels and ranks,
+  persistence, History, renderers, World simulation, and balance retain their
+  existing owners. No schema, progression identity, renderer pass, timer,
+  setting, or per-frame navigation work changed.
+- Focused Chrome 152 Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D
+  matrices pass real keyboard boundaries and wrapping, ready-set variants,
+  exact purchase isolation, two-button/zero-retired-control DOM assertions,
+  forced colors, reduced motion, context loss, and all eight maintained
+  viewports at 200% text. WebGL remains four draws. Final exact-revision broad
+  verification and publication evidence are recorded by the active work package
+  and implementation handoff.
+
 ## Orbital Starfield Fidelity v1
 
 - One shared deterministic `256×128` RGB field now supplies low-amplitude,
@@ -150,10 +175,9 @@
   production compiler consumes the 42 ranks. Equal aggregate distributions
   compile identically regardless of spatial placement.
 - Picking, focus, detail, History, fine Imprints, agent candidates, WebGL2, and
-  Canvas 2D use exact cell identities. The former 42-item tree is replaced by a
-  bounded native navigator exposing the current cell, five or six direct
-  neighbors, previous/next traversal, next ready cell, and one purchase action.
-  WebGL still uses four draws.
+  Canvas 2D use exact cell identities. This campaign deleted the former 42-item
+  tree; its interim detail-button navigation catalog is superseded by Evolution
+  Globe-First Navigation v1. WebGL still uses four draws.
 - Current-only validation preserves independently valid non-Evolution meta while
   resetting incompatible skill-ID levels, receipts, coarse Imprints, and
   Evolution History. The current representation writes only sparse `{cell,

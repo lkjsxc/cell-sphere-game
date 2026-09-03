@@ -13,12 +13,15 @@
   percentage for assistive technology. Interpolation does not use a live region;
   History remains its own temporal surface.
   RESULT is last in reading/visual order and remains restrained at extinction.
-- Evolution exposes one bounded native navigator for the selected cell. It names
-  stable cell position, archetype, domain, local level, shared aggregate rank,
-  ownership, reachability, affordability, and exact next cost; it adds only five
-  or six direct-neighbor buttons, previous/next traversal, next-ready navigation,
-  and the purchase action. The 2,562 rendered cells never become persistent DOM
-  controls or live announcements.
+- Evolution keeps the globe as its primary exact-cell selector. The focusable
+  globe and open cell-detail heading expose Left/Right numeric traversal, Home
+  for the authored `First Division` root, and Page Up/Down for ready-cell
+  traversal through `aria-keyshortcuts` and one concise description. Commands
+  keep focus stable, center and describe one exact cell, and never purchase.
+  Detail names cell position, archetype, domain, local level, shared rank,
+  ownership, reachability, affordability, and exact cost, then exposes only
+  Close and the native Unlock/Strengthen action. The 2,562 rendered cells never
+  become persistent DOM controls or live announcements.
 - Trophy Sphere exposes all 96 criteria in a semantic grid.
 - Inspector fields use real headings and definition lists. Locked habitats name
   the missing Evolution capability. The selected-cell inspector remains the
@@ -56,7 +59,9 @@ Interaction contract:
   the open detail;
 - valid release inertia on the globe or Drag globe strip preserves the open
   detail, selection, levels, and focus, then rests without idle orbit;
-- focus moves to the new heading and returns to a sensible trigger on close.
+- pointer-origin detail entry moves focus to the heading and returns to a
+  sensible trigger on close; globe-keyboard entry and traversal retain the
+  current keyboard surface instead of moving focus on every cell.
 
 Result actions are ordered **Next World**, **Evolution**, and **History**. Its
 continuation status and primary action sit outside the scrolling Result body, so
@@ -99,8 +104,8 @@ Canvas bitmap; cancelled and disabled text remains explicit. High contrast
 strengthens material boundaries and focus indicators. Text and controls remain
 bounded at 200% font scaling. Home copy has one bounded content scroll owner when
 the enlarged text cannot fit, while exposed canvas remains directly manipulable.
-Evolution state is never canvas-color-only: the bounded navigator and detail name
-locked, reachable-unaffordable, ready, owned, owned-ready, and selected state;
+Evolution state is never canvas-color-only: cell detail and its bounded keyboard
+path name locked, reachable-unaffordable, ready, owned, owned-ready, and selected state;
 small kind-sensitive inset shapes accompany a continuous exact ownership graph
 cut and a thinner segmented or dashed reachable perimeter. Owned interiors do
 not form a strong honeycomb, and affordability remains explicit in the local cue

@@ -97,9 +97,14 @@ macro-region fitted to existing geography. Lower tiers lead away from the root
 before higher tiers. Region membership never becomes a bulk purchase, effect
 owner, completion bonus, or location-dependent simulation rule.
 
-The bounded native navigator presents one current cell, its five or six direct
-neighbors, stable previous/next traversal, and a next-ready action. It keeps
-every cell keyboard-reachable without creating 2,562 persistent DOM controls.
+The globe is the primary exact-cell selector. Pointer and touch act on rendered
+cells directly. While focus is on the globe or the open cell-detail heading,
+Left/Right traverse stable cell-number order, Home returns to the authored
+`First Division` root, and Page Up/Down traverse currently ready cells with
+unowned purchases preferred over owned refinements. The bounded presentation
+policy centers and describes its target but never purchases it. Detail retains
+one native Unlock/Strengthen action and does not duplicate the globe with a
+persistent traversal or direct-neighbor catalog.
 Evolution's immutable substrate comes from the maintained World planet-field
 generator at one fixed seed. Large connected oceans and landmasses, coasts,
 relief, lakes, and biome regions remain visually primary and guide the one

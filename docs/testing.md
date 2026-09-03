@@ -99,10 +99,15 @@ focus restoration, forced colors, reduced motion, 200% text, and responsive
 rectangles in Worker/WebGL2, fallback/WebGL2, and fallback/Canvas 2D.
 
 The three focused Evolution-cell commands use the production entry point,
-level-4 topology, cell projection, renderers, and bounded native navigator. They
-prove 2,562 authoritative cells, one exact selected/purchased cell, direct
-neighbor reachability, aggregate-rank detail, bounded DOM, and one shared packed
-edge authority. Deterministic fresh, root-only, and root-plus-ring fixtures prove
+level-4 topology, cell projection, renderers, and one bounded keyboard-target
+policy. Real key events prove wrapped numeric traversal, the authored-root jump,
+wrapped ready traversal, unowned-ready preference, owned-refinement fallback,
+an honest no-ready announcement, stable focus/camera/detail synchronization,
+native-control and scene boundaries, and purchase isolation. They also prove
+the retired traversal/neighbor DOM is absent, detail contains only Close and
+Unlock/Strengthen, all eight 200%-text viewports remain bounded, and pointer,
+touch, Enter/Space, and explicit purchase still address one exact cell.
+Deterministic fresh, root-only, and root-plus-ring fixtures prove
 the exact ownership and reachable graph cuts; selected/recent overrides are
 incident-local and clear back to byte-identical steady classifications. The
 browser oracle samples multiple ownership, reachable, interior, quiet, and
