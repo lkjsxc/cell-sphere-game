@@ -20,9 +20,7 @@ import { applySafeLayout, safeLayout } from './policies/layout-policy.js'; impor
 import { advanceContinuation, cancelContinuation, completeContinuation, continuationPresentation,
   createContinuation, createContinuationPresentationCadence, disableContinuation,
   planContinuationPresentation, setContinuationHidden } from './policies/continuation.js';
-import { createTrustedInteractionGuard } from './policies/trusted-interaction.js';
-import { evolutionNavigationCommand, evolutionNavigationTarget,
-  isReadyEvolutionNavigation } from './policies/evolution-navigation.js';
+import { createTrustedInteractionGuard } from './policies/trusted-interaction.js'; import { evolutionNavigationCommand, evolutionNavigationTarget, isReadyEvolutionNavigation } from './policies/evolution-navigation.js';
 import { advanceCameraMotion, beginCameraDrag, cameraMotionActivity, cameraMotionSnapshot, createCameraMotion,
   endCameraDrag, recordCameraDrag, resetCameraMotion, setCameraMotionHidden, setCameraMotionReduced,
   setCameraMotionScene, setCameraMotionSurface } from './policies/camera-motion.js';
@@ -164,20 +162,15 @@ class GameApp {
   }
   navigateEvolutionByKeyboard(event) {
     const command = evolutionNavigationCommand(event); if (!command || this.scene !== 'evolution') return false;
-    const heading = document.getElementById('memory-node-heading');
-    if (event.target !== this.canvas && !(this.overlay === 'memory-node' && event.target === heading)) return false;
-    event.preventDefault();
-    const projection = this.memorySnapshot?.evolutionProjection;
+    const heading = document.getElementById('memory-node-heading'); if (event.target !== this.canvas
+      && !(this.overlay === 'memory-node' && event.target === heading)) return false;
+    event.preventDefault(); const projection = this.memorySnapshot?.evolutionProjection;
     const cell = evolutionNavigationTarget(command, { nodeCount: this.topo4.nodeCount,
       rootCell: this.evolutionLayout.rootCell, selectedCell: this.memoryUi.selectedCell ?? this.selectedNode,
       readyCells: projection?.readyCells, owned: projection?.owned });
-    if (cell === null) {
-      if (isReadyEvolutionNavigation(command)) ui.announce(this.el, 'No ready Evolution cell.');
-      return true;
-    }
+    if (cell === null) { if (isReadyEvolutionNavigation(command)) ui.announce(this.el, 'No ready Evolution cell.'); return true; }
     if (selectEvolutionCell(this, cell, 'keyboard')) ui.announce(this.el, this.memoryUi.accessibleDescription);
-    return true;
-  }
+    return true; }
   bindCanvas() { this.input = bindGlobeInput(this.canvas, this.camera, { canInteract: () => true,
     gestureTargets: [document.getElementById('surface-globe-gesture')].filter(Boolean),
     onTap: (x, y) => this.tapGlobe(x, y),

@@ -273,8 +273,7 @@ async function evolutionActivationEvidence(t) {
     p=a.memorySnapshot.evolutionProjection,n=evolutionCellState(p,${cell},a.memoryUi.selectedCell);return{level:n.localLevel,aggregate:n.aggregateRank,
       selected:a.memoryUi.selectedCell,overlay:a.overlay,events:a.archive.evolution.length,balance:a.meta.echoBalance,status:a.memorySnapshot.evolutionStatus[${cell}],
       panel:document.getElementById('memory-node-panel').textContent,action:document.getElementById('memory-unlock').getAttribute('aria-label'),
-      detailButtons:document.querySelectorAll('#memory-node-panel button').length,
-      obsoleteControls:document.querySelectorAll('#evolution-navigator,#evolution-current,#evolution-previous,#evolution-next,#evolution-frontier,#evolution-neighbors').length,
+      detailButtons:document.querySelectorAll('#memory-node-panel button').length,obsoleteControls:document.querySelectorAll('#evolution-navigator,#evolution-current,#evolution-previous,#evolution-next,#evolution-frontier,#evolution-neighbors').length,
       treeItems:document.querySelectorAll('#evolution-tree').length}})()`);
   const keyboard=await semanticTarget();await evaluate(`window.__CELL_SPHERE_APP__.canvas.focus({preventScroll:true})`);await key('PageDown');await wait(80);
   const keyboardSelected=await stateFor(keyboard.cell);ok(keyboardSelected.level==='0'&&keyboardSelected.events===keyboard.events&&keyboardSelected.selected===keyboard.cell
