@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/mark.svg" width="112" height="112" alt="The cell-sphere-game mark">
+  <img src="https://raw.githubusercontent.com/lkjsxc/cell-sphere-game/main/assets/mark.svg" width="112" height="112" alt="The cell-sphere-game mark">
 </p>
 
 # cell-sphere-game
@@ -11,8 +11,14 @@
 
 <p align="center">
   <a href="https://lkjsxc.github.io/cell-sphere-game/"><strong>Play the latest build</strong></a>
-  · <a href="docs/game-design.md">Game design</a>
-  · <a href="docs/README.md">Documentation</a>
+  · <a href="https://github.com/lkjsxc/cell-sphere-game/blob/main/docs/game-design.md">Game design</a>
+  · <a href="https://github.com/lkjsxc/cell-sphere-game/blob/main/docs/README.md">Documentation</a>
+</p>
+
+<p align="center">
+  <a href="https://lkjsxc.github.io/cell-sphere-game/">
+    <img src="https://raw.githubusercontent.com/lkjsxc/cell-sphere-game/main/assets/cell-sphere-game-home.png" width="1280" alt="The cell-sphere-game Home scene, with a cloud-bearing cellular planet against a dark star field">
+  </a>
 </p>
 
 `cell-sphere-game` is an autonomous incremental game about watching life find a
@@ -134,9 +140,9 @@ the same cell meanings even when their exact pixels differ. The interface also
 supports responsive layouts, touch, keyboard navigation, reduced motion, forced
 colors, and textual equivalents for important non-color state.
 
-The deployed application has no runtime package dependencies and commits almost
-no media. The visual world is procedural; the small hand-authored project mark is
-the main shipped asset.
+The deployed application has no runtime package dependencies or bitmap textures.
+The visual world is procedural; the small hand-authored project mark is its only
+runtime image asset. The Home capture above is documentation only.
 
 ## Run locally
 
@@ -174,17 +180,20 @@ npm run test:browser
 ```
 
 Useful focused commands include `npm test`, `npm run balance:smoke`, and
-`npm run benchmark`. See [`docs/testing.md`](docs/testing.md) for the full matrix.
+`npm run benchmark`. See
+[`docs/testing.md`](https://github.com/lkjsxc/cell-sphere-game/blob/main/docs/testing.md)
+for the full matrix.
 
 ## Documentation
 
-- [`docs/game-design.md`](docs/game-design.md) — autonomous loop and progression
-- [`docs/architecture.md`](docs/architecture.md) — authority boundaries and data flow
-- [`docs/simulation.md`](docs/simulation.md) — ticks, resources, habitats, and pressure
-- [`docs/rendering.md`](docs/rendering.md) — cellular rendering and performance
-- [`docs/accessibility.md`](docs/accessibility.md) — input and semantic behavior
-- [`docs/status.md`](docs/status.md) — current implementation and deployment evidence
+- [`docs/game-design.md`](https://github.com/lkjsxc/cell-sphere-game/blob/main/docs/game-design.md) — autonomous loop and progression
+- [`docs/architecture.md`](https://github.com/lkjsxc/cell-sphere-game/blob/main/docs/architecture.md) — authority boundaries and data flow
+- [`docs/simulation.md`](https://github.com/lkjsxc/cell-sphere-game/blob/main/docs/simulation.md) — ticks, resources, habitats, and pressure
+- [`docs/rendering.md`](https://github.com/lkjsxc/cell-sphere-game/blob/main/docs/rendering.md) — cellular rendering and performance
+- [`docs/accessibility.md`](https://github.com/lkjsxc/cell-sphere-game/blob/main/docs/accessibility.md) — input and semantic behavior
+- [`docs/status.md`](https://github.com/lkjsxc/cell-sphere-game/blob/main/docs/status.md) — current implementation and deployment evidence
 
 ## License
 
-Licensed under the [Apache License 2.0](LICENSE).
+Licensed under the
+[Apache License 2.0](https://github.com/lkjsxc/cell-sphere-game/blob/main/LICENSE).
